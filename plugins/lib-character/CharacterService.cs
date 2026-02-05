@@ -907,7 +907,7 @@ public partial class CharacterService : ICharacterService
     /// NOTE: Per SERVICE_HIERARCHY, this only returns L2 data (base character info + family summary).
     /// L4 data (personality, history, encounters) is gathered by Resource from L4 services.
     /// </summary>
-    public async Task<(StatusCodes, CharacterCompressData?)> GetCompressDataAsync(
+    public async Task<(StatusCodes, CharacterBaseArchive?)> GetCompressDataAsync(
         GetCompressDataRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -934,7 +934,7 @@ public partial class CharacterService : ICharacterService
             // Generate family summary (uses Relationship service - L2, allowed)
             var familySummary = await GenerateFamilySummaryAsync(body.CharacterId, cancellationToken);
 
-            var compressData = new CharacterCompressData
+            var compressData = new CharacterBaseArchive
             {
                 CharacterId = character.CharacterId,
                 Name = character.Name,

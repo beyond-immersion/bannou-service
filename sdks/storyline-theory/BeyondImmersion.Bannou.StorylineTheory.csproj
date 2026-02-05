@@ -16,8 +16,8 @@
 
     <!-- NuGet Package Metadata -->
     <Authors>BeyondImmersion</Authors>
-    <Description>Pure computation narrative theory library for story generation. Provides formal narrative primitives including Propp functions, Story Grid genres, Save the Cat beats, emotional arcs, kernel/satellite classification, and scoring algorithms - all without AI/neural networks.</Description>
-    <PackageTags>bannou;narrative;storytelling;propp;storygrid;savethecat;gamedev</PackageTags>
+    <Description>Pure computation narrative theory library for story generation. Provides Life Value spectrums (Story Grid), Reagan emotional arcs, archive extraction for GOAP world state, and narrative kernel identification - all without AI/neural networks.</Description>
+    <PackageTags>bannou;narrative;storytelling;storygrid;reagan-arcs;goap;gamedev</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
     <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
@@ -35,6 +35,15 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Data\narrative-state.yaml" />
+    <EmbeddedResource Include="Data\emotional-arcs.yaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
 </Project>

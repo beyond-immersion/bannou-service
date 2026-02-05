@@ -1719,7 +1719,7 @@ public class CharacterPersonalityServiceTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var archiveData = new PersonalityCompressData
+        var archiveData = new CharacterPersonalityArchive
         {
             CharacterId = characterId,
             HasPersonality = true,
@@ -1794,7 +1794,7 @@ public class CharacterPersonalityServiceTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var archiveData = new PersonalityCompressData
+        var archiveData = new CharacterPersonalityArchive
         {
             CharacterId = characterId,
             HasPersonality = true,
@@ -1903,7 +1903,7 @@ public class CharacterPersonalityServiceTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var archiveData = new PersonalityCompressData
+        var archiveData = new CharacterPersonalityArchive
         {
             CharacterId = characterId,
             HasPersonality = true,
@@ -1962,7 +1962,7 @@ public class CharacterPersonalityServiceTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var archiveData = new PersonalityCompressData
+        var archiveData = new CharacterPersonalityArchive
         {
             CharacterId = characterId,
             HasPersonality = true,
@@ -2036,7 +2036,7 @@ public class CharacterPersonalityServiceTests
     /// <summary>
     /// Helper method to compress archive data for testing RestoreFromArchive.
     /// </summary>
-    private static string CompressArchiveData(PersonalityCompressData data)
+    private static string CompressArchiveData(CharacterPersonalityArchive data)
     {
         var json = BannouJson.Serialize(data);
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);

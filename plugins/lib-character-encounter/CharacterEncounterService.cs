@@ -1543,7 +1543,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     /// Gets encounter data for compression during character archival.
     /// Called by Resource service during character compression via compression callback.
     /// </summary>
-    public async Task<(StatusCodes, EncounterCompressData?)> GetCompressDataAsync(
+    public async Task<(StatusCodes, CharacterEncounterArchive?)> GetCompressDataAsync(
         GetCompressDataRequest body,
         CancellationToken cancellationToken)
     {
@@ -1614,7 +1614,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 }
             }
 
-            var response = new EncounterCompressData
+            var response = new CharacterEncounterArchive
             {
                 CharacterId = body.CharacterId,
                 HasEncounters = encounters.Count > 0,
@@ -1663,12 +1663,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         try
         {
             // Decompress the archive data
-            EncounterCompressData archiveData;
+            CharacterEncounterArchive archiveData;
             try
             {
                 var compressedBytes = Convert.FromBase64String(body.Data);
                 var jsonData = DecompressJsonData(compressedBytes);
-                archiveData = BannouJson.Deserialize<EncounterCompressData>(jsonData)
+                archiveData = BannouJson.Deserialize<CharacterEncounterArchive>(jsonData)
                     ?? throw new InvalidOperationException("Deserialized archive data is null");
             }
             catch (Exception ex)

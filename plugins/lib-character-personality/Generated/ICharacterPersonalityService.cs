@@ -77,7 +77,7 @@ public partial interface ICharacterPersonalityService : IBannouService
         /// <summary>
         /// GetCompressData operation
         /// </summary>
-        Task<(StatusCodes, PersonalityCompressData?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, CharacterPersonalityArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// RestoreFromArchive operation

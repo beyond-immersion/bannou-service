@@ -82,7 +82,7 @@ public partial interface ICharacterHistoryService : IBannouService
         /// <summary>
         /// GetCompressData operation
         /// </summary>
-        Task<(StatusCodes, HistoryCompressData?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, CharacterHistoryArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// RestoreFromArchive operation

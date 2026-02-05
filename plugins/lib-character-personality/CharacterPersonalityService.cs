@@ -1004,7 +1004,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// Gets personality data for compression during character archival.
     /// Called by Resource service during character compression via compression callback.
     /// </summary>
-    public async Task<(StatusCodes, PersonalityCompressData?)> GetCompressDataAsync(
+    public async Task<(StatusCodes, CharacterPersonalityArchive?)> GetCompressDataAsync(
         GetCompressDataRequest body,
         CancellationToken cancellationToken)
     {
@@ -1025,7 +1025,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 return (StatusCodes.NotFound, null);
             }
 
-            var response = new PersonalityCompressData
+            var response = new CharacterPersonalityArchive
             {
                 CharacterId = body.CharacterId,
                 HasPersonality = personalityData != null,
@@ -1074,12 +1074,12 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         try
         {
             // Decompress the archive data
-            PersonalityCompressData archiveData;
+            CharacterPersonalityArchive archiveData;
             try
             {
                 var compressedBytes = Convert.FromBase64String(body.Data);
                 var jsonData = DecompressJsonData(compressedBytes);
-                archiveData = BannouJson.Deserialize<PersonalityCompressData>(jsonData)
+                archiveData = BannouJson.Deserialize<CharacterPersonalityArchive>(jsonData)
                     ?? throw new InvalidOperationException("Deserialized archive data is null");
             }
             catch (Exception ex)

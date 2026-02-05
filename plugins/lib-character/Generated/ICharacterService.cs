@@ -87,6 +87,6 @@ public partial interface ICharacterService : IBannouService
         /// <summary>
         /// GetCompressData operation
         /// </summary>
-        Task<(StatusCodes, CharacterCompressData?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, CharacterBaseArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

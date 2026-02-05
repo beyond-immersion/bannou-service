@@ -127,7 +127,7 @@ public partial interface ICharacterEncounterService : IBannouService
         /// <summary>
         /// GetCompressData operation
         /// </summary>
-        Task<(StatusCodes, EncounterCompressData?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, CharacterEncounterArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// RestoreFromArchive operation

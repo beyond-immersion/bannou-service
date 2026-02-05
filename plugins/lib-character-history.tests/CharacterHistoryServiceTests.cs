@@ -989,7 +989,7 @@ public class CharacterHistoryServiceTests
         var participationId = Guid.NewGuid();
         var eventId = Guid.NewGuid();
 
-        var archiveData = new HistoryCompressData
+        var archiveData = new CharacterHistoryArchive
         {
             CharacterId = characterId,
             HasParticipations = true,
@@ -1065,7 +1065,7 @@ public class CharacterHistoryServiceTests
         var participationId = Guid.NewGuid();
         var eventId = Guid.NewGuid();
 
-        var archiveData = new HistoryCompressData
+        var archiveData = new CharacterHistoryArchive
         {
             CharacterId = characterId,
             HasParticipations = true,
@@ -1170,7 +1170,7 @@ public class CharacterHistoryServiceTests
         var service = CreateService();
         var characterId = Guid.NewGuid();
 
-        var archiveData = new HistoryCompressData
+        var archiveData = new CharacterHistoryArchive
         {
             CharacterId = characterId,
             HasParticipations = false,
@@ -1233,7 +1233,7 @@ public class CharacterHistoryServiceTests
     /// <summary>
     /// Helper method to compress archive data for testing RestoreFromArchive.
     /// </summary>
-    private static string CompressArchiveData(HistoryCompressData data)
+    private static string CompressArchiveData(CharacterHistoryArchive data)
     {
         var json = BannouJson.Serialize(data);
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);

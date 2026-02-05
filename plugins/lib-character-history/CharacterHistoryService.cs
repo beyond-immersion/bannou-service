@@ -891,7 +891,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// Gets history data for compression during character archival.
     /// Called by Resource service during character compression via compression callback.
     /// </summary>
-    public async Task<(StatusCodes, HistoryCompressData?)> GetCompressDataAsync(
+    public async Task<(StatusCodes, CharacterHistoryArchive?)> GetCompressDataAsync(
         GetCompressDataRequest body,
         CancellationToken cancellationToken)
     {
@@ -943,7 +943,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 },
                 cancellationToken);
 
-            var response = new HistoryCompressData
+            var response = new CharacterHistoryArchive
             {
                 CharacterId = body.CharacterId,
                 HasParticipations = participations.Count > 0,
@@ -993,12 +993,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         try
         {
             // Decompress the archive data
-            HistoryCompressData archiveData;
+            CharacterHistoryArchive archiveData;
             try
             {
                 var compressedBytes = Convert.FromBase64String(body.Data);
                 var jsonData = DecompressJsonData(compressedBytes);
-                archiveData = BannouJson.Deserialize<HistoryCompressData>(jsonData)
+                archiveData = BannouJson.Deserialize<CharacterHistoryArchive>(jsonData)
                     ?? throw new InvalidOperationException("Deserialized archive data is null");
             }
             catch (Exception ex)

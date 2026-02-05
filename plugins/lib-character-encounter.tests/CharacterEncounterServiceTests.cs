@@ -1933,7 +1933,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .ReturnsAsync("etag-1");
     }
 
-    private static string CompressArchiveData(EncounterCompressData data)
+    private static string CompressArchiveData(CharacterEncounterArchive data)
     {
         var json = BannouJson.Serialize(data);
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
@@ -2172,7 +2172,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var encounterId = Guid.NewGuid();
         var perspectiveId = Guid.NewGuid();
 
-        var archiveData = new EncounterCompressData
+        var archiveData = new CharacterEncounterArchive
         {
             CharacterId = characterId,
             HasEncounters = true,
@@ -2249,7 +2249,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var encounterId = Guid.NewGuid();
         var perspectiveId = Guid.NewGuid();
 
-        var archiveData = new EncounterCompressData
+        var archiveData = new CharacterEncounterArchive
         {
             CharacterId = characterId,
             HasEncounters = true,
@@ -2369,7 +2369,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var service = CreateService();
         var characterId = Guid.NewGuid();
 
-        var archiveData = new EncounterCompressData
+        var archiveData = new CharacterEncounterArchive
         {
             CharacterId = characterId,
             HasEncounters = false,
@@ -2406,7 +2406,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var myPerspectiveId = Guid.NewGuid();
         var otherPerspectiveId = Guid.NewGuid();
 
-        var archiveData = new EncounterCompressData
+        var archiveData = new CharacterEncounterArchive
         {
             CharacterId = characterId,
             HasEncounters = true,
@@ -2482,7 +2482,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var characterId = Guid.NewGuid();
         var encounterId = Guid.NewGuid();
 
-        var archiveData = new EncounterCompressData
+        var archiveData = new CharacterEncounterArchive
         {
             CharacterId = characterId,
             HasEncounters = true,
