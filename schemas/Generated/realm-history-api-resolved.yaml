@@ -37,13 +37,13 @@ info:
   version: 1.0.0
   # Resource reference tracking (see SCHEMA-RULES.md "x-references")
   x-references:
-    - target: realm
-      sourceType: realm-history
-      field: realmId
-      onDelete: cascade
-      cleanup:
-        endpoint: /realm-history/delete-all
-        payloadTemplate: '{"realmId": "{{resourceId}}"}'
+  - target: realm
+    sourceType: realm-history
+    field: realmId
+    onDelete: cascade
+    cleanup:
+      endpoint: /realm-history/delete-all
+      payloadTemplate: '{"realmId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -322,7 +322,7 @@ paths:
       summary: Get realm history data for compression
       operationId: getCompressData
       tags:
-        - Compression
+      - Compression
       description: |
         Returns complete realm history data (lore elements, event participations)
         for archive storage. Called during realm archival process by the
@@ -349,7 +349,7 @@ paths:
       summary: Restore realm history from archive
       operationId: restoreFromArchive
       tags:
-        - Compression
+      - Compression
       description: |
         Restores realm history data from a compressed archive.
         Used when expanding archived realm data. Called by Resource
@@ -873,7 +873,7 @@ components:
       description: Request to get realm history data for compression
       additionalProperties: false
       required:
-        - realmId
+      - realmId
       properties:
         realmId:
           type: string
@@ -888,12 +888,12 @@ components:
         Inherits base archive properties from ResourceArchiveBase.
         The realmId field equals resourceId for convenience.
       allOf:
-        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      - $ref: '#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
-        - realmId
-        - hasLore
-        - hasParticipations
+      - realmId
+      - hasLore
+      - hasParticipations
       properties:
         realmId:
           type: string
@@ -925,8 +925,8 @@ components:
       description: Request to restore realm history data from archive
       additionalProperties: false
       required:
-        - realmId
-        - data
+      - realmId
+      - data
       properties:
         realmId:
           type: string
@@ -941,10 +941,10 @@ components:
       description: Result of restoration from archive
       additionalProperties: false
       required:
-        - realmId
-        - loreRestored
-        - participationsRestored
-        - success
+      - realmId
+      - loreRestored
+      - participationsRestored
+      - success
       properties:
         realmId:
           type: string
@@ -963,3 +963,41 @@ components:
           type: string
           nullable: true
           description: Error details if restoration failed
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+x-inlined-types:
+- ResourceArchiveBase

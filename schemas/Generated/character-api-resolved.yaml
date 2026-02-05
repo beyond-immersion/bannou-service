@@ -1,0 +1,1224 @@
+openapi: 3.0.0
+info:
+  title: Bannou Character Service API
+  description: |
+    Character management service for game worlds.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    Characters are independent world assets (not owned by accounts). Guardian spirits
+    (future service) will reference characters for possession mechanics.
+
+    **Scale**: Designed to handle hundreds of thousands of characters with realm-based
+    partitioning for optimal performance.
+
+    **Foreign Keys**: realmId and speciesId are UUIDs referencing future services
+    (Realm, Species).
+
+    **Relationships**: Character relationships are managed by the separate Relationship
+    service, which handles entity-agnostic relationships between any two entities.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+x-service-layer: GameFoundation
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+# NOTE: x-lifecycle moved to character-events.yaml
+
+paths:
+  /character/create:
+    post:
+      summary: Create new character
+      operationId: createCharacter
+      tags:
+      - Character Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCharacterRequest'
+      responses:
+        '200':
+          description: Character created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '400':
+          description: Invalid character data
+        '409':
+          description: Character already exists
+
+  /character/get:
+    post:
+      summary: Get character by ID
+      operationId: getCharacter
+      tags:
+      - Character Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCharacterRequest'
+      responses:
+        '200':
+          description: Character retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '404':
+          description: Character not found
+
+  /character/update:
+    post:
+      summary: Update character
+      operationId: updateCharacter
+      tags:
+      - Character Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCharacterRequest'
+      responses:
+        '200':
+          description: Character updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '404':
+          description: Character not found
+        '400':
+          description: Invalid update data
+
+  /character/delete:
+    post:
+      summary: Delete character (permanent removal)
+      operationId: deleteCharacter
+      tags:
+      - Character Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCharacterRequest'
+      responses:
+        '200':
+          description: Character deleted successfully
+        '404':
+          description: Character not found
+
+  /character/list:
+    post:
+      summary: List characters with filtering
+      operationId: listCharacters
+      tags:
+      - Character Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCharactersRequest'
+      responses:
+        '200':
+          description: Characters retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterListResponse'
+
+  /character/get-enriched:
+    post:
+      summary: Get character with optional related data (personality, backstory, family)
+      description: |
+        Retrieves a character with optional include flags for related data.
+        Use this endpoint when you need aggregated character data from multiple services.
+        Each included dataset is fetched from its respective service.
+      operationId: getEnrichedCharacter
+      tags:
+      - Character Lookup
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEnrichedCharacterRequest'
+      responses:
+        '200':
+          description: Character retrieved with requested includes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichedCharacterResponse'
+        '404':
+          description: Character not found
+
+  /character/compress:
+    post:
+      summary: Compress a dead character to archive format
+      description: |
+        Compresses a dead character's data for long-term storage.
+        Generates text summaries of personality, backstory, and relationships.
+        After compression, detailed data can be deleted to save storage.
+        Only works on characters with status 'dead'.
+      operationId: compressCharacter
+      tags:
+      - Character Compression
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompressCharacterRequest'
+      responses:
+        '200':
+          description: Character compressed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterArchive'
+        '400':
+          description: Character is not dead (cannot compress alive characters)
+        '404':
+          description: Character not found
+
+  /character/get-archive:
+    post:
+      summary: Get compressed archive data for a character
+      operationId: getCharacterArchive
+      tags:
+      - Character Compression
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCharacterArchiveRequest'
+      responses:
+        '200':
+          description: Archive retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterArchive'
+        '404':
+          description: Archive not found (character may not be compressed yet)
+
+  /character/check-references:
+    post:
+      summary: Check reference count for cleanup eligibility
+      description: |
+        Returns the current reference count for a compressed character.
+        Characters with refCount=0 for the grace period are eligible for deletion.
+        References include: family relationships, past lives, historical events, memories.
+      operationId: checkCharacterReferences
+      tags:
+      - Character Compression
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckReferencesRequest'
+      responses:
+        '200':
+          description: Reference count retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterRefCount'
+        '404':
+          description: Character not found
+
+  /character/by-realm:
+    post:
+      summary: Get all characters in a realm (primary query pattern)
+      operationId: getCharactersByRealm
+      tags:
+      - Character Lookup
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCharactersByRealmRequest'
+      responses:
+        '200':
+          description: Characters retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterListResponse'
+
+  /character/transfer-realm:
+    post:
+      summary: Transfer character to a different realm
+      description: |
+        Moves a character from their current realm to a new target realm.
+        Updates all indexes, validates the target realm exists and is active,
+        and publishes realm transition events.
+      operationId: transferCharacterToRealm
+      tags:
+      - Character Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferCharacterToRealmRequest'
+      responses:
+        '200':
+          description: Character transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '400':
+          description: Invalid transfer (same realm or target realm invalid)
+        '404':
+          description: Character or target realm not found
+        '409':
+          description: Could not acquire lock on character
+
+  # ===========================================================================
+  # Compression Endpoint (Resource Service Integration)
+  # ===========================================================================
+
+  /character/get-compress-data:
+    post:
+      summary: Get character base data for compression
+      operationId: getCompressData
+      tags:
+      - Character Compression
+      description: |
+        Called by Resource service during compression.
+        Returns core character data (name, dates, family summary).
+        Returns BadRequest if character is alive - only dead characters can be compressed.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Character base data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterBaseArchive'
+        '400':
+          description: Character is not dead (cannot compress alive characters)
+        '404':
+          description: Character not found
+
+components:
+  schemas:
+    # Shared Enum Definitions
+    CharacterStatus:
+      type: string
+      description: Character lifecycle status
+      enum: [alive, dead, dormant]
+
+    # Request Models for POST-only pattern
+    CreateCharacterRequest:
+      description: Request payload for creating a new character in the game world
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Character name
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (foreign key to future Realm service, partition key)
+        speciesId:
+          type: string
+          format: uuid
+          description: Species ID (foreign key to future Species service)
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
+          default: alive
+          description: Initial lifecycle status for the character
+
+    GetCharacterRequest:
+      description: Request payload for retrieving a single character by ID
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to retrieve
+
+    UpdateCharacterRequest:
+      description: Request payload for updating an existing character's properties
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to update
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+          description: New name for the character
+        speciesId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Update character's species (used for species merge migrations)
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
+          nullable: true
+          description: New lifecycle status for the character
+        deathDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: In-game death timestamp (sets status to dead)
+
+    DeleteCharacterRequest:
+      description: Request payload for permanently deleting a character
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to delete
+
+    ListCharactersRequest:
+      description: Request payload for listing characters with filtering and pagination
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to list characters from (required for efficiency)
+        speciesId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by species
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
+          nullable: true
+          description: Filter by status
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of results per page
+
+    GetCharactersByRealmRequest:
+      description: Request payload for retrieving all characters within a specific realm
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID to query (uses partition key for efficiency)
+        speciesId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by species
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
+          nullable: true
+          description: Optional status filter
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of results per page
+
+    TransferCharacterToRealmRequest:
+      description: Request payload for transferring a character to a different realm
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - targetRealmId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to transfer
+        targetRealmId:
+          type: string
+          format: uuid
+          description: ID of the realm to transfer the character to
+
+    # Response Models
+    CharacterResponse:
+      description: Complete character data returned from character operations
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - status
+      - createdAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the character
+        name:
+          type: string
+          description: Display name of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (partition key)
+        speciesId:
+          type: string
+          format: uuid
+          description: Species ID (foreign key to Species service)
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        deathDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: In-game death timestamp
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+          description: Current lifecycle status of the character
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp
+
+    CharacterListResponse:
+      description: Paginated list of characters with metadata for navigation
+      type: object
+      additionalProperties: false
+      required:
+      - characters
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        characters:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterResponse'
+          description: List of characters matching the query
+        totalCount:
+          type: integer
+          description: Total number of characters matching the filter criteria
+        page:
+          type: integer
+          description: Current page number (1-based)
+        pageSize:
+          type: integer
+          description: Number of results per page
+        hasNextPage:
+          type: boolean
+          description: Whether there are more results after this page
+        hasPreviousPage:
+          type: boolean
+          description: Whether there are results before this page
+
+    # Realm Transition Events (custom, not lifecycle)
+    CharacterRealmJoinedEvent:
+      type: object
+      description: Event published when a character joins a realm
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - characterId
+      - realmId
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm being joined
+        previousRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Previous realm (if transitioning)
+
+    CharacterRealmLeftEvent:
+      type: object
+      description: Event published when a character leaves a realm
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - characterId
+      - realmId
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm being left
+        reason:
+          type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
+          description: Reason for leaving (death, transfer, deletion)
+
+    # =========================================================================
+    # Enriched Character Models (Include Pattern)
+    # =========================================================================
+
+    GetEnrichedCharacterRequest:
+      description: |
+        Request payload for retrieving a character with optional related data.
+        Each include flag fetches data from its respective service (zero overhead if not requested).
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to retrieve
+        includePersonality:
+          type: boolean
+          default: false
+          description: Include personality traits from character-personality service
+        includeBackstory:
+          type: boolean
+          default: false
+          description: Include backstory elements from character-history service
+        includeFamilyTree:
+          type: boolean
+          default: false
+          description: Include family relationships from relationship service
+        includeCombatPreferences:
+          type: boolean
+          default: false
+          description: Include combat preferences from character-personality service
+
+    EnrichedCharacterResponse:
+      description: |
+        Character data with optional enriched fields.
+        Fields are only populated if the corresponding include flag was set in the request.
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - status
+      - createdAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the character
+        name:
+          type: string
+          description: Display name of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (partition key)
+        speciesId:
+          type: string
+          format: uuid
+          description: Species ID (foreign key to Species service)
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        deathDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: In-game death timestamp
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+          description: Current lifecycle status of the character
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp
+        # Enriched fields (optional)
+        personality:
+          $ref: '#/components/schemas/PersonalitySnapshot'
+          nullable: true
+          description: Personality traits (included if includePersonality=true)
+        backstory:
+          $ref: '#/components/schemas/BackstorySnapshot'
+          nullable: true
+          description: Backstory elements (included if includeBackstory=true)
+        familyTree:
+          $ref: '#/components/schemas/FamilyTreeResponse'
+          nullable: true
+          description: Family relationships (included if includeFamilyTree=true)
+        combatPreferences:
+          $ref: '#/components/schemas/CombatPreferencesSnapshot'
+          nullable: true
+          description: Combat preferences (included if includeCombatPreferences=true)
+
+    PersonalitySnapshot:
+      description: Snapshot of personality traits for enriched response
+      type: object
+      additionalProperties: false
+      required:
+      - traits
+      - version
+      properties:
+        traits:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.)
+        version:
+          type: integer
+          description: Personality version number (increments on evolution)
+
+    BackstorySnapshot:
+      description: Snapshot of backstory for enriched response
+      type: object
+      additionalProperties: false
+      required:
+      - elements
+      properties:
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/BackstoryElementSnapshot'
+          description: List of backstory elements
+
+    BackstoryElementSnapshot:
+      description: Single backstory element
+      type: object
+      additionalProperties: false
+      required:
+      - elementType
+      - key
+      - value
+      - strength
+      properties:
+        elementType:
+          type: string
+          description: Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)
+        key:
+          type: string
+          description: Machine-readable key (homeland, past_job, etc.)
+        value:
+          type: string
+          description: Machine-readable value (northlands, blacksmith, etc.)
+        strength:
+          type: number
+          format: float
+          description: How strongly this affects behavior (0.0 to 1.0)
+
+    CombatPreferencesSnapshot:
+      description: Snapshot of combat preferences for enriched response
+      type: object
+      additionalProperties: false
+      required:
+      - style
+      - preferredRange
+      - groupRole
+      - riskTolerance
+      - retreatThreshold
+      - protectAllies
+      properties:
+        style:
+          type: string
+          description: Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL)
+        preferredRange:
+          type: string
+          description: Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)
+        groupRole:
+          type: string
+          description: Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)
+        riskTolerance:
+          type: number
+          format: float
+          description: Willingness to take risky actions (0.0 to 1.0)
+        retreatThreshold:
+          type: number
+          format: float
+          description: Health percentage at which retreat is considered (0.0 to 1.0)
+        protectAllies:
+          type: boolean
+          description: Whether to prioritize ally protection
+
+    FamilyTreeResponse:
+      description: Family relationships for a character
+      type: object
+      additionalProperties: false
+      properties:
+        parents:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyMember'
+          description: Parent relationships (biological and adoptive)
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyMember'
+          description: Child relationships
+        siblings:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyMember'
+          description: Sibling relationships (including half-siblings)
+        spouse:
+          $ref: '#/components/schemas/FamilyMember'
+          nullable: true
+          description: Current spouse (if any)
+        pastLives:
+          type: array
+          items:
+            $ref: '#/components/schemas/PastLifeReference'
+          description: Previous incarnations (if reincarnation tracked)
+
+    FamilyMember:
+      description: Reference to a family member
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - relationshipType
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the related character
+        name:
+          type: string
+          nullable: true
+          description: Display name (if available)
+        relationshipType:
+          type: string
+          description: Specific relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.)
+        isAlive:
+          type: boolean
+          description: Whether the related character is alive
+
+    PastLifeReference:
+      description: Reference to a past incarnation
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the previous incarnation
+        name:
+          type: string
+          nullable: true
+          description: Display name of the past life
+        deathDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the past life ended
+
+    # =========================================================================
+    # Character Compression Models
+    # =========================================================================
+
+    CompressCharacterRequest:
+      description: Request to compress a dead character for archival
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the dead character to compress
+        deleteSourceData:
+          type: boolean
+          default: false
+          description: |
+            If true, delete personality/backstory data after compression.
+            The archive becomes the only record of this information.
+
+    GetCharacterArchiveRequest:
+      description: Request to retrieve a character's compressed archive
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get archive for
+
+    CheckReferencesRequest:
+      description: Request to check reference count for a character
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to check references for
+
+    CharacterArchive:
+      description: |
+        Compressed archive of a dead character.
+        Contains text summaries instead of structured data for long-term storage.
+        Self-contained with no external references (suitable for cleanup).
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - deathDate
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Original character ID
+        name:
+          type: string
+          description: Character display name
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the character belonged to
+        speciesId:
+          type: string
+          format: uuid
+          description: Character's species
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth date
+        deathDate:
+          type: string
+          format: date-time
+          description: In-game death date
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        personalitySummary:
+          type: string
+          nullable: true
+          description: |
+            Text summary of personality traits.
+            Example: "Brave and loyal, somewhat hot-tempered with a strong sense of justice"
+        keyBackstoryPoints:
+          type: array
+          items:
+            type: string
+          description: |
+            Key backstory elements as text.
+            Example: ["Trained by the Knights Guild", "Born in the Northlands"]
+        majorLifeEvents:
+          type: array
+          items:
+            type: string
+          description: |
+            Significant life events as text.
+            Example: ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+        familySummary:
+          type: string
+          nullable: true
+          description: |
+            Text summary of family relationships.
+            Example: "Father of 3, married to Elena, orphaned at young age"
+
+    CharacterRefCount:
+      description: Reference count information for cleanup eligibility
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - referenceCount
+      - isEligibleForCleanup
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character ID
+        referenceCount:
+          type: integer
+          description: Number of active references to this character
+        referenceTypes:
+          type: array
+          items:
+            type: string
+          description: Types of references found (FAMILY, PAST_LIFE, HISTORY, MEMORY)
+        isCompressed:
+          type: boolean
+          description: Whether the character has been compressed
+        isEligibleForCleanup:
+          type: boolean
+          description: |
+            True if compressed, refCount=0, and grace period has passed.
+            Safe to permanently delete if true.
+        zeroRefSince:
+          type: string
+          format: date-time
+          nullable: true
+          description: When refCount first reached zero (null if refCount > 0)
+
+    # =========================================================================
+    # Compression Models (Resource Service Integration)
+    # =========================================================================
+
+    GetCompressDataRequest:
+      description: Request to get character data for compression
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    CharacterBaseArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Core character data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+
+        Note: This is distinct from CharacterArchive which contains text summaries
+        for cleanup. CharacterBaseArchive contains structured data for SDK consumption.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - deathDate
+      - status
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the character (equals resourceId)
+        name:
+          type: string
+          description: Display name of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (partition key)
+        speciesId:
+          type: string
+          format: uuid
+          description: Species ID (foreign key to Species service)
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        deathDate:
+          type: string
+          format: date-time
+          description: In-game death timestamp (required for compression)
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+          description: Current lifecycle status (must be dead for compression)
+        familySummary:
+          type: string
+          nullable: true
+          description: |
+            Text summary of family relationships.
+            Example: "Father of 3, married to Elena, orphaned at young age"
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+x-inlined-types:
+- ResourceArchiveBase
