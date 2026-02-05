@@ -131,4 +131,35 @@ public class MusicServiceConfiguration : IServiceConfiguration
     /// </summary>
     public double DefaultEmotionalValence { get; set; } = 0.5;
 
+    /// <summary>
+    /// Tension delta threshold for determining ascending/descending contour.
+    /// If final tension exceeds initial by this amount, contour is ascending.
+    /// If it's below initial by this amount, contour is descending.
+    /// Environment variable: MUSIC_CONTOUR_TENSION_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 0.05, Maximum = 0.5)]
+    public double ContourTensionThreshold { get; set; } = 0.2;
+
+    /// <summary>
+    /// Default initial tension used when no section provides a value.
+    /// Environment variable: MUSIC_CONTOUR_DEFAULT_TENSION
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 1)]
+    public double ContourDefaultTension { get; set; } = 0.5;
+
+    /// <summary>
+    /// Minimum melody density (floor value before energy scaling).
+    /// Environment variable: MUSIC_DENSITY_MINIMUM
+    /// </summary>
+    [ConfigRange(Minimum = 0.1, Maximum = 0.8)]
+    public double DensityMinimum { get; set; } = 0.4;
+
+    /// <summary>
+    /// Multiplier applied to energy for density calculation.
+    /// Final density = DensityMinimum + (energy * DensityEnergyMultiplier).
+    /// Environment variable: MUSIC_DENSITY_ENERGY_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.1, Maximum = 0.8)]
+    public double DensityEnergyMultiplier { get; set; } = 0.5;
+
 }

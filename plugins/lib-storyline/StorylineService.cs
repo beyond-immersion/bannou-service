@@ -760,34 +760,35 @@ public partial class StorylineService : IStorylineService
     }
 
     /// <summary>
-    /// Calculates plan confidence score.
+    /// Calculates plan confidence score using config-driven thresholds (T21 compliant).
     /// </summary>
-    private static double CalculateConfidence(StorylinePlan plan)
+    private double CalculateConfidence(StorylinePlan plan)
     {
         // Simple confidence heuristic based on plan completeness
         var phaseCount = plan.Phases.Length;
         var actionCount = plan.Phases.Sum(p => p.Actions.Length);
         var coreEventCount = plan.Phases.Sum(p => p.Actions.Count(a => a.IsCoreEvent));
 
-        // Base confidence
-        var confidence = 0.5;
+        // Base confidence from config
+        var confidence = _configuration.ConfidenceBaseScore;
 
-        // Boost for having multiple phases
-        if (phaseCount >= 3)
+        // Boost for having multiple phases (threshold from config)
+        if (phaseCount >= _configuration.ConfidencePhaseThreshold)
         {
-            confidence += 0.2;
+            confidence += _configuration.ConfidencePhaseBonus;
         }
 
         // Boost for having core events
         if (coreEventCount > 0)
         {
-            confidence += 0.15;
+            confidence += _configuration.ConfidenceCoreEventBonus;
         }
 
-        // Boost for reasonable action count
-        if (actionCount >= 5 && actionCount <= 20)
+        // Boost for reasonable action count (range from config)
+        if (actionCount >= _configuration.ConfidenceMinActionCount &&
+            actionCount <= _configuration.ConfidenceMaxActionCount)
         {
-            confidence += 0.15;
+            confidence += _configuration.ConfidenceActionCountBonus;
         }
 
         return Math.Min(1.0, confidence);
@@ -832,15 +833,15 @@ public partial class StorylineService : IStorylineService
     }
 
     /// <summary>
-    /// Identifies potential risks in the plan.
+    /// Identifies potential risks in the plan using config-driven thresholds (T21 compliant).
     /// </summary>
-    private static IEnumerable<StorylineRisk> IdentifyRisks(StorylinePlan plan)
+    private IEnumerable<StorylineRisk> IdentifyRisks(StorylinePlan plan)
     {
         var actionCount = plan.Phases.Sum(p => p.Actions.Length);
         var coreEventCount = plan.Phases.Sum(p => p.Actions.Count(a => a.IsCoreEvent));
 
-        // Low action count risk
-        if (actionCount < 3)
+        // Low action count risk (threshold from config)
+        if (actionCount < _configuration.RiskMinActionThreshold)
         {
             yield return new StorylineRisk
             {
@@ -851,7 +852,7 @@ public partial class StorylineService : IStorylineService
             };
         }
 
-        // Missing core events risk
+        // Missing core events risk (this is a logical check, not a tunable)
         if (coreEventCount == 0)
         {
             yield return new StorylineRisk
@@ -863,8 +864,8 @@ public partial class StorylineService : IStorylineService
             };
         }
 
-        // Single phase risk
-        if (plan.Phases.Length < 2)
+        // Single phase risk (threshold from config)
+        if (plan.Phases.Length < _configuration.RiskMinPhaseThreshold)
         {
             yield return new StorylineRisk
             {

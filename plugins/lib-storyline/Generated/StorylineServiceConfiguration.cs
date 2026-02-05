@@ -91,4 +91,67 @@ public class StorylineServiceConfiguration : IServiceConfiguration
     [ConfigRange(Minimum = 1, Maximum = 20)]
     public int MaxSeedSources { get; set; } = 10;
 
+    /// <summary>
+    /// Base confidence score before any bonuses are applied.
+    /// Environment variable: STORYLINE_CONFIDENCE_BASE_SCORE
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 1)]
+    public double ConfidenceBaseScore { get; set; } = 0.5;
+
+    /// <summary>
+    /// Minimum number of phases to receive a phase count bonus.
+    /// Environment variable: STORYLINE_CONFIDENCE_PHASE_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int ConfidencePhaseThreshold { get; set; } = 3;
+
+    /// <summary>
+    /// Confidence bonus when phase threshold is met.
+    /// Environment variable: STORYLINE_CONFIDENCE_PHASE_BONUS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 0.5)]
+    public double ConfidencePhaseBonus { get; set; } = 0.2;
+
+    /// <summary>
+    /// Confidence bonus when plan contains core events.
+    /// Environment variable: STORYLINE_CONFIDENCE_CORE_EVENT_BONUS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 0.5)]
+    public double ConfidenceCoreEventBonus { get; set; } = 0.15;
+
+    /// <summary>
+    /// Confidence bonus when action count is within acceptable range.
+    /// Environment variable: STORYLINE_CONFIDENCE_ACTION_COUNT_BONUS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 0.5)]
+    public double ConfidenceActionCountBonus { get; set; } = 0.15;
+
+    /// <summary>
+    /// Minimum action count for action count bonus.
+    /// Environment variable: STORYLINE_CONFIDENCE_MIN_ACTION_COUNT
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
+    public int ConfidenceMinActionCount { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum action count for action count bonus.
+    /// Environment variable: STORYLINE_CONFIDENCE_MAX_ACTION_COUNT
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 100)]
+    public int ConfidenceMaxActionCount { get; set; } = 20;
+
+    /// <summary>
+    /// Minimum action count before "thin_content" risk is flagged.
+    /// Environment variable: STORYLINE_RISK_MIN_ACTION_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 20)]
+    public int RiskMinActionThreshold { get; set; } = 3;
+
+    /// <summary>
+    /// Minimum phase count before "flat_arc" risk is flagged.
+    /// Environment variable: STORYLINE_RISK_MIN_PHASE_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int RiskMinPhaseThreshold { get; set; } = 2;
+
 }

@@ -58,3 +58,90 @@ x-service-configuration:
       description: |
         Maximum number of seed sources per compose request.
       env: STORYLINE_MAX_SEED_SOURCES
+
+    # Confidence calculation parameters (T21 compliant - no hardcoded magic numbers)
+    ConfidenceBaseScore:
+      type: number
+      format: double
+      default: 0.5
+      minimum: 0
+      maximum: 1
+      description: |
+        Base confidence score before any bonuses are applied.
+      env: STORYLINE_CONFIDENCE_BASE_SCORE
+
+    ConfidencePhaseThreshold:
+      type: integer
+      default: 3
+      minimum: 1
+      maximum: 10
+      description: |
+        Minimum number of phases to receive a phase count bonus.
+      env: STORYLINE_CONFIDENCE_PHASE_THRESHOLD
+
+    ConfidencePhaseBonus:
+      type: number
+      format: double
+      default: 0.2
+      minimum: 0
+      maximum: 0.5
+      description: |
+        Confidence bonus when phase threshold is met.
+      env: STORYLINE_CONFIDENCE_PHASE_BONUS
+
+    ConfidenceCoreEventBonus:
+      type: number
+      format: double
+      default: 0.15
+      minimum: 0
+      maximum: 0.5
+      description: |
+        Confidence bonus when plan contains core events.
+      env: STORYLINE_CONFIDENCE_CORE_EVENT_BONUS
+
+    ConfidenceActionCountBonus:
+      type: number
+      format: double
+      default: 0.15
+      minimum: 0
+      maximum: 0.5
+      description: |
+        Confidence bonus when action count is within acceptable range.
+      env: STORYLINE_CONFIDENCE_ACTION_COUNT_BONUS
+
+    ConfidenceMinActionCount:
+      type: integer
+      default: 5
+      minimum: 1
+      maximum: 50
+      description: |
+        Minimum action count for action count bonus.
+      env: STORYLINE_CONFIDENCE_MIN_ACTION_COUNT
+
+    ConfidenceMaxActionCount:
+      type: integer
+      default: 20
+      minimum: 5
+      maximum: 100
+      description: |
+        Maximum action count for action count bonus.
+      env: STORYLINE_CONFIDENCE_MAX_ACTION_COUNT
+
+    # Risk identification thresholds (T21 compliant)
+    RiskMinActionThreshold:
+      type: integer
+      default: 3
+      minimum: 1
+      maximum: 20
+      description: |
+        Minimum action count before "thin_content" risk is flagged.
+      env: STORYLINE_RISK_MIN_ACTION_THRESHOLD
+
+    RiskMinPhaseThreshold:
+      type: integer
+      default: 2
+      minimum: 1
+      maximum: 10
+      description: |
+        Minimum phase count before "flat_arc" risk is flagged.
+      env: STORYLINE_RISK_MIN_PHASE_THRESHOLD

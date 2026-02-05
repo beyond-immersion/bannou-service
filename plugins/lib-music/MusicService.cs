@@ -847,22 +847,27 @@ public partial class MusicService : IMusicService
     /// <summary>
     /// Determines melody contour from Storyteller result.
     /// Maps narrative arc to contour shape.
+    /// Uses configuration for thresholds per IMPLEMENTATION TENETS (no hardcoded magic numbers).
     /// </summary>
-    private static ContourShape GetContourFromStoryResult(CompositionResult result)
+    private ContourShape GetContourFromStoryResult(CompositionResult result)
     {
         // Use the emotional trajectory to determine contour
         var finalTension = result.FinalState.Emotional.Tension;
         var initialTension = result.Sections.FirstOrDefault()?.Plan.Goal.TargetState
             .Get<double>(WorldState.Keys.Tension);
 
+        // Use configuration values for thresholds (T21 compliant)
+        var defaultTension = _configuration.ContourDefaultTension;
+        var tensionThreshold = _configuration.ContourTensionThreshold;
+
         // If tension generally increases, use ascending contour
-        if (finalTension > (initialTension ?? 0.5) + 0.2)
+        if (finalTension > (initialTension ?? defaultTension) + tensionThreshold)
         {
             return ContourShape.Ascending;
         }
 
         // If tension generally decreases, use descending contour
-        if (finalTension < (initialTension ?? 0.5) - 0.2)
+        if (finalTension < (initialTension ?? defaultTension) - tensionThreshold)
         {
             return ContourShape.Descending;
         }
@@ -886,17 +891,18 @@ public partial class MusicService : IMusicService
     /// <summary>
     /// Determines melody density from Storyteller result.
     /// Higher energy phases get denser melodies.
+    /// Uses configuration for scaling per IMPLEMENTATION TENETS (no hardcoded magic numbers).
     /// </summary>
-    private static double GetDensityFromStoryResult(CompositionResult result)
+    private double GetDensityFromStoryResult(CompositionResult result)
     {
         // Average energy across all phases
         var avgEnergy = result.Sections.Count > 0
             ? result.Sections.Average(s =>
                 s.Plan.Goal.TargetState.Get<double>(WorldState.Keys.Energy))
-            : 0.5;
+            : _configuration.DefaultEmotionalEnergy;
 
-        // Map energy (0-1) to density (0.4-0.9)
-        return 0.4 + avgEnergy * 0.5;
+        // Map energy to density using configuration (T21 compliant)
+        return _configuration.DensityMinimum + avgEnergy * _configuration.DensityEnergyMultiplier;
     }
 
     /// <summary>

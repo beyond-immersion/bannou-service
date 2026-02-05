@@ -95,3 +95,48 @@ x-service-configuration:
       description: Default valence value for emotional state (0.0-1.0)
       default: 0.5
       env: MUSIC_DEFAULT_EMOTIONAL_VALENCE
+
+    # Contour Detection (T21 compliant - no hardcoded magic numbers)
+    ContourTensionThreshold:
+      type: number
+      format: double
+      default: 0.2
+      minimum: 0.05
+      maximum: 0.5
+      description: |
+        Tension delta threshold for determining ascending/descending contour.
+        If final tension exceeds initial by this amount, contour is ascending.
+        If it's below initial by this amount, contour is descending.
+      env: MUSIC_CONTOUR_TENSION_THRESHOLD
+
+    ContourDefaultTension:
+      type: number
+      format: double
+      default: 0.5
+      minimum: 0
+      maximum: 1
+      description: |
+        Default initial tension used when no section provides a value.
+      env: MUSIC_CONTOUR_DEFAULT_TENSION
+
+    # Density Calculation (T21 compliant - no hardcoded magic numbers)
+    DensityMinimum:
+      type: number
+      format: double
+      default: 0.4
+      minimum: 0.1
+      maximum: 0.8
+      description: |
+        Minimum melody density (floor value before energy scaling).
+      env: MUSIC_DENSITY_MINIMUM
+
+    DensityEnergyMultiplier:
+      type: number
+      format: double
+      default: 0.5
+      minimum: 0.1
+      maximum: 0.8
+      description: |
+        Multiplier applied to energy for density calculation.
+        Final density = DensityMinimum + (energy * DensityEnergyMultiplier).
+      env: MUSIC_DENSITY_ENERGY_MULTIPLIER
