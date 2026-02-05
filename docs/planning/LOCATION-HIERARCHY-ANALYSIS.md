@@ -623,23 +623,19 @@ Rotation3D:
 
 ## Part 9: Summary of Recommendations
 
-### Immediate (This Sprint)
-1. **Remove ILocationClient from Contract service** - hierarchy violation
-2. **Document realm vs location distinction** in CLAUDE.md and SERVICE_HIERARCHY.md
-
 ### Short-Term (Next 2-4 Weeks)
-3. **Add boundContractIds to Location** - enables location-bound contracts correctly
-4. **Create COORDINATE-SYSTEM.md** - establishes shared spatial semantics
-5. **Add optional locationId to Mapping channels** - enables semantic queries
+1. **Add boundContractIds to Location** - enables location-bound contracts correctly
+2. **Create COORDINATE-SYSTEM.md** - establishes shared spatial semantics
+3. **Add optional locationId to Mapping channels** - enables semantic queries
 
 ### Medium-Term (Next 1-2 Months)
-6. **Add optional bounds to Location** - enables spatial-to-location queries
-7. **Implement ground containers** per Issue #164 - enables economy vision
-8. **Add /location/query/by-position** - Event Brains can ask "where is this?"
+4. **Add optional bounds to Location** - enables spatial-to-location queries
+5. **Implement ground containers** per Issue #164 - enables economy vision
+6. **Add /location/query/by-position** - Event Brains can ask "where is this?"
 
 ### Future (When Needed)
-9. **Full affordance tagging system** - per THE_DREAM Section 10.1
-10. **Event Brain location awareness** - THE_DREAM Phase 3
+7. **Full affordance tagging system** - per THE_DREAM Section 10.1
+8. **Event Brain location awareness** - THE_DREAM Phase 3
 
 ---
 
