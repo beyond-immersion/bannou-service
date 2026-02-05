@@ -326,6 +326,16 @@ else
 fi
 echo ""
 
+# Generate storyline-theory SDK archive types (x-archive-type: true markers)
+echo -e "${BLUE}📦 Generating storyline-theory SDK archive types...${NC}"
+if ./generate-storyline-archives.sh; then
+    echo -e "${GREEN}✅ Storyline archive types generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate storyline archive types${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate IServiceNavigator and ServiceNavigator (aggregates all service clients)
 echo -e "${BLUE}🧭 Generating ServiceNavigator (service client aggregator)...${NC}"
 if python3 "$SCRIPT_DIR/generate-service-navigator.py"; then

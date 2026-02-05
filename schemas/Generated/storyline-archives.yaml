@@ -1,0 +1,1004 @@
+openapi: 3.0.0
+info:
+  title: Storyline Archive Types
+  version: 1.0.0
+  description: Consolidated archive schemas for storyline-theory SDK. Auto-generated from plugin schemas.
+paths: {}
+components:
+  schemas:
+    BackstoryElement:
+      type: object
+      description: A machine-readable backstory element for behavior system consumption
+      additionalProperties: false
+      required:
+      - elementType
+      - key
+      - value
+      properties:
+        elementType:
+          $ref: '#/components/schemas/BackstoryElementType'
+          description: Category of this backstory element
+        key:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: |
+            Machine-readable key (e.g., "homeland", "trained_by", "past_job").
+            Used by behavior system to query specific aspects.
+        value:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: |
+            Machine-readable value (e.g., "northlands", "knights_guild", "blacksmith").
+            Referenced in behavior rules.
+        strength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: |
+            How strongly this element affects behavior (0.0 to 1.0).
+            Higher strength = greater influence on decisions.
+        relatedEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional related entity (location, organization, character)
+        relatedEntityType:
+          type: string
+          nullable: true
+          description: Type of the related entity (if any)
+    BackstoryElementType:
+      type: string
+      description: |
+        Types of backstory elements. Each type represents a different aspect
+        of the character's background that influences behavior.
+      enum:
+      - ORIGIN
+      - OCCUPATION
+      - TRAINING
+      - TRAUMA
+      - ACHIEVEMENT
+      - SECRET
+      - GOAL
+      - FEAR
+      - BELIEF
+    BackstoryResponse:
+      type: object
+      description: Complete backstory data for a character
+      additionalProperties: false
+      required:
+      - characterId
+      - elements
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character this backstory belongs to
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/BackstoryElement'
+          description: All backstory elements for this character
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this backstory was first created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this backstory was last modified
+    CharacterBaseArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Core character data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+
+        Note: This is distinct from CharacterArchive which contains text summaries
+        for cleanup. CharacterBaseArchive contains structured data for SDK consumption.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - deathDate
+      - status
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the character (equals resourceId)
+        name:
+          type: string
+          description: Display name of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (partition key)
+        speciesId:
+          type: string
+          format: uuid
+          description: Species ID (foreign key to Species service)
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        deathDate:
+          type: string
+          format: date-time
+          description: In-game death timestamp (required for compression)
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+          description: Current lifecycle status (must be dead for compression)
+        familySummary:
+          type: string
+          nullable: true
+          description: |
+            Text summary of family relationships.
+            Example: "Father of 3, married to Elena, orphaned at young age"
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp
+    CharacterEncounterArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete encounter data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasEncounters
+      - encounterCount
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasEncounters:
+          type: boolean
+          description: Whether encounters exist for this character
+        encounterCount:
+          type: integer
+          description: Number of encounters archived
+        encounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterResponse'
+          description: Encounters with perspectives (empty if hasEncounters=false)
+        aggregateSentiment:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: |
+            Map of target characterId to aggregate sentiment.
+            Preserves sentiment relationships for historical reference.
+          nullable: true
+    CharacterHistoryArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete history data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasParticipations
+      - hasBackstory
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasParticipations:
+          type: boolean
+          description: Whether historical participations exist
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricalParticipation'
+          description: Historical event participations (empty if hasParticipations=false)
+        hasBackstory:
+          type: boolean
+          description: Whether backstory elements exist
+        backstory:
+          $ref: '#/components/schemas/BackstoryResponse'
+          nullable: true
+          description: Backstory data (null if hasBackstory=false)
+        summaries:
+          $ref: '#/components/schemas/HistorySummaryResponse'
+          nullable: true
+          description: Text summaries for reference
+    CharacterPersonalityArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete personality data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasPersonality
+      - hasCombatPreferences
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasPersonality:
+          type: boolean
+          description: Whether personality traits exist
+        personality:
+          $ref: '#/components/schemas/PersonalityResponse'
+          nullable: true
+          description: Personality traits (null if hasPersonality=false)
+        hasCombatPreferences:
+          type: boolean
+          description: Whether combat preferences exist
+        combatPreferences:
+          $ref: '#/components/schemas/CombatPreferencesResponse'
+          nullable: true
+          description: Combat preferences (null if hasCombatPreferences=false)
+    CharacterStatus:
+      type: string
+      description: Character lifecycle status
+      enum:
+      - alive
+      - dead
+      - dormant
+    CombatPreferences:
+      type: object
+      description: |
+        Combat behavior preferences that influence tactical decisions.
+        These values affect GOAP action selection, retreat conditions,
+        and group coordination behavior.
+      additionalProperties: false
+      required:
+      - style
+      - preferredRange
+      - groupRole
+      - riskTolerance
+      - retreatThreshold
+      - protectAllies
+      properties:
+        style:
+          $ref: '#/components/schemas/CombatStyle'
+          description: Overall combat approach
+        preferredRange:
+          $ref: '#/components/schemas/PreferredRange'
+          description: Preferred engagement distance
+        groupRole:
+          $ref: '#/components/schemas/GroupRole'
+          description: Role when fighting in groups
+        riskTolerance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: |
+            Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).
+            Affects ability selection and target prioritization.
+        retreatThreshold:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: |
+            Health percentage at which retreat is considered (0.0 = fight to death,
+            0.5 = retreat at half health, 1.0 = retreat at any damage).
+        protectAllies:
+          type: boolean
+          description: |
+            Whether to prioritize ally protection over self-preservation.
+            Affects target selection and positioning decisions.
+    CombatPreferencesResponse:
+      type: object
+      description: Combat preferences profile for behavior system consumption
+      additionalProperties: false
+      required:
+      - characterId
+      - preferences
+      - version
+      - createdAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character these preferences belong to
+        preferences:
+          $ref: '#/components/schemas/CombatPreferences'
+          description: The combat preferences values
+        version:
+          type: integer
+          description: Preferences version number (increments on each evolution)
+        createdAt:
+          type: string
+          format: date-time
+          description: When these preferences were first created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When these preferences were last modified
+    CombatStyle:
+      type: string
+      description: |
+        Overall approach to combat situations. Affects target selection,
+        ability usage, and engagement decisions.
+      enum:
+      - DEFENSIVE
+      - BALANCED
+      - AGGRESSIVE
+      - BERSERKER
+      - TACTICAL
+    EmotionalImpact:
+      type: string
+      description: How the encounter emotionally affected the character
+      enum:
+      - GRATITUDE
+      - ANGER
+      - FEAR
+      - RESPECT
+      - CONTEMPT
+      - AFFECTION
+      - RIVALRY
+      - INDIFFERENCE
+      - GUILT
+      - PRIDE
+    EncounterModel:
+      type: object
+      description: Core encounter record representing a memorable interaction
+      additionalProperties: false
+      required:
+      - encounterId
+      - timestamp
+      - realmId
+      - encounterTypeCode
+      - outcome
+      - participantIds
+      - createdAt
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Unique identifier for this encounter
+        timestamp:
+          type: string
+          format: date-time
+          description: In-game time when the encounter occurred
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where the encounter took place
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific location within the realm (optional)
+        encounterTypeCode:
+          type: string
+          description: Type code for this encounter (e.g., COMBAT, TRADE)
+        context:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: What triggered or contextualized the encounter
+        outcome:
+          allOf:
+          - $ref: '#/components/schemas/EncounterOutcome'
+          description: Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)
+        participantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          description: All character IDs involved in the encounter
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional encounter-specific data
+        createdAt:
+          type: string
+          format: date-time
+          description: System timestamp when record was created
+    EncounterOutcome:
+      type: string
+      description: Overall outcome of an encounter
+      enum:
+      - POSITIVE
+      - NEGATIVE
+      - NEUTRAL
+      - MEMORABLE
+      - TRANSFORMATIVE
+    EncounterPerspectiveModel:
+      type: object
+      description: A character's individual perspective on an encounter
+      additionalProperties: false
+      required:
+      - perspectiveId
+      - encounterId
+      - characterId
+      - emotionalImpact
+      - memoryStrength
+      - createdAt
+      properties:
+        perspectiveId:
+          type: string
+          format: uuid
+          description: Unique identifier for this perspective
+        encounterId:
+          type: string
+          format: uuid
+          description: Reference to the shared encounter record
+        characterId:
+          type: string
+          format: uuid
+          description: Character holding this perspective
+        emotionalImpact:
+          allOf:
+          - $ref: '#/components/schemas/EmotionalImpact'
+          description: Primary emotional response to the encounter
+        sentimentShift:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+          nullable: true
+          description: Opinion change toward other participants (-1.0 to +1.0)
+        memoryStrength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: How strongly remembered (0.0-1.0, decays over time)
+        rememberedAs:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Short description from this character's POV
+        lastDecayedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When memory decay was last applied
+        createdAt:
+          type: string
+          format: date-time
+          description: System timestamp when record was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last modification timestamp
+    EncounterResponse:
+      type: object
+      description: Response containing an encounter with perspectives
+      additionalProperties: false
+      required:
+      - encounter
+      - perspectives
+      properties:
+        encounter:
+          allOf:
+          - $ref: '#/components/schemas/EncounterModel'
+          description: The shared encounter record
+        perspectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterPerspectiveModel'
+          description: All perspectives on this encounter
+    EventCategory:
+      type: string
+      description: Categories of historical events that characters can participate in
+      enum:
+      - WAR
+      - NATURAL_DISASTER
+      - POLITICAL
+      - ECONOMIC
+      - RELIGIOUS
+      - CULTURAL
+      - PERSONAL
+    GroupRole:
+      type: string
+      description: |
+        Preferred role when fighting in groups. Affects positioning,
+        target priority, and coordination behavior.
+      enum:
+      - FRONTLINE
+      - SUPPORT
+      - FLANKER
+      - LEADER
+      - SOLO
+    HistoricalParticipation:
+      type: object
+      description: Record of a character's participation in a historical event
+      additionalProperties: false
+      required:
+      - participationId
+      - characterId
+      - eventId
+      - eventName
+      - eventCategory
+      - role
+      - eventDate
+      - createdAt
+      properties:
+        participationId:
+          type: string
+          format: uuid
+          description: Unique ID for this participation record
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character who participated
+        eventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        eventName:
+          type: string
+          description: Name of the event (for display and summarization)
+        eventCategory:
+          $ref: '#/components/schemas/EventCategory'
+          description: Category of the historical event
+        role:
+          $ref: '#/components/schemas/ParticipationRole'
+          description: How the character participated
+        eventDate:
+          type: string
+          format: date-time
+          description: In-game date when the event occurred
+        significance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: |
+            How significant this event was for the character (0.0 to 1.0).
+            Affects behavior system weighting of this memory.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Event-specific details for behavior decisions
+        createdAt:
+          type: string
+          format: date-time
+          description: When this record was created
+    HistorySummaryResponse:
+      type: object
+      description: Generated text summaries for character compression
+      additionalProperties: false
+      required:
+      - characterId
+      - keyBackstoryPoints
+      - majorLifeEvents
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character summarized
+        keyBackstoryPoints:
+          type: array
+          items:
+            type: string
+          description: |
+            Key backstory elements as text summaries.
+            e.g., ["Trained by Knights Guild", "Born in the Northlands"]
+        majorLifeEvents:
+          type: array
+          items:
+            type: string
+          description: |
+            Major historical events as text summaries.
+            e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+    ParticipationRole:
+      type: string
+      description: How the character participated in the historical event
+      enum:
+      - LEADER
+      - COMBATANT
+      - VICTIM
+      - WITNESS
+      - BENEFICIARY
+      - CONSPIRATOR
+      - HERO
+      - SURVIVOR
+    PersonalityResponse:
+      type: object
+      description: Complete personality profile for behavior system consumption
+      additionalProperties: false
+      required:
+      - characterId
+      - traits
+      - version
+      - createdAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this personality belongs to
+        traits:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraitValue'
+          description: All trait axis values for this character
+        version:
+          type: integer
+          description: Personality version number (increments on each evolution)
+        archetypeHint:
+          type: string
+          nullable: true
+          description: |
+            Optional archetype code for behavior optimization (e.g., "guardian",
+            "merchant", "scholar", "trickster"). Allows behavior system to use
+            pre-compiled behavior variants for common personality patterns.
+        createdAt:
+          type: string
+          format: date-time
+          description: When this personality was first created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this personality was last modified
+    PreferredRange:
+      type: string
+      description: |
+        Preferred engagement distance. Influences positioning and
+        ability selection in combat.
+      enum:
+      - MELEE
+      - CLOSE
+      - MEDIUM
+      - RANGED
+    RealmEventCategory:
+      type: string
+      description: Categories of historical events that realms can participate in
+      enum:
+      - FOUNDING
+      - WAR
+      - TREATY
+      - CATACLYSM
+      - DISCOVERY
+      - MIGRATION
+      - CULTURAL_SHIFT
+      - ECONOMIC_CHANGE
+      - POLITICAL_UPHEAVAL
+    RealmEventRole:
+      type: string
+      description: How the realm participated in the historical event
+      enum:
+      - ORIGIN
+      - AGGRESSOR
+      - DEFENDER
+      - MEDIATOR
+      - AFFECTED
+      - BENEFICIARY
+      - INSTIGATOR
+      - NEUTRAL_PARTY
+    RealmHistoricalParticipation:
+      type: object
+      description: Record of a realm's participation in a historical event
+      additionalProperties: false
+      required:
+      - participationId
+      - realmId
+      - eventId
+      - eventName
+      - eventCategory
+      - role
+      - eventDate
+      - createdAt
+      properties:
+        participationId:
+          type: string
+          format: uuid
+          description: Unique ID for this participation record
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm that participated
+        eventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        eventName:
+          type: string
+          description: Name of the event (for display and summarization)
+        eventCategory:
+          $ref: '#/components/schemas/RealmEventCategory'
+          description: Category of the historical event
+        role:
+          $ref: '#/components/schemas/RealmEventRole'
+          description: How the realm participated
+        eventDate:
+          type: string
+          format: date-time
+          description: In-game date when the event occurred
+        impact:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: |
+            How significant this event was for the realm (0.0 to 1.0).
+            Affects behavior system weighting.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Event-specific details for behavior decisions
+        createdAt:
+          type: string
+          format: date-time
+          description: When this record was created
+    RealmHistoryArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Compressed realm lore and history for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The realmId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - realmId
+      - hasLore
+      - hasParticipations
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this data belongs to (equals resourceId)
+        hasLore:
+          type: boolean
+          description: Whether lore elements exist
+        loreElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmLoreResponse'
+          description: Lore elements (empty if hasLore=false)
+        hasParticipations:
+          type: boolean
+          description: Whether event participations exist
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmHistoricalParticipation'
+          description: Event participations (empty if hasParticipations=false)
+        summaries:
+          $ref: '#/components/schemas/RealmHistorySummaryResponse'
+          nullable: true
+          description: Text summaries for reference
+    RealmHistorySummaryResponse:
+      type: object
+      description: Generated text summaries for realm archival
+      additionalProperties: false
+      required:
+      - realmId
+      - keyLorePoints
+      - majorHistoricalEvents
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm summarized
+        keyLorePoints:
+          type: array
+          items:
+            type: string
+          description: |
+            Key lore elements as text summaries.
+            e.g., ["Founded during Year of the Dragon", "Primary export: Iron ore"]
+        majorHistoricalEvents:
+          type: array
+          items:
+            type: string
+          description: |
+            Major historical events as text summaries.
+            e.g., ["Defended against the Northern Invasion", "Treaty of Stormgate established peace"]
+    RealmLoreElement:
+      type: object
+      description: A machine-readable lore element for behavior system consumption
+      additionalProperties: false
+      required:
+      - elementType
+      - key
+      - value
+      properties:
+        elementType:
+          $ref: '#/components/schemas/RealmLoreElementType'
+          description: Category of this lore element
+        key:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: |
+            Machine-readable key (e.g., "founding_year", "primary_export", "capital_city").
+            Used by behavior system to query specific aspects.
+        value:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: |
+            Machine-readable value (e.g., "year_of_the_dragon", "iron_ore", "stormgate").
+            Referenced in behavior rules.
+        strength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: |
+            How strongly this element affects behavior (0.0 to 1.0).
+            Higher strength = greater influence on decisions.
+        relatedEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional related entity (location, organization, character)
+        relatedEntityType:
+          type: string
+          nullable: true
+          description: Type of the related entity (if any)
+    RealmLoreElementType:
+      type: string
+      description: |
+        Types of lore elements. Each type represents a different aspect
+        of the realm's background that influences behavior.
+      enum:
+      - ORIGIN_MYTH
+      - CULTURAL_PRACTICE
+      - POLITICAL_SYSTEM
+      - ECONOMIC_BASE
+      - RELIGIOUS_TRADITION
+      - GEOGRAPHIC_FEATURE
+      - FAMOUS_FIGURE
+      - TECHNOLOGICAL_LEVEL
+    RealmLoreResponse:
+      type: object
+      description: Complete lore data for a realm
+      additionalProperties: false
+      required:
+      - realmId
+      - elements
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm this lore belongs to
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmLoreElement'
+          description: All lore elements for this realm
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this lore was first created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this lore was last modified
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+    TraitAxis:
+      type: string
+      description: |
+        Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
+        Based on psychological research (Big Five + game-relevant extensions).
+      enum:
+      - OPENNESS
+      - CONSCIENTIOUSNESS
+      - EXTRAVERSION
+      - AGREEABLENESS
+      - NEUROTICISM
+      - HONESTY
+      - AGGRESSION
+      - LOYALTY
+    TraitValue:
+      type: object
+      description: A single personality trait with its current value and evolution history
+      additionalProperties: false
+      required:
+      - axis
+      - value
+      properties:
+        axis:
+          $ref: '#/components/schemas/TraitAxis'
+          description: The personality axis this value represents
+        value:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+          description: Current trait value on the spectrum (-1.0 to +1.0)
+        lastChangedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this trait last evolved (null if never changed since creation)
+        changeCount:
+          type: integer
+          default: 0
+          description: Number of times this trait has evolved
+x-archive-types:
+- CharacterBaseArchive
+- CharacterEncounterArchive
+- CharacterHistoryArchive
+- CharacterPersonalityArchive
+- RealmHistoryArchive
+x-source-plugins:
+- character
+- character-encounter
+- character-history
+- character-personality
+- realm-history
