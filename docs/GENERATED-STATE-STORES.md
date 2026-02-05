@@ -97,11 +97,13 @@ This document lists all state store components used in Bannou.
 | `save-load-versions` | MySQL | SaveLoad | Save version history |
 | `scene-statestore` | MySQL | Scene | Hierarchical scene composition storage |
 | `species-statestore` | MySQL | Species | Species definitions |
+| `storyline-plan-index` | Redis | Storyline | Plan index by realm for list queries |
+| `storyline-plans` | Redis | Storyline | Cached composed storyline plans (ephemeral, TTL from config) |
 | `subscription-statestore` | MySQL | Subscription | User subscriptions to game services |
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 91 stores (58 Redis, 33 MySQL)
+**Total**: 93 stores (60 Redis, 33 MySQL)
 
 ## Naming Conventions
 
