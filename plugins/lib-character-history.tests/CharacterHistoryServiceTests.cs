@@ -991,6 +991,12 @@ public class CharacterHistoryServiceTests
 
         var archiveData = new CharacterHistoryArchive
         {
+            // ResourceArchiveBase fields
+            ResourceId = characterId,
+            ResourceType = "character-history",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
             CharacterId = characterId,
             HasParticipations = true,
             Participations = new List<HistoricalParticipation>
@@ -1022,8 +1028,7 @@ public class CharacterHistoryServiceTests
                     }
                 },
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
-            },
-            CompressedAt = DateTimeOffset.UtcNow
+            }
         };
 
         var compressedData = CompressArchiveData(archiveData);
@@ -1067,6 +1072,12 @@ public class CharacterHistoryServiceTests
 
         var archiveData = new CharacterHistoryArchive
         {
+            // ResourceArchiveBase fields
+            ResourceId = characterId,
+            ResourceType = "character-history",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
             CharacterId = characterId,
             HasParticipations = true,
             Participations = new List<HistoricalParticipation>
@@ -1084,8 +1095,7 @@ public class CharacterHistoryServiceTests
                 }
             },
             HasBackstory = false,
-            Backstory = null,
-            CompressedAt = DateTimeOffset.UtcNow
+            Backstory = null
         };
 
         var compressedData = CompressArchiveData(archiveData);
@@ -1172,6 +1182,12 @@ public class CharacterHistoryServiceTests
 
         var archiveData = new CharacterHistoryArchive
         {
+            // ResourceArchiveBase fields
+            ResourceId = characterId,
+            ResourceType = "character-history",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
             CharacterId = characterId,
             HasParticipations = false,
             Participations = new List<HistoricalParticipation>(),
@@ -1190,8 +1206,7 @@ public class CharacterHistoryServiceTests
                     }
                 },
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
-            },
-            CompressedAt = DateTimeOffset.UtcNow
+            }
         };
 
         var compressedData = CompressArchiveData(archiveData);

@@ -13,17 +13,17 @@ public sealed class GenreSpectrumMapping
     public required string Genre { get; init; }
 
     /// <summary>
+    /// The optional subgenre.
+    /// </summary>
+    public required string? Subgenre { get; init; }
+
+    /// <summary>
     /// The primary spectrum for this genre.
     /// </summary>
     public required SpectrumType PrimarySpectrum { get; init; }
 
     /// <summary>
-    /// The core event for this genre (e.g., "Hero at Mercy of Villain").
+    /// The optional secondary spectrum for this genre.
     /// </summary>
-    public required string CoreEvent { get; init; }
-
-    /// <summary>
-    /// Optional override for core emotion (some genres sharing a spectrum have different emotions).
-    /// </summary>
-    public string? CoreEmotionOverride { get; init; }
+    public required SpectrumType? SecondarySpectrum { get; init; }
 }

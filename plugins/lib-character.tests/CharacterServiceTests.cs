@@ -1109,7 +1109,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.Equal(speciesId, response.SpeciesId);
         Assert.Equal(CharacterStatus.Dead, response.Status);
         Assert.Equal(deathDate, response.DeathDate);
-        Assert.NotEqual(default, response.CompressedAt);
+        Assert.NotEqual(default, response.ArchivedAt);
     }
 
     [Fact]

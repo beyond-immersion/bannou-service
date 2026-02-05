@@ -4,7 +4,6 @@ namespace BeyondImmersion.Bannou.StorylineTheory.Spectrums;
 
 /// <summary>
 /// Runtime state container for tracking spectrum values during story generation.
-/// Only the active spectrums (primary + any secondary) are tracked; others remain null.
 /// </summary>
 public sealed class NarrativeState
 {
@@ -64,19 +63,8 @@ public sealed class NarrativeState
     public required SpectrumType PrimarySpectrum { get; init; }
 
     /// <summary>
-    /// Gets the value of the primary spectrum.
-    /// </summary>
-    /// <returns>The primary spectrum value, or 0.5 (neutral) if not set.</returns>
-    public double GetPrimaryValue()
-    {
-        return this[PrimarySpectrum] ?? 0.5;
-    }
-
-    /// <summary>
     /// Gets or sets a spectrum value by type.
     /// </summary>
-    /// <param name="spectrum">The spectrum type.</param>
-    /// <returns>The spectrum value, or null if not tracked.</returns>
     public double? this[SpectrumType spectrum]
     {
         get => spectrum switch
@@ -114,11 +102,8 @@ public sealed class NarrativeState
 
     /// <summary>
     /// Calculates the Euclidean distance to a target state.
-    /// Only compares spectrums that are active in both states.
     /// Used as a heuristic for GOAP planning.
     /// </summary>
-    /// <param name="target">The target state to compare against.</param>
-    /// <returns>The average distance across active spectrums, or 0 if no overlap.</returns>
     public double DistanceTo(NarrativeState target)
     {
         double sumSquared = 0;
@@ -146,40 +131,5 @@ public sealed class NarrativeState
             sumSquared += diff * diff;
             count++;
         }
-    }
-
-    /// <summary>
-    /// Creates a deep copy of this state.
-    /// </summary>
-    /// <returns>A new NarrativeState with the same values.</returns>
-    public NarrativeState Clone()
-    {
-        return new NarrativeState
-        {
-            PrimarySpectrum = PrimarySpectrum,
-            LifeDeath = LifeDeath,
-            HonorDishonor = HonorDishonor,
-            JusticeInjustice = JusticeInjustice,
-            FreedomSubjugation = FreedomSubjugation,
-            LoveHate = LoveHate,
-            RespectShame = RespectShame,
-            PowerImpotence = PowerImpotence,
-            SuccessFailure = SuccessFailure,
-            AltruismSelfishness = AltruismSelfishness,
-            WisdomIgnorance = WisdomIgnorance
-        };
-    }
-
-    /// <summary>
-    /// Creates a new state with a spectrum value changed.
-    /// </summary>
-    /// <param name="spectrum">The spectrum to change.</param>
-    /// <param name="value">The new value.</param>
-    /// <returns>A new NarrativeState with the updated value.</returns>
-    public NarrativeState WithSpectrum(SpectrumType spectrum, double? value)
-    {
-        var clone = Clone();
-        clone[spectrum] = value;
-        return clone;
     }
 }

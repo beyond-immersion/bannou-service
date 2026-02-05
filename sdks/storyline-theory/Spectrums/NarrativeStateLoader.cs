@@ -30,9 +30,6 @@ public static class NarrativeStateLoader
     /// <summary>
     /// Gets a spectrum definition by type.
     /// </summary>
-    /// <param name="type">The spectrum type.</param>
-    /// <returns>The spectrum definition.</returns>
-    /// <exception cref="KeyNotFoundException">Thrown if the spectrum type is not found.</exception>
     public static SpectrumDefinition GetSpectrum(SpectrumType type)
     {
         return SpectrumsByType.Value[type];
@@ -41,36 +38,9 @@ public static class NarrativeStateLoader
     /// <summary>
     /// Gets the primary spectrum for a genre.
     /// </summary>
-    /// <param name="genre">The genre code (e.g., "action", "crime").</param>
-    /// <returns>The primary spectrum type for the genre.</returns>
-    /// <exception cref="KeyNotFoundException">Thrown if the genre is not found.</exception>
     public static SpectrumType GetPrimarySpectrum(string genre)
     {
         return GenreMappingsByGenre.Value[genre].PrimarySpectrum;
-    }
-
-    /// <summary>
-    /// Gets the genre mapping for a genre.
-    /// </summary>
-    /// <param name="genre">The genre code (e.g., "action", "crime").</param>
-    /// <returns>The genre mapping, or null if not found.</returns>
-    public static GenreSpectrumMapping? GetGenreMapping(string genre)
-    {
-        return GenreMappingsByGenre.Value.TryGetValue(genre, out var mapping) ? mapping : null;
-    }
-
-    /// <summary>
-    /// Creates an initial NarrativeState for a genre with default values.
-    /// </summary>
-    /// <param name="genre">The genre code.</param>
-    /// <param name="initialPrimaryValue">The initial value for the primary spectrum (default 0.5).</param>
-    /// <returns>A new NarrativeState configured for the genre.</returns>
-    public static NarrativeState CreateForGenre(string genre, double initialPrimaryValue = 0.5)
-    {
-        var primarySpectrum = GetPrimarySpectrum(genre);
-        var state = new NarrativeState { PrimarySpectrum = primarySpectrum };
-        state[primarySpectrum] = initialPrimaryValue;
-        return state;
     }
 
     private static IReadOnlyList<SpectrumDefinition> BuildSpectrums()
@@ -92,8 +62,7 @@ public static class NarrativeStateLoader
                     {
                         Label = yaml.Poles.Positive.Label ?? "Positive",
                         Value = yaml.Poles.Positive.Value,
-                        Description = yaml.Poles.Positive.Description ?? "",
-                        Examples = yaml.Poles.Positive.Examples
+                        Description = yaml.Poles.Positive.Description ?? ""
                     });
                 }
                 if (yaml.Poles.Contrary != null)
@@ -102,8 +71,7 @@ public static class NarrativeStateLoader
                     {
                         Label = yaml.Poles.Contrary.Label ?? "Contrary",
                         Value = yaml.Poles.Contrary.Value,
-                        Description = yaml.Poles.Contrary.Description ?? "",
-                        Examples = yaml.Poles.Contrary.Examples
+                        Description = yaml.Poles.Contrary.Description ?? ""
                     });
                 }
                 if (yaml.Poles.Negative != null)
@@ -112,8 +80,7 @@ public static class NarrativeStateLoader
                     {
                         Label = yaml.Poles.Negative.Label ?? "Negative",
                         Value = yaml.Poles.Negative.Value,
-                        Description = yaml.Poles.Negative.Description ?? "",
-                        Examples = yaml.Poles.Negative.Examples
+                        Description = yaml.Poles.Negative.Description ?? ""
                     });
                 }
                 if (yaml.Poles.NegationOfNegation != null)
@@ -122,8 +89,7 @@ public static class NarrativeStateLoader
                     {
                         Label = yaml.Poles.NegationOfNegation.Label ?? "Negation",
                         Value = yaml.Poles.NegationOfNegation.Value,
-                        Description = yaml.Poles.NegationOfNegation.Description ?? "",
-                        Examples = yaml.Poles.NegationOfNegation.Examples
+                        Description = yaml.Poles.NegationOfNegation.Description ?? ""
                     });
                 }
             }
@@ -131,17 +97,10 @@ public static class NarrativeStateLoader
             spectrums.Add(new SpectrumDefinition
             {
                 Type = type,
-                Code = yaml.Code,
-                Name = yaml.Name,
-                Domain = yaml.Domain ?? "unknown",
-                MaslowLevel = yaml.MaslowLevel,
                 PositiveLabel = yaml.Poles?.Positive?.Label ?? yaml.Name.Split(" vs ")[0],
                 NegativeLabel = yaml.Poles?.Negative?.Label ?? yaml.Name.Split(" vs ").LastOrDefault() ?? "",
                 Stages = stages.ToArray(),
-                CoreNeed = yaml.CoreNeed ?? "",
-                CoreEmotion = yaml.CoreEmotion ?? "",
-                PrimaryGenres = yaml.Genres?.Primary ?? Array.Empty<string>(),
-                DramaticQuestion = yaml.Question ?? ""
+                MediaExamples = Array.Empty<string>()
             });
         }
 
@@ -163,19 +122,12 @@ public static class NarrativeStateLoader
             var genre = kvp.Key;
             var yaml = kvp.Value;
 
-            // Look up override if present
-            string? emotionOverride = null;
-            if (data.GenreOverrides?.TryGetValue(genre, out var overrideData) == true)
-            {
-                emotionOverride = overrideData.CoreEmotion;
-            }
-
             mappings.Add(new GenreSpectrumMapping
             {
                 Genre = genre,
+                Subgenre = null,
                 PrimarySpectrum = ParseSpectrumType(yaml.Primary.ToUpperInvariant().Replace("_", "")),
-                CoreEvent = yaml.CoreEvent ?? "",
-                CoreEmotionOverride = emotionOverride
+                SecondarySpectrum = null
             });
         }
 
@@ -184,7 +136,6 @@ public static class NarrativeStateLoader
 
     private static SpectrumType ParseSpectrumType(string code)
     {
-        // Handle both formats: "LIFE_DEATH" and "LIFEDEATH"
         var normalized = code.ToUpperInvariant().Replace("_", "");
         return normalized switch
         {
@@ -204,14 +155,12 @@ public static class NarrativeStateLoader
 
     #region YAML Data Classes
 
-    // These classes match the YAML structure for deserialization
     internal sealed class NarrativeStateData
     {
         public string? Version { get; set; }
         public string? Source { get; set; }
         public Dictionary<string, SpectrumYaml> Spectrums { get; set; } = new();
         public Dictionary<string, GenreMappingYaml>? GenreSpectrumMapping { get; set; }
-        public Dictionary<string, GenreOverrideYaml>? GenreOverrides { get; set; }
     }
 
     internal sealed class SpectrumYaml
@@ -219,13 +168,7 @@ public static class NarrativeStateLoader
         public int Id { get; set; }
         public string Code { get; set; } = "";
         public string Name { get; set; } = "";
-        public string? Domain { get; set; }
-        public int MaslowLevel { get; set; }
         public PolesYaml? Poles { get; set; }
-        public string? CoreNeed { get; set; }
-        public string? CoreEmotion { get; set; }
-        public GenresYaml? Genres { get; set; }
-        public string? Question { get; set; }
     }
 
     internal sealed class PolesYaml
@@ -241,23 +184,12 @@ public static class NarrativeStateLoader
         public double Value { get; set; }
         public string? Label { get; set; }
         public string? Description { get; set; }
-        public string[]? Examples { get; set; }
-    }
-
-    internal sealed class GenresYaml
-    {
-        public string[]? Primary { get; set; }
     }
 
     internal sealed class GenreMappingYaml
     {
         public string Primary { get; set; } = "";
         public string? CoreEvent { get; set; }
-    }
-
-    internal sealed class GenreOverrideYaml
-    {
-        public string? CoreEmotion { get; set; }
     }
 
     #endregion
