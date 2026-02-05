@@ -344,7 +344,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PersonalityCompressData'
+                $ref: '#/components/schemas/CharacterPersonalityArchive'
         '404':
           description: No personality data for character
 
@@ -938,20 +938,25 @@ components:
           format: uuid
           description: ID of the character to get compress data for
 
-    PersonalityCompressData:
+    CharacterPersonalityArchive:
       type: object
-      description: Complete personality data for archive storage
+      x-archive-type: true
+      description: |
+        Complete personality data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
-      - characterId
-      - hasPersonality
-      - hasCombatPreferences
-      - compressedAt
+        - characterId
+        - hasPersonality
+        - hasCombatPreferences
       properties:
         characterId:
           type: string
           format: uuid
-          description: Character this data belongs to
+          description: Character this data belongs to (equals resourceId)
         hasPersonality:
           type: boolean
           description: Whether personality traits exist
@@ -966,10 +971,6 @@ components:
           $ref: '#/components/schemas/CombatPreferencesResponse'
           nullable: true
           description: Combat preferences (null if hasCombatPreferences=false)
-        compressedAt:
-          type: string
-          format: date-time
-          description: When this data was compressed
 
     RestoreFromArchiveRequest:
       type: object
@@ -985,7 +986,7 @@ components:
           description: ID of the character to restore data for
         data:
           type: string
-          description: Base64-encoded gzipped PersonalityCompressData JSON
+          description: Base64-encoded gzipped CharacterPersonalityArchive JSON
 
     RestoreFromArchiveResponse:
       type: object

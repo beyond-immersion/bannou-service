@@ -356,7 +356,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CharacterCompressData'
+                $ref: '#/components/schemas/CharacterBaseArchive'
         '400':
           description: Character is not dead (cannot compress alive characters)
         '404':
@@ -1121,24 +1121,32 @@ components:
           format: uuid
           description: ID of the character to get compress data for
 
-    CharacterCompressData:
-      description: Core character data for archive storage
+    CharacterBaseArchive:
       type: object
+      x-archive-type: true
+      description: |
+        Core character data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+
+        Note: This is distinct from CharacterArchive which contains text summaries
+        for cleanup. CharacterBaseArchive contains structured data for SDK consumption.
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
-      - characterId
-      - name
-      - realmId
-      - speciesId
-      - birthDate
-      - deathDate
-      - status
-      - compressedAt
+        - characterId
+        - name
+        - realmId
+        - speciesId
+        - birthDate
+        - deathDate
+        - status
       properties:
         characterId:
           type: string
           format: uuid
-          description: Unique identifier for the character
+          description: Unique identifier for the character (equals resourceId)
         name:
           type: string
           description: Display name of the character
@@ -1167,10 +1175,6 @@ components:
           description: |
             Text summary of family relationships.
             Example: "Father of 3, married to Elena, orphaned at young age"
-        compressedAt:
-          type: string
-          format: date-time
-          description: When this data was compressed
         createdAt:
           type: string
           format: date-time

@@ -295,64 +295,80 @@ Which is correct?
 
 **Only enter this phase when ALL questions from Phase 4 are resolved.**
 
-Launch a planning agent with full context.
+**⛔ CRITICAL: YOU (the main agent) MUST WRITE THE PLAN YOURSELF ⛔**
 
-**⚠️ CRITICAL: The Plan agent does not know about project-specific rules. You MUST include explicit instructions to read the TENETs.**
+Do NOT use the Task tool with `subagent_type=Plan` to write plans. Subagents:
+- Do not have write permissions for the plan file
+- Cannot be granted write permissions dynamically
+- Will produce a 200-line "summary" that corrupts the planning workflow
+- Roll forward with their degraded output as if nothing went wrong
 
-```markdown
-## Planning Request
+**YOU must write the plan directly using the Write tool.**
 
-### ⛔ MANDATORY FIRST STEP ⛔
-Before creating any plan, you MUST read and understand the project's development guidelines:
-- **Read `docs/reference/TENETS.md`** - This contains inviolable development rules
-- **Read `docs/reference/SCHEMA-RULES.md`** - Schema-first development requirements
-- All planned changes MUST comply with these TENETs
+**Planning Process:**
 
-Key TENETs to be aware of:
-- T1: Schema-first development (NEVER edit Generated/ files)
-- T4: Infrastructure libs pattern (use lib-state, lib-messaging, lib-mesh)
-- T5: Event-driven architecture (typed events, not anonymous objects)
-- T7: Error handling patterns
-- T8: Return pattern (StatusCodes tuples)
-- T21: Configuration-first (no hardcoded tunables)
+1. **Read project development rules** (if not already done in Phase 2):
+   - `docs/reference/TENETS.md` - Inviolable development rules
+   - `docs/reference/SCHEMA-RULES.md` - Schema-first development requirements
 
----
+2. **Use subagents for RESEARCH ONLY** (optional):
+   - `subagent_type=Explore` - To find files, understand patterns, trace code paths
+   - `subagent_type=feature-dev:code-explorer` - To deeply analyze existing features
+   - These agents RESEARCH and REPORT BACK - they do NOT write plans
 
-## Planning Context
+3. **YOU write the plan** to `~/.claude/plans/{plan-name}.md`:
+   ```markdown
+   # Implementation Plan: Issue #{number} - {title}
 
-### Issue
-- Number: #{number}
-- Title: {title}
-- Link: {url}
+   ## Summary
+   {One paragraph overview}
 
-### Decisions Made
-{Copy the completed Decision Tracker with all ✅ items}
+   ## Decisions Made
+   | Question | Decision |
+   |----------|----------|
+   | {From Phase 4} | {Explicit answer} |
 
-### Affected Plugins
-{From Phase 2}
+   ---
 
-### Constraints & Quirks
-{From Phase 2 deep dive reading}
+   ## Phase 1: {First Phase Name}
+   {Detailed steps with specific files, line numbers, code snippets}
 
-### Scope
-{Confirmed scope from Phase 3/4}
+   ## Phase 2: {Second Phase Name}
+   {Continue as needed}
 
----
+   ---
 
-Create a detailed implementation plan that:
-1. Lists specific files to create/modify
-2. Specifies the order of changes (schema-first per T1)
-3. Identifies test requirements
-4. Notes documentation updates needed
-5. Explicitly notes which TENETs apply to each change
-```
+   ## Files to Create/Modify
+   | File | Action | Description |
+   |------|--------|-------------|
+   | {path} | Create/Modify | {what changes} |
 
-**Use the Plan agent:**
-```
-Task tool with subagent_type=Plan
-```
+   ---
 
-**Present the plan to the developer for approval before implementation.**
+   ## Verification
+   1. {How to verify step 1}
+   2. {How to verify step 2}
+
+   ---
+
+   ## Order of Operations
+   1. Schema changes first (per T1 schema-first)
+   2. Regenerate models
+   3. Implementation changes
+   4. Build verification
+   ```
+
+4. **Plan requirements:**
+   - Lists specific files to create/modify with paths
+   - Specifies the order of changes (schema-first per T1)
+   - Includes actual code snippets where helpful
+   - Identifies test requirements
+   - Notes documentation updates needed
+   - References which TENETs apply to changes
+
+5. **Present the plan to the developer for approval before implementation.**
+
+**Why this matters:** Plans need to be precise, complete, and written to a file the developer can review. Subagent-generated "summaries" lose critical details, miss file paths, and produce vague directives instead of actionable implementation steps.
 
 ### Phase 6: Implementation
 

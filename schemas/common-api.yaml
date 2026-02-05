@@ -43,3 +43,44 @@ components:
         - monster
         - custom
         - other
+
+    # ==========================================================================
+    # Archive Base Types
+    # ==========================================================================
+
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+        - resourceId
+        - resourceType
+        - archivedAt
+        - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'

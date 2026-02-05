@@ -603,7 +603,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EncounterCompressData'
+                $ref: '#/components/schemas/CharacterEncounterArchive'
         '404':
           description: No encounter data for character
 
@@ -1634,20 +1634,25 @@ components:
           format: uuid
           description: ID of the character to get compress data for
 
-    EncounterCompressData:
+    CharacterEncounterArchive:
       type: object
-      description: Complete encounter data for archive storage
+      x-archive-type: true
+      description: |
+        Complete encounter data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
-      - characterId
-      - hasEncounters
-      - encounterCount
-      - compressedAt
+        - characterId
+        - hasEncounters
+        - encounterCount
       properties:
         characterId:
           type: string
           format: uuid
-          description: Character this data belongs to
+          description: Character this data belongs to (equals resourceId)
         hasEncounters:
           type: boolean
           description: Whether encounters exist for this character
@@ -1668,10 +1673,6 @@ components:
             Map of target characterId to aggregate sentiment.
             Preserves sentiment relationships for historical reference.
           nullable: true
-        compressedAt:
-          type: string
-          format: date-time
-          description: When this data was compressed
 
     RestoreFromArchiveRequest:
       type: object
@@ -1687,7 +1688,7 @@ components:
           description: ID of the character to restore data for
         data:
           type: string
-          description: Base64-encoded gzipped EncounterCompressData JSON
+          description: Base64-encoded gzipped CharacterEncounterArchive JSON
 
     RestoreFromArchiveResponse:
       type: object
