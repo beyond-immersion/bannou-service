@@ -596,6 +596,50 @@ x-state-stores:
     purpose: Custom asset type handler registrations
 
   # ============================================================================
+  # Quest Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  quest-definition-statestore:
+    backend: mysql
+    service: Quest
+    purpose: Quest definitions with contract template IDs and metadata
+
+  quest-instance-statestore:
+    backend: mysql
+    service: Quest
+    purpose: Quest instances with status and party information
+
+  quest-objective-progress:
+    backend: redis
+    prefix: "quest:prog"
+    service: Quest
+    purpose: Real-time objective progress tracking
+
+  quest-definition-cache:
+    backend: redis
+    prefix: "quest:def"
+    service: Quest
+    purpose: Quest definition read-through cache
+
+  quest-character-index:
+    backend: redis
+    prefix: "quest:char"
+    service: Quest
+    purpose: Character to active quest instance mapping
+
+  quest-cooldown:
+    backend: redis
+    prefix: "quest:cd"
+    service: Quest
+    purpose: Per-character quest cooldown tracking
+
+  quest-idempotency:
+    backend: redis
+    prefix: "quest:idem"
+    service: Quest
+    purpose: Idempotency keys for accept/complete operations
+
+  # ============================================================================
   # Resource Lifecycle Stores
   # ============================================================================
 

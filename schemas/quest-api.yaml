@@ -1,0 +1,1201 @@
+openapi: 3.0.3
+info:
+  title: Bannou Quest Service API
+  description: |
+    Quest system providing objective-based gameplay progression as a thin orchestration
+    layer over lib-contract. Quests are contracts with game-flavored terminology:
+    objectives are milestones, rewards are prebound API executions.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+x-service-layer: GameFeatures
+
+servers:
+  - url: http://localhost:5012
+    description: Bannou service endpoint (internal only)
+
+paths:
+  # === DEFINITION ENDPOINTS ===
+  /quest/definition/create:
+    post:
+      operationId: createQuestDefinition
+      tags: [Definitions]
+      summary: Create a new quest definition
+      description: Creates a quest definition wrapping a contract template with quest metadata.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestDefinitionRequest'
+      responses:
+        '200':
+          description: Quest definition created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDefinitionResponse'
+        '400':
+          description: Invalid request (validation error)
+        '409':
+          description: Quest definition with this code already exists
+
+  /quest/definition/get:
+    post:
+      operationId: getQuestDefinition
+      tags: [Definitions]
+      summary: Get quest definition by ID or code
+      description: Retrieves a quest definition by its unique identifier or code.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetQuestDefinitionRequest'
+      responses:
+        '200':
+          description: Quest definition found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDefinitionResponse'
+        '404':
+          description: Quest definition not found
+
+  /quest/definition/list:
+    post:
+      operationId: listQuestDefinitions
+      tags: [Definitions]
+      summary: List quest definitions with filtering
+      description: Lists quest definitions with optional filtering by category, difficulty, tags.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListQuestDefinitionsRequest'
+      responses:
+        '200':
+          description: Quest definitions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListQuestDefinitionsResponse'
+
+  /quest/definition/update:
+    post:
+      operationId: updateQuestDefinition
+      tags: [Definitions]
+      summary: Update quest definition metadata
+      description: Updates quest metadata (not contract template - that's immutable).
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuestDefinitionRequest'
+      responses:
+        '200':
+          description: Quest definition updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDefinitionResponse'
+        '404':
+          description: Quest definition not found
+
+  /quest/definition/deprecate:
+    post:
+      operationId: deprecateQuestDefinition
+      tags: [Definitions]
+      summary: Mark quest definition as deprecated
+      description: Marks a quest definition as deprecated. No new instances can be created.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateQuestDefinitionRequest'
+      responses:
+        '200':
+          description: Quest definition deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDefinitionResponse'
+        '404':
+          description: Quest definition not found
+
+  # === INSTANCE ENDPOINTS ===
+  /quest/accept:
+    post:
+      operationId: acceptQuest
+      tags: [Instances]
+      summary: Accept a quest
+      description: Creates a contract instance and auto-consents for the questor. Returns the active quest.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptQuestRequest'
+      responses:
+        '200':
+          description: Quest accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstanceResponse'
+        '400':
+          description: Prerequisites not met or already at max quests
+        '404':
+          description: Quest definition not found
+        '409':
+          description: Quest already active or on cooldown
+
+  /quest/abandon:
+    post:
+      operationId: abandonQuest
+      tags: [Instances]
+      summary: Abandon an active quest
+      description: Terminates the underlying contract and marks the quest as abandoned.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbandonQuestRequest'
+      responses:
+        '200':
+          description: Quest abandoned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstanceResponse'
+        '404':
+          description: Quest not found
+        '409':
+          description: Quest not in abandonable state
+
+  /quest/get:
+    post:
+      operationId: getQuest
+      tags: [Instances]
+      summary: Get quest instance details
+      description: Retrieves detailed quest instance information including objectives.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetQuestRequest'
+      responses:
+        '200':
+          description: Quest instance found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstanceResponse'
+        '404':
+          description: Quest not found
+
+  /quest/list:
+    post:
+      operationId: listQuests
+      tags: [Instances]
+      summary: List character's quests
+      description: Lists quests for a character filtered by status.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListQuestsRequest'
+      responses:
+        '200':
+          description: Quests retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListQuestsResponse'
+
+  /quest/list-available:
+    post:
+      operationId: listAvailableQuests
+      tags: [Instances]
+      summary: List quests available to accept
+      description: Lists quests a character can accept (prerequisites met, not on cooldown, not active).
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListAvailableQuestsRequest'
+      responses:
+        '200':
+          description: Available quests retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAvailableQuestsResponse'
+
+  /quest/log:
+    post:
+      operationId: getQuestLog
+      tags: [Instances]
+      summary: Get player-facing quest log
+      description: Returns UI-optimized quest log with progress summaries.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetQuestLogRequest'
+      responses:
+        '200':
+          description: Quest log retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestLogResponse'
+
+  # === OBJECTIVE ENDPOINTS ===
+  /quest/objective/progress:
+    post:
+      operationId: reportObjectiveProgress
+      tags: [Objectives]
+      summary: Report progress on an objective
+      description: Manually reports progress on a quest objective. Used by game systems.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportProgressRequest'
+      responses:
+        '200':
+          description: Progress recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectiveProgressResponse'
+        '404':
+          description: Quest or objective not found
+
+  /quest/objective/complete:
+    post:
+      operationId: forceCompleteObjective
+      tags: [Objectives]
+      summary: Force complete an objective (debug/GM)
+      description: Immediately completes an objective regardless of progress. Admin only.
+      x-permissions:
+        - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForceCompleteObjectiveRequest'
+      responses:
+        '200':
+          description: Objective completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectiveProgressResponse'
+        '404':
+          description: Quest or objective not found
+
+  /quest/objective/get:
+    post:
+      operationId: getObjectiveProgress
+      tags: [Objectives]
+      summary: Get objective progress details
+      description: Returns detailed progress information for a specific objective.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetObjectiveProgressRequest'
+      responses:
+        '200':
+          description: Objective progress retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectiveProgressResponse'
+        '404':
+          description: Quest or objective not found
+
+  # === INTERNAL ENDPOINTS (service-to-service) ===
+  /quest/internal/milestone-completed:
+    post:
+      operationId: handleMilestoneCompleted
+      tags: [Internal]
+      summary: Handle milestone completion callback
+      description: Called by Contract prebound API when a milestone completes.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MilestoneCompletedCallback'
+      responses:
+        '200':
+          description: Callback processed
+
+  /quest/internal/quest-completed:
+    post:
+      operationId: handleQuestCompleted
+      tags: [Internal]
+      summary: Handle quest completion callback
+      description: Called when all required milestones are done.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestCompletedCallback'
+      responses:
+        '200':
+          description: Callback processed
+
+components:
+  schemas:
+    # === ENUMS ===
+    QuestStatus:
+      type: string
+      enum: [ACTIVE, COMPLETED, FAILED, ABANDONED, EXPIRED]
+      description: Current status of a quest instance
+
+    QuestCategory:
+      type: string
+      enum: [MAIN, SIDE, BOUNTY, DAILY, WEEKLY, EVENT, TUTORIAL]
+      description: Category of quest for organization
+
+    QuestDifficulty:
+      type: string
+      enum: [TRIVIAL, EASY, NORMAL, HARD, HEROIC, LEGENDARY]
+      description: Difficulty rating of the quest
+
+    ObjectiveType:
+      type: string
+      enum: [KILL, COLLECT, DELIVER, TRAVEL, DISCOVER, TALK, CRAFT, ESCORT, DEFEND, CUSTOM]
+      description: Type of objective determining progress tracking logic
+
+    ObjectiveRevealBehavior:
+      type: string
+      enum: [ALWAYS, ON_PROGRESS, ON_COMPLETE, NEVER]
+      description: When a hidden objective is revealed in the quest log
+
+    PrerequisiteType:
+      type: string
+      enum: [QUEST_COMPLETED, CHARACTER_LEVEL, REPUTATION, ITEM_OWNED, CURRENCY_AMOUNT]
+      description: Type of prerequisite check
+
+    # === REQUEST/RESPONSE MODELS ===
+    CreateQuestDefinitionRequest:
+      type: object
+      description: Request to create a new quest definition with objectives and rewards
+      additionalProperties: false
+      required: [code, name, objectives, gameServiceId]
+      properties:
+        code:
+          type: string
+          description: Unique quest code (uppercase, underscores)
+        name:
+          type: string
+          description: Display name of the quest
+        description:
+          type: string
+          nullable: true
+          description: Quest description for players
+        category:
+          description: Quest category for organization
+          $ref: '#/components/schemas/QuestCategory'
+        difficulty:
+          description: Difficulty rating of the quest
+          $ref: '#/components/schemas/QuestDifficulty'
+        levelRequirement:
+          type: integer
+          nullable: true
+          description: Minimum character level required
+        repeatable:
+          type: boolean
+          default: false
+          description: Whether quest can be repeated
+        cooldownSeconds:
+          type: integer
+          nullable: true
+          description: Cooldown in seconds for repeatable quests
+        deadlineSeconds:
+          type: integer
+          nullable: true
+          description: Time limit in seconds (null for no deadline)
+        maxQuestors:
+          type: integer
+          default: 1
+          description: Maximum party members (1 for solo)
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveDefinition'
+          description: List of quest objectives (ordered)
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PrerequisiteDefinition'
+          description: Requirements to accept the quest
+        rewards:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RewardDefinition'
+          description: Rewards granted on completion
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Tags for filtering and organization
+        questGiverCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character who offers this quest (null for any)
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this quest belongs to
+
+    ObjectiveDefinition:
+      type: object
+      description: Definition of a single quest objective with tracking parameters
+      additionalProperties: false
+      required: [code, name, objectiveType, requiredCount]
+      properties:
+        code:
+          type: string
+          description: Unique objective code within quest
+        name:
+          type: string
+          description: Display name of the objective
+        description:
+          type: string
+          nullable: true
+          description: Objective description
+        objectiveType:
+          description: Type of objective determining progress tracking logic
+          $ref: '#/components/schemas/ObjectiveType'
+        requiredCount:
+          type: integer
+          description: Count needed to complete
+        targetEntityType:
+          type: string
+          nullable: true
+          description: Entity type for kill/collect objectives
+        targetEntitySubtype:
+          type: string
+          nullable: true
+          description: Subtype filter (e.g., species:wolf)
+        targetLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location for travel/deliver objectives
+        hidden:
+          type: boolean
+          default: false
+          description: Whether objective is hidden initially
+        revealBehavior:
+          description: When a hidden objective is revealed in the quest log
+          $ref: '#/components/schemas/ObjectiveRevealBehavior'
+        optional:
+          type: boolean
+          default: false
+          description: Whether objective is optional for completion
+
+    PrerequisiteDefinition:
+      type: object
+      description: Requirement that must be met before a quest can be accepted
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          description: Type of prerequisite check
+          $ref: '#/components/schemas/PrerequisiteType'
+        questCode:
+          type: string
+          nullable: true
+          description: Quest code for QUEST_COMPLETED type
+        minLevel:
+          type: integer
+          nullable: true
+          description: Minimum level for CHARACTER_LEVEL type
+        factionCode:
+          type: string
+          nullable: true
+          description: Faction code for REPUTATION type
+        minReputation:
+          type: integer
+          nullable: true
+          description: Minimum reputation for REPUTATION type
+        itemCode:
+          type: string
+          nullable: true
+          description: Item code for ITEM_OWNED type
+        currencyCode:
+          type: string
+          nullable: true
+          description: Currency code for CURRENCY_AMOUNT type
+        minAmount:
+          type: integer
+          nullable: true
+          description: Minimum amount for CURRENCY_AMOUNT type
+
+    RewardDefinition:
+      type: object
+      description: Reward granted when a quest is completed
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [CURRENCY, ITEM, EXPERIENCE, REPUTATION]
+          description: Type of reward
+        currencyCode:
+          type: string
+          nullable: true
+          description: Currency code for CURRENCY rewards
+        amount:
+          type: integer
+          nullable: true
+          description: Amount for CURRENCY/EXPERIENCE rewards
+        itemCode:
+          type: string
+          nullable: true
+          description: Item code for ITEM rewards
+        quantity:
+          type: integer
+          nullable: true
+          description: Quantity for ITEM rewards
+        factionCode:
+          type: string
+          nullable: true
+          description: Faction code for REPUTATION rewards
+
+    QuestDefinitionResponse:
+      type: object
+      description: Complete quest definition including objectives, prerequisites, and rewards
+      additionalProperties: false
+      required: [definitionId, contractTemplateId, code, name, category, difficulty, repeatable, maxQuestors, objectives, deprecated, createdAt, gameServiceId]
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Unique quest definition ID
+        contractTemplateId:
+          type: string
+          format: uuid
+          description: Underlying contract template ID
+        code:
+          type: string
+          description: Quest code
+        name:
+          type: string
+          description: Quest name
+        description:
+          type: string
+          nullable: true
+          description: Quest description
+        category:
+          description: Quest category for organization
+          $ref: '#/components/schemas/QuestCategory'
+        difficulty:
+          description: Difficulty rating of the quest
+          $ref: '#/components/schemas/QuestDifficulty'
+        levelRequirement:
+          type: integer
+          nullable: true
+          description: Minimum level required
+        repeatable:
+          type: boolean
+          description: Whether repeatable
+        cooldownSeconds:
+          type: integer
+          nullable: true
+          description: Cooldown for repeatable quests
+        deadlineSeconds:
+          type: integer
+          nullable: true
+          description: Time limit
+        maxQuestors:
+          type: integer
+          description: Max party size
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveDefinition'
+          description: Quest objectives
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PrerequisiteDefinition'
+          description: Prerequisites
+        rewards:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RewardDefinition'
+          description: Rewards
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Tags
+        deprecated:
+          type: boolean
+          description: Whether deprecated
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service ID
+
+    GetQuestDefinitionRequest:
+      type: object
+      description: Request to retrieve a quest definition by ID or code
+      additionalProperties: false
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Definition ID (provide either this or code)
+        code:
+          type: string
+          nullable: true
+          description: Quest code (provide either this or definitionId)
+
+    ListQuestDefinitionsRequest:
+      type: object
+      description: Request to list quest definitions with optional filtering
+      additionalProperties: false
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service
+        category:
+          description: Filter by quest category
+          $ref: '#/components/schemas/QuestCategory'
+        difficulty:
+          description: Filter by difficulty rating
+          $ref: '#/components/schemas/QuestDifficulty'
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Filter by tags (any match)
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated definitions
+        limit:
+          type: integer
+          default: 50
+          description: Max results
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+
+    ListQuestDefinitionsResponse:
+      type: object
+      description: Paginated list of quest definitions
+      additionalProperties: false
+      required: [definitions, total]
+      properties:
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestDefinitionResponse'
+          description: List of definitions
+        total:
+          type: integer
+          description: Total count for pagination
+
+    UpdateQuestDefinitionRequest:
+      type: object
+      description: Request to update quest definition metadata
+      additionalProperties: false
+      required: [definitionId]
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition to update
+        name:
+          type: string
+          nullable: true
+          description: New name
+        description:
+          type: string
+          nullable: true
+          description: New description
+        category:
+          description: New quest category
+          $ref: '#/components/schemas/QuestCategory'
+        difficulty:
+          description: New difficulty rating
+          $ref: '#/components/schemas/QuestDifficulty'
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: New tags
+
+    DeprecateQuestDefinitionRequest:
+      type: object
+      description: Request to mark a quest definition as deprecated
+      additionalProperties: false
+      required: [definitionId]
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition to deprecate
+
+    # === INSTANCE MODELS ===
+    AcceptQuestRequest:
+      type: object
+      description: Request to accept a quest and create an active instance
+      additionalProperties: false
+      required: [questorCharacterId]
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Quest definition ID (provide either this or code)
+        code:
+          type: string
+          nullable: true
+          description: Quest code (provide either this or definitionId)
+        questorCharacterId:
+          type: string
+          format: uuid
+          description: Character accepting the quest
+        questGiverCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: NPC offering the quest
+        termOverrides:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+          description: Template variable overrides
+
+    AbandonQuestRequest:
+      type: object
+      description: Request to abandon an active quest
+      additionalProperties: false
+      required: [questInstanceId, questorCharacterId]
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance to abandon
+        questorCharacterId:
+          type: string
+          format: uuid
+          description: Character abandoning
+
+    GetQuestRequest:
+      type: object
+      description: Request to get details of a quest instance
+      additionalProperties: false
+      required: [questInstanceId]
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+
+    ListQuestsRequest:
+      type: object
+      description: Request to list quests for a character with optional status filtering
+      additionalProperties: false
+      required: [characterId]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to list quests for
+        statuses:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/QuestStatus'
+          description: Filter by statuses (null for all)
+        limit:
+          type: integer
+          default: 50
+          description: Max results
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+
+    ListQuestsResponse:
+      type: object
+      description: Paginated list of quest instances
+      additionalProperties: false
+      required: [quests, total]
+      properties:
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestInstanceResponse'
+          description: Quest instances
+        total:
+          type: integer
+          description: Total count
+
+    ListAvailableQuestsRequest:
+      type: object
+      description: Request to list quests available for a character to accept
+      additionalProperties: false
+      required: [characterId]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to check availability for
+        questGiverCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by quest giver
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service
+
+    ListAvailableQuestsResponse:
+      type: object
+      description: List of quest definitions available for acceptance
+      additionalProperties: false
+      required: [available]
+      properties:
+        available:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestDefinitionResponse'
+          description: Available quest definitions
+
+    GetQuestLogRequest:
+      type: object
+      description: Request to get a player-facing quest log summary
+      additionalProperties: false
+      required: [characterId]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to get log for
+
+    QuestInstanceResponse:
+      type: object
+      description: Active or completed quest instance with progress information
+      additionalProperties: false
+      required: [questInstanceId, definitionId, contractInstanceId, code, name, status, questorCharacterIds, objectives, acceptedAt]
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Unique instance ID
+        definitionId:
+          type: string
+          format: uuid
+          description: Quest definition ID
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Underlying contract instance ID
+        code:
+          type: string
+          description: Quest code
+        name:
+          type: string
+          description: Quest name
+        status:
+          description: Current status of the quest
+          $ref: '#/components/schemas/QuestStatus'
+        questorCharacterIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Characters on the quest
+        questGiverCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Quest giver NPC
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveProgress'
+          description: Objective progress
+        acceptedAt:
+          type: string
+          format: date-time
+          description: When quest was accepted
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Quest deadline (null if none)
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When completed
+
+    ObjectiveProgress:
+      type: object
+      description: Current progress state of a quest objective
+      additionalProperties: false
+      required: [code, name, objectiveType, currentCount, requiredCount, isComplete, progressPercent, hidden, optional]
+      properties:
+        code:
+          type: string
+          description: Objective code
+        name:
+          type: string
+          description: Objective name
+        description:
+          type: string
+          nullable: true
+          description: Objective description
+        objectiveType:
+          description: Type of objective determining progress tracking logic
+          $ref: '#/components/schemas/ObjectiveType'
+        currentCount:
+          type: integer
+          description: Current progress count
+        requiredCount:
+          type: integer
+          description: Required count
+        isComplete:
+          type: boolean
+          description: Whether complete
+        progressPercent:
+          type: number
+          format: float
+          description: Progress percentage (0-100)
+        hidden:
+          type: boolean
+          description: Whether currently hidden
+        optional:
+          type: boolean
+          description: Whether optional
+
+    QuestLogResponse:
+      type: object
+      description: Player-facing quest log with active quests and completion counts
+      additionalProperties: false
+      required: [activeQuests, completedCount, failedCount]
+      properties:
+        activeQuests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestLogEntry'
+          description: Active quests with progress
+        completedCount:
+          type: integer
+          description: Total completed quests
+        failedCount:
+          type: integer
+          description: Total failed quests
+
+    QuestLogEntry:
+      type: object
+      description: Single entry in the quest log with progress summary
+      additionalProperties: false
+      required: [questInstanceId, code, name, category, status, overallProgress, visibleObjectives, acceptedAt]
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        code:
+          type: string
+          description: Quest code
+        name:
+          type: string
+          description: Quest name
+        category:
+          description: Quest category for organization
+          $ref: '#/components/schemas/QuestCategory'
+        status:
+          description: Current status of the quest
+          $ref: '#/components/schemas/QuestStatus'
+        overallProgress:
+          type: number
+          format: float
+          description: Overall progress percentage
+        visibleObjectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveProgress'
+          description: Visible objectives (hidden ones excluded until revealed)
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline if any
+        acceptedAt:
+          type: string
+          format: date-time
+          description: When accepted
+
+    # === OBJECTIVE ENDPOINTS ===
+    ReportProgressRequest:
+      type: object
+      description: Request to report progress on a quest objective
+      additionalProperties: false
+      required: [questInstanceId, objectiveCode, incrementBy]
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance
+        objectiveCode:
+          type: string
+          description: Objective code
+        incrementBy:
+          type: integer
+          description: Amount to increment progress
+        trackedEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity that contributed to progress (for deduplication)
+
+    ForceCompleteObjectiveRequest:
+      type: object
+      description: Request to force complete an objective (admin/debug only)
+      additionalProperties: false
+      required: [questInstanceId, objectiveCode]
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance
+        objectiveCode:
+          type: string
+          description: Objective code
+
+    GetObjectiveProgressRequest:
+      type: object
+      description: Request to get detailed progress for a specific objective
+      additionalProperties: false
+      required: [questInstanceId, objectiveCode]
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance
+        objectiveCode:
+          type: string
+          description: Objective code
+
+    ObjectiveProgressResponse:
+      type: object
+      description: Response with objective progress and milestone completion status
+      additionalProperties: false
+      required: [questInstanceId, objective, milestoneCompleted]
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        objective:
+          description: Current progress state of the objective
+          $ref: '#/components/schemas/ObjectiveProgress'
+        milestoneCompleted:
+          type: boolean
+          description: Whether this progress completed the milestone
+
+    # === INTERNAL CALLBACKS ===
+    MilestoneCompletedCallback:
+      type: object
+      description: Callback from Contract service when a milestone is completed
+      additionalProperties: false
+      required: [contractInstanceId, milestoneCode]
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID (maps to questInstanceId)
+        milestoneCode:
+          type: string
+          description: Completed milestone code
+
+    QuestCompletedCallback:
+      type: object
+      description: Callback when all quest milestones are completed
+      additionalProperties: false
+      required: [contractInstanceId]
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID

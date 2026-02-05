@@ -80,6 +80,13 @@ This document lists all state store components used in Bannou.
 | `orchestrator-routings` | Redis | Orchestrator | Service-to-app-id routing tables |
 | `orchestrator-statestore` | Redis | Orchestrator | Primary orchestrator state |
 | `permission-statestore` | Redis | Permission | Permission cache and session capabilities |
+| `quest-character-index` | Redis | Quest | Character to active quest instance mapping |
+| `quest-cooldown` | Redis | Quest | Per-character quest cooldown tracking |
+| `quest-definition-cache` | Redis | Quest | Quest definition read-through cache |
+| `quest-definition-statestore` | MySQL | Quest | Quest definitions with contract template IDs and metadata |
+| `quest-idempotency` | Redis | Quest | Idempotency keys for accept/complete operations |
+| `quest-instance-statestore` | MySQL | Quest | Quest instances with status and party information |
+| `quest-objective-progress` | Redis | Quest | Real-time objective progress tracking |
 | `realm-history-statestore` | MySQL | RealmHistory | Realm historical events and lore |
 | `realm-statestore` | MySQL | Realm | Realm definitions and configuration |
 | `relationship-statestore` | MySQL | Relationship | Entity relationships |
@@ -103,7 +110,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 93 stores (60 Redis, 33 MySQL)
+**Total**: 100 stores (65 Redis, 35 MySQL)
 
 ## Naming Conventions
 

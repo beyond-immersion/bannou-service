@@ -1,7 +1,8 @@
 # Variable Providers: Storyline & Quest
 
-> **Status**: Planning
+> **Status**: Ready for Implementation
 > **Created**: 2026-02-05
+> **Resolved**: 2026-02-05
 > **Related**: Quest Plugin, Storyline Plugin, Actor Service
 > **Service Hierarchy**: L4 (Game Features) providers accessing L4 services
 
@@ -112,15 +113,23 @@ From `ACTOR_DATA_ACCESS_PATTERNS.md`:
 | `${storyline.is_participant}` | `bool` | Is this character in any active storyline? |
 | `${storyline.active_count}` | `int` | Number of active storylines character participates in |
 | `${storyline.active_storylines}` | `List<string>` | List of active storyline IDs |
-| `${storyline.primary}` | `object?` | Primary/most recent storyline details |
+| `${storyline.primary}` | `object?` | Highest priority storyline details |
 | `${storyline.primary.id}` | `string` | Primary storyline ID |
 | `${storyline.primary.template_code}` | `string` | Story template code (e.g., "FALL_FROM_GRACE") |
 | `${storyline.primary.phase}` | `string` | Current phase of primary storyline |
 | `${storyline.primary.role}` | `string` | Character's role in primary storyline |
-| `${storyline.primary.started_at}` | `string` | ISO 8601 timestamp |
+| `${storyline.primary.priority}` | `int` | Priority value (higher = more important) |
+| `${storyline.primary.joined_at}` | `string` | ISO 8601 timestamp |
+| `${storyline.most_recent}` | `object?` | Most recently joined storyline details |
+| `${storyline.most_recent.id}` | `string` | Most recent storyline ID |
+| `${storyline.most_recent.template_code}` | `string` | Story template code |
+| `${storyline.most_recent.phase}` | `string` | Current phase |
+| `${storyline.most_recent.role}` | `string` | Character's role |
+| `${storyline.most_recent.priority}` | `int` | Priority value |
+| `${storyline.most_recent.joined_at}` | `string` | ISO 8601 timestamp |
 | `${storyline.has_role(role)}` | N/A | **Not supported** - providers are synchronous, use conditions |
 
-**Note:** Function-style access (`has_role(role)`) is not directly supported by the `IVariableProvider` interface. Instead, expose data that ABML conditions can filter:
+**Note:** `primary` = highest priority (informational, may not be honored by everything). `most_recent` = most recently joined (temporal). These are often the same storyline but semantically distinct.
 
 ```yaml
 # ABML usage
@@ -178,9 +187,11 @@ action: "return_to_questgiver"
 
 ### Prerequisite: Service Clients
 
-The Storyline and Quest plugins must exist and expose APIs that the cache can call:
+Generated clients `IStorylineClient` and `IQuestClient` already exist. These are hard dependencies - constructor injection ensures DI container fails at startup if not registered.
 
-**Storyline Service API (needed):**
+**Required API endpoints:**
+
+**Storyline Service API:**
 ```yaml
 /storyline/list-by-character:
   summary: List storylines where character participates
@@ -188,10 +199,10 @@ The Storyline and Quest plugins must exist and expose APIs that the cache can ca
     characterId: uuid
     status: [active]  # Filter to active only
   output:
-    storylines: [StorylineParticipation]
+    storylines: [StorylineParticipation]  # Must include Priority field
 ```
 
-**Quest Service API (needed):**
+**Quest Service API:**
 ```yaml
 /quest/list:
   summary: List character's quests
@@ -202,7 +213,7 @@ The Storyline and Quest plugins must exist and expose APIs that the cache can ca
     quests: [QuestSummary]
 ```
 
-**If these APIs don't exist yet:** The cache implementations should gracefully handle `ApiException` with 404 (service not available) and return empty/null data. This allows Actor service to work even when Storyline/Quest plugins are not deployed.
+**Schema requirement:** `StorylineParticipation` must include a `priority` field (int, higher = more important) for primary storyline selection.
 
 ---
 
@@ -253,26 +264,30 @@ public async Task HandleStorylineJoined(StorylineCharacterJoinedEvent evt, Cance
 }
 ```
 
-### Graceful Degradation
+### Error Handling
 
-When Storyline/Quest services are unavailable:
+Since Storyline/Quest clients are hard dependencies (constructor-injected), service unavailability is a deployment configuration error, not a runtime state to handle gracefully.
 
-1. **On cache miss + API failure:** Return empty/null data (not crash)
-2. **On cache hit but stale + API failure:** Return stale data (better than nothing)
-3. **Log warnings** but don't emit error events (optional service)
-
+**API-level errors (expected):**
 ```csharp
 catch (ApiException ex) when (ex.StatusCode == 404)
 {
-    _logger.LogDebug("Storyline service returned 404 for character {CharacterId}", characterId);
-    return null;  // Character has no storylines - valid state
-}
-catch (Exception ex)
-{
-    _logger.LogWarning(ex, "Failed to load storyline data for character {CharacterId}", characterId);
-    return cached?.Data;  // Return stale if available
+    // Character has no storylines - valid state, return empty list
+    return new StorylineListResponse { Storylines = new() };
 }
 ```
+
+**Infrastructure errors (unexpected):**
+```csharp
+catch (Exception ex)
+{
+    // Service should be available - this is a real error
+    _logger.LogError(ex, "Failed to load storyline data for character {CharacterId}", characterId);
+    throw;  // Let it bubble up - don't hide infrastructure failures
+}
+```
+
+**Stale-if-error:** For transient network issues, cache implementations MAY return stale data if available, but should log at Error level since the service should be reachable.
 
 ---
 
@@ -322,15 +337,17 @@ services.AddSingleton<IQuestCache, QuestCache>();
 **Question:** Do lib-storyline and lib-quest plugins exist with the required APIs?
 
 **Status:**
-- **lib-storyline**: Exists but ~30% complete (has GOAP plan composition, missing Scenario APIs, instances, Variable Provider support)
-- **lib-quest**: Does not exist yet (implementation plan in `sharded-waddling-narwhal.md`)
+- **lib-storyline**: Exists (~30% complete, needs API additions)
+- **lib-quest**: Implementation planned (`sharded-waddling-narwhal.md`)
+- **Generated clients**: `IStorylineClient` and `IQuestClient` already exist
 
-**Decision:** ✅ Implement providers now with graceful degradation. Wire to real clients once APIs exist. Providers can ship before services are complete.
+**Decision:** ✅ Hard dependency on generated clients. No graceful degradation.
 
-**Implementation:**
-- Cache returns `null` when client unavailable
-- Provider returns `is_participant = false`, `active_count = 0`, etc. for null data
-- Log at Debug level (not Warning) since this is expected for optional services
+**Rationale:**
+- Clients already exist - adding fallback logic would be dead code
+- Graceful degradation hides real errors (TENET violation)
+- These providers ship WITH the storyline/quest feature set - if you're using them, the services are deployed
+- Constructor injection for the clients; DI container fails at startup if not registered
 
 ### 2. Character vs Entity ID
 
@@ -348,44 +365,58 @@ services.AddSingleton<IQuestCache, QuestCache>();
 
 **Question:** Can non-character actors (e.g., Regional Watchers) access storyline data for OTHER characters?
 
-**Decision:** ✅ Keep providers character-scoped. Orchestrators use `service_call` for querying other characters.
+**Decision:** ✅ Keep providers character-scoped. Orchestrators access other characters' data via **Resource plugin snapshots**, NOT arbitrary `service_call`.
 
 **Rationale:**
-This aligns with the passive vs active architecture:
-- **Providers** = MY data (self-referential, cached)
-- **service_call** = QUERY the world (any character, real-time)
+- Non-character actors do NOT get `service_call` access to arbitrary services
+- The **Resource plugin (L1)** provides the controlled data access interface for obtaining character/entity snapshots
+- Resource plugin handles automatic caching, audit trails, and controlled access patterns
+- This prevents actors from having carte blanche to call any service
 
-**Documentation requirement:** Add to ABML docs and Regional Watchers doc:
+**Data access pattern for orchestrators:**
 
 ```yaml
-# Regional Watcher behavior - query storyline for candidate character
-- service_call:
-    service: storyline
-    method: list-by-character
-    parameters:
-      characterId: "${candidate.id}"
-      status: ["active"]
-    result_variable: candidate_storylines
+# Regional Watcher behavior - get character snapshot via Resource plugin
+- resource_snapshot:
+    entity_type: character
+    entity_id: "${candidate.id}"
+    include:
+      - storyline_participation
+      - quest_state
+    result_variable: candidate_snapshot
+
+# Then access data from snapshot
+condition: "${candidate_snapshot.storyline_participation.active_count} == 0"
 ```
+
+**Documentation requirement:** Update Regional Watchers doc with Resource plugin snapshot pattern, NOT service_call.
 
 ### 4. Primary Storyline Selection
 
 **Question:** How do we determine "primary" storyline when character has multiple?
 
-**Decision:** ✅ Most recently joined (sort by `joined_at` descending, take first).
+**Decision:** ✅ Primary = highest priority. Add separate `most_recent` for recency.
 
 **Rationale:**
-- Simple and deterministic (no ambiguity or extra state)
-- Matches cognitive intuition ("top of mind" is what you just got into)
-- No additional schema fields required
-- Can enhance with priority/urgency sorting later if needed
+- "Primary" semantically means "most important", not "most recent"
+- Priority is meaningful and obvious - the storyline the system considers most important
+- Recency is a separate useful data point, so expose both
+- Designing for "enhance later" creates cleanup work - do it right the first time
 
 **Implementation:**
 ```csharp
-_primary = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
+// Primary = highest priority (may not be honored by everything, but informational)
+_primary = _storylines.OrderByDescending(s => s.Priority).FirstOrDefault();
+
+// Most recent = most recently joined (separate concept)
+_mostRecent = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
 ```
 
-**Future enhancement:** Consider adding `last_phase_transition_at` for "most recently active" sorting if "most recently joined" proves insufficient.
+**Provider variables:**
+- `${storyline.primary.*}` - highest priority storyline
+- `${storyline.most_recent.*}` - most recently joined storyline
+
+**Schema requirement:** Storyline participation must include a `priority` field (int, higher = more important).
 
 ---
 
@@ -402,37 +433,38 @@ _primary = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
 
 - [ ] Create `IStorylineCache.cs` interface
 - [ ] Create `StorylineCache.cs` implementation
-- [ ] Create `StorylineProvider.cs` implementation
-- [ ] Register cache in DI
+- [ ] Create `StorylineProvider.cs` implementation (with `primary` and `most_recent`)
+- [ ] Register cache in DI (Singleton)
 - [ ] Register provider in ActorRunner
 - [ ] Add event subscriptions for cache invalidation
 - [ ] Write unit tests for provider path resolution
-- [ ] Test empty/null handling for graceful degradation
+- [ ] Test empty list handling (character has no storylines)
 
 ### Phase 3: Quest Provider
 
 - [ ] Create `IQuestCache.cs` interface
 - [ ] Create `QuestCache.cs` implementation
 - [ ] Create `QuestProvider.cs` implementation
-- [ ] Register cache in DI
+- [ ] Register cache in DI (Singleton)
 - [ ] Register provider in ActorRunner
 - [ ] Add event subscriptions for cache invalidation
 - [ ] Write unit tests for provider path resolution
-- [ ] Test empty/null handling for graceful degradation
+- [ ] Test empty list handling (character has no quests)
 
 ### Phase 4: Integration Testing
 
 - [ ] Test ABML access to `${storyline.*}` variables
 - [ ] Test ABML access to `${quest.*}` variables
+- [ ] Test `${storyline.primary}` vs `${storyline.most_recent}` ordering
 - [ ] Test cache invalidation flow
-- [ ] Test graceful degradation when services unavailable
 - [ ] Update ABML documentation with new variable providers
 
 ### Phase 5: Documentation
 
 - [ ] Update `docs/guides/ABML.md` with new providers
 - [ ] Update `docs/guides/ACTOR_SYSTEM.md` with variable provider list
-- [ ] Add examples to `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md`
+- [ ] Update `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md` with Resource plugin snapshot pattern (NOT service_call)
+- [ ] Document distinction: providers = self data, Resource snapshots = query others
 
 ---
 
@@ -444,14 +476,16 @@ _primary = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
 public sealed class StorylineProvider : IVariableProvider
 {
     private readonly List<StorylineParticipation> _storylines;
-    private readonly StorylineParticipation? _primary;
+    private readonly StorylineParticipation? _primary;     // Highest priority
+    private readonly StorylineParticipation? _mostRecent;  // Most recently joined
 
     public string Name => "storyline";
 
-    public StorylineProvider(StorylineListResponse? response)
+    public StorylineProvider(StorylineListResponse response)
     {
-        _storylines = response?.Storylines ?? new List<StorylineParticipation>();
-        _primary = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
+        _storylines = response.Storylines;
+        _primary = _storylines.OrderByDescending(s => s.Priority).FirstOrDefault();
+        _mostRecent = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
     }
 
     public object? GetValue(ReadOnlySpan<string> path)
@@ -465,27 +499,29 @@ public sealed class StorylineProvider : IVariableProvider
             "is_participant" => _storylines.Count > 0,
             "active_count" => _storylines.Count,
             "active_storylines" => _storylines.Select(s => s.StorylineId.ToString()).ToList(),
-            "primary" => path.Length == 1 ? GetPrimaryRoot() : GetPrimaryProperty(path.Slice(1)),
+            "primary" => path.Length == 1 ? GetStorylineRoot(_primary) : GetStorylineProperty(_primary, path.Slice(1)),
+            "most_recent" => path.Length == 1 ? GetStorylineRoot(_mostRecent) : GetStorylineProperty(_mostRecent, path.Slice(1)),
             _ => null
         };
     }
 
-    private object? GetPrimaryProperty(ReadOnlySpan<string> path)
+    private object? GetStorylineProperty(StorylineParticipation? storyline, ReadOnlySpan<string> path)
     {
-        if (_primary == null || path.Length == 0) return null;
+        if (storyline == null || path.Length == 0) return null;
 
         return path[0].ToLowerInvariant() switch
         {
-            "id" => _primary.StorylineId.ToString(),
-            "template_code" => _primary.TemplateCode,
-            "phase" => _primary.CurrentPhase,
-            "role" => _primary.Role,
-            "started_at" => _primary.JoinedAt.ToString("o"),
+            "id" => storyline.StorylineId.ToString(),
+            "template_code" => storyline.TemplateCode,
+            "phase" => storyline.CurrentPhase,
+            "role" => storyline.Role,
+            "priority" => storyline.Priority,
+            "joined_at" => storyline.JoinedAt.ToString("o"),
             _ => null
         };
     }
 
-    // ... GetRootValue, CanResolve implementations
+    // ... GetRootValue, GetStorylineRoot, CanResolve implementations
 }
 ```
 
@@ -499,9 +535,9 @@ public sealed class QuestProvider : IVariableProvider
 
     public string Name => "quest";
 
-    public QuestProvider(QuestListResponse? response)
+    public QuestProvider(QuestListResponse response)
     {
-        _quests = response?.Quests ?? new List<QuestSummary>();
+        _quests = response.Quests;
         _byCode = _quests.ToDictionary(q => q.QuestCode, q => q, StringComparer.OrdinalIgnoreCase);
     }
 

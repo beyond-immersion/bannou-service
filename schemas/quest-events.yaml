@@ -1,0 +1,317 @@
+openapi: 3.0.3
+info:
+  title: Quest Service Events
+  description: |
+    Event subscription and publication declarations for Quest service.
+
+    **Data Flow**:
+    - Subscribes to: contract.milestone.completed, contract.fulfilled, contract.terminated
+    - Publishes: quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned
+  version: 1.0.0
+
+  x-event-subscriptions:
+    - topic: contract.milestone.completed
+      event: ContractMilestoneCompletedEvent
+      handler: HandleContractMilestoneCompleted
+      description: Update quest state when Contract milestone completes
+    - topic: contract.fulfilled
+      event: ContractFulfilledEvent
+      handler: HandleContractFulfilled
+      description: Handle quest completion when contract is fulfilled
+    - topic: contract.terminated
+      event: ContractTerminatedEvent
+      handler: HandleContractTerminated
+      description: Handle quest failure/abandonment when contract terminates
+
+  x-event-publications:
+    - topic: quest.accepted
+      event: QuestAcceptedEvent
+      description: Published when a character accepts a quest
+    - topic: quest.objective.progressed
+      event: QuestObjectiveProgressedEvent
+      description: Published when objective progress changes
+    - topic: quest.completed
+      event: QuestCompletedEvent
+      description: Published when quest is completed successfully
+    - topic: quest.failed
+      event: QuestFailedEvent
+      description: Published when quest fails (deadline, breach)
+    - topic: quest.abandoned
+      event: QuestAbandonedEvent
+      description: Published when quest is voluntarily abandoned
+
+paths: {}
+
+components:
+  schemas:
+    # === PUBLISHED EVENTS ===
+    QuestAcceptedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character accepts a quest
+      required:
+        - eventId
+        - timestamp
+        - questInstanceId
+        - definitionId
+        - questCode
+        - questorCharacterIds
+        - gameServiceId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        definitionId:
+          type: string
+          format: uuid
+          description: Quest definition ID
+        questCode:
+          type: string
+          description: Quest code
+        questorCharacterIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Characters who accepted
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service ID
+
+    QuestObjectiveProgressedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when objective progress changes
+      required:
+        - eventId
+        - timestamp
+        - questInstanceId
+        - questCode
+        - objectiveCode
+        - currentCount
+        - requiredCount
+        - isComplete
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        questCode:
+          type: string
+          description: Quest code
+        objectiveCode:
+          type: string
+          description: Objective code
+        currentCount:
+          type: integer
+          description: Current progress
+        requiredCount:
+          type: integer
+          description: Required for completion
+        isComplete:
+          type: boolean
+          description: Whether objective is now complete
+
+    QuestCompletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when quest is completed successfully
+      required:
+        - eventId
+        - timestamp
+        - questInstanceId
+        - definitionId
+        - questCode
+        - questorCharacterIds
+        - gameServiceId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        definitionId:
+          type: string
+          format: uuid
+          description: Quest definition ID
+        questCode:
+          type: string
+          description: Quest code
+        questorCharacterIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Characters who completed
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service ID
+
+    QuestFailedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when quest fails
+      required:
+        - eventId
+        - timestamp
+        - questInstanceId
+        - questCode
+        - questorCharacterIds
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        questCode:
+          type: string
+          description: Quest code
+        questorCharacterIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Characters who failed
+        reason:
+          type: string
+          description: Failure reason
+
+    QuestAbandonedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when quest is voluntarily abandoned
+      required:
+        - eventId
+        - timestamp
+        - questInstanceId
+        - questCode
+        - abandoningCharacterId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        questCode:
+          type: string
+          description: Quest code
+        abandoningCharacterId:
+          type: string
+          format: uuid
+          description: Character who abandoned
+
+    # === SUBSCRIBED EVENTS (from Contract) ===
+    ContractMilestoneCompletedEvent:
+      type: object
+      additionalProperties: false
+      description: Event from Contract when milestone completes
+      required:
+        - eventId
+        - timestamp
+        - contractInstanceId
+        - milestoneCode
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Event ID
+        timestamp:
+          type: string
+          format: date-time
+          description: When occurred
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance
+        milestoneCode:
+          type: string
+          description: Milestone code
+
+    ContractFulfilledEvent:
+      type: object
+      additionalProperties: false
+      description: Event from Contract when fulfilled
+      required:
+        - eventId
+        - timestamp
+        - contractInstanceId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Event ID
+        timestamp:
+          type: string
+          format: date-time
+          description: When occurred
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance
+
+    ContractTerminatedEvent:
+      type: object
+      additionalProperties: false
+      description: Event from Contract when terminated
+      required:
+        - eventId
+        - timestamp
+        - contractInstanceId
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Event ID
+        timestamp:
+          type: string
+          format: date-time
+          description: When occurred
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance
+        reason:
+          type: string
+          description: Termination reason
