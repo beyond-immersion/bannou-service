@@ -97,6 +97,21 @@
             The SDK doesn't reference plugins directly - it receives a generic bundle
             and extracts what it knows how to interpret.
             </summary>
+            <remarks>
+            <para>
+            The ArchiveExtractor builds a WorldState from archive data for use in
+            GOAP planning. It extracts facts about characters, their relationships,
+            personality traits, and historical context.
+            </para>
+            <para>
+            Facts are keyed by convention:
+            - "character.{id}.trait.{axis}" - personality traits
+            - "character.{id}.status" - alive/dead/dormant
+            - "character.{id}.realm" - realm membership
+            - "character.{id}.relationship.{otherId}" - aggregate sentiment
+            - "history.participation.{eventId}" - historical event involvement
+            </para>
+            </remarks>
         </member>
         <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveExtractor.ExtractWorldState(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType)">
             <summary>
@@ -106,6 +121,26 @@
             <param name="bundle">The archive bundle containing data entries.</param>
             <param name="primarySpectrum">The primary spectrum for the story.</param>
             <returns>The extracted world state.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveExtractor.ExtractCharacterFacts(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Extract facts from character base archive.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveExtractor.ExtractHistoryFacts(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Extract facts from character history archive.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveExtractor.ExtractEncounterFacts(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Extract facts from character encounter archive.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveExtractor.ExtractPersonalityFacts(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Extract facts from character personality archive.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor">
             <summary>
@@ -119,10 +154,33 @@
             character-encounter, character-personality) and processes nested archives recursively.
             </para>
             <para>
-            Kernel extraction logic will be fully implemented when Generated archive types
-            are available from the plugin schema generation pipeline (GH Issue #279).
+            Extraction thresholds follow narratology principles:
+            - Death is always maximum significance (1.0) for archived characters
+            - HistoricalEvent kernels require significance > 0.7
+            - Conflict kernels require sentiment &lt; -0.5 and impact > 0.7
+            - DeepBond kernels require sentiment > 0.6 and 5+ encounters
             </para>
             </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.HistoricalEventSignificanceThreshold">
+            <summary>
+            Minimum significance threshold for historical event kernels.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ConflictSentimentThreshold">
+            <summary>
+            Minimum negative sentiment for conflict kernels.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.DeepBondSentimentThreshold">
+            <summary>
+            Minimum positive sentiment for deep bond kernels.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.DeepBondMinEncounters">
+            <summary>
+            Minimum encounters required for deep bond kernels.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ExtractKernels(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle)">
             <summary>
@@ -151,6 +209,898 @@
         <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ExtractFromPersonalityArchive(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,System.Collections.Generic.List{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel})">
             <summary>
             Personality archive doesn't directly produce kernels but can adjust scoring.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.GetArcsForHistoricalEvent(BeyondImmersion.Bannou.StorylineTheory.Archives.EventCategory)">
+            <summary>
+            Get compatible arcs based on historical event category.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.GetGenreAffinitiesForEvent(BeyondImmersion.Bannou.StorylineTheory.Archives.EventCategory)">
+            <summary>
+            Get genre affinities based on historical event category.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryElement">
+            <summary>
+            A machine-readable backstory element for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryElement.ElementType">
+            <summary>
+            Category of this backstory element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryElement.Key">
+            <summary>
+            Machine-readable key (e.g., "homeland", "trained_by", "past_job").
+            <br/>Used by behavior system to query specific aspects.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryElement.Value">
+            <summary>
+            Machine-readable value (e.g., "northlands", "knights_guild", "blacksmith").
+            <br/>Referenced in behavior rules.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryElement.Strength">
+            <summary>
+            How strongly this element affects behavior (0.0 to 1.0).
+            <br/>Higher strength = greater influence on decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryElement.RelatedEntityId">
+            <summary>
+            Optional related entity (location, organization, character)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryElement.RelatedEntityType">
+            <summary>
+            Type of the related entity (if any)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryElementType">
+            <summary>
+            Types of backstory elements. Each type represents a different aspect
+            <br/>of the character's background that influences behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryResponse">
+            <summary>
+            Complete backstory data for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryResponse.CharacterId">
+            <summary>
+            ID of the character this backstory belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryResponse.Elements">
+            <summary>
+            All backstory elements for this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryResponse.CreatedAt">
+            <summary>
+            When this backstory was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.BackstoryResponse.UpdatedAt">
+            <summary>
+            When this backstory was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive">
+            <summary>
+            Core character data for archive storage and storyline SDK consumption.
+            <br/>Inherits base archive properties from ResourceArchiveBase.
+            <br/>The characterId field equals resourceId for convenience.
+            <br/>
+            <br/>Note: This is distinct from CharacterArchive which contains text summaries
+            <br/>for cleanup. CharacterBaseArchive contains structured data for SDK consumption.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.CharacterId">
+            <summary>
+            Unique identifier for the character (equals resourceId)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.Name">
+            <summary>
+            Display name of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.RealmId">
+            <summary>
+            Realm ID (partition key)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.SpeciesId">
+            <summary>
+            Species ID (foreign key to Species service)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.BirthDate">
+            <summary>
+            In-game birth timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.DeathDate">
+            <summary>
+            In-game death timestamp (required for compression)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.Status">
+            <summary>
+            Current lifecycle status (must be dead for compression)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.FamilySummary">
+            <summary>
+            Text summary of family relationships.
+            <br/>Example: "Father of 3, married to Elena, orphaned at young age"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.CreatedAt">
+            <summary>
+            Real-world creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterBaseArchive.UpdatedAt">
+            <summary>
+            Real-world last update timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterEncounterArchive">
+            <summary>
+            Complete encounter data for archive storage and storyline SDK consumption.
+            <br/>Inherits base archive properties from ResourceArchiveBase.
+            <br/>The characterId field equals resourceId for convenience.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterEncounterArchive.CharacterId">
+            <summary>
+            Character this data belongs to (equals resourceId)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterEncounterArchive.HasEncounters">
+            <summary>
+            Whether encounters exist for this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterEncounterArchive.EncounterCount">
+            <summary>
+            Number of encounters archived
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterEncounterArchive.Encounters">
+            <summary>
+            Encounters with perspectives (empty if hasEncounters=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterEncounterArchive.AggregateSentiment">
+            <summary>
+            Map of target characterId to aggregate sentiment.
+            <br/>Preserves sentiment relationships for historical reference.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterHistoryArchive">
+            <summary>
+            Complete history data for archive storage and storyline SDK consumption.
+            <br/>Inherits base archive properties from ResourceArchiveBase.
+            <br/>The characterId field equals resourceId for convenience.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterHistoryArchive.CharacterId">
+            <summary>
+            Character this data belongs to (equals resourceId)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterHistoryArchive.HasParticipations">
+            <summary>
+            Whether historical participations exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterHistoryArchive.Participations">
+            <summary>
+            Historical event participations (empty if hasParticipations=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterHistoryArchive.HasBackstory">
+            <summary>
+            Whether backstory elements exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterHistoryArchive.Backstory">
+            <summary>
+            Backstory data (null if hasBackstory=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterHistoryArchive.Summaries">
+            <summary>
+            Text summaries for reference
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterPersonalityArchive">
+            <summary>
+            Complete personality data for archive storage and storyline SDK consumption.
+            <br/>Inherits base archive properties from ResourceArchiveBase.
+            <br/>The characterId field equals resourceId for convenience.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterPersonalityArchive.CharacterId">
+            <summary>
+            Character this data belongs to (equals resourceId)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterPersonalityArchive.HasPersonality">
+            <summary>
+            Whether personality traits exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterPersonalityArchive.Personality">
+            <summary>
+            Personality traits (null if hasPersonality=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterPersonalityArchive.HasCombatPreferences">
+            <summary>
+            Whether combat preferences exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterPersonalityArchive.CombatPreferences">
+            <summary>
+            Combat preferences (null if hasCombatPreferences=false)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.CharacterStatus">
+            <summary>
+            Character lifecycle status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferences">
+            <summary>
+            Combat behavior preferences that influence tactical decisions.
+            <br/>These values affect GOAP action selection, retreat conditions,
+            <br/>and group coordination behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferences.Style">
+            <summary>
+            Overall combat approach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferences.PreferredRange">
+            <summary>
+            Preferred engagement distance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferences.GroupRole">
+            <summary>
+            Role when fighting in groups
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferences.RiskTolerance">
+            <summary>
+            Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).
+            <br/>Affects ability selection and target prioritization.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferences.RetreatThreshold">
+            <summary>
+            Health percentage at which retreat is considered (0.0 = fight to death,
+            <br/>0.5 = retreat at half health, 1.0 = retreat at any damage).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferences.ProtectAllies">
+            <summary>
+            Whether to prioritize ally protection over self-preservation.
+            <br/>Affects target selection and positioning decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferencesResponse">
+            <summary>
+            Combat preferences profile for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferencesResponse.CharacterId">
+            <summary>
+            Character these preferences belong to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferencesResponse.Preferences">
+            <summary>
+            The combat preferences values
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferencesResponse.Version">
+            <summary>
+            Preferences version number (increments on each evolution)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferencesResponse.CreatedAt">
+            <summary>
+            When these preferences were first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatPreferencesResponse.UpdatedAt">
+            <summary>
+            When these preferences were last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.CombatStyle">
+            <summary>
+            Overall approach to combat situations. Affects target selection,
+            <br/>ability usage, and engagement decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.EmotionalImpact">
+            <summary>
+            How the encounter emotionally affected the character
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel">
+            <summary>
+            Core encounter record representing a memorable interaction
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.EncounterId">
+            <summary>
+            Unique identifier for this encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.Timestamp">
+            <summary>
+            In-game time when the encounter occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.RealmId">
+            <summary>
+            Realm where the encounter took place
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.LocationId">
+            <summary>
+            Specific location within the realm (optional)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.EncounterTypeCode">
+            <summary>
+            Type code for this encounter (e.g., COMBAT, TRADE)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.Context">
+            <summary>
+            What triggered or contextualized the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.Outcome">
+            <summary>
+            Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.ParticipantIds">
+            <summary>
+            All character IDs involved in the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.Metadata">
+            <summary>
+            Additional encounter-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.CreatedAt">
+            <summary>
+            System timestamp when record was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterOutcome">
+            <summary>
+            Overall outcome of an encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel">
+            <summary>
+            A character's individual perspective on an encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.PerspectiveId">
+            <summary>
+            Unique identifier for this perspective
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.EncounterId">
+            <summary>
+            Reference to the shared encounter record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.CharacterId">
+            <summary>
+            Character holding this perspective
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.EmotionalImpact">
+            <summary>
+            Primary emotional response to the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.SentimentShift">
+            <summary>
+            Opinion change toward other participants (-1.0 to +1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.MemoryStrength">
+            <summary>
+            How strongly remembered (0.0-1.0, decays over time)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.RememberedAs">
+            <summary>
+            Short description from this character's POV
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.LastDecayedAt">
+            <summary>
+            When memory decay was last applied
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.CreatedAt">
+            <summary>
+            System timestamp when record was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.UpdatedAt">
+            <summary>
+            Last modification timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterResponse">
+            <summary>
+            Response containing an encounter with perspectives
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterResponse.Encounter">
+            <summary>
+            The shared encounter record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterResponse.Perspectives">
+            <summary>
+            All perspectives on this encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.EventCategory">
+            <summary>
+            Categories of historical events that characters can participate in
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.GroupRole">
+            <summary>
+            Preferred role when fighting in groups. Affects positioning,
+            <br/>target priority, and coordination behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation">
+            <summary>
+            Record of a character's participation in a historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.ParticipationId">
+            <summary>
+            Unique ID for this participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.CharacterId">
+            <summary>
+            ID of the character who participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.EventName">
+            <summary>
+            Name of the event (for display and summarization)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.EventCategory">
+            <summary>
+            Category of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.Role">
+            <summary>
+            How the character participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.Significance">
+            <summary>
+            How significant this event was for the character (0.0 to 1.0).
+            <br/>Affects behavior system weighting of this memory.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.Metadata">
+            <summary>
+            Event-specific details for behavior decisions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.CreatedAt">
+            <summary>
+            When this record was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.HistorySummaryResponse">
+            <summary>
+            Generated text summaries for character compression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistorySummaryResponse.CharacterId">
+            <summary>
+            ID of the character summarized
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistorySummaryResponse.KeyBackstoryPoints">
+            <summary>
+            Key backstory elements as text summaries.
+            <br/>e.g., ["Trained by Knights Guild", "Born in the Northlands"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistorySummaryResponse.MajorLifeEvents">
+            <summary>
+            Major historical events as text summaries.
+            <br/>e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.ParticipationRole">
+            <summary>
+            How the character participated in the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.PersonalityResponse">
+            <summary>
+            Complete personality profile for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.PersonalityResponse.CharacterId">
+            <summary>
+            Character this personality belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.PersonalityResponse.Traits">
+            <summary>
+            All trait axis values for this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.PersonalityResponse.Version">
+            <summary>
+            Personality version number (increments on each evolution)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.PersonalityResponse.ArchetypeHint">
+            <summary>
+            Optional archetype code for behavior optimization (e.g., "guardian",
+            <br/>"merchant", "scholar", "trickster"). Allows behavior system to use
+            <br/>pre-compiled behavior variants for common personality patterns.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.PersonalityResponse.CreatedAt">
+            <summary>
+            When this personality was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.PersonalityResponse.UpdatedAt">
+            <summary>
+            When this personality was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.PreferredRange">
+            <summary>
+            Preferred engagement distance. Influences positioning and
+            <br/>ability selection in combat.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmEventCategory">
+            <summary>
+            Categories of historical events that realms can participate in
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmEventRole">
+            <summary>
+            How the realm participated in the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation">
+            <summary>
+            Record of a realm's participation in a historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.ParticipationId">
+            <summary>
+            Unique ID for this participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.RealmId">
+            <summary>
+            ID of the realm that participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.EventName">
+            <summary>
+            Name of the event (for display and summarization)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.EventCategory">
+            <summary>
+            Category of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.Role">
+            <summary>
+            How the realm participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.Impact">
+            <summary>
+            How significant this event was for the realm (0.0 to 1.0).
+            <br/>Affects behavior system weighting.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.Metadata">
+            <summary>
+            Event-specific details for behavior decisions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.CreatedAt">
+            <summary>
+            When this record was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoryArchive">
+            <summary>
+            Compressed realm lore and history for archive storage and storyline SDK consumption.
+            <br/>Inherits base archive properties from ResourceArchiveBase.
+            <br/>The realmId field equals resourceId for convenience.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoryArchive.RealmId">
+            <summary>
+            Realm this data belongs to (equals resourceId)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoryArchive.HasLore">
+            <summary>
+            Whether lore elements exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoryArchive.LoreElements">
+            <summary>
+            Lore elements (empty if hasLore=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoryArchive.HasParticipations">
+            <summary>
+            Whether event participations exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoryArchive.Participations">
+            <summary>
+            Event participations (empty if hasParticipations=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoryArchive.Summaries">
+            <summary>
+            Text summaries for reference
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistorySummaryResponse">
+            <summary>
+            Generated text summaries for realm archival
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistorySummaryResponse.RealmId">
+            <summary>
+            ID of the realm summarized
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistorySummaryResponse.KeyLorePoints">
+            <summary>
+            Key lore elements as text summaries.
+            <br/>e.g., ["Founded during Year of the Dragon", "Primary export: Iron ore"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistorySummaryResponse.MajorHistoricalEvents">
+            <summary>
+            Major historical events as text summaries.
+            <br/>e.g., ["Defended against the Northern Invasion", "Treaty of Stormgate established peace"]
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreElement">
+            <summary>
+            A machine-readable lore element for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreElement.ElementType">
+            <summary>
+            Category of this lore element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreElement.Key">
+            <summary>
+            Machine-readable key (e.g., "founding_year", "primary_export", "capital_city").
+            <br/>Used by behavior system to query specific aspects.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreElement.Value">
+            <summary>
+            Machine-readable value (e.g., "year_of_the_dragon", "iron_ore", "stormgate").
+            <br/>Referenced in behavior rules.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreElement.Strength">
+            <summary>
+            How strongly this element affects behavior (0.0 to 1.0).
+            <br/>Higher strength = greater influence on decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreElement.RelatedEntityId">
+            <summary>
+            Optional related entity (location, organization, character)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreElement.RelatedEntityType">
+            <summary>
+            Type of the related entity (if any)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreElementType">
+            <summary>
+            Types of lore elements. Each type represents a different aspect
+            <br/>of the realm's background that influences behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreResponse">
+            <summary>
+            Complete lore data for a realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreResponse.RealmId">
+            <summary>
+            ID of the realm this lore belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreResponse.Elements">
+            <summary>
+            All lore elements for this realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreResponse.CreatedAt">
+            <summary>
+            When this lore was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmLoreResponse.UpdatedAt">
+            <summary>
+            When this lore was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.ResourceArchiveBase">
+            <summary>
+            Base schema for all resource archives that can be stored in
+            <br/>the resource service's archive bundles and consumed by the
+            <br/>storyline SDK's ArchiveExtractor.
+            <br/>
+            <br/>Archives implementing this base schema are marked with
+            <br/>x-archive-type: true and are automatically collected by
+            <br/>the archive generation script for SDK model generation.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.ResourceArchiveBase.ResourceId">
+            <summary>
+            Unique identifier of the archived resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.ResourceArchiveBase.ResourceType">
+            <summary>
+            Type identifier (e.g., "character", "character-personality", "realm-history")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.ResourceArchiveBase.ArchivedAt">
+            <summary>
+            When this archive was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.ResourceArchiveBase.SchemaVersion">
+            <summary>
+            Schema version for forward compatibility migration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.ResourceArchiveBase.NestedArchives">
+            <summary>
+            Child archives from dependent resources (populated by lib-resource compression)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.ResourceArchiveBase.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.TraitAxis">
+            <summary>
+            Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
+            <br/>Based on psychological research (Big Five + game-relevant extensions).
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.TraitValue">
+            <summary>
+            A single personality trait with its current value and evolution history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.TraitValue.Axis">
+            <summary>
+            The personality axis this value represents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.TraitValue.Value">
+            <summary>
+            Current trait value on the spectrum (-1.0 to +1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.TraitValue.LastChangedAt">
+            <summary>
+            When this trait last evolved (null if never changed since creation)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.TraitValue.ChangeCount">
+            <summary>
+            Number of times this trait has evolved
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcControlPoint">
