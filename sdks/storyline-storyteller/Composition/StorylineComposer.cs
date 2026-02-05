@@ -33,8 +33,9 @@ public sealed class StorylineComposer
     /// </summary>
     /// <param name="context">Story generation context.</param>
     /// <param name="archives">Archive bundle with character/realm data.</param>
+    /// <param name="urgency">Planning urgency affecting search parameters. Defaults to Medium.</param>
     /// <returns>The composed storyline plan.</returns>
-    public StorylinePlan Compose(StoryContext context, ArchiveBundle archives)
+    public StorylinePlan Compose(StoryContext context, ArchiveBundle archives, PlanningUrgency urgency = PlanningUrgency.Medium)
     {
         // Extract initial world state from archives
         var initialState = _archiveExtractor.ExtractWorldState(archives, context.PrimarySpectrum);
@@ -59,7 +60,7 @@ public sealed class StorylineComposer
             currentPhase,
             context.Genre,
             context.PrimarySpectrum,
-            PlanningUrgency.Medium);
+            urgency);
 
         return plan;
     }

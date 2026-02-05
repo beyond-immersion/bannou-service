@@ -32,22 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Storyline;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Default urgency tier for GOAP planning.
-    /// low = more iterations (1000/20)
-    /// medium = balanced (500/15)
-    /// high = fewer iterations (200/10)
-/// </summary>
-public enum DefaultPlanningUrgency
-{
-    Low,
-    Medium,
-    High,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Storyline service.
 /// Properties are automatically bound from environment variables.
@@ -78,29 +62,13 @@ public class StorylineServiceConfiguration : IServiceConfiguration
     public int PlanCacheTtlSeconds { get; set; } = 3600;
 
     /// <summary>
-    /// Maximum A* iterations for GOAP planning.
-    /// Higher values allow more complex plans but take longer.
-    /// Environment variable: STORYLINE_MAX_PLANNING_ITERATIONS
-    /// </summary>
-    [ConfigRange(Minimum = 100, Maximum = 5000)]
-    public int MaxPlanningIterations { get; set; } = 500;
-
-    /// <summary>
-    /// Default maximum entities per storyline plan.
-    /// Can be overridden per-request.
-    /// Environment variable: STORYLINE_DEFAULT_MAX_ENTITIES
-    /// </summary>
-    [ConfigRange(Minimum = 1, Maximum = 50)]
-    public int DefaultMaxEntities { get; set; } = 10;
-
-    /// <summary>
     /// Default urgency tier for GOAP planning.
     /// low = more iterations (1000/20)
     /// medium = balanced (500/15)
     /// high = fewer iterations (200/10)
     /// Environment variable: STORYLINE_DEFAULT_PLANNING_URGENCY
     /// </summary>
-    public DefaultPlanningUrgency DefaultPlanningUrgency { get; set; } = DefaultPlanningUrgency.Medium;
+    public PlanningUrgency DefaultPlanningUrgency { get; set; } = PlanningUrgency.Medium;
 
     /// <summary>
     /// Whether to cache deterministic plans (those with explicit seed).

@@ -129,9 +129,6 @@ components:
       - legacy
       - mystery
       - peace
-      - redemption
-      - conquest
-      - survival
       description: |
         High-level story goal that drives arc selection.
         revenge: Character seeks vengeance for past wrongs
@@ -139,9 +136,6 @@ components:
         legacy: Creating or continuing a lasting impact
         mystery: Uncovering hidden truths
         peace: Resolving conflicts and finding harmony
-        redemption: Atoning for past mistakes
-        conquest: Achieving dominion or victory
-        survival: Overcoming threats to existence
 
     ArcType:
       type: string

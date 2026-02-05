@@ -20,6 +20,7 @@ using SdkArcType = BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType;
 using SdkEffectCardinality = BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality;
 using SdkPhasePosition = BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition;
 using SdkPhaseTargetState = BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState;
+using SdkPlanningUrgency = BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency;
 using SdkSpectrumType = BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType;
 using SdkStorylinePlan = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlan;
 using SdkStorylinePlanAction = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction;
@@ -183,8 +184,11 @@ public partial class StorylineService : IStorylineService
                 ActantAssignments = actantAssignments
             };
 
+            // Resolve planning urgency: request override → config default
+            var urgency = ResolveUrgency(body.Urgency);
+
             // Call SDK to compose storyline
-            var sdkPlan = _composer.Compose(context, archiveBundle);
+            var sdkPlan = _composer.Compose(context, archiveBundle, urgency);
 
             stopwatch.Stop();
             var generationTimeMs = (int)stopwatch.ElapsedMilliseconds;
@@ -259,6 +263,12 @@ public partial class StorylineService : IStorylineService
             // SDK operation error
             _logger.LogWarning(ex, "Invalid operation during composition");
             return (StatusCodes.BadRequest, null);
+        }
+        catch (ApiException ex)
+        {
+            // Expected API error from inter-service call (e.g., resource not found)
+            _logger.LogWarning(ex, "Resource service call failed with status {Status}", ex.StatusCode);
+            return ((StatusCodes)ex.StatusCode, null);
         }
         catch (Exception ex)
         {
@@ -583,6 +593,23 @@ public partial class StorylineService : IStorylineService
     }
 
     /// <summary>
+    /// Resolves planning urgency from request or configuration, converting to SDK type.
+    /// </summary>
+    private SdkPlanningUrgency ResolveUrgency(PlanningUrgency? requestedUrgency)
+    {
+        // Request override takes precedence, then config default
+        var urgency = requestedUrgency ?? _configuration.DefaultPlanningUrgency;
+
+        return urgency switch
+        {
+            PlanningUrgency.Low => SdkPlanningUrgency.Low,
+            PlanningUrgency.Medium => SdkPlanningUrgency.Medium,
+            PlanningUrgency.High => SdkPlanningUrgency.High,
+            _ => SdkPlanningUrgency.Medium
+        };
+    }
+
+    /// <summary>
     /// Resolves arc type from request or goal.
     /// </summary>
     private SdkArcType ResolveArcType(ArcType? requestedArcType, StorylineGoal goal)
@@ -600,9 +627,6 @@ public partial class StorylineService : IStorylineService
             StorylineGoal.Legacy => SdkArcType.RagsToRiches,   // Monotonic rise, building lasting impact
             StorylineGoal.Mystery => SdkArcType.Cinderella,    // Rise-fall-rise, uncovering and resolving
             StorylineGoal.Peace => SdkArcType.ManInHole,       // Fall then rise, resolving conflicts
-            StorylineGoal.Redemption => SdkArcType.ManInHole,  // Fall then rise, atoning for mistakes
-            StorylineGoal.Conquest => SdkArcType.Icarus,       // Rise then fall, warning against hubris
-            StorylineGoal.Survival => SdkArcType.ManInHole,    // Fall then rise, overcoming threats
             _ => SdkArcType.ManInHole                          // Default: most common arc
         };
     }
@@ -619,9 +643,6 @@ public partial class StorylineService : IStorylineService
             StorylineGoal.Legacy => SdkSpectrumType.SuccessFailure,
             StorylineGoal.Mystery => SdkSpectrumType.WisdomIgnorance,
             StorylineGoal.Peace => SdkSpectrumType.LoveHate,
-            StorylineGoal.Redemption => SdkSpectrumType.HonorDishonor,
-            StorylineGoal.Conquest => SdkSpectrumType.PowerImpotence,
-            StorylineGoal.Survival => SdkSpectrumType.LifeDeath,
             _ => SdkSpectrumType.JusticeInjustice
         };
     }

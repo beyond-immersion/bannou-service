@@ -25,32 +25,8 @@ x-service-configuration:
         Default: 3600 (1 hour)
       env: STORYLINE_PLAN_CACHE_TTL_SECONDS
 
-    MaxPlanningIterations:
-      type: integer
-      default: 500
-      minimum: 100
-      maximum: 5000
-      description: |
-        Maximum A* iterations for GOAP planning.
-        Higher values allow more complex plans but take longer.
-      env: STORYLINE_MAX_PLANNING_ITERATIONS
-
-    DefaultMaxEntities:
-      type: integer
-      default: 10
-      minimum: 1
-      maximum: 50
-      description: |
-        Default maximum entities per storyline plan.
-        Can be overridden per-request.
-      env: STORYLINE_DEFAULT_MAX_ENTITIES
-
     DefaultPlanningUrgency:
-      type: string
-      enum:
-      - low
-      - medium
-      - high
+      $ref: 'storyline-api.yaml#/components/schemas/PlanningUrgency'
       default: medium
       description: |
         Default urgency tier for GOAP planning.
