@@ -239,6 +239,12 @@ internal class ObjectiveProgressModel
 
     /// <summary>Whether optional.</summary>
     public bool Optional { get; set; }
+
+    /// <summary>
+    /// Tracked entity IDs for deduplication (e.g., killed enemies, collected items).
+    /// Prevents counting the same entity multiple times for progress.
+    /// </summary>
+    public HashSet<Guid> TrackedEntityIds { get; set; } = new();
 }
 
 /// <summary>

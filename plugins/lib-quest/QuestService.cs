@@ -1072,8 +1072,9 @@ public partial class QuestService : IQuestService
                         continue;
                 }
 
-                // TODO: Check prerequisites (level requirements, completed quests, etc.)
-                // This would require additional service calls to validate
+                // Check prerequisites
+                if (!await CheckPrerequisitesAsync(definition, body.CharacterId, completedCodes, cancellationToken))
+                    continue;
 
                 available.Add(MapToDefinitionResponse(definition));
             }
@@ -1257,7 +1258,26 @@ public partial class QuestService : IQuestService
                     });
                 }
 
-                // TODO: Check for duplicate entity tracking if TrackedEntityId is provided
+                // Check for duplicate entity tracking if TrackedEntityId is provided
+                // This prevents counting the same kill/collect multiple times
+                if (body.TrackedEntityId.HasValue)
+                {
+                    progress.TrackedEntityIds ??= new HashSet<Guid>();
+                    if (progress.TrackedEntityIds.Contains(body.TrackedEntityId.Value))
+                    {
+                        _logger.LogDebug("Entity {EntityId} already tracked for objective {ObjectiveCode} on quest {QuestInstanceId}",
+                            body.TrackedEntityId.Value, body.ObjectiveCode, body.QuestInstanceId);
+                        // Return current state without incrementing - idempotent behavior
+                        return (StatusCodes.OK, new ObjectiveProgressResponse
+                        {
+                            QuestInstanceId = body.QuestInstanceId,
+                            Objective = MapToObjectiveProgress(progress),
+                            MilestoneCompleted = false
+                        });
+                    }
+                    // Add entity to tracked set
+                    progress.TrackedEntityIds.Add(body.TrackedEntityId.Value);
+                }
 
                 var previousCount = progress.CurrentCount;
                 progress.CurrentCount = Math.Min(
@@ -1599,6 +1619,81 @@ public partial class QuestService : IQuestService
         }
 
         return definition;
+    }
+
+    /// <summary>
+    /// Checks whether a character meets all prerequisites for a quest definition.
+    /// </summary>
+    /// <param name="definition">The quest definition to check prerequisites for.</param>
+    /// <param name="characterId">The character ID to check.</param>
+    /// <param name="completedCodes">List of quest codes the character has completed.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if all prerequisites are met, false otherwise.</returns>
+    private async Task<bool> CheckPrerequisitesAsync(
+        QuestDefinitionModel definition,
+        Guid characterId,
+        List<string> completedCodes,
+        CancellationToken cancellationToken)
+    {
+        // No prerequisites = always available
+        if (definition.Prerequisites == null || definition.Prerequisites.Count == 0)
+            return true;
+
+        foreach (var prereq in definition.Prerequisites)
+        {
+            switch (prereq.Type)
+            {
+                case PrerequisiteType.QUEST_COMPLETED:
+                    // Check if character has completed the required quest
+                    if (!string.IsNullOrWhiteSpace(prereq.QuestCode))
+                    {
+                        var normalizedCode = prereq.QuestCode.ToUpperInvariant();
+                        if (!completedCodes.Contains(normalizedCode))
+                        {
+                            _logger.LogDebug("Character {CharacterId} has not completed prerequisite quest {QuestCode} for quest {DefinitionCode}",
+                                characterId, prereq.QuestCode, definition.Code);
+                            return false;
+                        }
+                    }
+                    break;
+
+                case PrerequisiteType.CHARACTER_LEVEL:
+                    // Character service doesn't track level - skip with log
+                    // Level tracking would require a separate progression/stats service
+                    _logger.LogDebug("Skipping CHARACTER_LEVEL prerequisite for quest {DefinitionCode} - level tracking not implemented",
+                        definition.Code);
+                    break;
+
+                case PrerequisiteType.REPUTATION:
+                    // Reputation service doesn't exist yet - skip with log
+                    _logger.LogDebug("Skipping REPUTATION prerequisite for quest {DefinitionCode} - reputation service not implemented",
+                        definition.Code);
+                    break;
+
+                case PrerequisiteType.ITEM_OWNED:
+                    // Would require complex inventory traversal via soft dependency
+                    // Skipping for now - can be implemented when needed
+                    _logger.LogDebug("Skipping ITEM_OWNED prerequisite for quest {DefinitionCode} - item ownership check not implemented",
+                        definition.Code);
+                    break;
+
+                case PrerequisiteType.CURRENCY_AMOUNT:
+                    // Would require wallet lookup + balance check via soft dependency
+                    // Skipping for now - can be implemented when needed
+                    _logger.LogDebug("Skipping CURRENCY_AMOUNT prerequisite for quest {DefinitionCode} - currency check not implemented",
+                        definition.Code);
+                    break;
+
+                default:
+                    _logger.LogWarning("Unknown prerequisite type {Type} for quest {DefinitionCode}",
+                        prereq.Type, definition.Code);
+                    break;
+            }
+        }
+
+        // Await to maintain async signature for future implementations
+        await Task.CompletedTask;
+        return true;
     }
 
     private async Task<List<ObjectiveProgress>> GetObjectiveProgressListAsync(
