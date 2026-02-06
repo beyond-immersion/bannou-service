@@ -4,7 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Behavior.Cognition;
-using BeyondImmersion.Bannou.Behavior.Handlers;
+using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.BannouService.Abml.Execution;
@@ -39,23 +39,16 @@ namespace BeyondImmersion.BannouService.Behavior.Tests.Handlers;
 public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
 {
     private readonly Mock<IGoapPlanner> _mockPlanner;
-    private readonly Mock<IServiceScopeFactory> _mockScopeFactory;
     private readonly Mock<ILogger<TriggerGoapReplanHandler>> _mockLogger;
     private readonly TriggerGoapReplanHandler _handler;
 
     public TriggerGoapReplanHandlerTests()
     {
         _mockPlanner = new Mock<IGoapPlanner>();
-        _mockScopeFactory = new Mock<IServiceScopeFactory>();
         _mockLogger = new Mock<ILogger<TriggerGoapReplanHandler>>();
 
-        // Setup empty scope that returns null for bundle manager (tests don't use it)
-        var mockScope = new Mock<IServiceScope>();
-        var mockServiceProvider = new Mock<IServiceProvider>();
-        mockScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
-        _mockScopeFactory.Setup(f => f.CreateScope()).Returns(mockScope.Object);
-
-        _handler = new TriggerGoapReplanHandler(_mockPlanner.Object, _mockScopeFactory.Object, _mockLogger.Object);
+        // Handler no longer needs IServiceScopeFactory - it's "dumb" and receives all data via parameters/scope
+        _handler = new TriggerGoapReplanHandler(_mockPlanner.Object, _mockLogger.Object);
     }
 
     #region Constructor Tests

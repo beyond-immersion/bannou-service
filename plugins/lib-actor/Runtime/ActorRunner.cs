@@ -608,6 +608,14 @@ public sealed class ActorRunner : IActorRunner
                     stack: ex.StackTrace);
                 return;
             }
+
+            // Verify behavior was loaded (loader might return null without throwing)
+            if (_behavior == null)
+            {
+                _logger.LogWarning("Actor {ActorId} behavior loader returned null for {BehaviorRef}",
+                    ActorId, _template.BehaviorRef);
+                return;
+            }
         }
 
         // 2. Create scope with current actor state
