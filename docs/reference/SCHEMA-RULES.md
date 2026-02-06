@@ -283,6 +283,52 @@ info:
 
 **Note**: This extension is documentation/configuration only - it does not generate code. The values are used when the foundational service calls `/resource/cleanup/execute` with `gracePeriodSeconds` and `cleanupPolicy` parameters.
 
+### x-compression-callback (Compression Callback Registration)
+
+Defined at the **info level** of `{service}-api.yaml`, declares compression callback registration for hierarchical resource archival via lib-resource. This enables automatic compression callback registration at service startup.
+
+**Purpose**: Services with compression endpoints declare their callbacks in their schemas. The code generator produces helper classes for registering compression callbacks during `OnRunningAsync`.
+
+```yaml
+# character-personality-api.yaml - Service with compression endpoint
+info:
+  title: Character Personality Service API
+  version: 1.0.0
+  x-compression-callback:
+    resourceType: character                                          # Required: Type of resource being compressed
+    sourceType: character-personality                                # Required: This service's data type identifier
+    compressEndpoint: /character-personality/get-compress-data       # Required: Endpoint to gather data for archival
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'     # Required: JSON template with {{resourceId}}
+    priority: 10                                                     # Required: Execution order (lower = earlier)
+    description: Personality traits and combat preferences           # Optional: Human-readable description
+    decompressEndpoint: /character-personality/restore-from-archive  # Optional: Endpoint to restore from archive
+    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}' # Optional: Decompress template
+```
+
+**Field definitions**:
+- `resourceType`: Type of resource being compressed (e.g., "character", "realm")
+- `sourceType`: This service's data type identifier (e.g., "character-personality")
+- `compressEndpoint`: Service endpoint called during compression (must exist in schema paths)
+- `compressPayloadTemplate`: JSON template with `{{resourceId}}` placeholder
+- `priority`: Execution order during compression (lower numbers execute earlier)
+- `description`: Human-readable description for documentation (optional)
+- `decompressEndpoint`: Endpoint for restoration from archive (optional)
+- `decompressPayloadTemplate`: JSON template with `{{resourceId}}` and `{{data}}` placeholders (optional)
+
+**Generated output** (`lib-{service}/Generated/{Service}CompressionCallbacks.cs`):
+- Static class with `RegisterAsync(IResourceClient, CancellationToken)` method
+- Called from plugin's `OnRunningAsync` to register callback with lib-resource
+
+**Priority Guidelines**:
+
+| Priority Range | Purpose |
+|----------------|---------|
+| 0 | Base entity data (e.g., character core fields) |
+| 10-30 | Extension data (personality, history, encounters) |
+| 50-100 | Optional/derived data (quests, storylines) |
+
+**Validation**: The generator validates that `compressEndpoint` and `decompressEndpoint` (if specified) exist in the schema's paths section.
+
 ### Service Hierarchy Compliance
 
 The x-references pattern ensures compliance with the service hierarchy:
@@ -1253,6 +1299,16 @@ Before submitting schema changes, verify:
 - [ ] Foundational services (L2) with deletable resources declare `x-resource-lifecycle`
 - [ ] `gracePeriodSeconds` is a positive integer (use 0 only for immediate cleanup)
 - [ ] `cleanupPolicy` is either `BEST_EFFORT` or `ALL_REQUIRED`
+
+### Compression Callbacks (x-compression-callback)
+- [ ] Services with `/get-compress-data` endpoints declare `x-compression-callback` in their API schema
+- [ ] `resourceType` matches the foundational resource type (e.g., "character", "realm")
+- [ ] `sourceType` is unique per service (e.g., "character-personality", "quest")
+- [ ] `compressEndpoint` exists in the schema's paths section
+- [ ] `compressPayloadTemplate` is valid JSON with `{{resourceId}}` placeholder
+- [ ] `priority` is set appropriately (0 for base data, 10-30 for extensions, 50-100 for optional)
+- [ ] `decompressEndpoint` (if specified) exists in the schema's paths section
+- [ ] Plugin's `OnRunningAsync` calls the generated `*CompressionCallbacks.RegisterAsync()` method
 
 ### Resource Cleanup Contract (CRITICAL - Producer Side)
 

@@ -143,6 +143,16 @@ public class CharacterPersonalityServicePlugin : BaseBannouPlugin
                 {
                     Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
                 }
+
+                // Register compression callback (generated from x-compression-callback)
+                if (await CharacterPersonalityCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
+                {
+                    Logger?.LogInformation("Registered character-personality compression callback with lib-resource");
+                }
+                else
+                {
+                    Logger?.LogWarning("Failed to register character-personality compression callback with lib-resource");
+                }
             }
             else
             {

@@ -115,7 +115,7 @@ public class QuestServicePlugin : BaseBannouPlugin
                 await bannouService.OnRunningAsync(CancellationToken.None);
             }
 
-            // Register compression callback with lib-resource
+            // Register compression callback with lib-resource (generated from x-compression-callback)
             await RegisterCompressionCallbackAsync();
         }
         catch (Exception ex)
@@ -126,6 +126,7 @@ public class QuestServicePlugin : BaseBannouPlugin
 
     /// <summary>
     /// Registers the quest compression callback with lib-resource for character archival.
+    /// Uses the schema-generated <see cref="QuestCompressionCallbacks"/> class.
     /// </summary>
     private async Task RegisterCompressionCallbackAsync()
     {
@@ -137,17 +138,14 @@ public class QuestServicePlugin : BaseBannouPlugin
             var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
             if (resourceClient != null)
             {
-                await resourceClient.DefineCompressCallbackAsync(new DefineCompressCallbackRequest
+                if (await QuestCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
                 {
-                    ResourceType = "character",
-                    SourceType = "quest",
-                    ServiceName = "quest",
-                    CompressEndpoint = "/quest/get-compress-data",
-                    CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
-                    Priority = 50,
-                    Description = "Quest state (active quests, completed counts, category breakdown)"
-                });
-                Logger?.LogInformation("Registered quest compression callback with lib-resource");
+                    Logger?.LogInformation("Registered quest compression callback with lib-resource");
+                }
+                else
+                {
+                    Logger?.LogWarning("Failed to register quest compression callback with lib-resource");
+                }
             }
             else
             {

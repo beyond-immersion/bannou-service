@@ -108,7 +108,7 @@ public class StorylineServicePlugin : BaseBannouPlugin
                 await bannouService.OnRunningAsync(CancellationToken.None);
             }
 
-            // Register compression callback with lib-resource
+            // Register compression callback with lib-resource (generated from x-compression-callback)
             await RegisterCompressionCallbackAsync();
         }
         catch (Exception ex)
@@ -119,6 +119,7 @@ public class StorylineServicePlugin : BaseBannouPlugin
 
     /// <summary>
     /// Registers the storyline compression callback with lib-resource for character archival.
+    /// Uses the schema-generated <see cref="StorylineCompressionCallbacks"/> class.
     /// </summary>
     private async Task RegisterCompressionCallbackAsync()
     {
@@ -130,17 +131,14 @@ public class StorylineServicePlugin : BaseBannouPlugin
             var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
             if (resourceClient != null)
             {
-                await resourceClient.DefineCompressCallbackAsync(new DefineCompressCallbackRequest
+                if (await StorylineCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
                 {
-                    ResourceType = "character",
-                    SourceType = "storyline",
-                    ServiceName = "storyline",
-                    CompressEndpoint = "/storyline/get-compress-data",
-                    CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
-                    Priority = 60,
-                    Description = "Storyline participation (scenario history, active arcs, completed count)"
-                });
-                Logger?.LogInformation("Registered storyline compression callback with lib-resource");
+                    Logger?.LogInformation("Registered storyline compression callback with lib-resource");
+                }
+                else
+                {
+                    Logger?.LogWarning("Failed to register storyline compression callback with lib-resource");
+                }
             }
             else
             {

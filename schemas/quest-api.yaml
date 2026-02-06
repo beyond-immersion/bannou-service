@@ -12,6 +12,14 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
+  x-compression-callback:
+    resourceType: character
+    sourceType: quest
+    compressEndpoint: /quest/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 50
+    description: Quest state (active quests, completed counts, category breakdown)
 x-service-layer: GameFeatures
 
 servers:

@@ -356,6 +356,16 @@ else
 fi
 echo ""
 
+# Generate compression callback registration code (for x-compression-callback declarations)
+echo -e "${BLUE}🗜️ Generating compression callback registration code...${NC}"
+if python3 "$SCRIPT_DIR/generate-compression-callbacks.py"; then
+    echo -e "${GREEN}✅ Compression callbacks generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate compression callbacks${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate client event registry (for typed event subscriptions)
 echo -e "${BLUE}📡 Generating client event registry...${NC}"
 if python3 "$SCRIPT_DIR/generate-client-event-registry.py"; then
