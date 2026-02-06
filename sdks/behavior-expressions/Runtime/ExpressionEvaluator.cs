@@ -6,10 +6,8 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
 using BeyondImmersion.Bannou.BehaviorCompiler.Exceptions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Compiler;
-using BeyondImmersion.Bannou.BehaviorExpressions.Exceptions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Functions;
-using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 
@@ -22,7 +20,6 @@ public sealed class ExpressionEvaluator : IExpressionEvaluator
     private readonly ExpressionCache _cache;
     private readonly ExpressionCompiler _compiler;
     private readonly IFunctionRegistry _functions;
-    private readonly ILogger<ExpressionEvaluator>? _logger;
 
     // Thread-local VM instances for thread safety
     private readonly ThreadLocal<ExpressionVm> _vm;
@@ -31,7 +28,7 @@ public sealed class ExpressionEvaluator : IExpressionEvaluator
     /// Creates a new expression evaluator with default settings.
     /// </summary>
     public ExpressionEvaluator()
-        : this(FunctionRegistry.CreateWithBuiltins(), null, VmConfig.DefaultCacheSize)
+        : this(FunctionRegistry.CreateWithBuiltins(), VmConfig.DefaultCacheSize)
     {
     }
 
@@ -39,15 +36,12 @@ public sealed class ExpressionEvaluator : IExpressionEvaluator
     /// Creates a new expression evaluator with the specified function registry.
     /// </summary>
     /// <param name="functions">The function registry.</param>
-    /// <param name="logger">Optional logger.</param>
     /// <param name="cacheSize">Expression cache size.</param>
     public ExpressionEvaluator(
         IFunctionRegistry functions,
-        ILogger<ExpressionEvaluator>? logger = null,
         int cacheSize = VmConfig.DefaultCacheSize)
     {
         _functions = functions ?? throw new ArgumentNullException(nameof(functions));
-        _logger = logger;
         _cache = new ExpressionCache(cacheSize);
         _compiler = new ExpressionCompiler();
         _vm = new ThreadLocal<ExpressionVm>(() => new ExpressionVm(_functions));
@@ -120,15 +114,13 @@ public sealed class ExpressionEvaluator : IExpressionEvaluator
             result = Evaluate(expression, scope);
             return true;
         }
-        catch (AbmlException ex)
+        catch (AbmlException)
         {
-            _logger?.LogDebug(ex, "Expression evaluation failed: {Expression}", expression);
             result = null;
             return false;
         }
-        catch (Exception ex)
+        catch
         {
-            _logger?.LogWarning(ex, "Unexpected error evaluating expression: {Expression}", expression);
             result = null;
             return false;
         }

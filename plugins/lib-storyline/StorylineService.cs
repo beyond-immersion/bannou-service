@@ -2501,3 +2501,79 @@ internal sealed class PlanIndexEntry
     public required Guid RealmId { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
 }
+
+/// <summary>
+/// Internal model for scenario definitions stored in MySQL.
+/// Uses JSON serialization for complex fields per IMPLEMENTATION TENETS.
+/// </summary>
+internal sealed class ScenarioDefinitionModel
+{
+    public required Guid ScenarioId { get; init; }
+    public required string Code { get; set; }
+    public required string Name { get; set; }
+    public string? Description { get; set; }
+    public Guid? RealmId { get; init; }
+    public Guid? GameServiceId { get; init; }
+    public required string TriggerConditions { get; set; } // JSON serialized
+    public required string Phases { get; set; } // JSON serialized
+    public string? Mutations { get; set; } // JSON serialized
+    public string? QuestHooks { get; set; } // JSON serialized
+    public int? CooldownSeconds { get; set; }
+    public string? Tags { get; set; } // JSON serialized
+    public string? ExclusivityTags { get; set; } // JSON serialized
+    public ScenarioStatus Status { get; set; }
+    public DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// Internal model for scenario executions stored in MySQL.
+/// </summary>
+internal sealed class ScenarioExecutionModel
+{
+    public required Guid ExecutionId { get; init; }
+    public required Guid ScenarioId { get; init; }
+    public required string ScenarioCode { get; init; }
+    public required Guid PrimaryCharacterId { get; init; }
+    public string? AdditionalParticipantIds { get; init; } // JSON serialized
+    public Guid? OrchestratorId { get; init; }
+    public Guid? RealmId { get; init; }
+    public Guid? GameServiceId { get; init; }
+    public double? FitScore { get; init; }
+    public ScenarioStatus Status { get; set; }
+    public int CurrentPhaseIndex { get; set; }
+    public int MutationsApplied { get; set; }
+    public int QuestsSpawned { get; set; }
+    public string? QuestIds { get; set; } // JSON serialized
+    public string? FailureReason { get; set; }
+    public DateTimeOffset StartedAt { get; init; }
+    public DateTimeOffset? CompletedAt { get; set; }
+}
+
+/// <summary>
+/// Internal marker for scenario cooldowns stored in Redis with TTL.
+/// </summary>
+internal sealed class CooldownMarker
+{
+    public required Guid ScenarioId { get; init; }
+    public required Guid CharacterId { get; init; }
+    public required DateTimeOffset ExpiresAt { get; init; }
+}
+
+/// <summary>
+/// Internal entry for active scenarios stored in Redis sets.
+/// </summary>
+internal sealed class ActiveScenarioEntry
+{
+    public required Guid ExecutionId { get; init; }
+    public required DateTimeOffset StartedAt { get; init; }
+}
+
+/// <summary>
+/// Internal marker for idempotency keys stored in Redis with TTL.
+/// </summary>
+internal sealed class IdempotencyMarker
+{
+    public required Guid ExecutionId { get; init; }
+    public required DateTimeOffset CreatedAt { get; init; }
+}

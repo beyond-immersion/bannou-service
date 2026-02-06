@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService.Abml.Execution.Handlers;
@@ -32,7 +33,7 @@ public sealed partial class LogHandler : IActionHandler
         return ValueTask.FromResult(ActionResult.Continue);
     }
 
-    private static string InterpolateMessage(string message, Expressions.IVariableScope scope, ExecutionContext context)
+    private static string InterpolateMessage(string message, IVariableScope scope, ExecutionContext context)
     {
         // Replace ${...} expressions with evaluated values
         return ExpressionPattern().Replace(message, match =>

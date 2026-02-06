@@ -40,7 +40,6 @@
   <ItemGroup>
     <ProjectReference Include="../behavior-compiler/BeyondImmersion.Bannou.BehaviorCompiler.csproj" />
     <PackageReference Include="Fluid.Core" Version="2.11.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
 </Project>

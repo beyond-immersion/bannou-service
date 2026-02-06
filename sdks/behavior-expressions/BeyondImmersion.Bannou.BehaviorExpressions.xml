@@ -1,0 +1,1126 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.BehaviorExpressions</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression">
+            <summary>
+            A compiled ABML expression ready for execution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression.Code">
+            <summary>Gets the bytecode instructions.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression.Constants">
+            <summary>Gets the constant pool.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression.RegisterCount">
+            <summary>Gets the number of registers needed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression.SourceText">
+            <summary>Gets the original expression text.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression.ExpectedType">
+            <summary>Gets the expected return type.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression.#ctor(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction[],System.Object[],System.Int32,System.String,System.Type)">
+            <summary>Creates a new compiled expression.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder">
+            <summary>
+            Builder for creating CompiledExpression instances.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.Constants">
+            <summary>Gets the constant pool.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.Registers">
+            <summary>Gets the register allocator.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.CodeLength">
+            <summary>Gets current instruction count.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.SetSourceText(System.String)">
+            <summary>Sets the source text.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.SetExpectedType(System.Type)">
+            <summary>Sets the expected return type.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.Emit(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction)">
+            <summary>Emits an instruction.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.Emit(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode,System.Byte,System.Byte,System.Byte)">
+            <summary>Emits an instruction with operands.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.PatchJump(System.Int32,System.Int32)">
+            <summary>Patches a jump instruction.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.Build">
+            <summary>Builds the compiled expression.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpressionBuilder.Reset">
+            <summary>Resets the builder.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool">
+            <summary>
+            Builds the constant pool for a compiled expression.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.Count">
+            <summary>Gets the current number of constants.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.Add(System.Object)">
+            <summary>Adds a constant and returns its index.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.AddString(System.String)">
+            <summary>Adds a string constant.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.AddInt(System.Int32)">
+            <summary>Adds an integer constant.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.AddDouble(System.Double)">
+            <summary>Adds a double constant.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.Get(System.Int32)">
+            <summary>Gets a constant by index.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.Contains(System.Object)">
+            <summary>Checks if pool contains a constant.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.TryGetIndex(System.Object,System.Byte@)">
+            <summary>Tries to get index of existing constant.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.ToArray">
+            <summary>Converts to array.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ConstantPool.Clear">
+            <summary>Clears the pool.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ExpressionCompiler">
+            <summary>
+            Compiles ABML expression AST into bytecode.
+            Thread-safe: each compilation uses its own state.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ExpressionCompiler.Compile(System.String)">
+            <summary>
+            Compiles an expression string to bytecode.
+            </summary>
+            <param name="expression">The expression source text.</param>
+            <returns>The compiled expression.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.ExpressionCompiler.Compile(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode,System.String)">
+            <summary>
+            Compiles an AST to bytecode.
+            </summary>
+            <param name="ast">The expression AST.</param>
+            <param name="sourceText">The original source text.</param>
+            <returns>The compiled expression.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor">
+            <summary>
+            Internal visitor that holds compilation state.
+            A new instance is created for each compilation to ensure thread safety.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitLiteral(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.LiteralNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitVariable(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.VariableNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitUnary(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitBinary(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitTernary(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitPropertyAccess(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitIndexAccess(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitFunctionCall(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.FunctionCallNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitNullCoalesce(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.NullCoalesceNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.VisitArrayLiteral(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ArrayLiteralNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompilerVisitor.AllLiterals(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode},System.Object[]@)">
+            <summary>
+            Checks if all elements are literals and extracts their values.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction">
+            <summary>
+            ABML bytecode instruction. 32-bit encoding: [opcode:8][A:8][B:8][C:8]
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.Op">
+            <summary>Gets the operation code.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.A">
+            <summary>Gets the A operand (usually destination register).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.B">
+            <summary>Gets the B operand (source 1 or constant index).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.C">
+            <summary>Gets the C operand (source 2 or constant index).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.Packed">
+            <summary>Gets the packed 32-bit representation.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.#ctor(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode,System.Byte,System.Byte,System.Byte)">
+            <summary>Creates a new instruction.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.#ctor(System.UInt32)">
+            <summary>Creates an instruction from packed value.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.GetJumpOffset">
+            <summary>Gets the 16-bit jump offset.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.CreateJump(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode,System.Byte,System.Int32)">
+            <summary>Creates a jump instruction.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.CreateJump(System.Int32)">
+            <summary>Creates an unconditional jump.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.Equals(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.op_Equality(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction,BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction)">
+            <summary>Equality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction.op_Inequality(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction,BeyondImmersion.Bannou.BehaviorExpressions.Compiler.Instruction)">
+            <summary>Inequality operator.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode">
+            <summary>
+            ABML bytecode operation codes.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.LoadConst">
+            <summary>R[A] = constants[B]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.LoadVar">
+            <summary>R[A] = scope.GetVariable(constants[B])</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.LoadNull">
+            <summary>R[A] = null</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.LoadTrue">
+            <summary>R[A] = true</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.LoadFalse">
+            <summary>R[A] = false</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Move">
+            <summary>R[A] = R[B]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.GetProp">
+            <summary>R[A] = R[B].GetProperty(constants[C])</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.GetPropSafe">
+            <summary>R[A] = R[B]?.GetProperty(constants[C])</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.GetIndex">
+            <summary>R[A] = R[B][R[C]]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.GetIndexSafe">
+            <summary>R[A] = R[B]?[R[C]]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Add">
+            <summary>R[A] = R[B] + R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Sub">
+            <summary>R[A] = R[B] - R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Mul">
+            <summary>R[A] = R[B] * R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Div">
+            <summary>R[A] = R[B] / R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Mod">
+            <summary>R[A] = R[B] % R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Neg">
+            <summary>R[A] = -R[B]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Eq">
+            <summary>R[A] = R[B] == R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Ne">
+            <summary>R[A] = R[B] != R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Lt">
+            <summary>R[A] = R[B] &lt; R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Le">
+            <summary>R[A] = R[B] &lt;= R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Gt">
+            <summary>R[A] = R[B] &gt; R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Ge">
+            <summary>R[A] = R[B] &gt;= R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Not">
+            <summary>R[A] = !R[B]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.And">
+            <summary>R[A] = R[B] &amp;&amp; R[C] (non-short-circuit, use jumps for short-circuit)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Or">
+            <summary>R[A] = R[B] || R[C] (non-short-circuit)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.ToBool">
+            <summary>R[A] = IsTrue(R[B]) - explicit boolean conversion</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Jump">
+            <summary>PC = (B &lt;&lt; 8) | C</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.JumpIfTrue">
+            <summary>if R[A] is truthy then PC = (B &lt;&lt; 8) | C</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.JumpIfFalse">
+            <summary>if R[A] is falsy then PC = (B &lt;&lt; 8) | C</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.JumpIfNull">
+            <summary>if R[A] == null then PC = (B &lt;&lt; 8) | C</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.JumpIfNotNull">
+            <summary>if R[A] != null then PC = (B &lt;&lt; 8) | C</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.CallArgs">
+            <summary>Specifies arg count for following Call. A = argCount</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Call">
+            <summary>R[A] = Call(constants[B], args starting at R[C])</summary>
+            <remarks>
+            Must be preceded by CallArgs instruction that specifies arg count.
+            B encodes function name index in constants.
+            Args are in R[C], R[C+1], ..., R[C+argCount-1].
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Coalesce">
+            <summary>R[A] = R[B] ?? R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.In">
+            <summary>R[A] = R[B] in R[C]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Concat">
+            <summary>R[A] = concat(R[B], R[C])</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.OpCode.Return">
+            <summary>Return R[A]</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.RegisterAllocator">
+            <summary>
+            Manages register allocation during expression compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.RegisterAllocator.UsedCount">
+            <summary>Gets the total number of registers used.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.RegisterAllocator.AllocatedCount">
+            <summary>Gets current allocated count.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.RegisterAllocator.Allocate">
+            <summary>Allocates a new register.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.RegisterAllocator.AllocateRange(System.Int32)">
+            <summary>Allocates a contiguous range of registers.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.RegisterAllocator.Free(System.Byte)">
+            <summary>Frees a register for reuse.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.RegisterAllocator.FreeRange(System.Byte,System.Int32)">
+            <summary>Frees a range of registers.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Compiler.RegisterAllocator.Reset">
+            <summary>Resets the allocator.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlDivisionByZeroException">
+            <summary>
+            Exception thrown when division by zero occurs.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlDivisionByZeroException.Operation">
+            <summary>Gets the operation type.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlDivisionByZeroException.#ctor">
+            <summary>Creates a new division by zero exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlDivisionByZeroException.#ctor(BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.DivisionOperation)">
+            <summary>Creates a new division by zero exception for a specific operation.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlDivisionByZeroException.#ctor(BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.DivisionOperation,System.String)">
+            <summary>Creates a new division by zero exception with source context.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlDivisionByZeroException.#ctor(BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.DivisionOperation,System.String,System.Int32)">
+            <summary>Creates a new division by zero exception with instruction index.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlDivisionByZeroException.Division(System.String)">
+            <summary>Creates a division exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlDivisionByZeroException.Modulo(System.String)">
+            <summary>Creates a modulo exception.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.DivisionOperation">
+            <summary>
+            Type of division operation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.DivisionOperation.Division">
+            <summary>Division operation (/).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.DivisionOperation.Modulo">
+            <summary>Modulo operation (%).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlRuntimeException">
+            <summary>
+            Exception thrown when an error occurs during ABML expression execution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlRuntimeException.InstructionIndex">
+            <summary>Gets the instruction index where the error occurred.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlRuntimeException.#ctor(System.String)">
+            <summary>Creates a new runtime exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlRuntimeException.#ctor(System.String,System.Exception)">
+            <summary>Creates a new runtime exception with inner exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlRuntimeException.#ctor(System.String,System.String,System.Nullable{System.Int32})">
+            <summary>Creates a new runtime exception with source context.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlRuntimeException.#ctor(System.String,System.Exception,System.String,System.Nullable{System.Int32})">
+            <summary>Creates a new runtime exception with inner exception and source context.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlRuntimeException.TypeError(System.String,System.String,System.String,System.String)">
+            <summary>Creates a type error exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlRuntimeException.InvalidOperation(System.String,System.String,System.String)">
+            <summary>Creates an invalid operation exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlRuntimeException.FunctionError(System.String,System.String,System.String)">
+            <summary>Creates a function error exception.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlUndefinedException">
+            <summary>
+            Exception thrown when accessing an undefined variable or property.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlUndefinedException.UndefinedName">
+            <summary>Gets the undefined name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlUndefinedException.ReferenceType">
+            <summary>Gets the type of undefined reference.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlUndefinedException.#ctor(System.String)">
+            <summary>Creates a new undefined exception for a variable.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlUndefinedException.#ctor(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.UndefinedReferenceType)">
+            <summary>Creates a new undefined exception with reference type.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlUndefinedException.Variable(System.String,System.String)">
+            <summary>Creates an exception for an undefined variable.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlUndefinedException.Property(System.String,System.String,System.String)">
+            <summary>Creates an exception for an undefined property.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.AbmlUndefinedException.Function(System.String,System.String)">
+            <summary>Creates an exception for an undefined function.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.UndefinedReferenceType">
+            <summary>
+            Type of undefined reference.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.UndefinedReferenceType.Variable">
+            <summary>Variable reference.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.UndefinedReferenceType.Property">
+            <summary>Property reference.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.UndefinedReferenceType.Function">
+            <summary>Function reference.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorExpressions.Exceptions.UndefinedReferenceType.Index">
+            <summary>Index reference.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion">
+            <summary>
+            Provides static helper methods for type coercion and operations in ABML expressions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.IsTrue(System.Object)">
+            <summary>
+            Evaluates the truthiness of a value for conditional expressions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Add(System.Object,System.Object)">
+            <summary>
+            Adds two values together with type coercion.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Subtract(System.Object,System.Object)">
+            <summary>
+            Subtracts one value from another.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Multiply(System.Object,System.Object)">
+            <summary>
+            Multiplies two values.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Divide(System.Object,System.Object)">
+            <summary>
+            Divides one value by another.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Modulo(System.Object,System.Object)">
+            <summary>
+            Computes the modulo of two values.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Negate(System.Object)">
+            <summary>
+            Negates a numeric value.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Compare(System.Object,System.Object)">
+            <summary>
+            Compares two values.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Equals(System.Object,System.Object)">
+            <summary>
+            Tests equality between two values.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.GetProperty(System.Object,System.String)">
+            <summary>
+            Gets a property value from an object.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.GetIndex(System.Object,System.Object)">
+            <summary>
+            Gets a value from an indexable object.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Contains(System.Object,System.Object)">
+            <summary>
+            Tests if a collection contains an item.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.Concat(System.Object,System.Object)">
+            <summary>
+            Concatenates two values as strings.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.ToDouble(System.Object)">
+            <summary>
+            Converts a value to double.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.IsNumeric(System.Object)">
+            <summary>
+            Checks if a value is numeric.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.AbmlTypeCoercion.ToDoubleNullable(System.Object)">
+            <summary>
+            Converts a value to double, returning null if the value is null.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableProvider">
+            <summary>
+            Provides external state access for ABML expressions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableProvider.Name">
+            <summary>
+            Gets the name of this provider (e.g., "entity", "world").
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableProvider.GetValue(System.ReadOnlySpan{System.String})">
+            <summary>
+            Gets a value by navigating the given path from this provider's root.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableProvider.GetRootValue">
+            <summary>
+            Gets the root value of this provider.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableProvider.CanResolve(System.ReadOnlySpan{System.String})">
+            <summary>
+            Checks if this provider can resolve the given path.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope">
+            <summary>
+            Provides variable storage and resolution for ABML expression evaluation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope.GetValue(System.String)">
+            <summary>
+            Gets a variable value by name or dotted path.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope.SetValue(System.String,System.Object)">
+            <summary>
+            Sets a variable value in the current scope.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope.CreateChild">
+            <summary>
+            Creates a child scope with this scope as the parent.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope.HasVariable(System.String)">
+            <summary>
+            Checks if a variable exists in this scope or any parent scope.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope.Parent">
+            <summary>
+            Gets the parent scope, if any.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope">
+            <summary>
+            Concrete implementation of <see cref="T:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope"/>.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.Parent">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.#ctor">
+            <summary>
+            Creates a new root scope.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.RegisterProvider(BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableProvider)">
+            <summary>
+            Registers a variable provider.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.GetValue(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.SetValue(System.String,System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.SetLocalValue(System.String,System.Object)">
+            <summary>
+            Sets a variable in this scope only, shadowing any parent variable.
+            Used by loop variables and explicit 'local:' actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.SetGlobalValue(System.String,System.Object)">
+            <summary>
+            Sets a variable in the root scope.
+            Used by explicit 'global:' actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.GetRootScope">
+            <summary>
+            Gets the root scope (topmost parent).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.FindScopeWithVariable(System.String)">
+            <summary>
+            Finds the scope that contains the given variable.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.CreateChild">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.HasVariable(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.SetVariables(System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Object}})">
+            <summary>
+            Sets multiple variables at once.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.ClearVariables">
+            <summary>
+            Clears all local variables.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.GetLocalVariableNames">
+            <summary>
+            Gets all local variable names.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.GetProviderNames">
+            <summary>
+            Gets all provider names.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope.GetLocalVariables">
+            <summary>
+            Gets all local variables as key-value pairs.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Functions.BuiltinFunctions">
+            <summary>
+            Built-in functions for ABML expressions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.BuiltinFunctions.RegisterAll(BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry)">
+            <summary>
+            Registers all built-in functions.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionRegistry">
+            <summary>
+            Registry for ABML expression functions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionRegistry.#ctor(System.Boolean)">
+            <summary>
+            Creates a new function registry with optional built-in functions.
+            </summary>
+            <param name="includeBuiltins">Whether to include built-in functions.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionRegistry.Register(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Functions.AbmlFunction,System.Int32,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionRegistry.GetFunction(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionRegistry.HasFunction(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionRegistry.Invoke(System.String,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionRegistry.GetFunctionNames">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionRegistry.CreateWithBuiltins">
+            <summary>
+            Creates a new function registry with built-in functions.
+            </summary>
+            <returns>A new function registry with built-in functions.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionRegistry.CreateEmpty">
+            <summary>
+            Creates a new empty function registry.
+            </summary>
+            <returns>A new empty function registry.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Functions.AbmlFunction">
+            <summary>
+            Delegate for ABML function implementations.
+            </summary>
+            <param name="args">The function arguments.</param>
+            <returns>The function result.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry">
+            <summary>
+            Registry for ABML expression functions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry.Register(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Functions.AbmlFunction,System.Int32,System.Int32)">
+            <summary>
+            Registers a function.
+            </summary>
+            <param name="name">The function name.</param>
+            <param name="function">The function implementation.</param>
+            <param name="minArgs">Minimum argument count.</param>
+            <param name="maxArgs">Maximum argument count (-1 for unlimited).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry.GetFunction(System.String)">
+            <summary>
+            Gets a registered function by name.
+            </summary>
+            <param name="name">The function name.</param>
+            <returns>The function entry, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry.HasFunction(System.String)">
+            <summary>
+            Checks if a function is registered.
+            </summary>
+            <param name="name">The function name.</param>
+            <returns>True if registered, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry.Invoke(System.String,System.Object[])">
+            <summary>
+            Invokes a function by name.
+            </summary>
+            <param name="name">The function name.</param>
+            <param name="args">The function arguments.</param>
+            <returns>The function result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry.GetFunctionNames">
+            <summary>
+            Gets all registered function names.
+            </summary>
+            <returns>Collection of function names.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionEntry">
+            <summary>
+            Entry for a registered function.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionEntry.Name">
+            <summary>Gets the function name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionEntry.Function">
+            <summary>Gets the function implementation.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionEntry.MinArgs">
+            <summary>Gets the minimum argument count.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionEntry.MaxArgs">
+            <summary>Gets the maximum argument count (-1 for unlimited).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionEntry.#ctor(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Functions.AbmlFunction,System.Int32,System.Int32)">
+            <summary>Creates a new function entry.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Functions.FunctionEntry.ValidateArgCount(System.Int32)">
+            <summary>Validates argument count.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache">
+            <summary>
+            Thread-safe LRU cache for compiled expressions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.Count">
+            <summary>Gets the current number of cached expressions.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.MaxSize">
+            <summary>Gets the maximum cache size.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.HitCount">
+            <summary>Gets cache hit count.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.MissCount">
+            <summary>Gets cache miss count.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.HitRatio">
+            <summary>Gets cache hit ratio.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.#ctor(System.Int32)">
+            <summary>
+            Creates a new expression cache.
+            </summary>
+            <param name="maxSize">Maximum number of cached expressions.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.GetOrCompile(System.String,System.Func{System.String,BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression})">
+            <summary>
+            Gets or compiles an expression.
+            </summary>
+            <param name="expression">The expression text.</param>
+            <param name="compile">Function to compile the expression if not cached.</param>
+            <returns>The compiled expression.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.TryGet(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression@)">
+            <summary>
+            Tries to get a cached expression.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.Add(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression)">
+            <summary>
+            Adds a compiled expression to the cache.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.Remove(System.String)">
+            <summary>
+            Removes an expression from the cache.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.Clear">
+            <summary>
+            Clears all cached expressions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.Contains(System.String)">
+            <summary>
+            Checks if an expression is cached.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionCache.GetStatistics">
+            <summary>
+            Gets cache statistics.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.CacheStatistics">
+            <summary>
+            Cache statistics.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.CacheStatistics.#ctor(System.Int32,System.Int32,System.Int64,System.Int64,System.Double)">
+            <summary>
+            Cache statistics.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator">
+            <summary>
+            Concrete implementation of <see cref="T:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator"/>.
+            Thread-safe for evaluation of cached expressions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.#ctor">
+            <summary>
+            Creates a new expression evaluator with default settings.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.#ctor(BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry,System.Int32)">
+            <summary>
+            Creates a new expression evaluator with the specified function registry.
+            </summary>
+            <param name="functions">The function registry.</param>
+            <param name="cacheSize">Expression cache size.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.Evaluate(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.Evaluate``1(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.EvaluateCondition(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.Compile(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.Execute(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.TryEvaluate(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope,System.Object@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.GetCacheStatistics">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.ClearCache">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.CreateDefault">
+            <summary>
+            Creates a default expression evaluator with built-in functions.
+            </summary>
+            <returns>A new expression evaluator.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluator.CreateWithCustomFunctions(System.Action{BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry})">
+            <summary>
+            Creates an expression evaluator with custom functions.
+            </summary>
+            <param name="customFunctions">Action to register custom functions.</param>
+            <returns>A new expression evaluator.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluatorExtensions">
+            <summary>
+            Extension methods for expression evaluation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluatorExtensions.Evaluate(BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator,System.String,System.Collections.Generic.IDictionary{System.String,System.Object})">
+            <summary>
+            Evaluates an expression with a dictionary of variables.
+            </summary>
+            <param name="evaluator">The expression evaluator.</param>
+            <param name="expression">The expression string.</param>
+            <param name="variables">The variables to use.</param>
+            <returns>The result of the expression evaluation.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluatorExtensions.Evaluate``1(BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator,System.String,System.Collections.Generic.IDictionary{System.String,System.Object})">
+            <summary>
+            Evaluates an expression with a dictionary of variables and returns a typed result.
+            </summary>
+            <typeparam name="T">The expected result type.</typeparam>
+            <param name="evaluator">The expression evaluator.</param>
+            <param name="expression">The expression string.</param>
+            <param name="variables">The variables to use.</param>
+            <returns>The typed result of the expression evaluation.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionEvaluatorExtensions.EvaluateCondition(BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator,System.String,System.Collections.Generic.IDictionary{System.String,System.Object})">
+            <summary>
+            Evaluates a condition expression with a dictionary of variables.
+            </summary>
+            <param name="evaluator">The expression evaluator.</param>
+            <param name="expression">The expression string.</param>
+            <param name="variables">The variables to use.</param>
+            <returns>The truthiness of the expression result.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionVm">
+            <summary>
+            Register-based bytecode virtual machine for ABML expressions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionVm.#ctor(BeyondImmersion.Bannou.BehaviorExpressions.Functions.IFunctionRegistry)">
+            <summary>
+            Creates a new VM instance with the specified function registry.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionVm.Execute(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <summary>
+            Executes a compiled expression with the given variable scope.
+            </summary>
+            <param name="expression">The compiled expression to execute.</param>
+            <param name="scope">The variable scope for variable lookups.</param>
+            <returns>The expression result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.ExpressionVm.GetDebugTrace(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <summary>
+            Gets a debug trace of execution.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator">
+            <summary>
+            Top-level API for evaluating ABML expressions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator.Evaluate(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <summary>
+            Evaluates an expression string with the given variable scope.
+            </summary>
+            <param name="expression">The expression string (e.g., "${health > 0.5}").</param>
+            <param name="scope">The variable scope for variable resolution.</param>
+            <returns>The result of the expression evaluation.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator.Evaluate``1(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <summary>
+            Evaluates an expression string and converts the result to the specified type.
+            </summary>
+            <typeparam name="T">The expected result type.</typeparam>
+            <param name="expression">The expression string.</param>
+            <param name="scope">The variable scope for variable resolution.</param>
+            <returns>The result converted to type T, or default if conversion fails.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator.EvaluateCondition(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <summary>
+            Evaluates an expression string as a boolean condition.
+            </summary>
+            <param name="expression">The expression string.</param>
+            <param name="scope">The variable scope for variable resolution.</param>
+            <returns>The truthiness of the expression result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator.Compile(System.String)">
+            <summary>
+            Compiles an expression string to bytecode without executing it.
+            </summary>
+            <param name="expression">The expression string.</param>
+            <returns>The compiled expression.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator.Execute(BeyondImmersion.Bannou.BehaviorExpressions.Compiler.CompiledExpression,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <summary>
+            Executes a pre-compiled expression with the given variable scope.
+            </summary>
+            <param name="compiled">The compiled expression.</param>
+            <param name="scope">The variable scope for variable resolution.</param>
+            <returns>The result of the expression execution.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator.TryEvaluate(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope,System.Object@)">
+            <summary>
+            Tries to evaluate an expression, returning false on failure.
+            </summary>
+            <param name="expression">The expression string.</param>
+            <param name="scope">The variable scope.</param>
+            <param name="result">The result if successful.</param>
+            <returns>True if evaluation succeeded.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator.GetCacheStatistics">
+            <summary>
+            Gets statistics about the expression cache.
+            </summary>
+            <returns>Cache statistics.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Runtime.IExpressionEvaluator.ClearCache">
+            <summary>
+            Clears the expression cache.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Templates.AbmlTemplateEngine">
+            <summary>
+            Template engine for Liquid-style templates using Fluid.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorExpressions.Templates.AbmlTemplateEngine.CacheCount">
+            <summary>Gets the number of cached templates.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Templates.AbmlTemplateEngine.#ctor(System.Int32)">
+            <summary>
+            Creates a new template engine.
+            </summary>
+            <param name="maxCacheSize">Maximum number of cached templates.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Templates.AbmlTemplateEngine.Render(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope)">
+            <summary>
+            Renders a template with the given variables.
+            </summary>
+            <param name="template">The template string.</param>
+            <param name="scope">Variable scope for template rendering.</param>
+            <returns>The rendered string.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Templates.AbmlTemplateEngine.RenderAsync(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope,System.Threading.CancellationToken)">
+            <summary>
+            Renders a template asynchronously.
+            </summary>
+            <param name="template">The template string.</param>
+            <param name="scope">Variable scope for template rendering.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The rendered string.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Templates.AbmlTemplateEngine.TryRender(System.String,BeyondImmersion.Bannou.BehaviorExpressions.Expressions.IVariableScope,System.String@)">
+            <summary>
+            Tries to render a template.
+            </summary>
+            <param name="template">The template string.</param>
+            <param name="scope">Variable scope for template rendering.</param>
+            <param name="result">The rendered string if successful.</param>
+            <returns>True if rendering succeeded.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Templates.AbmlTemplateEngine.IsValid(System.String)">
+            <summary>
+            Validates a template without rendering.
+            </summary>
+            <param name="template">The template string to validate.</param>
+            <returns>True if the template is valid.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Templates.AbmlTemplateEngine.ClearCache">
+            <summary>
+            Clears the template cache.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorExpressions.Templates.VariableScopeExtensions">
+            <summary>
+            Extension methods for VariableScope to support template rendering.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorExpressions.Templates.VariableScopeExtensions.GetAllVariables(BeyondImmersion.Bannou.BehaviorExpressions.Expressions.VariableScope)">
+            <summary>
+            Gets all variables as a dictionary.
+            </summary>
+            <param name="scope">The variable scope.</param>
+            <returns>All local variables as key-value pairs.</returns>
+        </member>
+    </members>
+</doc>
