@@ -2798,6 +2798,66 @@
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LogAction.Level">
             <summary>Log level (info, debug, warn, error).</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LoadSnapshotAction">
+            <summary>
+            Loads a resource snapshot and registers it as a variable provider.
+            </summary>
+            <remarks>
+            <para>
+            Loads snapshot data from the Resource service and makes it available
+            via the standard ABML expression syntax:
+            <code>
+            ${candidate.personality.aggression}  # Access personality.aggression from snapshot
+            ${candidate.history.participations}  # Access history.participations
+            </code>
+            </para>
+            <para>
+            The snapshot is registered in the document's root scope for document-wide access.
+            If the snapshot cannot be loaded, an empty provider is registered that returns
+            null for all paths (graceful degradation).
+            </para>
+            </remarks>
+            <param name="Name">Provider name for expression access (e.g., "candidate").</param>
+            <param name="ResourceType">Resource type (e.g., "character").</param>
+            <param name="ResourceId">Expression evaluating to resource GUID.</param>
+            <param name="Filter">Optional list of source types to include (e.g., ["character-personality", "character-history"]).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LoadSnapshotAction.#ctor(System.String,System.String,System.String,System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>
+            Loads a resource snapshot and registers it as a variable provider.
+            </summary>
+            <remarks>
+            <para>
+            Loads snapshot data from the Resource service and makes it available
+            via the standard ABML expression syntax:
+            <code>
+            ${candidate.personality.aggression}  # Access personality.aggression from snapshot
+            ${candidate.history.participations}  # Access history.participations
+            </code>
+            </para>
+            <para>
+            The snapshot is registered in the document's root scope for document-wide access.
+            If the snapshot cannot be loaded, an empty provider is registered that returns
+            null for all paths (graceful degradation).
+            </para>
+            </remarks>
+            <param name="Name">Provider name for expression access (e.g., "candidate").</param>
+            <param name="ResourceType">Resource type (e.g., "character").</param>
+            <param name="ResourceId">Expression evaluating to resource GUID.</param>
+            <param name="Filter">Optional list of source types to include (e.g., ["character-personality", "character-history"]).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LoadSnapshotAction.Name">
+            <summary>Provider name for expression access (e.g., "candidate").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LoadSnapshotAction.ResourceType">
+            <summary>Resource type (e.g., "character").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LoadSnapshotAction.ResourceId">
+            <summary>Expression evaluating to resource GUID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LoadSnapshotAction.Filter">
+            <summary>Optional list of source types to include (e.g., ["character-personality", "character-history"]).</summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction">
             <summary>
             Generic domain action (handler-provided).

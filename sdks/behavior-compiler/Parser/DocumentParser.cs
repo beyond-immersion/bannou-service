@@ -589,6 +589,7 @@ public sealed class DocumentParser
             "sync" => ParseSyncAction(actionValue, errors),
             "continuation_point" => ParseContinuationPointAction(actionValue, errors),
             "emit_intent" => ParseEmitIntentAction(actionValue, errors),
+            "load_snapshot" => ParseLoadSnapshotAction(actionValue, errors),
             _ => ParseDomainAction(actionName, actionValue, errors)
         };
     }
@@ -1087,6 +1088,66 @@ public sealed class DocumentParser
         }
 
         return new EmitIntentAction(action, channel, urgency, target);
+    }
+
+    private LoadSnapshotAction? ParseLoadSnapshotAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'load_snapshot' must be an object"));
+            return null;
+        }
+
+        // Required: name (provider name for expressions)
+        if (!dict.TryGetValue("name", out var nameObj) || nameObj is not string name)
+        {
+            errors.Add(new ParseError("'load_snapshot' requires 'name' field (provider name for expressions)"));
+            return null;
+        }
+
+        // Required: resource_type
+        if (!dict.TryGetValue("resource_type", out var typeObj) || typeObj is not string resourceType)
+        {
+            errors.Add(new ParseError("'load_snapshot' requires 'resource_type' field"));
+            return null;
+        }
+
+        // Required: resource_id (expression string)
+        if (!dict.TryGetValue("resource_id", out var idObj) || idObj is not string resourceId)
+        {
+            errors.Add(new ParseError("'load_snapshot' requires 'resource_id' field (expression)"));
+            return null;
+        }
+
+        // Optional: filter (list of strings)
+        IReadOnlyList<string>? filter = null;
+        if (dict.TryGetValue("filter", out var filterObj))
+        {
+            if (filterObj is IList<object> filterList)
+            {
+                var filterStrings = new List<string>();
+                foreach (var item in filterList)
+                {
+                    if (item is string str)
+                    {
+                        filterStrings.Add(str);
+                    }
+                    else
+                    {
+                        errors.Add(new ParseError("'load_snapshot.filter' items must be strings"));
+                        return null;
+                    }
+                }
+                filter = filterStrings;
+            }
+            else
+            {
+                errors.Add(new ParseError("'load_snapshot.filter' must be a list of strings"));
+                return null;
+            }
+        }
+
+        return new LoadSnapshotAction(name, resourceType, resourceId, filter);
     }
 
     private DomainAction ParseDomainAction(string name, object? value, List<ParseError> errors)

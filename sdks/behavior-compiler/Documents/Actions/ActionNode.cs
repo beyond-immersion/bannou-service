@@ -153,6 +153,38 @@ public sealed record LogAction(
     string Level = "info") : ActionNode;
 
 // ═══════════════════════════════════════════════════════════════════════════
+// RESOURCE LOADING ACTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Loads a resource snapshot and registers it as a variable provider.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Loads snapshot data from the Resource service and makes it available
+/// via the standard ABML expression syntax:
+/// <code>
+/// ${candidate.personality.aggression}  # Access personality.aggression from snapshot
+/// ${candidate.history.participations}  # Access history.participations
+/// </code>
+/// </para>
+/// <para>
+/// The snapshot is registered in the document's root scope for document-wide access.
+/// If the snapshot cannot be loaded, an empty provider is registered that returns
+/// null for all paths (graceful degradation).
+/// </para>
+/// </remarks>
+/// <param name="Name">Provider name for expression access (e.g., "candidate").</param>
+/// <param name="ResourceType">Resource type (e.g., "character").</param>
+/// <param name="ResourceId">Expression evaluating to resource GUID.</param>
+/// <param name="Filter">Optional list of source types to include (e.g., ["character-personality", "character-history"]).</param>
+public sealed record LoadSnapshotAction(
+    string Name,
+    string ResourceType,
+    string ResourceId,
+    IReadOnlyList<string>? Filter = null) : ActionNode;
+
+// ═══════════════════════════════════════════════════════════════════════════
 // DOMAIN ACTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
