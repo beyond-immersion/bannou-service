@@ -66,13 +66,13 @@ public partial class ActorService
         try
         {
             // Invalidate cached behavior documents (enables hot-reload)
-            _behaviorCache.InvalidateByBehaviorId(evt.BehaviorId);
+            _behaviorLoader.InvalidateByBehaviorId(evt.BehaviorId);
             _logger.LogDebug("Invalidated cached behaviors matching {BehaviorId}", evt.BehaviorId);
 
             // Also invalidate by asset ID if present
             if (!string.IsNullOrEmpty(evt.AssetId))
             {
-                _behaviorCache.Invalidate(evt.AssetId);
+                _behaviorLoader.Invalidate(evt.AssetId);
             }
 
             // Find actors using this behavior

@@ -25,6 +25,21 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -54,6 +69,102 @@ public partial class BehaviorInvalidatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("invalidatedCount")]
     public int InvalidatedCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a regional watcher is started
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class WatcherStartedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for watcher started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "puppetmaster.watcher.started";
+
+    /// <summary>
+    /// Unique identifier for the watcher instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("watcherId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid WatcherId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm the watcher monitors
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of watcher (e.g., "regional", "dungeon", "event")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("watcherType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string WatcherType { get; set; } = default!;
+
+    /// <summary>
+    /// Behavior document reference used by this watcher
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
+    public string? BehaviorRef { get; set; } = default!;
+
+    /// <summary>
+    /// Actor instance ID running this watcher's behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    public string? ActorId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a regional watcher is stopped
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class WatcherStoppedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for watcher stopped
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "puppetmaster.watcher.stopped";
+
+    /// <summary>
+    /// Unique identifier for the watcher instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("watcherId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid WatcherId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm the watcher was monitoring
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of watcher
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("watcherType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string WatcherType { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for stopping (manual, error, realm deleted, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
 
 }
 

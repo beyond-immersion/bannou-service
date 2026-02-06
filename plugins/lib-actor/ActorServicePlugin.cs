@@ -1,13 +1,14 @@
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Execution;
 using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.PoolNode;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -80,7 +81,15 @@ public class ActorServicePlugin : BaseBannouPlugin
         // Note: Variable provider factories (personality, encounters, quests) are registered by their
         // owning L3/L4 plugins (lib-character-personality, lib-character-encounter, lib-quest) via
         // IVariableProviderFactory interface. Actor (L2) discovers them via DI collection injection.
-        services.AddSingleton<IBehaviorDocumentCache, BehaviorDocumentCache>();
+
+        // Behavior document providers - discovered via IEnumerable<IBehaviorDocumentProvider>
+        // Priority 100 (DynamicBehaviorProvider) is registered by lib-puppetmaster (L4)
+        // Priority 50 (SeededBehaviorProvider) loads embedded behaviors from this assembly
+        // Priority 0 (FallbackBehaviorProvider) logs when no provider can serve a behavior
+        services.AddSingleton<IBehaviorDocumentProvider, SeededBehaviorProvider>();
+        services.AddSingleton<IBehaviorDocumentProvider, FallbackBehaviorProvider>();
+        services.AddSingleton<BehaviorDocumentLoader>();
+
         services.AddSingleton<IDocumentExecutorFactory, DocumentExecutorFactory>();
 
         // Register actor runtime components as singletons (shared across service instances)

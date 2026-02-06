@@ -44,4 +44,19 @@ public partial interface IPuppetmasterService : IBannouService
         /// </summary>
         Task<(StatusCodes, ListWatchersResponse?)> ListWatchersAsync(ListWatchersRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// StartWatcher operation
+        /// </summary>
+        Task<(StatusCodes, StartWatcherResponse?)> StartWatcherAsync(StartWatcherRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// StopWatcher operation
+        /// </summary>
+        Task<(StatusCodes, StopWatcherResponse?)> StopWatcherAsync(StopWatcherRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// StartWatchersForRealm operation
+        /// </summary>
+        Task<(StatusCodes, StartWatchersForRealmResponse?)> StartWatchersForRealmAsync(StartWatchersForRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

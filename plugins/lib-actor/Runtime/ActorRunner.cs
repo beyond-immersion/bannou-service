@@ -2,7 +2,7 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -30,7 +30,7 @@ public sealed class ActorRunner : IActorRunner
     private readonly Channel<PerceptionData> _perceptionQueue;
     private readonly ActorState _state;
     private readonly IStateStore<ActorStateSnapshot> _stateStore;
-    private readonly IBehaviorDocumentCache _behaviorCache;
+    private readonly BehaviorDocumentLoader _behaviorLoader;
     private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutor _executor;
     private readonly IExpressionEvaluator _expressionEvaluator;
@@ -120,7 +120,7 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="messageSubscriber">Message subscriber for dynamic subscriptions.</param>
     /// <param name="meshClient">Mesh client for routing state updates to game servers.</param>
     /// <param name="stateStore">State store for actor persistence.</param>
-    /// <param name="behaviorCache">Behavior document cache.</param>
+    /// <param name="behaviorLoader">Behavior document loader.</param>
     /// <param name="providerFactories">Variable provider factories for ABML expressions (discovered via DI).</param>
     /// <param name="executor">Document executor for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
@@ -135,7 +135,7 @@ public sealed class ActorRunner : IActorRunner
         IMessageSubscriber messageSubscriber,
         IMeshInvocationClient meshClient,
         IStateStore<ActorStateSnapshot> stateStore,
-        IBehaviorDocumentCache behaviorCache,
+        BehaviorDocumentLoader behaviorLoader,
         IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutor executor,
         IExpressionEvaluator expressionEvaluator,
@@ -150,7 +150,7 @@ public sealed class ActorRunner : IActorRunner
         _messageSubscriber = messageSubscriber;
         _meshClient = meshClient;
         _stateStore = stateStore;
-        _behaviorCache = behaviorCache;
+        _behaviorLoader = behaviorLoader;
         _providerFactories = providerFactories;
         _executor = executor;
         _expressionEvaluator = expressionEvaluator;
@@ -591,7 +591,7 @@ public sealed class ActorRunner : IActorRunner
 
             try
             {
-                _behavior = await _behaviorCache.GetOrLoadAsync(_template.BehaviorRef, ct);
+                _behavior = await _behaviorLoader.GetDocumentAsync(_template.BehaviorRef, ct);
                 _logger.LogInformation("Actor {ActorId} loaded behavior from {BehaviorRef}",
                     ActorId, _template.BehaviorRef);
             }

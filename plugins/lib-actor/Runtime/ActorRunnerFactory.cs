@@ -1,5 +1,5 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
-using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Execution;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
@@ -19,7 +19,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly ActorServiceConfiguration _config;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly IBehaviorDocumentCache _behaviorCache;
+    private readonly BehaviorDocumentLoader _behaviorLoader;
     private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutorFactory _executorFactory;
     private readonly IExpressionEvaluator _expressionEvaluator;
@@ -33,7 +33,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="config">Service configuration.</param>
     /// <param name="loggerFactory">Logger factory for creating loggers.</param>
     /// <param name="stateStoreFactory">State store factory for actor persistence.</param>
-    /// <param name="behaviorCache">Behavior document cache for loading ABML.</param>
+    /// <param name="behaviorLoader">Behavior document loader for loading ABML.</param>
     /// <param name="providerFactories">Variable provider factories for ABML expressions (discovered via DI).</param>
     /// <param name="executorFactory">Document executor factory for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
@@ -44,7 +44,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         ActorServiceConfiguration config,
         ILoggerFactory loggerFactory,
         IStateStoreFactory stateStoreFactory,
-        IBehaviorDocumentCache behaviorCache,
+        BehaviorDocumentLoader behaviorLoader,
         IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutorFactory executorFactory,
         IExpressionEvaluator expressionEvaluator)
@@ -55,7 +55,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         _config = config;
         _loggerFactory = loggerFactory;
         _stateStoreFactory = stateStoreFactory;
-        _behaviorCache = behaviorCache;
+        _behaviorLoader = behaviorLoader;
         _providerFactories = providerFactories;
         _executorFactory = executorFactory;
         _expressionEvaluator = expressionEvaluator;
@@ -94,7 +94,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
             _messageSubscriber,
             _meshClient,
             stateStore,
-            _behaviorCache,
+            _behaviorLoader,
             _providerFactories,
             executor,
             _expressionEvaluator,

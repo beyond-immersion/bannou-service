@@ -11,8 +11,21 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 
-  # No subscriptions for Phase 2 (future: realm.activated, realm.deactivated)
-x-event-subscriptions: []
+  # Phase 2d: Subscribe to realm lifecycle events to auto-start watchers
+  x-event-subscriptions:
+    - topic: realm.created
+      event: RealmCreatedEvent
+      handler: HandleRealmCreated
+  x-event-publications:
+    - topic: puppetmaster.behavior.invalidated
+      event: BehaviorInvalidatedEvent
+      description: Published when behavior documents are invalidated from cache
+    - topic: puppetmaster.watcher.started
+      event: WatcherStartedEvent
+      description: Published when a regional watcher is started
+    - topic: puppetmaster.watcher.stopped
+      event: WatcherStoppedEvent
+      description: Published when a regional watcher is stopped
 
 servers: []
 
@@ -40,3 +53,69 @@ components:
         invalidatedCount:
           type: integer
           description: Number of behaviors invalidated
+
+    WatcherStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when a regional watcher is started
+      required:
+        - watcherId
+        - realmId
+        - watcherType
+      properties:
+        eventName:
+          type: string
+          default: "puppetmaster.watcher.started"
+          description: Event type identifier for watcher started
+        watcherId:
+          type: string
+          format: uuid
+          description: Unique identifier for the watcher instance
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the watcher monitors
+        watcherType:
+          type: string
+          description: Type of watcher (e.g., "regional", "dungeon", "event")
+        behaviorRef:
+          type: string
+          nullable: true
+          description: Behavior document reference used by this watcher
+        actorId:
+          type: string
+          nullable: true
+          description: Actor instance ID running this watcher's behavior
+
+    WatcherStoppedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when a regional watcher is stopped
+      required:
+        - watcherId
+        - realmId
+        - watcherType
+      properties:
+        eventName:
+          type: string
+          default: "puppetmaster.watcher.stopped"
+          description: Event type identifier for watcher stopped
+        watcherId:
+          type: string
+          format: uuid
+          description: Unique identifier for the watcher instance
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the watcher was monitoring
+        watcherType:
+          type: string
+          description: Type of watcher
+        reason:
+          type: string
+          nullable: true
+          description: Reason for stopping (manual, error, realm deleted, etc.)

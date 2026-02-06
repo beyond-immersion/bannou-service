@@ -1,5 +1,5 @@
 using BeyondImmersion.Bannou.Core;
-using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Attributes;
@@ -46,7 +46,7 @@ public partial class ActorService : IActorService
     private readonly IActorRegistry _actorRegistry;
     private readonly IActorRunnerFactory _actorRunnerFactory;
     private readonly IEventConsumer _eventConsumer;
-    private readonly IBehaviorDocumentCache _behaviorCache;
+    private readonly BehaviorDocumentLoader _behaviorLoader;
     private readonly IActorPoolManager _poolManager;
     private readonly IMeshInvocationClient _meshClient;
 
@@ -67,7 +67,7 @@ public partial class ActorService : IActorService
     /// <param name="actorRegistry">Registry for tracking active actors.</param>
     /// <param name="actorRunnerFactory">Factory for creating actor runners.</param>
     /// <param name="eventConsumer">Event consumer for registering handlers.</param>
-    /// <param name="behaviorCache">Behavior document cache for hot-reload invalidation.</param>
+    /// <param name="behaviorLoader">Behavior document loader for hot-reload invalidation.</param>
     /// <param name="poolManager">Pool manager for distributed actor routing.</param>
     /// <param name="meshClient">Mesh client for invoking methods on remote nodes.</param>
     public ActorService(
@@ -78,7 +78,7 @@ public partial class ActorService : IActorService
         IActorRegistry actorRegistry,
         IActorRunnerFactory actorRunnerFactory,
         IEventConsumer eventConsumer,
-        IBehaviorDocumentCache behaviorCache,
+        BehaviorDocumentLoader behaviorLoader,
         IActorPoolManager poolManager,
         IMeshInvocationClient meshClient)
     {
@@ -89,7 +89,7 @@ public partial class ActorService : IActorService
         _actorRegistry = actorRegistry;
         _actorRunnerFactory = actorRunnerFactory;
         _eventConsumer = eventConsumer;
-        _behaviorCache = behaviorCache;
+        _behaviorLoader = behaviorLoader;
         _poolManager = poolManager;
         _meshClient = meshClient;
 
