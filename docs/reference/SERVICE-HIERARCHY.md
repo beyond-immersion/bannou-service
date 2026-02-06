@@ -1,7 +1,7 @@
 # Bannou Service Hierarchy
 
-> **Version**: 2.4
-> **Last Updated**: 2026-02-03
+> **Version**: 2.5
+> **Last Updated**: 2026-02-06
 > **Scope**: All Bannou service plugins and their inter-dependencies
 
 This document defines the authoritative service dependency hierarchy for Bannou. Services are organized into five layers based on their **domain** (application vs game) and **optionality** (foundation vs feature). Dependencies may only flow downward.
@@ -145,6 +145,7 @@ These services provide the core game infrastructure - worlds, characters, specie
 | **item** | Item templates and instances |
 | **inventory** | Container and slot management |
 | **game-session** | Active game session management |
+| **actor** | NPC brains, behavior execution runtime |
 
 **Rules**:
 - May depend on Layer 0, Layer 1, and other L2 services
@@ -192,7 +193,6 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 
 | Service | Role |
 |---------|------|
-| **actor** | NPC brains, behavior execution |
 | **analytics** | Event aggregation, statistics, skill ratings (see note below) |
 | **behavior** | ABML compiler, GOAP planner |
 | **mapping** | Spatial data management |
@@ -462,6 +462,155 @@ This is simpler but means the foundational service can't gate deletion on active
 
 ---
 
+## Variable Provider Factory Pattern
+
+When a foundational service (L2) needs data from higher-layer services (L4) at runtime, it cannot inject those service clients (that would be a hierarchy violation). Instead, the foundational service defines an interface that higher-layer services implement and register.
+
+### The Actor Runtime Example
+
+The Actor service (L2) executes behavior models that need character data - personality traits, combat preferences, quest state, encounter history. These are owned by L4 services (character-personality, character-encounter, quest). How does Actor get this data without depending on L4?
+
+### The Wrong Way (Layer Violation)
+
+```csharp
+// IN ACTOR SERVICE (L2) - FORBIDDEN!
+public class ActorRunner
+{
+    private readonly ICharacterPersonalityClient _personalityClient;  // NO! L4
+    private readonly IQuestClient _questClient;                       // NO! L4
+
+    public async Task<float> GetPersonalityTrait(Guid characterId, string trait)
+    {
+        // Actor depends on L4 services - VIOLATION
+        var response = await _personalityClient.GetPersonalityAsync(...);
+    }
+}
+```
+
+### The Right Way (Interface Inversion)
+
+**Step 1: Foundational service defines the interface it needs**
+
+```csharp
+// bannou-service/Providers/IVariableProviderFactory.cs (shared, layer-agnostic)
+namespace BeyondImmersion.BannouService.Providers;
+
+/// <summary>
+/// Factory for creating variable providers for behavior execution.
+/// Higher-layer services implement this to provide their data to Actor (L2).
+/// </summary>
+public interface IVariableProviderFactory
+{
+    /// <summary>The variable namespace this factory provides (e.g., "personality").</summary>
+    string ProviderName { get; }
+
+    /// <summary>Creates a provider instance for the given character.</summary>
+    Task<IVariableProvider> CreateAsync(Guid characterId, CancellationToken ct);
+}
+
+public interface IVariableProvider
+{
+    /// <summary>The variable namespace (e.g., "personality" for ${personality.*}).</summary>
+    string Namespace { get; }
+
+    /// <summary>Gets a variable value by name within this namespace.</summary>
+    object? GetVariable(string name);
+}
+```
+
+**Step 2: Higher-layer services implement and register the interface**
+
+```csharp
+// lib-character-personality (L4) - implements the interface
+public class PersonalityProviderFactory : IVariableProviderFactory
+{
+    private readonly IPersonalityDataCache _cache;
+
+    public string ProviderName => "personality";
+
+    public async Task<IVariableProvider> CreateAsync(Guid characterId, CancellationToken ct)
+    {
+        var data = await _cache.GetOrLoadAsync(characterId, ct);
+        return new PersonalityProvider(data);
+    }
+}
+
+// In plugin registration
+services.AddSingleton<IVariableProviderFactory, PersonalityProviderFactory>();
+```
+
+**Step 3: Foundational service discovers providers via DI collection**
+
+```csharp
+// lib-actor (L2) - discovers providers at runtime
+public class ActorRunner
+{
+    private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
+
+    public ActorRunner(
+        IEnumerable<IVariableProviderFactory> providerFactories,  // DI collection
+        ...)
+    {
+        _providerFactories = providerFactories;
+    }
+
+    private async Task<ExecutionScope> CreateExecutionScopeAsync(...)
+    {
+        var scope = new ExecutionScope();
+
+        // Actor doesn't know WHO provides these - just that they exist
+        foreach (var factory in _providerFactories)
+        {
+            try
+            {
+                var provider = await factory.CreateAsync(CharacterId, ct);
+                scope.RegisterProvider(provider);
+            }
+            catch (Exception ex)
+            {
+                // Graceful degradation - some providers may fail
+                _logger.LogWarning(ex, "Failed to create {Provider}", factory.ProviderName);
+            }
+        }
+
+        return scope;
+    }
+}
+```
+
+### Key Insights
+
+1. **The interface lives in shared code** (bannou-service), not in Actor or the L4 services
+2. **Actor depends on the interface** (allowed - it's shared code, not a service client)
+3. **L4 services implement the interface** (allowed - they depend on the shared contract)
+4. **DI collection injection** discovers implementations at runtime
+5. **Graceful degradation** handles missing providers (L4 may not be enabled)
+
+### When to Use This Pattern
+
+Use Variable Provider Factory when:
+- A foundational service needs data from optional higher-layer services
+- The data is needed frequently during runtime execution
+- Different deployments may have different providers enabled
+- The foundational service shouldn't crash when providers are unavailable
+
+### Related Pattern: Cache Ownership
+
+When using this pattern, the cache for each data type should live with its owning service:
+
+| Provider | Cache | Owned By |
+|----------|-------|----------|
+| PersonalityProvider | IPersonalityDataCache | lib-character-personality (L4) |
+| CombatPreferencesProvider | IPersonalityDataCache | lib-character-personality (L4) |
+| QuestProvider | IQuestDataCache | lib-quest (L4) |
+| EncountersProvider | IEncounterDataCache | lib-character-encounter (L4) |
+| BackstoryProvider | - (no cache) | lib-character-history (L4) |
+| BehaviorDocumentCache | IBehaviorDocumentCache | lib-actor (L2) |
+
+Cache invalidation events are handled by each owning service, not by Actor.
+
+---
+
 ## Dependency Handling Patterns (MANDATORY)
 
 The hierarchy dictates not just WHAT services can depend on, but HOW those dependencies should be handled in code. This prevents silent degradation that hides deployment configuration errors.
@@ -635,9 +784,9 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 |-------|----------|
 | **L0** | state, messaging, mesh (required); telemetry (optional)† |
 | **L1** | account, auth, connect, permission, contract, resource |
-| **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory, game-session |
+| **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory, game-session, actor |
 | **L3** | asset, orchestrator, documentation, website |
-| **L4** | actor, analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
+| **L4** | analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
 | **L5** | (reserved for third-party plugins and internal meta-services) |
 
 † Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.
@@ -661,6 +810,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | 2026-02-03 | 2.2 | Added "Dependency Handling Patterns" section: L0/L1/L2 dependencies must be hard (constructor injection, fail at startup); L3/L4 may be soft (graceful degradation). This prevents silent degradation that hides deployment configuration errors. |
 | 2026-02-03 | 2.3 | Added schema-first layer declaration via `x-service-layer` in API schemas. Added `ServiceLayer` enum to `BannouServiceAttribute`. PluginLoader now sorts by layer for deterministic cross-layer dependency resolution. Added L5 (Extensions) layer for third-party plugins. |
 | 2026-02-03 | 2.4 | Added ServiceHierarchyValidator documentation. Updated to reflect layer-based loading is now implemented (not future). Updated diagram to show 6 layers including L5 Extensions. Removed outdated "Current Limitation" notes. |
+| 2026-02-06 | 2.5 | Moved Actor from L4 to L2 (Game Foundation). Added Variable Provider Factory pattern documentation for how L2 services can receive data from L4 services without hierarchy violations. |
 
 ---
 

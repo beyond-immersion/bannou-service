@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Execution;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
@@ -19,9 +20,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly ILoggerFactory _loggerFactory;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IBehaviorDocumentCache _behaviorCache;
-    private readonly IPersonalityCache _personalityCache;
-    private readonly IEncounterCache _encounterCache;
-    private readonly IQuestCache _questCache;
+    private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutorFactory _executorFactory;
     private readonly IExpressionEvaluator _expressionEvaluator;
 
@@ -35,9 +34,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="loggerFactory">Logger factory for creating loggers.</param>
     /// <param name="stateStoreFactory">State store factory for actor persistence.</param>
     /// <param name="behaviorCache">Behavior document cache for loading ABML.</param>
-    /// <param name="personalityCache">Personality cache for character traits.</param>
-    /// <param name="encounterCache">Encounter cache for character encounter data.</param>
-    /// <param name="questCache">Quest cache for character quest data.</param>
+    /// <param name="providerFactories">Variable provider factories for ABML expressions (discovered via DI).</param>
     /// <param name="executorFactory">Document executor factory for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     public ActorRunnerFactory(
@@ -48,9 +45,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         ILoggerFactory loggerFactory,
         IStateStoreFactory stateStoreFactory,
         IBehaviorDocumentCache behaviorCache,
-        IPersonalityCache personalityCache,
-        IEncounterCache encounterCache,
-        IQuestCache questCache,
+        IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutorFactory executorFactory,
         IExpressionEvaluator expressionEvaluator)
     {
@@ -61,9 +56,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         _loggerFactory = loggerFactory;
         _stateStoreFactory = stateStoreFactory;
         _behaviorCache = behaviorCache;
-        _personalityCache = personalityCache;
-        _encounterCache = encounterCache;
-        _questCache = questCache;
+        _providerFactories = providerFactories;
         _executorFactory = executorFactory;
         _expressionEvaluator = expressionEvaluator;
     }
@@ -102,9 +95,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
             _meshClient,
             stateStore,
             _behaviorCache,
-            _personalityCache,
-            _encounterCache,
-            _questCache,
+            _providerFactories,
             executor,
             _expressionEvaluator,
             logger,

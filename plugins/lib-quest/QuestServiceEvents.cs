@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Quest.Caching;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
@@ -32,6 +33,24 @@ public partial class QuestService
         eventConsumer.RegisterHandler<IQuestService, ContractTerminatedEvent>(
             "contract.terminated",
             async (svc, evt) => await ((QuestService)svc).HandleContractTerminatedAsync(evt));
+
+        // Self-subscribe to our own events for cache invalidation.
+        // When quest state changes, invalidate the cache so running actors get fresh data.
+        eventConsumer.RegisterHandler<IQuestService, QuestAcceptedEvent>(
+            QuestTopics.QuestAccepted,
+            async (svc, evt) => await ((QuestService)svc).HandleQuestAcceptedForCacheAsync(evt));
+
+        eventConsumer.RegisterHandler<IQuestService, QuestCompletedEvent>(
+            QuestTopics.QuestCompleted,
+            async (svc, evt) => await ((QuestService)svc).HandleQuestCompletedForCacheAsync(evt));
+
+        eventConsumer.RegisterHandler<IQuestService, QuestFailedEvent>(
+            QuestTopics.QuestFailed,
+            async (svc, evt) => await ((QuestService)svc).HandleQuestFailedForCacheAsync(evt));
+
+        eventConsumer.RegisterHandler<IQuestService, QuestAbandonedEvent>(
+            QuestTopics.QuestAbandoned,
+            async (svc, evt) => await ((QuestService)svc).HandleQuestAbandonedForCacheAsync(evt));
     }
 
     /// <summary>
@@ -341,4 +360,60 @@ public partial class QuestService
             newStatus,
             _configuration.MaxConcurrencyRetries);
     }
+
+    #region Cache Invalidation Handlers
+
+    /// <summary>
+    /// Handles quest.accepted events for cache invalidation.
+    /// </summary>
+    private async Task HandleQuestAcceptedForCacheAsync(QuestAcceptedEvent evt)
+    {
+        _logger.LogDebug("Invalidating quest cache for accepted quest {QuestCode}", evt.QuestCode);
+        foreach (var characterId in evt.QuestorCharacterIds)
+        {
+            _questDataCache.Invalidate(characterId);
+        }
+        await Task.Yield();
+    }
+
+    /// <summary>
+    /// Handles quest.completed events for cache invalidation.
+    /// </summary>
+    private async Task HandleQuestCompletedForCacheAsync(QuestCompletedEvent evt)
+    {
+        _logger.LogDebug("Invalidating quest cache for completed quest {QuestCode}", evt.QuestCode);
+        foreach (var characterId in evt.QuestorCharacterIds)
+        {
+            _questDataCache.Invalidate(characterId);
+        }
+        await Task.Yield();
+    }
+
+    /// <summary>
+    /// Handles quest.failed events for cache invalidation.
+    /// </summary>
+    private async Task HandleQuestFailedForCacheAsync(QuestFailedEvent evt)
+    {
+        _logger.LogDebug("Invalidating quest cache for failed quest {QuestCode}", evt.QuestCode);
+        if (evt.QuestorCharacterIds != null)
+        {
+            foreach (var characterId in evt.QuestorCharacterIds)
+            {
+                _questDataCache.Invalidate(characterId);
+            }
+        }
+        await Task.Yield();
+    }
+
+    /// <summary>
+    /// Handles quest.abandoned events for cache invalidation.
+    /// </summary>
+    private async Task HandleQuestAbandonedForCacheAsync(QuestAbandonedEvent evt)
+    {
+        _logger.LogDebug("Invalidating quest cache for abandoned quest {QuestCode}", evt.QuestCode);
+        _questDataCache.Invalidate(evt.AbandoningCharacterId);
+        await Task.Yield();
+    }
+
+    #endregion
 }

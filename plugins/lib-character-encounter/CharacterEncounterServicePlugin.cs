@@ -1,4 +1,7 @@
+using BeyondImmersion.BannouService.CharacterEncounter.Caching;
+using BeyondImmersion.BannouService.CharacterEncounter.Providers;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -32,8 +35,12 @@ public class CharacterEncounterServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register CharacterEncounterServiceConfiguration here
 
-        // Add any service-specific dependencies
-        // The generated clients should already be registered by AddAllBannouServiceClients()
+        // Register encounter data cache (singleton for cross-request caching)
+        services.AddSingleton<IEncounterDataCache, EncounterDataCache>();
+
+        // Register variable provider factory for Actor to discover via DI
+        // Enables dependency inversion: Actor (L2) consumes providers without knowing about CharacterEncounter (L3)
+        services.AddSingleton<IVariableProviderFactory, EncountersProviderFactory>();
 
         // Register the memory decay scheduler background service
         // This only activates when MemoryDecayMode is set to Scheduled

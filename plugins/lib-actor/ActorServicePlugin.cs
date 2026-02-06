@@ -76,10 +76,10 @@ public class ActorServicePlugin : BaseBannouPlugin
         services.AddSingleton<IScheduledEventManager, ScheduledEventManager>();
 
         // Register behavior execution infrastructure
+        // Note: Variable provider factories (personality, encounters, quests) are registered by their
+        // owning L3/L4 plugins (lib-character-personality, lib-character-encounter, lib-quest) via
+        // IVariableProviderFactory interface. Actor (L2) discovers them via DI collection injection.
         services.AddSingleton<IBehaviorDocumentCache, BehaviorDocumentCache>();
-        services.AddSingleton<IPersonalityCache, PersonalityCache>();
-        services.AddSingleton<IEncounterCache, EncounterCache>();
-        services.AddSingleton<IQuestCache, QuestCache>();
         services.AddSingleton<IDocumentExecutorFactory, DocumentExecutorFactory>();
 
         // Register actor runtime components as singletons (shared across service instances)

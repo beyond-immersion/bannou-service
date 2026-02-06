@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -30,9 +31,7 @@ public sealed class ActorRunner : IActorRunner
     private readonly ActorState _state;
     private readonly IStateStore<ActorStateSnapshot> _stateStore;
     private readonly IBehaviorDocumentCache _behaviorCache;
-    private readonly IPersonalityCache _personalityCache;
-    private readonly IEncounterCache _encounterCache;
-    private readonly IQuestCache _questCache;
+    private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutor _executor;
     private readonly IExpressionEvaluator _expressionEvaluator;
 
@@ -122,9 +121,7 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="meshClient">Mesh client for routing state updates to game servers.</param>
     /// <param name="stateStore">State store for actor persistence.</param>
     /// <param name="behaviorCache">Behavior document cache.</param>
-    /// <param name="personalityCache">Personality cache for character traits.</param>
-    /// <param name="encounterCache">Encounter cache for character encounter data.</param>
-    /// <param name="questCache">Quest cache for character quest data.</param>
+    /// <param name="providerFactories">Variable provider factories for ABML expressions (discovered via DI).</param>
     /// <param name="executor">Document executor for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     /// <param name="logger">Logger instance.</param>
@@ -139,9 +136,7 @@ public sealed class ActorRunner : IActorRunner
         IMeshInvocationClient meshClient,
         IStateStore<ActorStateSnapshot> stateStore,
         IBehaviorDocumentCache behaviorCache,
-        IPersonalityCache personalityCache,
-        IEncounterCache encounterCache,
-        IQuestCache questCache,
+        IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutor executor,
         IExpressionEvaluator expressionEvaluator,
         ILogger<ActorRunner> logger,
@@ -156,9 +151,7 @@ public sealed class ActorRunner : IActorRunner
         _meshClient = meshClient;
         _stateStore = stateStore;
         _behaviorCache = behaviorCache;
-        _personalityCache = personalityCache;
-        _encounterCache = encounterCache;
-        _questCache = questCache;
+        _providerFactories = providerFactories;
         _executor = executor;
         _expressionEvaluator = expressionEvaluator;
         _logger = logger;
@@ -745,35 +738,23 @@ public sealed class ActorRunner : IActorRunner
             scope.SetValue("encounter", null);
         }
 
-        // Load personality, combat preferences, backstory, and encounters for character-based actors
-        if (CharacterId.HasValue)
+        // Load variable providers via registered factories (dependency inversion pattern).
+        // Higher-layer services (L3/L4) register their provider factories with DI,
+        // Actor (L2) discovers and uses them without knowing about specific game features.
+        foreach (var factory in _providerFactories)
         {
-            var personality = await _personalityCache.GetOrLoadAsync(CharacterId.Value, ct);
-            scope.RegisterProvider(new PersonalityProvider(personality));
-
-            var combatPrefs = await _personalityCache.GetCombatPreferencesOrLoadAsync(CharacterId.Value, ct);
-            scope.RegisterProvider(new CombatPreferencesProvider(combatPrefs));
-
-            var backstory = await _personalityCache.GetBackstoryOrLoadAsync(CharacterId.Value, ct);
-            scope.RegisterProvider(new BackstoryProvider(backstory));
-
-            // Load encounter data for the character
-            var encounters = await _encounterCache.GetEncountersOrLoadAsync(CharacterId.Value, ct);
-            scope.RegisterProvider(new EncountersProvider(encounters));
-
-            // Load quest data for the character
-            var quests = await _questCache.GetActiveQuestsOrLoadAsync(CharacterId.Value, ct);
-            scope.RegisterProvider(new QuestProvider(quests));
-        }
-        else
-        {
-            // Register empty providers for non-character actors to avoid null reference issues
-            // Per QUALITY TENETS (T12): use static Empty property, not null
-            scope.RegisterProvider(new PersonalityProvider(null));
-            scope.RegisterProvider(new CombatPreferencesProvider(null));
-            scope.RegisterProvider(new BackstoryProvider(null));
-            scope.RegisterProvider(new EncountersProvider(null));
-            scope.RegisterProvider(QuestProvider.Empty);
+            try
+            {
+                var provider = await factory.CreateAsync(CharacterId, ct);
+                scope.RegisterProvider(provider);
+                _logger.LogDebug("Actor {ActorId} registered provider {ProviderName}", ActorId, factory.ProviderName);
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail - actor can continue without optional providers
+                _logger.LogWarning(ex, "Actor {ActorId} failed to create provider {ProviderName}",
+                    ActorId, factory.ProviderName);
+            }
         }
 
         return scope;

@@ -7,7 +7,7 @@ using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.Quest;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -77,15 +77,9 @@ public class ActorRunnerTests
             .ReturnsAsync("etag-1");
 
         var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
-        var personalityCacheMock = new Mock<IPersonalityCache>();
-        var encounterCacheMock = new Mock<IEncounterCache>();
-        var questCacheMock = new Mock<IQuestCache>();
 
-        // Set up quest cache to return empty response (character has no quests)
-        questCacheMock.Setup(c => c.GetActiveQuestsOrLoadAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListQuestsResponse { Quests = new List<QuestInstanceResponse>(), Total = 0 });
+        // Empty provider factories list - tests don't need actual providers
+        var providerFactories = new List<IVariableProviderFactory>();
 
         var executorMock = new Mock<IDocumentExecutor>();
         var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
@@ -125,9 +119,7 @@ public class ActorRunnerTests
             meshClientMock.Object,
             stateStoreMock.Object,
             behaviorCacheMock.Object,
-            personalityCacheMock.Object,
-            encounterCacheMock.Object,
-            questCacheMock.Object,
+            providerFactories,
             executorMock.Object,
             expressionEvaluatorMock.Object,
             loggerMock.Object,

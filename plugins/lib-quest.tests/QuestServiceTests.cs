@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Quest;
+using BeyondImmersion.BannouService.Quest.Caching;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -36,6 +37,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
     private readonly Mock<ILogger<QuestService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
+    private readonly Mock<IQuestDataCache> _mockQuestDataCache;
 
     public QuestServiceTests()
     {
@@ -54,6 +56,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockLogger = new Mock<ILogger<QuestService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockQuestDataCache = new Mock<IQuestDataCache>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -107,7 +110,8 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             _mockCharacterClient.Object,
             _mockLockProvider.Object,
             _mockEventConsumer.Object,
-            _mockServiceProvider.Object);
+            _mockServiceProvider.Object,
+            _mockQuestDataCache.Object);
     }
 
     #region Constructor Validation

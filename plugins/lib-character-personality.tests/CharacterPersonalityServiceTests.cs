@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.CharacterPersonality;
+using BeyondImmersion.BannouService.CharacterPersonality.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
@@ -26,6 +27,7 @@ public class CharacterPersonalityServiceTests
     private readonly Mock<IStateStore<CombatPreferencesData>> _mockCombatStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IPersonalityDataCache> _mockPersonalityCache;
 
     // Capture lists for verifying published events
     private readonly List<(string Topic, object Event)> _publishedEvents = new();
@@ -39,6 +41,7 @@ public class CharacterPersonalityServiceTests
         _mockCombatStore = new Mock<IStateStore<CombatPreferencesData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockPersonalityCache = new Mock<IPersonalityDataCache>();
 
         // Setup state store factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<PersonalityData>(It.IsAny<string>()))
@@ -102,7 +105,8 @@ public class CharacterPersonalityServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockPersonalityCache.Object);
     }
 
     /// <summary>

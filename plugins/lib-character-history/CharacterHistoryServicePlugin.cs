@@ -1,4 +1,7 @@
+using BeyondImmersion.BannouService.CharacterHistory.Caching;
+using BeyondImmersion.BannouService.CharacterHistory.Providers;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -32,8 +35,12 @@ public class CharacterHistoryServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register CharacterHistoryServiceConfiguration here
 
-        // Add any service-specific dependencies
-        // The generated clients should already be registered by AddAllBannouServiceClients()
+        // Register backstory data cache (singleton for cross-request caching)
+        services.AddSingleton<IBackstoryCache, BackstoryCache>();
+
+        // Register variable provider factory for Actor to discover via DI
+        // Enables dependency inversion: Actor (L2) consumes providers without knowing about CharacterHistory (L3)
+        services.AddSingleton<IVariableProviderFactory, BackstoryProviderFactory>();
 
         Logger?.LogDebug("Service dependencies configured");
     }

@@ -1,4 +1,3 @@
-using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
@@ -28,31 +27,9 @@ public partial class ActorService
             "session.disconnected",
             async (svc, evt) => await ((ActorService)svc).HandleSessionDisconnectedAsync(evt));
 
-        // Personality cache invalidation - invalidate when personality or combat preferences evolve
-        eventConsumer.RegisterHandler<IActorService, PersonalityEvolvedEvent>(
-            "personality.evolved",
-            async (svc, evt) => await ((ActorService)svc).HandlePersonalityEvolvedAsync(evt));
-
-        eventConsumer.RegisterHandler<IActorService, CombatPreferencesEvolvedEvent>(
-            "combat-preferences.evolved",
-            async (svc, evt) => await ((ActorService)svc).HandleCombatPreferencesEvolvedAsync(evt));
-
-        // Quest cache invalidation - invalidate when quest state changes
-        eventConsumer.RegisterHandler<IActorService, QuestAcceptedEvent>(
-            "quest.accepted",
-            async (svc, evt) => await ((ActorService)svc).HandleQuestAcceptedAsync(evt));
-
-        eventConsumer.RegisterHandler<IActorService, QuestCompletedEvent>(
-            "quest.completed",
-            async (svc, evt) => await ((ActorService)svc).HandleQuestCompletedAsync(evt));
-
-        eventConsumer.RegisterHandler<IActorService, QuestFailedEvent>(
-            "quest.failed",
-            async (svc, evt) => await ((ActorService)svc).HandleQuestFailedAsync(evt));
-
-        eventConsumer.RegisterHandler<IActorService, QuestAbandonedEvent>(
-            "quest.abandoned",
-            async (svc, evt) => await ((ActorService)svc).HandleQuestAbandonedAsync(evt));
+        // Note: Personality and quest cache invalidation is now handled by the services that own
+        // those caches (lib-character-personality, lib-quest) via their own event handlers.
+        // Actor (L2) does not own these caches - it gets fresh data from provider factories.
 
         // Pool node events (control plane only - when _poolManager is available)
         eventConsumer.RegisterHandler<IActorService, PoolNodeRegisteredEvent>(
@@ -181,124 +158,6 @@ public partial class ActorService
         // For NPC brain actors, they continue running even when players disconnect.
         // For session-bound actors (future), we would stop them here.
     }
-
-    /// <summary>
-    /// Handles personality.evolved events.
-    /// Invalidates the personality cache for the affected character so actors
-    /// pick up the updated personality data.
-    /// </summary>
-    /// <param name="evt">The event data.</param>
-    public async Task HandlePersonalityEvolvedAsync(PersonalityEvolvedEvent evt)
-    {
-        _logger.LogInformation(
-            "Received personality.evolved event for character {CharacterId}, experience type {ExperienceType}",
-            evt.CharacterId, evt.ExperienceType);
-
-        _personalityCache.Invalidate(evt.CharacterId);
-        _logger.LogDebug("Invalidated personality cache for character {CharacterId}", evt.CharacterId);
-
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
-    }
-
-    /// <summary>
-    /// Handles combat-preferences.evolved events.
-    /// Invalidates the personality cache for the affected character so actors
-    /// pick up the updated combat preferences data.
-    /// </summary>
-    /// <param name="evt">The event data.</param>
-    public async Task HandleCombatPreferencesEvolvedAsync(CombatPreferencesEvolvedEvent evt)
-    {
-        _logger.LogInformation(
-            "Received combat-preferences.evolved event for character {CharacterId}, experience type {ExperienceType}",
-            evt.CharacterId, evt.ExperienceType);
-
-        _personalityCache.Invalidate(evt.CharacterId);
-        _logger.LogDebug("Invalidated personality/combat cache for character {CharacterId}", evt.CharacterId);
-
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
-    }
-
-    #region Quest Cache Invalidation Handlers
-
-    /// <summary>
-    /// Handles quest.accepted events.
-    /// Invalidates the quest cache for all characters who accepted the quest.
-    /// </summary>
-    /// <param name="evt">The event data.</param>
-    public async Task HandleQuestAcceptedAsync(QuestAcceptedEvent evt)
-    {
-        _logger.LogDebug("Received quest.accepted event for quest {QuestCode}", evt.QuestCode);
-
-        foreach (var characterId in evt.QuestorCharacterIds)
-        {
-            _questCache.Invalidate(characterId);
-            _logger.LogDebug("Invalidated quest cache for character {CharacterId} (quest accepted)", characterId);
-        }
-
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
-    }
-
-    /// <summary>
-    /// Handles quest.completed events.
-    /// Invalidates the quest cache for all characters who completed the quest.
-    /// </summary>
-    /// <param name="evt">The event data.</param>
-    public async Task HandleQuestCompletedAsync(QuestCompletedEvent evt)
-    {
-        _logger.LogDebug("Received quest.completed event for quest {QuestCode}", evt.QuestCode);
-
-        foreach (var characterId in evt.QuestorCharacterIds)
-        {
-            _questCache.Invalidate(characterId);
-            _logger.LogDebug("Invalidated quest cache for character {CharacterId} (quest completed)", characterId);
-        }
-
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
-    }
-
-    /// <summary>
-    /// Handles quest.failed events.
-    /// Invalidates the quest cache for all characters who failed the quest.
-    /// </summary>
-    /// <param name="evt">The event data.</param>
-    public async Task HandleQuestFailedAsync(QuestFailedEvent evt)
-    {
-        _logger.LogDebug("Received quest.failed event for quest {QuestCode}", evt.QuestCode);
-
-        if (evt.QuestorCharacterIds != null)
-        {
-            foreach (var characterId in evt.QuestorCharacterIds)
-            {
-                _questCache.Invalidate(characterId);
-                _logger.LogDebug("Invalidated quest cache for character {CharacterId} (quest failed)", characterId);
-            }
-        }
-
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
-    }
-
-    /// <summary>
-    /// Handles quest.abandoned events.
-    /// Invalidates the quest cache for the character who abandoned the quest.
-    /// </summary>
-    /// <param name="evt">The event data.</param>
-    public async Task HandleQuestAbandonedAsync(QuestAbandonedEvent evt)
-    {
-        _logger.LogDebug("Received quest.abandoned event for quest {QuestCode}", evt.QuestCode);
-
-        _questCache.Invalidate(evt.AbandoningCharacterId);
-        _logger.LogDebug("Invalidated quest cache for character {CharacterId} (quest abandoned)", evt.AbandoningCharacterId);
-
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
-    }
-
-    #endregion
 
     #region Pool Node Event Handlers
 

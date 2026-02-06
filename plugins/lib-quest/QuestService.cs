@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Quest.Caching;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,6 +62,7 @@ public partial class QuestService : IQuestService
     private readonly ICharacterClient _characterClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IQuestDataCache _questDataCache;
 
     #region State Store Accessors
 
@@ -129,7 +131,8 @@ public partial class QuestService : IQuestService
         ICharacterClient characterClient,
         IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IQuestDataCache questDataCache)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -139,6 +142,7 @@ public partial class QuestService : IQuestService
         _characterClient = characterClient;
         _lockProvider = lockProvider;
         _serviceProvider = serviceProvider;
+        _questDataCache = questDataCache;
 
         // Register event handlers via partial class (QuestServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);

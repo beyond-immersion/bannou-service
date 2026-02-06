@@ -26,8 +26,6 @@ public class ActorServiceTests
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IBehaviorDocumentCache> _mockBehaviorCache;
     private readonly Mock<IActorPoolManager> _mockPoolManager;
-    private readonly Mock<IPersonalityCache> _mockPersonalityCache;
-    private readonly Mock<IQuestCache> _mockQuestCache;
     private readonly Mock<IMeshInvocationClient> _mockMeshClient;
     private readonly Mock<IStateStore<ActorTemplateData>> _mockTemplateStore;
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
@@ -49,8 +47,6 @@ public class ActorServiceTests
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockBehaviorCache = new Mock<IBehaviorDocumentCache>();
         _mockPoolManager = new Mock<IActorPoolManager>();
-        _mockPersonalityCache = new Mock<IPersonalityCache>();
-        _mockQuestCache = new Mock<IQuestCache>();
         _mockMeshClient = new Mock<IMeshInvocationClient>();
         _mockTemplateStore = new Mock<IStateStore<ActorTemplateData>>();
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
@@ -76,8 +72,6 @@ public class ActorServiceTests
             _mockEventConsumer.Object,
             _mockBehaviorCache.Object,
             _mockPoolManager.Object,
-            _mockPersonalityCache.Object,
-            _mockQuestCache.Object,
             _mockMeshClient.Object);
     }
 

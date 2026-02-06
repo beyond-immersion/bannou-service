@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.CharacterPersonality.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
@@ -24,6 +25,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     private readonly CharacterPersonalityServiceConfiguration _configuration;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
+    private readonly IPersonalityDataCache _personalityCache;
 
     private const string PERSONALITY_KEY_PREFIX = "personality-";
     private const string COMBAT_KEY_PREFIX = "combat-";
@@ -47,12 +49,14 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         CharacterPersonalityServiceConfiguration configuration,
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IPersonalityDataCache personalityCache)
     {
         _logger = logger;
         _configuration = configuration;
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
+        _personalityCache = personalityCache;
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }

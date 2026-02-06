@@ -1,0 +1,43 @@
+// =============================================================================
+// Quest Variable Provider Factory
+// Creates QuestProvider instances for ABML expression evaluation.
+// Registered with DI for Actor to consume via IEnumerable<IVariableProviderFactory>.
+// =============================================================================
+
+using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Quest.Caching;
+
+namespace BeyondImmersion.BannouService.Quest.Providers;
+
+/// <summary>
+/// Factory for creating QuestProvider instances.
+/// Registered with DI as IVariableProviderFactory for Actor to discover.
+/// </summary>
+public sealed class QuestProviderFactory : IVariableProviderFactory
+{
+    private readonly IQuestDataCache _cache;
+
+    /// <summary>
+    /// Creates a new quest provider factory.
+    /// </summary>
+    public QuestProviderFactory(IQuestDataCache cache)
+    {
+        _cache = cache;
+    }
+
+    /// <inheritdoc/>
+    public string ProviderName => "quest";
+
+    /// <inheritdoc/>
+    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    {
+        if (!entityId.HasValue)
+        {
+            return QuestProvider.Empty;
+        }
+
+        var quests = await _cache.GetActiveQuestsOrLoadAsync(entityId.Value, ct);
+        return new QuestProvider(quests);
+    }
+}

@@ -24,6 +24,11 @@ info:
 servers:
 - url: http://localhost:5012
 
+# Service hierarchy layer - Actor is L2 (Game Foundation) because it's a core
+# runtime for behavior execution. It uses IVariableProviderFactory pattern to
+# receive data from L4 services without depending on them directly.
+x-service-layer: GameFoundation
+
 paths:
   # === Actor Templates ===
   /actor/template/create:
