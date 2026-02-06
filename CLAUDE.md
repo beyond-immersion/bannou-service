@@ -43,9 +43,9 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 @docs/reference/TENETS.md
 
-@docs/reference/SERVICE_HIERARCHY.md
+@docs/reference/SERVICE-HIERARCHY.md
 
-@docs/BANNOU_DESIGN.md
+@docs/BANNOU-DESIGN.md
 
 @docs/GENERATED-SERVICE-DETAILS.md
 
@@ -73,9 +73,9 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ## ⚠️ Additional Reference Documentation
 
-**The TENETS and BANNOU_DESIGN documents are automatically included above.** For specific tasks, also reference:
+**The TENETS and BANNOU-DESIGN documents are automatically included above.** For specific tasks, also reference:
 
-- **Plugin Development**: `docs/guides/PLUGIN_DEVELOPMENT.md` - How to add and extend services
+- **Plugin Development**: `docs/guides/PLUGIN-DEVELOPMENT.md` - How to add and extend services
 - **WebSocket Protocol**: `docs/WEBSOCKET-PROTOCOL.md` - Protocol details
 - **Deployment**: `docs/guides/DEPLOYMENT.md` - Deployment patterns
 

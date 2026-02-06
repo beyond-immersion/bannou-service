@@ -36,7 +36,7 @@ namespace BeyondImmersion.BannouService.Actor;
 /// </list>
 /// </para>
 /// </remarks>
-[BannouService("actor", typeof(IActorService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("actor", typeof(IActorService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class ActorService : IActorService
 {
     private readonly IMessageBus _messageBus;
