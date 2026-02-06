@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -39,6 +40,7 @@ public partial class ResourceService : IResourceService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ResourceService> _logger;
     private readonly ResourceServiceConfiguration _configuration;
+    private readonly IEnumerable<ISeededResourceProvider> _seededProviders;
 
     // State stores - using constants from StateStoreDefinitions
     private readonly ICacheableStateStore<ResourceReferenceEntry> _refStore;
@@ -58,7 +60,8 @@ public partial class ResourceService : IResourceService
         IDistributedLockProvider lockProvider,
         ILogger<ResourceService> logger,
         ResourceServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IEnumerable<ISeededResourceProvider> seededProviders)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -66,6 +69,7 @@ public partial class ResourceService : IResourceService
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
+        _seededProviders = seededProviders;
 
         // Get state stores
         _refStore = stateStoreFactory.GetCacheableStore<ResourceReferenceEntry>(
@@ -1972,6 +1976,151 @@ public partial class ResourceService : IResourceService
             SnapshotId = body.SnapshotId,
             Found = true,
             Snapshot = apiSnapshot
+        });
+    }
+
+    // =========================================================================
+    // Seeded Resource Management
+    // =========================================================================
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListSeededResourcesResponse?)> ListSeededResourcesAsync(
+        ListSeededResourcesRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var resources = new List<SeededResourceSummary>();
+
+        // Query all registered providers
+        foreach (var provider in _seededProviders)
+        {
+            // Filter by resource type if specified
+            if (!string.IsNullOrEmpty(body.ResourceType) &&
+                !string.Equals(provider.ResourceType, body.ResourceType, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            try
+            {
+                var identifiers = await provider.ListSeededAsync(cancellationToken);
+
+                foreach (var identifier in identifiers)
+                {
+                    // Get the resource to obtain content type and size
+                    var resource = await provider.GetSeededAsync(identifier, cancellationToken);
+                    if (resource != null)
+                    {
+                        resources.Add(new SeededResourceSummary
+                        {
+                            ResourceType = resource.ResourceType,
+                            Identifier = resource.Identifier,
+                            ContentType = resource.ContentType,
+                            SizeBytes = resource.SizeBytes
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but continue - one failing provider shouldn't break the whole list
+                _logger.LogWarning(
+                    ex,
+                    "Failed to list seeded resources from provider {ResourceType}",
+                    provider.ResourceType);
+            }
+        }
+
+        _logger.LogDebug(
+            "Listed {Count} seeded resources (filter: {ResourceType})",
+            resources.Count,
+            body.ResourceType ?? "none");
+
+        return (StatusCodes.OK, new ListSeededResourcesResponse
+        {
+            Resources = resources,
+            TotalCount = resources.Count
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, GetSeededResourceResponse?)> GetSeededResourceAsync(
+        GetSeededResourceRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        // Find providers for the requested resource type
+        var matchingProviders = _seededProviders
+            .Where(p => string.Equals(p.ResourceType, body.ResourceType, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (matchingProviders.Count == 0)
+        {
+            _logger.LogDebug(
+                "No providers registered for resource type {ResourceType}",
+                body.ResourceType);
+
+            return (StatusCodes.OK, new GetSeededResourceResponse
+            {
+                ResourceType = body.ResourceType,
+                Identifier = body.Identifier,
+                Found = false,
+                Resource = null
+            });
+        }
+
+        // Try each provider until we find the resource
+        foreach (var provider in matchingProviders)
+        {
+            try
+            {
+                var resource = await provider.GetSeededAsync(body.Identifier, cancellationToken);
+                if (resource != null)
+                {
+                    _logger.LogDebug(
+                        "Found seeded resource {ResourceType}:{Identifier} ({Size} bytes)",
+                        body.ResourceType,
+                        body.Identifier,
+                        resource.SizeBytes);
+
+                    return (StatusCodes.OK, new GetSeededResourceResponse
+                    {
+                        ResourceType = body.ResourceType,
+                        Identifier = body.Identifier,
+                        Found = true,
+                        Resource = new SeededResourceDetail
+                        {
+                            ResourceType = resource.ResourceType,
+                            Identifier = resource.Identifier,
+                            ContentType = resource.ContentType,
+                            Content = Convert.ToBase64String(resource.Content),
+                            Metadata = resource.Metadata.Count > 0
+                                ? resource.Metadata.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                                : null
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but continue to next provider
+                _logger.LogWarning(
+                    ex,
+                    "Failed to get seeded resource {ResourceType}:{Identifier} from provider",
+                    body.ResourceType,
+                    body.Identifier);
+            }
+        }
+
+        _logger.LogDebug(
+            "Seeded resource {ResourceType}:{Identifier} not found in any provider",
+            body.ResourceType,
+            body.Identifier);
+
+        return (StatusCodes.OK, new GetSeededResourceResponse
+        {
+            ResourceType = body.ResourceType,
+            Identifier = body.Identifier,
+            Found = false,
+            Resource = null
         });
     }
 }

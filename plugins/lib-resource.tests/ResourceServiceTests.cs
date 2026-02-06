@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
@@ -280,7 +281,7 @@ public class ResourceServiceTests
             .ReturnsAsync("mock-etag");
     }
 
-    private ResourceService CreateService()
+    private ResourceService CreateService(IEnumerable<ISeededResourceProvider>? seededProviders = null)
     {
         return new ResourceService(
             _mockMessageBus.Object,
@@ -289,7 +290,8 @@ public class ResourceServiceTests
             _mockLockProvider.Object,
             _mockLogger.Object,
             _configuration,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            seededProviders ?? Array.Empty<ISeededResourceProvider>());
     }
 
     private void ClearCaptures()
