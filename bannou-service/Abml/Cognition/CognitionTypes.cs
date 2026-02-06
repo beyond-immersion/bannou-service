@@ -3,6 +3,8 @@
 // Core types for the 5-stage cognition pipeline.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
+
 namespace BeyondImmersion.BannouService.Abml.Cognition;
 
 /// <summary>
@@ -584,6 +586,20 @@ public sealed class UrgencyBasedPlanningOptions
             MaxDepth = CognitionConstants.HighUrgencyMaxDepth,
             TimeoutMs = CognitionConstants.HighUrgencyTimeoutMs,
             MaxNodes = CognitionConstants.HighUrgencyMaxNodes
+        };
+    }
+
+    /// <summary>
+    /// Converts to SDK planning options for use with IGoapPlanner.
+    /// </summary>
+    /// <returns>PlanningOptions configured from these urgency-based settings.</returns>
+    public PlanningOptions ToPlanningOptions()
+    {
+        return new PlanningOptions
+        {
+            MaxDepth = MaxDepth,
+            MaxNodesExpanded = MaxNodes,
+            TimeoutMs = TimeoutMs
         };
     }
 }
