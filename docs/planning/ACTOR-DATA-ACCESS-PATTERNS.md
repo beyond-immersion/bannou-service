@@ -2375,4 +2375,221 @@ Behavior Execution
 
 ---
 
+## 8. Architectural Corrections Required {#corrections}
+
+> **Added**: 2026-02-05
+> **Status**: Analysis complete, implementation pending
+> **Severity**: Foundational architecture violation
+
+### 8.1 Design Intent: Actor as a Game Foundation Service
+
+The original design intent for the Actor plugin was to be a **Layer 2 Foundational Service** - a generic "cloud brain infrastructure" that can execute any behavior without first-hand knowledge of game-specific features. The Actor service should be:
+
+1. **A generic network task executor** - capable of running long-term objectives in the service network
+2. **A cloud-brain for entities** - providing autonomous behavior execution for characters, NPCs, and event orchestrators
+3. **Game-agnostic** - the Actor plugin should know how to execute ABML behaviors, not what game features exist
+
+The key principle is **dependency inversion**: Actor provides interfaces (`IVariableProvider`), and higher-layer plugins register implementations. The ABML behaviors themselves are game-specific (they reference `${personality.*}`, `${quest.*}`, etc.), but Actor executes them without understanding what those namespaces mean.
+
+### 8.2 Current Architecture Violations
+
+**The Actor plugin currently violates the service hierarchy by having hardcoded knowledge of game features.**
+
+#### Violation 1: Hardcoded Provider Implementations
+
+The following files in `lib-actor/Runtime/` directly import and use L3/L4 service types:
+
+| File | Imports | Layer Violation |
+|------|---------|-----------------|
+| `PersonalityProvider.cs` | `BeyondImmersion.BannouService.CharacterPersonality` | L4 → L3 |
+| `CombatPreferencesProvider.cs` | `BeyondImmersion.BannouService.CharacterPersonality` | L4 → L3 |
+| `BackstoryProvider.cs` | `BeyondImmersion.BannouService.CharacterHistory` | L4 → L3 |
+| `EncountersProvider.cs` | `BeyondImmersion.BannouService.CharacterEncounter` | L4 → L3 |
+| `QuestProvider.cs` | `BeyondImmersion.BannouService.Quest` | L4 → L4 (circular) |
+
+#### Violation 2: Hardcoded Provider Loading in ActorRunner
+
+`lib-actor/Runtime/ActorRunner.cs` lines 749-777 contain hardcoded logic to load and register all five providers:
+
+```csharp
+// CURRENT (WRONG): Actor has hardcoded knowledge of game features
+if (CharacterId.HasValue)
+{
+    var personality = await _personalityCache.GetOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new PersonalityProvider(personality));
+
+    var combatPrefs = await _personalityCache.GetCombatPreferencesOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new CombatPreferencesProvider(combatPrefs));
+
+    var backstory = await _personalityCache.GetBackstoryOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new BackstoryProvider(backstory));
+
+    var encounters = await _encounterCache.GetEncountersOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new EncountersProvider(encounters));
+
+    var quests = await _questCache.GetActiveQuestsOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new QuestProvider(quests));
+}
+```
+
+#### Violation 3: Caches with Game-Specific Knowledge
+
+The cache implementations in `lib-actor/Caching/` also have direct knowledge of L3/L4 services:
+- `PersonalityCache.cs` - knows about `ICharacterPersonalityClient`
+- `EncounterCache.cs` - knows about `ICharacterEncounterClient`
+- `QuestCache.cs` - knows about `IQuestClient`
+
+### 8.3 Correct Architecture: Provider Registration Pattern
+
+The correct architecture follows dependency inversion: **higher-layer services register their providers with Actor**.
+
+#### Interface Design (in lib-actor or lib-behavior, L2)
+
+```csharp
+/// <summary>
+/// Factory interface for creating variable providers for an entity.
+/// Higher-layer services implement this to register their data with Actor.
+/// </summary>
+public interface IVariableProviderFactory
+{
+    /// <summary>Namespace this factory provides (e.g., "personality", "quest").</summary>
+    string ProviderName { get; }
+
+    /// <summary>Creates a provider for the given entity.</summary>
+    Task<IVariableProvider> CreateProviderAsync(Guid entityId, CancellationToken ct);
+}
+```
+
+#### Registration by Higher-Layer Services (L3/L4)
+
+Each game-feature plugin would register its provider factory on startup:
+
+```csharp
+// In lib-character-personality (L3) - registers itself with Actor (L2)
+public class CharacterPersonalityServiceEvents : IEventConsumer
+{
+    private readonly IActorProviderRegistry _providerRegistry;
+
+    public Task OnStartupAsync(CancellationToken ct)
+    {
+        // Register personality provider factory
+        _providerRegistry.RegisterFactory(new PersonalityProviderFactory(_client));
+        _providerRegistry.RegisterFactory(new CombatPreferencesProviderFactory(_client));
+        return Task.CompletedTask;
+    }
+}
+
+// In lib-quest (L4) - registers itself with Actor (L2)
+public class QuestServiceEvents : IEventConsumer
+{
+    public Task OnStartupAsync(CancellationToken ct)
+    {
+        _providerRegistry.RegisterFactory(new QuestProviderFactory(_client));
+        return Task.CompletedTask;
+    }
+}
+```
+
+#### ActorRunner Would Query Registered Factories
+
+```csharp
+// CORRECT: Actor knows nothing about specific game features
+private async Task<ExecutionScope> BuildExecutionScopeAsync(CancellationToken ct)
+{
+    var scope = new ExecutionScope();
+
+    // Query all registered provider factories
+    foreach (var factory in _providerRegistry.GetFactories())
+    {
+        var provider = await factory.CreateProviderAsync(EntityId, ct);
+        scope.RegisterProvider(provider);
+    }
+
+    return scope;
+}
+```
+
+### 8.4 Why This Matters: Templates and Data Access
+
+The original design envisioned that **game-feature plugins would provide both**:
+1. **Data Providers** - how to access the data (`PersonalityProviderFactory`)
+2. **Templates** - ABML behavior patterns that use that data (`narrative-god.yaml`)
+
+Example: The Storyline plugin (L4) would:
+1. Register a `StorylineProviderFactory` that exposes `${storyline.*}` variables
+2. Provide behavior templates like `regional-watcher.yaml` that use those variables
+3. Games would extend those templates with game-specific preferences
+
+The Actor plugin just executes whatever behaviors it's given, using whatever providers are registered. It's like the JVM - it doesn't know about Java programs, it just executes bytecode.
+
+### 8.5 Migration Path
+
+#### Phase 1: Define Provider Registry Interface (Non-Breaking)
+
+1. Create `IActorProviderRegistry` in lib-actor
+2. Create `IVariableProviderFactory` in lib-actor (or lib-behavior for ABML integration)
+3. Implement registry storage in ActorService
+
+#### Phase 2: Move Provider Implementations (Breaking)
+
+1. Move `PersonalityProvider.cs` → `lib-character-personality/Providers/`
+2. Move `CombatPreferencesProvider.cs` → `lib-character-personality/Providers/`
+3. Move `BackstoryProvider.cs` → `lib-character-history/Providers/`
+4. Move `EncountersProvider.cs` → `lib-character-encounter/Providers/`
+5. Move `QuestProvider.cs` → `lib-quest/Providers/`
+
+Each moved provider becomes a factory registered on service startup.
+
+#### Phase 3: Update ActorRunner (Breaking)
+
+1. Remove hardcoded provider loading from `ActorRunner.cs`
+2. Replace with factory-based provider creation
+3. Remove direct imports of L3/L4 service types
+
+#### Phase 4: Move Caches (Breaking)
+
+1. Move `PersonalityCache` → `lib-character-personality/Caching/`
+2. Move `EncounterCache` → `lib-character-encounter/Caching/`
+3. Move `QuestCache` → `lib-quest/Caching/`
+
+Each service owns its own cache and exposes it via the provider factory.
+
+### 8.6 Resource Plugin Integration
+
+The Resource plugin (L1) was designed as a low-level archival system that Actor (as L2) can consume. This allows:
+
+1. **Compressed character data** to be retrieved without Actor knowing about CharacterPersonality/CharacterHistory
+2. **Archived realm data** to be retrieved without Actor knowing about Realm services
+3. **Generic data providers** that work with Resource's opaque archive format
+
+When a character is compressed, higher-layer services register their data with Resource. Actor can later query Resource for archived character data without knowing what services contributed that data.
+
+### 8.7 Files Requiring Changes
+
+| Current Location | Target Location | Change Type |
+|------------------|-----------------|-------------|
+| `lib-actor/Runtime/PersonalityProvider.cs` | `lib-character-personality/Providers/PersonalityProvider.cs` | Move |
+| `lib-actor/Runtime/CombatPreferencesProvider.cs` | `lib-character-personality/Providers/CombatPreferencesProvider.cs` | Move |
+| `lib-actor/Runtime/BackstoryProvider.cs` | `lib-character-history/Providers/BackstoryProvider.cs` | Move |
+| `lib-actor/Runtime/EncountersProvider.cs` | `lib-character-encounter/Providers/EncountersProvider.cs` | Move |
+| `lib-actor/Runtime/QuestProvider.cs` | `lib-quest/Providers/QuestProvider.cs` | Move |
+| `lib-actor/Caching/PersonalityCache.cs` | `lib-character-personality/Caching/PersonalityCache.cs` | Move |
+| `lib-actor/Caching/EncounterCache.cs` | `lib-character-encounter/Caching/EncounterCache.cs` | Move |
+| `lib-actor/Caching/QuestCache.cs` | `lib-quest/Caching/QuestCache.cs` | Move |
+| `lib-actor/Runtime/ActorRunner.cs` | N/A | Refactor (remove hardcoded providers) |
+| `lib-actor/ActorService.cs` | N/A | Add `IActorProviderRegistry` |
+| NEW: `lib-actor/Registry/IVariableProviderFactory.cs` | N/A | Create interface |
+| NEW: `lib-actor/Registry/IActorProviderRegistry.cs` | N/A | Create interface |
+| NEW: `lib-actor/Registry/ActorProviderRegistry.cs` | N/A | Create implementation |
+
+### 8.8 Related Issues
+
+- **Issue #147**: "Implement Phase 2 Variable Providers (Currency, Inventory, Relationship)" - This issue describes adding MORE hardcoded providers. It should be updated to follow the correct registration pattern.
+- **Issue #145**: "Implement spatial context providers for actor decision-making" - Same concern.
+- **Issue #148**: "Implement GoapWorldStateProvider for batched external state queries" - Places this in lib-behavior, which is closer to correct (lib-behavior is L2-adjacent).
+
+A new GitHub issue should be created to track this architectural correction work.
+
+---
+
 *This document establishes the foundational patterns for actor data access. Future implementations should reference these patterns to maintain architectural consistency.*
