@@ -1740,7 +1740,7 @@ components:
         sizeBytes:
           type: integer
           nullable: true
-          description: Content size in bytes (null if not readily available)
+          description: Content size in bytes (null in list responses for efficiency; use getSeededResource for size)
 
     GetSeededResourceRequest:
       type: object

@@ -1918,7 +1918,7 @@ public partial class SeededResourceSummary
     public string ContentType { get; set; } = default!;
 
     /// <summary>
-    /// Content size in bytes (null if not readily available)
+    /// Content size in bytes (null in list responses for efficiency; use getSeededResource for size)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
     public int? SizeBytes { get; set; } = default!;

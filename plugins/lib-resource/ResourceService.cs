@@ -2004,20 +2004,17 @@ public partial class ResourceService : IResourceService
             {
                 var identifiers = await provider.ListSeededAsync(cancellationToken);
 
+                // Use provider-level ContentType to avoid loading each resource
+                // SizeBytes is left null for efficiency - caller can get full resource if size is needed
                 foreach (var identifier in identifiers)
                 {
-                    // Get the resource to obtain content type and size
-                    var resource = await provider.GetSeededAsync(identifier, cancellationToken);
-                    if (resource != null)
+                    resources.Add(new SeededResourceSummary
                     {
-                        resources.Add(new SeededResourceSummary
-                        {
-                            ResourceType = resource.ResourceType,
-                            Identifier = resource.Identifier,
-                            ContentType = resource.ContentType,
-                            SizeBytes = resource.SizeBytes
-                        });
-                    }
+                        ResourceType = provider.ResourceType,
+                        Identifier = identifier,
+                        ContentType = provider.ContentType,
+                        SizeBytes = null
+                    });
                 }
             }
             catch (Exception ex)

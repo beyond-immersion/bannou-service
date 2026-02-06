@@ -405,6 +405,11 @@ public class SeededResourceTests
 
         public string ResourceType { get; }
 
+        /// <summary>
+        /// Provider-level content type (uses first resource's content type or default).
+        /// </summary>
+        public string ContentType { get; }
+
         public TestSeededResourceProvider(
             string resourceType,
             (string Identifier, string ContentType, string Content)[] resources,
@@ -415,6 +420,8 @@ public class SeededResourceTests
                 r => r.Identifier,
                 r => (r.ContentType, r.Content));
             _metadata = metadata ?? new Dictionary<string, string>();
+            // Use first resource's content type as provider-level default
+            ContentType = resources.Length > 0 ? resources[0].ContentType : "application/octet-stream";
         }
 
         public Task<IReadOnlyList<string>> ListSeededAsync(CancellationToken ct)

@@ -4,6 +4,599 @@
         <name>BeyondImmersion.Bannou.BehaviorCompiler</name>
     </assembly>
     <members>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition">
+            <summary>
+            Defines an entity archetype with its channel configuration.
+            </summary>
+            <remarks>
+            <para>
+            Archetypes are data-driven definitions that specify:
+            - Which logical channels the entity type uses
+            - How those channels map to physical bytecode slots
+            - Which behavior model types are relevant
+            </para>
+            <para>
+            Standard archetypes: humanoid, vehicle, creature, object, environmental
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.Id">
+            <summary>
+            Unique identifier for this archetype (e.g., "humanoid", "vehicle").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.Description">
+            <summary>
+            Human-readable description of the archetype.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.ModelTypes">
+            <summary>
+            Behavior model types available for this archetype.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.Channels">
+            <summary>
+            Logical channel definitions for this archetype.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.BeyondImmersion#Bannou#BehaviorCompiler#Archetypes#IArchetypeDefinition#Channels">
+            <summary>
+            Gets channels as interface type for IArchetypeDefinition implementation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.IdHash">
+            <summary>
+            FNV-1a hash of the archetype ID for fast lookup.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.#ctor">
+            <summary>
+            Creates a new archetype definition.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.Initialize">
+            <summary>
+            Initializes lookup dictionaries after properties are set.
+            Call this after construction via object initializer.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.GetChannel(System.String)">
+            <summary>
+            Gets a logical channel by name.
+            </summary>
+            <param name="name">The channel name (case-insensitive).</param>
+            <returns>The channel definition, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.BeyondImmersion#Bannou#BehaviorCompiler#Archetypes#IArchetypeDefinition#GetChannel(System.String)">
+            <summary>
+            Gets a channel as interface type for IArchetypeDefinition implementation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.GetChannelByHash(System.Int32)">
+            <summary>
+            Gets a logical channel by name hash.
+            </summary>
+            <param name="nameHash">The FNV-1a hash of the channel name.</param>
+            <returns>The channel definition, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.GetChannelsForPhysical(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel)">
+            <summary>
+            Gets all logical channels that map to a physical channel.
+            </summary>
+            <param name="physical">The physical channel.</param>
+            <returns>List of logical channels, empty if none.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.SupportsModelType(BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType)">
+            <summary>
+            Checks if this archetype supports a behavior model type.
+            </summary>
+            <param name="modelType">The model type to check.</param>
+            <returns>True if the model type is supported.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.HasChannel(System.String)">
+            <summary>
+            Checks if this archetype has a channel with the given name.
+            </summary>
+            <param name="channelName">The channel name (case-insensitive).</param>
+            <returns>True if the channel exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.GetUsedPhysicalChannels">
+            <summary>
+            Gets the physical channels used by this archetype.
+            </summary>
+            <returns>Set of physical channels.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.CreateHumanoid">
+            <summary>
+            Creates the standard Humanoid archetype.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.CreateVehicle">
+            <summary>
+            Creates the standard Vehicle archetype.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.CreateCreature">
+            <summary>
+            Creates the standard Creature archetype.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.CreateObject">
+            <summary>
+            Creates the standard Object archetype.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition.CreateEnvironmental">
+            <summary>
+            Creates the standard Environmental archetype.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry">
+            <summary>
+            Thread-safe registry for entity archetype definitions.
+            </summary>
+            <remarks>
+            <para>
+            Automatically registers standard archetypes on construction:
+            humanoid, vehicle, creature, object, environmental.
+            </para>
+            <para>
+            Custom archetypes can be added at runtime via <see cref="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.RegisterArchetype(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition)"/>.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.#ctor">
+            <summary>
+            Creates a new archetype registry with standard archetypes pre-registered.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.GetArchetype(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.GetArchetypeByHash(System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.GetArchetypeIds">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.GetAllArchetypes">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.RegisterArchetype(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.HasArchetype(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.GetDefaultArchetype">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.RegisterArchetypeInternal(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeDefinition)">
+            <summary>
+            Internal registration without validation for pre-built archetypes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ArchetypeRegistry.ComputeIdHash(System.String)">
+            <summary>
+            Computes FNV-1a hash for an archetype ID.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.MergeStrategy">
+            <summary>
+            Merge strategy for combining multiple intent emissions on the same channel.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.MergeStrategy.Priority">
+            <summary>Highest urgency wins exclusively.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.MergeStrategy.Blend">
+            <summary>Values are blended proportionally by urgency.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.MergeStrategy.Additive">
+            <summary>Values are summed (for additive effects).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel">
+            <summary>
+            Physical output channel for entity animation/physics.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel.Action">
+            <summary>Primary actions (attacks, abilities).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel.Locomotion">
+            <summary>Movement and navigation.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel.Attention">
+            <summary>Gaze and head tracking.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel.Stance">
+            <summary>Body posture.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel.Vocalization">
+            <summary>Speech and sounds.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel.Expression">
+            <summary>Facial expressions.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ILogicalChannelDefinition">
+            <summary>
+            Definition of a logical channel within an archetype.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ILogicalChannelDefinition.Name">
+            <summary>The logical channel name (e.g., "combat", "movement").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ILogicalChannelDefinition.PhysicalChannel">
+            <summary>The physical channel this maps to.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ILogicalChannelDefinition.DefaultUrgency">
+            <summary>Default urgency for emissions on this channel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ILogicalChannelDefinition.MergeStrategy">
+            <summary>How to merge multiple emissions on this channel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ILogicalChannelDefinition.Description">
+            <summary>Human-readable description.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition">
+            <summary>
+            Definition of an entity archetype (humanoid, vehicle, creature, etc.).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition.Id">
+            <summary>Unique archetype identifier (e.g., "humanoid", "vehicle").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition.Description">
+            <summary>Human-readable description.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition.Channels">
+            <summary>Logical channels available for this archetype.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition.HasChannel(System.String)">
+            <summary>
+            Checks if this archetype has a channel with the given name.
+            </summary>
+            <param name="channelName">The channel name to check.</param>
+            <returns>True if the channel exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition.GetChannel(System.String)">
+            <summary>
+            Gets a channel definition by name.
+            </summary>
+            <param name="channelName">The channel name.</param>
+            <returns>The channel definition, or null if not found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeRegistry">
+            <summary>
+            Registry of entity archetypes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeRegistry.GetArchetype(System.String)">
+            <summary>
+            Gets an archetype definition by ID.
+            </summary>
+            <param name="archetypeId">The archetype ID.</param>
+            <returns>The archetype, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeRegistry.GetArchetypeByHash(System.Int32)">
+            <summary>
+            Gets an archetype by its pre-computed hash.
+            </summary>
+            <param name="archetypeIdHash">The FNV-1a hash of the archetype ID.</param>
+            <returns>The archetype, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeRegistry.HasArchetype(System.String)">
+            <summary>
+            Checks if an archetype exists.
+            </summary>
+            <param name="archetypeId">The archetype ID to check.</param>
+            <returns>True if the archetype is registered.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeRegistry.GetDefaultArchetype">
+            <summary>
+            Gets the default archetype (typically "humanoid").
+            </summary>
+            <returns>The default archetype.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeRegistry.GetArchetypeIds">
+            <summary>
+            Gets all registered archetype IDs.
+            </summary>
+            <returns>Collection of archetype IDs.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeRegistry.GetAllArchetypes">
+            <summary>
+            Gets all registered archetypes.
+            </summary>
+            <returns>Collection of archetype definitions.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeRegistry.RegisterArchetype(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition)">
+            <summary>
+            Registers a new archetype.
+            </summary>
+            <param name="archetype">The archetype to register.</param>
+            <exception cref="T:System.ArgumentException">If archetype ID is already registered.</exception>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentEmission">
+            <summary>
+            A single Intent emission targeting a specific channel.
+            </summary>
+            <param name="Channel">The logical channel name (e.g., "combat", "movement").</param>
+            <param name="Intent">The intent identifier (e.g., "attack", "walk").</param>
+            <param name="Urgency">Urgency value 0.0-1.0 for merge priority.</param>
+            <param name="Target">Optional target entity ID.</param>
+            <param name="Data">Additional emission data.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentEmission.#ctor(System.String,System.String,System.Single,System.Nullable{System.Guid},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            A single Intent emission targeting a specific channel.
+            </summary>
+            <param name="Channel">The logical channel name (e.g., "combat", "movement").</param>
+            <param name="Intent">The intent identifier (e.g., "attack", "walk").</param>
+            <param name="Urgency">Urgency value 0.0-1.0 for merge priority.</param>
+            <param name="Target">Optional target entity ID.</param>
+            <param name="Data">Additional emission data.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentEmission.Channel">
+            <summary>The logical channel name (e.g., "combat", "movement").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentEmission.Intent">
+            <summary>The intent identifier (e.g., "attack", "walk").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentEmission.Urgency">
+            <summary>Urgency value 0.0-1.0 for merge priority.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentEmission.Target">
+            <summary>Optional target entity ID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentEmission.Data">
+            <summary>Additional emission data.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IIntentChannelFactory">
+            <summary>
+            Factory for creating runtime intent channel instances.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IIntentChannelFactory.CreateChannels(System.Guid,BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition)">
+            <summary>
+            Creates intent channel instances for an entity based on its archetype.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <param name="archetype">The archetype defining available channels.</param>
+            <returns>A set of intent channels for the entity.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentChannelFactory">
+            <summary>
+            Default implementation of intent channel factory.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentChannelFactory.CreateChannels(System.Guid,BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IArchetypeDefinition)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelSet">
+            <summary>
+            A set of runtime intent channels for an entity.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelSet.#ctor(System.Guid,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannel})">
+            <summary>
+            Creates a new runtime channel set.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <param name="archetypeId">The archetype ID.</param>
+            <param name="channels">The channel instances.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelSet.EntityId">
+            <summary>
+            Gets the entity ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelSet.ArchetypeId">
+            <summary>
+            Gets the archetype ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelSet.Channels">
+            <summary>
+            Gets all channels in this set.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelSet.GetChannel(System.String)">
+            <summary>
+            Gets a channel by name.
+            </summary>
+            <param name="name">The channel name.</param>
+            <returns>The channel, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelSet.ApplyEmission(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.IntentEmission)">
+            <summary>
+            Applies an intent emission to the appropriate channel.
+            </summary>
+            <param name="emission">The emission to apply.</param>
+            <returns>True if the emission was applied, false if channel not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelSet.ClearAll">
+            <summary>
+            Clears all channels.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannel">
+            <summary>
+            A single runtime intent channel instance.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannel.#ctor(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.ILogicalChannelDefinition)">
+            <summary>
+            Creates a new runtime channel.
+            </summary>
+            <param name="name">The channel name.</param>
+            <param name="definition">The channel definition.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannel.Name">
+            <summary>
+            Gets the channel name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannel.Definition">
+            <summary>
+            Gets the channel definition from the archetype.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannel.CurrentValue">
+            <summary>
+            Gets the current value of this channel.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannel.LastUpdated">
+            <summary>
+            Gets the timestamp when the value was last set.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannel.SetValue(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelValue)">
+            <summary>
+            Sets the channel value.
+            </summary>
+            <param name="value">The value to set.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannel.Clear">
+            <summary>
+            Clears the channel value.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelValue">
+            <summary>
+            A value stored in a runtime channel.
+            </summary>
+            <param name="Intent">The intent name.</param>
+            <param name="Urgency">The urgency level (0-1).</param>
+            <param name="Target">Optional target entity.</param>
+            <param name="Data">Additional data.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelValue.#ctor(System.String,System.Single,System.Nullable{System.Guid},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            A value stored in a runtime channel.
+            </summary>
+            <param name="Intent">The intent name.</param>
+            <param name="Urgency">The urgency level (0-1).</param>
+            <param name="Target">Optional target entity.</param>
+            <param name="Data">Additional data.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelValue.Intent">
+            <summary>The intent name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelValue.Urgency">
+            <summary>The urgency level (0-1).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelValue.Target">
+            <summary>Optional target entity.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.RuntimeChannelValue.Data">
+            <summary>Additional data.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition">
+            <summary>
+            Defines a logical channel for an entity archetype.
+            </summary>
+            <remarks>
+            <para>
+            Logical channels are semantic (e.g., "Combat", "Expression") and map to
+            physical bytecode output slots. Multiple logical channels can map to the
+            same physical channel, with merge strategy determining conflict resolution.
+            </para>
+            </remarks>
+            <param name="Name">The semantic name of the channel (e.g., "combat", "expression").</param>
+            <param name="PhysicalChannel">The bytecode output slot this channel maps to.</param>
+            <param name="DefaultUrgency">Default urgency for outputs on this channel (0.0-1.0).</param>
+            <param name="MergeStrategy">How to resolve conflicts when multiple behaviors output to this channel.</param>
+            <param name="Description">Human-readable description of the channel's purpose.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.#ctor(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel,System.Single,BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.MergeStrategy,System.String)">
+            <summary>
+            Defines a logical channel for an entity archetype.
+            </summary>
+            <remarks>
+            <para>
+            Logical channels are semantic (e.g., "Combat", "Expression") and map to
+            physical bytecode output slots. Multiple logical channels can map to the
+            same physical channel, with merge strategy determining conflict resolution.
+            </para>
+            </remarks>
+            <param name="Name">The semantic name of the channel (e.g., "combat", "expression").</param>
+            <param name="PhysicalChannel">The bytecode output slot this channel maps to.</param>
+            <param name="DefaultUrgency">Default urgency for outputs on this channel (0.0-1.0).</param>
+            <param name="MergeStrategy">How to resolve conflicts when multiple behaviors output to this channel.</param>
+            <param name="Description">Human-readable description of the channel's purpose.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.Name">
+            <summary>The semantic name of the channel (e.g., "combat", "expression").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.PhysicalChannel">
+            <summary>The bytecode output slot this channel maps to.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.DefaultUrgency">
+            <summary>Default urgency for outputs on this channel (0.0-1.0).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.MergeStrategy">
+            <summary>How to resolve conflicts when multiple behaviors output to this channel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.Description">
+            <summary>Human-readable description of the channel's purpose.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.NameHash">
+            <summary>
+            FNV-1a hash of the channel name for fast lookup.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.ComputeNameHash(System.String)">
+            <summary>
+            Computes FNV-1a hash for a channel name.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.Create(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel)">
+            <summary>
+            Creates a channel definition with default values.
+            </summary>
+            <param name="name">The channel name.</param>
+            <param name="physicalChannel">The physical output slot.</param>
+            <returns>A new channel definition with defaults.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.WithUrgency(System.Single)">
+            <summary>
+            Creates a copy with modified urgency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.LogicalChannelDefinition.WithMergeStrategy(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.MergeStrategy)">
+            <summary>
+            Creates a copy with modified merge strategy.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannelExtensions">
+            <summary>
+            Extension methods for physical channel conversion.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannelExtensions.ToIntentChannel(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel)">
+            <summary>
+            Converts a physical channel to its bytecode IntentChannel equivalent.
+            </summary>
+            <param name="channel">The physical channel.</param>
+            <returns>The corresponding IntentChannel, or null if not supported in bytecode.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannelExtensions.GetSlotIndex(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel)">
+            <summary>
+            Gets the output slot index for a physical channel.
+            </summary>
+            <param name="channel">The physical channel.</param>
+            <returns>The output buffer slot index.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannelExtensions.IsBytecodeSupported(BeyondImmersion.Bannou.BehaviorCompiler.Archetypes.PhysicalChannel)">
+            <summary>
+            Checks if this physical channel is supported in the current bytecode.
+            </summary>
+            <param name="channel">The physical channel.</param>
+            <returns>True if the channel is supported in bytecode.</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerRegistry">
             <summary>
             Registry of action compilers. Dispatches compilation to appropriate handlers.

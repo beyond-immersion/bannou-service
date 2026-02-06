@@ -52,6 +52,15 @@ public interface ISeededResourceProvider
     string ResourceType { get; }
 
     /// <summary>
+    /// Gets the MIME content type for resources from this provider.
+    /// </summary>
+    /// <remarks>
+    /// Common values: "application/yaml", "application/json", "text/plain", "application/octet-stream".
+    /// All resources from a single provider are expected to have the same content type.
+    /// </remarks>
+    string ContentType { get; }
+
+    /// <summary>
     /// Returns all seeded resource identifiers available from this provider.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>

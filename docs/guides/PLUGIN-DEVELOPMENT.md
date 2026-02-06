@@ -381,6 +381,63 @@ public async Task<SomeResponse> CallServiceAsync(SomeRequest request, Cancellati
 }
 ```
 
+### Seeded Resources
+
+Plugins can provide **seeded resources** - read-only factory defaults (ABML behaviors, templates, configuration data) that are discoverable via lib-resource.
+
+**When to use seeded resources:**
+- Shipping default ABML behavior definitions with lib-actor
+- Providing template species/realm configurations
+- Including scenario templates for game designers
+- Any static content that should be queryable at runtime
+
+**Implementation using EmbeddedResourceProvider:**
+
+1. Add embedded resources to your plugin project:
+   ```xml
+   <!-- In lib-{service}.csproj -->
+   <ItemGroup>
+     <EmbeddedResource Include="Resources\Behaviors\*.yaml" />
+   </ItemGroup>
+   ```
+
+2. Create a provider by subclassing `EmbeddedResourceProvider`:
+   ```csharp
+   using BeyondImmersion.BannouService.Providers;
+   using System.Reflection;
+
+   public class BehaviorSeededProvider : EmbeddedResourceProvider
+   {
+       public override string ResourceType => "behavior";
+       public override string ContentType => "application/yaml";
+
+       protected override Assembly ResourceAssembly =>
+           typeof(BehaviorSeededProvider).Assembly;
+
+       protected override string ResourcePrefix =>
+           "BeyondImmersion.LibActor.Resources.Behaviors.";
+   }
+   ```
+
+3. Register in your plugin's DI setup:
+   ```csharp
+   // In ConfigureServices:
+   services.AddSingleton<ISeededResourceProvider, BehaviorSeededProvider>();
+   ```
+
+4. Query via lib-resource API:
+   ```
+   POST /resource/seeded/list
+   { "resourceType": "behavior" }
+
+   POST /resource/seeded/get
+   { "resourceType": "behavior", "identifier": "idle" }
+   ```
+
+**Note:** Seeded resources are read-only. If consumers need to modify them, they should copy to their own state stores.
+
+See [RESOURCE.md](../plugins/RESOURCE.md#seeded-resource-management) for full documentation.
+
 ## POST-Only API Pattern
 
 All service APIs must use POST requests with body parameters:
