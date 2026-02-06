@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Pool;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -46,7 +47,7 @@ public partial class ActorService : IActorService
     private readonly IActorRegistry _actorRegistry;
     private readonly IActorRunnerFactory _actorRunnerFactory;
     private readonly IEventConsumer _eventConsumer;
-    private readonly BehaviorDocumentLoader _behaviorLoader;
+    private readonly IBehaviorDocumentLoader _behaviorLoader;
     private readonly IActorPoolManager _poolManager;
     private readonly IMeshInvocationClient _meshClient;
 
@@ -78,7 +79,7 @@ public partial class ActorService : IActorService
         IActorRegistry actorRegistry,
         IActorRunnerFactory actorRunnerFactory,
         IEventConsumer eventConsumer,
-        BehaviorDocumentLoader behaviorLoader,
+        IBehaviorDocumentLoader behaviorLoader,
         IActorPoolManager poolManager,
         IMeshInvocationClient meshClient)
     {

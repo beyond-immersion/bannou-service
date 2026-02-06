@@ -88,6 +88,7 @@ public class ActorServicePlugin : BaseBannouPlugin
         services.AddSingleton<IBehaviorDocumentProvider, SeededBehaviorProvider>();
         services.AddSingleton<IBehaviorDocumentProvider, FallbackBehaviorProvider>();
         services.AddSingleton<BehaviorDocumentLoader>();
+        services.AddSingleton<IBehaviorDocumentLoader>(sp => sp.GetRequiredService<BehaviorDocumentLoader>());
 
         services.AddSingleton<IDocumentExecutorFactory, DocumentExecutorFactory>();
 

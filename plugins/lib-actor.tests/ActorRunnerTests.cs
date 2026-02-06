@@ -3,7 +3,6 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor;
-using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -11,7 +10,6 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BeyondImmersion.BannouService.Actor.Tests;
 
@@ -77,7 +75,7 @@ public class ActorRunnerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        // Create test document that will be returned by the mock provider
+        // Create test document that will be returned by the mock loader
         var document = new AbmlDocument
         {
             Version = "2.0",
@@ -88,17 +86,10 @@ public class ActorRunnerTests
             }
         };
 
-        // Create mock provider that returns the test document
-        var mockProvider = new Mock<IBehaviorDocumentProvider>();
-        mockProvider.SetupGet(p => p.Priority).Returns(100);
-        mockProvider.Setup(p => p.CanProvide(It.IsAny<string>())).Returns(true);
-        mockProvider.Setup(p => p.GetDocumentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        // Mock the behavior document loader directly
+        var behaviorLoaderMock = new Mock<IBehaviorDocumentLoader>();
+        behaviorLoaderMock.Setup(l => l.GetDocumentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(document);
-
-        // Create behavior loader with the mock provider
-        var behaviorLoader = new BehaviorDocumentLoader(
-            new[] { mockProvider.Object },
-            NullLogger<BehaviorDocumentLoader>.Instance);
 
         // Empty provider factories list - tests don't need actual providers
         var providerFactories = new List<IVariableProviderFactory>();
@@ -125,7 +116,7 @@ public class ActorRunnerTests
             messageSubscriberMock.Object,
             meshClientMock.Object,
             stateStoreMock.Object,
-            behaviorLoader,
+            behaviorLoaderMock.Object,
             providerFactories,
             executorMock.Object,
             expressionEvaluatorMock.Object,

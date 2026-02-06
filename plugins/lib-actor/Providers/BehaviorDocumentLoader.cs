@@ -28,7 +28,7 @@ namespace BeyondImmersion.BannouService.Actor.Providers;
 /// sorted by priority descending. The first provider that can serve a behavior reference wins.
 /// </para>
 /// </remarks>
-public sealed class BehaviorDocumentLoader
+public sealed class BehaviorDocumentLoader : IBehaviorDocumentLoader
 {
     private readonly IReadOnlyList<IBehaviorDocumentProvider> _providers;
     private readonly ILogger<BehaviorDocumentLoader> _logger;

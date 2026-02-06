@@ -30,7 +30,7 @@ public sealed class ActorRunner : IActorRunner
     private readonly Channel<PerceptionData> _perceptionQueue;
     private readonly ActorState _state;
     private readonly IStateStore<ActorStateSnapshot> _stateStore;
-    private readonly BehaviorDocumentLoader _behaviorLoader;
+    private readonly IBehaviorDocumentLoader _behaviorLoader;
     private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutor _executor;
     private readonly IExpressionEvaluator _expressionEvaluator;
@@ -135,7 +135,7 @@ public sealed class ActorRunner : IActorRunner
         IMessageSubscriber messageSubscriber,
         IMeshInvocationClient meshClient,
         IStateStore<ActorStateSnapshot> stateStore,
-        BehaviorDocumentLoader behaviorLoader,
+        IBehaviorDocumentLoader behaviorLoader,
         IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutor executor,
         IExpressionEvaluator expressionEvaluator,

@@ -19,7 +19,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly ActorServiceConfiguration _config;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly BehaviorDocumentLoader _behaviorLoader;
+    private readonly IBehaviorDocumentLoader _behaviorLoader;
     private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutorFactory _executorFactory;
     private readonly IExpressionEvaluator _expressionEvaluator;
@@ -44,7 +44,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         ActorServiceConfiguration config,
         ILoggerFactory loggerFactory,
         IStateStoreFactory stateStoreFactory,
-        BehaviorDocumentLoader behaviorLoader,
+        IBehaviorDocumentLoader behaviorLoader,
         IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutorFactory executorFactory,
         IExpressionEvaluator expressionEvaluator)
