@@ -260,8 +260,8 @@ All configuration properties are verified as used in `ResourceService.cs`.
 
 | Endpoint | Notes |
 |----------|-------|
-| `POST /resource/snapshot/execute` | Creates ephemeral snapshot using compression callbacks, stores in Redis with TTL |
-| `POST /resource/snapshot/get` | Retrieves snapshot by ID; returns 404 if expired or not found |
+| `POST /resource/snapshot/execute` | Creates ephemeral snapshot using compression callbacks, stores in Redis with TTL. Supports `filterSourceTypes` to limit which callbacks are executed. |
+| `POST /resource/snapshot/get` | Retrieves snapshot by ID; returns 404 if expired or not found. Supports `filterSourceTypes` to filter returned entries. |
 
 **Key Differences from Compression**:
 - Stores in Redis (ephemeral) with TTL, not MySQL (permanent)
@@ -269,19 +269,26 @@ All configuration properties are verified as used in `ResourceService.cs`.
 - Publishes `resource.snapshot.created` event (not `resource.compressed`)
 - Snapshot auto-expires after TTL (default 1 hour, max 24 hours)
 
+**Server-Side Filtering** (`filterSourceTypes` parameter):
+- **ExecuteSnapshotRequest**: Only callbacks matching the filter are executed (reduces processing)
+- **GetSnapshotRequest**: Only entries matching the filter are returned (reduces network bandwidth)
+- If omitted or empty, all callbacks/entries are included (backwards compatible)
+
 **Use Cases**:
 - Storyline Composer needs compressed data from living entities to seed emergent narratives
 - Actor behaviors can capture character state via ABML `service_call`
 - Analytics can capture living entity snapshots for point-in-time analysis
+- Event Brain actors can request only personality data without triggering history/encounter callbacks
 
 **Snapshot Execution Flow**:
-1. Get all compression callbacks for resourceType (same as compression)
-2. If `dryRun: true`, return preview without executing
-3. Execute each callback to gather data (same as compression)
-4. Bundle responses into snapshot model
-5. Store in Redis with TTL via `SaveAsync` with `StateOptions { Ttl = ttlSeconds }`
-6. Publish `resource.snapshot.created` event
-7. Return snapshotId for later retrieval
+1. Get all compression callbacks for resourceType
+2. Filter callbacks by `filterSourceTypes` if specified (server-side optimization)
+3. If `dryRun: true`, return preview without executing
+4. Execute each callback to gather data (same as compression)
+5. Bundle responses into snapshot model
+6. Store in Redis with TTL via `SaveAsync` with `StateOptions { Ttl = ttlSeconds }`
+7. Publish `resource.snapshot.created` event
+8. Return snapshotId for later retrieval
 
 ### Seeded Resource Management
 
@@ -657,6 +664,12 @@ This section tracks active development work on items from the quirks/bugs lists 
 *No active work items.*
 
 ### Completed (Historical)
+
+- **2026-02-06**: Added `filterSourceTypes` parameter to snapshot endpoints (Issue #290):
+  - `ExecuteSnapshotRequest.filterSourceTypes` filters which callbacks are executed
+  - `GetSnapshotRequest.filterSourceTypes` filters which entries are returned
+  - Enables server-side filtering to reduce processing and bandwidth
+  - Backwards compatible: null/empty filter includes all (existing behavior)
 
 - **2026-02-06**: Added seeded resource loading capability (Issue #289):
   - 2 new endpoints (`/resource/seeded/list`, `/resource/seeded/get`)
