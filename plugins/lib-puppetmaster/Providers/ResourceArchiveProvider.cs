@@ -29,8 +29,11 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Providers;
 ///   <item>"character-personality" → "personality"</item>
 ///   <item>"character-history" → "history"</item>
 ///   <item>"character-encounter" → "encounters"</item>
+///   <item>"storyline" → "storyline" (identity)</item>
+///   <item>"quest" → "quest" (identity)</item>
 /// </list>
-/// Unknown source types use the full sourceType as the namespace.
+/// Unknown source types use the full sourceType as the namespace, or strip
+/// the "character-" prefix if present.
 /// </para>
 /// <para>
 /// <b>Path Navigation</b>: The provider navigates JSON data dynamically.
@@ -46,9 +49,9 @@ public sealed class ResourceArchiveProvider : IVariableProvider
             ["character-base"] = "base",
             ["character-personality"] = "personality",
             ["character-history"] = "history",
-            ["character-encounter"] = "encounters",
-            ["character-storyline"] = "storyline",
-            ["character-quest"] = "quests"
+            ["character-encounter"] = "encounters"
+            // Note: "storyline" and "quest" use identity mapping (sourceType == namespace)
+            // via the fallback logic in GetNamespace(), not explicit aliases
         };
 
     private readonly string _name;
