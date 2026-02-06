@@ -238,6 +238,83 @@ public sealed class SemanticAnalyzer
                 "Use purpose-built actions instead (e.g., load_snapshot, actor_command, spawn_watcher).",
                 SemanticErrorKind.ForbiddenDomainAction));
         }
+
+        // Validate actor_command action parameters
+        if (action.Name.Equals("actor_command", StringComparison.OrdinalIgnoreCase))
+        {
+            ValidateActorCommand(flowName, action);
+        }
+
+        // Validate actor_query action parameters
+        if (action.Name.Equals("actor_query", StringComparison.OrdinalIgnoreCase))
+        {
+            ValidateActorQuery(flowName, action);
+        }
+    }
+
+    private void ValidateActorCommand(string flowName, DomainAction action)
+    {
+        // Check required 'target' parameter
+        if (!action.Parameters.ContainsKey("target"))
+        {
+            _errors.Add(new SemanticError(
+                $"actor_command in flow '{flowName}' missing required 'target' parameter",
+                SemanticErrorKind.MissingRequiredParameter));
+        }
+
+        // Check required 'command' parameter and validate it's a valid identifier
+        if (!action.Parameters.TryGetValue("command", out var commandObj) || commandObj == null)
+        {
+            _errors.Add(new SemanticError(
+                $"actor_command in flow '{flowName}' missing required 'command' parameter",
+                SemanticErrorKind.MissingRequiredParameter));
+        }
+        else if (commandObj is string commandStr && !IsValidIdentifier(commandStr))
+        {
+            _errors.Add(new SemanticError(
+                $"actor_command 'command' must be a valid identifier (alphanumeric + underscore), got '{commandStr}' in flow '{flowName}'",
+                SemanticErrorKind.InvalidIdentifier));
+        }
+    }
+
+    private void ValidateActorQuery(string flowName, DomainAction action)
+    {
+        // Check required 'target' parameter
+        if (!action.Parameters.ContainsKey("target"))
+        {
+            _errors.Add(new SemanticError(
+                $"actor_query in flow '{flowName}' missing required 'target' parameter",
+                SemanticErrorKind.MissingRequiredParameter));
+        }
+
+        // Check required 'query' parameter
+        if (!action.Parameters.ContainsKey("query"))
+        {
+            _errors.Add(new SemanticError(
+                $"actor_query in flow '{flowName}' missing required 'query' parameter",
+                SemanticErrorKind.MissingRequiredParameter));
+        }
+
+        // Check required 'into' parameter and validate it's a valid variable name
+        if (!action.Parameters.TryGetValue("into", out var intoObj) || intoObj == null)
+        {
+            _errors.Add(new SemanticError(
+                $"actor_query in flow '{flowName}' missing required 'into' parameter",
+                SemanticErrorKind.MissingRequiredParameter));
+        }
+        else if (intoObj is string intoStr && !IsValidIdentifier(intoStr))
+        {
+            _errors.Add(new SemanticError(
+                $"actor_query 'into' must be a valid variable name (alphanumeric + underscore), got '{intoStr}' in flow '{flowName}'",
+                SemanticErrorKind.InvalidIdentifier));
+        }
+    }
+
+    private static bool IsValidIdentifier(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return false;
+        if (!char.IsLetter(name[0]) && name[0] != '_') return false;
+        return name.All(c => char.IsLetterOrDigit(c) || c == '_');
     }
 
     private void ValidateCondAction(string flowName, CondAction cond)
@@ -405,6 +482,12 @@ public enum SemanticErrorKind
 
     /// <summary>Forbidden domain action that violates security policy.</summary>
     ForbiddenDomainAction,
+
+    /// <summary>Missing required parameter for domain action.</summary>
+    MissingRequiredParameter,
+
+    /// <summary>Invalid identifier format.</summary>
+    InvalidIdentifier,
 
     /// <summary>Other semantic error.</summary>
     Other

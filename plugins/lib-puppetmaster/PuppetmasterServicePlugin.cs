@@ -1,6 +1,8 @@
+using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
+using BeyondImmersion.BannouService.Puppetmaster.Handlers;
 using BeyondImmersion.BannouService.Puppetmaster.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -44,6 +46,12 @@ public class PuppetmasterServicePlugin : BaseBannouPlugin
         // Register the dynamic behavior provider (priority 100 = highest)
         // This enables lib-actor to discover and use our provider via DI
         services.AddSingleton<IBehaviorDocumentProvider, DynamicBehaviorProvider>();
+
+        // Register load_snapshot handler for ABML execution
+        // This enables Event Brain actors to load resource snapshots via load_snapshot: action
+        // The handler is discovered by DocumentExecutorFactory via GetServices<IActionHandler>()
+        services.AddSingleton<LoadSnapshotHandler>();
+        services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<LoadSnapshotHandler>());
 
         Logger?.LogDebug("Puppetmaster service dependencies configured");
     }
