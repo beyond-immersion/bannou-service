@@ -4,9 +4,9 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Behavior.Cognition;
-using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;

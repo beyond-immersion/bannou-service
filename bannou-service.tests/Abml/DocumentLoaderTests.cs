@@ -4,8 +4,8 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
-using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
+using BeyondImmersion.BannouService.Abml.Execution;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Tests.Abml;

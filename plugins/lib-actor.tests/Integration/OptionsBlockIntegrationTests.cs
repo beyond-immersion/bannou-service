@@ -5,9 +5,9 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Actor.Caching;

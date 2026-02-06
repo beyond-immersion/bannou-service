@@ -3,12 +3,13 @@
 // Triggers GOAP replanning with urgency-based constraints.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.BannouService.Abml.Cognition;
-using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Behavior.Goap;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;

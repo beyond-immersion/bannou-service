@@ -3,9 +3,9 @@
 // Tests for memory querying (Cognition Stage 2).
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
-using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.TestUtilities;
 using Moq;

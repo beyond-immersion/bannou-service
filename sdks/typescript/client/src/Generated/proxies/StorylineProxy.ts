@@ -37,7 +37,10 @@ export class StorylineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ComposeResponse']>> {
     return this.client.invokeAsync<Schemas['ComposeRequest'], Schemas['ComposeResponse']>(
-      '/storyline/compose', request, channel, timeout
+      '/storyline/compose',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -54,7 +57,10 @@ export class StorylineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetPlanResponse']>> {
     return this.client.invokeAsync<Schemas['GetPlanRequest'], Schemas['GetPlanResponse']>(
-      '/storyline/plan/get', request, channel, timeout
+      '/storyline/plan/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -71,7 +77,10 @@ export class StorylineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListPlansResponse']>> {
     return this.client.invokeAsync<Schemas['ListPlansRequest'], Schemas['ListPlansResponse']>(
-      '/storyline/plan/list', request, channel, timeout
+      '/storyline/plan/list',
+      request,
+      channel,
+      timeout
     );
   }
 }

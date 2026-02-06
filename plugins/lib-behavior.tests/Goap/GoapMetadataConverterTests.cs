@@ -3,8 +3,8 @@
 // Tests for converting ABML parsed metadata to GOAP runtime types.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Goap;

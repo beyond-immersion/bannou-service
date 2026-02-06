@@ -3,10 +3,10 @@
 // Tests for multi-channel execution, signaling, and synchronization.
 // ═══════════════════════════════════════════════════════════════════════════
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Execution.Channel;
 using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Abml.Runtime;
 using Xunit;
 

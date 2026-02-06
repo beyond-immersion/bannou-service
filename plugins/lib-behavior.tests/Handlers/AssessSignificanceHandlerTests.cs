@@ -3,9 +3,9 @@
 // Tests for significance assessment (Cognition Stage 3).
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
-using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using Xunit;
 

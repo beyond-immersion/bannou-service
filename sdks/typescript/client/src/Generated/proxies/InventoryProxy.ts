@@ -37,7 +37,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContainerResponse']>> {
     return this.client.invokeAsync<Schemas['CreateContainerRequest'], Schemas['ContainerResponse']>(
-      '/inventory/container/create', request, channel, timeout
+      '/inventory/container/create',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -53,9 +56,10 @@ export class InventoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContainerWithContentsResponse']>> {
-    return this.client.invokeAsync<Schemas['GetContainerRequest'], Schemas['ContainerWithContentsResponse']>(
-      '/inventory/container/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetContainerRequest'],
+      Schemas['ContainerWithContentsResponse']
+    >('/inventory/container/get', request, channel, timeout);
   }
 
   /**
@@ -70,9 +74,10 @@ export class InventoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContainerResponse']>> {
-    return this.client.invokeAsync<Schemas['GetOrCreateContainerRequest'], Schemas['ContainerResponse']>(
-      '/inventory/container/get-or-create', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetOrCreateContainerRequest'],
+      Schemas['ContainerResponse']
+    >('/inventory/container/get-or-create', request, channel, timeout);
   }
 
   /**
@@ -87,9 +92,10 @@ export class InventoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListContainersResponse']>> {
-    return this.client.invokeAsync<Schemas['ListContainersRequest'], Schemas['ListContainersResponse']>(
-      '/inventory/container/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListContainersRequest'],
+      Schemas['ListContainersResponse']
+    >('/inventory/container/list', request, channel, timeout);
   }
 
   /**
@@ -105,7 +111,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContainerResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateContainerRequest'], Schemas['ContainerResponse']>(
-      '/inventory/container/update', request, channel, timeout
+      '/inventory/container/update',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -122,7 +131,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AddItemResponse']>> {
     return this.client.invokeAsync<Schemas['AddItemRequest'], Schemas['AddItemResponse']>(
-      '/inventory/add', request, channel, timeout
+      '/inventory/add',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -139,7 +151,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RemoveItemResponse']>> {
     return this.client.invokeAsync<Schemas['RemoveItemRequest'], Schemas['RemoveItemResponse']>(
-      '/inventory/remove', request, channel, timeout
+      '/inventory/remove',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -156,7 +171,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MoveItemResponse']>> {
     return this.client.invokeAsync<Schemas['MoveItemRequest'], Schemas['MoveItemResponse']>(
-      '/inventory/move', request, channel, timeout
+      '/inventory/move',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -173,7 +191,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['TransferItemResponse']>> {
     return this.client.invokeAsync<Schemas['TransferItemRequest'], Schemas['TransferItemResponse']>(
-      '/inventory/transfer', request, channel, timeout
+      '/inventory/transfer',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -190,7 +211,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SplitStackResponse']>> {
     return this.client.invokeAsync<Schemas['SplitStackRequest'], Schemas['SplitStackResponse']>(
-      '/inventory/split', request, channel, timeout
+      '/inventory/split',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -207,7 +231,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MergeStacksResponse']>> {
     return this.client.invokeAsync<Schemas['MergeStacksRequest'], Schemas['MergeStacksResponse']>(
-      '/inventory/merge', request, channel, timeout
+      '/inventory/merge',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -224,7 +251,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryItemsResponse']>> {
     return this.client.invokeAsync<Schemas['QueryItemsRequest'], Schemas['QueryItemsResponse']>(
-      '/inventory/query', request, channel, timeout
+      '/inventory/query',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -241,7 +271,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CountItemsResponse']>> {
     return this.client.invokeAsync<Schemas['CountItemsRequest'], Schemas['CountItemsResponse']>(
-      '/inventory/count', request, channel, timeout
+      '/inventory/count',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -258,7 +291,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HasItemsResponse']>> {
     return this.client.invokeAsync<Schemas['HasItemsRequest'], Schemas['HasItemsResponse']>(
-      '/inventory/has', request, channel, timeout
+      '/inventory/has',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -275,7 +311,10 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FindSpaceResponse']>> {
     return this.client.invokeAsync<Schemas['FindSpaceRequest'], Schemas['FindSpaceResponse']>(
-      '/inventory/find-space', request, channel, timeout
+      '/inventory/find-space',
+      request,
+      channel,
+      timeout
     );
   }
 }

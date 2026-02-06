@@ -1,16 +1,16 @@
 using BeyondImmersion.Bannou.Behavior.Cognition;
-using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
-using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.Bannou.Behavior.Coordination;
 using BeyondImmersion.Bannou.Behavior.Dialogue;
-using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.Bannou.Behavior.Handlers;
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
+using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
+using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior.Control;
 using BeyondImmersion.BannouService.Behavior.Handlers;
-using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 

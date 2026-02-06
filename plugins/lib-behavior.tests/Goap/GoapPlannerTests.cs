@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
+using BeyondImmersion.BannouService.Behavior.Goap;
 using Xunit;
 
 using InternalGoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;

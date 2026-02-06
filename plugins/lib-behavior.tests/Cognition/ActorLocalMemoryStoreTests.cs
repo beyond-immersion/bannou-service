@@ -6,12 +6,12 @@
 using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Services;
-using CognitionMemory = BeyondImmersion.BannouService.Abml.Cognition.Memory;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using CognitionMemory = BeyondImmersion.BannouService.Abml.Cognition.Memory;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Cognition;
 

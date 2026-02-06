@@ -3,15 +3,15 @@
 // Shared test infrastructure for cognition handler tests.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
-using CognitionMemory = BeyondImmersion.BannouService.Abml.Cognition.Memory;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Abml.Runtime;
 using Moq;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using CognitionMemory = BeyondImmersion.BannouService.Abml.Cognition.Memory;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Handlers;
 

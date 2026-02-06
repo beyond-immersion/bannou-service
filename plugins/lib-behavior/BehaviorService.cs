@@ -1,9 +1,10 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
 using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Abml.Cognition;
-using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
+using BeyondImmersion.BannouService.Behavior.Goap;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;

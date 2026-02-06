@@ -36,9 +36,10 @@ export class QuestProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QuestDefinitionResponse']>> {
-    return this.client.invokeAsync<Schemas['CreateQuestDefinitionRequest'], Schemas['QuestDefinitionResponse']>(
-      '/quest/definition/create', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CreateQuestDefinitionRequest'],
+      Schemas['QuestDefinitionResponse']
+    >('/quest/definition/create', request, channel, timeout);
   }
 
   /**
@@ -53,9 +54,10 @@ export class QuestProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QuestDefinitionResponse']>> {
-    return this.client.invokeAsync<Schemas['GetQuestDefinitionRequest'], Schemas['QuestDefinitionResponse']>(
-      '/quest/definition/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetQuestDefinitionRequest'],
+      Schemas['QuestDefinitionResponse']
+    >('/quest/definition/get', request, channel, timeout);
   }
 
   /**
@@ -70,9 +72,10 @@ export class QuestProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListQuestDefinitionsResponse']>> {
-    return this.client.invokeAsync<Schemas['ListQuestDefinitionsRequest'], Schemas['ListQuestDefinitionsResponse']>(
-      '/quest/definition/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListQuestDefinitionsRequest'],
+      Schemas['ListQuestDefinitionsResponse']
+    >('/quest/definition/list', request, channel, timeout);
   }
 
   /**
@@ -87,9 +90,10 @@ export class QuestProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QuestDefinitionResponse']>> {
-    return this.client.invokeAsync<Schemas['UpdateQuestDefinitionRequest'], Schemas['QuestDefinitionResponse']>(
-      '/quest/definition/update', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['UpdateQuestDefinitionRequest'],
+      Schemas['QuestDefinitionResponse']
+    >('/quest/definition/update', request, channel, timeout);
   }
 
   /**
@@ -104,9 +108,10 @@ export class QuestProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QuestDefinitionResponse']>> {
-    return this.client.invokeAsync<Schemas['DeprecateQuestDefinitionRequest'], Schemas['QuestDefinitionResponse']>(
-      '/quest/definition/deprecate', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['DeprecateQuestDefinitionRequest'],
+      Schemas['QuestDefinitionResponse']
+    >('/quest/definition/deprecate', request, channel, timeout);
   }
 
   /**
@@ -122,7 +127,10 @@ export class QuestProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QuestInstanceResponse']>> {
     return this.client.invokeAsync<Schemas['AcceptQuestRequest'], Schemas['QuestInstanceResponse']>(
-      '/quest/accept', request, channel, timeout
+      '/quest/accept',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -138,9 +146,10 @@ export class QuestProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QuestInstanceResponse']>> {
-    return this.client.invokeAsync<Schemas['AbandonQuestRequest'], Schemas['QuestInstanceResponse']>(
-      '/quest/abandon', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['AbandonQuestRequest'],
+      Schemas['QuestInstanceResponse']
+    >('/quest/abandon', request, channel, timeout);
   }
 
   /**
@@ -156,7 +165,10 @@ export class QuestProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QuestInstanceResponse']>> {
     return this.client.invokeAsync<Schemas['GetQuestRequest'], Schemas['QuestInstanceResponse']>(
-      '/quest/get', request, channel, timeout
+      '/quest/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -173,7 +185,10 @@ export class QuestProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListQuestsResponse']>> {
     return this.client.invokeAsync<Schemas['ListQuestsRequest'], Schemas['ListQuestsResponse']>(
-      '/quest/list', request, channel, timeout
+      '/quest/list',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -189,9 +204,10 @@ export class QuestProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListAvailableQuestsResponse']>> {
-    return this.client.invokeAsync<Schemas['ListAvailableQuestsRequest'], Schemas['ListAvailableQuestsResponse']>(
-      '/quest/list-available', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListAvailableQuestsRequest'],
+      Schemas['ListAvailableQuestsResponse']
+    >('/quest/list-available', request, channel, timeout);
   }
 
   /**
@@ -207,7 +223,10 @@ export class QuestProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QuestLogResponse']>> {
     return this.client.invokeAsync<Schemas['GetQuestLogRequest'], Schemas['QuestLogResponse']>(
-      '/quest/log', request, channel, timeout
+      '/quest/log',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -223,9 +242,10 @@ export class QuestProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ObjectiveProgressResponse']>> {
-    return this.client.invokeAsync<Schemas['ReportProgressRequest'], Schemas['ObjectiveProgressResponse']>(
-      '/quest/objective/progress', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ReportProgressRequest'],
+      Schemas['ObjectiveProgressResponse']
+    >('/quest/objective/progress', request, channel, timeout);
   }
 
   /**
@@ -240,8 +260,9 @@ export class QuestProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ObjectiveProgressResponse']>> {
-    return this.client.invokeAsync<Schemas['GetObjectiveProgressRequest'], Schemas['ObjectiveProgressResponse']>(
-      '/quest/objective/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetObjectiveProgressRequest'],
+      Schemas['ObjectiveProgressResponse']
+    >('/quest/objective/get', request, channel, timeout);
   }
 }
