@@ -53,6 +53,11 @@ public class PuppetmasterServicePlugin : BaseBannouPlugin
         services.AddSingleton<LoadSnapshotHandler>();
         services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<LoadSnapshotHandler>());
 
+        // Register prefetch_snapshots handler for ABML execution
+        // This enables Event Brain actors to batch-prefetch resource snapshots before iteration
+        services.AddSingleton<PrefetchSnapshotsHandler>();
+        services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<PrefetchSnapshotsHandler>());
+
         Logger?.LogDebug("Puppetmaster service dependencies configured");
     }
 

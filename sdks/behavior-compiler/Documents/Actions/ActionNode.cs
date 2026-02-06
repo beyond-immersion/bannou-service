@@ -184,6 +184,38 @@ public sealed record LoadSnapshotAction(
     string ResourceId,
     IReadOnlyList<string>? Filter = null) : ActionNode;
 
+/// <summary>
+/// Prefetches multiple resource snapshots into cache for batch operations.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Use before iterating over a collection to batch-load all snapshots upfront:
+/// <code>
+/// - prefetch_snapshots:
+///     resource_type: character
+///     resource_ids: ${participants | map('id')}
+///     filter:
+///       - character-personality
+///
+/// - foreach:
+///     variable: p
+///     collection: ${participants}
+///     do:
+///       - load_snapshot:  # Cache hit - instant
+///           name: char
+///           resource_type: character
+///           resource_id: ${p.id}
+/// </code>
+/// </para>
+/// </remarks>
+/// <param name="ResourceType">Resource type (e.g., "character").</param>
+/// <param name="ResourceIds">Expression evaluating to list of resource GUIDs.</param>
+/// <param name="Filter">Optional list of source types to include.</param>
+public sealed record PrefetchSnapshotsAction(
+    string ResourceType,
+    string ResourceIds,
+    IReadOnlyList<string>? Filter = null) : ActionNode;
+
 // ═══════════════════════════════════════════════════════════════════════════
 // DOMAIN ACTIONS
 // ═══════════════════════════════════════════════════════════════════════════

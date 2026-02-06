@@ -2886,6 +2886,73 @@
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LoadSnapshotAction.Filter">
             <summary>Optional list of source types to include (e.g., ["character-personality", "character-history"]).</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.PrefetchSnapshotsAction">
+             <summary>
+             Prefetches multiple resource snapshots into cache for batch operations.
+             </summary>
+             <remarks>
+             <para>
+             Use before iterating over a collection to batch-load all snapshots upfront:
+             <code>
+             - prefetch_snapshots:
+                 resource_type: character
+                 resource_ids: ${participants | map('id')}
+                 filter:
+                   - character-personality
+            
+             - foreach:
+                 variable: p
+                 collection: ${participants}
+                 do:
+                   - load_snapshot:  # Cache hit - instant
+                       name: char
+                       resource_type: character
+                       resource_id: ${p.id}
+             </code>
+             </para>
+             </remarks>
+             <param name="ResourceType">Resource type (e.g., "character").</param>
+             <param name="ResourceIds">Expression evaluating to list of resource GUIDs.</param>
+             <param name="Filter">Optional list of source types to include.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.PrefetchSnapshotsAction.#ctor(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.String})">
+             <summary>
+             Prefetches multiple resource snapshots into cache for batch operations.
+             </summary>
+             <remarks>
+             <para>
+             Use before iterating over a collection to batch-load all snapshots upfront:
+             <code>
+             - prefetch_snapshots:
+                 resource_type: character
+                 resource_ids: ${participants | map('id')}
+                 filter:
+                   - character-personality
+            
+             - foreach:
+                 variable: p
+                 collection: ${participants}
+                 do:
+                   - load_snapshot:  # Cache hit - instant
+                       name: char
+                       resource_type: character
+                       resource_id: ${p.id}
+             </code>
+             </para>
+             </remarks>
+             <param name="ResourceType">Resource type (e.g., "character").</param>
+             <param name="ResourceIds">Expression evaluating to list of resource GUIDs.</param>
+             <param name="Filter">Optional list of source types to include.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.PrefetchSnapshotsAction.ResourceType">
+            <summary>Resource type (e.g., "character").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.PrefetchSnapshotsAction.ResourceIds">
+            <summary>Expression evaluating to list of resource GUIDs.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.PrefetchSnapshotsAction.Filter">
+            <summary>Optional list of source types to include.</summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction">
             <summary>
             Generic domain action (handler-provided).

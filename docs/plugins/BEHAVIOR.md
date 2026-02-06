@@ -712,6 +712,72 @@ flows:
                   urgency: 0.8
 ```
 
+#### prefetch_snapshots (batch cache warmup)
+
+Batch-loads multiple resource snapshots into cache before iteration. Use before `foreach` loops to convert N sequential API calls into 1 batch call + N cache hits.
+
+**Handler Location:** `plugins/lib-puppetmaster/Handlers/PrefetchSnapshotsHandler.cs`
+
+```yaml
+- prefetch_snapshots:
+    resource_type: character
+    resource_ids: ${participants | map('id')}  # Expression → List<Guid>
+    filter:                                     # Optional
+      - character-personality
+      - character-history
+
+- foreach:
+    variable: candidate
+    collection: ${participants}
+    do:
+      - load_snapshot:        # Cache hit - instant
+          name: char
+          resource_type: character
+          resource_id: ${candidate.id}
+```
+
+**Parameters:**
+- `resource_type` (required): Resource type (e.g., "character")
+- `resource_ids` (required): Expression evaluating to a list of resource GUIDs
+- `filter` (optional): List of source types to include in snapshots
+
+**Behavior:**
+- Prefetches all snapshots in parallel with bounded concurrency (max 5 concurrent)
+- Logs success count but does not fail if some snapshots are missing
+- Empty `resource_ids` list is a no-op (logs skip, returns Continue)
+- Uses same cache as `load_snapshot` (5 minute TTL)
+
+**Example - Prefetch before iterating raid participants:**
+```yaml
+flows:
+  evaluate_raid:
+    actions:
+      # Prefetch all participant data upfront
+      - prefetch_snapshots:
+          resource_type: character
+          resource_ids: ${raid.participants | map('character_id')}
+          filter:
+            - character-personality
+
+      # Now iterate - all load_snapshot calls hit cache
+      - foreach:
+          variable: p
+          collection: ${raid.participants}
+          do:
+            - load_snapshot:
+                name: participant
+                resource_type: character
+                resource_id: ${p.character_id}
+                filter:
+                  - character-personality
+            - cond:
+                - when: ${participant.personality.aggression > 0.8}
+                  then:
+                    - actor_command:
+                        target: ${p.actor_id}
+                        command: lead_charge
+```
+
 ---
 
 ## Work Tracking

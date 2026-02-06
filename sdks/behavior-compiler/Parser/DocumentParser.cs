@@ -590,6 +590,7 @@ public sealed class DocumentParser
             "continuation_point" => ParseContinuationPointAction(actionValue, errors),
             "emit_intent" => ParseEmitIntentAction(actionValue, errors),
             "load_snapshot" => ParseLoadSnapshotAction(actionValue, errors),
+            "prefetch_snapshots" => ParsePrefetchSnapshotsAction(actionValue, errors),
             _ => ParseDomainAction(actionName, actionValue, errors)
         };
     }
@@ -1148,6 +1149,59 @@ public sealed class DocumentParser
         }
 
         return new LoadSnapshotAction(name, resourceType, resourceId, filter);
+    }
+
+    private PrefetchSnapshotsAction? ParsePrefetchSnapshotsAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'prefetch_snapshots' must be an object"));
+            return null;
+        }
+
+        // Required: resource_type
+        if (!dict.TryGetValue("resource_type", out var typeObj) || typeObj is not string resourceType)
+        {
+            errors.Add(new ParseError("'prefetch_snapshots' requires 'resource_type' field"));
+            return null;
+        }
+
+        // Required: resource_ids (expression string)
+        if (!dict.TryGetValue("resource_ids", out var idsObj) || idsObj is not string resourceIds)
+        {
+            errors.Add(new ParseError("'prefetch_snapshots' requires 'resource_ids' field (expression)"));
+            return null;
+        }
+
+        // Optional: filter (list of strings)
+        IReadOnlyList<string>? filter = null;
+        if (dict.TryGetValue("filter", out var filterObj))
+        {
+            if (filterObj is IList<object> filterList)
+            {
+                var filterStrings = new List<string>();
+                foreach (var item in filterList)
+                {
+                    if (item is string str)
+                    {
+                        filterStrings.Add(str);
+                    }
+                    else
+                    {
+                        errors.Add(new ParseError("'prefetch_snapshots.filter' items must be strings"));
+                        return null;
+                    }
+                }
+                filter = filterStrings;
+            }
+            else
+            {
+                errors.Add(new ParseError("'prefetch_snapshots.filter' must be a list of strings"));
+                return null;
+            }
+        }
+
+        return new PrefetchSnapshotsAction(resourceType, resourceIds, filter);
     }
 
     private DomainAction ParseDomainAction(string name, object? value, List<ParseError> errors)
