@@ -766,6 +766,984 @@
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction.Target">
             <summary>Optional target expression.</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction">
+            <summary>
+            Represents a GOAP action that can be planned.
+            Each action has preconditions that must be satisfied, effects it produces, and a cost.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.Id">
+            <summary>
+            Unique identifier for this action (typically the flow name).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.Name">
+            <summary>
+            Human-readable name for this action.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.Preconditions">
+            <summary>
+            Preconditions that must be satisfied to execute this action.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.Effects">
+            <summary>
+            Effects applied to world state when action completes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.Cost">
+            <summary>
+            Cost of executing this action (lower = preferred in plans).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.#ctor(System.String,System.String,BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions,BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects,System.Single)">
+            <summary>
+            Creates a new GOAP action.
+            </summary>
+            <param name="id">Action identifier.</param>
+            <param name="name">Action name.</param>
+            <param name="preconditions">Preconditions.</param>
+            <param name="effects">Effects.</param>
+            <param name="cost">Action cost.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.FromMetadata(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Single)">
+            <summary>
+            Creates a GOAP action from parsed metadata.
+            </summary>
+            <param name="flowName">The flow name as action ID and name.</param>
+            <param name="preconditionStrings">Map of property names to condition strings.</param>
+            <param name="effectStrings">Map of property names to effect strings.</param>
+            <param name="cost">Action cost.</param>
+            <returns>New GOAP action.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.IsApplicable(BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState)">
+            <summary>
+            Checks if this action can be executed given the current world state.
+            </summary>
+            <param name="state">Current world state.</param>
+            <returns>True if all preconditions are satisfied.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.Apply(BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState)">
+            <summary>
+            Applies this action's effects to a world state.
+            </summary>
+            <param name="state">Current world state.</param>
+            <returns>New world state with effects applied.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.EffectType">
+            <summary>
+            Type of effect to apply to world state.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.EffectType.Set">
+            <summary>Set to an absolute value.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.EffectType.Add">
+            <summary>Add to current value (delta).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.EffectType.Subtract">
+            <summary>Subtract from current value (delta).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect">
+            <summary>
+            Represents a single effect on a world state property.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect.Type">
+            <summary>
+            Type of effect.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect.Value">
+            <summary>
+            The value to apply.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Goap.EffectType,System.Object)">
+            <summary>
+            Creates a new effect.
+            </summary>
+            <param name="type">Effect type.</param>
+            <param name="value">Value to apply.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect.Parse(System.String)">
+            <summary>
+            Parses an effect string into a GoapEffect.
+            </summary>
+            <param name="effectString">Effect like "-0.8", "+5", "tavern", "true".</param>
+            <returns>Parsed effect.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect.TryParse(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect@)">
+            <summary>
+            Tries to parse an effect string.
+            </summary>
+            <param name="effectString">Effect string to parse.</param>
+            <param name="effect">Parsed effect if successful.</param>
+            <returns>True if parsing succeeded.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect.Apply(System.Object)">
+            <summary>
+            Applies this effect to a current value.
+            </summary>
+            <param name="currentValue">The current value from world state.</param>
+            <returns>The new value after applying the effect.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects">
+            <summary>
+            Container for action effects.
+            Maps world state property names to their effects.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects.#ctor">
+            <summary>
+            Creates empty effects container.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects.FromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Creates effects from a dictionary of effect strings.
+            </summary>
+            <param name="effectStrings">Map of property names to effect strings.</param>
+            <returns>Parsed effects container.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects.AddEffect(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapEffect)">
+            <summary>
+            Adds an effect for a property.
+            </summary>
+            <param name="propertyName">World state property name.</param>
+            <param name="effect">Effect to apply.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects.Effects">
+            <summary>
+            Gets all effects as key-value pairs.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects.Count">
+            <summary>
+            Gets the number of effects.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects.HasEffect(System.String)">
+            <summary>
+            Checks if there's an effect for a property.
+            </summary>
+            <param name="propertyName">Property name to check.</param>
+            <returns>True if an effect exists for this property.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects.GetEffect(System.String)">
+            <summary>
+            Gets the effect for a property.
+            </summary>
+            <param name="propertyName">Property name.</param>
+            <returns>The effect, or null if not found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ComparisonOperator">
+            <summary>
+            Comparison operators for GOAP conditions.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ComparisonOperator.Equal">
+            <summary>Equals (==).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ComparisonOperator.NotEqual">
+            <summary>Not equals (!=).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ComparisonOperator.GreaterThan">
+            <summary>Greater than (>).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ComparisonOperator.GreaterThanOrEqual">
+            <summary>Greater than or equal (>=).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ComparisonOperator.LessThan">
+            <summary>Less than (&lt;).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ComparisonOperator.LessThanOrEqual">
+            <summary>Less than or equal (&lt;=).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition">
+            <summary>
+            Represents a GOAP condition that compares a world state property to a literal value.
+            Conditions use literal values only, not expressions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition.Operator">
+            <summary>
+            The comparison operator.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition.TargetValue">
+            <summary>
+            The target value to compare against.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition.NumericTarget">
+            <summary>
+            The numeric target value (for heuristic calculation).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Goap.ComparisonOperator,System.Object)">
+            <summary>
+            Creates a new GOAP condition.
+            </summary>
+            <param name="op">Comparison operator.</param>
+            <param name="targetValue">Value to compare against.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition.Parse(System.String)">
+            <summary>
+            Parses a condition string into a GoapCondition.
+            </summary>
+            <param name="conditionString">Condition like "> 0.6", ">= 5", "== true", "!= 'idle'".</param>
+            <returns>Parsed condition.</returns>
+            <exception cref="T:System.FormatException">If the condition string is invalid.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition.TryParse(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition@)">
+            <summary>
+            Tries to parse a condition string into a GoapCondition.
+            </summary>
+            <param name="conditionString">Condition string to parse.</param>
+            <param name="condition">Parsed condition if successful.</param>
+            <returns>True if parsing succeeded.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition.Evaluate(System.Object)">
+            <summary>
+            Evaluates this condition against a world state value.
+            </summary>
+            <param name="actualValue">The actual value from world state.</param>
+            <returns>True if the condition is satisfied.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition.Distance(System.Object)">
+            <summary>
+            Calculates the distance from a value to satisfying this condition.
+            Used as heuristic for A* search.
+            </summary>
+            <param name="actualValue">The actual value from world state.</param>
+            <returns>Distance (0 if satisfied, positive otherwise).</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal">
+            <summary>
+            Represents a GOAP goal with priority and conditions.
+            Goals define desired world state conditions that the planner tries to achieve.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.Id">
+            <summary>
+            Unique identifier for this goal.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.Name">
+            <summary>
+            Human-readable name for this goal.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.Priority">
+            <summary>
+            Goal priority (higher = more important).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.Conditions">
+            <summary>
+            Conditions that define goal satisfaction.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.#ctor(System.String,System.String,System.Int32)">
+            <summary>
+            Creates a new GOAP goal.
+            </summary>
+            <param name="id">Goal identifier.</param>
+            <param name="name">Goal name.</param>
+            <param name="priority">Goal priority.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.FromMetadata(System.String,System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Creates a GOAP goal from parsed metadata.
+            </summary>
+            <param name="goalName">The goal name as ID and name.</param>
+            <param name="priority">Goal priority.</param>
+            <param name="conditionStrings">Map of property names to condition strings.</param>
+            <returns>New GOAP goal.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.AddCondition(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition)">
+            <summary>
+            Adds a condition to this goal.
+            </summary>
+            <param name="propertyName">World state property name.</param>
+            <param name="condition">Condition that must be satisfied.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.HasCondition(System.String)">
+            <summary>
+            Checks if the goal has a condition for a property.
+            </summary>
+            <param name="propertyName">Property name to check.</param>
+            <returns>True if a condition exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.GetCondition(System.String)">
+            <summary>
+            Gets the condition for a property.
+            </summary>
+            <param name="propertyName">Property name.</param>
+            <returns>The condition, or null if not found.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.ConditionCount">
+            <summary>
+            Gets the number of conditions in this goal.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.PropertyNames">
+            <summary>
+            Gets the property names that have conditions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.IsSatisfiedBy(BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState)">
+            <summary>
+            Checks if this goal is satisfied by a world state.
+            </summary>
+            <param name="state">World state to check.</param>
+            <returns>True if all conditions are satisfied.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.DistanceFrom(BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState)">
+            <summary>
+            Calculates the heuristic distance from a state to this goal.
+            </summary>
+            <param name="state">Current world state.</param>
+            <returns>Estimated distance (0 if satisfied).</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapMetadataConverter">
+            <summary>
+            Converts parsed GOAP metadata from ABML documents to runtime planning types.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapMetadataConverter.ToGoapGoal(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Documents.GoapGoalDefinition)">
+            <summary>
+            Converts a parsed goal definition to a GOAP goal.
+            </summary>
+            <param name="name">Goal name.</param>
+            <param name="definition">Parsed goal definition.</param>
+            <returns>GOAP goal ready for planning.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapMetadataConverter.ToGoapAction(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Documents.GoapFlowMetadata)">
+            <summary>
+            Converts parsed flow GOAP metadata to a GOAP action.
+            </summary>
+            <param name="flowName">Flow name (becomes action ID).</param>
+            <param name="metadata">Parsed GOAP metadata.</param>
+            <returns>GOAP action ready for planning.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapMetadataConverter.ExtractGoals(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
+            <summary>
+            Extracts all goals from an ABML document.
+            </summary>
+            <param name="document">Parsed ABML document.</param>
+            <returns>List of GOAP goals.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapMetadataConverter.ExtractActions(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
+            <summary>
+            Extracts all GOAP-enabled actions from an ABML document.
+            Only flows with goap: blocks are included.
+            </summary>
+            <param name="document">Parsed ABML document.</param>
+            <returns>List of GOAP actions.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapMetadataConverter.ExtractAll(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
+            <summary>
+            Extracts both goals and actions from an ABML document.
+            </summary>
+            <param name="document">Parsed ABML document.</param>
+            <returns>Tuple of goals and actions.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapMetadataConverter.HasGoapContent(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
+            <summary>
+            Checks if a document has any GOAP content (goals or GOAP-enabled flows).
+            </summary>
+            <param name="document">Parsed ABML document.</param>
+            <returns>True if document has GOAP content.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapMetadataConverter.GetGoalCount(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
+            <summary>
+            Gets the count of GOAP goals in a document.
+            </summary>
+            <param name="document">Parsed ABML document.</param>
+            <returns>Number of goals.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapMetadataConverter.GetActionCount(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
+            <summary>
+            Gets the count of GOAP-enabled actions in a document.
+            </summary>
+            <param name="document">Parsed ABML document.</param>
+            <returns>Number of actions with goap: blocks.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlannedAction">
+            <summary>
+            Represents a planned action in a GOAP plan.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlannedAction.Action">
+            <summary>
+            The action to execute.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlannedAction.Index">
+            <summary>
+            Index of this action in the plan sequence.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlannedAction.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction,System.Int32)">
+            <summary>
+            Creates a new planned action.
+            </summary>
+            <param name="action">The action.</param>
+            <param name="index">Index in plan.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlannedAction.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan">
+            <summary>
+            Represents a GOAP plan - a sequence of actions to achieve a goal.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.Goal">
+            <summary>
+            The goal this plan achieves.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.Actions">
+            <summary>
+            Ordered sequence of actions to execute.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.TotalCost">
+            <summary>
+            Total cost of all actions in the plan.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.NodesExpanded">
+            <summary>
+            Number of nodes expanded during planning.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.PlanningTimeMs">
+            <summary>
+            Time spent planning in milliseconds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.InitialState">
+            <summary>
+            The initial world state the plan was generated from.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.ExpectedFinalState">
+            <summary>
+            The expected world state after plan execution.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlannedAction},System.Single,System.Int32,System.Int64,BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState,BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState)">
+            <summary>
+            Creates a new GOAP plan.
+            </summary>
+            <param name="goal">Goal being achieved.</param>
+            <param name="actions">Ordered actions.</param>
+            <param name="totalCost">Total plan cost.</param>
+            <param name="nodesExpanded">Nodes expanded during search.</param>
+            <param name="planningTimeMs">Planning time in ms.</param>
+            <param name="initialState">Initial world state.</param>
+            <param name="expectedFinalState">Expected final state.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.Empty(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal,BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState,System.Int64)">
+            <summary>
+            Creates an empty plan (goal already satisfied).
+            </summary>
+            <param name="goal">Goal that's already satisfied.</param>
+            <param name="currentState">Current world state.</param>
+            <param name="planningTimeMs">Planning time in ms.</param>
+            <returns>Empty plan.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.ActionCount">
+            <summary>
+            Gets the number of actions in the plan.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.IsEmpty">
+            <summary>
+            Checks if the plan is empty (goal was already satisfied).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.GetAction(System.Int32)">
+            <summary>
+            Gets the action at a specific index.
+            </summary>
+            <param name="index">Action index.</param>
+            <returns>The planned action.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.GetActionIds">
+            <summary>
+            Gets the action IDs as a list.
+            </summary>
+            <returns>List of action IDs in order.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlanner">
+            <summary>
+            A* search implementation for GOAP planning.
+            Thread-safe: all state is method-local.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlanner.PlanNode">
+            <summary>
+            Node in the A* search graph.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlanner.PlanAsync(BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState,BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction},BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlanner.ValidatePlanAsync(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan,System.Int32,BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal},System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions">
+            <summary>
+            Container for action preconditions.
+            Maps world state property names to conditions that must be satisfied.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions.#ctor">
+            <summary>
+            Creates empty preconditions container.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions.FromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Creates preconditions from a dictionary of condition strings.
+            </summary>
+            <param name="conditionStrings">Map of property names to condition strings.</param>
+            <returns>Parsed preconditions container.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions.AddCondition(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapCondition)">
+            <summary>
+            Adds a condition for a property.
+            </summary>
+            <param name="propertyName">World state property name.</param>
+            <param name="condition">Condition that must be satisfied.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions.Conditions">
+            <summary>
+            Gets all conditions as key-value pairs.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions.Count">
+            <summary>
+            Gets the number of conditions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions.HasCondition(System.String)">
+            <summary>
+            Checks if there's a condition for a property.
+            </summary>
+            <param name="propertyName">Property name to check.</param>
+            <returns>True if a condition exists for this property.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions.GetCondition(System.String)">
+            <summary>
+            Gets the condition for a property.
+            </summary>
+            <param name="propertyName">Property name.</param>
+            <returns>The condition, or null if not found.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions.PropertyNames">
+            <summary>
+            Gets the property names that have conditions.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.IGoapPlanner">
+            <summary>
+            Interface for GOAP planners.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.IGoapPlanner.PlanAsync(BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState,BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction},BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions,System.Threading.CancellationToken)">
+            <summary>
+            Generates a plan to achieve a goal from the current world state.
+            </summary>
+            <param name="currentState">Current world state.</param>
+            <param name="goal">Goal to achieve.</param>
+            <param name="availableActions">Actions available for planning.</param>
+            <param name="options">Planning options.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>A plan if one is found, null otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.IGoapPlanner.ValidatePlanAsync(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPlan,System.Int32,BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal},System.Threading.CancellationToken)">
+            <summary>
+            Validates an existing plan against the current world state.
+            </summary>
+            <param name="plan">Plan to validate.</param>
+            <param name="currentActionIndex">Index of the current action being executed.</param>
+            <param name="currentState">Current world state.</param>
+            <param name="activeGoals">All active goals (for priority checking).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Validation result with suggestions.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions">
+            <summary>
+            Configuration options for GOAP planning.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.MaxDepth">
+            <summary>
+            Maximum depth of the search tree (number of actions in a plan).
+            Default: 10
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.MaxNodesExpanded">
+            <summary>
+            Maximum number of nodes to expand during search.
+            Prevents runaway planning in complex action spaces.
+            Default: 1000
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.TimeoutMs">
+            <summary>
+            Planning timeout in milliseconds.
+            Default: 100ms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.AllowDuplicateActions">
+            <summary>
+            Whether to allow duplicate actions in a plan.
+            Default: true (same action can appear multiple times)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.HeuristicWeight">
+            <summary>
+            Heuristic weight for A* search.
+            Higher values make search faster but potentially suboptimal.
+            Default: 1.0 (standard A*)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.Default">
+            <summary>
+            Default planning options.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.Fast">
+            <summary>
+            Fast planning options for real-time use.
+            Shorter timeout, fewer nodes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.Thorough">
+            <summary>
+            Thorough planning options for complex scenarios.
+            Longer timeout, more nodes, deeper search.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.WithTimeout(System.Int32)">
+            <summary>
+            Creates options with a specific timeout.
+            </summary>
+            <param name="timeoutMs">Timeout in milliseconds.</param>
+            <returns>New options with the specified timeout.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.WithMaxDepth(System.Int32)">
+            <summary>
+            Creates options with a specific max depth.
+            </summary>
+            <param name="maxDepth">Maximum plan depth.</param>
+            <returns>New options with the specified max depth.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanningOptions.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason">
+            <summary>
+            Reason why a plan might need to be regenerated.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason.None">
+            <summary>No replan needed, plan is still valid.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason.PreconditionInvalidated">
+            <summary>The current action's preconditions are no longer satisfied.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason.ActionFailed">
+            <summary>An action in the plan failed during execution.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason.BetterGoalAvailable">
+            <summary>A higher priority goal is now available.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason.PlanCompleted">
+            <summary>The plan has completed successfully.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason.GoalAlreadySatisfied">
+            <summary>The goal has been achieved externally.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ReplanReason.SuboptimalPlan">
+            <summary>The plan is no longer optimal given world state changes.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ValidationSuggestion">
+            <summary>
+            Suggested action after plan validation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ValidationSuggestion.Continue">
+            <summary>Continue executing the current plan.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ValidationSuggestion.Replan">
+            <summary>Generate a new plan from the current state.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Goap.ValidationSuggestion.Abort">
+            <summary>Abort the current plan without replanning.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult">
+            <summary>
+            Result of validating an existing GOAP plan against current world state.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.IsValid">
+            <summary>
+            Whether the plan is still valid.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.Reason">
+            <summary>
+            Reason for potential replan.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.Suggestion">
+            <summary>
+            Suggested action based on validation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.InvalidatedAtIndex">
+            <summary>
+            Index in the plan where validation failed (if applicable).
+            -1 if not applicable.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.Message">
+            <summary>
+            Additional message describing the validation result.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.BetterGoal">
+            <summary>
+            If BetterGoalAvailable, the goal that should be pursued instead.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.Valid">
+            <summary>
+            Creates a valid result (plan can continue).
+            </summary>
+            <returns>Valid result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.Completed">
+            <summary>
+            Creates a result indicating plan is complete.
+            </summary>
+            <returns>Completed result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.GoalSatisfied">
+            <summary>
+            Creates a result indicating goal is already satisfied.
+            </summary>
+            <returns>Goal satisfied result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.PreconditionInvalidated(System.Int32,System.String)">
+            <summary>
+            Creates a result indicating precondition failure.
+            </summary>
+            <param name="actionIndex">Index of the action with invalid preconditions.</param>
+            <param name="message">Description of what precondition failed.</param>
+            <returns>Precondition invalidated result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.ActionFailed(System.Int32,System.String)">
+            <summary>
+            Creates a result indicating action failure.
+            </summary>
+            <param name="actionIndex">Index of the failed action.</param>
+            <param name="message">Description of the failure.</param>
+            <returns>Action failed result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.BetterGoalAvailable(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal)">
+            <summary>
+            Creates a result indicating a better goal is available.
+            </summary>
+            <param name="betterGoal">The higher-priority goal.</param>
+            <returns>Better goal available result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.SuboptimalPlan(System.String)">
+            <summary>
+            Creates a result indicating the current plan is suboptimal.
+            </summary>
+            <param name="message">Description of why the plan is suboptimal.</param>
+            <returns>Suboptimal plan result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.PlanValidationResult.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState">
+            <summary>
+            Represents immutable world state for GOAP planning.
+            All modifications return new instances, enabling safe A* backtracking.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.#ctor">
+            <summary>
+            Creates an empty world state.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.#ctor(System.Collections.Immutable.ImmutableDictionary{System.String,System.Object})">
+            <summary>
+            Creates world state from existing values.
+            </summary>
+            <param name="state">Initial state values.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.FromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Creates world state from a dictionary of values.
+            </summary>
+            <param name="values">Key-value pairs to initialize state with.</param>
+            <returns>New world state with the given values.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.GetNumeric(System.String,System.Single)">
+            <summary>
+            Gets a numeric value from state.
+            </summary>
+            <param name="key">Property key (supports dot notation).</param>
+            <param name="defaultValue">Default if key not found.</param>
+            <returns>The numeric value or default.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.GetBoolean(System.String,System.Boolean)">
+            <summary>
+            Gets a boolean value from state.
+            </summary>
+            <param name="key">Property key.</param>
+            <param name="defaultValue">Default if key not found.</param>
+            <returns>The boolean value or default.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.GetString(System.String,System.String)">
+            <summary>
+            Gets a string value from state.
+            </summary>
+            <param name="key">Property key.</param>
+            <param name="defaultValue">Default if key not found.</param>
+            <returns>The string value or default.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.GetValue(System.String)">
+            <summary>
+            Gets a raw value from state.
+            </summary>
+            <param name="key">Property key.</param>
+            <returns>The value or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.ContainsKey(System.String)">
+            <summary>
+            Checks if state contains a key.
+            </summary>
+            <param name="key">Property key to check.</param>
+            <returns>True if key exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.SetNumeric(System.String,System.Single)">
+            <summary>
+            Sets a numeric value, returning a new state.
+            </summary>
+            <param name="key">Property key.</param>
+            <param name="value">Numeric value to set.</param>
+            <returns>New world state with the value set.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.SetBoolean(System.String,System.Boolean)">
+            <summary>
+            Sets a boolean value, returning a new state.
+            </summary>
+            <param name="key">Property key.</param>
+            <param name="value">Boolean value to set.</param>
+            <returns>New world state with the value set.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.SetString(System.String,System.String)">
+            <summary>
+            Sets a string value, returning a new state.
+            </summary>
+            <param name="key">Property key.</param>
+            <param name="value">String value to set.</param>
+            <returns>New world state with the value set.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.SetValue(System.String,System.Object)">
+            <summary>
+            Sets a value of any type, returning a new state.
+            </summary>
+            <param name="key">Property key.</param>
+            <param name="value">Value to set.</param>
+            <returns>New world state with the value set.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.ApplyEffects(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapActionEffects)">
+            <summary>
+            Applies action effects to this state, returning a new state.
+            </summary>
+            <param name="effects">Effects to apply.</param>
+            <returns>New world state with effects applied.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.SatisfiesPreconditions(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapPreconditions)">
+            <summary>
+            Checks if this state satisfies all preconditions.
+            </summary>
+            <param name="preconditions">Preconditions to check.</param>
+            <returns>True if all preconditions are satisfied.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.SatisfiesGoal(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal)">
+            <summary>
+            Checks if this state satisfies a goal.
+            </summary>
+            <param name="goal">Goal to check.</param>
+            <returns>True if all goal conditions are satisfied.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.DistanceToGoal(BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal)">
+            <summary>
+            Calculates heuristic distance to goal.
+            Used as H-cost in A* search.
+            </summary>
+            <param name="goal">Goal to measure distance to.</param>
+            <returns>Estimated distance (lower = closer).</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.Keys">
+            <summary>
+            Gets all keys in this state.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.Count">
+            <summary>
+            Gets the number of properties in this state.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.Equals(BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.op_Equality(BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState,BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState)">
+            <summary>
+            Equality operator.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState.op_Inequality(BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState,BeyondImmersion.Bannou.BehaviorCompiler.Goap.WorldState)">
+            <summary>
+            Inequality operator.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent">
             <summary>
             Attention intent with blendable gaze targets.
