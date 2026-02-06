@@ -3,12 +3,11 @@
 // Queries relevant memories for filtered perceptions.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
-namespace BeyondImmersion.Bannou.Behavior.Handlers;
+namespace BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 
 /// <summary>
 /// ABML action handler for memory querying (Cognition Stage 2).
@@ -47,7 +46,7 @@ public sealed class QueryMemoryHandler : IActionHandler
     /// <inheritdoc/>
     public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
-        AbmlExecutionContext context,
+        ExecutionContext context,
         CancellationToken ct)
     {
         var domainAction = (DomainAction)action;
@@ -119,4 +118,6 @@ public sealed class QueryMemoryHandler : IActionHandler
 
         return [];
     }
+
+    public ValueTask<ActionResult> ExecuteAsync(ActionNode action, Execution.ExecutionContext context, CancellationToken ct) => throw new NotImplementedException();
 }

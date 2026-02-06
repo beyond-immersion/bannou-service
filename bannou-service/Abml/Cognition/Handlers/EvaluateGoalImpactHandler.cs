@@ -3,12 +3,11 @@
 // Evaluates how perceptions impact current goals.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
-namespace BeyondImmersion.Bannou.Behavior.Handlers;
+namespace BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 
 /// <summary>
 /// ABML action handler for goal impact evaluation (Cognition Stage 5).
@@ -37,7 +36,7 @@ public sealed class EvaluateGoalImpactHandler : IActionHandler
     /// <inheritdoc/>
     public ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
-        AbmlExecutionContext context,
+        ExecutionContext context,
         CancellationToken ct)
     {
         var domainAction = (DomainAction)action;
@@ -295,6 +294,8 @@ public sealed class EvaluateGoalImpactHandler : IActionHandler
 
         return false;
     }
+
+    public ValueTask<ActionResult> ExecuteAsync(ActionNode action, Execution.ExecutionContext context, CancellationToken ct) => throw new NotImplementedException();
 
     /// <summary>
     /// Internal goal info structure for evaluation.

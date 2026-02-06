@@ -4,6 +4,7 @@ using BeyondImmersion.Bannou.Behavior.Coordination;
 using BeyondImmersion.Bannou.Behavior.Dialogue;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.Bannou.Behavior.Handlers;
+using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Behavior.Archetypes;
 using BeyondImmersion.BannouService.Behavior.Control;

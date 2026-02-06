@@ -3,12 +3,11 @@
 // Filters perceptions based on attention budget and priority weights.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
-namespace BeyondImmersion.Bannou.Behavior.Handlers;
+namespace BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 
 /// <summary>
 /// ABML action handler for attention filtering (Cognition Stage 1).
@@ -45,7 +44,7 @@ public sealed class FilterAttentionHandler : IActionHandler
     /// <inheritdoc/>
     public ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
-        AbmlExecutionContext context,
+        ExecutionContext context,
         CancellationToken ct)
     {
         var domainAction = (DomainAction)action;
@@ -259,4 +258,6 @@ public sealed class FilterAttentionHandler : IActionHandler
             RemainingBudget = remainingBudget
         };
     }
+
+    public ValueTask<ActionResult> ExecuteAsync(ActionNode action, Execution.ExecutionContext context, CancellationToken ct) => throw new NotImplementedException();
 }
