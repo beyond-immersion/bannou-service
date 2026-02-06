@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -106,10 +107,49 @@ public class StorylineServicePlugin : BaseBannouPlugin
                 Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Storyline service");
                 await bannouService.OnRunningAsync(CancellationToken.None);
             }
+
+            // Register compression callback with lib-resource
+            await RegisterCompressionCallbackAsync();
         }
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during Storyline service running phase");
+        }
+    }
+
+    /// <summary>
+    /// Registers the storyline compression callback with lib-resource for character archival.
+    /// </summary>
+    private async Task RegisterCompressionCallbackAsync()
+    {
+        if (_serviceProvider == null) return;
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
+            if (resourceClient != null)
+            {
+                await resourceClient.DefineCompressCallbackAsync(new DefineCompressCallbackRequest
+                {
+                    ResourceType = "character",
+                    SourceType = "storyline",
+                    ServiceName = "storyline",
+                    CompressEndpoint = "/storyline/get-compress-data",
+                    CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+                    Priority = 60,
+                    Description = "Storyline participation (scenario history, active arcs, completed count)"
+                });
+                Logger?.LogInformation("Registered storyline compression callback with lib-resource");
+            }
+            else
+            {
+                Logger?.LogDebug("IResourceClient not available - compression callback not registered (lib-resource may not be enabled)");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(ex, "Failed to register compression callback with lib-resource");
         }
     }
 

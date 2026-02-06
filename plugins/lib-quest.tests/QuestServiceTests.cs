@@ -1539,6 +1539,147 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
     #endregion
 
+    #region GetCompressData Tests
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithActiveAndCompletedQuests_ReturnsArchiveModel()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // Setup: character index with active and completed quests
+        var activeQuestId = Guid.NewGuid();
+        var completedQuestCode = "COMPLETED_QUEST";
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid> { activeQuestId },
+            CompletedQuestCodes = new List<string> { completedQuestCode }
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        // Setup: active quest instance
+        var activeInstance = CreateTestInstanceModel(activeQuestId, characterId);
+        activeInstance.Status = QuestStatus.ACTIVE;
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(activeInstance);
+
+        // Setup: definition for active quest
+        var definition = CreateTestDefinitionModel(activeInstance.DefinitionId);
+        definition.Category = QuestCategory.MAIN;
+        _mockDefinitionCache
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(definition);
+
+        // Setup: objective progress
+        var progress = new ObjectiveProgressModel
+        {
+            QuestInstanceId = activeQuestId,
+            ObjectiveCode = "KILL_WOLVES",
+            Name = "Kill Wolves",
+            ObjectiveType = ObjectiveType.KILL,
+            CurrentCount = 5,
+            RequiredCount = 10,
+            IsComplete = false,
+            TrackedEntityIds = new HashSet<Guid>()
+        };
+        _mockProgressStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(progress);
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.Equal("quest", response.ResourceType);
+        Assert.Single(response.ActiveQuests);
+        Assert.Equal(1, response.CompletedQuests);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithNoQuests_ReturnsEmptyArchive()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // Setup: no character index (no quests)
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CharacterQuestIndex?)null);
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.Empty(response.ActiveQuests);
+        Assert.Equal(0, response.CompletedQuests);
+        Assert.Empty(response.QuestCategories);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_AggregatesCategories_Correctly()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // Setup: character index with completed quests from different categories
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid>(),
+            CompletedQuestCodes = new List<string> { "MAIN_1", "MAIN_2", "SIDE_1" }
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        // Setup: definitions for completed quests
+        var mainDef1 = CreateTestDefinitionModel(Guid.NewGuid(), "MAIN_1");
+        mainDef1.Category = QuestCategory.MAIN;
+        var mainDef2 = CreateTestDefinitionModel(Guid.NewGuid(), "MAIN_2");
+        mainDef2.Category = QuestCategory.MAIN;
+        var sideDef = CreateTestDefinitionModel(Guid.NewGuid(), "SIDE_1");
+        sideDef.Category = QuestCategory.SIDE;
+
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { mainDef1, mainDef2, sideDef });
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(3, response.CompletedQuests);
+        Assert.True(response.QuestCategories.ContainsKey("MAIN"));
+        Assert.True(response.QuestCategories.ContainsKey("SIDE"));
+        Assert.Equal(2, response.QuestCategories["MAIN"]);
+        Assert.Equal(1, response.QuestCategories["SIDE"]);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static CreateQuestDefinitionRequest CreateValidDefinitionRequest()

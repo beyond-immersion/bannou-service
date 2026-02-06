@@ -30,6 +30,21 @@ using BeyondImmersion.Bannou.StorylineStoryteller.Templates;
 using BeyondImmersion.Bannou.StorylineTheory.Arcs;
 using BeyondImmersion.Bannou.StorylineTheory.Spectrums;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Storyline;
 
@@ -2324,6 +2339,154 @@ public partial class GetScenarioHistoryResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get storyline data for compression
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetCompressDataRequest
+{
+
+    /// <summary>
+    /// ID of the character to get compress data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Complete storyline participation data for archive storage and SDK consumption.
+/// <br/>Inherits base archive properties from ResourceArchiveBase.
+/// <br/>The characterId field equals resourceId for convenience.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StorylineArchive : ResourceArchiveBase
+{
+
+    /// <summary>
+    /// Character this data belongs to (equals resourceId)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// All scenario participations (completed and active)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participations")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<StorylineParticipation> Participations { get; set; } = new System.Collections.ObjectModel.Collection<StorylineParticipation>();
+
+    /// <summary>
+    /// Story arcs the character is currently involved in
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("activeArcs")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ActiveArcs { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Total count of completed scenarios
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedStorylines")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int CompletedStorylines { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Summary of a scenario participation for archive purposes
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StorylineParticipation
+{
+
+    /// <summary>
+    /// Scenario execution ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ExecutionId { get; set; } = default!;
+
+    /// <summary>
+    /// Scenario definition ID (if available)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
+    public System.Guid? ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Scenario code for lookup
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ScenarioCode { get; set; } = default!;
+
+    /// <summary>
+    /// Scenario display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioName")]
+    public string? ScenarioName { get; set; } = default!;
+
+    /// <summary>
+    /// Character's role in the scenario (primary, secondary, witness)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Role { get; set; } = default!;
+
+    /// <summary>
+    /// Current phase number (or final phase if completed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("phase")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int Phase { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of phases in the scenario
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalPhases")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int TotalPhases { get; set; } = default!;
+
+    /// <summary>
+    /// Current status of the scenario execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ScenarioStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// When the scenario was triggered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset StartedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the scenario completed (null if still active)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
+    public System.DateTimeOffset? CompletedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Key choices made during the scenario (for narrative hooks)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("choices")]
+    public System.Collections.Generic.ICollection<string>? Choices { get; set; } = default!;
 
 }
 

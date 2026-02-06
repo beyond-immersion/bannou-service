@@ -99,4 +99,9 @@ public partial interface IStorylineService : IBannouService
         /// </summary>
         Task<(StatusCodes, GetScenarioHistoryResponse?)> GetScenarioHistoryAsync(GetScenarioHistoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// GetCompressData operation
+        /// </summary>
+        Task<(StatusCodes, StorylineArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

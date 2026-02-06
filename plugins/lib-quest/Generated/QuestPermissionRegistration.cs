@@ -275,6 +275,21 @@ public static class QuestPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/quest/get-compress-data",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getCompressData",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

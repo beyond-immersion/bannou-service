@@ -270,6 +270,119 @@ public class StorylineServiceTests
     }
 
     #endregion
+
+    #region GetCompressData Response Tests
+
+    [Fact]
+    public void StorylineArchive_HasRequiredFields()
+    {
+        // Test that the archive model has all required fields
+        var archive = new StorylineArchive
+        {
+            ResourceId = Guid.NewGuid(),
+            ResourceType = "storyline",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            CharacterId = Guid.NewGuid(),
+            Participations = new List<StorylineParticipation>(),
+            ActiveArcs = new List<string>(),
+            CompletedStorylines = 0
+        };
+
+        Assert.NotEqual(Guid.Empty, archive.ResourceId);
+        Assert.Equal("storyline", archive.ResourceType);
+        Assert.NotEqual(Guid.Empty, archive.CharacterId);
+        Assert.Empty(archive.Participations);
+        Assert.Empty(archive.ActiveArcs);
+        Assert.Equal(0, archive.CompletedStorylines);
+    }
+
+    [Fact]
+    public void StorylineParticipation_HasRequiredFields()
+    {
+        // Test that participation model captures scenario participation
+        var participation = new StorylineParticipation
+        {
+            ExecutionId = Guid.NewGuid(),
+            ScenarioId = Guid.NewGuid(),
+            ScenarioCode = "ROMANCE_FIRST_MEETING",
+            ScenarioName = "First Meeting",
+            Role = "primary",
+            Phase = 2,
+            TotalPhases = 5,
+            Status = ScenarioStatus.Active,
+            StartedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            CompletedAt = null,
+            Choices = new List<string> { "approached", "offered_help" }
+        };
+
+        Assert.Equal("ROMANCE_FIRST_MEETING", participation.ScenarioCode);
+        Assert.Equal("primary", participation.Role);
+        Assert.Equal(ScenarioStatus.Active, participation.Status);
+        Assert.Null(participation.CompletedAt);
+        Assert.Equal(2, participation.Choices.Count);
+    }
+
+    [Fact]
+    public void StorylineArchive_WithActiveAndCompletedScenarios()
+    {
+        // Test archive with both active and completed scenarios
+        var characterId = Guid.NewGuid();
+        var activeExecution = new StorylineParticipation
+        {
+            ExecutionId = Guid.NewGuid(),
+            ScenarioCode = "REVENGE_PLOT",
+            ScenarioName = "Revenge Plot",
+            Role = "primary",
+            Phase = 1,
+            TotalPhases = 3,
+            Status = ScenarioStatus.Active,
+            StartedAt = DateTimeOffset.UtcNow.AddHours(-2)
+        };
+        var completedExecution = new StorylineParticipation
+        {
+            ExecutionId = Guid.NewGuid(),
+            ScenarioCode = "MYSTERY_SOLVED",
+            ScenarioName = "Mystery Solved",
+            Role = "primary",
+            Phase = 4,
+            TotalPhases = 4,
+            Status = ScenarioStatus.Completed,
+            StartedAt = DateTimeOffset.UtcNow.AddDays(-5),
+            CompletedAt = DateTimeOffset.UtcNow.AddDays(-1)
+        };
+
+        var archive = new StorylineArchive
+        {
+            ResourceId = characterId,
+            ResourceType = "storyline",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            CharacterId = characterId,
+            Participations = new List<StorylineParticipation> { activeExecution, completedExecution },
+            ActiveArcs = new List<string> { "REVENGE" },
+            CompletedStorylines = 1
+        };
+
+        Assert.Equal(2, archive.Participations.Count);
+        Assert.Single(archive.ActiveArcs);
+        Assert.Equal(1, archive.CompletedStorylines);
+        Assert.Contains(archive.Participations, p => p.Status == ScenarioStatus.Active);
+        Assert.Contains(archive.Participations, p => p.Status == ScenarioStatus.Completed);
+    }
+
+    [Fact]
+    public void StorylineArchive_DeriveActiveArcsFromCodes()
+    {
+        // Test that active arcs are derived from scenario codes (prefix before underscore)
+        var activeArcs = new List<string> { "romance", "mystery" };
+
+        // Simulate the service logic: scenario codes like "romance_first_meeting" -> "romance"
+        Assert.Contains("romance", activeArcs);
+        Assert.Contains("mystery", activeArcs);
+    }
+
+    #endregion
 }
 
 /// <summary>

@@ -393,6 +393,36 @@ paths:
         '200':
           description: Callback processed
 
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /quest/get-compress-data:
+    post:
+      summary: Get quest data for compression
+      operationId: getCompressData
+      tags: [Compression]
+      description: |
+        Called by Resource service during character compression.
+        Returns active quests, completion counts, and category breakdown for archival.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestArchive'
+        '404':
+          description: No quest data for character
+
 components:
   schemas:
     # === ENUMS ===
@@ -1207,3 +1237,93 @@ components:
           type: string
           format: uuid
           description: Contract instance ID
+
+    # ===========================================================================
+    # Compression Models (Resource Service Integration)
+    # ===========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get quest data for compression
+      additionalProperties: false
+      required:
+        - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    QuestArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete quest data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+        - characterId
+        - activeQuests
+        - completedQuests
+        - questCategories
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        activeQuests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveQuestSummary'
+          description: Summary of currently active quests
+        completedQuests:
+          type: integer
+          minimum: 0
+          description: Total count of completed quests
+        questCategories:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Breakdown of completed quests by category (main, side, bounty, etc.)
+
+    ActiveQuestSummary:
+      type: object
+      description: Summary of an active quest for archive purposes
+      additionalProperties: false
+      required:
+        - questId
+        - questCode
+        - name
+        - currentObjective
+        - totalObjectives
+        - startedAt
+      properties:
+        questId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        questCode:
+          type: string
+          description: Quest code for lookup
+        name:
+          type: string
+          description: Quest display name
+        currentObjective:
+          type: integer
+          minimum: 0
+          description: Number of completed objectives
+        totalObjectives:
+          type: integer
+          minimum: 1
+          description: Total number of objectives
+        startedAt:
+          type: string
+          format: date-time
+          description: When the quest was accepted
+        category:
+          $ref: '#/components/schemas/QuestCategory'
+          nullable: true
+          description: Quest category (if available)

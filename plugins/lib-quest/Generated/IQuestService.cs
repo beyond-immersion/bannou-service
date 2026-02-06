@@ -109,4 +109,9 @@ public partial interface IQuestService : IBannouService
         /// </summary>
         Task<StatusCodes> HandleQuestCompletedAsync(QuestCompletedCallback body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// GetCompressData operation
+        /// </summary>
+        Task<(StatusCodes, QuestArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

@@ -1,0 +1,2478 @@
+openapi: 3.0.0
+info:
+  title: Storyline Composer API
+  version: 1.0.0
+  description: |
+    Seeded narrative generation from compressed archives using the storyline SDKs.
+
+    The Storyline service wraps `storyline-theory` and `storyline-storyteller` SDKs
+    to provide HTTP endpoints for generating storyline plans from archive data.
+    Plans describe narrative arcs with phases, actions, and entity requirements -
+    callers (gods/regional watchers) decide whether to instantiate them.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: GameFeatures
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  /storyline/compose:
+    post:
+      summary: Compose a storyline plan from archive seeds
+      description: |
+        Generates a storyline plan using data from compressed archives and/or
+        live snapshots. The plan describes phases, actions, and entity requirements
+        but does NOT create any entities - callers decide whether to instantiate.
+
+        **Workflow**:
+        1. Fetch archive/snapshot data via IResourceClient
+        2. Extract world state from archive bundle
+        3. Select template based on goal and constraints
+        4. Run GOAP planner to generate action sequences
+        5. Cache plan and publish storyline.composed event
+      operationId: Compose
+      tags:
+      - Composition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComposeRequest'
+      responses:
+        '200':
+          description: Storyline plan generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeResponse'
+        '400':
+          description: Invalid request (no valid archives, incompatible goal/genre)
+        '404':
+          description: Archive or snapshot not found
+
+  /storyline/plan/get:
+    post:
+      summary: Retrieve a cached storyline plan
+      description: |
+        Retrieves a previously generated storyline plan by its ID.
+        Returns 404 if the plan has expired from cache or doesn't exist.
+      operationId: GetPlan
+      tags:
+      - Plans
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPlanRequest'
+      responses:
+        '200':
+          description: Plan retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPlanResponse'
+        '404':
+          description: Plan not found or expired
+
+  /storyline/plan/list:
+    post:
+      summary: List cached storyline plans
+      description: |
+        Lists storyline plans in the cache, optionally filtered by realm.
+        Plans are ordered by creation time (newest first).
+      operationId: ListPlans
+      tags:
+      - Plans
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListPlansRequest'
+      responses:
+        '200':
+          description: Plans listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPlansResponse'
+
+  # =========================================================================
+  # Scenario Definition CRUD
+  # =========================================================================
+
+  /storyline/scenario/create:
+    post:
+      summary: Create a new scenario definition
+      description: |
+        Creates a reusable scenario definition template.
+        Scenarios are passive building blocks with triggering conditions,
+        phases, mutations, and optional quest hooks.
+      operationId: CreateScenarioDefinition
+      tags:
+      - Scenario Definitions
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateScenarioDefinitionRequest'
+      responses:
+        '200':
+          description: Scenario definition created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioDefinition'
+        '400':
+          description: Invalid request (validation error)
+        '409':
+          description: Scenario with code already exists
+
+  /storyline/scenario/get:
+    post:
+      summary: Get a scenario definition by ID or code
+      description: |
+        Retrieves a scenario definition by its ID or code.
+        Uses read-through cache for performance.
+      operationId: GetScenarioDefinition
+      tags:
+      - Scenario Definitions
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetScenarioDefinitionRequest'
+      responses:
+        '200':
+          description: Scenario definition retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetScenarioDefinitionResponse'
+        '404':
+          description: Scenario not found
+
+  /storyline/scenario/list:
+    post:
+      summary: List scenario definitions
+      description: |
+        Lists scenario definitions with optional filtering by realm, game service, and tags.
+        Results are paginated and ordered by priority (descending), then creation time.
+      operationId: ListScenarioDefinitions
+      tags:
+      - Scenario Definitions
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListScenarioDefinitionsRequest'
+      responses:
+        '200':
+          description: Scenarios listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListScenarioDefinitionsResponse'
+
+  /storyline/scenario/update:
+    post:
+      summary: Update a scenario definition
+      description: |
+        Updates an existing scenario definition.
+        Uses ETag for optimistic concurrency control.
+      operationId: UpdateScenarioDefinition
+      tags:
+      - Scenario Definitions
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScenarioDefinitionRequest'
+      responses:
+        '200':
+          description: Scenario updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioDefinition'
+        '404':
+          description: Scenario not found
+        '409':
+          description: Concurrent modification conflict
+
+  /storyline/scenario/deprecate:
+    post:
+      summary: Deprecate a scenario definition
+      description: |
+        Soft-deletes a scenario definition by marking it deprecated.
+        Deprecated scenarios are not returned by find-available.
+      operationId: DeprecateScenarioDefinition
+      tags:
+      - Scenario Definitions
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateScenarioDefinitionRequest'
+      responses:
+        '200':
+          description: Scenario deprecated
+        '404':
+          description: Scenario not found
+
+  # =========================================================================
+  # Scenario Discovery
+  # =========================================================================
+
+  /storyline/scenario/find-available:
+    post:
+      summary: Find scenarios matching character state
+      description: |
+        Finds scenarios that match the provided character state.
+        This is a PASSIVE query - the caller (Regional Watcher) provides
+        all character data; the scenario service does not fetch it.
+
+        Returns scenarios ordered by fit score with cooldown status.
+      operationId: FindAvailableScenarios
+      tags:
+      - Scenario Discovery
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindAvailableScenariosRequest'
+      responses:
+        '200':
+          description: Matching scenarios found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FindAvailableScenariosResponse'
+
+  /storyline/scenario/test:
+    post:
+      summary: Dry-run scenario trigger
+      description: |
+        Tests whether a scenario would trigger for a character without
+        actually executing it. Returns detailed condition evaluation results
+        and predicted mutations.
+      operationId: TestScenarioTrigger
+      tags:
+      - Scenario Discovery
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestScenarioRequest'
+      responses:
+        '200':
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestScenarioResponse'
+        '404':
+          description: Scenario not found
+
+  /storyline/scenario/evaluate-fit:
+    post:
+      summary: Score narrative fit without full condition check
+      description: |
+        Lightweight scoring of narrative fit between a scenario and character
+        state. Faster than test but less detailed.
+      operationId: EvaluateScenarioFit
+      tags:
+      - Scenario Discovery
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluateFitRequest'
+      responses:
+        '200':
+          description: Fit score calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluateFitResponse'
+
+  # =========================================================================
+  # Scenario Execution
+  # =========================================================================
+
+  /storyline/scenario/trigger:
+    post:
+      summary: Execute a scenario
+      description: |
+        Triggers scenario execution for a character. Applies mutations to
+        character state (personality, backstory, relationships) and spawns
+        quests via quest hooks.
+
+        Uses distributed locks to prevent double-triggering and idempotency
+        keys for safe retries.
+      operationId: TriggerScenario
+      tags:
+      - Scenario Execution
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerScenarioRequest'
+      responses:
+        '200':
+          description: Scenario triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggerScenarioResponse'
+        '400':
+          description: Conditions not met
+        '404':
+          description: Scenario not found
+        '409':
+          description: Cooldown active or exclusivity conflict
+
+  /storyline/scenario/get-active:
+    post:
+      summary: Get active scenarios for a character
+      description: |
+        Returns currently executing scenarios for a character.
+      operationId: GetActiveScenarios
+      tags:
+      - Scenario Execution
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetActiveScenariosRequest'
+      responses:
+        '200':
+          description: Active scenarios
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetActiveScenariosResponse'
+
+  /storyline/scenario/get-history:
+    post:
+      summary: Get scenario execution history
+      description: |
+        Returns historical scenario executions for a character with pagination.
+      operationId: GetScenarioHistory
+      tags:
+      - Scenario Execution
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetScenarioHistoryRequest'
+      responses:
+        '200':
+          description: Scenario history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetScenarioHistoryResponse'
+
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /storyline/get-compress-data:
+    post:
+      summary: Get storyline data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns scenario participations, active arcs, and completion counts for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorylineArchive'
+        '404':
+          description: No storyline data for character
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums
+    # =========================================================================
+
+    StorylineGoal:
+      type: string
+      enum:
+      - revenge
+      - resurrection
+      - legacy
+      - mystery
+      - peace
+      description: |
+        High-level story goal that drives arc selection.
+        revenge: Character seeks vengeance for past wrongs
+        resurrection: Restoring something/someone lost
+        legacy: Creating or continuing a lasting impact
+        mystery: Uncovering hidden truths
+        peace: Resolving conflicts and finding harmony
+
+    ArcType:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType
+      type: string
+      enum:
+      - RagsToRiches
+      - Tragedy
+      - ManInHole
+      - Icarus
+      - Cinderella
+      - Oedipus
+      description: |
+        Emotional arc shapes from Reagan et al. research.
+        RagsToRiches: Rise (1)
+        Tragedy: Fall (2)
+        ManInHole: Fall then rise (3)
+        Icarus: Rise then fall (4)
+        Cinderella: Rise, fall, rise (5)
+        Oedipus: Fall, rise, fall (6)
+
+    SpectrumType:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType
+      type: string
+      enum:
+      - LifeDeath
+      - HonorDishonor
+      - JusticeInjustice
+      - FreedomSubjugation
+      - LoveHate
+      - RespectShame
+      - PowerImpotence
+      - SuccessFailure
+      - AltruismSelfishness
+      - WisdomIgnorance
+      description: |
+        The 10 Story Grid Life Value spectrums.
+        These are bipolar axes for emotional progression.
+
+    PlanningUrgency:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency
+      type: string
+      enum:
+      - Low
+      - Medium
+      - High
+      description: |
+        GOAP planning urgency level affecting search parameters.
+        Low: More iterations, wider beam (1000/20)
+        Medium: Balanced (500/15)
+        High: Fewer iterations, narrower beam (200/10)
+
+    # =========================================================================
+    # Scenario Enums
+    # =========================================================================
+
+    ScenarioStatus:
+      type: string
+      enum:
+      - Active
+      - Completed
+      - Failed
+      - Cancelled
+      description: |
+        Current status of a scenario execution instance.
+        Active: Scenario is currently executing
+        Completed: Scenario finished successfully
+        Failed: Scenario failed during execution
+        Cancelled: Scenario was cancelled externally
+
+    TriggerConditionType:
+      type: string
+      enum:
+      - TraitRange
+      - BackstoryElement
+      - RelationshipExists
+      - RelationshipMissing
+      - AgeRange
+      - LocationAt
+      - TimeOfDay
+      - WorldState
+      - Custom
+      description: |
+        Types of trigger conditions for scenario activation.
+        TraitRange: Character trait within value range
+        BackstoryElement: Character has specific backstory element
+        RelationshipExists: Relationship exists between entities
+        RelationshipMissing: Relationship does not exist
+        AgeRange: Character age within range
+        LocationAt: Character at specific location
+        TimeOfDay: In-game time within range
+        WorldState: Custom world state check
+        Custom: Custom condition (not evaluated server-side)
+
+    MutationType:
+      type: string
+      enum:
+      - PersonalityEvolve
+      - BackstoryAdd
+      - RelationshipCreate
+      - RelationshipEnd
+      - Custom
+      description: |
+        Types of state mutations a scenario can apply.
+        PersonalityEvolve: Apply experience to evolve personality traits
+        BackstoryAdd: Add backstory element to character history
+        RelationshipCreate: Create relationship between entities
+        RelationshipEnd: End existing relationship
+        Custom: Custom mutation (not executed server-side)
+
+    # =========================================================================
+    # Request Models
+    # =========================================================================
+
+    ComposeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compose a storyline plan
+      required:
+      - seedSources
+      - goal
+      properties:
+        seedSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedSource'
+          minItems: 1
+          maxItems: 10
+          description: |
+            Archive or snapshot sources to seed the storyline.
+            At least one source is required. Mix of archives and snapshots allowed.
+        goal:
+          $ref: '#/components/schemas/StorylineGoal'
+          description: The high-level goal driving arc selection
+        constraints:
+          $ref: '#/components/schemas/ComposeConstraints'
+          nullable: true
+          description: Optional constraints on composition
+        genre:
+          type: string
+          nullable: true
+          description: |
+            Genre filter (e.g., "crime", "action", "romance").
+            If omitted, inferred from archive data.
+        arcType:
+          $ref: '#/components/schemas/ArcType'
+          nullable: true
+          description: |
+            Specific arc type to use. If omitted, selected based on goal.
+        urgency:
+          $ref: '#/components/schemas/PlanningUrgency'
+          nullable: true
+          description: |
+            Planning urgency level. Defaults to configuration value.
+        seed:
+          type: integer
+          nullable: true
+          description: Random seed for deterministic output (enables caching)
+
+    SeedSource:
+      type: object
+      additionalProperties: false
+      description: A source of seed data (archive or snapshot)
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of a compressed archive (dead entity)
+        snapshotId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of a live snapshot (living entity)
+        role:
+          type: string
+          nullable: true
+          description: |
+            Optional actant role hint (e.g., "protagonist", "antagonist", "helper").
+            Used for Greimas actant assignment if provided.
+
+    ComposeConstraints:
+      type: object
+      additionalProperties: false
+      description: Constraints on storyline composition
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm to anchor the storyline in
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional starting location
+        maxEntities:
+          type: integer
+          minimum: 1
+          maximum: 50
+          nullable: true
+          description: Maximum entities the plan can require (default from config)
+        maxPhases:
+          type: integer
+          minimum: 1
+          maximum: 10
+          nullable: true
+          description: Maximum phases in the plan (default unlimited)
+
+    GetPlanRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a cached plan
+      required:
+      - planId
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: ID of the plan to retrieve
+
+    ListPlansRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list cached plans
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm (optional)
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Maximum plans to return
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Pagination offset
+
+    # =========================================================================
+    # Response Models
+    # =========================================================================
+
+    ComposeResponse:
+      type: object
+      additionalProperties: false
+      description: Composed storyline plan
+      required:
+      - planId
+      - confidence
+      - goal
+      - arcType
+      - primarySpectrum
+      - phases
+      - generationTimeMs
+      - cached
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: Unique plan identifier
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Plan viability score (0-1)
+        goal:
+          $ref: '#/components/schemas/StorylineGoal'
+          description: The goal that was used
+        genre:
+          type: string
+          nullable: true
+          description: Inferred or specified genre
+        arcType:
+          $ref: '#/components/schemas/ArcType'
+          description: Emotional arc type used
+        primarySpectrum:
+          $ref: '#/components/schemas/SpectrumType'
+          description: Primary Life Value spectrum
+        themes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Inferred thematic elements
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylinePlanPhase'
+          description: Planned phases with actions
+        entitiesToSpawn:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityRequirement'
+          nullable: true
+          description: |
+            Entities required for this storyline (descriptions only).
+            Callers decide whether to spawn them.
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylineLink'
+          nullable: true
+          description: Links between entities in the plan
+        risks:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylineRisk'
+          nullable: true
+          description: Identified risks or weak points in the plan
+        generationTimeMs:
+          type: integer
+          description: Time taken to generate in milliseconds
+        cached:
+          type: boolean
+          description: Whether this was returned from cache
+
+    GetPlanResponse:
+      type: object
+      additionalProperties: false
+      description: Retrieved plan
+      required:
+      - found
+      properties:
+        found:
+          type: boolean
+          description: Whether the plan was found
+        plan:
+          $ref: '#/components/schemas/ComposeResponse'
+          nullable: true
+          description: The plan (null if not found)
+
+    ListPlansResponse:
+      type: object
+      additionalProperties: false
+      description: List of plans
+      required:
+      - plans
+      - totalCount
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanSummary'
+          description: Plan summaries
+        totalCount:
+          type: integer
+          description: Total matching plans
+
+    # =========================================================================
+    # Supporting Models (SDK types exposed via x-sdk-type)
+    # =========================================================================
+
+    StorylinePlanPhase:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase
+      type: object
+      additionalProperties: false
+      description: A phase in the storyline plan (SDK type)
+      required:
+      - phaseNumber
+      - name
+      - actions
+      - targetState
+      - positionBounds
+      properties:
+        phaseNumber:
+          type: integer
+          minimum: 1
+          description: 1-based phase number
+        name:
+          type: string
+          description: Phase name
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylinePlanAction'
+          description: Actions in this phase
+        targetState:
+          $ref: '#/components/schemas/PhaseTargetState'
+          description: Target state for phase completion
+        positionBounds:
+          $ref: '#/components/schemas/PhasePosition'
+          description: Position bounds for this phase
+
+    StorylinePlanAction:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction
+      type: object
+      additionalProperties: false
+      description: A planned action in the storyline (SDK type)
+      required:
+      - actionId
+      - sequenceIndex
+      - effects
+      - narrativeEffect
+      - isCoreEvent
+      properties:
+        actionId:
+          type: string
+          description: Action identifier from action registry
+        sequenceIndex:
+          type: integer
+          description: Sequence index within the plan
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionEffect'
+          description: World state effects of this action
+        narrativeEffect:
+          $ref: '#/components/schemas/NarrativeEffect'
+          description: Narrative effect on the emotional arc
+        isCoreEvent:
+          type: boolean
+          description: Whether this is an obligatory scene
+        chainedFrom:
+          type: string
+          nullable: true
+          description: If chained, the ID of the action it was chained from
+
+    ActionEffect:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect
+      type: object
+      additionalProperties: false
+      description: Effect of an action on world state (SDK type)
+      required:
+      - key
+      - value
+      properties:
+        key:
+          type: string
+          description: State key to modify
+        value:
+          description: New value to set (any type)
+        cardinality:
+          $ref: '#/components/schemas/EffectCardinality'
+          description: How the effect is applied
+
+    EffectCardinality:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality
+      type: string
+      enum:
+      - Exclusive
+      - Additive
+      description: |
+        Cardinality for effect application.
+        Exclusive: Replaces existing value at key
+        Additive: Adds to collection at key
+
+    NarrativeEffect:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect
+      type: object
+      additionalProperties: false
+      description: Narrative effect on the emotional arc (SDK type)
+      properties:
+        primarySpectrumDelta:
+          type: number
+          format: double
+          nullable: true
+          description: Delta to apply to the primary spectrum
+        secondarySpectrumDelta:
+          type: number
+          format: double
+          nullable: true
+          description: Delta to apply to the secondary spectrum
+        positionAdvance:
+          type: string
+          nullable: true
+          description: Position advance type (micro, standard, macro)
+
+    PhaseTargetState:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState
+      type: object
+      additionalProperties: false
+      description: Target state for phase completion (SDK type)
+      required:
+      - minPrimarySpectrum
+      - maxPrimarySpectrum
+      properties:
+        minPrimarySpectrum:
+          type: number
+          format: double
+          description: Minimum primary spectrum value for this phase
+        maxPrimarySpectrum:
+          type: number
+          format: double
+          description: Maximum primary spectrum value for this phase
+        rangeDescription:
+          type: string
+          nullable: true
+          description: Human-readable description of this state range
+
+    PhasePosition:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition
+      type: object
+      additionalProperties: false
+      description: Phase position constraints from Save the Cat beat timing (SDK type)
+      required:
+      - stcCenter
+      - floor
+      - ceiling
+      - validationBand
+      properties:
+        stcCenter:
+          type: number
+          format: double
+          description: Target position from STC beat timing
+        floor:
+          type: number
+          format: double
+          description: Earliest advancement position (prevents speed-running)
+        ceiling:
+          type: number
+          format: double
+          description: Forced advancement position (prevents deadlock)
+        validationBand:
+          type: number
+          format: double
+          description: Validation tolerance (±)
+
+    EntityRequirement:
+      type: object
+      additionalProperties: false
+      description: An entity required for the storyline
+      required:
+      - role
+      - entityType
+      - description
+      properties:
+        role:
+          type: string
+          description: Role in the story (e.g., "witness", "informant", "target")
+        entityType:
+          type: string
+          description: Type of entity needed (e.g., "character", "location", "item")
+        description:
+          type: string
+          description: Description of what's needed
+        constraints:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Constraints on entity selection/creation
+        sourceArchiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: If derived from an archive, that archive's ID
+
+    StorylineLink:
+      type: object
+      additionalProperties: false
+      description: A relationship link in the storyline
+      required:
+      - sourceRole
+      - targetRole
+      - linkType
+      properties:
+        sourceRole:
+          type: string
+          description: Source entity role
+        targetRole:
+          type: string
+          description: Target entity role
+        linkType:
+          type: string
+          description: Type of relationship (e.g., "opposes", "allies_with", "seeks")
+
+    StorylineRisk:
+      type: object
+      additionalProperties: false
+      description: Identified risk in the plan
+      required:
+      - riskType
+      - description
+      - severity
+      properties:
+        riskType:
+          type: string
+          description: Risk category (e.g., "missing_entity", "low_tension", "weak_climax")
+        description:
+          type: string
+          description: Risk description
+        severity:
+          type: string
+          enum: [low, medium, high]
+          description: Risk severity
+        mitigation:
+          type: string
+          nullable: true
+          description: Suggested mitigation
+
+    PlanSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a cached plan
+      required:
+      - planId
+      - goal
+      - arcType
+      - confidence
+      - createdAt
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: Plan identifier
+        goal:
+          $ref: '#/components/schemas/StorylineGoal'
+          description: Story goal
+        arcType:
+          $ref: '#/components/schemas/ArcType'
+          description: Arc type
+        confidence:
+          type: number
+          format: double
+          description: Viability score
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Anchored realm (if any)
+        createdAt:
+          type: string
+          format: date-time
+          description: When plan was created
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When plan expires from cache
+
+    # =========================================================================
+    # Scenario Definition Models
+    # =========================================================================
+
+    ScenarioDefinition:
+      type: object
+      additionalProperties: false
+      description: A scenario definition template that can be triggered when conditions are met
+      required:
+      - scenarioId
+      - code
+      - name
+      - triggerConditions
+      - phases
+      - priority
+      - enabled
+      - createdAt
+      properties:
+        scenarioId:
+          type: string
+          format: uuid
+          description: Unique scenario definition identifier
+        code:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Human-readable scenario code (uppercase with underscores)
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display name for the scenario
+        description:
+          type: string
+          nullable: true
+          description: Detailed scenario description
+        triggerConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerCondition'
+          minItems: 1
+          description: Conditions that must ALL be met to trigger (AND logic)
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioPhase'
+          minItems: 1
+          description: Execution phases in order
+        mutations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioMutation'
+          nullable: true
+          description: State mutations to apply on completion
+        questHooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioQuestHook'
+          nullable: true
+          description: Quests to spawn on completion
+        cooldownSeconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Per-character cooldown in seconds (null uses default from config)
+        exclusivityTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Tags for mutual exclusivity checking
+        priority:
+          type: integer
+          default: 0
+          description: Higher priority scenarios are checked first
+        enabled:
+          type: boolean
+          default: true
+          description: Whether scenario can be triggered
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm scope (null means all realms)
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope (null means all games)
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Classification tags for filtering
+        deprecated:
+          type: boolean
+          default: false
+          description: Whether scenario is soft-deleted
+        createdAt:
+          type: string
+          format: date-time
+          description: When definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When definition was last modified
+        etag:
+          type: string
+          nullable: true
+          description: ETag for optimistic concurrency
+
+    TriggerCondition:
+      type: object
+      additionalProperties: false
+      description: A condition that must be met for scenario triggering
+      required:
+      - conditionType
+      properties:
+        conditionType:
+          $ref: '#/components/schemas/TriggerConditionType'
+          description: Type of condition to evaluate
+        traitAxis:
+          type: string
+          nullable: true
+          description: Personality trait axis for TraitRange (e.g., AGGRESSION)
+        traitMin:
+          type: number
+          format: float
+          nullable: true
+          description: Minimum trait value for TraitRange (-1.0 to 1.0)
+        traitMax:
+          type: number
+          format: float
+          nullable: true
+          description: Maximum trait value for TraitRange (-1.0 to 1.0)
+        backstoryType:
+          type: string
+          nullable: true
+          description: Backstory element type for BackstoryElement (e.g., TRAUMA)
+        backstoryKey:
+          type: string
+          nullable: true
+          description: Backstory element key for BackstoryElement
+        relationshipTypeCode:
+          type: string
+          nullable: true
+          description: Relationship type code for RelationshipExists/Missing
+        otherEntityType:
+          type: string
+          nullable: true
+          description: Type of other entity in relationship check
+        ageMin:
+          type: integer
+          nullable: true
+          description: Minimum character age for AgeRange
+        ageMax:
+          type: integer
+          nullable: true
+          description: Maximum character age for AgeRange
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Required location ID for LocationAt
+        timeOfDayMin:
+          type: integer
+          minimum: 0
+          maximum: 23
+          nullable: true
+          description: Minimum hour of day (0-23) for TimeOfDay
+        timeOfDayMax:
+          type: integer
+          minimum: 0
+          maximum: 23
+          nullable: true
+          description: Maximum hour of day (0-23) for TimeOfDay
+        worldStateKey:
+          type: string
+          nullable: true
+          description: Custom state key for WorldState/Custom
+        worldStateValue:
+          type: string
+          nullable: true
+          description: Expected value for WorldState/Custom
+
+    ScenarioPhase:
+      type: object
+      additionalProperties: false
+      description: A phase in scenario execution
+      required:
+      - phaseNumber
+      - name
+      properties:
+        phaseNumber:
+          type: integer
+          minimum: 1
+          description: Phase sequence number (1-based)
+        name:
+          type: string
+          description: Phase name
+        description:
+          type: string
+          nullable: true
+          description: What happens in this phase
+        durationSeconds:
+          type: integer
+          nullable: true
+          description: Expected duration in seconds (for pacing, not enforced)
+        dialogueHint:
+          type: string
+          nullable: true
+          description: Hint for dialogue generation system
+        actionHint:
+          type: string
+          nullable: true
+          description: Hint for behavior/GOAP system
+
+    ScenarioMutation:
+      type: object
+      additionalProperties: false
+      description: A state mutation to apply during scenario execution
+      required:
+      - mutationType
+      properties:
+        mutationType:
+          $ref: '#/components/schemas/MutationType'
+          description: Type of mutation to apply
+        experienceType:
+          type: string
+          nullable: true
+          description: Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)
+        experienceIntensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Experience intensity for PersonalityEvolve (0.0-1.0)
+        backstoryElementType:
+          type: string
+          nullable: true
+          description: Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)
+        backstoryKey:
+          type: string
+          nullable: true
+          description: Backstory element key for BackstoryAdd
+        backstoryValue:
+          type: string
+          nullable: true
+          description: Backstory element value for BackstoryAdd
+        backstoryStrength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Backstory element strength for BackstoryAdd (0.0-1.0)
+        relationshipTypeCode:
+          type: string
+          nullable: true
+          description: Relationship type code for RelationshipCreate/End
+        otherParticipantRole:
+          type: string
+          nullable: true
+          description: Role name for other participant in multi-character scenarios
+
+    ScenarioQuestHook:
+      type: object
+      additionalProperties: false
+      description: Quest to spawn on scenario completion
+      required:
+      - questCode
+      properties:
+        questCode:
+          type: string
+          description: Quest definition code to spawn
+        delaySeconds:
+          type: integer
+          default: 0
+          description: Delay before spawning quest (not implemented in Phase 1)
+        termOverrides:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Variable overrides for quest template
+
+    # =========================================================================
+    # Scenario CRUD Request/Response Models
+    # =========================================================================
+
+    CreateScenarioDefinitionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a scenario definition
+      required:
+      - code
+      - name
+      - triggerConditions
+      - phases
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Human-readable scenario code (uppercase with underscores)
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display name for the scenario
+        description:
+          type: string
+          nullable: true
+          description: Detailed scenario description
+        triggerConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerCondition'
+          minItems: 1
+          description: Conditions that must ALL be met to trigger
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioPhase'
+          minItems: 1
+          description: Execution phases in order
+        mutations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioMutation'
+          nullable: true
+          description: State mutations to apply on completion
+        questHooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioQuestHook'
+          nullable: true
+          description: Quests to spawn on completion
+        cooldownSeconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Per-character cooldown in seconds
+        exclusivityTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Tags for mutual exclusivity checking
+        priority:
+          type: integer
+          default: 0
+          description: Higher priority scenarios are checked first
+        enabled:
+          type: boolean
+          default: true
+          description: Whether scenario can be triggered
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm scope (null means all realms)
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope (null means all games)
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Classification tags for filtering
+
+    GetScenarioDefinitionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a scenario definition
+      properties:
+        scenarioId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Scenario ID to retrieve
+        code:
+          type: string
+          nullable: true
+          description: Scenario code to retrieve (if ID not provided)
+
+    GetScenarioDefinitionResponse:
+      type: object
+      additionalProperties: false
+      description: Response with scenario definition
+      required:
+      - found
+      properties:
+        found:
+          type: boolean
+          description: Whether the scenario was found
+        scenario:
+          $ref: '#/components/schemas/ScenarioDefinition'
+          nullable: true
+          description: The scenario definition (null if not found)
+
+    ListScenarioDefinitionsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list scenario definitions
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter by tags (OR logic)
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated scenarios
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Maximum scenarios to return
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Pagination offset
+
+    ListScenarioDefinitionsResponse:
+      type: object
+      additionalProperties: false
+      description: List of scenario definitions
+      required:
+      - scenarios
+      - totalCount
+      properties:
+        scenarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioDefinitionSummary'
+          description: Scenario definition summaries
+        totalCount:
+          type: integer
+          description: Total matching scenarios
+
+    ScenarioDefinitionSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a scenario definition
+      required:
+      - scenarioId
+      - code
+      - name
+      - priority
+      - enabled
+      - createdAt
+      properties:
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario identifier
+        code:
+          type: string
+          description: Scenario code
+        name:
+          type: string
+          description: Scenario name
+        priority:
+          type: integer
+          description: Scenario priority
+        enabled:
+          type: boolean
+          description: Whether enabled
+        deprecated:
+          type: boolean
+          description: Whether deprecated
+        conditionCount:
+          type: integer
+          description: Number of trigger conditions
+        phaseCount:
+          type: integer
+          description: Number of phases
+        mutationCount:
+          type: integer
+          description: Number of mutations
+        questHookCount:
+          type: integer
+          description: Number of quest hooks
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm scope
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Classification tags
+        createdAt:
+          type: string
+          format: date-time
+          description: When created
+
+    UpdateScenarioDefinitionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update a scenario definition
+      required:
+      - scenarioId
+      - etag
+      properties:
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario to update
+        etag:
+          type: string
+          description: ETag for optimistic concurrency
+        name:
+          type: string
+          nullable: true
+          description: New name
+        description:
+          type: string
+          nullable: true
+          description: New description
+        triggerConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerCondition'
+          nullable: true
+          description: New trigger conditions
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioPhase'
+          nullable: true
+          description: New phases
+        mutations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioMutation'
+          nullable: true
+          description: New mutations
+        questHooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioQuestHook'
+          nullable: true
+          description: New quest hooks
+        cooldownSeconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: New cooldown
+        exclusivityTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New exclusivity tags
+        priority:
+          type: integer
+          nullable: true
+          description: New priority
+        enabled:
+          type: boolean
+          nullable: true
+          description: New enabled state
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New classification tags
+
+    DeprecateScenarioDefinitionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a scenario definition
+      required:
+      - scenarioId
+      properties:
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario to deprecate
+
+    # =========================================================================
+    # Scenario Discovery Request/Response Models
+    # =========================================================================
+
+    FindAvailableScenariosRequest:
+      type: object
+      additionalProperties: false
+      description: Request to find scenarios matching character state
+      required:
+      - characterId
+      - characterState
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to find scenarios for
+        characterState:
+          $ref: '#/components/schemas/CharacterStateSnapshot'
+          description: Current character state (caller provides this)
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Current character location
+        timeOfDay:
+          type: integer
+          minimum: 0
+          maximum: 23
+          nullable: true
+          description: Current in-game hour (0-23)
+        worldState:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Current world state key-value pairs
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm to search within
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service to search within
+        maxResults:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+          description: Maximum scenarios to return
+        excludeTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Exclude scenarios with these tags
+
+    CharacterStateSnapshot:
+      type: object
+      additionalProperties: false
+      description: Snapshot of character state for condition evaluation
+      properties:
+        age:
+          type: integer
+          nullable: true
+          description: Character age in years
+        traits:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraitSnapshot'
+          nullable: true
+          description: Current personality traits
+        backstoryElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/BackstorySnapshot'
+          nullable: true
+          description: Current backstory elements
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipSnapshot'
+          nullable: true
+          description: Current relationships
+
+    TraitSnapshot:
+      type: object
+      additionalProperties: false
+      description: Snapshot of a personality trait
+      required:
+      - axis
+      - value
+      properties:
+        axis:
+          type: string
+          description: Trait axis name (e.g., AGGRESSION, OPENNESS)
+        value:
+          type: number
+          format: float
+          description: Trait value (-1.0 to 1.0)
+
+    BackstorySnapshot:
+      type: object
+      additionalProperties: false
+      description: Snapshot of a backstory element
+      required:
+      - elementType
+      - key
+      properties:
+        elementType:
+          type: string
+          description: Backstory element type (e.g., TRAUMA, GOAL)
+        key:
+          type: string
+          description: Backstory element key
+
+    RelationshipSnapshot:
+      type: object
+      additionalProperties: false
+      description: Snapshot of a relationship
+      required:
+      - relationshipTypeCode
+      - otherEntityId
+      - otherEntityType
+      properties:
+        relationshipTypeCode:
+          type: string
+          description: Relationship type code
+        otherEntityId:
+          type: string
+          format: uuid
+          description: ID of other entity
+        otherEntityType:
+          type: string
+          description: Type of other entity
+
+    FindAvailableScenariosResponse:
+      type: object
+      additionalProperties: false
+      description: Matching scenarios with fit scores
+      required:
+      - matches
+      properties:
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioMatch'
+          description: Matching scenarios ordered by fit score
+
+    ScenarioMatch:
+      type: object
+      additionalProperties: false
+      description: A scenario that matches character state
+      required:
+      - scenarioId
+      - code
+      - name
+      - fitScore
+      - conditionsMet
+      - conditionsTotal
+      - onCooldown
+      properties:
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario definition ID
+        code:
+          type: string
+          description: Scenario code
+        name:
+          type: string
+          description: Scenario name
+        fitScore:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Narrative fit score (0-1)
+        conditionsMet:
+          type: integer
+          description: Number of conditions met
+        conditionsTotal:
+          type: integer
+          description: Total conditions
+        onCooldown:
+          type: boolean
+          description: Whether scenario is on cooldown for this character
+        cooldownExpiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When cooldown expires (if on cooldown)
+
+    TestScenarioRequest:
+      type: object
+      additionalProperties: false
+      description: Request to dry-run scenario trigger
+      required:
+      - scenarioId
+      - characterId
+      - characterState
+      properties:
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario to test
+        characterId:
+          type: string
+          format: uuid
+          description: Character to test against
+        characterState:
+          $ref: '#/components/schemas/CharacterStateSnapshot'
+          description: Current character state
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location context
+        timeOfDay:
+          type: integer
+          minimum: 0
+          maximum: 23
+          nullable: true
+          description: Current in-game hour
+        worldState:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: World state context
+
+    TestScenarioResponse:
+      type: object
+      additionalProperties: false
+      description: Result of scenario dry-run
+      required:
+      - wouldTrigger
+      - conditionResults
+      properties:
+        wouldTrigger:
+          type: boolean
+          description: Whether scenario would trigger
+        conditionResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConditionResult'
+          description: Result of each condition check
+        predictedMutations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PredictedMutation'
+          nullable: true
+          description: Mutations that would be applied
+        blockingReason:
+          type: string
+          nullable: true
+          description: Why scenario would not trigger (cooldown, exclusivity, etc.)
+
+    ConditionResult:
+      type: object
+      additionalProperties: false
+      description: Result of evaluating a single condition
+      required:
+      - conditionType
+      - met
+      properties:
+        conditionType:
+          $ref: '#/components/schemas/TriggerConditionType'
+          description: Condition type
+        met:
+          type: boolean
+          description: Whether condition was met
+        actualValue:
+          type: string
+          nullable: true
+          description: Actual value found
+        expectedValue:
+          type: string
+          nullable: true
+          description: Expected value
+        details:
+          type: string
+          nullable: true
+          description: Additional details
+
+    PredictedMutation:
+      type: object
+      additionalProperties: false
+      description: Mutation that would be applied
+      required:
+      - mutationType
+      - description
+      properties:
+        mutationType:
+          $ref: '#/components/schemas/MutationType'
+          description: Type of mutation
+        description:
+          type: string
+          description: Human-readable description
+
+    EvaluateFitRequest:
+      type: object
+      additionalProperties: false
+      description: Request for lightweight fit scoring
+      required:
+      - scenarioId
+      - characterState
+      properties:
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario to evaluate
+        characterState:
+          $ref: '#/components/schemas/CharacterStateSnapshot'
+          description: Character state snapshot
+
+    EvaluateFitResponse:
+      type: object
+      additionalProperties: false
+      description: Fit score result
+      required:
+      - fitScore
+      - conditionsMet
+      - conditionsTotal
+      properties:
+        fitScore:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Narrative fit score (0-1)
+        conditionsMet:
+          type: integer
+          description: Number of conditions met
+        conditionsTotal:
+          type: integer
+          description: Total conditions
+
+    # =========================================================================
+    # Scenario Execution Request/Response Models
+    # =========================================================================
+
+    TriggerScenarioRequest:
+      type: object
+      additionalProperties: false
+      description: Request to trigger scenario execution
+      required:
+      - scenarioId
+      - characterId
+      - characterState
+      properties:
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario to trigger
+        characterId:
+          type: string
+          format: uuid
+          description: Primary character in scenario
+        characterState:
+          $ref: '#/components/schemas/CharacterStateSnapshot'
+          description: Current character state for condition validation
+        additionalParticipants:
+          type: object
+          additionalProperties:
+            type: string
+            format: uuid
+          nullable: true
+          description: Additional participants by role name
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location context
+        timeOfDay:
+          type: integer
+          minimum: 0
+          maximum: 23
+          nullable: true
+          description: Current in-game hour
+        worldState:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: World state context
+        orchestratorId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Actor ID of the orchestrating watcher
+        skipConditionCheck:
+          type: boolean
+          default: false
+          description: Skip condition validation (for forced triggers)
+        idempotencyKey:
+          type: string
+          nullable: true
+          description: Idempotency key for safe retries
+
+    TriggerScenarioResponse:
+      type: object
+      additionalProperties: false
+      description: Result of scenario trigger
+      required:
+      - executionId
+      - scenarioId
+      - status
+      - triggeredAt
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Scenario execution instance ID
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario definition ID
+        status:
+          $ref: '#/components/schemas/ScenarioStatus'
+          description: Execution status
+        triggeredAt:
+          type: string
+          format: date-time
+          description: When scenario was triggered
+        mutationsApplied:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedMutation'
+          nullable: true
+          description: Mutations that were applied
+        questsSpawned:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpawnedQuest'
+          nullable: true
+          description: Quests that were spawned
+        failureReason:
+          type: string
+          nullable: true
+          description: Reason for failure (if status is Failed)
+
+    AppliedMutation:
+      type: object
+      additionalProperties: false
+      description: A mutation that was applied
+      required:
+      - mutationType
+      - success
+      properties:
+        mutationType:
+          $ref: '#/components/schemas/MutationType'
+          description: Type of mutation
+        success:
+          type: boolean
+          description: Whether mutation succeeded
+        targetCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character affected
+        details:
+          type: string
+          nullable: true
+          description: Details of what changed
+
+    SpawnedQuest:
+      type: object
+      additionalProperties: false
+      description: A quest that was spawned
+      required:
+      - questInstanceId
+      - questCode
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        questCode:
+          type: string
+          description: Quest definition code
+
+    GetActiveScenariosRequest:
+      type: object
+      additionalProperties: false
+      description: Request for active scenarios
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to query
+
+    GetActiveScenariosResponse:
+      type: object
+      additionalProperties: false
+      description: Active scenario executions
+      required:
+      - executions
+      properties:
+        executions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioExecution'
+          description: Active scenario executions
+
+    ScenarioExecution:
+      type: object
+      additionalProperties: false
+      description: A scenario execution instance
+      required:
+      - executionId
+      - scenarioId
+      - code
+      - name
+      - status
+      - currentPhase
+      - totalPhases
+      - triggeredAt
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Execution instance ID
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario definition ID
+        code:
+          type: string
+          description: Scenario code
+        name:
+          type: string
+          description: Scenario name
+        status:
+          $ref: '#/components/schemas/ScenarioStatus'
+          description: Current status
+        currentPhase:
+          type: integer
+          description: Current phase number
+        totalPhases:
+          type: integer
+          description: Total phases
+        triggeredAt:
+          type: string
+          format: date-time
+          description: When triggered
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When completed (if applicable)
+
+    GetScenarioHistoryRequest:
+      type: object
+      additionalProperties: false
+      description: Request for scenario execution history
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to query
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Max results
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Pagination offset
+
+    GetScenarioHistoryResponse:
+      type: object
+      additionalProperties: false
+      description: Scenario execution history
+      required:
+      - executions
+      - totalCount
+      properties:
+        executions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioExecution'
+          description: Historical executions
+        totalCount:
+          type: integer
+          description: Total count for pagination
+
+    # ===========================================================================
+    # Compression Models (Resource Service Integration)
+    # ===========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get storyline data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    StorylineArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete storyline participation data for archive storage and SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - participations
+      - activeArcs
+      - completedStorylines
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylineParticipation'
+          description: All scenario participations (completed and active)
+        activeArcs:
+          type: array
+          items:
+            type: string
+          description: Story arcs the character is currently involved in
+        completedStorylines:
+          type: integer
+          minimum: 0
+          description: Total count of completed scenarios
+
+    StorylineParticipation:
+      type: object
+      description: Summary of a scenario participation for archive purposes
+      additionalProperties: false
+      required:
+      - executionId
+      - scenarioCode
+      - role
+      - phase
+      - totalPhases
+      - status
+      - startedAt
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Scenario execution ID
+        scenarioId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Scenario definition ID (if available)
+        scenarioCode:
+          type: string
+          description: Scenario code for lookup
+        scenarioName:
+          type: string
+          nullable: true
+          description: Scenario display name
+        role:
+          type: string
+          description: Character's role in the scenario (primary, secondary, witness)
+        phase:
+          type: integer
+          minimum: 0
+          description: Current phase number (or final phase if completed)
+        totalPhases:
+          type: integer
+          minimum: 0
+          description: Total number of phases in the scenario
+        status:
+          $ref: '#/components/schemas/ScenarioStatus'
+          description: Current status of the scenario execution
+        startedAt:
+          type: string
+          format: date-time
+          description: When the scenario was triggered
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario completed (null if still active)
+        choices:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Key choices made during the scenario (for narrative hooks)
+
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+tags:
+- name: Composition
+  description: Storyline plan composition
+- name: Plans
+  description: Plan management and retrieval
+- name: Scenario Definitions
+  description: Scenario definition CRUD operations
+- name: Scenario Discovery
+  description: Find and test scenarios for characters
+- name: Scenario Execution
+  description: Trigger and track scenario executions
+- name: Compression
+  description: Resource service compression integration
+x-inlined-types:
+- ResourceArchiveBase

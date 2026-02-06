@@ -2632,6 +2632,110 @@ public partial class StorylineService : IStorylineService
     }
 
     #endregion
+
+    #region Compression
+
+    /// <summary>
+    /// Gets storyline data for character compression/archival.
+    /// </summary>
+    public async Task<(StatusCodes, StorylineArchive?)> GetCompressDataAsync(
+        GetCompressDataRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
+
+        try
+        {
+            // Query all scenario executions for this character
+            var allExecutions = await _scenarioExecutionStore.QueryAsync(
+                e => e.PrimaryCharacterId == body.CharacterId,
+                cancellationToken);
+
+            var characterExecutions = allExecutions
+                .OrderByDescending(e => e.TriggeredAt)
+                .ToList();
+
+            // Get active scenarios from Redis set
+            var activeKey = body.CharacterId.ToString();
+            var activeMembers = await _scenarioActiveStore.GetSetAsync<ActiveScenarioEntry>(activeKey, cancellationToken);
+            var activeScenarioCodes = activeMembers.Select(a => a.ScenarioCode).ToHashSet();
+
+            // Build participation entries from executions
+            var participations = new List<StorylineParticipation>();
+            var completedCount = 0;
+
+            foreach (var execution in characterExecutions)
+            {
+                var participation = new StorylineParticipation
+                {
+                    ExecutionId = execution.ExecutionId,
+                    ScenarioId = execution.ScenarioId,
+                    ScenarioCode = execution.ScenarioCode,
+                    ScenarioName = execution.ScenarioName,
+                    Role = "primary", // PrimaryCharacterId means primary role
+                    Phase = execution.CurrentPhase,
+                    TotalPhases = execution.TotalPhases,
+                    Status = execution.Status,
+                    StartedAt = execution.TriggeredAt,
+                    CompletedAt = execution.CompletedAt,
+                    Choices = null // Could parse from mutations if needed
+                };
+                participations.Add(participation);
+
+                if (execution.Status == ScenarioStatus.Completed)
+                {
+                    completedCount++;
+                }
+            }
+
+            // Derive active arcs from active scenario codes
+            // Arc types are typically the prefix before underscore (e.g., "romance_first_meeting" -> "romance")
+            var activeArcs = activeScenarioCodes
+                .Select(code => code.Split('_').FirstOrDefault() ?? code)
+                .Distinct()
+                .ToList();
+
+            var archive = new StorylineArchive
+            {
+                ResourceId = body.CharacterId,
+                ResourceType = "storyline",
+                ArchivedAt = DateTimeOffset.UtcNow,
+                SchemaVersion = 1,
+                CharacterId = body.CharacterId,
+                Participations = participations,
+                ActiveArcs = activeArcs,
+                CompletedStorylines = completedCount
+            };
+
+            _logger.LogDebug(
+                "Compress data for character {CharacterId}: {ParticipationCount} participations, {ActiveArcCount} active arcs, {CompletedCount} completed",
+                body.CharacterId,
+                participations.Count,
+                activeArcs.Count,
+                completedCount);
+
+            return (StatusCodes.OK, archive);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "API exception getting compress data for character {CharacterId}", body.CharacterId);
+            return ((StatusCodes)ex.StatusCode, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "GetCompressData",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
 }
 
 /// <summary>

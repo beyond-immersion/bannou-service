@@ -230,6 +230,21 @@ public static class StorylinePermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/storyline/get-compress-data",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getCompressData",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

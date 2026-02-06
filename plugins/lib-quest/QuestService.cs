@@ -1981,4 +1981,128 @@ public partial class QuestService : IQuestService
     }
 
     #endregion
+
+    #region Compression Methods
+
+    /// <summary>
+    /// Gets quest data for compression during character archival.
+    /// Called by Resource service during character compression via compression callback.
+    /// </summary>
+    /// <param name="body">Request containing the character ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Quest archive data for the character.</returns>
+    public async Task<(StatusCodes, QuestArchive?)> GetCompressDataAsync(
+        GetCompressDataRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
+
+        try
+        {
+            // Get character quest index for fast lookup
+            var indexKey = BuildCharacterIndexKey(body.CharacterId);
+            var characterIndex = await CharacterIndex.GetAsync(indexKey, cancellationToken);
+
+            var activeQuestSummaries = new List<ActiveQuestSummary>();
+            var categoryBreakdown = new Dictionary<string, int>();
+            var completedCount = 0;
+
+            if (characterIndex != null)
+            {
+                // Gather active quest summaries
+                if (characterIndex.ActiveQuestIds != null)
+                {
+                    foreach (var questId in characterIndex.ActiveQuestIds)
+                    {
+                        var instances = await InstanceStore.QueryAsync(
+                            i => i.QuestInstanceId == questId,
+                            cancellationToken: cancellationToken);
+                        var questInstance = instances.FirstOrDefault();
+                        if (questInstance == null) continue;
+
+                        var definition = await GetDefinitionModelAsync(questInstance.DefinitionId, cancellationToken);
+
+                        // Count completed objectives
+                        var completedObjectives = 0;
+                        var totalObjectives = definition?.Objectives?.Count ?? 1;
+                        if (definition?.Objectives != null)
+                        {
+                            foreach (var obj in definition.Objectives)
+                            {
+                                var progressKey = BuildProgressKey(questId, obj.Code);
+                                var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+                                if (progress?.IsComplete == true) completedObjectives++;
+                            }
+                        }
+
+                        activeQuestSummaries.Add(new ActiveQuestSummary
+                        {
+                            QuestId = questId,
+                            QuestCode = questInstance.Code,
+                            Name = definition?.Name ?? questInstance.Name,
+                            CurrentObjective = completedObjectives,
+                            TotalObjectives = totalObjectives > 0 ? totalObjectives : 1,
+                            StartedAt = questInstance.AcceptedAt,
+                            Category = definition?.Category
+                        });
+                    }
+                }
+
+                // Calculate completed quest count and category breakdown
+                if (characterIndex.CompletedQuestCodes != null)
+                {
+                    completedCount = characterIndex.CompletedQuestCodes.Count;
+
+                    foreach (var code in characterIndex.CompletedQuestCodes)
+                    {
+                        var defs = await DefinitionStore.QueryAsync(
+                            d => d.Code == code.ToUpperInvariant(),
+                            cancellationToken: cancellationToken);
+                        var def = defs.FirstOrDefault();
+                        if (def != null)
+                        {
+                            var categoryName = def.Category.ToString().ToLowerInvariant();
+                            categoryBreakdown.TryGetValue(categoryName, out var count);
+                            categoryBreakdown[categoryName] = count + 1;
+                        }
+                    }
+                }
+            }
+
+            var archive = new QuestArchive
+            {
+                ResourceId = body.CharacterId,
+                ResourceType = "quest",
+                ArchivedAt = DateTimeOffset.UtcNow,
+                SchemaVersion = 1,
+                CharacterId = body.CharacterId,
+                ActiveQuests = activeQuestSummaries,
+                CompletedQuests = completedCount,
+                QuestCategories = categoryBreakdown
+            };
+
+            _logger.LogInformation(
+                "Prepared quest archive for character {CharacterId}: {ActiveCount} active, {CompletedCount} completed",
+                body.CharacterId, activeQuestSummaries.Count, completedCount);
+
+            return (StatusCodes.OK, archive);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "quest",
+                "GetCompressData",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/quest/get-compress-data",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
 }
