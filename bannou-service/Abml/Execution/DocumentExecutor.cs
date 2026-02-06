@@ -283,7 +283,7 @@ public sealed class DocumentExecutor : IDocumentExecutor
                     }
 
                     // Execute the target flow (tail call)
-                    return await ExecuteFlowAsync(targetFlow, context, ct);
+                    return await ExecuteFlowAsync((Flow)targetFlow, context, ct);
 
                 case ReturnResult:
                 case CompleteResult:
