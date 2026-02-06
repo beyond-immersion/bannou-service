@@ -2661,4 +2661,300 @@ public partial class ResourceController
             _GetSnapshot_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for ListSeededResources
+
+    private static readonly string _ListSeededResources_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListSeededResourcesRequest",
+    "$defs": {
+        "ListSeededResourcesRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list available seeded resources",
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by resource type (list all types if not specified)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListSeededResources_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListSeededResourcesResponse",
+    "$defs": {
+        "ListSeededResourcesResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "List of available seeded resources",
+            "required": [
+                "resources",
+                "totalCount"
+            ],
+            "properties": {
+                "resources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/SeededResourceSummary"
+                    },
+                    "description": "Available seeded resources"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of resources returned"
+                }
+            }
+        },
+        "SeededResourceSummary": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Summary of an available seeded resource",
+            "required": [
+                "resourceType",
+                "identifier",
+                "contentType"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Resource type category (e.g., \"behavior\", \"species-definition\")"
+                },
+                "identifier": {
+                    "type": "string",
+                    "description": "Unique identifier within the resource type"
+                },
+                "contentType": {
+                    "type": "string",
+                    "description": "MIME type of the content (e.g., \"application/yaml\")"
+                },
+                "sizeBytes": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Content size in bytes (null in list responses for efficiency; use getSeededResource for size)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListSeededResources_Info = """
+{
+    "summary": "List available seeded resources",
+    "description": "Returns identifiers of all seeded resources available from registered providers.\nFilter by resourceType to get resources of a specific category.\n\nSeeded resources are read-only factory defaults provided by plugins via\nISeededResourceProvider implementations registered in DI.\n",
+    "tags": [
+        "Seeded Resources"
+    ],
+    "deprecated": false,
+    "operationId": "listSeededResources"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListSeededResources</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/seeded/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListSeededResources_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/seeded/list",
+            _ListSeededResources_Info));
+
+    /// <summary>Returns request schema for ListSeededResources</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/seeded/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListSeededResources_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/seeded/list",
+            "request-schema",
+            _ListSeededResources_RequestSchema));
+
+    /// <summary>Returns response schema for ListSeededResources</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/seeded/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListSeededResources_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/seeded/list",
+            "response-schema",
+            _ListSeededResources_ResponseSchema));
+
+    /// <summary>Returns full schema for ListSeededResources</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/seeded/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListSeededResources_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/seeded/list",
+            _ListSeededResources_Info,
+            _ListSeededResources_RequestSchema,
+            _ListSeededResources_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetSeededResource
+
+    private static readonly string _GetSeededResource_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetSeededResourceRequest",
+    "$defs": {
+        "GetSeededResourceRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get a seeded resource",
+            "required": [
+                "resourceType",
+                "identifier"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Resource type category"
+                },
+                "identifier": {
+                    "type": "string",
+                    "description": "Resource identifier"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetSeededResource_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetSeededResourceResponse",
+    "$defs": {
+        "GetSeededResourceResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing seeded resource content",
+            "required": [
+                "resourceType",
+                "identifier",
+                "found"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Resource type requested"
+                },
+                "identifier": {
+                    "type": "string",
+                    "description": "Resource identifier requested"
+                },
+                "found": {
+                    "type": "boolean",
+                    "description": "True if resource was found"
+                },
+                "resource": {
+                    "$ref": "#/$defs/SeededResourceDetail",
+                    "nullable": true,
+                    "description": "The resource data (null if not found)"
+                }
+            }
+        },
+        "SeededResourceDetail": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Full seeded resource with content",
+            "required": [
+                "resourceType",
+                "identifier",
+                "contentType",
+                "content"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Resource type category"
+                },
+                "identifier": {
+                    "type": "string",
+                    "description": "Unique identifier"
+                },
+                "contentType": {
+                    "type": "string",
+                    "description": "MIME type of the content"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Base64-encoded resource content"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Optional key-value metadata"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetSeededResource_Info = """
+{
+    "summary": "Get a seeded resource by type and identifier",
+    "description": "Retrieves the content and metadata of a seeded resource.\nReturns found=false if the resource type or identifier is not found.\n\nContent is returned as base64-encoded bytes with contentType indicating\nthe MIME type for proper parsing.\n",
+    "tags": [
+        "Seeded Resources"
+    ],
+    "deprecated": false,
+    "operationId": "getSeededResource"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetSeededResource</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/seeded/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSeededResource_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/seeded/get",
+            _GetSeededResource_Info));
+
+    /// <summary>Returns request schema for GetSeededResource</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/seeded/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSeededResource_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/seeded/get",
+            "request-schema",
+            _GetSeededResource_RequestSchema));
+
+    /// <summary>Returns response schema for GetSeededResource</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/seeded/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSeededResource_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/seeded/get",
+            "response-schema",
+            _GetSeededResource_ResponseSchema));
+
+    /// <summary>Returns full schema for GetSeededResource</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/seeded/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSeededResource_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/seeded/get",
+            _GetSeededResource_Info,
+            _GetSeededResource_RequestSchema,
+            _GetSeededResource_ResponseSchema));
+
+    #endregion
 }

@@ -1109,6 +1109,126 @@ paths:
         created snapshot by its ID.\\nReturns 404 if the snapshot has expired or doesn't exist.\\n\\nSnapshots are stored
         with TTL - if the TTL has elapsed, the snapshot\\nis automatically deleted by Redis.\\n\",\n    \"tags\": [\n    \
         \    \"Snapshot Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSnapshot\"\n}"
+  /resource/seeded/list:
+    post:
+      operationId: listSeededResources
+      tags:
+      - Seeded Resources
+      summary: List available seeded resources
+      description: |
+        Returns identifiers of all seeded resources available from registered providers.
+        Filter by resourceType to get resources of a specific category.
+
+        Seeded resources are read-only factory defaults provided by plugins via
+        ISeededResourceProvider implementations registered in DI.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListSeededResourcesRequest'
+      responses:
+        '200':
+          description: List of seeded resource identifiers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSeededResourcesResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListSeededResourcesRequest\"\
+        ,\n    \"$defs\": {\n        \"ListSeededResourcesRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to list available seeded resources\",\n   \
+        \         \"properties\": {\n                \"resourceType\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Filter by resource type (list all types
+        if not specified)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListSeededResourcesResponse\"\
+        ,\n    \"$defs\": {\n        \"ListSeededResourcesResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"List of available seeded resources\",\n           \
+        \ \"required\": [\n                \"resources\",\n                \"totalCount\"\n            ],\n            \"\
+        properties\": {\n                \"resources\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/SeededResourceSummary\"\n                    },\n        \
+        \            \"description\": \"Available seeded resources\"\n                },\n                \"totalCount\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number of resources returned\"\
+        \n                }\n            }\n        },\n        \"SeededResourceSummary\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Summary of an available seeded resource\"\
+        ,\n            \"required\": [\n                \"resourceType\",\n                \"identifier\",\n             \
+        \   \"contentType\"\n            ],\n            \"properties\": {\n                \"resourceType\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Resource type category (e.g., \\\"behavior\\\
+        \", \\\"species-definition\\\")\"\n                },\n                \"identifier\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Unique identifier within the resource type\"\n             \
+        \   },\n                \"contentType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"MIME type of the content (e.g., \\\"application/yaml\\\")\"\n                },\n                \"sizeBytes\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Content size in bytes (null in list responses for efficiency; use getSeededResource for size)\"\n            \
+        \    }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List available seeded resources\",\n    \"description\": \"Returns identifiers
+        of all seeded resources available from registered providers.\\nFilter by resourceType to get resources of a specific
+        category.\\n\\nSeeded resources are read-only factory defaults provided by plugins via\\nISeededResourceProvider implementations
+        registered in DI.\\n\",\n    \"tags\": [\n        \"Seeded Resources\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"listSeededResources\"\n}"
+  /resource/seeded/get:
+    post:
+      operationId: getSeededResource
+      tags:
+      - Seeded Resources
+      summary: Get a seeded resource by type and identifier
+      description: |
+        Retrieves the content and metadata of a seeded resource.
+        Returns found=false if the resource type or identifier is not found.
+
+        Content is returned as base64-encoded bytes with contentType indicating
+        the MIME type for proper parsing.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSeededResourceRequest'
+      responses:
+        '200':
+          description: Seeded resource content and metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSeededResourceResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSeededResourceRequest\"\
+        ,\n    \"$defs\": {\n        \"GetSeededResourceRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get a seeded resource\",\n            \"required\": [\n      \
+        \          \"resourceType\",\n                \"identifier\"\n            ],\n            \"properties\": {\n    \
+        \            \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Resource type category\"\n                },\n                \"identifier\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Resource identifier\"\n                }\n            }\n      \
+        \  }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSeededResourceResponse\"\
+        ,\n    \"$defs\": {\n        \"GetSeededResourceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response containing seeded resource content\",\n            \"required\"\
+        : [\n                \"resourceType\",\n                \"identifier\",\n                \"found\"\n            ],\n\
+        \            \"properties\": {\n                \"resourceType\": {\n                    \"type\": \"string\",\n \
+        \                   \"description\": \"Resource type requested\"\n                },\n                \"identifier\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Resource identifier requested\"\
+        \n                },\n                \"found\": {\n                    \"type\": \"boolean\",\n                 \
+        \   \"description\": \"True if resource was found\"\n                },\n                \"resource\": {\n       \
+        \             \"$ref\": \"#/$defs/SeededResourceDetail\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"The resource data (null if not found)\"\n                }\n            }\n        },\n\
+        \        \"SeededResourceDetail\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Full seeded resource with content\",\n            \"required\": [\n              \
+        \  \"resourceType\",\n                \"identifier\",\n                \"contentType\",\n                \"content\"\
+        \n            ],\n            \"properties\": {\n                \"resourceType\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Resource type category\"\n                },\n             \
+        \   \"identifier\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier\"\
+        \n                },\n                \"contentType\": {\n                    \"type\": \"string\",\n            \
+        \        \"description\": \"MIME type of the content\"\n                },\n                \"content\": {\n     \
+        \               \"type\": \"string\",\n                    \"description\": \"Base64-encoded resource content\"\n\
+        \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
+        \    \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Optional key-value metadata\"\n          \
+        \      }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get a seeded resource by type and identifier\",\n    \"description\": \"\
+        Retrieves the content and metadata of a seeded resource.\\nReturns found=false if the resource type or identifier
+        is not found.\\n\\nContent is returned as base64-encoded bytes with contentType indicating\\nthe MIME type for proper
+        parsing.\\n\",\n    \"tags\": [\n        \"Seeded Resources\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"getSeededResource\"\n}"
 components:
   schemas:
     OnDeleteAction:
@@ -2216,3 +2336,114 @@ components:
           type: string
           format: date-time
           description: When this snapshot will expire
+    ListSeededResourcesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list available seeded resources
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all types if not specified)
+    ListSeededResourcesResponse:
+      type: object
+      additionalProperties: false
+      description: List of available seeded resources
+      required:
+      - resources
+      - totalCount
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeededResourceSummary'
+          description: Available seeded resources
+        totalCount:
+          type: integer
+          description: Total number of resources returned
+    SeededResourceSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of an available seeded resource
+      required:
+      - resourceType
+      - identifier
+      - contentType
+      properties:
+        resourceType:
+          type: string
+          description: Resource type category (e.g., "behavior", "species-definition")
+        identifier:
+          type: string
+          description: Unique identifier within the resource type
+        contentType:
+          type: string
+          description: MIME type of the content (e.g., "application/yaml")
+        sizeBytes:
+          type: integer
+          nullable: true
+          description: Content size in bytes (null in list responses for efficiency; use getSeededResource for size)
+    GetSeededResourceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a seeded resource
+      required:
+      - resourceType
+      - identifier
+      properties:
+        resourceType:
+          type: string
+          description: Resource type category
+        identifier:
+          type: string
+          description: Resource identifier
+    GetSeededResourceResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing seeded resource content
+      required:
+      - resourceType
+      - identifier
+      - found
+      properties:
+        resourceType:
+          type: string
+          description: Resource type requested
+        identifier:
+          type: string
+          description: Resource identifier requested
+        found:
+          type: boolean
+          description: True if resource was found
+        resource:
+          $ref: '#/components/schemas/SeededResourceDetail'
+          nullable: true
+          description: The resource data (null if not found)
+    SeededResourceDetail:
+      type: object
+      additionalProperties: false
+      description: Full seeded resource with content
+      required:
+      - resourceType
+      - identifier
+      - contentType
+      - content
+      properties:
+        resourceType:
+          type: string
+          description: Resource type category
+        identifier:
+          type: string
+          description: Unique identifier
+        contentType:
+          type: string
+          description: MIME type of the content
+        content:
+          type: string
+          description: Base64-encoded resource content
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Optional key-value metadata

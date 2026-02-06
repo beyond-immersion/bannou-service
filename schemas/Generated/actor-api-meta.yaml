@@ -22,6 +22,7 @@ info:
       payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
+x-service-layer: GameFoundation
 paths:
   /actor/template/create:
     post:
