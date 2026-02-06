@@ -20,12 +20,27 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | lib-state (`IStateStoreFactory`) | Redis persistence for actor state, templates, pool nodes, assignments |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events, state updates, pool commands; error publishing |
 | lib-messaging (`IEventConsumer`) | Behavior/personality cache invalidation, pool node management events |
-| lib-behavior (`IBehaviorClient`) | Loading compiled ABML behavior documents |
-| lib-character-personality (`ICharacterPersonalityClient`) | Loading personality traits for behavior context |
-| lib-character-history (`ICharacterHistoryClient`) | Loading backstory for behavior context |
-| lib-asset (`IAssetClient`) | Fetching behavior YAML documents via pre-signed URLs |
-| lib-character-encounter (`ICharacterEncounterClient`) | Loading encounter history, sentiment, and has-met data |
+| lib-behavior | Loading compiled ABML behavior documents, cognition handlers |
 | lib-mesh (`IMeshInvocationClient`) | Forwarding requests to remote pool nodes in distributed mode |
+| `IEnumerable<IVariableProviderFactory>` | DI-discovered providers from L3/L4 services (see below) |
+
+**Variable Provider Factory Pattern (L2 → L3/L4 Data Access)**
+
+Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, encounters, quests) at runtime. Per SERVICE_HIERARCHY.md, this uses **dependency inversion**:
+
+1. `IVariableProviderFactory` interface defined in `bannou-service/Providers/`
+2. L3/L4 services implement and register factories via DI
+3. ActorRunner discovers all factories via `IEnumerable<IVariableProviderFactory>` injection
+4. Each factory creates providers on-demand with graceful degradation
+
+**Registered Provider Factories** (from L3/L4 plugins):
+| Factory | Provider | Owning Plugin |
+|---------|----------|---------------|
+| `PersonalityProviderFactory` | `personality` | lib-character-personality |
+| `CombatPreferencesProviderFactory` | `combat_preferences` | lib-character-personality |
+| `BackstoryProviderFactory` | `backstory` | lib-character-history |
+| `EncountersProviderFactory` | `encounters` | lib-character-encounter |
+| `QuestProviderFactory` | `quest` | lib-quest |
 
 ---
 
