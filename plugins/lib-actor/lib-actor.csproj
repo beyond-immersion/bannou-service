@@ -11,6 +11,8 @@
     <!-- lib-behavior: Required - provides actual ABML execution types (Handlers, Archetypes, Control) -->
     <!-- NOT generated code - these are manual implementation classes for cognition system -->
     <ProjectReference Include="../lib-behavior/lib-behavior.csproj" />
+    <!-- behavior-expressions SDK: Required for expression evaluation (IVariableScope, IExpressionEvaluator) -->
+    <ProjectReference Include="../../sdks/behavior-expressions/BeyondImmersion.Bannou.BehaviorExpressions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

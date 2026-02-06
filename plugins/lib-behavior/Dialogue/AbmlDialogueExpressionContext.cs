@@ -3,9 +3,9 @@
 // Bridges ABML expression evaluation with the dialogue resolver.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.Bannou.Behavior.Dialogue;
