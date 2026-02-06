@@ -252,6 +252,11 @@ public sealed class SemanticAnalyzer
         }
     }
 
+    /// <summary>
+    /// Validates actor_command action parameters (target, command).
+    /// </summary>
+    /// <param name="flowName">Current flow name for error reporting.</param>
+    /// <param name="action">Domain action to validate.</param>
     private void ValidateActorCommand(string flowName, DomainAction action)
     {
         // Check required 'target' parameter
@@ -277,6 +282,11 @@ public sealed class SemanticAnalyzer
         }
     }
 
+    /// <summary>
+    /// Validates actor_query action parameters (target, query, into).
+    /// </summary>
+    /// <param name="flowName">Current flow name for error reporting.</param>
+    /// <param name="action">Domain action to validate.</param>
     private void ValidateActorQuery(string flowName, DomainAction action)
     {
         // Check required 'target' parameter
@@ -310,6 +320,12 @@ public sealed class SemanticAnalyzer
         }
     }
 
+    /// <summary>
+    /// Validates that a string is a valid identifier (starts with letter or underscore,
+    /// followed by alphanumeric characters or underscores).
+    /// </summary>
+    /// <param name="name">The string to validate.</param>
+    /// <returns>True if the string is a valid identifier.</returns>
     private static bool IsValidIdentifier(string name)
     {
         if (string.IsNullOrEmpty(name)) return false;
