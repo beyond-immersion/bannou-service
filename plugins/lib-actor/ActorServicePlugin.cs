@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Behavior.Handlers;
+using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Execution;

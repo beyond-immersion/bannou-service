@@ -3,9 +3,11 @@
 // Tests for cognition pipeline types.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Cognition;
-using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Abml.Cognition;
 using Xunit;
+
+// Alias to avoid conflict with System.Memory<T>
+using CognitionMemory = BeyondImmersion.BannouService.Abml.Cognition.Memory;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Cognition;
 
@@ -403,7 +405,7 @@ public class CognitionTypesTests
     public void Memory_DefaultValues()
     {
         // Arrange & Act
-        var memory = new Memory();
+        var memory = new CognitionMemory();
 
         // Assert
         Assert.Empty(memory.Id);
@@ -419,7 +421,7 @@ public class CognitionTypesTests
     public void Memory_CustomValues()
     {
         // Arrange & Act
-        var memory = new Memory
+        var memory = new CognitionMemory
         {
             Id = "mem-123",
             EntityId = "entity-456",
@@ -454,10 +456,10 @@ public class CognitionTypesTests
         // Arrange
         CognitionConstants.Reset(); // Ensure clean state
 
-        var config = new BehaviorServiceConfiguration
+        var config = new CognitionConfiguration
         {
-            LowUrgencyThreshold = 0.25,
-            HighUrgencyThreshold = 0.75,
+            LowUrgencyThreshold = 0.25f,
+            HighUrgencyThreshold = 0.75f,
             LowUrgencyMaxPlanDepth = 12,
             LowUrgencyPlanTimeoutMs = 150,
             LowUrgencyMaxPlanNodes = 1200,
@@ -467,21 +469,21 @@ public class CognitionTypesTests
             HighUrgencyMaxPlanDepth = 4,
             HighUrgencyPlanTimeoutMs = 30,
             HighUrgencyMaxPlanNodes = 250,
-            DefaultThreatWeight = 12.0,
-            DefaultNoveltyWeight = 6.0,
-            DefaultSocialWeight = 4.0,
-            DefaultRoutineWeight = 1.5,
-            DefaultThreatFastTrackThreshold = 0.85,
-            DefaultEmotionalWeight = 0.5,
-            DefaultGoalRelevanceWeight = 0.35,
-            DefaultRelationshipWeight = 0.15,
-            MemoryMinimumRelevanceThreshold = 0.15,
-            DefaultStorageThreshold = 0.65,
-            MemoryCategoryMatchWeight = 0.35,
-            MemoryContentOverlapWeight = 0.45,
-            MemoryMetadataOverlapWeight = 0.25,
-            MemoryRecencyBonusWeight = 0.15,
-            MemorySignificanceBonusWeight = 0.12
+            DefaultThreatWeight = 12.0f,
+            DefaultNoveltyWeight = 6.0f,
+            DefaultSocialWeight = 4.0f,
+            DefaultRoutineWeight = 1.5f,
+            DefaultThreatFastTrackThreshold = 0.85f,
+            DefaultEmotionalWeight = 0.5f,
+            DefaultGoalRelevanceWeight = 0.35f,
+            DefaultRelationshipWeight = 0.15f,
+            MemoryMinimumRelevanceThreshold = 0.15f,
+            DefaultStorageThreshold = 0.65f,
+            MemoryCategoryMatchWeight = 0.35f,
+            MemoryContentOverlapWeight = 0.45f,
+            MemoryMetadataOverlapWeight = 0.25f,
+            MemoryRecencyBonusWeight = 0.15f,
+            MemorySignificanceBonusWeight = 0.12f
         };
 
         // Act
@@ -541,13 +543,13 @@ public class CognitionTypesTests
     {
         // Arrange - Initialize with non-default values
         CognitionConstants.Reset();
-        var config = new BehaviorServiceConfiguration
+        var config = new CognitionConfiguration
         {
-            LowUrgencyThreshold = 0.5,
-            HighUrgencyThreshold = 0.9,
-            DefaultThreatWeight = 99.0,
-            DefaultStorageThreshold = 0.99,
-            MemoryCategoryMatchWeight = 0.99
+            LowUrgencyThreshold = 0.5f,
+            HighUrgencyThreshold = 0.9f,
+            DefaultThreatWeight = 99.0f,
+            DefaultStorageThreshold = 0.99f,
+            MemoryCategoryMatchWeight = 0.99f
         };
         CognitionConstants.Initialize(config);
 
@@ -571,15 +573,15 @@ public class CognitionTypesTests
     {
         // Arrange
         CognitionConstants.Reset();
-        var config1 = new BehaviorServiceConfiguration
+        var config1 = new CognitionConfiguration
         {
-            DefaultThreatWeight = 15.0,
-            DefaultStorageThreshold = 0.8
+            DefaultThreatWeight = 15.0f,
+            DefaultStorageThreshold = 0.8f
         };
-        var config2 = new BehaviorServiceConfiguration
+        var config2 = new CognitionConfiguration
         {
-            DefaultThreatWeight = 25.0,
-            DefaultStorageThreshold = 0.5
+            DefaultThreatWeight = 25.0f,
+            DefaultStorageThreshold = 0.5f
         };
 
         // Act - First initialization
@@ -608,7 +610,7 @@ public class CognitionTypesTests
     {
         // Arrange
         CognitionConstants.Reset();
-        var config = new BehaviorServiceConfiguration(); // All defaults
+        var config = new CognitionConfiguration(); // All defaults
 
         // Act
         CognitionConstants.Initialize(config);

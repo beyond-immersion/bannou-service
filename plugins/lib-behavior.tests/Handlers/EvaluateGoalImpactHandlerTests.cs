@@ -3,8 +3,8 @@
 // Tests for goal impact evaluation (Cognition Stage 5).
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Cognition;
-using BeyondImmersion.Bannou.Behavior.Handlers;
+using BeyondImmersion.BannouService.Abml.Cognition;
+using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using Xunit;

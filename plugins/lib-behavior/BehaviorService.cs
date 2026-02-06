@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Abml.Parser;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
@@ -84,7 +85,7 @@ public partial class BehaviorService : IBehaviorService
 
         // Initialize cognition constants from configuration (idempotent - first call wins)
         // IMPLEMENTATION TENETS - Configuration-First
-        CognitionConstants.Initialize(configuration);
+        CognitionConstants.Initialize(configuration.ToCognitionConfiguration());
 
         // Register event handlers via partial class (BehaviorServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);

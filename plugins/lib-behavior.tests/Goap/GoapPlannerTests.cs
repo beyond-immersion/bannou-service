@@ -562,7 +562,7 @@ public class GoapPlannerTests
         };
 
         // Use actual high-urgency planning options from CognitionConstants
-        var options = BeyondImmersion.Bannou.Behavior.Cognition.UrgencyBasedPlanningOptions
+        var options = BeyondImmersion.BannouService.Abml.Cognition.UrgencyBasedPlanningOptions
             .FromUrgency(0.9f) // High urgency
             .ToPlanningOptions();
 
