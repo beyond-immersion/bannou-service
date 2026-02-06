@@ -1,0 +1,99 @@
+version: "2.0"
+
+metadata:
+  id: creature_base
+  type: character_brain
+  description: |
+    Simplified cognition behavior for animal/creature NPCs.
+    Focuses on survival instincts, territorial behavior, and
+    basic stimulus-response patterns.
+  tags:
+    - npc
+    - creature
+    - animal
+    - instinct
+  deterministic: false
+
+# Variables for instinctual behavior
+variables:
+  hunger_threshold: 0.7
+  fear_threshold: 0.5
+  territory_radius: 50.0
+  aggression_level: 0.3
+
+# Entry flow - initialize creature systems
+flows:
+  start:
+    actions:
+      - log: "Creature brain initialized"
+      - set:
+          variable: current_state
+          value: "idle"
+
+  # Simple stimulus-response tick processing
+  on_tick:
+    actions:
+      # Creatures have higher attention threshold (less aware)
+      - filter_attention:
+          threshold: 0.5
+      # Simple significance assessment (no complex reasoning)
+      - assess_significance: {}
+      # Only high-significance events trigger response
+      - cond:
+          - when: "${significance > 0.7}"
+            then:
+              - trigger_goap_replan:
+                  urgency: high
+          - when: "${significance > 0.4}"
+            then:
+              - trigger_goap_replan:
+                  urgency: medium
+
+  # Handle threat detection
+  on_threat_detected:
+    actions:
+      - log: { message: "Threat detected: ${event.threatLevel}" }
+      - cond:
+          - when: "${event.threatLevel > fear_threshold}"
+            then:
+              - set:
+                  variable: current_state
+                  value: "fleeing"
+              - trigger_goap_replan:
+                  urgency: high
+          - when: "${event.threatLevel < aggression_level}"
+            then:
+              - set:
+                  variable: current_state
+                  value: "aggressive"
+              - trigger_goap_replan:
+                  urgency: high
+
+  # Handle territory intrusion
+  on_territory_intrusion:
+    actions:
+      - log: { message: "Territory intrusion by ${event.intruderId}" }
+      - cond:
+          - when: "${aggression_level > 0.5}"
+            then:
+              - set:
+                  variable: current_state
+                  value: "defending"
+              - trigger_goap_replan:
+                  urgency: high
+          - else:
+              - set:
+                  variable: current_state
+                  value: "alert"
+
+  # Handle hunger/needs
+  on_need_critical:
+    actions:
+      - cond:
+          - when: "${event.needType == 'hunger'}"
+            then:
+              - set:
+                  variable: current_state
+                  value: "foraging"
+              - trigger_goap_replan:
+                  urgency: medium

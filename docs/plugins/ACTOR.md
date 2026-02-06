@@ -20,9 +20,24 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | lib-state (`IStateStoreFactory`) | Redis persistence for actor state, templates, pool nodes, assignments |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events, state updates, pool commands; error publishing |
 | lib-messaging (`IEventConsumer`) | Behavior/personality cache invalidation, pool node management events |
-| lib-behavior | Loading compiled ABML behavior documents, cognition handlers |
 | lib-mesh (`IMeshInvocationClient`) | Forwarding requests to remote pool nodes in distributed mode |
+| lib-resource (`IResourceClient`) | Character reference cleanup via x-references pattern |
 | `IEnumerable<IVariableProviderFactory>` | DI-discovered providers from L3/L4 services (see below) |
+| `IEnumerable<IBehaviorDocumentProvider>` | DI-discovered behavior document providers (see below) |
+
+**Behavior Document Loading (Provider Chain)**
+
+Actor loads ABML documents via `IBehaviorDocumentLoader` which discovers providers via DI. The provider chain supports multiple sources with priority-based fallback:
+
+| Provider | Priority | Source Plugin | Purpose |
+|----------|----------|---------------|---------|
+| `DynamicBehaviorProvider` | 100 | lib-puppetmaster | Scene-specific dynamic behaviors |
+| `SeededBehaviorProvider` | 50 | lib-actor | Static behaviors from filesystem/embedded resources |
+| `FallbackBehaviorProvider` | 0 | lib-actor | Generates default stub behavior for missing docs |
+
+Higher priority providers are checked first. If a provider returns `null`, the next lower priority provider is tried. The fallback provider always returns a minimal behavior document.
+
+**Note**: Actor uses shared ABML compiler types from `BeyondImmersion.Bannou.BehaviorCompiler` (in bannou-service), NOT a service client dependency on lib-behavior.
 
 **Variable Provider Factory Pattern (L2 → L3/L4 Data Access)**
 
@@ -205,6 +220,8 @@ Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, en
 |----------|---------|---------|---------|
 | `PersonalityCacheTtlMinutes` | `ACTOR_PERSONALITY_CACHE_TTL_MINUTES` | `5` | Personality data cache lifetime |
 | `EncounterCacheTtlMinutes` | `ACTOR_ENCOUNTER_CACHE_TTL_MINUTES` | `5` | Encounter data cache lifetime |
+| `StorylineCacheTtlMinutes` | `ACTOR_STORYLINE_CACHE_TTL_MINUTES` | `5` | Storyline participation data cache lifetime |
+| `QuestCacheTtlMinutes` | `ACTOR_QUEST_CACHE_TTL_MINUTES` | `5` | Quest data cache lifetime |
 | `MaxEncounterResultsPerQuery` | `ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY` | `50` | Query result limit |
 | `QueryOptionsDefaultMaxAgeMs` | `ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS` | `5000` | Max age for cached query options |
 
@@ -221,7 +238,9 @@ Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, en
 | `IEventConsumer` | Scoped | Cache invalidation, pool events |
 | `ActorRunnerFactory` | Scoped | Creates ActorRunner instances |
 | `ActorRegistry` | Singleton | Local actor instance tracking |
-| `BehaviorDocumentCache` | Singleton | Compiled ABML document caching |
+| `IBehaviorDocumentLoader` | Singleton | Loads behavior documents via provider chain |
+| `SeededBehaviorProvider` | Singleton | Loads static behaviors from filesystem (Priority 50) |
+| `FallbackBehaviorProvider` | Singleton | Generates stub behaviors for missing docs (Priority 0) |
 | `PersonalityCache` | Singleton | Character personality caching |
 | `ActorPoolManager` | Singleton | Pool node management (control plane) |
 | `ActorPoolNodeWorker` | Hosted (BackgroundService) | Pool node command listener |
@@ -229,6 +248,8 @@ Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, en
 | `PoolHealthMonitor` | Hosted (BackgroundService) | Pool node health checking |
 
 Service lifetime is **Scoped** for ActorService. Multiple BackgroundServices for pool operations.
+
+**Behavior Document Provider Chain**: `IBehaviorDocumentLoader` aggregates all registered `IBehaviorDocumentProvider` implementations, sorted by priority (descending). When loading a behavior ref, it queries providers in order until one returns a document. This enables lib-puppetmaster to inject dynamic scene-specific behaviors (Priority 100) without Actor having a compile-time dependency.
 
 ---
 
@@ -242,11 +263,12 @@ Service lifetime is **Scoped** for ActorService. Multiple BackgroundServices for
 - **UpdateActorTemplate** (`/actor/template/update`): Partial update with `changedFields` tracking. Publishes `actor-template.updated`.
 - **DeleteActorTemplate** (`/actor/template/delete`): Removes from index. Publishes `actor-template.deleted`.
 
-### Actor Lifecycle (4 endpoints)
+### Actor Lifecycle (5 endpoints)
 
 - **SpawnActor** (`/actor/spawn`): In bannou mode: creates ActorRunner locally, registers in ActorRegistry, starts behavior loop. In pool mode: acquires least-loaded node via ActorPoolManager, publishes SpawnActorCommand to node's command topic. Publishes `actor-instance.created`.
 - **StopActor** (`/actor/stop`): In bannou mode: stops local runner, removes from registry. In pool mode: publishes StopActorCommand to assigned node. Publishes `actor-instance.deleted`.
 - **GetActor** (`/actor/get`): Returns actor state snapshot. If actor not running but matches an auto-spawn template (regex pattern), automatically spawns it (instantiate-on-access pattern).
+- **CleanupByCharacter** (`/actor/cleanup-by-character`): Called by lib-resource cleanup coordination when a character is deleted. Stops and removes all actors referencing the specified characterId. Returns count of actors cleaned up. Part of x-references cascade pattern.
 - **InjectPerception** (`/actor/inject-perception`): Enqueues perception data into actor's bounded channel. Returns current queue depth. Developer-only for testing.
 
 ### Encounter Management (4 endpoints)
@@ -495,14 +517,6 @@ No bugs identified.
 ---
 
 ## Work Tracking
-
-### AUDIT Markers
-
-- **AUDIT[2026-01-31]: Schema-code mismatch for personality/combat-preferences event subscriptions**
-  - **Status**: FIXED
-  - **Issue**: `actor-events.yaml` x-event-subscriptions was missing `personality.evolved` and `combat-preferences.evolved` entries that were implemented in `ActorServiceEvents.cs`
-  - **Fix**: Added missing event subscriptions to schema, regenerated service events
-  - **Verification**: Build passes, schema now matches implementation
 
 ### Implementation Gaps
 

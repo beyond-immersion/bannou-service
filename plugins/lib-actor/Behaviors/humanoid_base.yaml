@@ -1,0 +1,77 @@
+version: "2.0"
+
+metadata:
+  id: humanoid_base
+  type: character_brain
+  description: |
+    Standard NPC cognition behavior for humanoid characters.
+    Provides sensory processing, memory formation, goal evaluation,
+    and basic decision-making for intelligent NPCs.
+  tags:
+    - npc
+    - humanoid
+    - cognition
+  deterministic: false
+
+# Variables for cognitive state
+variables:
+  attention_threshold: 0.3
+  memory_retention_hours: 72
+  goal_priority_decay: 0.1
+
+# Entry flow - initialize cognitive systems
+flows:
+  start:
+    actions:
+      - log: "Humanoid brain initialized"
+
+  # Process incoming perceptions each tick
+  on_tick:
+    actions:
+      # Filter perceptions by attention threshold
+      - filter_attention:
+          threshold: "${attention_threshold}"
+      # Assess significance of filtered perceptions
+      - assess_significance: {}
+      # Form memories from significant events
+      - store_memory:
+          retention_hours: "${memory_retention_hours}"
+      # Evaluate impact on current goals
+      - evaluate_goal_impact: {}
+      # Trigger GOAP replanning if goals changed
+      - trigger_goap_replan:
+          urgency: medium
+
+  # Handle direct interaction with player
+  on_interaction:
+    actions:
+      - log: { message: "Interaction from ${event.sourceId}" }
+      - assess_significance:
+          boost: 0.5
+      - store_memory:
+          retention_hours: 168
+          tags: ["interaction", "social"]
+
+  # Handle combat perception
+  on_combat_perception:
+    actions:
+      - filter_attention:
+          threshold: 0.1
+      - assess_significance:
+          boost: 0.8
+      - trigger_goap_replan:
+          urgency: high
+
+  # Handle environmental changes
+  on_environment_change:
+    actions:
+      - filter_attention:
+          threshold: "${attention_threshold}"
+      - assess_significance: {}
+      - cond:
+          - when: "${significance > 0.5}"
+            then:
+              - store_memory:
+                  retention_hours: 24
+              - trigger_goap_replan:
+                  urgency: low

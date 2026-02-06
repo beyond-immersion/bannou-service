@@ -1,0 +1,86 @@
+version: "2.0"
+
+metadata:
+  id: object_base
+  type: object_brain
+  description: |
+    Minimal behavior for interactive objects like traps, doors,
+    levers, and environmental hazards. Responds to specific
+    triggers without complex cognition.
+  tags:
+    - object
+    - interactive
+    - trigger
+  deterministic: true
+
+# Variables for object state
+variables:
+  is_active: true
+  cooldown_seconds: 0
+  trigger_count: 0
+  max_triggers: -1
+
+# Entry flow - initialize object
+flows:
+  start:
+    actions:
+      - log: "Interactive object initialized"
+
+  # Objects don't process perceptions like characters
+  on_tick:
+    actions:
+      # Decrement cooldown if active
+      - cond:
+          - when: "${cooldown_seconds > 0}"
+            then:
+              - decrement:
+                  variable: cooldown_seconds
+                  by: 1
+
+  # Handle activation trigger
+  on_triggered:
+    actions:
+      - cond:
+          # Check if object can be triggered
+          - when: "${is_active && cooldown_seconds <= 0}"
+            then:
+              - log: { message: "Object triggered by ${event.triggerId}" }
+              - increment:
+                  variable: trigger_count
+                  by: 1
+              - call: { flow: execute_effect }
+              # Check max triggers
+              - cond:
+                  - when: "${max_triggers > 0 && trigger_count >= max_triggers}"
+                    then:
+                      - set:
+                          variable: is_active
+                          value: false
+                      - log: "Object deactivated (max triggers reached)"
+
+  # Execute the object's effect (override in specific behaviors)
+  execute_effect:
+    actions:
+      - log: "Object effect executed"
+
+  # Handle reset command
+  on_reset:
+    actions:
+      - set:
+          variable: is_active
+          value: true
+      - set:
+          variable: cooldown_seconds
+          value: 0
+      - set:
+          variable: trigger_count
+          value: 0
+      - log: "Object reset"
+
+  # Handle enable/disable
+  on_set_active:
+    actions:
+      - set:
+          variable: is_active
+          value: "${event.active}"
+      - log: { message: "Object active state: ${is_active}" }

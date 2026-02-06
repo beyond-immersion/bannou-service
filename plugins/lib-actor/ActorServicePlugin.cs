@@ -90,6 +90,10 @@ public class ActorServicePlugin : BaseBannouPlugin
         services.AddSingleton<BehaviorDocumentLoader>();
         services.AddSingleton<IBehaviorDocumentLoader>(sp => sp.GetRequiredService<BehaviorDocumentLoader>());
 
+        // Register seeded resource provider for lib-resource API exposure
+        // This enables behaviors to be discovered via /resource/seeded/list and /resource/seeded/get
+        services.AddSingleton<ISeededResourceProvider, BehaviorSeededResourceProvider>();
+
         services.AddSingleton<IDocumentExecutorFactory, DocumentExecutorFactory>();
 
         // Register actor runtime components as singletons (shared across service instances)

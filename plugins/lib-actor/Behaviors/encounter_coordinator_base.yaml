@@ -1,0 +1,164 @@
+version: "2.0"
+
+metadata:
+  id: encounter_coordinator_base
+  type: event_brain
+  description: |
+    Base behavior template for Encounter Coordinator actors.
+    Manages the lifecycle of a specific encounter instance,
+    coordinating participants and phasing through stages.
+  tags:
+    - encounter
+    - coordinator
+    - orchestration
+  deterministic: false
+
+# Event subscriptions for encounter management
+subscriptions:
+  - "encounter.${encounter_id}.participant_joined"
+  - "encounter.${encounter_id}.participant_left"
+  - "encounter.${encounter_id}.objective_completed"
+  - "encounter.${encounter_id}.timer_expired"
+
+# Variables for encounter state
+variables:
+  current_phase: "setup"
+  phase_timeout_seconds: 300
+  participants: []
+  min_participants: 1
+  max_participants: 10
+  objectives_completed: 0
+  total_objectives: 1
+
+# Entry flow - initialize encounter
+flows:
+  start:
+    actions:
+      - log: { message: "Encounter coordinator initialized for ${encounter_id}" }
+      - set_encounter_phase:
+          phase: "setup"
+      - schedule_event:
+          event_type: "phase_timeout"
+          delay_seconds: "${phase_timeout_seconds}"
+
+  # Handle phase progression
+  on_tick:
+    actions:
+      # Check phase-specific conditions
+      - cond:
+          - when: "${current_phase == 'setup'}"
+            then:
+              - call: { flow: check_setup_complete }
+          - when: "${current_phase == 'active'}"
+            then:
+              - call: { flow: check_encounter_complete }
+          - when: "${current_phase == 'resolution'}"
+            then:
+              - call: { flow: check_resolution_complete }
+
+  # Check if setup phase is complete
+  check_setup_complete:
+    actions:
+      - cond:
+          - when: "${len(participants) >= min_participants}"
+            then:
+              - call: { flow: transition_to_active }
+
+  # Transition to active phase
+  transition_to_active:
+    actions:
+      - set:
+          variable: current_phase
+          value: "active"
+      - set_encounter_phase:
+          phase: "active"
+      - log: "Encounter transitioning to active phase"
+
+  # Check if encounter is complete
+  check_encounter_complete:
+    actions:
+      - cond:
+          - when: "${objectives_completed >= total_objectives}"
+            then:
+              - call: { flow: transition_to_resolution }
+              - call: { flow: mark_success }
+
+  # Transition to resolution phase
+  transition_to_resolution:
+    actions:
+      - set:
+          variable: current_phase
+          value: "resolution"
+      - set_encounter_phase:
+          phase: "resolution"
+      - log: "Encounter transitioning to resolution phase"
+
+  # Check if resolution is complete
+  check_resolution_complete:
+    actions:
+      # Resolution completes after one tick
+      - end_encounter:
+          outcome: "success"
+
+  # Mark encounter as success
+  mark_success:
+    actions:
+      - log: "Encounter completed successfully"
+
+  # Handle participant joining
+  on_participant_joined:
+    actions:
+      - log: { message: "Participant ${event.participantId} joined encounter" }
+      - cond:
+          - when: "${len(participants) < max_participants}"
+            then:
+              # Add to participants list (in real impl would use array operations)
+              - log: "Participant accepted"
+
+  # Handle participant leaving
+  on_participant_left:
+    actions:
+      - log: { message: "Participant ${event.participantId} left encounter" }
+      # Check if we still have minimum participants
+      - cond:
+          - when: "${current_phase == 'active' && len(participants) < min_participants}"
+            then:
+              - call: { flow: handle_insufficient_participants }
+
+  # Handle objective completion
+  on_objective_completed:
+    actions:
+      - increment:
+          variable: objectives_completed
+          by: 1
+      - log: { message: "Objective completed: ${objectives_completed}/${total_objectives}" }
+
+  # Handle phase timeout
+  on_timer_expired:
+    actions:
+      - cond:
+          - when: "${event.timer_type == 'phase_timeout'}"
+            then:
+              - call: { flow: handle_phase_timeout }
+
+  # Handle insufficient participants
+  handle_insufficient_participants:
+    actions:
+      - log: "Insufficient participants, ending encounter"
+      - end_encounter:
+          outcome: "abandoned"
+
+  # Handle phase timeout
+  handle_phase_timeout:
+    actions:
+      - cond:
+          - when: "${current_phase == 'setup'}"
+            then:
+              - log: "Setup phase timed out"
+              - end_encounter:
+                  outcome: "timeout"
+          - when: "${current_phase == 'active'}"
+            then:
+              - log: "Active phase timed out"
+              - end_encounter:
+                  outcome: "timeout"
