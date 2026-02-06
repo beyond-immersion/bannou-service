@@ -537,6 +537,183 @@ No bugs identified.
 
 ---
 
+## Domain Actions Reference
+
+### Event-to-Character Communication
+
+Two purpose-built ABML actions enable Event Brain actors to communicate with Character Brain actors:
+
+#### actor_command (fire-and-forget)
+
+Sends a command to a Character Brain actor via perception injection. The command is delivered as a perception of type `command:{commandName}`.
+
+```yaml
+- actor_command:
+    target: ${attacker.actor_id}    # Required - expression evaluating to actor ID
+    command: engage_target          # Required - command name (identifier)
+    urgency: 0.8                    # Optional - default 0.7
+    params:                         # Optional - command parameters
+      target_id: ${defender.character_id}
+      strategy: aggressive
+```
+
+**Parameters:**
+- `target` (required): Expression evaluating to the target actor's ID
+- `command` (required): Command name (must be a valid identifier: alphanumeric + underscore)
+- `urgency` (optional): Perception urgency, 0.0-1.0 (default: 0.7)
+- `params` (optional): Dictionary of parameters passed with the command
+
+**Semantic Validation:** The compiler validates that `target` and `command` are present, and that `command` is a valid identifier.
+
+**Character Brain Reception:** Character Brain behaviors can handle commands via flows named `on_command_{command_name}`:
+
+```yaml
+flows:
+  on_command_engage_target:
+    actions:
+      - set:
+          variable: current_target
+          value: ${perception.params.target_id}
+      - goto: { flow: combat_engage }
+```
+
+#### actor_query (request-response)
+
+Queries a Character Brain actor for its current state/options and stores the result in a variable.
+
+```yaml
+- actor_query:
+    target: ${defender.actor_id}    # Required - expression evaluating to actor ID
+    query: combat_readiness         # Required - query type
+    into: defender_status           # Required - variable to store result
+    timeout: 1000                   # Optional - default 1000ms
+```
+
+**Parameters:**
+- `target` (required): Expression evaluating to the target actor's ID
+- `query` (required): Query type (combat, dialogue, exploration, or custom)
+- `into` (required): Variable name to store the result (must be a valid identifier)
+- `timeout` (optional): Query timeout in milliseconds (default: 1000)
+
+**Semantic Validation:** The compiler validates that `target`, `query`, and `into` are present, and that `into` is a valid identifier.
+
+**Result:** The query returns a list of `ActorOption` objects with:
+- `ActionId`: Action identifier
+- `Preference`: Preference score (0.0-1.0)
+- `Available`: Whether the action is currently available
+- `Risk`: Risk assessment (optional)
+- `CooldownMs`: Cooldown remaining (optional)
+- `Requirements`: List of requirements
+- `Tags`: Action tags
+
+**Example Usage:**
+
+```yaml
+flows:
+  coordinate_attack:
+    actions:
+      # Query defender's readiness
+      - actor_query:
+          target: ${defender.actor_id}
+          query: combat_readiness
+          into: defender_status
+
+      # Conditional based on query result
+      - cond:
+          - when: ${defender_status[0].preference < 0.3}
+            then:
+              # Defender is vulnerable, press the attack
+              - actor_command:
+                  target: ${attacker.actor_id}
+                  command: engage_aggressive
+                  params:
+                    target_id: ${defender.character_id}
+          - else:
+              # Defender is ready, use caution
+              - actor_command:
+                  target: ${attacker.actor_id}
+                  command: engage_defensive
+                  params:
+                    target_id: ${defender.character_id}
+```
+
+### Resource Loading
+
+#### load_snapshot
+
+Loads a resource snapshot and registers it as a variable provider for expression evaluation. Enables Event Brain actors to access character data (personality, history, encounters) via standard ABML expression syntax.
+
+**Handler Location:** `plugins/lib-puppetmaster/Handlers/LoadSnapshotHandler.cs`
+
+```yaml
+- load_snapshot:
+    name: candidate              # Required - provider name for expressions
+    resource_type: character     # Required - resource type to load
+    resource_id: ${target_id}    # Required - expression evaluating to GUID
+    filter:                      # Optional - limit to specific source types
+      - character-personality
+      - character-history
+```
+
+**Parameters:**
+- `name` (required): Provider name used in expression access (e.g., "candidate" enables `${candidate.personality.aggression}`)
+- `resource_type` (required): Type of resource to load (e.g., "character")
+- `resource_id` (required): Expression evaluating to the resource's GUID
+- `filter` (optional): List of source types to include in the snapshot (e.g., `["character-personality", "character-history"]`)
+
+**After loading, access via expressions:**
+```yaml
+- cond:
+    - when: ${candidate.personality.aggression > 0.7}
+      then:
+        - log: "High aggression detected"
+    - when: ${candidate.history.participations | length > 5}
+      then:
+        - log: "Experienced character"
+```
+
+**Implementation Notes:**
+- Provider is registered in **root scope** (document-wide access)
+- Uses `ResourceSnapshotCache` in lib-puppetmaster for TTL-based caching (5 minute default)
+- If snapshot cannot be loaded, registers an empty provider (graceful degradation - returns null for all paths)
+- The `resource_id` expression is evaluated at runtime, enabling dynamic resource loading
+- The handler is provided by lib-puppetmaster (L4) and discovered via `GetServices<IActionHandler>()`
+
+**Example - Event Brain loading both participants:**
+```yaml
+flows:
+  main:
+    actions:
+      # Load attacker data
+      - load_snapshot:
+          name: attacker
+          resource_type: character
+          resource_id: ${attacker_id}
+          filter:
+            - character-personality
+            - character-encounter
+
+      # Load defender data
+      - load_snapshot:
+          name: defender
+          resource_type: character
+          resource_id: ${defender_id}
+          filter:
+            - character-personality
+            - character-history
+
+      # Use loaded data for decision making
+      - cond:
+          - when: ${attacker.personality.aggression > defender.personality.courage}
+            then:
+              - actor_command:
+                  target: ${defender.actor_id}
+                  command: intimidated
+                  urgency: 0.8
+```
+
+---
+
 ## Work Tracking
 
 ### AUDIT Markers

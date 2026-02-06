@@ -99,6 +99,42 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 | `DynamicBehaviorProvider` | `IBehaviorDocumentProvider` implementation (priority 100) |
 | `ResourceSnapshotCache` | `IResourceSnapshotCache` implementation for Event Brain actors |
 | `ResourceArchiveProvider` | `IVariableProvider` implementation (not DI-registered - created per-snapshot for ABML expressions) |
+| `LoadSnapshotHandler` | `IActionHandler` for `load_snapshot:` ABML action - enables Event Brain actors to load resource snapshots |
+
+---
+
+## ABML Action Handlers
+
+The Puppetmaster plugin provides ABML action handlers that extend the behavior execution runtime. These handlers are discovered by `DocumentExecutorFactory` via `GetServices<IActionHandler>()`.
+
+### load_snapshot
+
+Loads a resource snapshot and registers it as a variable provider for expression evaluation.
+
+**YAML Syntax**:
+```yaml
+- load_snapshot:
+    name: candidate          # Provider name for expressions (required)
+    resource_type: character # Resource type to load (required)
+    resource_id: ${target_id} # Expression evaluating to GUID (required)
+    filter:                  # Optional: limit to specific source types
+      - character-personality
+      - character-history
+```
+
+**After loading, access via expressions**:
+```yaml
+- cond:
+    - when: ${candidate.personality.aggression > 0.7}
+      then:
+        - log: "High aggression detected"
+```
+
+**Implementation Notes**:
+- Provider is registered in **root scope** (document-wide access)
+- Uses `ResourceSnapshotCache` for TTL-based caching
+- If snapshot cannot be loaded, registers an empty provider (graceful degradation - returns null for all paths)
+- `resource_id` expression is evaluated at runtime, enabling dynamic resource loading
 
 ---
 

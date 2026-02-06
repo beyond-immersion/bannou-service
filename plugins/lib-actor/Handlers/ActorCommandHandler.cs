@@ -110,7 +110,7 @@ public sealed class ActorCommandHandler : IActionHandler
         var perception = new PerceptionData
         {
             PerceptionType = $"command:{command}",
-            SourceId = context.ActorId?.ToString() ?? "event-brain",
+            SourceId = context.RootScope.GetValue("actor_id")?.ToString() ?? "event-brain",
             SourceType = PerceptionSourceType.Coordinator,
             Urgency = urgency,
             Data = commandParams
