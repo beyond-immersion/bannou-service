@@ -3,7 +3,7 @@
 // Static utility for evaluating ABML options definitions to ActorOption values.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Abml.Runtime;

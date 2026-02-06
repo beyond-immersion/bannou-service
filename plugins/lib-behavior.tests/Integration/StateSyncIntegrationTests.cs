@@ -4,7 +4,8 @@
 // EntityStateRegistry, verifying the behavior system can read synced state.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
 using BeyondImmersion.BannouService.Behavior.Runtime;

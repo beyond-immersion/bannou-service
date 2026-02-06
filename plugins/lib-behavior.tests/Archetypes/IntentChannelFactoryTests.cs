@@ -4,7 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.BannouService.Behavior;
-using BeyondImmersion.BannouService.Behavior.Archetypes;
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Archetypes;

@@ -4,6 +4,7 @@
 // and action-to-intent translation.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Handlers;
 using Xunit;

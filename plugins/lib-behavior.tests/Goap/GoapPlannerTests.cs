@@ -3,10 +3,10 @@
 // Tests for GOAP A* planner implementation.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.Bannou.Behavior.Goap;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using Xunit;
 
-using InternalGoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
+using InternalGoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Goap;
 

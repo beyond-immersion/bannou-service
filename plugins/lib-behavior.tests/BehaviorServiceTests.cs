@@ -1,5 +1,5 @@
-using BeyondImmersion.Bannou.Behavior.Compiler;
-using BeyondImmersion.Bannou.Behavior.Goap;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Behavior;
@@ -12,7 +12,7 @@ using Moq;
 using Xunit;
 using ApiGoapGoal = BeyondImmersion.BannouService.Behavior.GoapGoal;
 // Aliases to distinguish between API and internal GOAP types
-using InternalGoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
+using InternalGoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests;
 

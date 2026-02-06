@@ -5,6 +5,7 @@
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 

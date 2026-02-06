@@ -3,7 +3,7 @@
 // ABML action handler for querying actor state (Event Brain support).
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using Microsoft.Extensions.Logging;

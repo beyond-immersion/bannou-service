@@ -3,7 +3,7 @@
 // Tests for GOAP condition parsing and evaluation.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.Bannou.Behavior.Goap;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Goap;

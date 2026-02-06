@@ -3,7 +3,7 @@
 // Caches parsed ABML documents for actor behavior execution.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 
 namespace BeyondImmersion.BannouService.Actor.Caching;
 

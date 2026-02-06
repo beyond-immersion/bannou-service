@@ -3,10 +3,11 @@
 // Tests for the ABML to bytecode compiler.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior.Runtime;
 using Xunit;
-using AbmlCompiler = BeyondImmersion.Bannou.Behavior.Compiler.BehaviorCompiler;
+using AbmlCompiler = BeyondImmersion.Bannou.BehaviorCompiler.Compiler.BehaviorCompiler;
 
 namespace BeyondImmersion.Bannou.Behavior.Tests.Compiler;
 

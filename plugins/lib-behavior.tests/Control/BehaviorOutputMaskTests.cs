@@ -3,6 +3,7 @@
 // Tests for behavior output masking based on control state.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
 using Xunit;

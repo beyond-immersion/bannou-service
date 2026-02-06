@@ -4,7 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Core;
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor;
 using Microsoft.Extensions.Logging;

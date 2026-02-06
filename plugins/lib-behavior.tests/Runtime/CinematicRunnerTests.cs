@@ -3,7 +3,9 @@
 // Tests for control gating integration with cinematic playback.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
 using BeyondImmersion.BannouService.Behavior.Runtime;

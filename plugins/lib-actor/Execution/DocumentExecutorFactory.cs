@@ -9,7 +9,7 @@ using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Behavior;
-using BeyondImmersion.BannouService.Behavior.Archetypes;
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior.Control;
 using Microsoft.Extensions.DependencyInjection;
 
