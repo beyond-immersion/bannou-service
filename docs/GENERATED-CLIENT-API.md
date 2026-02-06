@@ -38,12 +38,13 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
+| [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 3 | Orchestration service for dynamic behaviors, regional watche... |
 | [Bannou Quest Service API](#quest) | `client.Quest` | 16 | Quest system providing objective-based gameplay progression ... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 11 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
 | [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for game worlds. |
-| [Resource Lifecycle API](#resource) | `client.Resource` | 15 | Resource reference tracking and lifecycle management. |
+| [Resource Lifecycle API](#resource) | `client.Resource` | 17 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
@@ -1312,6 +1313,32 @@ Redis-backed high-performance permission system for WebSocket services.
 
 ---
 
+## Bannou Puppetmaster Service API {#puppetmaster}
+
+**Proxy**: `client.Puppetmaster` | **Version**: 1.0.0
+
+Orchestration service for dynamic behaviors, regional watchers, and encounter coordination. Pulls the strings while actors perform on stage.
+
+### Behaviors
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `InvalidatebehaviorsAsync` | `InvalidateBehaviorsRequest` | `InvalidateBehaviorsResponse` | Invalidate cached behavior documents |
+
+### Puppetmaster
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetStatusAsync` | `GetStatusRequest` | `PuppetmasterStatusResponse` | Get service status and statistics |
+
+### Watchers
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ListWatchersAsync` | `ListWatchersRequest` | `ListWatchersResponse` | List active regional watchers |
+
+---
+
 ## Bannou Quest Service API {#quest}
 
 **Proxy**: `client.Quest` | **Version**: 1.0.0
@@ -1509,6 +1536,13 @@ Resource reference tracking and lifecycle management.
 | `UnregisterreferenceAsync` | `UnregisterReferenceRequest` | `UnregisterReferenceResponse` | Remove a reference to a resource |
 | `CheckreferencesAsync` | `CheckReferencesRequest` | `CheckReferencesResponse` | Check reference count and cleanup eligibility |
 | `ListReferencesAsync` | `ListReferencesRequest` | `ListReferencesResponse` | List all references to a resource |
+
+### Seeded Resources
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ListSeededresourcesAsync` | `ListSeededResourcesRequest` | `ListSeededResourcesResponse` | List available seeded resources |
+| `GetSeededresourceAsync` | `GetSeededResourceRequest` | `GetSeededResourceResponse` | Get a seeded resource by type and identifier |
 
 ### Snapshot Management
 
@@ -1831,8 +1865,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 44
-- **Total methods**: 588
+- **Total services**: 45
+- **Total methods**: 593
 
 ---
 

@@ -3,10 +3,11 @@
 // Bridges bannou-service cognition types to lib-behavior GOAP types.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Behavior;
 
-namespace BeyondImmersion.Bannou.BehaviorCompiler.Goap;
+namespace BeyondImmersion.BannouService.Behavior.Goap;
 
 /// <summary>
 /// Extension methods bridging cognition types to GOAP planning options.

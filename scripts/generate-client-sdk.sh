@@ -7,14 +7,16 @@ echo "🔧 Generating Bannou SDK behavior runtime files..."
 # =============================================================================
 # BEHAVIOR FILE COPYING WITH NAMESPACE TRANSFORMATION
 # =============================================================================
-# lib-behavior uses namespace BeyondImmersion.BannouService.Behavior
-# SDKs need their own namespaces:
+# The behavior-compiler SDK uses namespace BeyondImmersion.Bannou.BehaviorCompiler
+# Server/Client SDKs need their own namespaces:
 #   - Server SDK: BeyondImmersion.Bannou.Server.Behavior
 #   - Client SDK: BeyondImmersion.Bannou.Client.Behavior
 #
-# This script ONLY regenerates the behavior runtime files with namespace
-# transformation. The SDK .csproj files are static and committed to git.
+# This script copies files from the behavior-compiler SDK and transforms
+# namespaces for the server and client SDKs.
 # =============================================================================
+
+BEHAVIOR_SDK_DIR="sdks/behavior-compiler"
 
 copy_behavior_files() {
     local target_dir="$1"
@@ -23,24 +25,26 @@ copy_behavior_files() {
     echo "  Copying behavior files to $target_dir with namespace $target_namespace..."
 
     # Create directory structure (clean first to remove stale files)
-    rm -rf "$target_dir/Runtime" "$target_dir/Intent"
+    rm -rf "$target_dir/Runtime" "$target_dir/Intent" "$target_dir/Archetypes" "$target_dir/Goap"
     mkdir -p "$target_dir/Runtime"
     mkdir -p "$target_dir/Intent"
+    mkdir -p "$target_dir/Archetypes"
+    mkdir -p "$target_dir/Goap"
 
-    # Source namespace pattern
-    local src_ns="BeyondImmersion.BannouService.Behavior"
+    # Source namespace pattern from the behavior-compiler SDK
+    local src_ns="BeyondImmersion.Bannou.BehaviorCompiler"
 
     # Copy and transform Runtime files
     # EXCLUDE cloud-side files that depend on server infrastructure:
-    #   - CinematicRunner.cs: Depends on Control/* types (server-side orchestration)
-    local exclude_runtime="CinematicRunner.cs"
+    #   - CinematicInterpreter.cs: Server-side only (lives in behavior-compiler SDK but not needed in client)
+    local exclude_runtime="CinematicInterpreter.cs"
 
-    for file in ./plugins/lib-behavior/Runtime/*.cs; do
+    for file in "$BEHAVIOR_SDK_DIR/Runtime/"*.cs; do
         if [ -f "$file" ]; then
             local basename=$(basename "$file")
-            # Skip excluded files
-            if [[ "$exclude_runtime" == *"$basename"* ]]; then
-                echo "    Skipping $basename (cloud-side only)"
+            # Skip excluded files for client SDK
+            if [[ "$target_namespace" == *"Client"* ]] && [[ "$exclude_runtime" == *"$basename"* ]]; then
+                echo "    Skipping $basename (server-side only)"
                 continue
             fi
             sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Runtime/$basename"
@@ -48,17 +52,35 @@ copy_behavior_files() {
     done
 
     # Copy and transform Intent files
-    for file in ./plugins/lib-behavior/Intent/*.cs; do
+    for file in "$BEHAVIOR_SDK_DIR/Intent/"*.cs; do
         if [ -f "$file" ]; then
             local basename=$(basename "$file")
             sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Intent/$basename"
         fi
     done
 
-    # Copy and transform root behavior files (IBehaviorEvaluator, BehaviorEvaluatorBase, BehaviorModelCache)
+    # Copy and transform Archetypes files
+    for file in "$BEHAVIOR_SDK_DIR/Archetypes/"*.cs; do
+        if [ -f "$file" ]; then
+            local basename=$(basename "$file")
+            sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Archetypes/$basename"
+        fi
+    done
+
+    # Copy and transform Goap files
+    for file in "$BEHAVIOR_SDK_DIR/Goap/"*.cs; do
+        if [ -f "$file" ]; then
+            local basename=$(basename "$file")
+            sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Goap/$basename"
+        fi
+    done
+
+    # Copy and transform service-level behavior files from lib-behavior
+    # These are the evaluator interfaces that depend on the runtime types
+    local lib_behavior_ns="BeyondImmersion.BannouService.Behavior"
     for file in IBehaviorEvaluator.cs BehaviorEvaluatorBase.cs BehaviorModelCache.cs; do
         if [ -f "./plugins/lib-behavior/$file" ]; then
-            sed "s/$src_ns/$target_namespace/g" "./plugins/lib-behavior/$file" > "$target_dir/$file"
+            sed "s/$lib_behavior_ns/$target_namespace/g" "./plugins/lib-behavior/$file" > "$target_dir/$file"
         fi
     done
 
@@ -96,6 +118,7 @@ echo "✅ Client SDK behavior files: $CLIENT_SDK_DIR/Generated/Behavior/"
 echo ""
 echo "✅ SDK behavior generation completed successfully!"
 echo ""
-echo "   Note: SDK .csproj files are static and committed to git."
-echo "   This script only regenerates behavior runtime files with namespace transformation."
+echo "   Source: $BEHAVIOR_SDK_DIR (behavior-compiler SDK)"
+echo "   Server: $SERVER_SDK_DIR/Generated/Behavior/"
+echo "   Client: $CLIENT_SDK_DIR/Generated/Behavior/"
 echo ""

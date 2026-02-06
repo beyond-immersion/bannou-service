@@ -349,6 +349,12 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
 
+### Puppetmaster
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `BehaviorInvalidatedEvent` | Custom | `behavior.invalidated` | Event published when behavior documents are invali... |
+
 ### Quest
 
 | Event | Type | Likely Topic | Description |

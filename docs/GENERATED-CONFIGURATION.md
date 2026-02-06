@@ -677,6 +677,14 @@ Final ... |
 | `PERMISSION_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiration time in seconds |
 | `PERMISSION_LOCK_MAX_RETRIES` | int | `10` | Maximum retries for acquiring distributed lock |
 
+### Puppetmaster
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `PUPPETMASTER_ASSET_DOWNLOAD_TIMEOUT_SECONDS` | int | `30` | Timeout for downloading behavior YAML from asset service |
+| `PUPPETMASTER_BEHAVIOR_CACHE_MAX_SIZE` | int | `1000` | Maximum number of behavior documents to cache in memory |
+| `PUPPETMASTER_BEHAVIOR_CACHE_TTL_SECONDS` | int | `3600` | Time-to-live for cached behavior documents in seconds |
+
 ### Quest
 
 | Environment Variable | Type | Default | Description |
@@ -870,9 +878,9 @@ Default: 3600 (1 h... |
 
 ## Configuration Summary
 
-- **Total properties**: 657
+- **Total properties**: 660
 - **Required (no default)**: 41
-- **Optional (has default)**: 616
+- **Optional (has default)**: 619
 
 ## Environment Variable Naming Convention
 

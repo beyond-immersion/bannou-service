@@ -40,12 +40,13 @@ Des... |
 | [Music](#music) | 1.0.0 | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
+| [Puppetmaster](#puppetmaster) | 1.0.0 | 3 | Orchestration service for dynamic behaviors, regional watche... |
 | [Quest](#quest) | 1.0.0 | 16 | Quest system providing objective-based gameplay progression ... |
 | [Realm](#realm) | 1.0.0 | 11 | Realm management service for game worlds. |
 | [Realm History](#realm-history) | 1.0.0 | 12 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for game worlds. |
-| [Resource](#resource) | 1.0.0 | 15 | Resource reference tracking and lifecycle management. |
+| [Resource](#resource) | 1.0.0 | 17 | Resource reference tracking and lifecycle management. |
 | [Save Load](#save-load) | 1.0.0 | 26 | Generic save/load system for game state persistence.
 Support... |
 | [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
@@ -304,6 +305,15 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 
 ---
 
+## Puppetmaster {#puppetmaster}
+
+**Version**: 1.0.0 | **Schema**: `schemas/puppetmaster-api.yaml` | **Deep Dive**: [docs/plugins/PUPPETMASTER.md](plugins/PUPPETMASTER.md)
+
+Orchestration service for dynamic behaviors, regional watchers, and encounter coordination.
+Pulls the strings while actors perform on stage.
+
+---
+
 ## Quest {#quest}
 
 **Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md)
@@ -428,7 +438,7 @@ IRedisOperations                  - Low-level Redis access (Lua scripts, transac
 
 **Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md)
 
-Seeded narrative generation from compressed archives using the storyline SDKs.
+The Storyline service wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements - callers (gods/regional watchers) decide whether to instantiate them. The service is internal-only (Layer 4 Game Features) and requires the `developer` role for all endpoints.
 
 ---
 
@@ -468,8 +478,8 @@ Public-facing website service for browser-based access to news, account profile 
 
 ## Summary
 
-- **Total services**: 45
-- **Total endpoints**: 594
+- **Total services**: 46
+- **Total endpoints**: 599
 
 ---
 
