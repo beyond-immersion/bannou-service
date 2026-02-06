@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Resource;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Resource;
 
@@ -1830,6 +1845,192 @@ public partial class ResourceSnapshot
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to list available seeded resources
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListSeededResourcesRequest
+{
+
+    /// <summary>
+    /// Filter by resource type (list all types if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    public string? ResourceType { get; set; } = default!;
+
+}
+
+/// <summary>
+/// List of available seeded resources
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListSeededResourcesResponse
+{
+
+    /// <summary>
+    /// Available seeded resources
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resources")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<SeededResourceSummary> Resources { get; set; } = new System.Collections.ObjectModel.Collection<SeededResourceSummary>();
+
+    /// <summary>
+    /// Total number of resources returned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Summary of an available seeded resource
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SeededResourceSummary
+{
+
+    /// <summary>
+    /// Resource type category (e.g., "behavior", "species-definition")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier within the resource type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("identifier")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Identifier { get; set; } = default!;
+
+    /// <summary>
+    /// MIME type of the content (e.g., "application/yaml")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ContentType { get; set; } = default!;
+
+    /// <summary>
+    /// Content size in bytes (null if not readily available)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public int? SizeBytes { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get a seeded resource
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetSeededResourceRequest
+{
+
+    /// <summary>
+    /// Resource type category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Resource identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("identifier")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Identifier { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response containing seeded resource content
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetSeededResourceResponse
+{
+
+    /// <summary>
+    /// Resource type requested
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Resource identifier requested
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("identifier")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Identifier { get; set; } = default!;
+
+    /// <summary>
+    /// True if resource was found
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("found")]
+    public bool Found { get; set; } = default!;
+
+    /// <summary>
+    /// The resource data (null if not found)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resource")]
+    public SeededResourceDetail? Resource { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Full seeded resource with content
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SeededResourceDetail
+{
+
+    /// <summary>
+    /// Resource type category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("identifier")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Identifier { get; set; } = default!;
+
+    /// <summary>
+    /// MIME type of the content
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ContentType { get; set; } = default!;
+
+    /// <summary>
+    /// Base64-encoded resource content
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("content")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Content { get; set; } = default!;
+
+    /// <summary>
+    /// Optional key-value metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
 }
 

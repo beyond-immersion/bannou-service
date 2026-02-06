@@ -462,6 +462,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetSnapshotResponse'
 
+  # ===========================================================================
+  # Seeded Resource Management (2 endpoints)
+  # ===========================================================================
+
+  /resource/seeded/list:
+    post:
+      operationId: listSeededResources
+      tags:
+      - Seeded Resources
+      summary: List available seeded resources
+      description: |
+        Returns identifiers of all seeded resources available from registered providers.
+        Filter by resourceType to get resources of a specific category.
+
+        Seeded resources are read-only factory defaults provided by plugins via
+        ISeededResourceProvider implementations registered in DI.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListSeededResourcesRequest'
+      responses:
+        '200':
+          description: List of seeded resource identifiers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSeededResourcesResponse'
+
+  /resource/seeded/get:
+    post:
+      operationId: getSeededResource
+      tags:
+      - Seeded Resources
+      summary: Get a seeded resource by type and identifier
+      description: |
+        Retrieves the content and metadata of a seeded resource.
+        Returns found=false if the resource type or identifier is not found.
+
+        Content is returned as base64-encoded bytes with contentType indicating
+        the MIME type for proper parsing.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSeededResourceRequest'
+      responses:
+        '200':
+          description: Seeded resource content and metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSeededResourceResponse'
+
 components:
   schemas:
     # =========================================================================
@@ -1629,3 +1687,124 @@ components:
           type: string
           format: date-time
           description: When this snapshot will expire
+
+    # =========================================================================
+    # Seeded Resource Management Models
+    # =========================================================================
+
+    ListSeededResourcesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list available seeded resources
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all types if not specified)
+
+    ListSeededResourcesResponse:
+      type: object
+      additionalProperties: false
+      description: List of available seeded resources
+      required:
+      - resources
+      - totalCount
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeededResourceSummary'
+          description: Available seeded resources
+        totalCount:
+          type: integer
+          description: Total number of resources returned
+
+    SeededResourceSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of an available seeded resource
+      required:
+      - resourceType
+      - identifier
+      - contentType
+      properties:
+        resourceType:
+          type: string
+          description: Resource type category (e.g., "behavior", "species-definition")
+        identifier:
+          type: string
+          description: Unique identifier within the resource type
+        contentType:
+          type: string
+          description: MIME type of the content (e.g., "application/yaml")
+        sizeBytes:
+          type: integer
+          nullable: true
+          description: Content size in bytes (null if not readily available)
+
+    GetSeededResourceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a seeded resource
+      required:
+      - resourceType
+      - identifier
+      properties:
+        resourceType:
+          type: string
+          description: Resource type category
+        identifier:
+          type: string
+          description: Resource identifier
+
+    GetSeededResourceResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing seeded resource content
+      required:
+      - resourceType
+      - identifier
+      - found
+      properties:
+        resourceType:
+          type: string
+          description: Resource type requested
+        identifier:
+          type: string
+          description: Resource identifier requested
+        found:
+          type: boolean
+          description: True if resource was found
+        resource:
+          $ref: '#/components/schemas/SeededResourceDetail'
+          nullable: true
+          description: The resource data (null if not found)
+
+    SeededResourceDetail:
+      type: object
+      additionalProperties: false
+      description: Full seeded resource with content
+      required:
+      - resourceType
+      - identifier
+      - contentType
+      - content
+      properties:
+        resourceType:
+          type: string
+          description: Resource type category
+        identifier:
+          type: string
+          description: Unique identifier
+        contentType:
+          type: string
+          description: MIME type of the content
+        content:
+          type: string
+          description: Base64-encoded resource content
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Optional key-value metadata

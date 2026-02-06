@@ -104,4 +104,14 @@ public partial interface IResourceService : IBannouService
         /// </summary>
         Task<(StatusCodes, GetSnapshotResponse?)> GetSnapshotAsync(GetSnapshotRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// ListSeededResources operation
+        /// </summary>
+        Task<(StatusCodes, ListSeededResourcesResponse?)> ListSeededResourcesAsync(ListSeededResourcesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetSeededResource operation
+        /// </summary>
+        Task<(StatusCodes, GetSeededResourceResponse?)> GetSeededResourceAsync(GetSeededResourceRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }
