@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Abml.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
 using BeyondImmersion.BannouService.Puppetmaster.Providers;
 using Microsoft.Extensions.Logging;

@@ -3,8 +3,8 @@
 // Tests for YAML document parsing.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
-using BeyondImmersion.BannouService.Abml.Parser;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Tests.Abml;

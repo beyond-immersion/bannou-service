@@ -4,10 +4,10 @@
 // =============================================================================
 
 using BeyondImmersion.BannouService.Abml.Compiler;
-using BeyondImmersion.BannouService.Abml.Documents;
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Abml.Parser;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Tests.Abml;
