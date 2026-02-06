@@ -8,7 +8,7 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 
-namespace BeyondImmersion.BannouService.Abml.Compiler;
+namespace BeyondImmersion.Bannou.Behavior.Compiler;
 
 /// <summary>
 /// Merges a LoadedDocument tree into a single flat AbmlDocument.

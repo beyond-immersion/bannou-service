@@ -11,6 +11,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Relationship;
+using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -61,6 +62,7 @@ public partial class StorylineService : IStorylineService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IResourceClient _resourceClient;
     private readonly IRelationshipClient _relationshipClient;
+    private readonly IRelationshipTypeClient _relationshipTypeClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<StorylineService> _logger;
@@ -89,6 +91,7 @@ public partial class StorylineService : IStorylineService
         IStateStoreFactory stateStoreFactory,
         IResourceClient resourceClient,
         IRelationshipClient relationshipClient,
+        IRelationshipTypeClient relationshipTypeClient,
         IServiceProvider serviceProvider,
         IDistributedLockProvider lockProvider,
         ILogger<StorylineService> logger,
@@ -99,6 +102,7 @@ public partial class StorylineService : IStorylineService
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
         ArgumentNullException.ThrowIfNull(resourceClient);
         ArgumentNullException.ThrowIfNull(relationshipClient);
+        ArgumentNullException.ThrowIfNull(relationshipTypeClient);
         ArgumentNullException.ThrowIfNull(serviceProvider);
         ArgumentNullException.ThrowIfNull(lockProvider);
         ArgumentNullException.ThrowIfNull(logger);
@@ -108,6 +112,7 @@ public partial class StorylineService : IStorylineService
         _stateStoreFactory = stateStoreFactory;
         _resourceClient = resourceClient;
         _relationshipClient = relationshipClient;
+        _relationshipTypeClient = relationshipTypeClient;
         _serviceProvider = serviceProvider;
         _lockProvider = lockProvider;
         _logger = logger;
@@ -599,8 +604,8 @@ public partial class StorylineService : IStorylineService
 
         try
         {
-            // Query all definitions from MySQL
-            var allDefinitions = await _scenarioDefinitionStore.GetAllAsync(cancellationToken);
+            // Query all definitions from MySQL using IQueryableStateStore
+            var allDefinitions = await _scenarioDefinitionStore.QueryAsync(d => true, cancellationToken);
 
             // Apply filters
             var filtered = allDefinitions.AsEnumerable();
@@ -729,7 +734,7 @@ public partial class StorylineService : IStorylineService
             existing.Etag = Guid.NewGuid().ToString("N");
 
             // Save to MySQL
-            await _scenarioDefinitionStore.SaveAsync(body.ScenarioId.ToString(), existing, cancellationToken);
+            await _scenarioDefinitionStore.SaveAsync(body.ScenarioId.ToString(), existing, null, cancellationToken);
 
             // Invalidate and update cache
             await _scenarioCacheStore.DeleteAsync(body.ScenarioId.ToString(), cancellationToken);
@@ -782,7 +787,7 @@ public partial class StorylineService : IStorylineService
             existing.UpdatedAt = DateTimeOffset.UtcNow;
             existing.Etag = Guid.NewGuid().ToString("N");
 
-            await _scenarioDefinitionStore.SaveAsync(body.ScenarioId.ToString(), existing, cancellationToken);
+            await _scenarioDefinitionStore.SaveAsync(body.ScenarioId.ToString(), existing, null, cancellationToken);
             await _scenarioCacheStore.DeleteAsync(body.ScenarioId.ToString(), cancellationToken);
 
             _logger.LogInformation("Deprecated scenario definition {ScenarioId}", body.ScenarioId);
@@ -820,8 +825,8 @@ public partial class StorylineService : IStorylineService
 
         try
         {
-            // Get all candidate scenarios
-            var allDefinitions = await _scenarioDefinitionStore.GetAllAsync(cancellationToken);
+            // Get all candidate scenarios using IQueryableStateStore
+            var allDefinitions = await _scenarioDefinitionStore.QueryAsync(d => true, cancellationToken);
 
             // Filter by scope and enabled status
             var candidates = allDefinitions
@@ -1109,10 +1114,12 @@ public partial class StorylineService : IStorylineService
             }
 
             // Acquire distributed lock to prevent double-trigger
-            var lockResource = $"scenario-trigger:{body.CharacterId}:{body.ScenarioId}";
+            var lockResource = $"{body.CharacterId}:{body.ScenarioId}";
+            var lockOwner = $"scenario-trigger-{executionId:N}";
             await using var lockHandle = await _lockProvider.LockAsync(
+                "storyline-scenario-lock",  // Lock store name
                 lockResource,
-                executionId.ToString(),
+                lockOwner,
                 _configuration.ScenarioTriggerLockTimeoutSeconds,
                 cancellationToken);
 
@@ -1200,7 +1207,7 @@ public partial class StorylineService : IStorylineService
             };
 
             // Save execution record
-            await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, cancellationToken);
+            await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, null, cancellationToken);
 
             // Add to active set
             var activeEntry = new ActiveScenarioEntry
@@ -1209,7 +1216,7 @@ public partial class StorylineService : IStorylineService
                 ScenarioId = body.ScenarioId,
                 ScenarioCode = definition.Code
             };
-            await _scenarioActiveStore.SetAddAsync(activeKey, BannouJson.Serialize(activeEntry), cancellationToken);
+            await _scenarioActiveStore.AddToSetAsync(activeKey, activeEntry, null, cancellationToken);
 
             // Store idempotency key if provided
             if (!string.IsNullOrEmpty(body.IdempotencyKey))
@@ -1274,10 +1281,10 @@ public partial class StorylineService : IStorylineService
             execution.CompletedAt = DateTimeOffset.UtcNow;
             execution.MutationsAppliedJson = BannouJson.Serialize(appliedMutations);
             execution.QuestsSpawnedJson = BannouJson.Serialize(spawnedQuests);
-            await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, cancellationToken);
+            await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, null, cancellationToken);
 
             // Remove from active set
-            await _scenarioActiveStore.SetRemoveAsync(activeKey, BannouJson.Serialize(activeEntry), cancellationToken);
+            await _scenarioActiveStore.RemoveFromSetAsync(activeKey, activeEntry, cancellationToken);
 
             // Set cooldown
             var cooldownSeconds = definition.CooldownSeconds ?? _configuration.ScenarioCooldownDefaultSeconds;
@@ -1368,14 +1375,11 @@ public partial class StorylineService : IStorylineService
         try
         {
             var activeKey = body.CharacterId.ToString();
-            var activeMembers = await _scenarioActiveStore.SetMembersAsync(activeKey, cancellationToken);
+            var activeMembers = await _scenarioActiveStore.GetSetAsync<ActiveScenarioEntry>(activeKey, cancellationToken);
 
             var executions = new List<ScenarioExecution>();
-            foreach (var memberJson in activeMembers)
+            foreach (var entry in activeMembers)
             {
-                var entry = BannouJson.Deserialize<ActiveScenarioEntry>(memberJson);
-                if (entry is null) continue;
-
                 var execution = await _scenarioExecutionStore.GetAsync(entry.ExecutionId.ToString(), cancellationToken);
                 if (execution is not null)
                 {
@@ -1424,8 +1428,8 @@ public partial class StorylineService : IStorylineService
 
         try
         {
-            // Query all executions for character
-            var allExecutions = await _scenarioExecutionStore.GetAllAsync(cancellationToken);
+            // Query executions for character using IQueryableStateStore
+            var allExecutions = await _scenarioExecutionStore.QueryAsync(e => e.PrimaryCharacterId == body.CharacterId, cancellationToken);
 
             var characterExecutions = allExecutions
                 .Where(e => e.PrimaryCharacterId == body.CharacterId)
@@ -2044,10 +2048,15 @@ public partial class StorylineService : IStorylineService
         Guid? gameServiceId,
         CancellationToken cancellationToken)
     {
-        var allDefinitions = await _scenarioDefinitionStore.GetAllAsync(cancellationToken);
+        var normalizedCode = code.ToUpperInvariant();
 
-        return allDefinitions.FirstOrDefault(d =>
-            d.Code.Equals(code, StringComparison.OrdinalIgnoreCase) &&
+        // Query with code filter (MySQL handles case-insensitive comparison)
+        var matchingDefinitions = await _scenarioDefinitionStore.QueryAsync(
+            d => d.Code == normalizedCode,
+            cancellationToken);
+
+        // Apply additional scope filters in memory
+        return matchingDefinitions.FirstOrDefault(d =>
             (!realmId.HasValue || !d.RealmId.HasValue || d.RealmId == realmId) &&
             (!gameServiceId.HasValue || !d.GameServiceId.HasValue || d.GameServiceId == gameServiceId));
     }
@@ -2330,15 +2339,29 @@ public partial class StorylineService : IStorylineService
                         return (false, "Missing experience type for personality mutation");
                     }
 
-                    var (status, _) = await client.RecordExperienceAsync(
-                        new CharacterPersonality.RecordExperienceRequest
-                        {
-                            CharacterId = characterId,
-                            ExperienceType = mutation.ExperienceType,
-                            Intensity = mutation.ExperienceIntensity ?? 0.5f
-                        }, cancellationToken);
+                    // Parse experience type string to enum (schema design limitation - should use enum type)
+                    if (!Enum.TryParse<CharacterPersonality.ExperienceType>(mutation.ExperienceType, ignoreCase: true, out var experienceType))
+                    {
+                        return (false, $"Unknown experience type: {mutation.ExperienceType}");
+                    }
 
-                    return (status == StatusCodes.OK, status == StatusCodes.OK ? "Personality evolved" : $"Failed: {status}");
+                    try
+                    {
+                        await client.RecordExperienceAsync(
+                            new CharacterPersonality.RecordExperienceRequest
+                            {
+                                CharacterId = characterId,
+                                ExperienceType = experienceType,
+                                Intensity = mutation.ExperienceIntensity ?? 0.5f
+                            }, cancellationToken);
+
+                        return (true, "Personality evolved");
+                    }
+                    catch (Bannou.Core.ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to record personality experience");
+                        return (false, $"Failed: {ex.StatusCode}");
+                    }
                 }
 
                 case MutationType.BackstoryAdd:
@@ -2356,17 +2379,34 @@ public partial class StorylineService : IStorylineService
                         return (false, "Missing backstory element type or key");
                     }
 
-                    var (status, _) = await client.AddBackstoryElementAsync(
-                        new CharacterHistory.AddBackstoryElementRequest
-                        {
-                            CharacterId = characterId,
-                            ElementType = mutation.BackstoryElementType,
-                            Key = mutation.BackstoryKey,
-                            Value = mutation.BackstoryValue,
-                            Strength = mutation.BackstoryStrength ?? 0.5f
-                        }, cancellationToken);
+                    // Parse backstory element type string to enum (schema design limitation - should use enum type)
+                    if (!Enum.TryParse<CharacterHistory.BackstoryElementType>(mutation.BackstoryElementType, ignoreCase: true, out var elementType))
+                    {
+                        return (false, $"Unknown backstory element type: {mutation.BackstoryElementType}");
+                    }
 
-                    return (status == StatusCodes.OK, status == StatusCodes.OK ? "Backstory added" : $"Failed: {status}");
+                    try
+                    {
+                        await client.AddBackstoryElementAsync(
+                            new CharacterHistory.AddBackstoryElementRequest
+                            {
+                                CharacterId = characterId,
+                                Element = new CharacterHistory.BackstoryElement
+                                {
+                                    ElementType = elementType,
+                                    Key = mutation.BackstoryKey,
+                                    Value = mutation.BackstoryValue ?? string.Empty,
+                                    Strength = mutation.BackstoryStrength ?? 0.5f
+                                }
+                            }, cancellationToken);
+
+                        return (true, "Backstory added");
+                    }
+                    catch (Bannou.Core.ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to add backstory element");
+                        return (false, $"Failed: {ex.StatusCode}");
+                    }
                 }
 
                 case MutationType.RelationshipCreate:
@@ -2390,17 +2430,32 @@ public partial class StorylineService : IStorylineService
                         return (false, $"No participant found for role {mutation.OtherParticipantRole}");
                     }
 
-                    var (status, _) = await _relationshipClient.CreateRelationshipAsync(
-                        new CreateRelationshipRequest
-                        {
-                            EntityAId = characterId,
-                            EntityAType = "character",
-                            EntityBId = otherEntityId.Value,
-                            EntityBType = "character",
-                            RelationshipTypeCode = mutation.RelationshipTypeCode
-                        }, cancellationToken);
+                    try
+                    {
+                        // Resolve relationship type code to ID
+                        var relationshipType = await _relationshipTypeClient.GetRelationshipTypeByCodeAsync(
+                            new GetRelationshipTypeByCodeRequest { Code = mutation.RelationshipTypeCode },
+                            cancellationToken);
 
-                    return (status == StatusCodes.OK, status == StatusCodes.OK ? "Relationship created" : $"Failed: {status}");
+                        // Create relationship with proper types
+                        await _relationshipClient.CreateRelationshipAsync(
+                            new CreateRelationshipRequest
+                            {
+                                Entity1Id = characterId,
+                                Entity1Type = EntityType.Character,
+                                Entity2Id = otherEntityId.Value,
+                                Entity2Type = EntityType.Character,
+                                RelationshipTypeId = relationshipType.RelationshipTypeId,
+                                StartedAt = DateTimeOffset.UtcNow
+                            }, cancellationToken);
+
+                        return (true, "Relationship created");
+                    }
+                    catch (Bannou.Core.ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to create relationship");
+                        return (false, $"Failed: {ex.StatusCode}");
+                    }
                 }
 
                 case MutationType.RelationshipEnd:
@@ -2423,27 +2478,47 @@ public partial class StorylineService : IStorylineService
                         return (false, $"No participant found for role {mutation.OtherParticipantRole}");
                     }
 
-                    // Find and end the relationship
-                    var (getStatus, getResponse) = await _relationshipClient.GetRelationshipAsync(
-                        new GetRelationshipRequest
-                        {
-                            EntityAId = characterId,
-                            EntityBId = otherEntityId.Value,
-                            RelationshipTypeCode = mutation.RelationshipTypeCode
-                        }, cancellationToken);
-
-                    if (getStatus != StatusCodes.OK || getResponse?.Found != true || getResponse.Relationship is null)
+                    try
                     {
-                        return (false, "Relationship not found");
-                    }
+                        // Resolve relationship type code to ID
+                        var relationshipType = await _relationshipTypeClient.GetRelationshipTypeByCodeAsync(
+                            new GetRelationshipTypeByCodeRequest { Code = mutation.RelationshipTypeCode },
+                            cancellationToken);
 
-                    var (endStatus, _) = await _relationshipClient.EndRelationshipAsync(
-                        new EndRelationshipRequest
+                        // Find relationships between the two characters of the specified type
+                        var relationships = await _relationshipClient.GetRelationshipsBetweenAsync(
+                            new GetRelationshipsBetweenRequest
+                            {
+                                Entity1Id = characterId,
+                                Entity1Type = EntityType.Character,
+                                Entity2Id = otherEntityId.Value,
+                                Entity2Type = EntityType.Character,
+                                RelationshipTypeId = relationshipType.RelationshipTypeId,
+                                IncludeEnded = false
+                            }, cancellationToken);
+
+                        // Find the active relationship to end
+                        var activeRelationship = relationships.Relationships.FirstOrDefault(r => r.EndedAt is null);
+                        if (activeRelationship is null)
                         {
-                            RelationshipId = getResponse.Relationship.RelationshipId
-                        }, cancellationToken);
+                            return (false, "Active relationship not found");
+                        }
 
-                    return (endStatus == StatusCodes.OK, endStatus == StatusCodes.OK ? "Relationship ended" : $"Failed: {endStatus}");
+                        // End the relationship
+                        await _relationshipClient.EndRelationshipAsync(
+                            new EndRelationshipRequest
+                            {
+                                RelationshipId = activeRelationship.RelationshipId,
+                                EndedAt = DateTimeOffset.UtcNow
+                            }, cancellationToken);
+
+                        return (true, "Relationship ended");
+                    }
+                    catch (Bannou.Core.ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to end relationship");
+                        return (false, $"Failed: {ex.StatusCode}");
+                    }
                 }
 
                 case MutationType.Custom:
@@ -2490,25 +2565,20 @@ public partial class StorylineService : IStorylineService
                 _logger.LogDebug("Delayed quest spawning not implemented, spawning {QuestCode} immediately", hook.QuestCode);
             }
 
-            var (status, response) = await client.CreateQuestFromTemplateAsync(
-                new Quest.CreateQuestFromTemplateRequest
+            // Use AcceptQuestAsync with quest code to spawn the quest
+            var response = await client.AcceptQuestAsync(
+                new Quest.AcceptQuestRequest
                 {
-                    QuestCode = hook.QuestCode,
-                    CharacterId = characterId,
+                    Code = hook.QuestCode,
+                    QuestorCharacterId = characterId,
                     TermOverrides = hook.TermOverrides
                 }, cancellationToken);
 
-            if (status == StatusCodes.OK && response is not null)
-            {
-                return (response.QuestInstanceId, true);
-            }
-
-            _logger.LogWarning("Failed to spawn quest {QuestCode}: {Status}", hook.QuestCode, status);
-            return (null, false);
+            return (response.QuestInstanceId, true);
         }
-        catch (ApiException ex)
+        catch (Bannou.Core.ApiException ex)
         {
-            _logger.LogWarning(ex, "API exception spawning quest {QuestCode}", hook.QuestCode);
+            _logger.LogWarning(ex, "API exception spawning quest {QuestCode}: {Status}", hook.QuestCode, ex.StatusCode);
             return (null, false);
         }
         catch (Exception ex)

@@ -6,7 +6,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
-using BeyondImmersion.BannouService.Abml.Compiler;
+using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.BannouService.Abml.Execution;
 using Xunit;
 
