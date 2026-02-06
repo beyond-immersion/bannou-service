@@ -1567,6 +1567,16 @@ components:
           type: boolean
           default: false
           description: If true, return what would be captured without storing
+        filterSourceTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Optional list of source types to include in the snapshot.
+            Only compression callbacks matching these source types will be executed.
+            If omitted or empty, all registered compression callbacks are executed.
+            Example: ["character-personality", "character-history"]
 
     ExecuteSnapshotResponse:
       type: object
@@ -1626,6 +1636,15 @@ components:
           type: string
           format: uuid
           description: ID of the snapshot to retrieve
+        filterSourceTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Optional filter for which entries to return from the snapshot.
+            Only entries with matching source types are returned.
+            If omitted or empty, all entries are returned.
 
     GetSnapshotResponse:
       type: object

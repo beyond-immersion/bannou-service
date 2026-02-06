@@ -1676,7 +1676,12 @@ public partial class ResourceService : IResourceService
         var stopwatch = Stopwatch.StartNew();
 
         // Get all compression callbacks for this resource type, sorted by priority
-        var callbacks = await GetCompressCallbacksAsync(body.ResourceType, cancellationToken);
+        var allCallbacks = await GetCompressCallbacksAsync(body.ResourceType, cancellationToken);
+
+        // Apply server-side filtering if filterSourceTypes is specified
+        var callbacks = body.FilterSourceTypes is { Count: > 0 }
+            ? allCallbacks.Where(c => body.FilterSourceTypes.Contains(c.SourceType, StringComparer.OrdinalIgnoreCase)).ToList()
+            : allCallbacks;
 
         if (callbacks.Count == 0)
         {
@@ -1951,6 +1956,11 @@ public partial class ResourceService : IResourceService
             });
         }
 
+        // Apply server-side filtering if filterSourceTypes is specified
+        var entriesToReturn = body.FilterSourceTypes is { Count: > 0 }
+            ? snapshot.Entries.Where(e => body.FilterSourceTypes.Contains(e.SourceType, StringComparer.OrdinalIgnoreCase))
+            : snapshot.Entries;
+
         // Convert internal model to API model
         var apiSnapshot = new ResourceSnapshot
         {
@@ -1958,7 +1968,7 @@ public partial class ResourceService : IResourceService
             ResourceType = snapshot.ResourceType,
             ResourceId = snapshot.ResourceId,
             SnapshotType = snapshot.SnapshotType,
-            Entries = snapshot.Entries.Select(e => new ArchiveBundleEntry
+            Entries = entriesToReturn.Select(e => new ArchiveBundleEntry
             {
                 SourceType = e.SourceType,
                 ServiceName = e.ServiceName,
