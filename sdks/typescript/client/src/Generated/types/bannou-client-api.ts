@@ -6828,6 +6828,174 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/storyline/scenario/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new scenario definition
+     * @description Creates a reusable scenario definition template.
+     *     Scenarios are passive building blocks with triggering conditions,
+     *     phases, mutations, and optional quest hooks.
+     */
+    post: operations['CreateScenarioDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/storyline/scenario/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a scenario definition by ID or code
+     * @description Retrieves a scenario definition by its ID or code.
+     *     Uses read-through cache for performance.
+     */
+    post: operations['GetScenarioDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/storyline/scenario/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List scenario definitions
+     * @description Lists scenario definitions with optional filtering by realm, game service, and tags.
+     *     Results are paginated and ordered by priority (descending), then creation time.
+     */
+    post: operations['ListScenarioDefinitions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/storyline/scenario/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a scenario definition
+     * @description Updates an existing scenario definition.
+     *     Uses ETag for optimistic concurrency control.
+     */
+    post: operations['UpdateScenarioDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/storyline/scenario/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a scenario definition
+     * @description Soft-deletes a scenario definition by marking it deprecated.
+     *     Deprecated scenarios are not returned by find-available.
+     */
+    post: operations['DeprecateScenarioDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/storyline/scenario/test': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Dry-run scenario trigger
+     * @description Tests whether a scenario would trigger for a character without
+     *     actually executing it. Returns detailed condition evaluation results
+     *     and predicted mutations.
+     */
+    post: operations['TestScenarioTrigger'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/storyline/scenario/get-active': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get active scenarios for a character
+     * @description Returns currently executing scenarios for a character.
+     */
+    post: operations['GetActiveScenarios'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/storyline/scenario/get-history': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get scenario execution history
+     * @description Returns historical scenario executions for a character with pagination.
+     */
+    post: operations['GetScenarioHistory'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/subscription/account/list': {
     parameters: {
       query?: never;
@@ -9147,6 +9315,17 @@ export interface components {
        */
       updatedAt?: string | null;
     };
+    /** @description Snapshot of character state for condition evaluation */
+    CharacterStateSnapshot: {
+      /** @description Character age in years */
+      age?: number | null;
+      /** @description Current personality traits */
+      traits?: components['schemas']['TraitSnapshot'][] | null;
+      /** @description Current backstory elements */
+      backstoryElements?: components['schemas']['BackstorySnapshot'][] | null;
+      /** @description Current relationships */
+      relationships?: components['schemas']['RelationshipSnapshot'][] | null;
+    };
     /**
      * @description Character lifecycle status
      * @enum {string}
@@ -9945,6 +10124,19 @@ export interface components {
      * @enum {string}
      */
     CompressionType: 'lz4' | 'lzma' | 'none';
+    /** @description Result of evaluating a single condition */
+    ConditionResult: {
+      /** @description Condition type */
+      conditionType: components['schemas']['TriggerConditionType'];
+      /** @description Whether condition was met */
+      met: boolean;
+      /** @description Actual value found */
+      actualValue?: string | null;
+      /** @description Expected value */
+      expectedValue?: string | null;
+      /** @description Additional details */
+      details?: string | null;
+    };
     /** @description Request to confirm receipt of refunded assets */
     ConfirmRefundRequest: {
       /**
@@ -11319,6 +11511,49 @@ export interface components {
        */
       gameServiceId?: string;
     };
+    /** @description Request to create a scenario definition */
+    CreateScenarioDefinitionRequest: {
+      /** @description Human-readable scenario code (uppercase with underscores) */
+      code: string;
+      /** @description Display name for the scenario */
+      name: string;
+      /** @description Detailed scenario description */
+      description?: string | null;
+      /** @description Conditions that must ALL be met to trigger */
+      triggerConditions: components['schemas']['TriggerCondition'][];
+      /** @description Execution phases in order */
+      phases: components['schemas']['ScenarioPhase'][];
+      /** @description State mutations to apply on completion */
+      mutations?: components['schemas']['ScenarioMutation'][] | null;
+      /** @description Quests to spawn on completion */
+      questHooks?: components['schemas']['ScenarioQuestHook'][] | null;
+      /** @description Per-character cooldown in seconds */
+      cooldownSeconds?: number | null;
+      /** @description Tags for mutual exclusivity checking */
+      exclusivityTags?: string[] | null;
+      /**
+       * @description Higher priority scenarios are checked first
+       * @default 0
+       */
+      priority: number;
+      /**
+       * @description Whether scenario can be triggered
+       * @default true
+       */
+      enabled: boolean;
+      /**
+       * Format: uuid
+       * @description Realm scope (null means all realms)
+       */
+      realmId?: string | null;
+      /**
+       * Format: uuid
+       * @description Game service scope (null means all games)
+       */
+      gameServiceId?: string | null;
+      /** @description Classification tags for filtering */
+      tags?: string[] | null;
+    };
     /** @description Request to create a new scene */
     CreateSceneRequest: {
       /** @description The scene document to create */
@@ -11952,6 +12187,14 @@ export interface components {
        * @description Definition to deprecate
        */
       definitionId: string;
+    };
+    /** @description Request to deprecate a scenario definition */
+    DeprecateScenarioDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Scenario to deprecate
+       */
+      scenarioId: string;
     };
     /** @description Request to destroy an item instance */
     DestroyItemInstanceRequest: {
@@ -13842,6 +14085,19 @@ export interface components {
       /** @description Specific achievement ID (null for all) */
       achievementId?: string | null;
     };
+    /** @description Request for active scenarios */
+    GetActiveScenariosRequest: {
+      /**
+       * Format: uuid
+       * @description Character to query
+       */
+      characterId: string;
+    };
+    /** @description Active scenario executions */
+    GetActiveScenariosResponse: {
+      /** @description Active scenario executions */
+      executions: components['schemas']['ScenarioExecution'][];
+    };
     /** @description Request to retrieve all ancestor types in the hierarchy chain from a relationship type up to the root */
     GetAncestorsRequest: {
       /**
@@ -14879,6 +15135,48 @@ export interface components {
        * @default false
        */
       includeEnded: boolean;
+    };
+    /** @description Request to retrieve a scenario definition */
+    GetScenarioDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Scenario ID to retrieve
+       */
+      scenarioId?: string | null;
+      /** @description Scenario code to retrieve (if ID not provided) */
+      code?: string | null;
+    };
+    /** @description Response with scenario definition */
+    GetScenarioDefinitionResponse: {
+      /** @description Whether the scenario was found */
+      found: boolean;
+      /** @description The scenario definition (null if not found) */
+      scenario?: components['schemas']['ScenarioDefinition'];
+    };
+    /** @description Request for scenario execution history */
+    GetScenarioHistoryRequest: {
+      /**
+       * Format: uuid
+       * @description Character to query
+       */
+      characterId: string;
+      /**
+       * @description Max results
+       * @default 20
+       */
+      limit: number;
+      /**
+       * @description Pagination offset
+       * @default 0
+       */
+      offset: number;
+    };
+    /** @description Scenario execution history */
+    GetScenarioHistoryResponse: {
+      /** @description Historical executions */
+      executions: components['schemas']['ScenarioExecution'][];
+      /** @description Total count for pagination */
+      totalCount: number;
     };
     /** @description Request to retrieve a scene */
     GetSceneRequest: {
@@ -16833,6 +17131,43 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to list scenario definitions */
+    ListScenarioDefinitionsRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by realm
+       */
+      realmId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter by game service
+       */
+      gameServiceId?: string | null;
+      /** @description Filter by tags (OR logic) */
+      tags?: string[] | null;
+      /**
+       * @description Include deprecated scenarios
+       * @default false
+       */
+      includeDeprecated: boolean;
+      /**
+       * @description Maximum scenarios to return
+       * @default 20
+       */
+      limit: number;
+      /**
+       * @description Pagination offset
+       * @default 0
+       */
+      offset: number;
+    };
+    /** @description List of scenario definitions */
+    ListScenarioDefinitionsResponse: {
+      /** @description Scenario definition summaries */
+      scenarios: components['schemas']['ScenarioDefinitionSummary'][];
+      /** @description Total matching scenarios */
+      totalCount: number;
+    };
     /** @description Request to list scenes with optional filters */
     ListScenesRequest: {
       /** @description Filter by game ID */
@@ -17863,6 +18198,21 @@ export interface components {
       /** @description Pre-signed URLs for each part of the multipart upload */
       uploadUrls?: components['schemas']['PartUploadInfo'][] | null;
     };
+    /**
+     * @description Types of state mutations a scenario can apply.
+     *     PersonalityEvolve: Apply experience to evolve personality traits
+     *     BackstoryAdd: Add backstory element to character history
+     *     RelationshipCreate: Create relationship between entities
+     *     RelationshipEnd: End existing relationship
+     *     Custom: Custom mutation (not executed server-side)
+     * @enum {string}
+     */
+    MutationType:
+      | 'PersonalityEvolve'
+      | 'BackstoryAdd'
+      | 'RelationshipCreate'
+      | 'RelationshipEnd'
+      | 'Custom';
     /** @description Narrative effect on the emotional arc (SDK type) */
     NarrativeEffect: {
       /**
@@ -18614,6 +18964,13 @@ export interface components {
       executionMode: 'sync' | 'async' | 'fire_and_forget';
       /** @description Optional validation rules for the response */
       responseValidation?: components['schemas']['ResponseValidation'];
+    };
+    /** @description Mutation that would be applied */
+    PredictedMutation: {
+      /** @description Type of mutation */
+      mutationType: components['schemas']['MutationType'];
+      /** @description Human-readable description */
+      description: string;
     };
     /**
      * @description Preferred engagement distance. Influences positioning and
@@ -20019,6 +20376,18 @@ export interface components {
        */
       updatedAt?: string | null;
     };
+    /** @description Snapshot of a relationship */
+    RelationshipSnapshot: {
+      /** @description Relationship type code */
+      relationshipTypeCode: string;
+      /**
+       * Format: uuid
+       * @description ID of other entity
+       */
+      otherEntityId: string;
+      /** @description Type of other entity */
+      otherEntityType: string;
+    };
     /** @description Response containing a list of relationship types with total count */
     RelationshipTypeListResponse: {
       /** @description List of relationship types matching the query */
@@ -20834,6 +21203,212 @@ export interface components {
        */
       uploadPending?: boolean;
     };
+    /** @description A scenario definition template that can be triggered when conditions are met */
+    ScenarioDefinition: {
+      /**
+       * Format: uuid
+       * @description Unique scenario definition identifier
+       */
+      scenarioId: string;
+      /** @description Human-readable scenario code (uppercase with underscores) */
+      code: string;
+      /** @description Display name for the scenario */
+      name: string;
+      /** @description Detailed scenario description */
+      description?: string | null;
+      /** @description Conditions that must ALL be met to trigger (AND logic) */
+      triggerConditions: components['schemas']['TriggerCondition'][];
+      /** @description Execution phases in order */
+      phases: components['schemas']['ScenarioPhase'][];
+      /** @description State mutations to apply on completion */
+      mutations?: components['schemas']['ScenarioMutation'][] | null;
+      /** @description Quests to spawn on completion */
+      questHooks?: components['schemas']['ScenarioQuestHook'][] | null;
+      /** @description Per-character cooldown in seconds (null uses default from config) */
+      cooldownSeconds?: number | null;
+      /** @description Tags for mutual exclusivity checking */
+      exclusivityTags?: string[] | null;
+      /**
+       * @description Higher priority scenarios are checked first
+       * @default 0
+       */
+      priority: number;
+      /**
+       * @description Whether scenario can be triggered
+       * @default true
+       */
+      enabled: boolean;
+      /**
+       * Format: uuid
+       * @description Realm scope (null means all realms)
+       */
+      realmId?: string | null;
+      /**
+       * Format: uuid
+       * @description Game service scope (null means all games)
+       */
+      gameServiceId?: string | null;
+      /** @description Classification tags for filtering */
+      tags?: string[] | null;
+      /**
+       * @description Whether scenario is soft-deleted
+       * @default false
+       */
+      deprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When definition was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When definition was last modified
+       */
+      updatedAt?: string | null;
+      /** @description ETag for optimistic concurrency */
+      etag?: string | null;
+    };
+    /** @description Summary of a scenario definition */
+    ScenarioDefinitionSummary: {
+      /**
+       * Format: uuid
+       * @description Scenario identifier
+       */
+      scenarioId: string;
+      /** @description Scenario code */
+      code: string;
+      /** @description Scenario name */
+      name: string;
+      /** @description Scenario priority */
+      priority: number;
+      /** @description Whether enabled */
+      enabled: boolean;
+      /** @description Whether deprecated */
+      deprecated?: boolean;
+      /** @description Number of trigger conditions */
+      conditionCount?: number;
+      /** @description Number of phases */
+      phaseCount?: number;
+      /** @description Number of mutations */
+      mutationCount?: number;
+      /** @description Number of quest hooks */
+      questHookCount?: number;
+      /**
+       * Format: uuid
+       * @description Realm scope
+       */
+      realmId?: string | null;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId?: string | null;
+      /** @description Classification tags */
+      tags?: string[] | null;
+      /**
+       * Format: date-time
+       * @description When created
+       */
+      createdAt: string;
+    };
+    /** @description A scenario execution instance */
+    ScenarioExecution: {
+      /**
+       * Format: uuid
+       * @description Execution instance ID
+       */
+      executionId: string;
+      /**
+       * Format: uuid
+       * @description Scenario definition ID
+       */
+      scenarioId: string;
+      /** @description Scenario code */
+      code: string;
+      /** @description Scenario name */
+      name: string;
+      /** @description Current status */
+      status: components['schemas']['ScenarioStatus'];
+      /** @description Current phase number */
+      currentPhase: number;
+      /** @description Total phases */
+      totalPhases: number;
+      /**
+       * Format: date-time
+       * @description When triggered
+       */
+      triggeredAt: string;
+      /**
+       * Format: date-time
+       * @description When completed (if applicable)
+       */
+      completedAt?: string | null;
+    };
+    /** @description A state mutation to apply during scenario execution */
+    ScenarioMutation: {
+      /** @description Type of mutation to apply */
+      mutationType: components['schemas']['MutationType'];
+      /** @description Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY) */
+      experienceType?: string | null;
+      /**
+       * Format: float
+       * @description Experience intensity for PersonalityEvolve (0.0-1.0)
+       */
+      experienceIntensity?: number | null;
+      /** @description Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL) */
+      backstoryElementType?: string | null;
+      /** @description Backstory element key for BackstoryAdd */
+      backstoryKey?: string | null;
+      /** @description Backstory element value for BackstoryAdd */
+      backstoryValue?: string | null;
+      /**
+       * Format: float
+       * @description Backstory element strength for BackstoryAdd (0.0-1.0)
+       */
+      backstoryStrength?: number | null;
+      /** @description Relationship type code for RelationshipCreate/End */
+      relationshipTypeCode?: string | null;
+      /** @description Role name for other participant in multi-character scenarios */
+      otherParticipantRole?: string | null;
+    };
+    /** @description A phase in scenario execution */
+    ScenarioPhase: {
+      /** @description Phase sequence number (1-based) */
+      phaseNumber: number;
+      /** @description Phase name */
+      name: string;
+      /** @description What happens in this phase */
+      description?: string | null;
+      /** @description Expected duration in seconds (for pacing, not enforced) */
+      durationSeconds?: number | null;
+      /** @description Hint for dialogue generation system */
+      dialogueHint?: string | null;
+      /** @description Hint for behavior/GOAP system */
+      actionHint?: string | null;
+    };
+    /** @description Quest to spawn on scenario completion */
+    ScenarioQuestHook: {
+      /** @description Quest definition code to spawn */
+      questCode: string;
+      /**
+       * @description Delay before spawning quest (not implemented in Phase 1)
+       * @default 0
+       */
+      delaySeconds: number;
+      /** @description Variable overrides for quest template */
+      termOverrides?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * @description Current status of a scenario execution instance.
+     *     Active: Scenario is currently executing
+     *     Completed: Scenario finished successfully
+     *     Failed: Scenario failed during execution
+     *     Cancelled: Scenario was cancelled externally
+     * @enum {string}
+     */
+    ScenarioStatus: 'Active' | 'Completed' | 'Failed' | 'Cancelled';
     /** @description A complete scene document with hierarchical node structure */
     Scene: {
       /**
@@ -22007,6 +22582,43 @@ export interface components {
      * @enum {string}
      */
     TerritoryMode: 'exclusive' | 'inclusive';
+    /** @description Request to dry-run scenario trigger */
+    TestScenarioRequest: {
+      /**
+       * Format: uuid
+       * @description Scenario to test
+       */
+      scenarioId: string;
+      /**
+       * Format: uuid
+       * @description Character to test against
+       */
+      characterId: string;
+      /** @description Current character state */
+      characterState: components['schemas']['CharacterStateSnapshot'];
+      /**
+       * Format: uuid
+       * @description Location context
+       */
+      locationId?: string | null;
+      /** @description Current in-game hour */
+      timeOfDay?: number | null;
+      /** @description World state context */
+      worldState?: {
+        [key: string]: string;
+      } | null;
+    };
+    /** @description Result of scenario dry-run */
+    TestScenarioResponse: {
+      /** @description Whether scenario would trigger */
+      wouldTrigger: boolean;
+      /** @description Result of each condition check */
+      conditionResults: components['schemas']['ConditionResult'][];
+      /** @description Mutations that would be applied */
+      predictedMutations?: components['schemas']['PredictedMutation'][] | null;
+      /** @description Why scenario would not trigger (cooldown, exclusivity, etc.) */
+      blockingReason?: string | null;
+    };
     /** @description Visual theme configuration including colors, fonts, and navigation */
     ThemeConfig: {
       /** @description Name of the active theme */
@@ -22077,6 +22689,16 @@ export interface components {
       | 'HONESTY'
       | 'AGGRESSION'
       | 'LOYALTY';
+    /** @description Snapshot of a personality trait */
+    TraitSnapshot: {
+      /** @description Trait axis name (e.g., AGGRESSION, OPENNESS) */
+      axis: string;
+      /**
+       * Format: float
+       * @description Trait value (-1.0 to 1.0)
+       */
+      value: number;
+    };
     /** @description A single personality trait with its current value and evolution history */
     TraitValue: {
       /** @description The personality axis this value represents */
@@ -22305,6 +22927,71 @@ export interface components {
       /** @description Scale relative to parent */
       scale: components['schemas']['Vector3'];
     };
+    /** @description A condition that must be met for scenario triggering */
+    TriggerCondition: {
+      /** @description Type of condition to evaluate */
+      conditionType: components['schemas']['TriggerConditionType'];
+      /** @description Personality trait axis for TraitRange (e.g., AGGRESSION) */
+      traitAxis?: string | null;
+      /**
+       * Format: float
+       * @description Minimum trait value for TraitRange (-1.0 to 1.0)
+       */
+      traitMin?: number | null;
+      /**
+       * Format: float
+       * @description Maximum trait value for TraitRange (-1.0 to 1.0)
+       */
+      traitMax?: number | null;
+      /** @description Backstory element type for BackstoryElement (e.g., TRAUMA) */
+      backstoryType?: string | null;
+      /** @description Backstory element key for BackstoryElement */
+      backstoryKey?: string | null;
+      /** @description Relationship type code for RelationshipExists/Missing */
+      relationshipTypeCode?: string | null;
+      /** @description Type of other entity in relationship check */
+      otherEntityType?: string | null;
+      /** @description Minimum character age for AgeRange */
+      ageMin?: number | null;
+      /** @description Maximum character age for AgeRange */
+      ageMax?: number | null;
+      /**
+       * Format: uuid
+       * @description Required location ID for LocationAt
+       */
+      locationId?: string | null;
+      /** @description Minimum hour of day (0-23) for TimeOfDay */
+      timeOfDayMin?: number | null;
+      /** @description Maximum hour of day (0-23) for TimeOfDay */
+      timeOfDayMax?: number | null;
+      /** @description Custom state key for WorldState/Custom */
+      worldStateKey?: string | null;
+      /** @description Expected value for WorldState/Custom */
+      worldStateValue?: string | null;
+    };
+    /**
+     * @description Types of trigger conditions for scenario activation.
+     *     TraitRange: Character trait within value range
+     *     BackstoryElement: Character has specific backstory element
+     *     RelationshipExists: Relationship exists between entities
+     *     RelationshipMissing: Relationship does not exist
+     *     AgeRange: Character age within range
+     *     LocationAt: Character at specific location
+     *     TimeOfDay: In-game time within range
+     *     WorldState: Custom world state check
+     *     Custom: Custom condition (not evaluated server-side)
+     * @enum {string}
+     */
+    TriggerConditionType:
+      | 'TraitRange'
+      | 'BackstoryElement'
+      | 'RelationshipExists'
+      | 'RelationshipMissing'
+      | 'AgeRange'
+      | 'LocationAt'
+      | 'TimeOfDay'
+      | 'WorldState'
+      | 'Custom';
     /** @description A style-specific tune type definition */
     TuneType: {
       /** @description Tune type name (e.g., "reel", "jig") */
@@ -22748,6 +23435,38 @@ export interface components {
     UpdateRepositoryBindingResponse: {
       /** @description Updated binding configuration */
       binding: components['schemas']['RepositoryBindingInfo'];
+    };
+    /** @description Request to update a scenario definition */
+    UpdateScenarioDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Scenario to update
+       */
+      scenarioId: string;
+      /** @description ETag for optimistic concurrency */
+      etag: string;
+      /** @description New name */
+      name?: string | null;
+      /** @description New description */
+      description?: string | null;
+      /** @description New trigger conditions */
+      triggerConditions?: components['schemas']['TriggerCondition'][] | null;
+      /** @description New phases */
+      phases?: components['schemas']['ScenarioPhase'][] | null;
+      /** @description New mutations */
+      mutations?: components['schemas']['ScenarioMutation'][] | null;
+      /** @description New quest hooks */
+      questHooks?: components['schemas']['ScenarioQuestHook'][] | null;
+      /** @description New cooldown */
+      cooldownSeconds?: number | null;
+      /** @description New exclusivity tags */
+      exclusivityTags?: string[] | null;
+      /** @description New priority */
+      priority?: number | null;
+      /** @description New enabled state */
+      enabled?: boolean | null;
+      /** @description New classification tags */
+      tags?: string[] | null;
     };
     /** @description Request to update an existing scene */
     UpdateSceneRequest: {
@@ -33422,6 +34141,245 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ListPlansResponse'];
+        };
+      };
+    };
+  };
+  CreateScenarioDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateScenarioDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenario definition created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioDefinition'];
+        };
+      };
+      /** @description Invalid request (validation error) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Scenario with code already exists */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  GetScenarioDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetScenarioDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenario definition retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetScenarioDefinitionResponse'];
+        };
+      };
+      /** @description Scenario not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ListScenarioDefinitions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListScenarioDefinitionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenarios listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListScenarioDefinitionsResponse'];
+        };
+      };
+    };
+  };
+  UpdateScenarioDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateScenarioDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenario updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioDefinition'];
+        };
+      };
+      /** @description Scenario not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Concurrent modification conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DeprecateScenarioDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateScenarioDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenario deprecated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Scenario not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestScenarioTrigger: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TestScenarioRequest'];
+      };
+    };
+    responses: {
+      /** @description Test result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TestScenarioResponse'];
+        };
+      };
+      /** @description Scenario not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  GetActiveScenarios: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetActiveScenariosRequest'];
+      };
+    };
+    responses: {
+      /** @description Active scenarios */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetActiveScenariosResponse'];
+        };
+      };
+    };
+  };
+  GetScenarioHistory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetScenarioHistoryRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenario history */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetScenarioHistoryResponse'];
         };
       };
     };

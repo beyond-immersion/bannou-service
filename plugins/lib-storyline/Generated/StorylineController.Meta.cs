@@ -1391,4 +1391,4002 @@ public partial class StorylineController
             _ListPlans_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for CreateScenarioDefinition
+
+    private static readonly string _CreateScenarioDefinition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateScenarioDefinitionRequest",
+    "$defs": {
+        "CreateScenarioDefinitionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to create a scenario definition",
+            "required": [
+                "code",
+                "name",
+                "triggerConditions",
+                "phases"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Human-readable scenario code (uppercase with underscores)"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Display name for the scenario"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed scenario description"
+                },
+                "triggerConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TriggerCondition"
+                    },
+                    "minItems": 1,
+                    "description": "Conditions that must ALL be met to trigger"
+                },
+                "phases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioPhase"
+                    },
+                    "minItems": 1,
+                    "description": "Execution phases in order"
+                },
+                "mutations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioMutation"
+                    },
+                    "nullable": true,
+                    "description": "State mutations to apply on completion"
+                },
+                "questHooks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioQuestHook"
+                    },
+                    "nullable": true,
+                    "description": "Quests to spawn on completion"
+                },
+                "cooldownSeconds": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Per-character cooldown in seconds"
+                },
+                "exclusivityTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tags for mutual exclusivity checking"
+                },
+                "priority": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Higher priority scenarios are checked first"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether scenario can be triggered"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm scope (null means all realms)"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Game service scope (null means all games)"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Classification tags for filtering"
+                }
+            }
+        },
+        "TriggerCondition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A condition that must be met for scenario triggering",
+            "required": [
+                "conditionType"
+            ],
+            "properties": {
+                "conditionType": {
+                    "$ref": "#/$defs/TriggerConditionType",
+                    "description": "Type of condition to evaluate"
+                },
+                "traitAxis": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
+                },
+                "traitMin": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Minimum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "traitMax": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Maximum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "backstoryType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryElement"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipExists/Missing"
+                },
+                "otherEntityType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of other entity in relationship check"
+                },
+                "ageMin": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Minimum character age for AgeRange"
+                },
+                "ageMax": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum character age for AgeRange"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Required location ID for LocationAt"
+                },
+                "timeOfDayMin": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Minimum hour of day (0-23) for TimeOfDay"
+                },
+                "timeOfDayMax": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Maximum hour of day (0-23) for TimeOfDay"
+                },
+                "worldStateKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom state key for WorldState/Custom"
+                },
+                "worldStateValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for WorldState/Custom"
+                }
+            }
+        },
+        "TriggerConditionType": {
+            "type": "string",
+            "enum": [
+                "TraitRange",
+                "BackstoryElement",
+                "RelationshipExists",
+                "RelationshipMissing",
+                "AgeRange",
+                "LocationAt",
+                "TimeOfDay",
+                "WorldState",
+                "Custom"
+            ],
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+        },
+        "ScenarioPhase": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A phase in scenario execution",
+            "required": [
+                "phaseNumber",
+                "name"
+            ],
+            "properties": {
+                "phaseNumber": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Phase sequence number (1-based)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Phase name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What happens in this phase"
+                },
+                "durationSeconds": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Expected duration in seconds (for pacing, not enforced)"
+                },
+                "dialogueHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for dialogue generation system"
+                },
+                "actionHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for behavior/GOAP system"
+                }
+            }
+        },
+        "ScenarioMutation": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A state mutation to apply during scenario execution",
+            "required": [
+                "mutationType"
+            ],
+            "properties": {
+                "mutationType": {
+                    "$ref": "#/$defs/MutationType",
+                    "description": "Type of mutation to apply"
+                },
+                "experienceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                },
+                "experienceIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
+                },
+                "backstoryElementType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryAdd"
+                },
+                "backstoryValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element value for BackstoryAdd"
+                },
+                "backstoryStrength": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Backstory element strength for BackstoryAdd (0.0-1.0)"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipCreate/End"
+                },
+                "otherParticipantRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Role name for other participant in multi-character scenarios"
+                }
+            }
+        },
+        "MutationType": {
+            "type": "string",
+            "enum": [
+                "PersonalityEvolve",
+                "BackstoryAdd",
+                "RelationshipCreate",
+                "RelationshipEnd",
+                "Custom"
+            ],
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\ nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "ScenarioQuestHook": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Quest to spawn on scenario completion",
+            "required": [
+                "questCode"
+            ],
+            "properties": {
+                "questCode": {
+                    "type": "string",
+                    "description": "Quest definition code to spawn"
+                },
+                "delaySeconds": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Delay before spawning quest (not implemented in Phase 1)"
+                },
+                "termOverrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Variable overrides for quest template"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CreateScenarioDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ScenarioDefinition",
+    "$defs": {
+        "ScenarioDefinition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A scenario definition template that can be triggered when conditions are met",
+            "required": [
+                "scenarioId",
+                "code",
+                "name",
+                "triggerConditions",
+                "phases",
+                "priority",
+                "enabled",
+                "createdAt"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique scenario definition identifier"
+                },
+                "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Human-readable scenario code (uppercase with underscores)"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Display name for the scenario"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed scenario description"
+                },
+                "triggerConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TriggerCondition"
+                    },
+                    "minItems": 1,
+                    "description": "Conditions that must ALL be met to trigger (AND logic)"
+                },
+                "phases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioPhase"
+                    },
+                    "minItems": 1,
+                    "description": "Execution phases in order"
+                },
+                "mutations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioMutation"
+                    },
+                    "nullable": true,
+                    "description": "State mutations to apply on completion"
+                },
+                "questHooks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioQuestHook"
+                    },
+                    "nullable": true,
+                    "description": "Quests to spawn on completion"
+                },
+                "cooldownSeconds": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Per-character cooldown in seconds (null uses default from config)"
+                },
+                "exclusivityTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tags for mutual exclusivity checking"
+                },
+                "priority": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Higher priority scenarios are checked first"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether scenario can be triggered"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm scope (null means all realms)"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Game service scope (null means all games)"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Classification tags for filtering"
+                },
+                "deprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether scenario is soft-deleted"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When definition was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When definition was last modified"
+                },
+                "etag": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ETag for optimistic concurrency"
+                }
+            }
+        },
+        "TriggerCondition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A condition that must be met for scenario triggering",
+            "required": [
+                "conditionType"
+            ],
+            "properties": {
+                "conditionType": {
+                    "$ref": "#/$defs/TriggerConditionType",
+                    "description": "Type of condition to evaluate"
+                },
+                "traitAxis": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
+                },
+                "traitMin": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Minimum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "traitMax": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Maximum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "backstoryType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryElement"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipExists/Missing"
+                },
+                "otherEntityType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of other entity in relationship check"
+                },
+                "ageMin": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Minimum character age for AgeRange"
+                },
+                "ageMax": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum character age for AgeRange"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Required location ID for LocationAt"
+                },
+                "timeOfDayMin": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Minimum hour of day (0-23) for TimeOfDay"
+                },
+                "timeOfDayMax": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Maximum hour of day (0-23) for TimeOfDay"
+                },
+                "worldStateKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom state key for WorldState/Custom"
+                },
+                "worldStateValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for WorldState/Custom"
+                }
+            }
+        },
+        "TriggerConditionType": {
+            "type": "string",
+            "enum": [
+                "TraitRange",
+                "BackstoryElement",
+                "RelationshipExists",
+                "RelationshipMissing",
+                "AgeRange",
+                "LocationAt",
+                "TimeOfDay",
+                "WorldState",
+                "Custom"
+            ],
+            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+        },
+        "ScenarioPhase": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A phase in scenario execution",
+            "required": [
+                "phaseNumber",
+                "name"
+            ],
+            "properties": {
+                "phaseNumber": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Phase sequence number (1-based)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Phase name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What happens in this phase"
+                },
+                "durationSeconds": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Expected duration in seconds (for pacing, not enforced)"
+                },
+                "dialogueHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for dialogue generation system"
+                },
+                "actionHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for behavior/GOAP system"
+                }
+            }
+        },
+        "ScenarioMutation": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A state mutation to apply during scenario execution",
+            "required": [
+                "mutationType"
+            ],
+            "properties": {
+                "mutationType": {
+                    "$ref": "#/$defs/MutationType",
+                    "description": "Type of mutation to apply"
+                },
+                "experienceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                },
+                "experienceIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
+                },
+                "backstoryElementType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryAdd"
+                },
+                "backstoryValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element value for BackstoryAdd"
+                },
+                "backstoryStrength": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Backstory element strength for BackstoryAdd (0.0-1.0)"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipCreate/End"
+                },
+                "otherParticipantRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Role name for other participant in multi-character scenarios"
+                }
+            }
+        },
+        "MutationType": {
+            "type": "string",
+            "enum": [
+                "PersonalityEvolve",
+                "BackstoryAdd",
+                "RelationshipCreate",
+                "RelationshipEnd",
+                "Custom"
+            ],
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "ScenarioQuestHook": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Quest to spawn on scenario completion",
+            "required": [
+                "questCode"
+            ],
+            "properties": {
+                "questCode": {
+                    "type": "string",
+                    "description": "Quest definition code to spawn"
+                },
+                "delaySeconds": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Delay before spawning quest (not implemented in Phase 1)"
+                },
+                "termOverrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Variable overrides for quest template"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CreateScenarioDefinition_Info = """
+{
+    "summary": "Create a new scenario definition",
+    "description": "Creates a reusable scenario definition template.\nScenarios are passive building blocks with triggering conditions,\nphases, mutations, and optional quest hooks.\n",
+    "tags": [
+        "Scenario Definitions"
+    ],
+    "deprecated": false,
+    "operationId": "CreateScenarioDefinition"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateScenarioDefinition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/create",
+            _CreateScenarioDefinition_Info));
+
+    /// <summary>Returns request schema for CreateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateScenarioDefinition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/create",
+            "request-schema",
+            _CreateScenarioDefinition_RequestSchema));
+
+    /// <summary>Returns response schema for CreateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateScenarioDefinition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/create",
+            "response-schema",
+            _CreateScenarioDefinition_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateScenarioDefinition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/create",
+            _CreateScenarioDefinition_Info,
+            _CreateScenarioDefinition_RequestSchema,
+            _CreateScenarioDefinition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetScenarioDefinition
+
+    private static readonly string _GetScenarioDefinition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetScenarioDefinitionRequest",
+    "$defs": {
+        "GetScenarioDefinitionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to retrieve a scenario definition",
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scenario ID to retrieve"
+                },
+                "code": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Scenario code to retrieve (if ID not provided)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetScenarioDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetScenarioDefinitionResponse",
+    "$defs": {
+        "GetScenarioDefinitionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response with scenario definition",
+            "required": [
+                "found"
+            ],
+            "properties": {
+                "found": {
+                    "type": "boolean",
+                    "description": "Whether the scenario was found"
+                },
+                "scenario": {
+                    "$ref": "#/$defs/ScenarioDefinition",
+                    "nullable": true,
+                    "description": "The scenario definition (null if not found)"
+                }
+            }
+        },
+        "ScenarioDefinition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A scenario definition template that can be triggered when conditions are met",
+            "required": [
+                "scenarioId",
+                "code",
+                "name",
+                "triggerConditions",
+                "phases",
+                "priority",
+                "enabled",
+                "createdAt"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique scenario definition identifier"
+                },
+                "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Human-readable scenario code (uppercase with underscores)"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Display name for the scenario"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed scenario description"
+                },
+                "triggerConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TriggerCondition"
+                    },
+                    "minItems": 1,
+                    "description": "Conditions that must ALL be met to trigger (AND logic)"
+                },
+                "phases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioPhase"
+                    },
+                    "minItems": 1,
+                    "description": "Execution phases in order"
+                },
+                "mutations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioMutation"
+                    },
+                    "nullable": true,
+                    "description": "State mutations to apply on completion"
+                },
+                "questHooks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioQuestHook"
+                    },
+                    "nullable": true,
+                    "description": "Quests to spawn on completion"
+                },
+                "cooldownSeconds": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Per-character cooldown in seconds (null uses default from config)"
+                },
+                "exclusivityTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tags for mutual exclusivity checking"
+                },
+                "priority": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Higher priority scenarios are checked first"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether scenario can be triggered"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm scope (null means all realms)"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Game service scope (null means all games)"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Classification tags for filtering"
+                },
+                "deprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether scenario is soft-deleted"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When definition was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When definition was last modified"
+                },
+                "etag": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ETag for optimistic concurrency"
+                }
+            }
+        },
+        "TriggerCondition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A condition that must be met for scenario triggering",
+            "required": [
+                "conditionType"
+            ],
+            "properties": {
+                "conditionType": {
+                    "$ref": "#/$defs/TriggerConditionType",
+                    "description": "Type of condition to evaluate"
+                },
+                "traitAxis": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
+                },
+                "traitMin": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Minimum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "traitMax": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Maximum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "backstoryType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryElement"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipExists/Missing"
+                },
+                "otherEntityType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of other entity in relationship check"
+                },
+                "ageMin": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Minimum character age for AgeRange"
+                },
+                "ageMax": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum character age for AgeRange"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Required location ID for LocationAt"
+                },
+                "timeOfDayMin": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Minimum hour of day (0-23) for TimeOfDay"
+                },
+                "timeOfDayMax": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Maximum hour of day (0-23) for TimeOfDay"
+                },
+                "worldStateKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom state key for WorldState/Custom"
+                },
+                "worldStateValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for WorldState/Custom"
+                }
+            }
+        },
+        "TriggerConditionType": {
+            "type": "string",
+            "enum": [
+                "TraitRange",
+                "BackstoryElement",
+                "RelationshipExists",
+                "RelationshipMissing",
+                "AgeRange",
+                "LocationAt",
+                "TimeOfDay",
+                "WorldState",
+                "Custom"
+            ],
+            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+        },
+        "ScenarioPhase": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A phase in scenario execution",
+            "required": [
+                "phaseNumber",
+                "name"
+            ],
+            "properties": {
+                "phaseNumber": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Phase sequence number (1-based)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Phase name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What happens in this phase"
+                },
+                "durationSeconds": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Expected duration in seconds (for pacing, not enforced)"
+                },
+                "dialogueHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for dialogue generation system"
+                },
+                "actionHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for behavior/GOAP system"
+                }
+            }
+        },
+        "ScenarioMutation": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A state mutation to apply during scenario execution",
+            "required": [
+                "mutationType"
+            ],
+            "properties": {
+                "mutationType": {
+                    "$ref": "#/$defs/MutationType",
+                    "description": "Type of mutation to apply"
+                },
+                "experienceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                },
+                "experienceIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
+                },
+                "backstoryElementType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryAdd"
+                },
+                "backstoryValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element value for BackstoryAdd"
+                },
+                "backstoryStrength": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Backstory element strength for BackstoryAdd (0.0-1.0)"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipCreate/End"
+                },
+                "otherParticipantRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Role name for other participant in multi-character scenarios"
+                }
+            }
+        },
+        "MutationType": {
+            "type": "string",
+            "enum": [
+                "PersonalityEvolve",
+                "BackstoryAdd",
+                "RelationshipCreate",
+                "RelationshipEnd",
+                "Custom"
+            ],
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "ScenarioQuestHook": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Quest to spawn on scenario completion",
+            "required": [
+                "questCode"
+            ],
+            "properties": {
+                "questCode": {
+                    "type": "string",
+                    "description": "Quest definition code to spawn"
+                },
+                "delaySeconds": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Delay before spawning quest (not implemented in Phase 1)"
+                },
+                "termOverrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Variable overrides for quest template"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetScenarioDefinition_Info = """
+{
+    "summary": "Get a scenario definition by ID or code",
+    "description": "Retrieves a scenario definition by its ID or code.\nUses read-through cache for performance.\n",
+    "tags": [
+        "Scenario Definitions"
+    ],
+    "deprecated": false,
+    "operationId": "GetScenarioDefinition"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetScenarioDefinition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get",
+            _GetScenarioDefinition_Info));
+
+    /// <summary>Returns request schema for GetScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetScenarioDefinition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get",
+            "request-schema",
+            _GetScenarioDefinition_RequestSchema));
+
+    /// <summary>Returns response schema for GetScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetScenarioDefinition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get",
+            "response-schema",
+            _GetScenarioDefinition_ResponseSchema));
+
+    /// <summary>Returns full schema for GetScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetScenarioDefinition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get",
+            _GetScenarioDefinition_Info,
+            _GetScenarioDefinition_RequestSchema,
+            _GetScenarioDefinition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListScenarioDefinitions
+
+    private static readonly string _ListScenarioDefinitions_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListScenarioDefinitionsRequest",
+    "$defs": {
+        "ListScenarioDefinitionsRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list scenario definitions",
+            "properties": {
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Filter by realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Filter by game service"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Filter by tags (OR logic)"
+                },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include deprecated scenarios"
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 20,
+                    "description": "Maximum scenarios to return"
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 0,
+                    "description": "Pagination offset"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListScenarioDefinitions_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListScenarioDefinitionsResponse",
+    "$defs": {
+        "ListScenarioDefinitionsResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "List of scenario definitions",
+            "required": [
+                "scenarios",
+                "totalCount"
+            ],
+            "properties": {
+                "scenarios": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioDefinitionSummary"
+                    },
+                    "description": "Scenario definition summaries"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total matching scenarios"
+                }
+            }
+        },
+        "ScenarioDefinitionSummary": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Summary of a scenario definition",
+            "required": [
+                "scenarioId",
+                "code",
+                "name",
+                "priority",
+                "enabled",
+                "createdAt"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario identifier"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Scenario code"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Scenario name"
+                },
+                "priority": {
+                    "type": "integer",
+                    "description": "Scenario priority"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Whether enabled"
+                },
+                "deprecated": {
+                    "type": "boolean",
+                    "description": "Whether deprecated"
+                },
+                "conditionCount": {
+                    "type": "integer",
+                    "description": "Number of trigger conditions"
+                },
+                "phaseCount": {
+                    "type": "integer",
+                    "description": "Number of phases"
+                },
+                "mutationCount": {
+                    "type": "integer",
+                    "description": "Number of mutations"
+                },
+                "questHookCount": {
+                    "type": "integer",
+                    "description": "Number of quest hooks"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm scope"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Game service scope"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Classification tags"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When created"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListScenarioDefinitions_Info = """
+{
+    "summary": "List scenario definitions",
+    "description": "Lists scenario definitions with optional filtering by realm, game service, and tags.\nResults are paginated and ordered by priority (descending), then creation time.\n",
+    "tags": [
+        "Scenario Definitions"
+    ],
+    "deprecated": false,
+    "operationId": "ListScenarioDefinitions"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListScenarioDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListScenarioDefinitions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/list",
+            _ListScenarioDefinitions_Info));
+
+    /// <summary>Returns request schema for ListScenarioDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListScenarioDefinitions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/list",
+            "request-schema",
+            _ListScenarioDefinitions_RequestSchema));
+
+    /// <summary>Returns response schema for ListScenarioDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListScenarioDefinitions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/list",
+            "response-schema",
+            _ListScenarioDefinitions_ResponseSchema));
+
+    /// <summary>Returns full schema for ListScenarioDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListScenarioDefinitions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/list",
+            _ListScenarioDefinitions_Info,
+            _ListScenarioDefinitions_RequestSchema,
+            _ListScenarioDefinitions_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateScenarioDefinition
+
+    private static readonly string _UpdateScenarioDefinition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateScenarioDefinitionRequest",
+    "$defs": {
+        "UpdateScenarioDefinitionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to update a scenario definition",
+            "required": [
+                "scenarioId",
+                "etag"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario to update"
+                },
+                "etag": {
+                    "type": "string",
+                    "description": "ETag for optimistic concurrency"
+                },
+                "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New description"
+                },
+                "triggerConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TriggerCondition"
+                    },
+                    "nullable": true,
+                    "description": "New trigger conditions"
+                },
+                "phases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioPhase"
+                    },
+                    "nullable": true,
+                    "description": "New phases"
+                },
+                "mutations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioMutation"
+                    },
+                    "nullable": true,
+                    "description": "New mutations"
+                },
+                "questHooks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioQuestHook"
+                    },
+                    "nullable": true,
+                    "description": "New quest hooks"
+                },
+                "cooldownSeconds": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "New cooldown"
+                },
+                "exclusivityTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "New exclusivity tags"
+                },
+                "priority": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "New priority"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "New enabled state"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "New classification tags"
+                }
+            }
+        },
+        "TriggerCondition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A condition that must be met for scenario triggering",
+            "required": [
+                "conditionType"
+            ],
+            "properties": {
+                "conditionType": {
+                    "$ref": "#/$defs/TriggerConditionType",
+                    "description": "Type of condition to evaluate"
+                },
+                "traitAxis": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
+                },
+                "traitMin": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Minimum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "traitMax": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Maximum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "backstoryType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryElement"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipExists/Missing"
+                },
+                "otherEntityType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of other entity in relationship check"
+                },
+                "ageMin": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Minimum character age for AgeRange"
+                },
+                "ageMax": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum character age for AgeRange"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Required location ID for LocationAt"
+                },
+                "timeOfDayMin": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Minimum hour of day (0-23) for TimeOfDay"
+                },
+                "timeOfDayMax": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Maximum hour of day (0-23) for TimeOfDay"
+                },
+                "worldStateKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom state key for WorldState/Custom"
+                },
+                "worldStateValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for WorldState/Custom"
+                }
+            }
+        },
+        "TriggerConditionType": {
+            "type": "string",
+            "enum": [
+                "TraitRange",
+                "BackstoryElement",
+                "RelationshipExists",
+                "RelationshipMissing",
+                "AgeRange",
+                "LocationAt",
+                "TimeOfDay",
+                "WorldState",
+                "Custom"
+            ],
+            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+        },
+        "ScenarioPhase": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A phase in scenario execution",
+            "required": [
+                "phaseNumber",
+                "name"
+            ],
+            "properties": {
+                "phaseNumber": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Phase sequence number (1-based)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Phase name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What happens in this phase"
+                },
+                "durationSeconds": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Expected duration in seconds (for pacing, not enforced)"
+                },
+                "dialogueHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for dialogue generation system"
+                },
+                "actionHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for behavior/GOAP system"
+                }
+            }
+        },
+        "ScenarioMutation": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A state mutation to apply during scenario execution",
+            "required": [
+                "mutationType"
+            ],
+            "properties": {
+                "mutationType": {
+                    "$ref": "#/$defs/MutationType",
+                    "description": "Type of mutation to apply"
+                },
+                "experienceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                },
+                "experienceIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
+                },
+                "backstoryElementType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryAdd"
+                },
+                "backstoryValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element value for BackstoryAdd"
+                },
+                "backstoryStrength": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Backstory element strength for BackstoryAdd (0.0-1.0)"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipCreate/End"
+                },
+                "otherParticipantRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Role name for other participant in multi-character scenarios"
+                }
+            }
+        },
+        "MutationType": {
+            "type": "string",
+            "enum": [
+                "PersonalityEvolve",
+                "BackstoryAdd",
+                "RelationshipCreate",
+                "RelationshipEnd",
+                "Custom"
+            ],
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "ScenarioQuestHook": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Quest to spawn on scenario completion",
+            "required": [
+                "questCode"
+            ],
+            "properties": {
+                "questCode": {
+                    "type": "string",
+                    "description": "Quest definition code to spawn"
+                },
+                "delaySeconds": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Delay before spawning quest (not implemented in Phase 1)"
+                },
+                "termOverrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Variable overrides for quest template"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateScenarioDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ScenarioDefinition",
+    "$defs": {
+        "ScenarioDefinition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A scenario definition template that can be triggered when conditions are met",
+            "required": [
+                "scenarioId",
+                "code",
+                "name",
+                "triggerConditions",
+                "phases",
+                "priority",
+                "enabled",
+                "createdAt"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique scenario definition identifier"
+                },
+                "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Human-readable scenario code (uppercase with underscores)"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Display name for the scenario"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed scenario description"
+                },
+                "triggerConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TriggerCondition"
+                    },
+                    "minItems": 1,
+                    "description": "Conditions that must ALL be met to trigger (AND logic)"
+                },
+                "phases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioPhase"
+                    },
+                    "minItems": 1,
+                    "description": "Execution phases in order"
+                },
+                "mutations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioMutation"
+                    },
+                    "nullable": true,
+                    "description": "State mutations to apply on completion"
+                },
+                "questHooks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioQuestHook"
+                    },
+                    "nullable": true,
+                    "description": "Quests to spawn on completion"
+                },
+                "cooldownSeconds": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Per-character cooldown in seconds (null uses default from config)"
+                },
+                "exclusivityTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tags for mutual exclusivity checking"
+                },
+                "priority": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Higher priority scenarios are checked first"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether scenario can be triggered"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm scope (null means all realms)"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Game service scope (null means all games)"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Classification tags for filtering"
+                },
+                "deprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether scenario is soft-deleted"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When definition was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When definition was last modified"
+                },
+                "etag": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ETag for optimistic concurrency"
+                }
+            }
+        },
+        "TriggerCondition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A condition that must be met for scenario triggering",
+            "required": [
+                "conditionType"
+            ],
+            "properties": {
+                "conditionType": {
+                    "$ref": "#/$defs/TriggerConditionType",
+                    "description": "Type of condition to evaluate"
+                },
+                "traitAxis": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
+                },
+                "traitMin": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Minimum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "traitMax": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Maximum trait value for TraitRange (-1.0 to 1.0)"
+                },
+                "backstoryType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryElement"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipExists/Missing"
+                },
+                "otherEntityType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of other entity in relationship check"
+                },
+                "ageMin": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Minimum character age for AgeRange"
+                },
+                "ageMax": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum character age for AgeRange"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Required location ID for LocationAt"
+                },
+                "timeOfDayMin": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Minimum hour of day (0-23) for TimeOfDay"
+                },
+                "timeOfDayMax": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Maximum hour of day (0-23) for TimeOfDay"
+                },
+                "worldStateKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom state key for WorldState/Custom"
+                },
+                "worldStateValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for WorldState/Custom"
+                }
+            }
+        },
+        "TriggerConditionType": {
+            "type": "string",
+            "enum": [
+                "TraitRange",
+                "BackstoryElement",
+                "RelationshipExists",
+                "RelationshipMissing",
+                "AgeRange",
+                "LocationAt",
+                "TimeOfDay",
+                "WorldState",
+                "Custom"
+            ],
+            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+        },
+        "ScenarioPhase": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A phase in scenario execution",
+            "required": [
+                "phaseNumber",
+                "name"
+            ],
+            "properties": {
+                "phaseNumber": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Phase sequence number (1-based)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Phase name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What happens in this phase"
+                },
+                "durationSeconds": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Expected duration in seconds (for pacing, not enforced)"
+                },
+                "dialogueHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for dialogue generation system"
+                },
+                "actionHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Hint for behavior/GOAP system"
+                }
+            }
+        },
+        "ScenarioMutation": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A state mutation to apply during scenario execution",
+            "required": [
+                "mutationType"
+            ],
+            "properties": {
+                "mutationType": {
+                    "$ref": "#/$defs/MutationType",
+                    "description": "Type of mutation to apply"
+                },
+                "experienceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+                },
+                "experienceIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
+                },
+                "backstoryElementType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+                },
+                "backstoryKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element key for BackstoryAdd"
+                },
+                "backstoryValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Backstory element value for BackstoryAdd"
+                },
+                "backstoryStrength": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Backstory element strength for BackstoryAdd (0.0-1.0)"
+                },
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Relationship type code for RelationshipCreate/End"
+                },
+                "otherParticipantRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Role name for other participant in multi-character scenarios"
+                }
+            }
+        },
+        "MutationType": {
+            "type": "string",
+            "enum": [
+                "PersonalityEvolve",
+                "BackstoryAdd",
+                "RelationshipCreate",
+                "RelationshipEnd",
+                "Custom"
+            ],
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "ScenarioQuestHook": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Quest to spawn on scenario completion",
+            "required": [
+                "questCode"
+            ],
+            "properties": {
+                "questCode": {
+                    "type": "string",
+                    "description": "Quest definition code to spawn"
+                },
+                "delaySeconds": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Delay before spawning quest (not implemented in Phase 1)"
+                },
+                "termOverrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Variable overrides for quest template"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateScenarioDefinition_Info = """
+{
+    "summary": "Update a scenario definition",
+    "description": "Updates an existing scenario definition.\nUses ETag for optimistic concurrency control.\n",
+    "tags": [
+        "Scenario Definitions"
+    ],
+    "deprecated": false,
+    "operationId": "UpdateScenarioDefinition"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateScenarioDefinition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/update",
+            _UpdateScenarioDefinition_Info));
+
+    /// <summary>Returns request schema for UpdateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateScenarioDefinition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/update",
+            "request-schema",
+            _UpdateScenarioDefinition_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateScenarioDefinition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/update",
+            "response-schema",
+            _UpdateScenarioDefinition_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateScenarioDefinition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/update",
+            _UpdateScenarioDefinition_Info,
+            _UpdateScenarioDefinition_RequestSchema,
+            _UpdateScenarioDefinition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeprecateScenarioDefinition
+
+    private static readonly string _DeprecateScenarioDefinition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeprecateScenarioDefinitionRequest",
+    "$defs": {
+        "DeprecateScenarioDefinitionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to deprecate a scenario definition",
+            "required": [
+                "scenarioId"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario to deprecate"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateScenarioDefinition_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeprecateScenarioDefinition_Info = """
+{
+    "summary": "Deprecate a scenario definition",
+    "description": "Soft-deletes a scenario definition by marking it deprecated.\nDeprecated scenarios are not returned by find-available.\n",
+    "tags": [
+        "Scenario Definitions"
+    ],
+    "deprecated": false,
+    "operationId": "DeprecateScenarioDefinition"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeprecateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateScenarioDefinition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/deprecate",
+            _DeprecateScenarioDefinition_Info));
+
+    /// <summary>Returns request schema for DeprecateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateScenarioDefinition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/deprecate",
+            "request-schema",
+            _DeprecateScenarioDefinition_RequestSchema));
+
+    /// <summary>Returns response schema for DeprecateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateScenarioDefinition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/deprecate",
+            "response-schema",
+            _DeprecateScenarioDefinition_ResponseSchema));
+
+    /// <summary>Returns full schema for DeprecateScenarioDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateScenarioDefinition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/deprecate",
+            _DeprecateScenarioDefinition_Info,
+            _DeprecateScenarioDefinition_RequestSchema,
+            _DeprecateScenarioDefinition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for FindAvailableScenarios
+
+    private static readonly string _FindAvailableScenarios_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/FindAvailableScenariosRequest",
+    "$defs": {
+        "FindAvailableScenariosRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to find scenarios matching character state",
+            "required": [
+                "characterId",
+                "characterState"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character to find scenarios for"
+                },
+                "characterState": {
+                    "$ref": "#/$defs/CharacterStateSnapshot",
+                    "description": "Current character state (caller provides this)"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Current character location"
+                },
+                "timeOfDay": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Current in-game hour (0-23)"
+                },
+                "worldState": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Current world state key-value pairs"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm to search within"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Game service to search within"
+                },
+                "maxResults": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                    "default": 10,
+                    "description": "Maximum scenarios to return"
+                },
+                "excludeTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Exclude scenarios with these tags"
+                }
+            }
+        },
+        "CharacterStateSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of character state for condition evaluation",
+            "properties": {
+                "age": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Character age in years"
+                },
+                "traits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TraitSnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current personality traits"
+                },
+                "backstoryElements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BackstorySnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current backstory elements"
+                },
+                "relationships": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RelationshipSnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current relationships"
+                }
+            }
+        },
+        "TraitSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a personality trait",
+            "required": [
+                "axis",
+                "value"
+            ],
+            "properties": {
+                "axis": {
+                    "type": "string",
+                    "description": "Trait axis name (e.g., AGGRESSION, OPENNESS)"
+                },
+                "value": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Trait value (-1.0 to 1.0)"
+                }
+            }
+        },
+        "BackstorySnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a backstory element",
+            "required": [
+                "elementType",
+                "key"
+            ],
+            "properties": {
+                "elementType": {
+                    "type": "string",
+                    "description": "Backstory element type (e.g., TRAUMA, GOAL)"
+                },
+                "key": {
+                    "type": "string",
+                    "description": "Backstory element key"
+                }
+            }
+        },
+        "RelationshipSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a relationship",
+            "required": [
+                "relationshipTypeCode",
+                "otherEntityId",
+                "otherEntityType"
+            ],
+            "properties": {
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "description": "Relationship type code"
+                },
+                "otherEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of other entity"
+                },
+                "otherEntityType": {
+                    "type": "string",
+                    "description": "Type of other entity"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _FindAvailableScenarios_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/FindAvailableScenariosResponse",
+    "$defs": {
+        "FindAvailableScenariosResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Matching scenarios with fit scores",
+            "required": [
+                "matches"
+            ],
+            "properties": {
+                "matches": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioMatch"
+                    },
+                    "description": "Matching scenarios ordered by fit score"
+                }
+            }
+        },
+        "ScenarioMatch": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A scenario that matches character state",
+            "required": [
+                "scenarioId",
+                "code",
+                "name",
+                "fitScore",
+                "conditionsMet",
+                "conditionsTotal",
+                "onCooldown"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario definition ID"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Scenario code"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Scenario name"
+                },
+                "fitScore": {
+                    "type": "number",
+                    "format": "double",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Narrative fit score (0-1)"
+                },
+                "conditionsMet": {
+                    "type": "integer",
+                    "description": "Number of conditions met"
+                },
+                "conditionsTotal": {
+                    "type": "integer",
+                    "description": "Total conditions"
+                },
+                "onCooldown": {
+                    "type": "boolean",
+                    "description": "Whether scenario is on cooldown for this character"
+                },
+                "cooldownExpiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When cooldown expires (if on cooldown)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _FindAvailableScenarios_Info = """
+{
+    "summary": "Find scenarios matching character state",
+    "description": "Finds scenarios that match the provided character state.\nThis is a PASSIVE query - the caller (Regional Watcher) provides\ nall character data; the scenario service does not fetch it.\n\nReturns scenarios ordered by fit score with cooldown status.\n",
+    "tags": [
+        "Scenario Discovery"
+    ],
+    "deprecated": false,
+    "operationId": "FindAvailableScenarios"
+}
+""";
+
+    /// <summary>Returns endpoint information for FindAvailableScenarios</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/find-available/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> FindAvailableScenarios_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/find-available",
+            _FindAvailableScenarios_Info));
+
+    /// <summary>Returns request schema for FindAvailableScenarios</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/find-available/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> FindAvailableScenarios_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/find-available",
+            "request-schema",
+            _FindAvailableScenarios_RequestSchema));
+
+    /// <summary>Returns response schema for FindAvailableScenarios</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/find-available/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> FindAvailableScenarios_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/find-available",
+            "response-schema",
+            _FindAvailableScenarios_ResponseSchema));
+
+    /// <summary>Returns full schema for FindAvailableScenarios</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/find-available/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> FindAvailableScenarios_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/find-available",
+            _FindAvailableScenarios_Info,
+            _FindAvailableScenarios_RequestSchema,
+            _FindAvailableScenarios_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for TestScenarioTrigger
+
+    private static readonly string _TestScenarioTrigger_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TestScenarioRequest",
+    "$defs": {
+        "TestScenarioRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to dry-run scenario trigger",
+            "required": [
+                "scenarioId",
+                "characterId",
+                "characterState"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario to test"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character to test against"
+                },
+                "characterState": {
+                    "$ref": "#/$defs/CharacterStateSnapshot",
+                    "description": "Current character state"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Location context"
+                },
+                "timeOfDay": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Current in-game hour"
+                },
+                "worldState": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "World state context"
+                }
+            }
+        },
+        "CharacterStateSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of character state for condition evaluation",
+            "properties": {
+                "age": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Character age in years"
+                },
+                "traits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TraitSnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current personality traits"
+                },
+                "backstoryElements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BackstorySnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current backstory elements"
+                },
+                "relationships": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RelationshipSnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current relationships"
+                }
+            }
+        },
+        "TraitSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a personality trait",
+            "required": [
+                "axis",
+                "value"
+            ],
+            "properties": {
+                "axis": {
+                    "type": "string",
+                    "description": "Trait axis name (e.g., AGGRESSION, OPENNESS)"
+                },
+                "value": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Trait value (-1.0 to 1.0)"
+                }
+            }
+        },
+        "BackstorySnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a backstory element",
+            "required": [
+                "elementType",
+                "key"
+            ],
+            "properties": {
+                "elementType": {
+                    "type": "string",
+                    "description": "Backstory element type (e.g., TRAUMA, GOAL)"
+                },
+                "key": {
+                    "type": "string",
+                    "description": "Backstory element key"
+                }
+            }
+        },
+        "RelationshipSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a relationship",
+            "required": [
+                "relationshipTypeCode",
+                "otherEntityId",
+                "otherEntityType"
+            ],
+            "properties": {
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "description": "Relationship type code"
+                },
+                "otherEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of other entity"
+                },
+                "otherEntityType": {
+                    "type": "string",
+                    "description": "Type of other entity"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TestScenarioTrigger_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TestScenarioResponse",
+    "$defs": {
+        "TestScenarioResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of scenario dry-run",
+            "required": [
+                "wouldTrigger",
+                "conditionResults"
+            ],
+            "properties": {
+                "wouldTrigger": {
+                    "type": "boolean",
+                    "description": "Whether scenario would trigger"
+                },
+                "conditionResults": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ConditionResult"
+                    },
+                    "description": "Result of each condition check"
+                },
+                "predictedMutations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PredictedMutation"
+                    },
+                    "nullable": true,
+                    "description": "Mutations that would be applied"
+                },
+                "blockingReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why scenario would not trigger (cooldown, exclusivity, etc.)"
+                }
+            }
+        },
+        "ConditionResult": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of evaluating a single condition",
+            "required": [
+                "conditionType",
+                "met"
+            ],
+            "properties": {
+                "conditionType": {
+                    "$ref": "#/$defs/TriggerConditionType",
+                    "description": "Condition type"
+                },
+                "met": {
+                    "type": "boolean",
+                    "description": "Whether condition was met"
+                },
+                "actualValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Actual value found"
+                },
+                "expectedValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value"
+                },
+                "details": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Additional details"
+                }
+            }
+        },
+        "TriggerConditionType": {
+            "type": "string",
+            "enum": [
+                "TraitRange",
+                "BackstoryElement",
+                "RelationshipExists",
+                "RelationshipMissing",
+                "AgeRange",
+                "LocationAt",
+                "TimeOfDay",
+                "WorldState",
+                "Custom"
+            ],
+            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+        },
+        "PredictedMutation": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Mutation that would be applied",
+            "required": [
+                "mutationType",
+                "description"
+            ],
+            "properties": {
+                "mutationType": {
+                    "$ref": "#/$defs/MutationType",
+                    "description": "Type of mutation"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description"
+                }
+            }
+        },
+        "MutationType": {
+            "type": "string",
+            "enum": [
+                "PersonalityEvolve",
+                "BackstoryAdd",
+                "RelationshipCreate",
+                "RelationshipEnd",
+                "Custom"
+            ],
+            "description": "Types of state mutations a scenario can apply.\ nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _TestScenarioTrigger_Info = """
+{
+    "summary": "Dry-run scenario trigger",
+    "description": "Tests whether a scenario would trigger for a character without\nactually executing it. Returns detailed condition evaluation results\nand predicted mutations.\n",
+    "tags": [
+        "Scenario Discovery"
+    ],
+    "deprecated": false,
+    "operationId": "TestScenarioTrigger"
+}
+""";
+
+    /// <summary>Returns endpoint information for TestScenarioTrigger</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/test/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TestScenarioTrigger_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/test",
+            _TestScenarioTrigger_Info));
+
+    /// <summary>Returns request schema for TestScenarioTrigger</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/test/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TestScenarioTrigger_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/test",
+            "request-schema",
+            _TestScenarioTrigger_RequestSchema));
+
+    /// <summary>Returns response schema for TestScenarioTrigger</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/test/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TestScenarioTrigger_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/test",
+            "response-schema",
+            _TestScenarioTrigger_ResponseSchema));
+
+    /// <summary>Returns full schema for TestScenarioTrigger</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/test/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TestScenarioTrigger_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/test",
+            _TestScenarioTrigger_Info,
+            _TestScenarioTrigger_RequestSchema,
+            _TestScenarioTrigger_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for EvaluateScenarioFit
+
+    private static readonly string _EvaluateScenarioFit_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/EvaluateFitRequest",
+    "$defs": {
+        "EvaluateFitRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request for lightweight fit scoring",
+            "required": [
+                "scenarioId",
+                "characterState"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario to evaluate"
+                },
+                "characterState": {
+                    "$ref": "#/$defs/CharacterStateSnapshot",
+                    "description": "Character state snapshot"
+                }
+            }
+        },
+        "CharacterStateSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of character state for condition evaluation",
+            "properties": {
+                "age": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Character age in years"
+                },
+                "traits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TraitSnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current personality traits"
+                },
+                "backstoryElements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BackstorySnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current backstory elements"
+                },
+                "relationships": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RelationshipSnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current relationships"
+                }
+            }
+        },
+        "TraitSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a personality trait",
+            "required": [
+                "axis",
+                "value"
+            ],
+            "properties": {
+                "axis": {
+                    "type": "string",
+                    "description": "Trait axis name (e.g., AGGRESSION, OPENNESS)"
+                },
+                "value": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Trait value (-1.0 to 1.0)"
+                }
+            }
+        },
+        "BackstorySnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a backstory element",
+            "required": [
+                "elementType",
+                "key"
+            ],
+            "properties": {
+                "elementType": {
+                    "type": "string",
+                    "description": "Backstory element type (e.g., TRAUMA, GOAL)"
+                },
+                "key": {
+                    "type": "string",
+                    "description": "Backstory element key"
+                }
+            }
+        },
+        "RelationshipSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a relationship",
+            "required": [
+                "relationshipTypeCode",
+                "otherEntityId",
+                "otherEntityType"
+            ],
+            "properties": {
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "description": "Relationship type code"
+                },
+                "otherEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of other entity"
+                },
+                "otherEntityType": {
+                    "type": "string",
+                    "description": "Type of other entity"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _EvaluateScenarioFit_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/EvaluateFitResponse",
+    "$defs": {
+        "EvaluateFitResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Fit score result",
+            "required": [
+                "fitScore",
+                "conditionsMet",
+                "conditionsTotal"
+            ],
+            "properties": {
+                "fitScore": {
+                    "type": "number",
+                    "format": "double",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Narrative fit score (0-1)"
+                },
+                "conditionsMet": {
+                    "type": "integer",
+                    "description": "Number of conditions met"
+                },
+                "conditionsTotal": {
+                    "type": "integer",
+                    "description": "Total conditions"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _EvaluateScenarioFit_Info = """
+{
+    "summary": "Score narrative fit without full condition check",
+    "description": "Lightweight scoring of narrative fit between a scenario and character\nstate. Faster than test but less detailed.\n",
+    "tags": [
+        "Scenario Discovery"
+    ],
+    "deprecated": false,
+    "operationId": "EvaluateScenarioFit"
+}
+""";
+
+    /// <summary>Returns endpoint information for EvaluateScenarioFit</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/evaluate-fit/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EvaluateScenarioFit_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/evaluate-fit",
+            _EvaluateScenarioFit_Info));
+
+    /// <summary>Returns request schema for EvaluateScenarioFit</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/evaluate-fit/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EvaluateScenarioFit_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/evaluate-fit",
+            "request-schema",
+            _EvaluateScenarioFit_RequestSchema));
+
+    /// <summary>Returns response schema for EvaluateScenarioFit</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/evaluate-fit/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EvaluateScenarioFit_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/evaluate-fit",
+            "response-schema",
+            _EvaluateScenarioFit_ResponseSchema));
+
+    /// <summary>Returns full schema for EvaluateScenarioFit</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/evaluate-fit/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EvaluateScenarioFit_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/evaluate-fit",
+            _EvaluateScenarioFit_Info,
+            _EvaluateScenarioFit_RequestSchema,
+            _EvaluateScenarioFit_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for TriggerScenario
+
+    private static readonly string _TriggerScenario_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TriggerScenarioRequest",
+    "$defs": {
+        "TriggerScenarioRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to trigger scenario execution",
+            "required": [
+                "scenarioId",
+                "characterId",
+                "characterState"
+            ],
+            "properties": {
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario to trigger"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Primary character in scenario"
+                },
+                "characterState": {
+                    "$ref": "#/$defs/CharacterStateSnapshot",
+                    "description": "Current character state for condition validation"
+                },
+                "additionalParticipants": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "nullable": true,
+                    "description": "Additional participants by role name"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Location context"
+                },
+                "timeOfDay": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "nullable": true,
+                    "description": "Current in-game hour"
+                },
+                "worldState": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "World state context"
+                },
+                "orchestratorId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Actor ID of the orchestrating watcher"
+                },
+                "skipConditionCheck": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip condition validation (for forced triggers)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Idempotency key for safe retries"
+                }
+            }
+        },
+        "CharacterStateSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of character state for condition evaluation",
+            "properties": {
+                "age": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Character age in years"
+                },
+                "traits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TraitSnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current personality traits"
+                },
+                "backstoryElements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BackstorySnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current backstory elements"
+                },
+                "relationships": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RelationshipSnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Current relationships"
+                }
+            }
+        },
+        "TraitSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a personality trait",
+            "required": [
+                "axis",
+                "value"
+            ],
+            "properties": {
+                "axis": {
+                    "type": "string",
+                    "description": "Trait axis name (e.g., AGGRESSION, OPENNESS)"
+                },
+                "value": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Trait value (-1.0 to 1.0)"
+                }
+            }
+        },
+        "BackstorySnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a backstory element",
+            "required": [
+                "elementType",
+                "key"
+            ],
+            "properties": {
+                "elementType": {
+                    "type": "string",
+                    "description": "Backstory element type (e.g., TRAUMA, GOAL)"
+                },
+                "key": {
+                    "type": "string",
+                    "description": "Backstory element key"
+                }
+            }
+        },
+        "RelationshipSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Snapshot of a relationship",
+            "required": [
+                "relationshipTypeCode",
+                "otherEntityId",
+                "otherEntityType"
+            ],
+            "properties": {
+                "relationshipTypeCode": {
+                    "type": "string",
+                    "description": "Relationship type code"
+                },
+                "otherEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of other entity"
+                },
+                "otherEntityType": {
+                    "type": "string",
+                    "description": "Type of other entity"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TriggerScenario_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TriggerScenarioResponse",
+    "$defs": {
+        "TriggerScenarioResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of scenario trigger",
+            "required": [
+                "executionId",
+                "scenarioId",
+                "status",
+                "triggeredAt"
+            ],
+            "properties": {
+                "executionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario execution instance ID"
+                },
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario definition ID"
+                },
+                "status": {
+                    "$ref": "#/$defs/ScenarioStatus",
+                    "description": "Execution status"
+                },
+                "triggeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When scenario was triggered"
+                },
+                "mutationsApplied": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AppliedMutation"
+                    },
+                    "nullable": true,
+                    "description": "Mutations that were applied"
+                },
+                "questsSpawned": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/SpawnedQuest"
+                    },
+                    "nullable": true,
+                    "description": "Quests that were spawned"
+                },
+                "failureReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for failure (if status is Failed)"
+                }
+            }
+        },
+        "ScenarioStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Completed",
+                "Failed",
+                "Cancelled"
+            ],
+            "description": "Current status of a scenario execution instance.\nActive: Scenario is currently executing\nCompleted: Scenario finished successfully\nFailed: Scenario failed during execution\nCancelled: Scenario was cancelled externally\n"
+        },
+        "AppliedMutation": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A mutation that was applied",
+            "required": [
+                "mutationType",
+                "success"
+            ],
+            "properties": {
+                "mutationType": {
+                    "$ref": "#/$defs/MutationType",
+                    "description": "Type of mutation"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether mutation succeeded"
+                },
+                "targetCharacterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Character affected"
+                },
+                "details": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Details of what changed"
+                }
+            }
+        },
+        "MutationType": {
+            "type": "string",
+            "enum": [
+                "PersonalityEvolve",
+                "BackstoryAdd",
+                "RelationshipCreate",
+                "RelationshipEnd",
+                "Custom"
+            ],
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+        },
+        "SpawnedQuest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A quest that was spawned",
+            "required": [
+                "questInstanceId",
+                "questCode"
+            ],
+            "properties": {
+                "questInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Quest instance ID"
+                },
+                "questCode": {
+                    "type": "string",
+                    "description": "Quest definition code"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TriggerScenario_Info = """
+{
+    "summary": "Execute a scenario",
+    "description": "Triggers scenario execution for a character. Applies mutations to\ncharacter state (personality, backstory, relationships) and spawns\nquests via quest hooks.\n\nUses distributed locks to prevent double-triggering and idempotency\nkeys for safe retries.\n",
+    "tags": [
+        "Scenario Execution"
+    ],
+    "deprecated": false,
+    "operationId": "TriggerScenario"
+}
+""";
+
+    /// <summary>Returns endpoint information for TriggerScenario</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/trigger/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TriggerScenario_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/trigger",
+            _TriggerScenario_Info));
+
+    /// <summary>Returns request schema for TriggerScenario</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/trigger/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TriggerScenario_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/trigger",
+            "request-schema",
+            _TriggerScenario_RequestSchema));
+
+    /// <summary>Returns response schema for TriggerScenario</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/trigger/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TriggerScenario_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/trigger",
+            "response-schema",
+            _TriggerScenario_ResponseSchema));
+
+    /// <summary>Returns full schema for TriggerScenario</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/trigger/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TriggerScenario_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/trigger",
+            _TriggerScenario_Info,
+            _TriggerScenario_RequestSchema,
+            _TriggerScenario_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetActiveScenarios
+
+    private static readonly string _GetActiveScenarios_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetActiveScenariosRequest",
+    "$defs": {
+        "GetActiveScenariosRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request for active scenarios",
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character to query"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetActiveScenarios_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetActiveScenariosResponse",
+    "$defs": {
+        "GetActiveScenariosResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Active scenario executions",
+            "required": [
+                "executions"
+            ],
+            "properties": {
+                "executions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioExecution"
+                    },
+                    "description": "Active scenario executions"
+                }
+            }
+        },
+        "ScenarioExecution": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A scenario execution instance",
+            "required": [
+                "executionId",
+                "scenarioId",
+                "code",
+                "name",
+                "status",
+                "currentPhase",
+                "totalPhases",
+                "triggeredAt"
+            ],
+            "properties": {
+                "executionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Execution instance ID"
+                },
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario definition ID"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Scenario code"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Scenario name"
+                },
+                "status": {
+                    "$ref": "#/$defs/ScenarioStatus",
+                    "description": "Current status"
+                },
+                "currentPhase": {
+                    "type": "integer",
+                    "description": "Current phase number"
+                },
+                "totalPhases": {
+                    "type": "integer",
+                    "description": "Total phases"
+                },
+                "triggeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When triggered"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When completed (if applicable)"
+                }
+            }
+        },
+        "ScenarioStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Completed",
+                "Failed",
+                "Cancelled"
+            ],
+            "description": "Current status of a scenario execution instance.\nActive: Scenario is currently executing\nCompleted: Scenario finished successfully\nFailed: Scenario failed during execution\nCancelled: Scenario was cancelled externally\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _GetActiveScenarios_Info = """
+{
+    "summary": "Get active scenarios for a character",
+    "description": "Returns currently executing scenarios for a character.\n",
+    "tags": [
+        "Scenario Execution"
+    ],
+    "deprecated": false,
+    "operationId": "GetActiveScenarios"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetActiveScenarios</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get-active/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetActiveScenarios_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get-active",
+            _GetActiveScenarios_Info));
+
+    /// <summary>Returns request schema for GetActiveScenarios</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get-active/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetActiveScenarios_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get-active",
+            "request-schema",
+            _GetActiveScenarios_RequestSchema));
+
+    /// <summary>Returns response schema for GetActiveScenarios</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get-active/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetActiveScenarios_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get-active",
+            "response-schema",
+            _GetActiveScenarios_ResponseSchema));
+
+    /// <summary>Returns full schema for GetActiveScenarios</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get-active/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetActiveScenarios_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get-active",
+            _GetActiveScenarios_Info,
+            _GetActiveScenarios_RequestSchema,
+            _GetActiveScenarios_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetScenarioHistory
+
+    private static readonly string _GetScenarioHistory_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetScenarioHistoryRequest",
+    "$defs": {
+        "GetScenarioHistoryRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request for scenario execution history",
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character to query"
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 20,
+                    "description": "Max results"
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 0,
+                    "description": "Pagination offset"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetScenarioHistory_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetScenarioHistoryResponse",
+    "$defs": {
+        "GetScenarioHistoryResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Scenario execution history",
+            "required": [
+                "executions",
+                "totalCount"
+            ],
+            "properties": {
+                "executions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ScenarioExecution"
+                    },
+                    "description": "Historical executions"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total count for pagination"
+                }
+            }
+        },
+        "ScenarioExecution": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A scenario execution instance",
+            "required": [
+                "executionId",
+                "scenarioId",
+                "code",
+                "name",
+                "status",
+                "currentPhase",
+                "totalPhases",
+                "triggeredAt"
+            ],
+            "properties": {
+                "executionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Execution instance ID"
+                },
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario definition ID"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Scenario code"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Scenario name"
+                },
+                "status": {
+                    "$ref": "#/$defs/ScenarioStatus",
+                    "description": "Current status"
+                },
+                "currentPhase": {
+                    "type": "integer",
+                    "description": "Current phase number"
+                },
+                "totalPhases": {
+                    "type": "integer",
+                    "description": "Total phases"
+                },
+                "triggeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When triggered"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When completed (if applicable)"
+                }
+            }
+        },
+        "ScenarioStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Completed",
+                "Failed",
+                "Cancelled"
+            ],
+            "description": "Current status of a scenario execution instance.\nActive: Scenario is currently executing\nCompleted: Scenario finished successfully\nFailed: Scenario failed during execution\ nCancelled: Scenario was cancelled externally\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _GetScenarioHistory_Info = """
+{
+    "summary": "Get scenario execution history",
+    "description": "Returns historical scenario executions for a character with pagination.\n",
+    "tags": [
+        "Scenario Execution"
+    ],
+    "deprecated": false,
+    "operationId": "GetScenarioHistory"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetScenarioHistory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get-history/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetScenarioHistory_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get-history",
+            _GetScenarioHistory_Info));
+
+    /// <summary>Returns request schema for GetScenarioHistory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get-history/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetScenarioHistory_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get-history",
+            "request-schema",
+            _GetScenarioHistory_RequestSchema));
+
+    /// <summary>Returns response schema for GetScenarioHistory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get-history/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetScenarioHistory_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get-history",
+            "response-schema",
+            _GetScenarioHistory_ResponseSchema));
+
+    /// <summary>Returns full schema for GetScenarioHistory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/scenario/get-history/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetScenarioHistory_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/scenario/get-history",
+            _GetScenarioHistory_Info,
+            _GetScenarioHistory_RequestSchema,
+            _GetScenarioHistory_ResponseSchema));
+
+    #endregion
 }

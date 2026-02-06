@@ -3,10 +3,10 @@
 // Tests for merging LoadedDocument trees into flat AbmlDocuments.
 // =============================================================================
 
+using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
-using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.BannouService.Abml.Execution;
 using Xunit;
 

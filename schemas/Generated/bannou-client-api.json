@@ -13378,6 +13378,316 @@
         }
       }
     },
+    "/storyline/scenario/create": {
+      "post": {
+        "summary": "Create a new scenario definition",
+        "description": "Creates a reusable scenario definition template.\nScenarios are passive building blocks with triggering conditions,\nphases, mutations, and optional quest hooks.\n",
+        "operationId": "CreateScenarioDefinition",
+        "tags": [
+          "Scenario Definitions"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScenarioDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scenario definition created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioDefinition"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (validation error)"
+          },
+          "409": {
+            "description": "Scenario with code already exists"
+          }
+        }
+      }
+    },
+    "/storyline/scenario/get": {
+      "post": {
+        "summary": "Get a scenario definition by ID or code",
+        "description": "Retrieves a scenario definition by its ID or code.\nUses read-through cache for performance.\n",
+        "operationId": "GetScenarioDefinition",
+        "tags": [
+          "Scenario Definitions"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetScenarioDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scenario definition retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetScenarioDefinitionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Scenario not found"
+          }
+        }
+      }
+    },
+    "/storyline/scenario/list": {
+      "post": {
+        "summary": "List scenario definitions",
+        "description": "Lists scenario definitions with optional filtering by realm, game service, and tags.\nResults are paginated and ordered by priority (descending), then creation time.\n",
+        "operationId": "ListScenarioDefinitions",
+        "tags": [
+          "Scenario Definitions"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListScenarioDefinitionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scenarios listed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListScenarioDefinitionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storyline/scenario/update": {
+      "post": {
+        "summary": "Update a scenario definition",
+        "description": "Updates an existing scenario definition.\nUses ETag for optimistic concurrency control.\n",
+        "operationId": "UpdateScenarioDefinition",
+        "tags": [
+          "Scenario Definitions"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScenarioDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scenario updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioDefinition"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Scenario not found"
+          },
+          "409": {
+            "description": "Concurrent modification conflict"
+          }
+        }
+      }
+    },
+    "/storyline/scenario/deprecate": {
+      "post": {
+        "summary": "Deprecate a scenario definition",
+        "description": "Soft-deletes a scenario definition by marking it deprecated.\nDeprecated scenarios are not returned by find-available.\n",
+        "operationId": "DeprecateScenarioDefinition",
+        "tags": [
+          "Scenario Definitions"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeprecateScenarioDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scenario deprecated"
+          },
+          "404": {
+            "description": "Scenario not found"
+          }
+        }
+      }
+    },
+    "/storyline/scenario/test": {
+      "post": {
+        "summary": "Dry-run scenario trigger",
+        "description": "Tests whether a scenario would trigger for a character without\nactually executing it. Returns detailed condition evaluation results\nand predicted mutations.\n",
+        "operationId": "TestScenarioTrigger",
+        "tags": [
+          "Scenario Discovery"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestScenarioRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestScenarioResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Scenario not found"
+          }
+        }
+      }
+    },
+    "/storyline/scenario/get-active": {
+      "post": {
+        "summary": "Get active scenarios for a character",
+        "description": "Returns currently executing scenarios for a character.\n",
+        "operationId": "GetActiveScenarios",
+        "tags": [
+          "Scenario Execution"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetActiveScenariosRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Active scenarios",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetActiveScenariosResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storyline/scenario/get-history": {
+      "post": {
+        "summary": "Get scenario execution history",
+        "description": "Returns historical scenario executions for a character with pagination.\n",
+        "operationId": "GetScenarioHistory",
+        "tags": [
+          "Scenario Execution"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetScenarioHistoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scenario history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetScenarioHistoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/subscription/account/list": {
       "post": {
         "summary": "Get subscriptions for an account",
@@ -17862,6 +18172,42 @@
           }
         }
       },
+      "CharacterStateSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Snapshot of character state for condition evaluation",
+        "properties": {
+          "age": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Character age in years"
+          },
+          "traits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraitSnapshot"
+            },
+            "nullable": true,
+            "description": "Current personality traits"
+          },
+          "backstoryElements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackstorySnapshot"
+            },
+            "nullable": true,
+            "description": "Current backstory elements"
+          },
+          "relationships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RelationshipSnapshot"
+            },
+            "nullable": true,
+            "description": "Current relationships"
+          }
+        }
+      },
       "CharacterStatus": {
         "type": "string",
         "description": "Character lifecycle status",
@@ -19433,6 +19779,40 @@
           "none"
         ],
         "description": "Compression algorithm for bundles"
+      },
+      "ConditionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Result of evaluating a single condition",
+        "required": [
+          "conditionType",
+          "met"
+        ],
+        "properties": {
+          "conditionType": {
+            "$ref": "#/components/schemas/TriggerConditionType",
+            "description": "Condition type"
+          },
+          "met": {
+            "type": "boolean",
+            "description": "Whether condition was met"
+          },
+          "actualValue": {
+            "type": "string",
+            "nullable": true,
+            "description": "Actual value found"
+          },
+          "expectedValue": {
+            "type": "string",
+            "nullable": true,
+            "description": "Expected value"
+          },
+          "details": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional details"
+          }
+        }
       },
       "ConfirmRefundRequest": {
         "type": "object",
@@ -22055,6 +22435,112 @@
           }
         }
       },
+      "CreateScenarioDefinitionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to create a scenario definition",
+        "required": [
+          "code",
+          "name",
+          "triggerConditions",
+          "phases"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Human-readable scenario code (uppercase with underscores)"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Display name for the scenario"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Detailed scenario description"
+          },
+          "triggerConditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TriggerCondition"
+            },
+            "minItems": 1,
+            "description": "Conditions that must ALL be met to trigger"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioPhase"
+            },
+            "minItems": 1,
+            "description": "Execution phases in order"
+          },
+          "mutations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioMutation"
+            },
+            "nullable": true,
+            "description": "State mutations to apply on completion"
+          },
+          "questHooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioQuestHook"
+            },
+            "nullable": true,
+            "description": "Quests to spawn on completion"
+          },
+          "cooldownSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Per-character cooldown in seconds"
+          },
+          "exclusivityTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Tags for mutual exclusivity checking"
+          },
+          "priority": {
+            "type": "integer",
+            "default": 0,
+            "description": "Higher priority scenarios are checked first"
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether scenario can be triggered"
+          },
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Realm scope (null means all realms)"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Game service scope (null means all games)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Classification tags for filtering"
+          }
+        }
+      },
       "CreateSceneRequest": {
         "type": "object",
         "description": "Request to create a new scene",
@@ -23189,6 +23675,21 @@
             "type": "string",
             "format": "uuid",
             "description": "Definition to deprecate"
+          }
+        }
+      },
+      "DeprecateScenarioDefinitionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to deprecate a scenario definition",
+        "required": [
+          "scenarioId"
+        ],
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Scenario to deprecate"
           }
         }
       },
@@ -26689,6 +27190,38 @@
           }
         }
       },
+      "GetActiveScenariosRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request for active scenarios",
+        "required": [
+          "characterId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to query"
+          }
+        }
+      },
+      "GetActiveScenariosResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Active scenario executions",
+        "required": [
+          "executions"
+        ],
+        "properties": {
+          "executions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioExecution"
+            },
+            "description": "Active scenario executions"
+          }
+        }
+      },
       "GetAncestorsRequest": {
         "description": "Request to retrieve all ancestor types in the hierarchy chain from a relationship type up to the root",
         "type": "object",
@@ -28568,6 +29101,93 @@
             "type": "boolean",
             "default": false,
             "description": "Include relationships that have ended"
+          }
+        }
+      },
+      "GetScenarioDefinitionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to retrieve a scenario definition",
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Scenario ID to retrieve"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Scenario code to retrieve (if ID not provided)"
+          }
+        }
+      },
+      "GetScenarioDefinitionResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Response with scenario definition",
+        "required": [
+          "found"
+        ],
+        "properties": {
+          "found": {
+            "type": "boolean",
+            "description": "Whether the scenario was found"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/ScenarioDefinition",
+            "nullable": true,
+            "description": "The scenario definition (null if not found)"
+          }
+        }
+      },
+      "GetScenarioHistoryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request for scenario execution history",
+        "required": [
+          "characterId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to query"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Max results"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Pagination offset"
+          }
+        }
+      },
+      "GetScenarioHistoryResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Scenario execution history",
+        "required": [
+          "executions",
+          "totalCount"
+        ],
+        "properties": {
+          "executions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioExecution"
+            },
+            "description": "Historical executions"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total count for pagination"
           }
         }
       },
@@ -32247,6 +32867,73 @@
           }
         }
       },
+      "ListScenarioDefinitionsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to list scenario definitions",
+        "properties": {
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Filter by realm"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Filter by game service"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Filter by tags (OR logic)"
+          },
+          "includeDeprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include deprecated scenarios"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Maximum scenarios to return"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Pagination offset"
+          }
+        }
+      },
+      "ListScenarioDefinitionsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "List of scenario definitions",
+        "required": [
+          "scenarios",
+          "totalCount"
+        ],
+        "properties": {
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioDefinitionSummary"
+            },
+            "description": "Scenario definition summaries"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total matching scenarios"
+          }
+        }
+      },
       "ListScenesRequest": {
         "type": "object",
         "description": "Request to list scenes with optional filters",
@@ -34231,6 +34918,17 @@
           }
         }
       },
+      "MutationType": {
+        "type": "string",
+        "enum": [
+          "PersonalityEvolve",
+          "BackstoryAdd",
+          "RelationshipCreate",
+          "RelationshipEnd",
+          "Custom"
+        ],
+        "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+      },
       "NarrativeEffect": {
         "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect",
         "type": "object",
@@ -35655,6 +36353,25 @@
             "$ref": "#/components/schemas/ResponseValidation",
             "nullable": true,
             "description": "Optional validation rules for the response"
+          }
+        }
+      },
+      "PredictedMutation": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Mutation that would be applied",
+        "required": [
+          "mutationType",
+          "description"
+        ],
+        "properties": {
+          "mutationType": {
+            "$ref": "#/components/schemas/MutationType",
+            "description": "Type of mutation"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description"
           }
         }
       },
@@ -38410,6 +39127,31 @@
           }
         }
       },
+      "RelationshipSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Snapshot of a relationship",
+        "required": [
+          "relationshipTypeCode",
+          "otherEntityId",
+          "otherEntityType"
+        ],
+        "properties": {
+          "relationshipTypeCode": {
+            "type": "string",
+            "description": "Relationship type code"
+          },
+          "otherEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of other entity"
+          },
+          "otherEntityType": {
+            "type": "string",
+            "description": "Type of other entity"
+          }
+        }
+      },
       "RelationshipTypeListResponse": {
         "description": "Response containing a list of relationship types with total count",
         "type": "object",
@@ -39934,6 +40676,418 @@
             "description": "True if async upload is enabled and data is queued for MinIO upload.\nSave is immediately loadable from Redis cache, but not yet durable.\n"
           }
         }
+      },
+      "ScenarioDefinition": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A scenario definition template that can be triggered when conditions are met",
+        "required": [
+          "scenarioId",
+          "code",
+          "name",
+          "triggerConditions",
+          "phases",
+          "priority",
+          "enabled",
+          "createdAt"
+        ],
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique scenario definition identifier"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Human-readable scenario code (uppercase with underscores)"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Display name for the scenario"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Detailed scenario description"
+          },
+          "triggerConditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TriggerCondition"
+            },
+            "minItems": 1,
+            "description": "Conditions that must ALL be met to trigger (AND logic)"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioPhase"
+            },
+            "minItems": 1,
+            "description": "Execution phases in order"
+          },
+          "mutations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioMutation"
+            },
+            "nullable": true,
+            "description": "State mutations to apply on completion"
+          },
+          "questHooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioQuestHook"
+            },
+            "nullable": true,
+            "description": "Quests to spawn on completion"
+          },
+          "cooldownSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Per-character cooldown in seconds (null uses default from config)"
+          },
+          "exclusivityTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Tags for mutual exclusivity checking"
+          },
+          "priority": {
+            "type": "integer",
+            "default": 0,
+            "description": "Higher priority scenarios are checked first"
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether scenario can be triggered"
+          },
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Realm scope (null means all realms)"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Game service scope (null means all games)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Classification tags for filtering"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether scenario is soft-deleted"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When definition was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When definition was last modified"
+          },
+          "etag": {
+            "type": "string",
+            "nullable": true,
+            "description": "ETag for optimistic concurrency"
+          }
+        }
+      },
+      "ScenarioDefinitionSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Summary of a scenario definition",
+        "required": [
+          "scenarioId",
+          "code",
+          "name",
+          "priority",
+          "enabled",
+          "createdAt"
+        ],
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Scenario identifier"
+          },
+          "code": {
+            "type": "string",
+            "description": "Scenario code"
+          },
+          "name": {
+            "type": "string",
+            "description": "Scenario name"
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Scenario priority"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether enabled"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "Whether deprecated"
+          },
+          "conditionCount": {
+            "type": "integer",
+            "description": "Number of trigger conditions"
+          },
+          "phaseCount": {
+            "type": "integer",
+            "description": "Number of phases"
+          },
+          "mutationCount": {
+            "type": "integer",
+            "description": "Number of mutations"
+          },
+          "questHookCount": {
+            "type": "integer",
+            "description": "Number of quest hooks"
+          },
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Realm scope"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Game service scope"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Classification tags"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When created"
+          }
+        }
+      },
+      "ScenarioExecution": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A scenario execution instance",
+        "required": [
+          "executionId",
+          "scenarioId",
+          "code",
+          "name",
+          "status",
+          "currentPhase",
+          "totalPhases",
+          "triggeredAt"
+        ],
+        "properties": {
+          "executionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Execution instance ID"
+          },
+          "scenarioId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Scenario definition ID"
+          },
+          "code": {
+            "type": "string",
+            "description": "Scenario code"
+          },
+          "name": {
+            "type": "string",
+            "description": "Scenario name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ScenarioStatus",
+            "description": "Current status"
+          },
+          "currentPhase": {
+            "type": "integer",
+            "description": "Current phase number"
+          },
+          "totalPhases": {
+            "type": "integer",
+            "description": "Total phases"
+          },
+          "triggeredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When triggered"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When completed (if applicable)"
+          }
+        }
+      },
+      "ScenarioMutation": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A state mutation to apply during scenario execution",
+        "required": [
+          "mutationType"
+        ],
+        "properties": {
+          "mutationType": {
+            "$ref": "#/components/schemas/MutationType",
+            "description": "Type of mutation to apply"
+          },
+          "experienceType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Experience type for PersonalityEvolve (e.g., TRAUMA, VICTORY)"
+          },
+          "experienceIntensity": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "nullable": true,
+            "description": "Experience intensity for PersonalityEvolve (0.0-1.0)"
+          },
+          "backstoryElementType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Backstory element type for BackstoryAdd (e.g., TRAUMA, GOAL)"
+          },
+          "backstoryKey": {
+            "type": "string",
+            "nullable": true,
+            "description": "Backstory element key for BackstoryAdd"
+          },
+          "backstoryValue": {
+            "type": "string",
+            "nullable": true,
+            "description": "Backstory element value for BackstoryAdd"
+          },
+          "backstoryStrength": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "nullable": true,
+            "description": "Backstory element strength for BackstoryAdd (0.0-1.0)"
+          },
+          "relationshipTypeCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Relationship type code for RelationshipCreate/End"
+          },
+          "otherParticipantRole": {
+            "type": "string",
+            "nullable": true,
+            "description": "Role name for other participant in multi-character scenarios"
+          }
+        }
+      },
+      "ScenarioPhase": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A phase in scenario execution",
+        "required": [
+          "phaseNumber",
+          "name"
+        ],
+        "properties": {
+          "phaseNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Phase sequence number (1-based)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Phase name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "What happens in this phase"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Expected duration in seconds (for pacing, not enforced)"
+          },
+          "dialogueHint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Hint for dialogue generation system"
+          },
+          "actionHint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Hint for behavior/GOAP system"
+          }
+        }
+      },
+      "ScenarioQuestHook": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Quest to spawn on scenario completion",
+        "required": [
+          "questCode"
+        ],
+        "properties": {
+          "questCode": {
+            "type": "string",
+            "description": "Quest definition code to spawn"
+          },
+          "delaySeconds": {
+            "type": "integer",
+            "default": 0,
+            "description": "Delay before spawning quest (not implemented in Phase 1)"
+          },
+          "termOverrides": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Variable overrides for quest template"
+          }
+        }
+      },
+      "ScenarioStatus": {
+        "type": "string",
+        "enum": [
+          "Active",
+          "Completed",
+          "Failed",
+          "Cancelled"
+        ],
+        "description": "Current status of a scenario execution instance.\nActive: Scenario is currently executing\nCompleted: Scenario finished successfully\nFailed: Scenario failed during execution\nCancelled: Scenario was cancelled externally\n"
       },
       "Scene": {
         "type": "object",
@@ -42139,6 +43293,88 @@
           "inclusive"
         ]
       },
+      "TestScenarioRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to dry-run scenario trigger",
+        "required": [
+          "scenarioId",
+          "characterId",
+          "characterState"
+        ],
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Scenario to test"
+          },
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to test against"
+          },
+          "characterState": {
+            "$ref": "#/components/schemas/CharacterStateSnapshot",
+            "description": "Current character state"
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Location context"
+          },
+          "timeOfDay": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23,
+            "nullable": true,
+            "description": "Current in-game hour"
+          },
+          "worldState": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "World state context"
+          }
+        }
+      },
+      "TestScenarioResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Result of scenario dry-run",
+        "required": [
+          "wouldTrigger",
+          "conditionResults"
+        ],
+        "properties": {
+          "wouldTrigger": {
+            "type": "boolean",
+            "description": "Whether scenario would trigger"
+          },
+          "conditionResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionResult"
+            },
+            "description": "Result of each condition check"
+          },
+          "predictedMutations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredictedMutation"
+            },
+            "nullable": true,
+            "description": "Mutations that would be applied"
+          },
+          "blockingReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why scenario would not trigger (cooldown, exclusivity, etc.)"
+          }
+        }
+      },
       "ThemeConfig": {
         "description": "Visual theme configuration including colors, fonts, and navigation",
         "type": "object",
@@ -42286,6 +43522,26 @@
           "AGGRESSION",
           "LOYALTY"
         ]
+      },
+      "TraitSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Snapshot of a personality trait",
+        "required": [
+          "axis",
+          "value"
+        ],
+        "properties": {
+          "axis": {
+            "type": "string",
+            "description": "Trait axis name (e.g., AGGRESSION, OPENNESS)"
+          },
+          "value": {
+            "type": "number",
+            "format": "float",
+            "description": "Trait value (-1.0 to 1.0)"
+          }
+        }
       },
       "TraitValue": {
         "type": "object",
@@ -42662,6 +43918,112 @@
             "description": "Scale relative to parent"
           }
         }
+      },
+      "TriggerCondition": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A condition that must be met for scenario triggering",
+        "required": [
+          "conditionType"
+        ],
+        "properties": {
+          "conditionType": {
+            "$ref": "#/components/schemas/TriggerConditionType",
+            "description": "Type of condition to evaluate"
+          },
+          "traitAxis": {
+            "type": "string",
+            "nullable": true,
+            "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
+          },
+          "traitMin": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Minimum trait value for TraitRange (-1.0 to 1.0)"
+          },
+          "traitMax": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Maximum trait value for TraitRange (-1.0 to 1.0)"
+          },
+          "backstoryType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
+          },
+          "backstoryKey": {
+            "type": "string",
+            "nullable": true,
+            "description": "Backstory element key for BackstoryElement"
+          },
+          "relationshipTypeCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Relationship type code for RelationshipExists/Missing"
+          },
+          "otherEntityType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Type of other entity in relationship check"
+          },
+          "ageMin": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Minimum character age for AgeRange"
+          },
+          "ageMax": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum character age for AgeRange"
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Required location ID for LocationAt"
+          },
+          "timeOfDayMin": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23,
+            "nullable": true,
+            "description": "Minimum hour of day (0-23) for TimeOfDay"
+          },
+          "timeOfDayMax": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23,
+            "nullable": true,
+            "description": "Maximum hour of day (0-23) for TimeOfDay"
+          },
+          "worldStateKey": {
+            "type": "string",
+            "nullable": true,
+            "description": "Custom state key for WorldState/Custom"
+          },
+          "worldStateValue": {
+            "type": "string",
+            "nullable": true,
+            "description": "Expected value for WorldState/Custom"
+          }
+        }
+      },
+      "TriggerConditionType": {
+        "type": "string",
+        "enum": [
+          "TraitRange",
+          "BackstoryElement",
+          "RelationshipExists",
+          "RelationshipMissing",
+          "AgeRange",
+          "LocationAt",
+          "TimeOfDay",
+          "WorldState",
+          "Custom"
+        ],
+        "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
       },
       "TuneType": {
         "description": "A style-specific tune type definition",
@@ -43653,6 +45015,100 @@
           "binding": {
             "$ref": "#/components/schemas/RepositoryBindingInfo",
             "description": "Updated binding configuration"
+          }
+        }
+      },
+      "UpdateScenarioDefinitionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to update a scenario definition",
+        "required": [
+          "scenarioId",
+          "etag"
+        ],
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Scenario to update"
+          },
+          "etag": {
+            "type": "string",
+            "description": "ETag for optimistic concurrency"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "New name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "New description"
+          },
+          "triggerConditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TriggerCondition"
+            },
+            "nullable": true,
+            "description": "New trigger conditions"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioPhase"
+            },
+            "nullable": true,
+            "description": "New phases"
+          },
+          "mutations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioMutation"
+            },
+            "nullable": true,
+            "description": "New mutations"
+          },
+          "questHooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioQuestHook"
+            },
+            "nullable": true,
+            "description": "New quest hooks"
+          },
+          "cooldownSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "New cooldown"
+          },
+          "exclusivityTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "New exclusivity tags"
+          },
+          "priority": {
+            "type": "integer",
+            "nullable": true,
+            "description": "New priority"
+          },
+          "enabled": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "New enabled state"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "New classification tags"
           }
         }
       },

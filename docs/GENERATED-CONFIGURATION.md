@@ -834,6 +834,22 @@ Default: 3600 (1 h... |
  |
 | `STORYLINE_RISK_MIN_PHASE_THRESHOLD` | int | `2` | Minimum phase count before "flat_arc" risk is flagged.
  |
+| `STORYLINE_SCENARIO_BACKSTORY_MATCH_BONUS` | double | `0.1` | Bonus added to fit score for each matching backstory conditi... |
+| `STORYLINE_SCENARIO_COOLDOWN_DEFAULT_SECONDS` | int | `86400` | Default cooldown in seconds before a scenario can trigger ag... |
+| `STORYLINE_SCENARIO_DEFINITION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached scenario definitions (Redis read-t... |
+| `STORYLINE_SCENARIO_FIT_SCORE_BASE_WEIGHT` | double | `0.5` | Base weight for scenario fit score calculation.
+Applied when... |
+| `STORYLINE_SCENARIO_FIT_SCORE_MINIMUM_THRESHOLD` | double | `0.3` | Minimum fit score required for a scenario to be considered a... |
+| `STORYLINE_SCENARIO_FIT_SCORE_RECOMMEND_THRESHOLD` | double | `0.7` | Fit score threshold above which immediate trigger is recomme... |
+| `STORYLINE_SCENARIO_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | TTL in seconds for idempotency keys to prevent duplicate tri... |
+| `STORYLINE_SCENARIO_LOCATION_MATCH_BONUS` | double | `0.08` | Bonus added to fit score for matching location condition.
+ |
+| `STORYLINE_SCENARIO_MAX_ACTIVE_PER_CHARACTER` | int | `3` | Maximum number of active (in-progress) scenarios per charact... |
+| `STORYLINE_SCENARIO_RELATIONSHIP_MATCH_BONUS` | double | `0.12` | Bonus added to fit score for each matching relationship cond... |
+| `STORYLINE_SCENARIO_TRAIT_MATCH_BONUS` | double | `0.15` | Bonus added to fit score for each matching trait condition.
+ |
+| `STORYLINE_SCENARIO_TRIGGER_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for the distributed lock during scenario ... |
+| `STORYLINE_SCENARIO_WORLD_STATE_MATCH_BONUS` | double | `0.05` | Bonus added to fit score for matching world state conditions... |
 
 ### Subscription
 
@@ -878,9 +894,9 @@ Default: 3600 (1 h... |
 
 ## Configuration Summary
 
-- **Total properties**: 660
+- **Total properties**: 673
 - **Required (no default)**: 41
-- **Optional (has default)**: 619
+- **Optional (has default)**: 632
 
 ## Environment Variable Naming Convention
 

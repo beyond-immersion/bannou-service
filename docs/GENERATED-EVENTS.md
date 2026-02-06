@@ -431,6 +431,11 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `ScenarioAvailableEvent` | Custom | `scenario-available` | Event published when new scenarios become availabl... |
+| `ScenarioCompletedEvent` | Custom | `scenario-completed` | Event published when a scenario finishes successfu... |
+| `ScenarioFailedEvent` | Custom | `scenario-failed` | Event published when a scenario fails during execu... |
+| `ScenarioPhaseCompletedEvent` | Custom | `scenario-phase-completed` | Event published when a phase within a multi-phase ... |
+| `ScenarioTriggeredEvent` | Custom | `scenario-triggered` | Event published when a scenario starts executing f... |
 | `StorylineComposedEvent` | Custom | `storyline-composed` | Event published when a storyline plan is generated |
 
 ### Subscription

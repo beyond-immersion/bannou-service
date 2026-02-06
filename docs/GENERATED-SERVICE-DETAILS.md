@@ -52,7 +52,7 @@ Support... |
 | [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
 | [Species](#species) | 2.0.0 | 13 | Species management service for game worlds. |
 | [State](#state) | 1.0.0 | 9 | Repository pattern state management with Redis and MySQL bac... |
-| [Storyline](#storyline) | 1.0.0 | 3 | Seeded narrative generation from compressed archives using t... |
+| [Storyline](#storyline) | 1.0.0 | 14 | Seeded narrative generation from compressed archives using t... |
 | [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
 Tracks which ac... |
 | [Telemetry](#telemetry) | 1.0.0 | 2 | Unified observability plugin providing distributed tracing, ... |
@@ -479,7 +479,7 @@ Public-facing website service for browser-based access to news, account profile 
 ## Summary
 
 - **Total services**: 46
-- **Total endpoints**: 599
+- **Total endpoints**: 610
 
 ---
 

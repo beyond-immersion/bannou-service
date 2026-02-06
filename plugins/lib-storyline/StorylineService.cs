@@ -2200,106 +2200,106 @@ public partial class StorylineService : IStorylineService
         switch (condition.ConditionType)
         {
             case TriggerConditionType.TraitRange:
-            {
-                if (string.IsNullOrEmpty(condition.TraitAxis))
-                    return (false, null, null, "Missing trait axis");
+                {
+                    if (string.IsNullOrEmpty(condition.TraitAxis))
+                        return (false, null, null, "Missing trait axis");
 
-                var trait = characterState.Traits?.FirstOrDefault(t =>
-                    t.Axis.Equals(condition.TraitAxis, StringComparison.OrdinalIgnoreCase));
+                    var trait = characterState.Traits?.FirstOrDefault(t =>
+                        t.Axis.Equals(condition.TraitAxis, StringComparison.OrdinalIgnoreCase));
 
-                if (trait is null)
-                    return (false, "not found", $"{condition.TraitMin}-{condition.TraitMax}", $"Trait {condition.TraitAxis} not in snapshot");
+                    if (trait is null)
+                        return (false, "not found", $"{condition.TraitMin}-{condition.TraitMax}", $"Trait {condition.TraitAxis} not in snapshot");
 
-                var inRange = (!condition.TraitMin.HasValue || trait.Value >= condition.TraitMin.Value) &&
-                              (!condition.TraitMax.HasValue || trait.Value <= condition.TraitMax.Value);
+                    var inRange = (!condition.TraitMin.HasValue || trait.Value >= condition.TraitMin.Value) &&
+                                (!condition.TraitMax.HasValue || trait.Value <= condition.TraitMax.Value);
 
-                return (inRange, trait.Value.ToString("F2"), $"{condition.TraitMin}-{condition.TraitMax}", null);
-            }
+                    return (inRange, trait.Value.ToString("F2"), $"{condition.TraitMin}-{condition.TraitMax}", null);
+                }
 
             case TriggerConditionType.BackstoryElement:
-            {
-                if (string.IsNullOrEmpty(condition.BackstoryType))
-                    return (false, null, null, "Missing backstory type");
+                {
+                    if (string.IsNullOrEmpty(condition.BackstoryType))
+                        return (false, null, null, "Missing backstory type");
 
-                var hasElement = characterState.BackstoryElements?.Any(b =>
-                    b.ElementType.Equals(condition.BackstoryType, StringComparison.OrdinalIgnoreCase) &&
-                    (string.IsNullOrEmpty(condition.BackstoryKey) ||
-                     b.Key.Equals(condition.BackstoryKey, StringComparison.OrdinalIgnoreCase))) ?? false;
+                    var hasElement = characterState.BackstoryElements?.Any(b =>
+                        b.ElementType.Equals(condition.BackstoryType, StringComparison.OrdinalIgnoreCase) &&
+                        (string.IsNullOrEmpty(condition.BackstoryKey) ||
+                        b.Key.Equals(condition.BackstoryKey, StringComparison.OrdinalIgnoreCase))) ?? false;
 
-                return (hasElement, hasElement ? "present" : "absent", "present", null);
-            }
+                    return (hasElement, hasElement ? "present" : "absent", "present", null);
+                }
 
             case TriggerConditionType.RelationshipExists:
-            {
-                if (string.IsNullOrEmpty(condition.RelationshipTypeCode))
-                    return (false, null, null, "Missing relationship type code");
+                {
+                    if (string.IsNullOrEmpty(condition.RelationshipTypeCode))
+                        return (false, null, null, "Missing relationship type code");
 
-                var hasRelationship = characterState.Relationships?.Any(r =>
-                    r.RelationshipTypeCode.Equals(condition.RelationshipTypeCode, StringComparison.OrdinalIgnoreCase) &&
-                    (string.IsNullOrEmpty(condition.OtherEntityType) ||
-                     r.OtherEntityType.Equals(condition.OtherEntityType, StringComparison.OrdinalIgnoreCase))) ?? false;
+                    var hasRelationship = characterState.Relationships?.Any(r =>
+                        r.RelationshipTypeCode.Equals(condition.RelationshipTypeCode, StringComparison.OrdinalIgnoreCase) &&
+                        (string.IsNullOrEmpty(condition.OtherEntityType) ||
+                        r.OtherEntityType.Equals(condition.OtherEntityType, StringComparison.OrdinalIgnoreCase))) ?? false;
 
-                return (hasRelationship, hasRelationship ? "exists" : "missing", "exists", null);
-            }
+                    return (hasRelationship, hasRelationship ? "exists" : "missing", "exists", null);
+                }
 
             case TriggerConditionType.RelationshipMissing:
-            {
-                if (string.IsNullOrEmpty(condition.RelationshipTypeCode))
-                    return (false, null, null, "Missing relationship type code");
+                {
+                    if (string.IsNullOrEmpty(condition.RelationshipTypeCode))
+                        return (false, null, null, "Missing relationship type code");
 
-                var hasRelationship = characterState.Relationships?.Any(r =>
-                    r.RelationshipTypeCode.Equals(condition.RelationshipTypeCode, StringComparison.OrdinalIgnoreCase)) ?? false;
+                    var hasRelationship = characterState.Relationships?.Any(r =>
+                        r.RelationshipTypeCode.Equals(condition.RelationshipTypeCode, StringComparison.OrdinalIgnoreCase)) ?? false;
 
-                return (!hasRelationship, hasRelationship ? "exists" : "missing", "missing", null);
-            }
+                    return (!hasRelationship, hasRelationship ? "exists" : "missing", "missing", null);
+                }
 
             case TriggerConditionType.AgeRange:
-            {
-                if (!characterState.Age.HasValue)
-                    return (false, "unknown", $"{condition.AgeMin}-{condition.AgeMax}", "Character age not in snapshot");
+                {
+                    if (!characterState.Age.HasValue)
+                        return (false, "unknown", $"{condition.AgeMin}-{condition.AgeMax}", "Character age not in snapshot");
 
-                var inRange = (!condition.AgeMin.HasValue || characterState.Age.Value >= condition.AgeMin.Value) &&
-                              (!condition.AgeMax.HasValue || characterState.Age.Value <= condition.AgeMax.Value);
+                    var inRange = (!condition.AgeMin.HasValue || characterState.Age.Value >= condition.AgeMin.Value) &&
+                                (!condition.AgeMax.HasValue || characterState.Age.Value <= condition.AgeMax.Value);
 
-                return (inRange, characterState.Age.Value.ToString(), $"{condition.AgeMin}-{condition.AgeMax}", null);
-            }
+                    return (inRange, characterState.Age.Value.ToString(), $"{condition.AgeMin}-{condition.AgeMax}", null);
+                }
 
             case TriggerConditionType.LocationAt:
-            {
-                if (!condition.LocationId.HasValue)
-                    return (false, null, null, "Missing location ID in condition");
+                {
+                    if (!condition.LocationId.HasValue)
+                        return (false, null, null, "Missing location ID in condition");
 
-                if (!locationId.HasValue)
-                    return (false, "unknown", condition.LocationId.Value.ToString(), "Location not provided in request");
+                    if (!locationId.HasValue)
+                        return (false, "unknown", condition.LocationId.Value.ToString(), "Location not provided in request");
 
-                var matches = locationId.Value == condition.LocationId.Value;
-                return (matches, locationId.Value.ToString(), condition.LocationId.Value.ToString(), null);
-            }
+                    var matches = locationId.Value == condition.LocationId.Value;
+                    return (matches, locationId.Value.ToString(), condition.LocationId.Value.ToString(), null);
+                }
 
             case TriggerConditionType.TimeOfDay:
-            {
-                if (!timeOfDay.HasValue)
-                    return (false, "unknown", $"{condition.TimeOfDayMin}-{condition.TimeOfDayMax}", "Time of day not provided in request");
+                {
+                    if (!timeOfDay.HasValue)
+                        return (false, "unknown", $"{condition.TimeOfDayMin}-{condition.TimeOfDayMax}", "Time of day not provided in request");
 
-                var inRange = (!condition.TimeOfDayMin.HasValue || timeOfDay.Value >= condition.TimeOfDayMin.Value) &&
-                              (!condition.TimeOfDayMax.HasValue || timeOfDay.Value <= condition.TimeOfDayMax.Value);
+                    var inRange = (!condition.TimeOfDayMin.HasValue || timeOfDay.Value >= condition.TimeOfDayMin.Value) &&
+                                (!condition.TimeOfDayMax.HasValue || timeOfDay.Value <= condition.TimeOfDayMax.Value);
 
-                return (inRange, timeOfDay.Value.ToString(), $"{condition.TimeOfDayMin}-{condition.TimeOfDayMax}", null);
-            }
+                    return (inRange, timeOfDay.Value.ToString(), $"{condition.TimeOfDayMin}-{condition.TimeOfDayMax}", null);
+                }
 
             case TriggerConditionType.WorldState:
-            {
-                if (string.IsNullOrEmpty(condition.WorldStateKey))
-                    return (false, null, null, "Missing world state key");
+                {
+                    if (string.IsNullOrEmpty(condition.WorldStateKey))
+                        return (false, null, null, "Missing world state key");
 
-                if (worldState is null || !worldState.TryGetValue(condition.WorldStateKey, out var actualValue))
-                    return (false, "not set", condition.WorldStateValue, $"World state key {condition.WorldStateKey} not provided");
+                    if (worldState is null || !worldState.TryGetValue(condition.WorldStateKey, out var actualValue))
+                        return (false, "not set", condition.WorldStateValue, $"World state key {condition.WorldStateKey} not provided");
 
-                var matches = string.IsNullOrEmpty(condition.WorldStateValue) ||
-                              actualValue.Equals(condition.WorldStateValue, StringComparison.OrdinalIgnoreCase);
+                    var matches = string.IsNullOrEmpty(condition.WorldStateValue) ||
+                                actualValue.Equals(condition.WorldStateValue, StringComparison.OrdinalIgnoreCase);
 
-                return (matches, actualValue, condition.WorldStateValue, null);
-            }
+                    return (matches, actualValue, condition.WorldStateValue, null);
+                }
 
             case TriggerConditionType.Custom:
                 // Custom conditions are not evaluated server-side
@@ -2325,201 +2325,201 @@ public partial class StorylineService : IStorylineService
             switch (mutation.MutationType)
             {
                 case MutationType.PersonalityEvolve:
-                {
-                    // Soft L4 dependency - graceful degradation
-                    var client = _serviceProvider.GetService<CharacterPersonality.ICharacterPersonalityClient>();
-                    if (client is null)
                     {
-                        _logger.LogDebug("Character personality service unavailable, skipping personality mutation");
-                        return (false, "Character personality service unavailable");
-                    }
-
-                    if (string.IsNullOrEmpty(mutation.ExperienceType))
-                    {
-                        return (false, "Missing experience type for personality mutation");
-                    }
-
-                    // Parse experience type string to enum (schema design limitation - should use enum type)
-                    if (!Enum.TryParse<CharacterPersonality.ExperienceType>(mutation.ExperienceType, ignoreCase: true, out var experienceType))
-                    {
-                        return (false, $"Unknown experience type: {mutation.ExperienceType}");
-                    }
-
-                    try
-                    {
-                        await client.RecordExperienceAsync(
-                            new CharacterPersonality.RecordExperienceRequest
-                            {
-                                CharacterId = characterId,
-                                ExperienceType = experienceType,
-                                Intensity = mutation.ExperienceIntensity ?? 0.5f
-                            }, cancellationToken);
-
-                        return (true, "Personality evolved");
-                    }
-                    catch (Bannou.Core.ApiException ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to record personality experience");
-                        return (false, $"Failed: {ex.StatusCode}");
-                    }
-                }
-
-                case MutationType.BackstoryAdd:
-                {
-                    // Soft L4 dependency - graceful degradation
-                    var client = _serviceProvider.GetService<CharacterHistory.ICharacterHistoryClient>();
-                    if (client is null)
-                    {
-                        _logger.LogDebug("Character history service unavailable, skipping backstory mutation");
-                        return (false, "Character history service unavailable");
-                    }
-
-                    if (string.IsNullOrEmpty(mutation.BackstoryElementType) || string.IsNullOrEmpty(mutation.BackstoryKey))
-                    {
-                        return (false, "Missing backstory element type or key");
-                    }
-
-                    // Parse backstory element type string to enum (schema design limitation - should use enum type)
-                    if (!Enum.TryParse<CharacterHistory.BackstoryElementType>(mutation.BackstoryElementType, ignoreCase: true, out var elementType))
-                    {
-                        return (false, $"Unknown backstory element type: {mutation.BackstoryElementType}");
-                    }
-
-                    try
-                    {
-                        await client.AddBackstoryElementAsync(
-                            new CharacterHistory.AddBackstoryElementRequest
-                            {
-                                CharacterId = characterId,
-                                Element = new CharacterHistory.BackstoryElement
-                                {
-                                    ElementType = elementType,
-                                    Key = mutation.BackstoryKey,
-                                    Value = mutation.BackstoryValue ?? string.Empty,
-                                    Strength = mutation.BackstoryStrength ?? 0.5f
-                                }
-                            }, cancellationToken);
-
-                        return (true, "Backstory added");
-                    }
-                    catch (Bannou.Core.ApiException ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to add backstory element");
-                        return (false, $"Failed: {ex.StatusCode}");
-                    }
-                }
-
-                case MutationType.RelationshipCreate:
-                {
-                    // Hard L2 dependency - should always be available
-                    if (string.IsNullOrEmpty(mutation.RelationshipTypeCode))
-                    {
-                        return (false, "Missing relationship type code");
-                    }
-
-                    // Get other participant from additionalParticipants
-                    Guid? otherEntityId = null;
-                    if (!string.IsNullOrEmpty(mutation.OtherParticipantRole) &&
-                        additionalParticipants?.TryGetValue(mutation.OtherParticipantRole, out var participantId) == true)
-                    {
-                        otherEntityId = participantId;
-                    }
-
-                    if (!otherEntityId.HasValue)
-                    {
-                        return (false, $"No participant found for role {mutation.OtherParticipantRole}");
-                    }
-
-                    try
-                    {
-                        // Resolve relationship type code to ID
-                        var relationshipType = await _relationshipTypeClient.GetRelationshipTypeByCodeAsync(
-                            new GetRelationshipTypeByCodeRequest { Code = mutation.RelationshipTypeCode },
-                            cancellationToken);
-
-                        // Create relationship with proper types
-                        await _relationshipClient.CreateRelationshipAsync(
-                            new CreateRelationshipRequest
-                            {
-                                Entity1Id = characterId,
-                                Entity1Type = EntityType.Character,
-                                Entity2Id = otherEntityId.Value,
-                                Entity2Type = EntityType.Character,
-                                RelationshipTypeId = relationshipType.RelationshipTypeId,
-                                StartedAt = DateTimeOffset.UtcNow
-                            }, cancellationToken);
-
-                        return (true, "Relationship created");
-                    }
-                    catch (Bannou.Core.ApiException ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to create relationship");
-                        return (false, $"Failed: {ex.StatusCode}");
-                    }
-                }
-
-                case MutationType.RelationshipEnd:
-                {
-                    // Hard L2 dependency - should always be available
-                    if (string.IsNullOrEmpty(mutation.RelationshipTypeCode))
-                    {
-                        return (false, "Missing relationship type code");
-                    }
-
-                    Guid? otherEntityId = null;
-                    if (!string.IsNullOrEmpty(mutation.OtherParticipantRole) &&
-                        additionalParticipants?.TryGetValue(mutation.OtherParticipantRole, out var participantId) == true)
-                    {
-                        otherEntityId = participantId;
-                    }
-
-                    if (!otherEntityId.HasValue)
-                    {
-                        return (false, $"No participant found for role {mutation.OtherParticipantRole}");
-                    }
-
-                    try
-                    {
-                        // Resolve relationship type code to ID
-                        var relationshipType = await _relationshipTypeClient.GetRelationshipTypeByCodeAsync(
-                            new GetRelationshipTypeByCodeRequest { Code = mutation.RelationshipTypeCode },
-                            cancellationToken);
-
-                        // Find relationships between the two characters of the specified type
-                        var relationships = await _relationshipClient.GetRelationshipsBetweenAsync(
-                            new GetRelationshipsBetweenRequest
-                            {
-                                Entity1Id = characterId,
-                                Entity1Type = EntityType.Character,
-                                Entity2Id = otherEntityId.Value,
-                                Entity2Type = EntityType.Character,
-                                RelationshipTypeId = relationshipType.RelationshipTypeId,
-                                IncludeEnded = false
-                            }, cancellationToken);
-
-                        // Find the active relationship to end
-                        var activeRelationship = relationships.Relationships.FirstOrDefault(r => r.EndedAt is null);
-                        if (activeRelationship is null)
+                        // Soft L4 dependency - graceful degradation
+                        var client = _serviceProvider.GetService<CharacterPersonality.ICharacterPersonalityClient>();
+                        if (client is null)
                         {
-                            return (false, "Active relationship not found");
+                            _logger.LogDebug("Character personality service unavailable, skipping personality mutation");
+                            return (false, "Character personality service unavailable");
                         }
 
-                        // End the relationship
-                        await _relationshipClient.EndRelationshipAsync(
-                            new EndRelationshipRequest
-                            {
-                                RelationshipId = activeRelationship.RelationshipId,
-                                EndedAt = DateTimeOffset.UtcNow
-                            }, cancellationToken);
+                        if (string.IsNullOrEmpty(mutation.ExperienceType))
+                        {
+                            return (false, "Missing experience type for personality mutation");
+                        }
 
-                        return (true, "Relationship ended");
+                        // Parse experience type string to enum (schema design limitation - should use enum type)
+                        if (!Enum.TryParse<CharacterPersonality.ExperienceType>(mutation.ExperienceType, ignoreCase: true, out var experienceType))
+                        {
+                            return (false, $"Unknown experience type: {mutation.ExperienceType}");
+                        }
+
+                        try
+                        {
+                            await client.RecordExperienceAsync(
+                                new CharacterPersonality.RecordExperienceRequest
+                                {
+                                    CharacterId = characterId,
+                                    ExperienceType = experienceType,
+                                    Intensity = mutation.ExperienceIntensity ?? 0.5f
+                                }, cancellationToken);
+
+                            return (true, "Personality evolved");
+                        }
+                        catch (Bannou.Core.ApiException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to record personality experience");
+                            return (false, $"Failed: {ex.StatusCode}");
+                        }
                     }
-                    catch (Bannou.Core.ApiException ex)
+
+                case MutationType.BackstoryAdd:
                     {
-                        _logger.LogWarning(ex, "Failed to end relationship");
-                        return (false, $"Failed: {ex.StatusCode}");
+                        // Soft L4 dependency - graceful degradation
+                        var client = _serviceProvider.GetService<CharacterHistory.ICharacterHistoryClient>();
+                        if (client is null)
+                        {
+                            _logger.LogDebug("Character history service unavailable, skipping backstory mutation");
+                            return (false, "Character history service unavailable");
+                        }
+
+                        if (string.IsNullOrEmpty(mutation.BackstoryElementType) || string.IsNullOrEmpty(mutation.BackstoryKey))
+                        {
+                            return (false, "Missing backstory element type or key");
+                        }
+
+                        // Parse backstory element type string to enum (schema design limitation - should use enum type)
+                        if (!Enum.TryParse<CharacterHistory.BackstoryElementType>(mutation.BackstoryElementType, ignoreCase: true, out var elementType))
+                        {
+                            return (false, $"Unknown backstory element type: {mutation.BackstoryElementType}");
+                        }
+
+                        try
+                        {
+                            await client.AddBackstoryElementAsync(
+                                new CharacterHistory.AddBackstoryElementRequest
+                                {
+                                    CharacterId = characterId,
+                                    Element = new CharacterHistory.BackstoryElement
+                                    {
+                                        ElementType = elementType,
+                                        Key = mutation.BackstoryKey,
+                                        Value = mutation.BackstoryValue ?? string.Empty,
+                                        Strength = mutation.BackstoryStrength ?? 0.5f
+                                    }
+                                }, cancellationToken);
+
+                            return (true, "Backstory added");
+                        }
+                        catch (Bannou.Core.ApiException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to add backstory element");
+                            return (false, $"Failed: {ex.StatusCode}");
+                        }
                     }
-                }
+
+                case MutationType.RelationshipCreate:
+                    {
+                        // Hard L2 dependency - should always be available
+                        if (string.IsNullOrEmpty(mutation.RelationshipTypeCode))
+                        {
+                            return (false, "Missing relationship type code");
+                        }
+
+                        // Get other participant from additionalParticipants
+                        Guid? otherEntityId = null;
+                        if (!string.IsNullOrEmpty(mutation.OtherParticipantRole) &&
+                            additionalParticipants?.TryGetValue(mutation.OtherParticipantRole, out var participantId) == true)
+                        {
+                            otherEntityId = participantId;
+                        }
+
+                        if (!otherEntityId.HasValue)
+                        {
+                            return (false, $"No participant found for role {mutation.OtherParticipantRole}");
+                        }
+
+                        try
+                        {
+                            // Resolve relationship type code to ID
+                            var relationshipType = await _relationshipTypeClient.GetRelationshipTypeByCodeAsync(
+                                new GetRelationshipTypeByCodeRequest { Code = mutation.RelationshipTypeCode },
+                                cancellationToken);
+
+                            // Create relationship with proper types
+                            await _relationshipClient.CreateRelationshipAsync(
+                                new CreateRelationshipRequest
+                                {
+                                    Entity1Id = characterId,
+                                    Entity1Type = EntityType.Character,
+                                    Entity2Id = otherEntityId.Value,
+                                    Entity2Type = EntityType.Character,
+                                    RelationshipTypeId = relationshipType.RelationshipTypeId,
+                                    StartedAt = DateTimeOffset.UtcNow
+                                }, cancellationToken);
+
+                            return (true, "Relationship created");
+                        }
+                        catch (Bannou.Core.ApiException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to create relationship");
+                            return (false, $"Failed: {ex.StatusCode}");
+                        }
+                    }
+
+                case MutationType.RelationshipEnd:
+                    {
+                        // Hard L2 dependency - should always be available
+                        if (string.IsNullOrEmpty(mutation.RelationshipTypeCode))
+                        {
+                            return (false, "Missing relationship type code");
+                        }
+
+                        Guid? otherEntityId = null;
+                        if (!string.IsNullOrEmpty(mutation.OtherParticipantRole) &&
+                            additionalParticipants?.TryGetValue(mutation.OtherParticipantRole, out var participantId) == true)
+                        {
+                            otherEntityId = participantId;
+                        }
+
+                        if (!otherEntityId.HasValue)
+                        {
+                            return (false, $"No participant found for role {mutation.OtherParticipantRole}");
+                        }
+
+                        try
+                        {
+                            // Resolve relationship type code to ID
+                            var relationshipType = await _relationshipTypeClient.GetRelationshipTypeByCodeAsync(
+                                new GetRelationshipTypeByCodeRequest { Code = mutation.RelationshipTypeCode },
+                                cancellationToken);
+
+                            // Find relationships between the two characters of the specified type
+                            var relationships = await _relationshipClient.GetRelationshipsBetweenAsync(
+                                new GetRelationshipsBetweenRequest
+                                {
+                                    Entity1Id = characterId,
+                                    Entity1Type = EntityType.Character,
+                                    Entity2Id = otherEntityId.Value,
+                                    Entity2Type = EntityType.Character,
+                                    RelationshipTypeId = relationshipType.RelationshipTypeId,
+                                    IncludeEnded = false
+                                }, cancellationToken);
+
+                            // Find the active relationship to end
+                            var activeRelationship = relationships.Relationships.FirstOrDefault(r => r.EndedAt is null);
+                            if (activeRelationship is null)
+                            {
+                                return (false, "Active relationship not found");
+                            }
+
+                            // End the relationship
+                            await _relationshipClient.EndRelationshipAsync(
+                                new EndRelationshipRequest
+                                {
+                                    RelationshipId = activeRelationship.RelationshipId,
+                                    EndedAt = DateTimeOffset.UtcNow
+                                }, cancellationToken);
+
+                            return (true, "Relationship ended");
+                        }
+                        catch (Bannou.Core.ApiException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to end relationship");
+                            return (false, $"Failed: {ex.StatusCode}");
+                        }
+                    }
 
                 case MutationType.Custom:
                     // Custom mutations not executed server-side

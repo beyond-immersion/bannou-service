@@ -49,7 +49,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
-| [Storyline Composer API](#storyline) | `client.Storyline` | 3 | Seeded narrative generation from compressed archives using t... |
+| [Storyline Composer API](#storyline) | `client.Storyline` | 14 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 7 | Voice communication coordination service for P2P and room-ba... |
@@ -1751,6 +1751,32 @@ Seeded narrative generation from compressed archives using the storyline SDKs.
 | `GetPlanAsync` | `GetPlanRequest` | `GetPlanResponse` | Retrieve a cached storyline plan |
 | `ListPlansAsync` | `ListPlansRequest` | `ListPlansResponse` | List cached storyline plans |
 
+### Scenario Definitions
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateScenariodefinitionAsync` | `CreateScenarioDefinitionRequest` | `ScenarioDefinition` | Create a new scenario definition |
+| `GetScenariodefinitionAsync` | `GetScenarioDefinitionRequest` | `GetScenarioDefinitionResponse` | Get a scenario definition by ID or code |
+| `ListScenariodefinitionsAsync` | `ListScenarioDefinitionsRequest` | `ListScenarioDefinitionsResponse` | List scenario definitions |
+| `UpdateScenariodefinitionAsync` | `UpdateScenarioDefinitionRequest` | `ScenarioDefinition` | Update a scenario definition |
+| `DeprecatescenariodefinitionEventAsync` | `DeprecateScenarioDefinitionRequest` | *(fire-and-forget)* | Deprecate a scenario definition |
+
+### Scenario Discovery
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `FindavailablescenariosAsync` | `FindAvailableScenariosRequest` | `FindAvailableScenariosResponse` | Find scenarios matching character state |
+| `TestscenariotriggerAsync` | `TestScenarioRequest` | `TestScenarioResponse` | Dry-run scenario trigger |
+| `EvaluatescenariofitAsync` | `EvaluateFitRequest` | `EvaluateFitResponse` | Score narrative fit without full condition check |
+
+### Scenario Execution
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `TriggerscenarioAsync` | `TriggerScenarioRequest` | `TriggerScenarioResponse` | Execute a scenario |
+| `GetActivescenariosAsync` | `GetActiveScenariosRequest` | `GetActiveScenariosResponse` | Get active scenarios for a character |
+| `GetScenariohistoryAsync` | `GetScenarioHistoryRequest` | `GetScenarioHistoryResponse` | Get scenario execution history |
+
 ---
 
 ## Bannou Subscription Service API {#subscription}
@@ -1866,7 +1892,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 45
-- **Total methods**: 593
+- **Total methods**: 604
 
 ---
 

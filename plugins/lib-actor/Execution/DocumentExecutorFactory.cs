@@ -5,10 +5,10 @@
 
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
-using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
-using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
+using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
+using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
 using Microsoft.Extensions.DependencyInjection;

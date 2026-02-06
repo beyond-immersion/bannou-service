@@ -79,4 +79,200 @@ public sealed class StorylineProxy
         return _client.InvokeAsync<ListPlansRequest, ListPlansResponse>(
             "/storyline/plan/list", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Create a new scenario definition
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ScenarioDefinition on success.</returns>
+    public Task<ApiResponse<ScenarioDefinition>> CreateScenarioDefinitionAsync(
+        CreateScenarioDefinitionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CreateScenarioDefinitionRequest, ScenarioDefinition>(
+            "/storyline/scenario/create", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get a scenario definition by ID or code
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetScenarioDefinitionResponse on success.</returns>
+    public Task<ApiResponse<GetScenarioDefinitionResponse>> GetScenarioDefinitionAsync(
+        GetScenarioDefinitionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetScenarioDefinitionRequest, GetScenarioDefinitionResponse>(
+            "/storyline/scenario/get", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// List scenario definitions
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ListScenarioDefinitionsResponse on success.</returns>
+    public Task<ApiResponse<ListScenarioDefinitionsResponse>> ListScenarioDefinitionsAsync(
+        ListScenarioDefinitionsRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ListScenarioDefinitionsRequest, ListScenarioDefinitionsResponse>(
+            "/storyline/scenario/list", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Update a scenario definition
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ScenarioDefinition on success.</returns>
+    public Task<ApiResponse<ScenarioDefinition>> UpdateScenarioDefinitionAsync(
+        UpdateScenarioDefinitionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UpdateScenarioDefinitionRequest, ScenarioDefinition>(
+            "/storyline/scenario/update", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Deprecate a scenario definition
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task DeprecateScenarioDefinitionEventAsync(
+        DeprecateScenarioDefinitionRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<DeprecateScenarioDefinitionRequest>(
+            "/storyline/scenario/deprecate", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// Find scenarios matching character state
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing FindAvailableScenariosResponse on success.</returns>
+    public Task<ApiResponse<FindAvailableScenariosResponse>> FindAvailableScenariosAsync(
+        FindAvailableScenariosRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<FindAvailableScenariosRequest, FindAvailableScenariosResponse>(
+            "/storyline/scenario/find-available", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Dry-run scenario trigger
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing TestScenarioResponse on success.</returns>
+    public Task<ApiResponse<TestScenarioResponse>> TestScenarioTriggerAsync(
+        TestScenarioRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<TestScenarioRequest, TestScenarioResponse>(
+            "/storyline/scenario/test", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Score narrative fit without full condition check
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing EvaluateFitResponse on success.</returns>
+    public Task<ApiResponse<EvaluateFitResponse>> EvaluateScenarioFitAsync(
+        EvaluateFitRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<EvaluateFitRequest, EvaluateFitResponse>(
+            "/storyline/scenario/evaluate-fit", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Execute a scenario
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing TriggerScenarioResponse on success.</returns>
+    public Task<ApiResponse<TriggerScenarioResponse>> TriggerScenarioAsync(
+        TriggerScenarioRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<TriggerScenarioRequest, TriggerScenarioResponse>(
+            "/storyline/scenario/trigger", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get active scenarios for a character
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetActiveScenariosResponse on success.</returns>
+    public Task<ApiResponse<GetActiveScenariosResponse>> GetActiveScenariosAsync(
+        GetActiveScenariosRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetActiveScenariosRequest, GetActiveScenariosResponse>(
+            "/storyline/scenario/get-active", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get scenario execution history
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetScenarioHistoryResponse on success.</returns>
+    public Task<ApiResponse<GetScenarioHistoryResponse>> GetScenarioHistoryAsync(
+        GetScenarioHistoryRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetScenarioHistoryRequest, GetScenarioHistoryResponse>(
+            "/storyline/scenario/get-history", request, channel, timeout, cancellationToken);
+    }
 }
