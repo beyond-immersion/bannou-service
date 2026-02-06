@@ -121,7 +121,11 @@ public class DynamicBehaviorProviderTests
     {
         // Arrange
         var behaviorRef = Guid.NewGuid().ToString();
-        var expectedDoc = new AbmlDocument { Version = "2.0" };
+        var expectedDoc = new AbmlDocument
+        {
+            Version = "2.0",
+            Metadata = new DocumentMetadata { Id = "test-doc" }
+        };
         _mockCache
             .Setup(c => c.GetOrLoadAsync(behaviorRef, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedDoc);

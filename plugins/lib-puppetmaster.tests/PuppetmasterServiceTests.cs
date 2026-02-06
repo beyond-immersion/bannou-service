@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Puppetmaster;
 using BeyondImmersion.BannouService.Services;
@@ -244,11 +245,10 @@ public class PuppetmasterServiceTests
             .Setup(m => m.TryPublishAsync(
                 "puppetmaster.behavior.invalidated",
                 It.IsAny<BehaviorInvalidatedEvent>(),
-                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, string?, CancellationToken>((topic, evt, routingKey, ct) =>
+            .Callback<string, BehaviorInvalidatedEvent, CancellationToken>((topic, evt, ct) =>
             {
-                capturedEvent = evt as BehaviorInvalidatedEvent;
+                capturedEvent = evt;
             })
             .ReturnsAsync(true);
 
@@ -262,7 +262,6 @@ public class PuppetmasterServiceTests
             m => m.TryPublishAsync(
                 "puppetmaster.behavior.invalidated",
                 It.IsAny<BehaviorInvalidatedEvent>(),
-                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
