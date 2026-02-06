@@ -4,7 +4,7 @@
 // Owned by lib-quest per service hierarchy (L4).
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 
 namespace BeyondImmersion.BannouService.Quest.Providers;
 

@@ -17,7 +17,6 @@ using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Locking;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -1380,6 +1379,17 @@ public partial class StorylineService : IStorylineService
             // Sort by fit score descending
             availableScenarios = availableScenarios.OrderByDescending(s => s.FitScore).ToList();
 
+            // Publish available event if scenarios found
+            if (availableScenarios.Count > 0)
+            {
+                await PublishScenarioAvailableEventAsync(
+                    body.CharacterId,
+                    body.RealmId,
+                    body.GameServiceId,
+                    availableScenarios,
+                    cancellationToken);
+            }
+
             return (StatusCodes.OK, new FindAvailableScenariosResponse
             {
                 Scenarios = availableScenarios,
@@ -1658,8 +1668,39 @@ public partial class StorylineService : IStorylineService
             // Publish triggered event
             await PublishScenarioTriggeredEventAsync(execution, scenario, fitScore, cancellationToken);
 
-            // Apply mutations
-            var (mutationsApplied, questsSpawned, questIds) = await ApplyMutationsAsync(scenario, execution, cancellationToken);
+            // Apply mutations - track partial progress for failure reporting
+            int mutationsApplied;
+            int questsSpawned;
+            List<Guid> questIds;
+            try
+            {
+                (mutationsApplied, questsSpawned, questIds) = await ApplyMutationsAsync(scenario, execution, cancellationToken);
+            }
+            catch (Exception mutationEx)
+            {
+                // Mutations failed - mark execution as failed
+                execution.Status = ScenarioStatus.Failed;
+                execution.FailureReason = $"Mutation application failed: {mutationEx.Message}";
+                execution.CompletedAt = DateTimeOffset.UtcNow;
+                await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, cancellationToken: cancellationToken);
+
+                // Remove from active set
+                await _scenarioActiveStore.SetRemoveAsync(activeKey, executionId.ToString(), cancellationToken);
+
+                // Publish failed event
+                await PublishScenarioFailedEventAsync(execution, mutationEx.Message, isRecoverable: false, cancellationToken);
+
+                _logger.LogWarning(mutationEx, "Scenario {ScenarioId} failed during mutation for character {CharacterId}",
+                    body.ScenarioId, body.PrimaryCharacterId);
+
+                return (StatusCodes.OK, new TriggerScenarioResponse
+                {
+                    ExecutionId = executionId,
+                    Status = ScenarioStatus.Failed,
+                    TriggeredAt = now,
+                    CompletedAt = execution.CompletedAt
+                });
+            }
 
             // Update execution with results
             execution.MutationsApplied = mutationsApplied;
@@ -2462,6 +2503,63 @@ public partial class StorylineService : IStorylineService
         };
 
         await _messageBus.TryPublishAsync("storyline.scenario.completed", completedEvent, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Publishes scenario failed event.
+    /// </summary>
+    private async Task PublishScenarioFailedEventAsync(
+        ScenarioExecutionModel execution,
+        string failureReason,
+        bool isRecoverable,
+        CancellationToken cancellationToken)
+    {
+        var failedEvent = new ScenarioFailedEvent
+        {
+            ExecutionId = execution.ExecutionId,
+            ScenarioId = execution.ScenarioId,
+            ScenarioCode = execution.ScenarioCode,
+            PrimaryCharacterId = execution.PrimaryCharacterId,
+            OrchestratorId = execution.OrchestratorId,
+            RealmId = execution.RealmId,
+            GameServiceId = execution.GameServiceId,
+            FailureReason = failureReason,
+            FailedAtPhase = execution.CurrentPhaseIndex,
+            FailedAtPhaseName = null, // MVP: single unnamed phase
+            PartialMutationsApplied = execution.MutationsApplied,
+            IsRecoverable = isRecoverable,
+            FailedAt = DateTimeOffset.UtcNow
+        };
+
+        await _messageBus.TryPublishAsync("storyline.scenario.failed", failedEvent, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Publishes scenario available event.
+    /// </summary>
+    private async Task PublishScenarioAvailableEventAsync(
+        Guid characterId,
+        Guid? realmId,
+        Guid? gameServiceId,
+        List<AvailableScenario> availableScenarios,
+        CancellationToken cancellationToken)
+    {
+        var topFitScore = availableScenarios.Count > 0 ? availableScenarios[0].FitScore : null;
+        var triggerRecommended = availableScenarios.Any(s => s.TriggerRecommended == true);
+
+        var availableEvent = new ScenarioAvailableEvent
+        {
+            CharacterId = characterId,
+            RealmId = realmId,
+            GameServiceId = gameServiceId,
+            AvailableScenarioIds = availableScenarios.Select(s => s.ScenarioId).ToList(),
+            AvailableScenarioCodes = availableScenarios.Select(s => s.Code).ToList(),
+            TopFitScore = topFitScore,
+            TriggerRecommended = triggerRecommended,
+            DetectedAt = DateTimeOffset.UtcNow
+        };
+
+        await _messageBus.TryPublishAsync("storyline.scenario.available", availableEvent, cancellationToken: cancellationToken);
     }
 
     #endregion

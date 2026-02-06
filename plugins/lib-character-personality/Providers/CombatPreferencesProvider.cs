@@ -4,7 +4,7 @@
 // Owned by lib-character-personality per service hierarchy (L3).
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 
 namespace BeyondImmersion.BannouService.CharacterPersonality.Providers;
 

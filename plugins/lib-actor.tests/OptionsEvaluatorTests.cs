@@ -1,6 +1,6 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Runtime;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using Microsoft.Extensions.Logging;
 

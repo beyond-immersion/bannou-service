@@ -4,7 +4,7 @@
 // Registered with DI for Actor to consume via IEnumerable<IVariableProviderFactory>.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Quest.Caching;
 
