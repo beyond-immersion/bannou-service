@@ -3,7 +3,7 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor;
-using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -11,6 +11,7 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BeyondImmersion.BannouService.Actor.Tests;
 
@@ -76,15 +77,7 @@ public class ActorRunnerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
-
-        // Empty provider factories list - tests don't need actual providers
-        var providerFactories = new List<IVariableProviderFactory>();
-
-        var executorMock = new Mock<IDocumentExecutor>();
-        var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
-
-        // Set up behavior cache to return a valid document with a main flow
+        // Create test document that will be returned by the mock provider
         var document = new AbmlDocument
         {
             Version = "2.0",
@@ -94,10 +87,24 @@ public class ActorRunnerTests
                 ["main"] = new Flow { Name = "main", Actions = [] }
             }
         };
-        behaviorCacheMock.Setup(c => c.GetOrLoadAsync(
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
+
+        // Create mock provider that returns the test document
+        var mockProvider = new Mock<IBehaviorDocumentProvider>();
+        mockProvider.SetupGet(p => p.Priority).Returns(100);
+        mockProvider.Setup(p => p.CanProvide(It.IsAny<string>())).Returns(true);
+        mockProvider.Setup(p => p.GetDocumentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(document);
+
+        // Create behavior loader with the mock provider
+        var behaviorLoader = new BehaviorDocumentLoader(
+            new[] { mockProvider.Object },
+            NullLogger<BehaviorDocumentLoader>.Instance);
+
+        // Empty provider factories list - tests don't need actual providers
+        var providerFactories = new List<IVariableProviderFactory>();
+
+        var executorMock = new Mock<IDocumentExecutor>();
+        var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
 
         // Set up executor to return success
         executorMock.Setup(e => e.ExecuteAsync(
@@ -118,7 +125,7 @@ public class ActorRunnerTests
             messageSubscriberMock.Object,
             meshClientMock.Object,
             stateStoreMock.Object,
-            behaviorCacheMock.Object,
+            behaviorLoader,
             providerFactories,
             executorMock.Object,
             expressionEvaluatorMock.Object,

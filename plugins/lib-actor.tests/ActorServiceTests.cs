@@ -1,13 +1,15 @@
 using BeyondImmersion.BannouService.Actor;
-using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Pool;
+using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace BeyondImmersion.BannouService.Actor.Tests;
@@ -24,7 +26,7 @@ public class ActorServiceTests
     private readonly Mock<IActorRegistry> _mockActorRegistry;
     private readonly Mock<IActorRunnerFactory> _mockActorRunnerFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
-    private readonly Mock<IBehaviorDocumentCache> _mockBehaviorCache;
+    private readonly BehaviorDocumentLoader _behaviorLoader;
     private readonly Mock<IActorPoolManager> _mockPoolManager;
     private readonly Mock<IMeshInvocationClient> _mockMeshClient;
     private readonly Mock<IStateStore<ActorTemplateData>> _mockTemplateStore;
@@ -45,7 +47,10 @@ public class ActorServiceTests
         _mockActorRegistry = new Mock<IActorRegistry>();
         _mockActorRunnerFactory = new Mock<IActorRunnerFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
-        _mockBehaviorCache = new Mock<IBehaviorDocumentCache>();
+        // BehaviorDocumentLoader is a sealed class - create real instance with no providers
+        _behaviorLoader = new BehaviorDocumentLoader(
+            Array.Empty<IBehaviorDocumentProvider>(),
+            NullLogger<BehaviorDocumentLoader>.Instance);
         _mockPoolManager = new Mock<IActorPoolManager>();
         _mockMeshClient = new Mock<IMeshInvocationClient>();
         _mockTemplateStore = new Mock<IStateStore<ActorTemplateData>>();
@@ -70,7 +75,7 @@ public class ActorServiceTests
             _mockActorRegistry.Object,
             _mockActorRunnerFactory.Object,
             _mockEventConsumer.Object,
-            _mockBehaviorCache.Object,
+            _behaviorLoader,
             _mockPoolManager.Object,
             _mockMeshClient.Object);
     }
