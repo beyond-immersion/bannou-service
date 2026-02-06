@@ -455,7 +455,7 @@ Memory Relevance Scoring (Keyword-Based)
 
 2. **Cinematic extension delivery**: The `CinematicExtensionAvailableEvent` is published but the actual extension attachment to a running interpreter (matching `continuationPointName` to an active `ContinuationPoint` opcode) is handled by the actor runtime, not the behavior service itself.
 
-3. **Embedding-based memory store**: `IMemoryStore` interface is designed for swappable implementations. Only `ActorLocalMemoryStore` (keyword-based) exists. The embedding-based implementation for semantic similarity matching is documented as a future migration path in ACTOR_SYSTEM.md section 7.3.
+3. **Embedding-based memory store**: `IMemoryStore` interface is designed for swappable implementations. Only `ActorLocalMemoryStore` (keyword-based) exists. The embedding-based implementation for semantic similarity matching is documented as a future migration path in ACTOR-SYSTEM.md section 7.3.
 
 4. **GOAP plan persistence**: Plans are stored in state for debugging (`goap-metadata:` prefix) but there is no retrieval endpoint or plan history query. The `GoapPlanGeneratedEvent` provides the analytics trail instead.
 

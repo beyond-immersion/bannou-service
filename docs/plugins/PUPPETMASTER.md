@@ -196,7 +196,7 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 
 4. **Lazy TTL eviction for behavior cache**: Expired cache entries are removed on access, not proactively via background cleanup. This matches the `ResourceSnapshotCache` pattern and avoids background task overhead for a cache that's typically small.
 
-5. **ResourceSnapshotCache uses `GetService<T>()` not constructor injection**: Because `IResourceClient` is an optional L1 dependency and the cache is a singleton, it resolves the client via service scope at runtime. This is the correct pattern per SERVICE_HIERARCHY.md.
+5. **ResourceSnapshotCache uses `GetService<T>()` not constructor injection**: Because `IResourceClient` is an optional L1 dependency and the cache is a singleton, it resolves the client via service scope at runtime. This is the correct pattern per SERVICE-HIERARCHY.md.
 
 6. **Event handler doesn't stop watchers on realm deletion**: The service only subscribes to `realm.created`, not `realm.deleted`. Watchers for deleted realms continue running until manually stopped or service restart.
 

@@ -477,4 +477,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ---
 
-*This document describes the orchestrator plugin as implemented. For architectural context, see [TENETS.md](../reference/TENETS.md) and [BANNOU_DESIGN.md](../BANNOU_DESIGN.md).*
+*This document describes the orchestrator plugin as implemented. For architectural context, see [TENETS.md](../reference/TENETS.md) and [BANNOU-DESIGN.md](../BANNOU-DESIGN.md).*

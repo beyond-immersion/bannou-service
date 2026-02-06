@@ -11,7 +11,7 @@
 
 The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that GameSession service consumes for real-time shortcut publishing. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
 
-> **Note**: Auth service previously consumed subscription events incorrectly. This was an architectural error - Auth should only manage JWTs and roles. See `docs/reference/SERVICE_HIERARCHY_VIOLATIONS.md` entry #3.
+> **Note**: Auth service previously consumed subscription events incorrectly. This was an architectural error - Auth should only manage JWTs and roles.
 
 ---
 
@@ -37,7 +37,7 @@ The Subscription service manages user subscriptions to game services, controllin
 | lib-game-session (`GameSessionStartupService`) | Calls `ISubscriptionClient` for subscription discovery at startup |
 | lib-game-session (`GameSessionServiceEvents`) | Subscribes to `subscription.updated` event to update subscription cache and publish/revoke shortcuts |
 
-> **Note**: The Auth dependencies listed above are architectural errors that need to be deleted. Auth should only manage JWTs and roles. See `docs/reference/SERVICE_HIERARCHY_VIOLATIONS.md` entry #3 for details.
+> **Note**: The Auth dependencies listed above are architectural errors that need to be deleted. Auth should only manage JWTs and roles.
 
 ---
 
