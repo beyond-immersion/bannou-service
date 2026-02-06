@@ -4983,6 +4983,68 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/puppetmaster/watchers/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Manually start a regional watcher
+     * @description Starts a regional watcher for the specified realm with the given behavior.
+     *     If a watcher already exists for this realm and watcher type, returns the existing watcher.
+     */
+    post: operations['startWatcher'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/puppetmaster/watchers/stop': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Stop a regional watcher
+     * @description Stops an active regional watcher by its ID.
+     */
+    post: operations['stopWatcher'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/puppetmaster/watchers/start-for-realm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start all relevant watchers for a realm
+     * @description Starts all applicable regional watchers for the specified realm.
+     *     Uses configured watcher templates to determine which watchers to start.
+     */
+    post: operations['startWatchersForRealm'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/quest/definition/create': {
     parameters: {
       query?: never;
@@ -22214,6 +22276,41 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description Request to start a regional watcher */
+    StartWatcherRequest: {
+      /**
+       * Format: uuid
+       * @description Realm the watcher should monitor
+       */
+      realmId: string;
+      /** @description Type of watcher to start (e.g., "regional", "dungeon", "event") */
+      watcherType: string;
+      /** @description Optional specific behavior document reference. If not provided, uses default for watcher type. */
+      behaviorRef?: string | null;
+    };
+    /** @description Response after starting a watcher */
+    StartWatcherResponse: {
+      watcher: components['schemas']['WatcherInfo'];
+      /** @description True if a matching watcher was already running */
+      alreadyExisted: boolean;
+    };
+    /** @description Request to start all relevant watchers for a realm */
+    StartWatchersForRealmRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to start watchers for
+       */
+      realmId: string;
+    };
+    /** @description Response after starting watchers for a realm */
+    StartWatchersForRealmResponse: {
+      /** @description Number of new watchers started */
+      watchersStarted: number;
+      /** @description Number of watchers that already existed */
+      watchersExisted?: number;
+      /** @description All watchers now active for this realm */
+      watchers: components['schemas']['WatcherInfo'][];
+    };
     /** @description Health and version status information for the website service */
     StatusResponse: {
       /**
@@ -22262,6 +22359,19 @@ export interface components {
       stopped: boolean;
       /** @description Final status of the actor after stopping */
       finalStatus: components['schemas']['ActorStatus'];
+    };
+    /** @description Request to stop a regional watcher */
+    StopWatcherRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the watcher to stop
+       */
+      watcherId: string;
+    };
+    /** @description Response after stopping a watcher */
+    StopWatcherResponse: {
+      /** @description True if the watcher was found and stopped */
+      stopped: boolean;
     };
     /**
      * @description High-level story goal that drives arc selection.
@@ -24102,6 +24212,30 @@ export interface components {
       wallet: components['schemas']['WalletResponse'];
       /** @description All non-zero balances in this wallet */
       balances: components['schemas']['BalanceSummary'][];
+    };
+    /** @description Information about an active regional watcher */
+    WatcherInfo: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this watcher instance
+       */
+      watcherId: string;
+      /**
+       * Format: uuid
+       * @description Realm this watcher monitors
+       */
+      realmId: string;
+      /** @description Type of watcher (e.g., "regional", "dungeon", "event") */
+      watcherType: string;
+      /**
+       * Format: date-time
+       * @description When this watcher was started
+       */
+      startedAt: string;
+      /** @description Behavior document reference this watcher uses */
+      behaviorRef?: string | null;
+      /** @description Actor instance ID running this watcher's behavior */
+      actorId?: string | null;
     };
     /**
      * @description How container weight propagates to parent
@@ -31536,6 +31670,78 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  startWatcher: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartWatcherRequest'];
+      };
+    };
+    responses: {
+      /** @description Watcher started or already exists */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StartWatcherResponse'];
+        };
+      };
+    };
+  };
+  stopWatcher: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StopWatcherRequest'];
+      };
+    };
+    responses: {
+      /** @description Watcher stopped successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StopWatcherResponse'];
+        };
+      };
+    };
+  };
+  startWatchersForRealm: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartWatchersForRealmRequest'];
+      };
+    };
+    responses: {
+      /** @description Watchers started for realm */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StartWatchersForRealmResponse'];
+        };
       };
     };
   };

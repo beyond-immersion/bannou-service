@@ -79,4 +79,58 @@ public sealed class PuppetmasterProxy
         return _client.InvokeAsync<ListWatchersRequest, ListWatchersResponse>(
             "/puppetmaster/watchers/list", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Manually start a regional watcher
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing StartWatcherResponse on success.</returns>
+    public Task<ApiResponse<StartWatcherResponse>> StartWatcherAsync(
+        StartWatcherRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<StartWatcherRequest, StartWatcherResponse>(
+            "/puppetmaster/watchers/start", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Stop a regional watcher
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing StopWatcherResponse on success.</returns>
+    public Task<ApiResponse<StopWatcherResponse>> StopWatcherAsync(
+        StopWatcherRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<StopWatcherRequest, StopWatcherResponse>(
+            "/puppetmaster/watchers/stop", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Start all relevant watchers for a realm
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing StartWatchersForRealmResponse on success.</returns>
+    public Task<ApiResponse<StartWatchersForRealmResponse>> StartWatchersForRealmAsync(
+        StartWatchersForRealmRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<StartWatchersForRealmRequest, StartWatchersForRealmResponse>(
+            "/puppetmaster/watchers/start-for-realm", request, channel, timeout, cancellationToken);
+    }
 }

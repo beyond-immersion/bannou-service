@@ -188,7 +188,7 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
 
         var identifiers = resourceNames
             .Where(name => name.StartsWith(ResourcePrefix, StringComparison.Ordinal) &&
-                           name.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
+                            name.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
             .Select(name =>
             {
                 // Extract identifier: remove prefix and .yaml suffix

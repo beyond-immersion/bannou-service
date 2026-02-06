@@ -6560,6 +6560,76 @@ paths:
                 $ref: '#/components/schemas/VoiceLeadResponse'
         '400':
           description: Invalid request
+  /puppetmaster/watchers/start:
+    post:
+      summary: Manually start a regional watcher
+      description: |
+        Starts a regional watcher for the specified realm with the given behavior.
+        If a watcher already exists for this realm and watcher type, returns the existing watcher.
+      operationId: startWatcher
+      tags:
+      - Watchers
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartWatcherRequest'
+      responses:
+        '200':
+          description: Watcher started or already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartWatcherResponse'
+  /puppetmaster/watchers/stop:
+    post:
+      summary: Stop a regional watcher
+      description: Stops an active regional watcher by its ID.
+      operationId: stopWatcher
+      tags:
+      - Watchers
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StopWatcherRequest'
+      responses:
+        '200':
+          description: Watcher stopped successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopWatcherResponse'
+  /puppetmaster/watchers/start-for-realm:
+    post:
+      summary: Start all relevant watchers for a realm
+      description: |
+        Starts all applicable regional watchers for the specified realm.
+        Uses configured watcher templates to determine which watchers to start.
+      operationId: startWatchersForRealm
+      tags:
+      - Watchers
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartWatchersForRealmRequest'
+      responses:
+        '200':
+          description: Watchers started for realm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartWatchersForRealmResponse'
   /quest/definition/create:
     post:
       operationId: createQuestDefinition
@@ -31987,6 +32057,70 @@ components:
           additionalProperties: true
           nullable: true
           description: Optional initial data for the encounter
+    StartWatcherRequest:
+      type: object
+      additionalProperties: false
+      description: Request to start a regional watcher
+      required:
+      - realmId
+      - watcherType
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the watcher should monitor
+        watcherType:
+          type: string
+          description: Type of watcher to start (e.g., "regional", "dungeon", 
+            "event")
+        behaviorRef:
+          type: string
+          nullable: true
+          description: Optional specific behavior document reference. If not 
+            provided, uses default for watcher type.
+    StartWatcherResponse:
+      type: object
+      additionalProperties: false
+      description: Response after starting a watcher
+      required:
+      - watcher
+      - alreadyExisted
+      properties:
+        watcher:
+          $ref: '#/components/schemas/WatcherInfo'
+        alreadyExisted:
+          type: boolean
+          description: True if a matching watcher was already running
+    StartWatchersForRealmRequest:
+      type: object
+      additionalProperties: false
+      description: Request to start all relevant watchers for a realm
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to start watchers for
+    StartWatchersForRealmResponse:
+      type: object
+      additionalProperties: false
+      description: Response after starting watchers for a realm
+      required:
+      - watchersStarted
+      - watchers
+      properties:
+        watchersStarted:
+          type: integer
+          description: Number of new watchers started
+        watchersExisted:
+          type: integer
+          description: Number of watchers that already existed
+        watchers:
+          type: array
+          description: All watchers now active for this realm
+          items:
+            $ref: '#/components/schemas/WatcherInfo'
     StatusResponse:
       description: Health and version status information for the website service
       type: object
@@ -32062,6 +32196,27 @@ components:
         finalStatus:
           description: Final status of the actor after stopping
           $ref: '#/components/schemas/ActorStatus'
+    StopWatcherRequest:
+      type: object
+      additionalProperties: false
+      description: Request to stop a regional watcher
+      required:
+      - watcherId
+      properties:
+        watcherId:
+          type: string
+          format: uuid
+          description: ID of the watcher to stop
+    StopWatcherResponse:
+      type: object
+      additionalProperties: false
+      description: Response after stopping a watcher
+      required:
+      - stopped
+      properties:
+        stopped:
+          type: boolean
+          description: True if the watcher was found and stopped
     StorylineGoal:
       type: string
       enum:
@@ -35034,6 +35189,39 @@ components:
           items:
             $ref: '#/components/schemas/BalanceSummary'
           description: All non-zero balances in this wallet
+    WatcherInfo:
+      type: object
+      additionalProperties: false
+      description: Information about an active regional watcher
+      required:
+      - watcherId
+      - realmId
+      - watcherType
+      - startedAt
+      properties:
+        watcherId:
+          type: string
+          format: uuid
+          description: Unique identifier for this watcher instance
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this watcher monitors
+        watcherType:
+          type: string
+          description: Type of watcher (e.g., "regional", "dungeon", "event")
+        startedAt:
+          type: string
+          format: date-time
+          description: When this watcher was started
+        behaviorRef:
+          type: string
+          nullable: true
+          description: Behavior document reference this watcher uses
+        actorId:
+          type: string
+          nullable: true
+          description: Actor instance ID running this watcher's behavior
     WeightContribution:
       type: string
       description: How container weight propagates to parent
@@ -35102,6 +35290,9 @@ tags:
   description: Spatial data management service for game worlds.
 - name: Bannou Matchmaking
   description: Matchmaking service for competitive and casual game matching.
+- name: Bannou Puppetmaster
+  description: Orchestration service for dynamic behaviors, regional watchers, 
+    and encounter coordination.
 - name: Bannou Quest
   description: Quest system providing objective-based gameplay progression as a 
     thin orchestration

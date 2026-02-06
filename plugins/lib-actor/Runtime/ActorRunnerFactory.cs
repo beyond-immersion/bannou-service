@@ -1,6 +1,6 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
-using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Execution;
+using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;

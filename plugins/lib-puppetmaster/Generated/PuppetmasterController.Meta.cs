@@ -299,6 +299,11 @@ public partial class PuppetmasterController
                     "type": "string",
                     "nullable": true,
                     "description": "Behavior document reference this watcher uses"
+                },
+                "actorId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Actor instance ID running this watcher's behavior"
                 }
             }
         }
@@ -357,6 +362,425 @@ public partial class PuppetmasterController
             _ListWatchers_Info,
             _ListWatchers_RequestSchema,
             _ListWatchers_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for StartWatcher
+
+    private static readonly string _StartWatcher_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StartWatcherRequest",
+    "$defs": {
+        "StartWatcherRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to start a regional watcher",
+            "required": [
+                "realmId",
+                "watcherType"
+            ],
+            "properties": {
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm the watcher should monitor"
+                },
+                "watcherType": {
+                    "type": "string",
+                    "description": "Type of watcher to start (e.g., \"regional\", \"dungeon\", \"event\")"
+                },
+                "behaviorRef": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional specific behavior document reference. If not provided, uses default for watcher type."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _StartWatcher_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StartWatcherResponse",
+    "$defs": {
+        "StartWatcherResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after starting a watcher",
+            "required": [
+                "watcher",
+                "alreadyExisted"
+            ],
+            "properties": {
+                "watcher": {
+                    "$ref": "#/$defs/WatcherInfo"
+                },
+                "alreadyExisted": {
+                    "type": "boolean",
+                    "description": "True if a matching watcher was already running"
+                }
+            }
+        },
+        "WatcherInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about an active regional watcher",
+            "required": [
+                "watcherId",
+                "realmId",
+                "watcherType",
+                "startedAt"
+            ],
+            "properties": {
+                "watcherId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this watcher instance"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this watcher monitors"
+                },
+                "watcherType": {
+                    "type": "string",
+                    "description": "Type of watcher (e.g., \"regional\", \"dungeon\", \"event\")"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this watcher was started"
+                },
+                "behaviorRef": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Behavior document reference this watcher uses"
+                },
+                "actorId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Actor instance ID running this watcher's behavior"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _StartWatcher_Info = """
+{
+    "summary": "Manually start a regional watcher",
+    "description": "Starts a regional watcher for the specified realm with the given behavior.\nIf a watcher already exists for this realm and watcher type, returns the existing watcher.\n",
+    "tags": [
+        "Watchers"
+    ],
+    "deprecated": false,
+    "operationId": "startWatcher"
+}
+""";
+
+    /// <summary>Returns endpoint information for StartWatcher</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/start/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartWatcher_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/start",
+            _StartWatcher_Info));
+
+    /// <summary>Returns request schema for StartWatcher</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/start/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartWatcher_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/start",
+            "request-schema",
+            _StartWatcher_RequestSchema));
+
+    /// <summary>Returns response schema for StartWatcher</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/start/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartWatcher_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/start",
+            "response-schema",
+            _StartWatcher_ResponseSchema));
+
+    /// <summary>Returns full schema for StartWatcher</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/start/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartWatcher_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/start",
+            _StartWatcher_Info,
+            _StartWatcher_RequestSchema,
+            _StartWatcher_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for StopWatcher
+
+    private static readonly string _StopWatcher_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StopWatcherRequest",
+    "$defs": {
+        "StopWatcherRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to stop a regional watcher",
+            "required": [
+                "watcherId"
+            ],
+            "properties": {
+                "watcherId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the watcher to stop"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _StopWatcher_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StopWatcherResponse",
+    "$defs": {
+        "StopWatcherResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after stopping a watcher",
+            "required": [
+                "stopped"
+            ],
+            "properties": {
+                "stopped": {
+                    "type": "boolean",
+                    "description": "True if the watcher was found and stopped"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _StopWatcher_Info = """
+{
+    "summary": "Stop a regional watcher",
+    "description": "Stops an active regional watcher by its ID.",
+    "tags": [
+        "Watchers"
+    ],
+    "deprecated": false,
+    "operationId": "stopWatcher"
+}
+""";
+
+    /// <summary>Returns endpoint information for StopWatcher</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/stop/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StopWatcher_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/stop",
+            _StopWatcher_Info));
+
+    /// <summary>Returns request schema for StopWatcher</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/stop/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StopWatcher_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/stop",
+            "request-schema",
+            _StopWatcher_RequestSchema));
+
+    /// <summary>Returns response schema for StopWatcher</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/stop/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StopWatcher_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/stop",
+            "response-schema",
+            _StopWatcher_ResponseSchema));
+
+    /// <summary>Returns full schema for StopWatcher</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/stop/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StopWatcher_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/stop",
+            _StopWatcher_Info,
+            _StopWatcher_RequestSchema,
+            _StopWatcher_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for StartWatchersForRealm
+
+    private static readonly string _StartWatchersForRealm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StartWatchersForRealmRequest",
+    "$defs": {
+        "StartWatchersForRealmRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to start all relevant watchers for a realm",
+            "required": [
+                "realmId"
+            ],
+            "properties": {
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm to start watchers for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _StartWatchersForRealm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StartWatchersForRealmResponse",
+    "$defs": {
+        "StartWatchersForRealmResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after starting watchers for a realm",
+            "required": [
+                "watchersStarted",
+                "watchers"
+            ],
+            "properties": {
+                "watchersStarted": {
+                    "type": "integer",
+                    "description": "Number of new watchers started"
+                },
+                "watchersExisted": {
+                    "type": "integer",
+                    "description": "Number of watchers that already existed"
+                },
+                "watchers": {
+                    "type": "array",
+                    "description": "All watchers now active for this realm",
+                    "items": {
+                        "$ref": "#/$defs/WatcherInfo"
+                    }
+                }
+            }
+        },
+        "WatcherInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about an active regional watcher",
+            "required": [
+                "watcherId",
+                "realmId",
+                "watcherType",
+                "startedAt"
+            ],
+            "properties": {
+                "watcherId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this watcher instance"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this watcher monitors"
+                },
+                "watcherType": {
+                    "type": "string",
+                    "description": "Type of watcher (e.g., \"regional\", \"dungeon\", \"event\")"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this watcher was started"
+                },
+                "behaviorRef": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Behavior document reference this watcher uses"
+                },
+                "actorId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Actor instance ID running this watcher's behavior"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _StartWatchersForRealm_Info = """
+{
+    "summary": "Start all relevant watchers for a realm",
+    "description": "Starts all applicable regional watchers for the specified realm.\nUses configured watcher templates to determine which watchers to start.\n",
+    "tags": [
+        "Watchers"
+    ],
+    "deprecated": false,
+    "operationId": "startWatchersForRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for StartWatchersForRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/start-for-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartWatchersForRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/start-for-realm",
+            _StartWatchersForRealm_Info));
+
+    /// <summary>Returns request schema for StartWatchersForRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/start-for-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartWatchersForRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/start-for-realm",
+            "request-schema",
+            _StartWatchersForRealm_RequestSchema));
+
+    /// <summary>Returns response schema for StartWatchersForRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/start-for-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartWatchersForRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/start-for-realm",
+            "response-schema",
+            _StartWatchersForRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for StartWatchersForRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/puppetmaster/watchers/start-for-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartWatchersForRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Puppetmaster",
+            "POST",
+            "/puppetmaster/watchers/start-for-realm",
+            _StartWatchersForRealm_Info,
+            _StartWatchersForRealm_RequestSchema,
+            _StartWatchersForRealm_ResponseSchema));
 
     #endregion
 }

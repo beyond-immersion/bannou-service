@@ -38,7 +38,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
-| [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 3 | Orchestration service for dynamic behaviors, regional watche... |
+| [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 6 | Orchestration service for dynamic behaviors, regional watche... |
 | [Bannou Quest Service API](#quest) | `client.Quest` | 16 | Quest system providing objective-based gameplay progression ... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 11 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
@@ -1336,6 +1336,9 @@ Orchestration service for dynamic behaviors, regional watchers, and encounter co
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `ListWatchersAsync` | `ListWatchersRequest` | `ListWatchersResponse` | List active regional watchers |
+| `StartwatcherAsync` | `StartWatcherRequest` | `StartWatcherResponse` | Manually start a regional watcher |
+| `StopwatcherAsync` | `StopWatcherRequest` | `StopWatcherResponse` | Stop a regional watcher |
+| `StartwatchersforrealmAsync` | `StartWatchersForRealmRequest` | `StartWatchersForRealmResponse` | Start all relevant watchers for a realm |
 
 ---
 
@@ -1892,7 +1895,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 45
-- **Total methods**: 604
+- **Total methods**: 607
 
 ---
 

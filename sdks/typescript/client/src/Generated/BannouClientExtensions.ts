@@ -38,6 +38,7 @@ import { LocationProxy } from './proxies/LocationProxy.js';
 import { MappingProxy } from './proxies/MappingProxy.js';
 import { MatchmakingProxy } from './proxies/MatchmakingProxy.js';
 import { MusicProxy } from './proxies/MusicProxy.js';
+import { PuppetmasterProxy } from './proxies/PuppetmasterProxy.js';
 import { QuestProxy } from './proxies/QuestProxy.js';
 import { RealmProxy } from './proxies/RealmProxy.js';
 import { RealmHistoryProxy } from './proxies/RealmHistoryProxy.js';
@@ -85,6 +86,7 @@ interface ProxyCache {
   mapping?: MappingProxy;
   matchmaking?: MatchmakingProxy;
   music?: MusicProxy;
+  puppetmaster?: PuppetmasterProxy;
   quest?: QuestProxy;
   realm?: RealmProxy;
   realmHistory?: RealmHistoryProxy;
@@ -418,6 +420,18 @@ Object.defineProperty(BannouClient.prototype, 'music', {
 });
 
 /**
+ * Add lazy-initialized puppetmaster proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'puppetmaster', {
+  get(this: BannouClientWithCache): PuppetmasterProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.puppetmaster ??= new PuppetmasterProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
  * Add lazy-initialized quest proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'quest', {
@@ -704,6 +718,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Music API endpoints.
      */
     readonly music: MusicProxy;
+    /**
+     * Typed proxy for Puppetmaster API endpoints.
+     */
+    readonly puppetmaster: PuppetmasterProxy;
     /**
      * Typed proxy for Quest API endpoints.
      */

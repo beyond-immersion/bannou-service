@@ -354,6 +354,8 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `BehaviorInvalidatedEvent` | Custom | `behavior.invalidated` | Event published when behavior documents are invali... |
+| `WatcherStartedEvent` | Custom | `watcher-started` | Event published when a regional watcher is started |
+| `WatcherStoppedEvent` | Custom | `watcher-stopped` | Event published when a regional watcher is stopped |
 
 ### Quest
 

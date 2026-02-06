@@ -99,6 +99,9 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
 
+        // From puppetmaster-events.yaml
+        EventSubscriptionRegistry.Register<RealmCreatedEvent>("realm.created");
+
         // From quest-events.yaml
         EventSubscriptionRegistry.Register<ContractMilestoneCompletedEvent>("contract.milestone.completed");
         EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");

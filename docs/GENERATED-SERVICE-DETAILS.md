@@ -40,7 +40,7 @@ Des... |
 | [Music](#music) | 1.0.0 | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
-| [Puppetmaster](#puppetmaster) | 1.0.0 | 3 | Orchestration service for dynamic behaviors, regional watche... |
+| [Puppetmaster](#puppetmaster) | 1.0.0 | 6 | Orchestration service for dynamic behaviors, regional watche... |
 | [Quest](#quest) | 1.0.0 | 16 | Quest system providing objective-based gameplay progression ... |
 | [Realm](#realm) | 1.0.0 | 11 | Realm management service for game worlds. |
 | [Realm History](#realm-history) | 1.0.0 | 12 | Historical event participation and lore management for realm... |
@@ -479,7 +479,7 @@ Public-facing website service for browser-based access to news, account profile 
 ## Summary
 
 - **Total services**: 46
-- **Total endpoints**: 610
+- **Total endpoints**: 613
 
 ---
 
