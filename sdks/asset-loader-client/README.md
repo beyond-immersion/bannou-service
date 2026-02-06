@@ -213,7 +213,7 @@ var loader = new AssetLoader(source);
 
 ## Further Reading
 
-- [Asset SDK Guide](../../docs/guides/ASSET_SDK.md) - Comprehensive documentation
+- [Asset SDK Guide](../../docs/guides/ASSET-SDK.md) - Comprehensive documentation
 - [Asset Loader Core](../asset-loader/README.md) - Engine-agnostic core SDK
 - [Bannou Client SDK](../client/README.md) - WebSocket client documentation
 

@@ -402,5 +402,5 @@ After connecting, the server sends a `connect.capability_manifest` event contain
 ## Related Documentation
 
 - [WebSocket Protocol](../WEBSOCKET-PROTOCOL.md) - Full protocol specification
-- [SDKs Overview](SDKs.md) - All Bannou SDKs
-- [Client Integration](CLIENT_INTEGRATION.md) - General client integration patterns
+- [SDKs Overview](SDK-OVERVIEW.md) - All Bannou SDKs
+- [Client Integration](CLIENT-INTEGRATION.md) - General client integration patterns

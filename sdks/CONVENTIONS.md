@@ -146,7 +146,7 @@ When creating a new SDK package:
 2. **Create csproj** with all three identifiers aligned (PackageId, RootNamespace, AssemblyName)
 3. **Add to SDK solution** using `dotnet sln sdks/bannou-sdks.sln add sdks/{name}/{name}.csproj`
 4. **Create test project** in `sdks/{name}.tests/` with matching conventions
-5. **Update documentation** in `docs/guides/SDKs.md`
+5. **Update documentation** in `docs/guides/SDK-OVERVIEW.md`
 
 ## Building and Testing SDKs
 

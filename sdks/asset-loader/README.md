@@ -235,7 +235,7 @@ BeyondImmersion.Bannou.AssetLoader           ← Core (this package)
 
 ## Further Reading
 
-- [Asset SDK Guide](../../docs/guides/ASSET_SDK.md) - Comprehensive documentation
+- [Asset SDK Guide](../../docs/guides/ASSET-SDK.md) - Comprehensive documentation
 - [Asset Loader Client](../asset-loader-client/README.md) - Game client SDK with `AssetManager`
 - [Asset Loader Server](../asset-loader-server/README.md) - Server-side usage
 - [Bundle Format](../bundle-format/README.md) - `.bannou` file format

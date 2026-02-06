@@ -278,7 +278,7 @@ public enum TimeoutBehavior
 
 ### Intent Execution Model
 
-**Decision**: Follow Actor/Behavior data access patterns per `ACTOR_DATA_ACCESS_PATTERNS.md`.
+**Decision**: Follow Actor/Behavior data access patterns per `ACTOR-DATA-ACCESS-PATTERNS.md`.
 
 The storyline composer outputs **intents** (what should happen) rather than directly modifying game state. Intents are executed by the appropriate services.
 

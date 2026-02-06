@@ -213,7 +213,7 @@ npm run test:watch
 
 - [TypeScript SDK Guide](../../docs/guides/TYPESCRIPT-SDK.md) - Detailed integration guide
 - [WebSocket Protocol](../../docs/WEBSOCKET-PROTOCOL.md) - Protocol specification
-- [SDKs Overview](../../docs/guides/SDKs.md) - All Bannou SDKs
+- [SDKs Overview](../../docs/guides/SDK-OVERVIEW.md) - All Bannou SDKs
 
 ## License
 

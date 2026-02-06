@@ -25,7 +25,7 @@ make up-compose
 curl http://localhost:8080/health
 ```
 
-**Next steps:** See the [Quickstart Guide](docs/guides/QUICKSTART.md) for client/service integration, or the [Getting Started Guide](docs/guides/GETTING_STARTED.md) for a comprehensive walkthrough.
+**Next steps:** See the [Quickstart Guide](docs/guides/QUICKSTART.md) for client/service integration, or the [Getting Started Guide](docs/guides/GETTING-STARTED.md) for a comprehensive walkthrough.
 
 ## Documentation
 
@@ -34,16 +34,16 @@ curl http://localhost:8080/health
 | I want to... | Time | Guide |
 |--------------|------|-------|
 | **Get running quickly** | 5 min | [Quickstart](docs/guides/QUICKSTART.md) |
-| **Full setup walkthrough** | 30 min | [Getting Started](docs/guides/GETTING_STARTED.md) |
-| **Connect a game client** | 15 min | [Client Integration](docs/guides/CLIENT_INTEGRATION.md) |
-| **Make service-to-service calls** | 10 min | [SDKs Overview](docs/guides/SDKs.md) |
+| **Full setup walkthrough** | 30 min | [Getting Started](docs/guides/GETTING-STARTED.md) |
+| **Connect a game client** | 15 min | [Client Integration](docs/guides/CLIENT-INTEGRATION.md) |
+| **Make service-to-service calls** | 10 min | [SDKs Overview](docs/guides/SDK-OVERVIEW.md) |
 
 ### Development
 
 | I want to... | Read... |
 |--------------|---------|
-| Understand the architecture | [Bannou Design](docs/BANNOU_DESIGN.md) |
-| Add or extend a plugin | [Plugin Development Guide](docs/guides/PLUGIN_DEVELOPMENT.md) |
+| Understand the architecture | [Bannou Design](docs/BANNOU-DESIGN.md) |
+| Add or extend a plugin | [Plugin Development Guide](docs/guides/PLUGIN-DEVELOPMENT.md) |
 | Understand a specific service | [Plugin Deep-Dives](docs/plugins/) (41 services) |
 | Run and write tests | [Testing Guide](docs/guides/TESTING.md) |
 | Contribute code | [Development Rules](docs/reference/TENETS.md) |
@@ -53,8 +53,8 @@ curl http://localhost:8080/health
 | I want to... | Read... |
 |--------------|---------|
 | Deploy to production | [Deployment Guide](docs/guides/DEPLOYMENT.md) |
-| Understand CI/CD pipelines | [GitHub Actions](docs/operations/GITHUB_ACTIONS.md) |
-| Set up NuGet publishing | [NuGet Setup](docs/operations/NUGET_SETUP.md) |
+| Understand CI/CD pipelines | [GitHub Actions](docs/operations/GITHUB-ACTIONS.md) |
+| Set up NuGet publishing | [NuGet Setup](docs/operations/NUGET-SETUP.md) |
 
 ## Key Features
 
