@@ -2,7 +2,7 @@
 
 This document provides a comprehensive overview of Bannou's narrative generation system, including the theoretical foundations, plugin architecture, and integration patterns for both traditional quest-hub gameplay and emergent AI-driven storytelling.
 
-> **Implementation Status**: The `lib-storyline` plugin exists with SDK integration for archives, spectrums, and arcs. The Quest and Scenario capabilities described here are planned extensions. See [Implementation Gaps](#implementation-gaps) for current state.
+> **Implementation Status**: The storyline SDKs are **complete** with 22 passing tests. The `lib-storyline` plugin provides `/compose`, `/plan/get`, and `/plan/list` endpoints. Quest and Scenario capabilities are planned extensions that depend on lib-quest (not yet built). See [Implementation Status](#implementation-status) for details.
 
 ## Overview
 
@@ -920,6 +920,20 @@ Compressed archives of dead characters become the raw material for future storyl
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Vision: The Living World
+
+When fully implemented, Bannou worlds become **living narratives**:
+
+1. **Every death matters**: Compressed characters become story seeds
+2. **History accumulates**: Older worlds have richer narrative potential
+3. **Connections emerge**: Cross-archive analysis finds unexpected links
+4. **Gods curate**: Regional Watchers select and shape which stories manifest
+5. **Players participate**: Actions create future archives for future stories
+
+This is not procedural generation. It's **emergent narrative archaeology** - unearthing the stories that players unknowingly wrote through play.
+
+The storyline composer doesn't invent stories. It discovers the stories that already exist in the accumulated history of the world, and gives them new life.
+
 ### Example: The Blacksmith's Vengeance
 
 **Archive Contents** (from actual play history):
@@ -991,6 +1005,82 @@ phases:
     continuation: after_player_speaks_to_ghost
     # Generated fresh with current world state
 ```
+
+### Example: The Lost Kingdom
+
+**Trigger**: God of Memory detects cluster of related deaths (guild wipe)
+
+**Archive Cluster**: 15 characters from same guild, compressed within 2-hour window
+
+**Generated Plan**:
+```yaml
+plan_id: "legacy-ironforge-guild-def456"
+confidence: 0.92
+template: "legacy_arc"
+themes: [loss, memory, rediscovery]
+
+analysis:
+  shared_elements:
+    - All members of "Ironforge Vanguard" guild
+    - All died in "Siege of Ashhold" historical event
+    - Average sentiment toward each other: +0.7 (comrades)
+    - Combined encounter count: 847 memorable interactions
+
+  narrative_potential:
+    - Guild hall location data available → lost_place theme
+    - Leader had "restore guild honor" goal → unfinished_business
+    - 3 members had "protect the weak" goals → guardian potential
+
+entities_to_spawn:
+  - type: location_marker
+    role: "lost_guild_hall"
+    properties:
+      discoverable: true
+      discovery_hint: "old_maps_in_tavern"
+
+  - type: character
+    role: "guild_leader_echo"
+    seeded_from: highest_significance_member
+    properties:
+      manifestation: "memory_echo"  # Not full ghost, just imprint
+
+  - type: item_template
+    role: "guild_artifact"
+    properties:
+      triggers_memory_when_held: true
+      memory_source: random_guild_member_archive
+```
+
+### Example: Cross-Archive Generational Saga
+
+**Trigger**: Discovery endpoint identifies narrative opportunity spanning 3 generations
+
+**Archives Involved**:
+- Grandparent (compressed 2 years ago, "betrayed_by_brother")
+- Parent (compressed 6 months ago, "never_learned_truth")
+- Grandchild (living, snapshot shows "searching_for_family_history")
+
+**Generated Plan**:
+```yaml
+plan_id: "generational-secret-ghi789"
+confidence: 0.78
+template: "mystery_arc"
+themes: [family, secrets, reconciliation]
+
+narrative_thread:
+  discovery: "Grandchild researches family"
+  hook: "Find grandparent's journal mentioning betrayal"
+  investigation: "Track down great-uncle (the betrayer)"
+  revelation: "Betrayer had reasons (protecting family from greater threat)"
+  choice: "Condemn or forgive; affects family legacy"
+
+cross_archive_connections:
+  - grandparent.trauma.betrayed_by_brother → mystery_hook
+  - parent.backstory.fears.family_shame → emotional_stakes
+  - grandchild.goals.understand_heritage → player_motivation
+```
+
+**Key insight**: This storyline uses **both compressed archives** (dead ancestors) **and live snapshots** (the grandchild). The `/resource/snapshot/execute` endpoint enables storyline composition for living characters without destroying their data.
 
 ---
 
@@ -1210,11 +1300,23 @@ Are you implementing narrative systems?
 
 ## References
 
-### Planning Documents (Detailed Implementation)
+### Authoritative YAML Schemas
 
-- [Quest Plugin Architecture](../planning/QUEST_PLUGIN_ARCHITECTURE.md) - Quest system design
-- [Scenario Plugin Architecture](../planning/SCENARIO_PLUGIN_ARCHITECTURE.md) - Scenario system design
-- [Storyline Composer](../planning/STORYLINE_COMPOSER.md) - Archive-seeded narrative generation
+The SDK implementations load these schemas directly - they are the source of truth:
+
+- [`schemas/storyline/narrative-state.yaml`](../../schemas/storyline/narrative-state.yaml) - 10 Life Value spectrums, genre mappings
+- [`schemas/storyline/emotional-arcs.yaml`](../../schemas/storyline/emotional-arcs.yaml) - 6 Reagan arcs with control points
+- [`schemas/storyline/story-grid-genres.yaml`](../../schemas/storyline/story-grid-genres.yaml) - 12 genres, subgenre arc mappings
+- [`schemas/storyline/story-actions.yaml`](../../schemas/storyline/story-actions.yaml) - 46+ GOAP actions
+- [`schemas/storyline/story-templates.yaml`](../../schemas/storyline/story-templates.yaml) - 6 arc-based templates
+- [`schemas/storyline/GAP_ANALYSIS.md`](../../schemas/storyline/GAP_ANALYSIS.md) - Implementation tracking
+
+### Planning Documents
+
+- [Quest Plugin Architecture](../planning/QUEST_PLUGIN_ARCHITECTURE.md) - Quest system design (planning stage)
+- [Scenario Plugin Architecture](../planning/SCENARIO_PLUGIN_ARCHITECTURE.md) - Scenario system design (planning stage)
+- [EVENT_ACTOR_RESOURCE_ACCESS](../planning/EVENT_ACTOR_RESOURCE_ACCESS.md) - Regional Watcher archive access (planning stage)
+- [Storyline Composer](../planning/STORYLINE_COMPOSER.md) - Original design doc (partially obsolete - SDK architecture sections superseded by actual implementation)
 
 ### Research Sources
 
@@ -1236,41 +1338,103 @@ Are you implementing narrative systems?
 
 ---
 
-## Implementation Gaps
+## Implementation Status
 
-The `lib-storyline` plugin exists with foundational SDK integration. The following capabilities are **planned but not yet implemented**:
+### Storyline SDKs (COMPLETE)
 
-### Current State (lib-storyline)
+The narrative theory foundation is **fully implemented** with 22 passing unit tests.
+
+**storyline-theory SDK** (`sdks/storyline-theory/`):
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| NarrativeState | ✅ Complete | 10 Life Value spectrums from Story Grid |
+| EmotionalArc | ✅ Complete | 6 Reagan arcs with control points and sampled trajectories |
+| ArchiveExtractor | ✅ Complete | Extracts WorldState facts from compressed archives |
+| KernelExtractor | ✅ Complete | Extracts 6 narrative kernel types (Death, HistoricalEvent, Trauma, UnfinishedBusiness, Conflict, DeepBond) |
+| GenreSpectrumMapping | ✅ Complete | 12 genres mapped to primary spectrums |
+| ActantRole | ✅ Complete | Greimas' 6 actant roles for character-agnostic templates |
+
+**storyline-storyteller SDK** (`sdks/storyline-storyteller/`):
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| StoryAction | ✅ Complete | GOAP actions with preconditions, effects, costs |
+| StoryTemplate | ✅ Complete | 6 arc-based templates with phase navigation |
+| ActionRegistry | ✅ Complete | 46+ actions from `story-actions.yaml` |
+| TemplateRegistry | ✅ Complete | Template loading and validation |
+| StoryGoapPlanner | ✅ Complete | A* search in narrative state space |
+| IntentGenerator | ✅ Complete | Converts plans to spawn/quest intents |
+| StorylineComposer | ✅ Complete | Full composition pipeline |
+
+**YAML Schemas** (`schemas/storyline/`):
+
+| Schema | Status | Contents |
+|--------|--------|----------|
+| `narrative-state.yaml` | ✅ Complete | 10 spectrums, 4-stage poles, genre overrides |
+| `emotional-arcs.yaml` | ✅ Complete | 6 arcs with SDK-implementable control points |
+| `story-grid-genres.yaml` | ✅ Complete | 12 genres, subgenres with `arc_direction` + `compatible_arcs` |
+| `story-actions.yaml` | ✅ Complete | 46+ GOAP actions with obligatory scene coverage |
+| `story-templates.yaml` | ✅ Complete | 6 arc-based templates with STC timing |
+| `propp-functions.yaml` | ✅ Complete | 31 functions (inspiration, not alignment target) |
+| `save-the-cat-beats.yaml` | ✅ Complete | 16 beats with timing guidelines |
+
+### Storyline Plugin (lib-storyline)
 
 | Capability | Status | Notes |
 |------------|--------|-------|
-| SDK integration (archives, spectrums, arcs) | ✅ Exists | Core narrative theory available |
-| Archive mining | ✅ Exists | Can extract narrative state from compressed data |
-| Basic storyline tracking | ✅ Exists | Can track active storylines |
+| `/storyline/compose` | ✅ Implemented | Archive → GOAP plan → cached result |
+| `/storyline/plan/get` | ✅ Implemented | Retrieve cached plans by ID |
+| `/storyline/plan/list` | ✅ Implemented | List plans by realm (sorted set index) |
+| Archive extraction | ✅ Implemented | Full SDK integration |
+| Plan caching | ✅ Implemented | Deterministic IDs, realm-indexed |
+| Confidence scoring | ✅ Implemented | Multi-factor assessment |
+| Risk identification | ✅ Implemented | Warns of potential issues |
 
-### Planned Extensions
+### Resource Plugin - Snapshots (COMPLETE)
 
-| Capability | Status | Planning Doc |
-|------------|--------|--------------|
-| Scenario definitions | 📋 Planned | [SCENARIO_PLUGIN_ARCHITECTURE.md](../planning/SCENARIO_PLUGIN_ARCHITECTURE.md) |
-| Scenario condition matching | 📋 Planned | Passive APIs for watcher queries |
-| Scenario triggering & mutations | 📋 Planned | State changes to characters |
-| Quest spawning via hooks | 📋 Planned | Integration with lib-quest |
-| Lazy phase evaluation | 📋 Planned | Continuation points |
-| Storyline composition from archives | 📋 Planned | GOAP planning in narrative space |
+Live entity snapshots are **fully implemented** in lib-resource, enabling storyline composition from living characters (not just compressed/dead ones).
 
-### Quest Plugin (lib-quest)
+| Capability | Status | Notes |
+|------------|--------|-------|
+| `/resource/snapshot/execute` | ✅ Implemented | Non-destructive capture with configurable TTL |
+| `/resource/snapshot/get` | ✅ Implemented | Retrieve snapshots before expiry |
+| `resource.snapshot.created` event | ✅ Implemented | Regional Watchers can subscribe |
+| Compression callbacks reuse | ✅ Implemented | Same callbacks as permanent archives |
 
-| Capability | Status | Planning Doc |
-|------------|--------|--------------|
-| Quest definitions (contract templates) | 📋 Planned | [QUEST_PLUGIN_ARCHITECTURE.md](../planning/QUEST_PLUGIN_ARCHITECTURE.md) |
-| Objective tracking | 📋 Planned | Event-driven progress updates |
-| Quest log UI support | 📋 Planned | Player-facing views |
+### Not Yet Exposed via HTTP API
+
+| Capability | SDK Status | HTTP Status | Notes |
+|------------|------------|-------------|-------|
+| Lazy phase evaluation | ✅ SDK complete | ❌ Not exposed | `ContinuePhase` exists in SDK; HTTP API returns full plan |
+| `/storyline/instantiate` | ✅ SDK complete | ❌ Not exposed | Needs Quest/Scenario plugins |
+| `/storyline/discover` | 📋 SDK planned | ❌ Not exposed | Needs EVENT_ACTOR_RESOURCE_ACCESS patterns |
+
+### Dependent Systems (Planning Stage)
+
+These capabilities require other plugins that are still in planning:
+
+| Capability | Blocking Dependency | Planning Doc |
+|------------|---------------------|--------------|
+| Scenario definitions | Merged into lib-storyline (planned) | [SCENARIO_PLUGIN_ARCHITECTURE.md](../planning/SCENARIO_PLUGIN_ARCHITECTURE.md) |
+| Quest spawning via hooks | lib-quest (planned) | [QUEST_PLUGIN_ARCHITECTURE.md](../planning/QUEST_PLUGIN_ARCHITECTURE.md) |
+| Regional Watcher archive access | EVENT_ACTOR_RESOURCE_ACCESS (planned) | [EVENT_ACTOR_RESOURCE_ACCESS.md](../planning/EVENT_ACTOR_RESOURCE_ACCESS.md) |
+| Entity spawning (`/instantiate`) | lib-quest + scenarios | [STORYLINE_COMPOSER.md](../planning/STORYLINE_COMPOSER.md) |
+
+### Quest Plugin (lib-quest) - Planning Stage
+
+| Capability | Status | Notes |
+|------------|--------|-------|
+| Quest definitions | 📋 Planned | Thin wrapper over lib-contract templates |
+| Objective tracking | 📋 Planned | Event-driven via contract milestones |
+| Quest log UI support | 📋 Planned | Player-facing query endpoints |
 | Reward distribution | 📋 Planned | Via lib-contract prebound APIs |
 
 ### Next Steps
 
-1. **Implement scenario APIs** as passive query endpoints
-2. **Create watcher base templates** for regional watcher behaviors
+1. **Expose lazy phase evaluation** via HTTP API (SDK already supports it)
+2. **Implement scenario definitions** as data within lib-storyline
+3. **Build lib-quest** as orchestration layer over lib-contract
+4. **Implement EVENT_ACTOR_RESOURCE_ACCESS** for Regional Watcher archive access
 
-Run `/audit-plugin storyline` to begin gap analysis against these requirements.
+Run `/audit-plugin storyline` to check for implementation gaps.
