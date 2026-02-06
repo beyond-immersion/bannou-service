@@ -5,8 +5,8 @@
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Runtime;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Abml.Execution.Channel;

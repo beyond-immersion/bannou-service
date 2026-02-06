@@ -63,6 +63,8 @@ examples/
 | Directory | PackageId | Description |
 |-----------|-----------|-------------|
 | `core/` | `BeyondImmersion.Bannou.Core` | Shared types (BannouJson, ApiException, base events) |
+| `behavior-compiler/` | `BeyondImmersion.Bannou.BehaviorCompiler` | ABML parser and behavior document compilation |
+| `behavior-expressions/` | `BeyondImmersion.Bannou.BehaviorExpressions` | Register-based expression VM with variable scopes, functions, and templates |
 | `client/` | `BeyondImmersion.Bannou.Client` | WebSocket client for game clients |
 | `client-voice/` | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling |
 | `server/` | `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients |
@@ -86,6 +88,10 @@ BeyondImmersion.Bannou.{Feature}[.{SubFeature}]
 
 Examples:
 - `BeyondImmersion.Bannou.Core`
+- `BeyondImmersion.Bannou.BehaviorCompiler`
+- `BeyondImmersion.Bannou.BehaviorExpressions`
+- `BeyondImmersion.Bannou.BehaviorExpressions.Compiler`
+- `BeyondImmersion.Bannou.BehaviorExpressions.Runtime`
 - `BeyondImmersion.Bannou.Client`
 - `BeyondImmersion.Bannou.Client.Voice`
 - `BeyondImmersion.Bannou.AssetBundler`

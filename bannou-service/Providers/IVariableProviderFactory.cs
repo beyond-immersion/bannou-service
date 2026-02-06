@@ -4,7 +4,7 @@
 // Higher-layer services implement this to register data providers with Actor (L2).
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 
 namespace BeyondImmersion.BannouService.Providers;
 
