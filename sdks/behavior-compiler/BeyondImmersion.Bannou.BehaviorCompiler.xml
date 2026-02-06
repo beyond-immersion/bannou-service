@@ -4,6 +4,1595 @@
         <name>BeyondImmersion.Bannou.BehaviorCompiler</name>
     </assembly>
     <members>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerRegistry">
+            <summary>
+            Registry of action compilers. Dispatches compilation to appropriate handlers.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerRegistry.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <summary>
+            Creates a new registry with default compilers.
+            </summary>
+            <param name="context">The compilation context.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerRegistry.Register(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.IActionCompiler)">
+            <summary>
+            Registers an action compiler.
+            </summary>
+            <param name="compiler">The compiler to register.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerRegistry.Compile(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <summary>
+            Compiles an action using the appropriate compiler.
+            </summary>
+            <param name="action">The action to compile.</param>
+            <param name="context">The compilation context.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerRegistry.CompileActions(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode},BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <summary>
+            Compiles a list of actions.
+            </summary>
+            <param name="actions">The actions to compile.</param>
+            <param name="context">The compilation context.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.CondCompiler">
+            <summary>
+            Compiles conditional (if/else-if/else) actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.CondCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerRegistry,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new conditional compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.CondCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ForEachCompiler">
+            <summary>
+            Compiles for-each loop actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ForEachCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerRegistry,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new for-each compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ForEachCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ForEachAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.RepeatCompiler">
+            <summary>
+            Compiles repeat (bounded loop) actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.RepeatCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerRegistry)">
+            <summary>Creates a new repeat compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.RepeatCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.RepeatAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.GotoCompiler">
+            <summary>
+            Compiles goto (tail call) actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.GotoCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GotoAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.CallCompiler">
+            <summary>
+            Compiles call (subroutine) actions.
+            </summary>
+            <remarks>
+            The call/return pattern is NOT supported in bytecode - the bytecode VM is intentionally
+            a flat state machine without a call stack. This is by design: bytecode behaviors are
+            meant for simple, fast per-frame decisions. Complex orchestration with subroutines
+            belongs in cloud-side execution (tree-walker), which has full call stack support.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.CallCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CallAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ReturnCompiler">
+            <summary>
+            Compiles return actions.
+            </summary>
+            <remarks>
+            In bytecode, 'return' halts execution and optionally sets an output value.
+            Note: This does NOT return to a caller (there is no call stack in bytecode).
+            For call/return semantics, use cloud-side execution.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ReturnCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new return compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ReturnCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ReturnAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.IActionCompiler">
+            <summary>
+            Interface for action-specific compilers.
+            Each action type has a corresponding compiler implementation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.IActionCompiler.CanCompile(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode)">
+            <summary>
+            Checks if this compiler can handle the given action.
+            </summary>
+            <param name="action">The action node.</param>
+            <returns>True if this compiler can handle the action.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.IActionCompiler.Compile(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <summary>
+            Compiles the action to bytecode.
+            </summary>
+            <param name="action">The action node to compile.</param>
+            <param name="context">The compilation context.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerBase`1">
+            <summary>
+            Base class for typed action compilers.
+            </summary>
+            <typeparam name="T">The action node type.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerBase`1.CanCompile(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerBase`1.Compile(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ActionCompilerBase`1.CompileTyped(`0,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <summary>
+            Compiles the typed action to bytecode.
+            </summary>
+            <param name="action">The typed action node.</param>
+            <param name="context">The compilation context.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.LogCompiler">
+            <summary>
+            Compiles log actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.LogCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new log compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.LogCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LogAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.EmitIntentCompiler">
+            <summary>
+            Compiles emit_intent actions for behavior output.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.EmitIntentCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new emit intent compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.EmitIntentCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ContinuationPointCompiler">
+            <summary>
+            Compiles continuation_point actions for streaming composition.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ContinuationPointCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new continuation point compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ContinuationPointCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ContinuationPointAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.DomainActionCompiler">
+            <summary>
+            Compiles domain-specific actions (catch-all for unknown action types).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.DomainActionCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new domain action compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.DomainActionCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.SetCompiler">
+            <summary>
+            Compiles set variable actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.SetCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new set compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.SetCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SetAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.LocalCompiler">
+            <summary>
+            Compiles local variable actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.LocalCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new local compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.LocalCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LocalAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.GlobalCompiler">
+            <summary>
+            Compiles global variable actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.GlobalCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new global compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.GlobalCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GlobalAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.IncrementCompiler">
+            <summary>
+            Compiles increment actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.IncrementCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.IncrementAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.DecrementCompiler">
+            <summary>
+            Compiles decrement actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.DecrementCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DecrementAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ClearCompiler">
+            <summary>
+            Compiles clear (unset) actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ClearCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ClearAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.BehaviorCompiler">
+            <summary>
+            Compiles ABML documents to behavior model bytecode.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.BehaviorCompiler.CompileYaml(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions)">
+            <summary>
+            Compiles an ABML YAML string to bytecode.
+            </summary>
+            <param name="yaml">The ABML YAML source.</param>
+            <param name="options">Compilation options.</param>
+            <returns>The compilation result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.BehaviorCompiler.Compile(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions)">
+            <summary>
+            Compiles a parsed ABML document to bytecode.
+            </summary>
+            <param name="document">The parsed ABML document.</param>
+            <param name="options">Compilation options.</param>
+            <returns>The compilation result.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationResult">
+            <summary>
+            Result of compiling an ABML document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationResult.Success">
+            <summary>
+            Whether compilation succeeded.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationResult.Bytecode">
+            <summary>
+            The compiled bytecode (null if compilation failed).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationResult.Errors">
+            <summary>
+            Compilation errors.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationResult.Warnings">
+            <summary>
+            Semantic warnings (non-fatal issues detected during analysis).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationResult.#ctor(System.Boolean,System.Byte[],System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationError},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarning})">
+            <summary>
+            Creates a new compilation result.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter">
+            <summary>
+            Low-level bytecode emitter for behavior model compilation.
+            Handles instruction encoding and operand formatting.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.CurrentOffset">
+            <summary>
+            Current bytecode offset (next instruction position).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.Bytecode">
+            <summary>
+            Gets the raw bytecode buffer for reading.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.Emit(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode)">
+            <summary>
+            Emits a single opcode with no operands.
+            </summary>
+            <param name="opcode">The opcode to emit.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitWithByte(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode,System.Byte)">
+            <summary>
+            Emits an opcode with a single byte operand.
+            </summary>
+            <param name="opcode">The opcode to emit.</param>
+            <param name="operand">The byte operand.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitWithUInt16(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode,System.UInt16)">
+            <summary>
+            Emits an opcode with a 16-bit unsigned operand (little-endian).
+            </summary>
+            <param name="opcode">The opcode to emit.</param>
+            <param name="operand">The 16-bit operand.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitWithByteAndUInt16(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode,System.Byte,System.UInt16)">
+            <summary>
+            Emits an opcode with a byte and a 16-bit operand.
+            </summary>
+            <param name="opcode">The opcode to emit.</param>
+            <param name="byteOperand">The byte operand.</param>
+            <param name="uint16Operand">The 16-bit operand.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitPushConst(System.Byte)">
+            <summary>
+            Emits a PushConst instruction.
+            </summary>
+            <param name="constantIndex">Index into constant pool.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitPushInput(System.Byte)">
+            <summary>
+            Emits a PushInput instruction.
+            </summary>
+            <param name="inputIndex">Index of input variable.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitPushLocal(System.Byte)">
+            <summary>
+            Emits a PushLocal instruction.
+            </summary>
+            <param name="localIndex">Index of local variable.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitStoreLocal(System.Byte)">
+            <summary>
+            Emits a StoreLocal instruction.
+            </summary>
+            <param name="localIndex">Index of local variable.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitPushString(System.UInt16)">
+            <summary>
+            Emits a PushString instruction.
+            </summary>
+            <param name="stringIndex">Index into string table.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitSetOutput(System.Byte)">
+            <summary>
+            Emits a SetOutput instruction.
+            </summary>
+            <param name="outputIndex">Index of output variable.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitEmitIntent(System.Byte)">
+            <summary>
+            Emits an EmitIntent instruction.
+            </summary>
+            <param name="channel">Intent channel (0=action, 1=locomotion, etc.).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitContinuationPoint(System.UInt16)">
+            <summary>
+            Emits a ContinuationPoint instruction.
+            </summary>
+            <param name="continuationIndex">Index into continuation point table.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitExtensionAvailable(System.UInt16)">
+            <summary>
+            Emits an ExtensionAvailable instruction.
+            </summary>
+            <param name="continuationIndex">Index into continuation point table.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitYieldToExtension(System.UInt16)">
+            <summary>
+            Emits a YieldToExtension instruction.
+            </summary>
+            <param name="continuationIndex">Index into continuation point table.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitTrace(System.UInt16)">
+            <summary>
+            Emits a Trace instruction for debugging.
+            </summary>
+            <param name="stringIndex">Index into string table for trace message.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.DefineLabel(System.Int32)">
+            <summary>
+            Defines a label at the current position.
+            </summary>
+            <param name="labelId">The label identifier.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitJumpToLabel(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode,System.Int32)">
+            <summary>
+            Emits a jump to a label (may be forward reference).
+            </summary>
+            <param name="opcode">Jump opcode (Jmp, JmpIf, JmpUnless).</param>
+            <param name="labelId">Target label identifier.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitJmp(System.Int32)">
+            <summary>
+            Emits an unconditional jump to a label.
+            </summary>
+            <param name="labelId">Target label identifier.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitJmpIf(System.Int32)">
+            <summary>
+            Emits a conditional jump (jump if top of stack is truthy).
+            </summary>
+            <param name="labelId">Target label identifier.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitJmpUnless(System.Int32)">
+            <summary>
+            Emits a conditional jump (jump if top of stack is falsy).
+            </summary>
+            <param name="labelId">Target label identifier.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.EmitCall(System.UInt16)">
+            <summary>
+            Emits a Call instruction.
+            </summary>
+            <param name="targetOffset">Bytecode offset of target flow.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.PatchJumps">
+            <summary>
+            Patches all forward jump references.
+            Must be called after all code has been emitted.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.ToArray">
+            <summary>
+            Gets the finalized bytecode array.
+            Automatically patches any pending jumps.
+            </summary>
+            <returns>The bytecode array.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter.Reset">
+            <summary>
+            Resets the emitter to initial state.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeOptimizer">
+            <summary>
+            Performs peephole optimizations on generated bytecode.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeOptimizer.Optimize(System.Byte[],BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder)">
+            <summary>
+            Optimizes the given bytecode.
+            </summary>
+            <param name="bytecode">The bytecode to optimize.</param>
+            <param name="constants">The constant pool (may be modified).</param>
+            <returns>The optimized bytecode.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeOptimizer.TryOptimizePushPop(System.Byte[],System.Int32,System.Collections.Generic.List{System.Byte},System.Int32@)">
+            <summary>
+            Optimizes push followed immediately by pop.
+            Pattern: PUSH_* x; POP -> (nothing)
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeOptimizer.TryOptimizeDuplicateConst(System.Byte[],System.Int32,System.Collections.Generic.List{System.Byte},System.Int32@)">
+            <summary>
+            Optimizes consecutive duplicate constants.
+            Pattern: PUSH_CONST x; PUSH_CONST x -> PUSH_CONST x; DUP
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeOptimizer.TryOptimizeConstantArithmetic(System.Byte[],System.Int32,System.Collections.Generic.List{System.Byte},BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder,System.Int32@)">
+            <summary>
+            Optimizes constant arithmetic.
+            Pattern: PUSH_CONST a; PUSH_CONST b; ADD -> PUSH_CONST (a+b)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder">
+            <summary>
+            Builds a constant pool for behavior model compilation.
+            Handles deduplication of numeric literals.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder.#ctor(System.Int32)">
+            <summary>
+            Creates a new constant pool builder with configurable limit.
+            </summary>
+            <param name="maxConstants">Maximum constants allowed. Defaults to VmConfig.MaxConstants.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder.Count">
+            <summary>
+            Number of constants in the pool.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder.MaxConstants">
+            <summary>
+            Maximum number of constants for this builder instance.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder.GetOrAdd(System.Double)">
+            <summary>
+            Adds or retrieves an existing constant from the pool.
+            </summary>
+            <param name="value">The constant value.</param>
+            <returns>The constant pool index.</returns>
+            <exception cref="T:System.InvalidOperationException">If constant pool is full.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder.AddCommonConstants">
+            <summary>
+            Adds common constants (0, 1, -1) for optimization.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder.GetValue(System.Byte)">
+            <summary>
+            Gets the constant value at the specified index.
+            </summary>
+            <param name="index">The constant pool index.</param>
+            <returns>The constant value.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder.TryGetValue(System.Byte,System.Double@)">
+            <summary>
+            Tries to get the constant value at the specified index.
+            </summary>
+            <param name="index">The constant pool index.</param>
+            <param name="value">The constant value if found.</param>
+            <returns>True if the index is valid.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder.ToList">
+            <summary>
+            Gets the finalized constant pool.
+            </summary>
+            <returns>Read-only list of constants.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder.Reset">
+            <summary>
+            Resets the constant pool to initial state.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.LabelManager">
+            <summary>
+            Manages label allocation and flow offset tracking during compilation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.LabelManager.AllocateLabel">
+            <summary>
+            Allocates a new unique label ID.
+            </summary>
+            <returns>A unique label identifier.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.LabelManager.AllocateLabels(System.Int32)">
+            <summary>
+            Allocates multiple labels at once.
+            </summary>
+            <param name="count">Number of labels to allocate.</param>
+            <returns>The first label ID (subsequent IDs are contiguous).</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.LabelManager.RegisterFlowOffset(System.String,System.Int32)">
+            <summary>
+            Registers a flow's bytecode offset.
+            </summary>
+            <param name="flowName">The flow name.</param>
+            <param name="bytecodeOffset">The bytecode offset where the flow starts.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.LabelManager.TryGetFlowOffset(System.String,System.Int32@)">
+            <summary>
+            Gets a flow's bytecode offset.
+            </summary>
+            <param name="flowName">The flow name.</param>
+            <param name="offset">The bytecode offset if found.</param>
+            <returns>True if the flow was found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.LabelManager.GetOrAllocateFlowLabel(System.String)">
+            <summary>
+            Gets or allocates a label for a flow.
+            Used for forward references to flows not yet compiled.
+            </summary>
+            <param name="flowName">The flow name.</param>
+            <returns>The label ID for this flow.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.LabelManager.GetFlowNames">
+            <summary>
+            Gets all registered flow names.
+            </summary>
+            <returns>Enumerable of flow names.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.LabelManager.GetFlowLabels">
+            <summary>
+            Gets all flow labels for patching.
+            </summary>
+            <returns>Dictionary mapping flow names to label IDs.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.LabelManager.Reset">
+            <summary>
+            Resets the label manager to initial state.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder">
+            <summary>
+            Builds a string table for behavior model compilation.
+            Handles string interning for deduplication.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder.#ctor(System.Int32)">
+            <summary>
+            Creates a new string table builder with configurable limit.
+            </summary>
+            <param name="maxStrings">Maximum strings allowed. Defaults to VmConfig.MaxStrings.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder.Count">
+            <summary>
+            Number of strings in the table.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder.MaxStrings">
+            <summary>
+            Maximum number of strings for this builder instance.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder.GetOrAdd(System.String)">
+            <summary>
+            Adds or retrieves an existing string from the table.
+            </summary>
+            <param name="value">The string value.</param>
+            <returns>The string table index.</returns>
+            <exception cref="T:System.InvalidOperationException">If string table is full.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder.GetValue(System.UInt16)">
+            <summary>
+            Gets the string value at the specified index.
+            </summary>
+            <param name="index">The string table index.</param>
+            <returns>The string value.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder.TryGet(System.String,System.UInt16@)">
+            <summary>
+            Checks if a string exists in the table.
+            </summary>
+            <param name="value">The string to check.</param>
+            <param name="index">The index if found.</param>
+            <returns>True if the string exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder.ToList">
+            <summary>
+            Gets the finalized string table.
+            </summary>
+            <returns>Read-only list of strings.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder.Reset">
+            <summary>
+            Resets the string table to initial state.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext">
+            <summary>
+            Holds compilation state during behavior model compilation.
+            Thread-unsafe: create a new instance for each compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.Emitter">
+            <summary>
+            Bytecode emitter for generating instructions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.Constants">
+            <summary>
+            Constant pool builder for numeric literals.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.Strings">
+            <summary>
+            String table builder for string literals.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.Labels">
+            <summary>
+            Label manager for jump targets and flow offsets.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.ModelBuilder">
+            <summary>
+            Model builder for final output.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.Options">
+            <summary>
+            Compilation options.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.Errors">
+            <summary>
+            Compilation errors accumulated during compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.DebugLineMap">
+            <summary>
+            Debug line map (bytecode offset -> source line).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.SourcePath">
+            <summary>
+            Source file path for debug info.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions)">
+            <summary>
+            Creates a new compilation context.
+            </summary>
+            <param name="options">Compilation options.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.RegisterInput(System.String,System.Double)">
+            <summary>
+            Registers an input variable and returns its index.
+            </summary>
+            <param name="name">Variable name.</param>
+            <param name="defaultValue">Default value.</param>
+            <returns>The input variable index.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.RegisterOutput(System.String,System.Double)">
+            <summary>
+            Registers an output variable and returns its index.
+            </summary>
+            <param name="name">Variable name.</param>
+            <param name="defaultValue">Default value.</param>
+            <returns>The output variable index.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.GetOrAllocateLocal(System.String)">
+            <summary>
+            Gets or allocates a local variable index.
+            </summary>
+            <param name="name">Variable name.</param>
+            <returns>The local variable index.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.TryGetInput(System.String,System.Byte@)">
+            <summary>
+            Tries to get an input variable index.
+            </summary>
+            <param name="name">The variable name.</param>
+            <param name="index">When this method returns, contains the index if found.</param>
+            <returns>True if the input variable exists; otherwise, false.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.TryGetOutput(System.String,System.Byte@)">
+            <summary>
+            Tries to get an output variable index.
+            </summary>
+            <param name="name">The variable name.</param>
+            <param name="index">When this method returns, contains the index if found.</param>
+            <returns>True if the output variable exists; otherwise, false.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.TryGetLocal(System.String,System.Byte@)">
+            <summary>
+            Tries to get a local variable index.
+            </summary>
+            <param name="name">The variable name.</param>
+            <param name="index">When this method returns, contains the index if found.</param>
+            <returns>True if the local variable exists; otherwise, false.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.RegisterContinuationPoint(System.String,System.UInt32,System.UInt32)">
+            <summary>
+            Registers a continuation point.
+            </summary>
+            <param name="name">Continuation point name.</param>
+            <param name="timeoutMs">Timeout in milliseconds.</param>
+            <param name="bytecodeOffset">Bytecode offset of the continuation point.</param>
+            <returns>The continuation point index.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.SetContinuationPointDefaultFlow(System.UInt16,System.UInt32)">
+            <summary>
+            Sets the default flow offset for a continuation point.
+            </summary>
+            <param name="index">Continuation point index.</param>
+            <param name="defaultFlowOffset">Bytecode offset of default flow.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.AddError(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Adds a compilation error.
+            </summary>
+            <param name="message">Error message.</param>
+            <param name="line">Source line number (optional).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.RecordDebugLine(System.Int32)">
+            <summary>
+            Records debug line info for the current bytecode position.
+            </summary>
+            <param name="sourceLine">Source line number.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.HasErrors">
+            <summary>
+            Whether compilation has errors.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext.Finalize">
+            <summary>
+            Finalizes compilation and returns the built model bytes.
+            </summary>
+            <returns>The compiled model as raw bytes.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions">
+            <summary>
+            Compilation options.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions.IncludeDebugInfo">
+            <summary>
+            Whether to include debug information.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions.EnableOptimizations">
+            <summary>
+            Whether to enable optimizations.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions.SkipSemanticAnalysis">
+            <summary>
+            Whether to skip semantic analysis.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions.MaxConstants">
+            <summary>
+            Maximum constants in the constant pool. Zero uses VmConfig default.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions.MaxStrings">
+            <summary>
+            Maximum strings in the string table. Zero uses VmConfig default.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions.ModelId">
+            <summary>
+            Model ID to use (null for auto-generated).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions.Default">
+            <summary>
+            Default compilation options.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions.Debug">
+            <summary>
+            Debug compilation options.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions.Release">
+            <summary>
+            Release compilation options with optimizations.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationError">
+            <summary>
+            A compilation error.
+            </summary>
+            <param name="Message">Error message.</param>
+            <param name="Line">Source line number (if available).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationError.#ctor(System.String,System.Nullable{System.Int32})">
+            <summary>
+            A compilation error.
+            </summary>
+            <param name="Message">Error message.</param>
+            <param name="Line">Source line number (if available).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationError.Message">
+            <summary>Error message.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationError.Line">
+            <summary>Source line number (if available).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode">
+            <summary>
+            Base class for all ABML expression AST nodes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode.Position">
+            <summary>Gets the source position for error reporting.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <summary>Accepts a visitor for tree traversal.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1">
+            <summary>
+            Visitor interface for expression nodes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitLiteral(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.LiteralNode)">
+            <summary>Visits a literal value node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitVariable(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.VariableNode)">
+            <summary>Visits a variable reference node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitUnary(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryNode)">
+            <summary>Visits a unary operation node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitBinary(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode)">
+            <summary>Visits a binary operation node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitTernary(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode)">
+            <summary>Visits a ternary conditional node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitPropertyAccess(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode)">
+            <summary>Visits a property access node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitIndexAccess(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode)">
+            <summary>Visits an index access node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitFunctionCall(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.FunctionCallNode)">
+            <summary>Visits a function call node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitNullCoalesce(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.NullCoalesceNode)">
+            <summary>Visits a null coalesce node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor`1.VisitArrayLiteral(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ArrayLiteralNode)">
+            <summary>Visits an array literal node.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.LiteralNode">
+            <summary>
+            Literal value (number, string, boolean, null).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.LiteralNode.Value">
+            <summary>Gets the literal value.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.LiteralNode.#ctor(System.Object)">
+            <summary>Creates a new literal node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.LiteralNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.LiteralNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.VariableNode">
+            <summary>
+            Variable reference (identifier).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.VariableNode.Name">
+            <summary>Gets the variable name.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.VariableNode.#ctor(System.String)">
+            <summary>Creates a new variable node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.VariableNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.VariableNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryOperator">
+            <summary>
+            Unary operation type.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryOperator.Not">
+            <summary>Logical negation (!).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryOperator.Negate">
+            <summary>Arithmetic negation (-).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryNode">
+            <summary>
+            Unary operation (!, -).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryNode.Operator">
+            <summary>Gets the operator.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryNode.Operand">
+            <summary>Gets the operand.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryNode.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryOperator,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode)">
+            <summary>Creates a new unary node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator">
+            <summary>
+            Binary operation type.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.Add">
+            <summary>Addition (+).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.Subtract">
+            <summary>Subtraction (-).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.Multiply">
+            <summary>Multiplication (*).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.Divide">
+            <summary>Division (/).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.Modulo">
+            <summary>Modulo (%).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.Equal">
+            <summary>Equality (==).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.NotEqual">
+            <summary>Inequality (!=).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.LessThan">
+            <summary>Less than (&lt;).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.LessOrEqual">
+            <summary>Less than or equal (&lt;=).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.GreaterThan">
+            <summary>Greater than (&gt;).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.GreaterOrEqual">
+            <summary>Greater than or equal (&gt;=).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.And">
+            <summary>Logical AND (&amp;&amp;).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.Or">
+            <summary>Logical OR (||).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator.In">
+            <summary>Membership test (in).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode">
+            <summary>
+            Binary operation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode.Operator">
+            <summary>Gets the operator.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode.Left">
+            <summary>Gets the left operand.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode.Right">
+            <summary>Gets the right operand.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryOperator,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode)">
+            <summary>Creates a new binary node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode">
+            <summary>
+            Ternary conditional (condition ? then : else).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode.Condition">
+            <summary>Gets the condition expression.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode.ThenBranch">
+            <summary>Gets the then expression.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode.ElseBranch">
+            <summary>Gets the else expression.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode)">
+            <summary>Creates a new ternary node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode">
+            <summary>
+            Property access (obj.prop or obj?.prop).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode.Object">
+            <summary>Gets the object expression.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode.PropertyName">
+            <summary>Gets the property name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode.IsNullSafe">
+            <summary>Gets whether this is a null-safe access (?.).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode,System.String,System.Boolean)">
+            <summary>Creates a new property access node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode">
+            <summary>
+            Index access (obj[index] or obj?[index]).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode.Object">
+            <summary>Gets the object expression.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode.Index">
+            <summary>Gets the index expression.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode.IsNullSafe">
+            <summary>Gets whether this is a null-safe access (?[]).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode,System.Boolean)">
+            <summary>Creates a new index access node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.FunctionCallNode">
+            <summary>
+            Function call (func(args)).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.FunctionCallNode.FunctionName">
+            <summary>Gets the function name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.FunctionCallNode.Arguments">
+            <summary>Gets the argument expressions.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.FunctionCallNode.#ctor(System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode})">
+            <summary>Creates a new function call node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.FunctionCallNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.FunctionCallNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.NullCoalesceNode">
+            <summary>
+            Null coalesce (left ?? right).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.NullCoalesceNode.Left">
+            <summary>Gets the left operand.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.NullCoalesceNode.Right">
+            <summary>Gets the right operand (default value).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.NullCoalesceNode.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode)">
+            <summary>Creates a new null coalesce node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.NullCoalesceNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.NullCoalesceNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ArrayLiteralNode">
+            <summary>
+            Array literal ([a, b, c]).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ArrayLiteralNode.Elements">
+            <summary>Gets the array elements.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ArrayLiteralNode.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode})">
+            <summary>Creates a new array literal node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ArrayLiteralNode.Accept``1(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ArrayLiteralNode.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.ExpressionParser">
+            <summary>
+            Parses ABML expressions into AST nodes using Parlot.
+            </summary>
+            <remarks>
+            Grammar (precedence low to high):
+            <code>
+            expression     = ternary
+            ternary        = nullCoalesce ("?" expression ":" expression)?
+            nullCoalesce   = or ("??" or)*
+            or             = and ("||" and)*
+            and            = equality ("&amp;&amp;" equality)*
+            equality       = comparison (("==" | "!=") comparison)*
+            comparison     = term (("&lt;" | "&lt;=" | "&gt;" | "&gt;=") term)*
+            term           = factor (("+" | "-") factor)*
+            factor         = unary (("*" | "/" | "%") unary)*
+            unary          = ("!" | "-") unary | membership
+            membership     = postfix ("in" postfix)?
+            postfix        = primary (("." IDENT) | ("[" expression "]") | ("?." IDENT) | ("?[" expression "]") | ("(" args ")"))*
+            primary        = "null" | "true" | "false" | NUMBER | STRING | arrayLiteral | IDENT | "(" expression ")"
+            arrayLiteral   = "[" (expression ("," expression)*)? "]"
+            </code>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.ExpressionParser.Parse(System.String)">
+            <summary>
+            Parses an expression string into an AST.
+            </summary>
+            <param name="expression">The expression to parse.</param>
+            <returns>The parsed AST root node.</returns>
+            <exception cref="T:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException">Thrown when parsing fails.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.ExpressionParser.TryParse(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode@)">
+            <summary>
+            Tries to parse an expression string into an AST.
+            </summary>
+            <param name="expression">The expression to parse.</param>
+            <param name="result">The parsed AST if successful.</param>
+            <returns>True if parsing succeeded, false otherwise.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler">
+            <summary>
+            Compiles expression AST nodes to stack-based bytecode.
+            Reuses the existing ExpressionParser for AST generation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <summary>
+            Creates a new stack expression compiler.
+            </summary>
+            <param name="context">The compilation context.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.Compile(System.String)">
+            <summary>
+            Compiles an expression string, leaving result on stack.
+            </summary>
+            <param name="expression">The expression source text.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.CompileNode(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ExpressionNode)">
+            <summary>
+            Compiles an AST node, leaving result on stack.
+            </summary>
+            <param name="node">The AST node.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitLiteral(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.LiteralNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitVariable(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.VariableNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitUnary(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.UnaryNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitBinary(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.CompileInOperator(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.BinaryNode)">
+            <summary>
+            Compiles the 'in' operator by expanding static array literals to OR chains.
+            For example: x in ['a', 'b', 'c'] becomes x == 'a' || x == 'b' || x == 'c'
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitTernary(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.TernaryNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitPropertyAccess(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.PropertyAccessNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitIndexAccess(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.IndexAccessNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitFunctionCall(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.FunctionCallNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitNullCoalesce(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.NullCoalesceNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler.VisitArrayLiteral(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast.ArrayLiteralNode)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.Unit">
+            <summary>
+            Unit type for void-returning visitor methods.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.Unit.Value">
+            <summary>
+            Singleton value.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder">
+            <summary>
+            Builds the final behavior model binary from compiled components.
+            Writes raw bytes according to the binary format specification.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.WithModelId(System.Guid)">
+            <summary>
+            Sets the model ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.WithFlags(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelFlags)">
+            <summary>
+            Sets the model flags.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.AsExtension(System.Guid,System.UInt32,System.UInt32)">
+            <summary>
+            Configures this model as an extension.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.AddInput(System.String,System.Double,System.Byte)">
+            <summary>
+            Adds an input variable definition.
+            </summary>
+            <param name="name">Variable name.</param>
+            <param name="defaultValue">Default value.</param>
+            <param name="type">Variable type (0=Bool, 1=Int, 2=Float).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.AddOutput(System.String,System.Double,System.Byte)">
+            <summary>
+            Adds an output variable definition.
+            </summary>
+            <param name="name">Variable name.</param>
+            <param name="defaultValue">Default value.</param>
+            <param name="type">Variable type (0=Bool, 1=Int, 2=Float).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.AddContinuationPoint(System.String,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            Adds a continuation point.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.WithConstantPool(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.ConstantPoolBuilder)">
+            <summary>
+            Sets the constant pool from a builder.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.WithConstantPool(System.Collections.Generic.IReadOnlyList{System.Double})">
+            <summary>
+            Sets the constant pool directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.WithStringTable(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.StringTableBuilder)">
+            <summary>
+            Sets the string table from a builder.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.WithStringTable(System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>
+            Sets the string table directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.WithBytecode(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Codegen.BytecodeEmitter)">
+            <summary>
+            Sets the bytecode from an emitter.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.WithBytecode(System.Byte[])">
+            <summary>
+            Sets the bytecode directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.WithDebugInfo(System.String,System.Collections.Generic.Dictionary{System.Int32,System.Int32})">
+            <summary>
+            Sets debug info.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.Build">
+            <summary>
+            Builds the final binary output.
+            </summary>
+            <returns>The compiled behavior model as raw bytes.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.HashName(System.String)">
+            <summary>
+            Computes FNV-1a hash of a variable name.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.BehaviorModelBuilder.Reset">
+            <summary>
+            Resets the builder to initial state.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.DebugInfoBuilder">
+            <summary>
+            Builds debug information for behavior models.
+            Maps bytecode offsets to source locations.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.DebugInfoBuilder.WithSourcePath(System.String)">
+            <summary>
+            Sets the source file path.
+            </summary>
+            <param name="path">The source file path.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.DebugInfoBuilder.RecordFlowOffset(System.String,System.Int32)">
+            <summary>
+            Records a flow's bytecode offset.
+            </summary>
+            <param name="flowName">The flow name.</param>
+            <param name="offset">The bytecode offset.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.DebugInfoBuilder.RecordMapping(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Records a source location mapping.
+            </summary>
+            <param name="bytecodeOffset">The bytecode offset.</param>
+            <param name="sourceLine">The source line number (1-based).</param>
+            <param name="sourceColumn">The source column number (1-based).</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.DebugInfoBuilder.Build">
+            <summary>
+            Builds the debug info as a byte array.
+            </summary>
+            <returns>The serialized debug info.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.DebugInfoBuilder.GetSourceLocation(System.Int32)">
+            <summary>
+            Gets the source location for a bytecode offset.
+            </summary>
+            <param name="bytecodeOffset">The bytecode offset.</param>
+            <returns>The source location, or null if not found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.SourceLocation">
+            <summary>
+            A source code location.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.SourceLocation.#ctor(System.String,System.Int32,System.Int32)">
+            <summary>
+            A source code location.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Output.SourceLocation.ToString">
+            <summary>
+            Returns a string representation of this location.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer">
+            <summary>
+            Analyzes ABML documents for semantic correctness before compilation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.Analyze(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
+            <summary>
+            Analyzes an ABML document for semantic errors and warnings.
+            </summary>
+            <param name="document">The document to analyze.</param>
+            <returns>The analysis result.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalysisResult">
+            <summary>
+            Result of semantic analysis.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalysisResult.IsValid">
+            <summary>
+            Whether the document passed semantic analysis.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalysisResult.Errors">
+            <summary>
+            Semantic errors found during analysis.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalysisResult.Warnings">
+            <summary>
+            Semantic warnings found during analysis.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalysisResult.#ctor(System.Boolean,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticError},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarning})">
+            <summary>
+            Creates a new semantic analysis result.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticError">
+            <summary>
+            A semantic error that prevents compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticError.Message">
+            <summary>
+            The error message.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticError.Kind">
+            <summary>
+            The kind of error.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticError.#ctor(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind)">
+            <summary>
+            Creates a new semantic error.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind">
+            <summary>
+            Kinds of semantic errors.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.UndefinedFlow">
+            <summary>Reference to an undefined flow.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.UndefinedVariable">
+            <summary>Reference to an undefined variable.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.EmptyConditional">
+            <summary>Empty conditional with no branches.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.EmptyCondition">
+            <summary>Conditional branch with empty condition.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.InvalidContinuationPoint">
+            <summary>Invalid continuation point definition.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.TypeMismatch">
+            <summary>Type mismatch in expression.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.Other">
+            <summary>Other semantic error.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarning">
+            <summary>
+            A semantic warning that doesn't prevent compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarning.Message">
+            <summary>
+            The warning message.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarning.Level">
+            <summary>
+            The warning level.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarning.#ctor(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarningLevel)">
+            <summary>
+            Creates a new semantic warning.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarningLevel">
+            <summary>
+            Levels of semantic warnings.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarningLevel.Info">
+            <summary>Informational message.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticWarningLevel.Warning">
+            <summary>Warning that may indicate a problem.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.VmConfig">
+            <summary>
+            Configuration constants for the ABML bytecode VM.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.VmConfig.MaxRegisters">
+            <summary>Maximum number of registers (256).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.VmConfig.MaxConstants">
+            <summary>Maximum number of constants (256).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.VmConfig.MaxStrings">
+            <summary>Maximum number of strings in the string table (65536).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.VmConfig.MaxInstructions">
+            <summary>Maximum bytecode length.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.VmConfig.MaxJumpOffset">
+            <summary>Maximum jump offset (16-bit).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.VmConfig.MaxFunctionArgs">
+            <summary>Maximum function argument count.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.VmConfig.DefaultCacheSize">
+            <summary>Default LRU cache size.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.VmConfig.MaxNestingDepth">
+            <summary>Maximum nesting depth.</summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument">
             <summary>
             Represents a complete ABML document.
@@ -765,6 +2354,58 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction.Target">
             <summary>Optional target expression.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException">
+            <summary>
+            Exception thrown when an ABML expression fails to parse or compile.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException.Line">
+            <summary>Gets the line number where the error occurred.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException.Column">
+            <summary>Gets the column number where the error occurred.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException.#ctor(System.String)">
+            <summary>Creates a new compilation exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException.#ctor(System.String,System.Exception)">
+            <summary>Creates a new compilation exception with inner exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException.#ctor(System.String,System.String,System.Nullable{System.Int32})">
+            <summary>Creates a new compilation exception with source context.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException.UnexpectedToken(System.String,System.String,System.String,System.Int32)">
+            <summary>Creates an exception for an unexpected token.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException.UnexpectedEndOfExpression(System.String)">
+            <summary>Creates an exception for unexpected end of expression.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlCompilationException.InvalidSyntax(System.String,System.String,System.Nullable{System.Int32})">
+            <summary>Creates an exception for invalid syntax.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlException">
+            <summary>
+            Base exception for all ABML-related errors.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlException.SourceExpression">
+            <summary>Gets the source expression that caused the exception.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlException.Position">
+            <summary>Gets the position in the source where the error occurred.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlException.#ctor(System.String)">
+            <summary>Creates a new ABML exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlException.#ctor(System.String,System.Exception)">
+            <summary>Creates a new ABML exception with inner exception.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlException.#ctor(System.String,System.String,System.Nullable{System.Int32})">
+            <summary>Creates a new ABML exception with source context.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Exceptions.AbmlException.#ctor(System.String,System.Exception,System.String,System.Nullable{System.Int32})">
+            <summary>Creates a new ABML exception with inner exception and source context.</summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction">
             <summary>

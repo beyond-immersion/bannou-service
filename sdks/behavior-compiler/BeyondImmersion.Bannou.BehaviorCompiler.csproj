@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Parlot" Version="0.0.29" />
+    <PackageReference Include="Parlot" Version="1.5.6" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 

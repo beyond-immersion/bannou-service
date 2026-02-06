@@ -156,6 +156,14 @@ All configuration properties are verified as used in `ResourceService.cs`.
 | `IMessageBus` | Publishing events |
 | `IServiceNavigator` | Executing cleanup callbacks |
 | `IEventConsumer` | Registering event subscription handlers |
+| `IEnumerable<ISeededResourceProvider>` | Discovered seeded resource providers from DI |
+
+**Shared Provider Interfaces** (defined in `bannou-service/Providers/`):
+| Type | Role |
+|------|------|
+| `ISeededResourceProvider` | Interface for plugins to provide seeded resources |
+| `SeededResource` | Record type for seeded resource with identifier, content, metadata |
+| `EmbeddedResourceProvider` | Base class for loading from assembly embedded resources |
 
 **Internal Types** (defined in ResourceService.cs):
 | Type | Role |
@@ -275,6 +283,48 @@ All configuration properties are verified as used in `ResourceService.cs`.
 5. Store in Redis with TTL via `SaveAsync` with `StateOptions { Ttl = ttlSeconds }`
 6. Publish `resource.snapshot.created` event
 7. Return snapshotId for later retrieval
+
+### Seeded Resource Management
+
+| Endpoint | Notes |
+|----------|-------|
+| `POST /resource/seeded/list` | Lists all available seeded resources; optionally filter by `resourceType` |
+| `POST /resource/seeded/get` | Retrieves seeded resource content by type and identifier; returns base64-encoded content |
+
+**Purpose**: Provides a consistent pattern for plugins to load embedded/static resources (ABML behaviors, templates, configuration data) without each plugin reinventing the wheel.
+
+**Key Design**:
+- Uses `ISeededResourceProvider` interface (defined in `bannou-service/Providers/`)
+- Providers discovered via DI collection (`IEnumerable<ISeededResourceProvider>`)
+- Content returned as base64-encoded bytes with MIME type metadata
+- Seeded resources are **read-only factory defaults** - consumers may copy to state stores for runtime modification
+
+**Integration Pattern for Higher-Layer Plugins**:
+
+1. **Implement provider** (use `EmbeddedResourceProvider` base class for assembly-embedded resources):
+   ```csharp
+   public class BehaviorSeededProvider : EmbeddedResourceProvider
+   {
+       public override string ResourceType => "behavior";
+       public override string ContentType => "application/yaml";
+       protected override Assembly ResourceAssembly => typeof(BehaviorSeededProvider).Assembly;
+       protected override string ResourcePrefix => "BeyondImmersion.LibActor.Behaviors.";
+   }
+   ```
+
+2. **Register in plugin DI** (in `ConfigureServices`):
+   ```csharp
+   services.AddSingleton<ISeededResourceProvider, BehaviorSeededProvider>();
+   ```
+
+3. **Query via API** (from any service or ABML behavior):
+   ```
+   POST /resource/seeded/list
+   { "resourceType": "behavior" }
+
+   POST /resource/seeded/get
+   { "resourceType": "behavior", "identifier": "idle" }
+   ```
 
 ---
 
@@ -610,6 +660,15 @@ This section tracks active development work on items from the quirks/bugs lists 
 *No active work items.*
 
 ### Completed (Historical)
+
+- **2026-02-06**: Added seeded resource loading capability (Issue #289):
+  - 2 new endpoints (`/resource/seeded/list`, `/resource/seeded/get`)
+  - `ISeededResourceProvider` interface in `bannou-service/Providers/`
+  - `SeededResource` record type for resource content and metadata
+  - `EmbeddedResourceProvider` base class for loading from assembly embedded resources
+  - Provider discovery via DI collection (`IEnumerable<ISeededResourceProvider>`)
+  - 11 unit tests covering provider discovery, listing, retrieval, and record type
+  - Enables plugins to provide factory default resources (ABML behaviors, templates, etc.)
 
 - **2026-02-03**: Added ephemeral snapshot system for living entities:
   - 2 new endpoints (`/resource/snapshot/execute`, `/resource/snapshot/get`)
