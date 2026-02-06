@@ -46,7 +46,7 @@ public sealed class QueryMemoryHandler : IActionHandler
     /// <inheritdoc/>
     public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
-        ExecutionContext context,
+        AbmlExecutionContext context,
         CancellationToken ct)
     {
         var domainAction = (DomainAction)action;
@@ -118,6 +118,4 @@ public sealed class QueryMemoryHandler : IActionHandler
 
         return [];
     }
-
-    public ValueTask<ActionResult> ExecuteAsync(ActionNode action, Execution.ExecutionContext context, CancellationToken ct) => throw new NotImplementedException();
 }

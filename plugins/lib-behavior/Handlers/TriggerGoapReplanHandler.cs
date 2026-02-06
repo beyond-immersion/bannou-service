@@ -3,8 +3,8 @@
 // Triggers GOAP replanning with urgency-based constraints.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.Bannou.Behavior.Goap;
+using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;

@@ -36,7 +36,7 @@ public sealed class EvaluateGoalImpactHandler : IActionHandler
     /// <inheritdoc/>
     public ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
-        ExecutionContext context,
+        AbmlExecutionContext context,
         CancellationToken ct)
     {
         var domainAction = (DomainAction)action;
@@ -294,8 +294,6 @@ public sealed class EvaluateGoalImpactHandler : IActionHandler
 
         return false;
     }
-
-    public ValueTask<ActionResult> ExecuteAsync(ActionNode action, Execution.ExecutionContext context, CancellationToken ct) => throw new NotImplementedException();
 
     /// <summary>
     /// Internal goal info structure for evaluation.

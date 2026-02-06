@@ -44,7 +44,7 @@ public sealed class FilterAttentionHandler : IActionHandler
     /// <inheritdoc/>
     public ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
-        ExecutionContext context,
+        AbmlExecutionContext context,
         CancellationToken ct)
     {
         var domainAction = (DomainAction)action;
@@ -258,6 +258,4 @@ public sealed class FilterAttentionHandler : IActionHandler
             RemainingBudget = remainingBudget
         };
     }
-
-    public ValueTask<ActionResult> ExecuteAsync(ActionNode action, Execution.ExecutionContext context, CancellationToken ct) => throw new NotImplementedException();
 }

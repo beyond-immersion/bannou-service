@@ -43,7 +43,7 @@ public sealed class AssessSignificanceHandler : IActionHandler
     /// <inheritdoc/>
     public ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
-        ExecutionContext context,
+        AbmlExecutionContext context,
         CancellationToken ct)
     {
         var domainAction = (DomainAction)action;
@@ -318,6 +318,4 @@ public sealed class AssessSignificanceHandler : IActionHandler
 
         return result;
     }
-
-    public ValueTask<ActionResult> ExecuteAsync(ActionNode action, Execution.ExecutionContext context, CancellationToken ct) => throw new NotImplementedException();
 }

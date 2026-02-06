@@ -1,4 +1,3 @@
-using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.Bannou.Core;
