@@ -693,3 +693,39 @@ x-state-stores:
     prefix: "storyline:idx"
     service: Storyline
     purpose: Plan index by realm for list queries
+
+  # Scenario stores
+
+  storyline-scenario-definitions:
+    backend: mysql
+    service: Storyline
+    purpose: Durable scenario template definitions with conditions and mutations
+
+  storyline-scenario-executions:
+    backend: mysql
+    service: Storyline
+    purpose: Scenario execution history with outcome tracking
+
+  storyline-scenario-cache:
+    backend: redis
+    prefix: "storyline:scenario:cache"
+    service: Storyline
+    purpose: Scenario definition read-through cache (TTL from config)
+
+  storyline-scenario-cooldown:
+    backend: redis
+    prefix: "storyline:scenario:cd"
+    service: Storyline
+    purpose: Per-character scenario cooldowns with TTL-based auto-expiry
+
+  storyline-scenario-active:
+    backend: redis
+    prefix: "storyline:scenario:active"
+    service: Storyline
+    purpose: Active scenario tracking per character (set membership)
+
+  storyline-scenario-idempotency:
+    backend: redis
+    prefix: "storyline:scenario:idemp"
+    service: Storyline
+    purpose: Scenario trigger idempotency keys for deduplication

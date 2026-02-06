@@ -23,6 +23,43 @@ x-events:
       Consumers can use this to trigger downstream processing like
       monitoring storyline activity or indexing for search.
 
+  # Scenario events
+  storyline.scenario.triggered:
+    schema: ScenarioTriggeredEvent
+    description: |
+      Published when a scenario starts executing for a character.
+      Consumers can use this for analytics, monitoring, or coordinating
+      related game systems. Includes orchestrator context if triggered
+      by a Regional Watcher via lib-puppetmaster.
+
+  storyline.scenario.phase-completed:
+    schema: ScenarioPhaseCompletedEvent
+    description: |
+      Published when a phase within a multi-phase scenario completes.
+      Enables progress tracking and phase-specific reactions by
+      downstream systems.
+
+  storyline.scenario.completed:
+    schema: ScenarioCompletedEvent
+    description: |
+      Published when a scenario finishes successfully with all mutations
+      applied. Includes summary of mutations performed and any quests
+      spawned. Downstream systems can react to the narrative outcome.
+
+  storyline.scenario.failed:
+    schema: ScenarioFailedEvent
+    description: |
+      Published when a scenario fails during execution (not cancelled).
+      Includes failure reason and partial mutation state for diagnostics
+      and potential recovery actions.
+
+  storyline.scenario.available:
+    schema: ScenarioAvailableEvent
+    description: |
+      Published when new scenarios become available for a character,
+      typically as a UI hint or for actor behavior planning. Regional
+      Watchers may consume this to prioritize character processing.
+
 components:
   schemas:
     StorylineComposedEvent:
@@ -102,3 +139,314 @@ components:
           type: string
           format: date-time
           description: When the plan was composed
+
+    # Scenario Events
+
+    ScenarioTriggeredEvent:
+      type: object
+      additionalProperties: false
+      description: Event published when a scenario starts executing for a character
+      required:
+        - executionId
+        - scenarioId
+        - scenarioCode
+        - primaryCharacterId
+        - triggeredAt
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Unique identifier for this scenario execution instance
+        scenarioId:
+          type: string
+          format: uuid
+          description: ID of the scenario definition being executed
+        scenarioCode:
+          type: string
+          description: Human-readable code of the scenario definition
+        primaryCharacterId:
+          type: string
+          format: uuid
+          description: Character for whom the scenario was triggered
+        additionalParticipantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Additional characters participating in the scenario
+        orchestratorId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Actor ID of the Regional Watcher that triggered this (if any)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for this scenario execution
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service context for this scenario execution
+        fitScore:
+          type: number
+          format: double
+          nullable: true
+          description: Calculated fit score at trigger time (0.0 to 1.0)
+        phaseCount:
+          type: integer
+          nullable: true
+          description: Total number of phases in this scenario
+        triggeredAt:
+          type: string
+          format: date-time
+          description: When the scenario was triggered
+
+    ScenarioPhaseCompletedEvent:
+      type: object
+      additionalProperties: false
+      description: Event published when a phase within a multi-phase scenario completes
+      required:
+        - executionId
+        - scenarioId
+        - primaryCharacterId
+        - phaseIndex
+        - phaseName
+        - completedAt
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Unique identifier for this scenario execution instance
+        scenarioId:
+          type: string
+          format: uuid
+          description: ID of the scenario definition being executed
+        primaryCharacterId:
+          type: string
+          format: uuid
+          description: Character for whom the scenario is executing
+        phaseIndex:
+          type: integer
+          minimum: 0
+          description: Zero-based index of the completed phase
+        phaseName:
+          type: string
+          description: Name of the completed phase
+        totalPhases:
+          type: integer
+          minimum: 1
+          description: Total number of phases in the scenario
+        mutationsApplied:
+          type: integer
+          nullable: true
+          description: Number of mutations applied in this phase
+        questsSpawned:
+          type: integer
+          nullable: true
+          description: Number of quests spawned in this phase
+        isLastPhase:
+          type: boolean
+          description: Whether this was the final phase
+        completedAt:
+          type: string
+          format: date-time
+          description: When the phase completed
+
+    ScenarioCompletedEvent:
+      type: object
+      additionalProperties: false
+      description: Event published when a scenario finishes successfully
+      required:
+        - executionId
+        - scenarioId
+        - scenarioCode
+        - primaryCharacterId
+        - startedAt
+        - completedAt
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Unique identifier for this scenario execution instance
+        scenarioId:
+          type: string
+          format: uuid
+          description: ID of the scenario definition that was executed
+        scenarioCode:
+          type: string
+          description: Human-readable code of the scenario definition
+        primaryCharacterId:
+          type: string
+          format: uuid
+          description: Character for whom the scenario executed
+        additionalParticipantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Additional characters who participated
+        orchestratorId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Actor ID of the Regional Watcher that triggered this (if any)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for this scenario execution
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service context for this scenario execution
+        phasesCompleted:
+          type: integer
+          nullable: true
+          description: Number of phases completed
+        totalMutationsApplied:
+          type: integer
+          nullable: true
+          description: Total number of mutations applied across all phases
+        totalQuestsSpawned:
+          type: integer
+          nullable: true
+          description: Total number of quests spawned
+        questIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: IDs of quests that were spawned
+        durationMs:
+          type: integer
+          nullable: true
+          description: Total execution duration in milliseconds
+        startedAt:
+          type: string
+          format: date-time
+          description: When the scenario execution started
+        completedAt:
+          type: string
+          format: date-time
+          description: When the scenario execution completed
+
+    ScenarioFailedEvent:
+      type: object
+      additionalProperties: false
+      description: Event published when a scenario fails during execution
+      required:
+        - executionId
+        - scenarioId
+        - scenarioCode
+        - primaryCharacterId
+        - failureReason
+        - failedAt
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Unique identifier for this scenario execution instance
+        scenarioId:
+          type: string
+          format: uuid
+          description: ID of the scenario definition that failed
+        scenarioCode:
+          type: string
+          description: Human-readable code of the scenario definition
+        primaryCharacterId:
+          type: string
+          format: uuid
+          description: Character for whom the scenario was executing
+        orchestratorId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Actor ID of the Regional Watcher that triggered this (if any)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for this scenario execution
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service context for this scenario execution
+        failureReason:
+          type: string
+          description: Human-readable description of why the scenario failed
+        failedAtPhase:
+          type: integer
+          nullable: true
+          description: Phase index where failure occurred (if during phase execution)
+        failedAtPhaseName:
+          type: string
+          nullable: true
+          description: Name of phase where failure occurred
+        partialMutationsApplied:
+          type: integer
+          nullable: true
+          description: Number of mutations that were applied before failure
+        isRecoverable:
+          type: boolean
+          nullable: true
+          description: Whether this failure may be recoverable with retry
+        failedAt:
+          type: string
+          format: date-time
+          description: When the scenario execution failed
+
+    ScenarioAvailableEvent:
+      type: object
+      additionalProperties: false
+      description: Event published when new scenarios become available for a character
+      required:
+        - characterId
+        - availableScenarioIds
+        - detectedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character for whom scenarios are available
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for availability check
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service context for availability check
+        availableScenarioIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of scenarios now available
+        availableScenarioCodes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Codes of scenarios now available (parallel to IDs)
+        topFitScore:
+          type: number
+          format: double
+          nullable: true
+          description: Highest fit score among available scenarios
+        triggerRecommended:
+          type: boolean
+          nullable: true
+          description: Whether immediate trigger is recommended based on fit scores
+        detectedAt:
+          type: string
+          format: date-time
+          description: When availability was detected

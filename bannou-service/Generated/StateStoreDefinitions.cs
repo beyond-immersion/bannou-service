@@ -296,6 +296,18 @@ public static class StateStoreDefinitions
     public const string StorylinePlanIndex = "storyline-plan-index";
     /// <summary>Cached composed storyline plans (ephemeral, TTL from config)</summary>
     public const string StorylinePlans = "storyline-plans";
+    /// <summary>Active scenario tracking per character (set membership)</summary>
+    public const string StorylineScenarioActive = "storyline-scenario-active";
+    /// <summary>Scenario definition read-through cache (TTL from config)</summary>
+    public const string StorylineScenarioCache = "storyline-scenario-cache";
+    /// <summary>Per-character scenario cooldowns with TTL-based auto-expiry</summary>
+    public const string StorylineScenarioCooldown = "storyline-scenario-cooldown";
+    /// <summary>Durable scenario template definitions with conditions and mutations</summary>
+    public const string StorylineScenarioDefinitions = "storyline-scenario-definitions";
+    /// <summary>Scenario execution history with outcome tracking</summary>
+    public const string StorylineScenarioExecutions = "storyline-scenario-executions";
+    /// <summary>Scenario trigger idempotency keys for deduplication</summary>
+    public const string StorylineScenarioIdempotency = "storyline-scenario-idempotency";
 
     // Subscription Service
     /// <summary>User subscriptions to game services</summary>
@@ -413,6 +425,12 @@ public static class StateStoreDefinitions
             [Species] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "species_statestore" },
             [StorylinePlanIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:idx" },
             [StorylinePlans] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:plan" },
+            [StorylineScenarioActive] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:active" },
+            [StorylineScenarioCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:cache" },
+            [StorylineScenarioCooldown] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:cd" },
+            [StorylineScenarioDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "storyline_scenario_definitions" },
+            [StorylineScenarioExecutions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "storyline_scenario_executions" },
+            [StorylineScenarioIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:idemp" },
             [Subscription] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "subscription_statestore" },
             [TestSearch] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test-search", EnableSearch = true },
             [Voice] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice" },
@@ -525,6 +543,12 @@ public static class StateStoreDefinitions
             [Species] = new StoreMetadata("Species", "Species definitions", "mysql"),
             [StorylinePlanIndex] = new StoreMetadata("Storyline", "Plan index by realm for list queries", "redis"),
             [StorylinePlans] = new StoreMetadata("Storyline", "Cached composed storyline plans (ephemeral, TTL from config)", "redis"),
+            [StorylineScenarioActive] = new StoreMetadata("Storyline", "Active scenario tracking per character (set membership)", "redis"),
+            [StorylineScenarioCache] = new StoreMetadata("Storyline", "Scenario definition read-through cache (TTL from config)", "redis"),
+            [StorylineScenarioCooldown] = new StoreMetadata("Storyline", "Per-character scenario cooldowns with TTL-based auto-expiry", "redis"),
+            [StorylineScenarioDefinitions] = new StoreMetadata("Storyline", "Durable scenario template definitions with conditions and mutations", "mysql"),
+            [StorylineScenarioExecutions] = new StoreMetadata("Storyline", "Scenario execution history with outcome tracking", "mysql"),
+            [StorylineScenarioIdempotency] = new StoreMetadata("Storyline", "Scenario trigger idempotency keys for deduplication", "redis"),
             [Subscription] = new StoreMetadata("Subscription", "User subscriptions to game services", "mysql"),
             [TestSearch] = new StoreMetadata("State", "Test store with RedisSearch enabled", "redis"),
             [Voice] = new StoreMetadata("Voice", "Voice room and peer state", "redis"),

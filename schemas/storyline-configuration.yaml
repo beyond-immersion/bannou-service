@@ -145,3 +145,141 @@ x-service-configuration:
       description: |
         Minimum phase count before "flat_arc" risk is flagged.
       env: STORYLINE_RISK_MIN_PHASE_THRESHOLD
+
+    # Scenario Configuration
+
+    ScenarioDefinitionCacheTtlSeconds:
+      type: integer
+      default: 300
+      minimum: 60
+      maximum: 3600
+      description: |
+        TTL in seconds for cached scenario definitions (Redis read-through cache).
+        Default: 300 (5 minutes)
+      env: STORYLINE_SCENARIO_DEFINITION_CACHE_TTL_SECONDS
+
+    ScenarioCooldownDefaultSeconds:
+      type: integer
+      default: 86400
+      minimum: 0
+      maximum: 604800
+      description: |
+        Default cooldown in seconds before a scenario can trigger again for the same character.
+        Can be overridden per-scenario in the definition. 0 = no cooldown.
+        Default: 86400 (24 hours)
+      env: STORYLINE_SCENARIO_COOLDOWN_DEFAULT_SECONDS
+
+    ScenarioIdempotencyTtlSeconds:
+      type: integer
+      default: 3600
+      minimum: 60
+      maximum: 86400
+      description: |
+        TTL in seconds for idempotency keys to prevent duplicate triggers.
+        Default: 3600 (1 hour)
+      env: STORYLINE_SCENARIO_IDEMPOTENCY_TTL_SECONDS
+
+    ScenarioMaxActivePerCharacter:
+      type: integer
+      default: 3
+      minimum: 1
+      maximum: 10
+      description: |
+        Maximum number of active (in-progress) scenarios per character.
+        Additional triggers are rejected until existing scenarios complete.
+      env: STORYLINE_SCENARIO_MAX_ACTIVE_PER_CHARACTER
+
+    ScenarioTriggerLockTimeoutSeconds:
+      type: integer
+      default: 30
+      minimum: 5
+      maximum: 120
+      description: |
+        Timeout in seconds for the distributed lock during scenario trigger.
+        Prevents double-trigger race conditions.
+      env: STORYLINE_SCENARIO_TRIGGER_LOCK_TIMEOUT_SECONDS
+
+    # Fit Score Calculation (T21 compliant - no hardcoded tunables)
+
+    ScenarioFitScoreBaseWeight:
+      type: number
+      format: double
+      default: 0.5
+      minimum: 0
+      maximum: 1
+      description: |
+        Base weight for scenario fit score calculation.
+        Applied when any required condition is met.
+      env: STORYLINE_SCENARIO_FIT_SCORE_BASE_WEIGHT
+
+    ScenarioTraitMatchBonus:
+      type: number
+      format: double
+      default: 0.15
+      minimum: 0
+      maximum: 0.5
+      description: |
+        Bonus added to fit score for each matching trait condition.
+      env: STORYLINE_SCENARIO_TRAIT_MATCH_BONUS
+
+    ScenarioBackstoryMatchBonus:
+      type: number
+      format: double
+      default: 0.1
+      minimum: 0
+      maximum: 0.5
+      description: |
+        Bonus added to fit score for each matching backstory condition.
+      env: STORYLINE_SCENARIO_BACKSTORY_MATCH_BONUS
+
+    ScenarioRelationshipMatchBonus:
+      type: number
+      format: double
+      default: 0.12
+      minimum: 0
+      maximum: 0.5
+      description: |
+        Bonus added to fit score for each matching relationship condition.
+      env: STORYLINE_SCENARIO_RELATIONSHIP_MATCH_BONUS
+
+    ScenarioLocationMatchBonus:
+      type: number
+      format: double
+      default: 0.08
+      minimum: 0
+      maximum: 0.5
+      description: |
+        Bonus added to fit score for matching location condition.
+      env: STORYLINE_SCENARIO_LOCATION_MATCH_BONUS
+
+    ScenarioWorldStateMatchBonus:
+      type: number
+      format: double
+      default: 0.05
+      minimum: 0
+      maximum: 0.5
+      description: |
+        Bonus added to fit score for matching world state conditions.
+      env: STORYLINE_SCENARIO_WORLD_STATE_MATCH_BONUS
+
+    ScenarioFitScoreMinimumThreshold:
+      type: number
+      format: double
+      default: 0.3
+      minimum: 0
+      maximum: 1
+      description: |
+        Minimum fit score required for a scenario to be considered available.
+        Scenarios below this threshold are excluded from find-available results.
+      env: STORYLINE_SCENARIO_FIT_SCORE_MINIMUM_THRESHOLD
+
+    ScenarioFitScoreRecommendThreshold:
+      type: number
+      format: double
+      default: 0.7
+      minimum: 0
+      maximum: 1
+      description: |
+        Fit score threshold above which immediate trigger is recommended.
+        Used in ScenarioAvailableEvent.triggerRecommended field.
+      env: STORYLINE_SCENARIO_FIT_SCORE_RECOMMEND_THRESHOLD

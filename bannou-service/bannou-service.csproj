@@ -74,6 +74,7 @@
     <ProjectReference Include="../sdks/storyline-theory/BeyondImmersion.Bannou.StorylineTheory.csproj" />
     <ProjectReference Include="../sdks/storyline-storyteller/BeyondImmersion.Bannou.StorylineStoryteller.csproj" />
     <ProjectReference Include="../sdks/behavior-compiler/BeyondImmersion.Bannou.BehaviorCompiler.csproj" />
+    <ProjectReference Include="../sdks/behavior-expressions/BeyondImmersion.Bannou.BehaviorExpressions.csproj" />
   </ItemGroup>
 
 

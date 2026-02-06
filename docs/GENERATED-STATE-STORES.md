@@ -106,11 +106,17 @@ This document lists all state store components used in Bannou.
 | `species-statestore` | MySQL | Species | Species definitions |
 | `storyline-plan-index` | Redis | Storyline | Plan index by realm for list queries |
 | `storyline-plans` | Redis | Storyline | Cached composed storyline plans (ephemeral, TTL from config) |
+| `storyline-scenario-active` | Redis | Storyline | Active scenario tracking per character (set membership) |
+| `storyline-scenario-cache` | Redis | Storyline | Scenario definition read-through cache (TTL from config) |
+| `storyline-scenario-cooldown` | Redis | Storyline | Per-character scenario cooldowns with TTL-based auto-expiry |
+| `storyline-scenario-definitions` | MySQL | Storyline | Durable scenario template definitions with conditions and mutations |
+| `storyline-scenario-executions` | MySQL | Storyline | Scenario execution history with outcome tracking |
+| `storyline-scenario-idempotency` | Redis | Storyline | Scenario trigger idempotency keys for deduplication |
 | `subscription-statestore` | MySQL | Subscription | User subscriptions to game services |
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 100 stores (65 Redis, 35 MySQL)
+**Total**: 106 stores (69 Redis, 37 MySQL)
 
 ## Naming Conventions
 

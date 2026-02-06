@@ -25,6 +25,21 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -135,6 +150,445 @@ public partial class StorylineComposedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ComposedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a scenario starts executing for a character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ScenarioTriggeredEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this scenario execution instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ExecutionId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the scenario definition being executed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable code of the scenario definition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ScenarioCode { get; set; } = default!;
+
+    /// <summary>
+    /// Character for whom the scenario was triggered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("primaryCharacterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PrimaryCharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Additional characters participating in the scenario
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("additionalParticipantIds")]
+    public System.Collections.Generic.ICollection<System.Guid>? AdditionalParticipantIds { get; set; } = default!;
+
+    /// <summary>
+    /// Actor ID of the Regional Watcher that triggered this (if any)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("orchestratorId")]
+    public System.Guid? OrchestratorId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm context for this scenario execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service context for this scenario execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Calculated fit score at trigger time (0.0 to 1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fitScore")]
+    public double? FitScore { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of phases in this scenario
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("phaseCount")]
+    public int? PhaseCount { get; set; } = default!;
+
+    /// <summary>
+    /// When the scenario was triggered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("triggeredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset TriggeredAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a phase within a multi-phase scenario completes
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ScenarioPhaseCompletedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this scenario execution instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ExecutionId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the scenario definition being executed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Character for whom the scenario is executing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("primaryCharacterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PrimaryCharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Zero-based index of the completed phase
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("phaseIndex")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int PhaseIndex { get; set; } = default!;
+
+    /// <summary>
+    /// Name of the completed phase
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("phaseName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PhaseName { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of phases in the scenario
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalPhases")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int TotalPhases { get; set; } = default!;
+
+    /// <summary>
+    /// Number of mutations applied in this phase
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mutationsApplied")]
+    public int? MutationsApplied { get; set; } = default!;
+
+    /// <summary>
+    /// Number of quests spawned in this phase
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("questsSpawned")]
+    public int? QuestsSpawned { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this was the final phase
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isLastPhase")]
+    public bool IsLastPhase { get; set; } = default!;
+
+    /// <summary>
+    /// When the phase completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CompletedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a scenario finishes successfully
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ScenarioCompletedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this scenario execution instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ExecutionId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the scenario definition that was executed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable code of the scenario definition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ScenarioCode { get; set; } = default!;
+
+    /// <summary>
+    /// Character for whom the scenario executed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("primaryCharacterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PrimaryCharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Additional characters who participated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("additionalParticipantIds")]
+    public System.Collections.Generic.ICollection<System.Guid>? AdditionalParticipantIds { get; set; } = default!;
+
+    /// <summary>
+    /// Actor ID of the Regional Watcher that triggered this (if any)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("orchestratorId")]
+    public System.Guid? OrchestratorId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm context for this scenario execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service context for this scenario execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of phases completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("phasesCompleted")]
+    public int? PhasesCompleted { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of mutations applied across all phases
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalMutationsApplied")]
+    public int? TotalMutationsApplied { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of quests spawned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalQuestsSpawned")]
+    public int? TotalQuestsSpawned { get; set; } = default!;
+
+    /// <summary>
+    /// IDs of quests that were spawned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("questIds")]
+    public System.Collections.Generic.ICollection<System.Guid>? QuestIds { get; set; } = default!;
+
+    /// <summary>
+    /// Total execution duration in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
+    public int? DurationMs { get; set; } = default!;
+
+    /// <summary>
+    /// When the scenario execution started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset StartedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the scenario execution completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CompletedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a scenario fails during execution
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ScenarioFailedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this scenario execution instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ExecutionId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the scenario definition that failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable code of the scenario definition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ScenarioCode { get; set; } = default!;
+
+    /// <summary>
+    /// Character for whom the scenario was executing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("primaryCharacterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PrimaryCharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Actor ID of the Regional Watcher that triggered this (if any)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("orchestratorId")]
+    public System.Guid? OrchestratorId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm context for this scenario execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service context for this scenario execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description of why the scenario failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failureReason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string FailureReason { get; set; } = default!;
+
+    /// <summary>
+    /// Phase index where failure occurred (if during phase execution)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedAtPhase")]
+    public int? FailedAtPhase { get; set; } = default!;
+
+    /// <summary>
+    /// Name of phase where failure occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedAtPhaseName")]
+    public string? FailedAtPhaseName { get; set; } = default!;
+
+    /// <summary>
+    /// Number of mutations that were applied before failure
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partialMutationsApplied")]
+    public int? PartialMutationsApplied { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this failure may be recoverable with retry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isRecoverable")]
+    public bool? IsRecoverable { get; set; } = default!;
+
+    /// <summary>
+    /// When the scenario execution failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset FailedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when new scenarios become available for a character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ScenarioAvailableEvent
+{
+
+    /// <summary>
+    /// Character for whom scenarios are available
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm context for availability check
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service context for availability check
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// IDs of scenarios now available
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("availableScenarioIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> AvailableScenarioIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Codes of scenarios now available (parallel to IDs)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("availableScenarioCodes")]
+    public System.Collections.Generic.ICollection<string>? AvailableScenarioCodes { get; set; } = default!;
+
+    /// <summary>
+    /// Highest fit score among available scenarios
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("topFitScore")]
+    public double? TopFitScore { get; set; } = default!;
+
+    /// <summary>
+    /// Whether immediate trigger is recommended based on fit scores
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("triggerRecommended")]
+    public bool? TriggerRecommended { get; set; } = default!;
+
+    /// <summary>
+    /// When availability was detected
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("detectedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset DetectedAt { get; set; } = default!;
 
 }
 

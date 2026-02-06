@@ -44,4 +44,59 @@ public partial interface IStorylineService : IBannouService
         /// </summary>
         Task<(StatusCodes, ListPlansResponse?)> ListPlansAsync(ListPlansRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// CreateScenarioDefinition operation
+        /// </summary>
+        Task<(StatusCodes, ScenarioDefinition?)> CreateScenarioDefinitionAsync(CreateScenarioDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetScenarioDefinition operation
+        /// </summary>
+        Task<(StatusCodes, GetScenarioDefinitionResponse?)> GetScenarioDefinitionAsync(GetScenarioDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ListScenarioDefinitions operation
+        /// </summary>
+        Task<(StatusCodes, ListScenarioDefinitionsResponse?)> ListScenarioDefinitionsAsync(ListScenarioDefinitionsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// UpdateScenarioDefinition operation
+        /// </summary>
+        Task<(StatusCodes, ScenarioDefinition?)> UpdateScenarioDefinitionAsync(UpdateScenarioDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DeprecateScenarioDefinition operation
+        /// </summary>
+        Task<StatusCodes> DeprecateScenarioDefinitionAsync(DeprecateScenarioDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// FindAvailableScenarios operation
+        /// </summary>
+        Task<(StatusCodes, FindAvailableScenariosResponse?)> FindAvailableScenariosAsync(FindAvailableScenariosRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// TestScenarioTrigger operation
+        /// </summary>
+        Task<(StatusCodes, TestScenarioResponse?)> TestScenarioTriggerAsync(TestScenarioRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// EvaluateScenarioFit operation
+        /// </summary>
+        Task<(StatusCodes, EvaluateFitResponse?)> EvaluateScenarioFitAsync(EvaluateFitRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// TriggerScenario operation
+        /// </summary>
+        Task<(StatusCodes, TriggerScenarioResponse?)> TriggerScenarioAsync(TriggerScenarioRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetActiveScenarios operation
+        /// </summary>
+        Task<(StatusCodes, GetActiveScenariosResponse?)> GetActiveScenariosAsync(GetActiveScenariosRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetScenarioHistory operation
+        /// </summary>
+        Task<(StatusCodes, GetScenarioHistoryResponse?)> GetScenarioHistoryAsync(GetScenarioHistoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

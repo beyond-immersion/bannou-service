@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Storyline;
 
@@ -77,6 +92,156 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
     /// <returns>Plans listed successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListPlansResponse>> ListPlansAsync(ListPlansRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Create a new scenario definition
+    /// </summary>
+
+    /// <remarks>
+    /// Creates a reusable scenario definition template.
+    /// <br/>Scenarios are passive building blocks with triggering conditions,
+    /// <br/>phases, mutations, and optional quest hooks.
+    /// </remarks>
+
+    /// <returns>Scenario definition created</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> CreateScenarioDefinitionAsync(CreateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get a scenario definition by ID or code
+    /// </summary>
+
+    /// <remarks>
+    /// Retrieves a scenario definition by its ID or code.
+    /// <br/>Uses read-through cache for performance.
+    /// </remarks>
+
+    /// <returns>Scenario definition retrieved</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioDefinitionResponse>> GetScenarioDefinitionAsync(GetScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// List scenario definitions
+    /// </summary>
+
+    /// <remarks>
+    /// Lists scenario definitions with optional filtering by realm, game service, and tags.
+    /// <br/>Results are paginated and ordered by priority (descending), then creation time.
+    /// </remarks>
+
+    /// <returns>Scenarios listed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListScenarioDefinitionsResponse>> ListScenarioDefinitionsAsync(ListScenarioDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update a scenario definition
+    /// </summary>
+
+    /// <remarks>
+    /// Updates an existing scenario definition.
+    /// <br/>Uses ETag for optimistic concurrency control.
+    /// </remarks>
+
+    /// <returns>Scenario updated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> UpdateScenarioDefinitionAsync(UpdateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Deprecate a scenario definition
+    /// </summary>
+
+    /// <remarks>
+    /// Soft-deletes a scenario definition by marking it deprecated.
+    /// <br/>Deprecated scenarios are not returned by find-available.
+    /// </remarks>
+
+    /// <returns>Scenario deprecated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeprecateScenarioDefinitionAsync(DeprecateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Find scenarios matching character state
+    /// </summary>
+
+    /// <remarks>
+    /// Finds scenarios that match the provided character state.
+    /// <br/>This is a PASSIVE query - the caller (Regional Watcher) provides
+    /// <br/>all character data; the scenario service does not fetch it.
+    /// <br/>
+    /// <br/>Returns scenarios ordered by fit score with cooldown status.
+    /// </remarks>
+
+    /// <returns>Matching scenarios found</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindAvailableScenariosResponse>> FindAvailableScenariosAsync(FindAvailableScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Dry-run scenario trigger
+    /// </summary>
+
+    /// <remarks>
+    /// Tests whether a scenario would trigger for a character without
+    /// <br/>actually executing it. Returns detailed condition evaluation results
+    /// <br/>and predicted mutations.
+    /// </remarks>
+
+    /// <returns>Test result</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TestScenarioResponse>> TestScenarioTriggerAsync(TestScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Score narrative fit without full condition check
+    /// </summary>
+
+    /// <remarks>
+    /// Lightweight scoring of narrative fit between a scenario and character
+    /// <br/>state. Faster than test but less detailed.
+    /// </remarks>
+
+    /// <returns>Fit score calculated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EvaluateFitResponse>> EvaluateScenarioFitAsync(EvaluateFitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Execute a scenario
+    /// </summary>
+
+    /// <remarks>
+    /// Triggers scenario execution for a character. Applies mutations to
+    /// <br/>character state (personality, backstory, relationships) and spawns
+    /// <br/>quests via quest hooks.
+    /// <br/>
+    /// <br/>Uses distributed locks to prevent double-triggering and idempotency
+    /// <br/>keys for safe retries.
+    /// </remarks>
+
+    /// <returns>Scenario triggered</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TriggerScenarioResponse>> TriggerScenarioAsync(TriggerScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get active scenarios for a character
+    /// </summary>
+
+    /// <remarks>
+    /// Returns currently executing scenarios for a character.
+    /// </remarks>
+
+    /// <returns>Active scenarios</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetActiveScenariosResponse>> GetActiveScenariosAsync(GetActiveScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get scenario execution history
+    /// </summary>
+
+    /// <remarks>
+    /// Returns historical scenario executions for a character with pagination.
+    /// </remarks>
+
+    /// <returns>Scenario history</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioHistoryResponse>> GetScenarioHistoryAsync(GetScenarioHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -183,6 +348,200 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     {
 
         var (statusCode, result) = await _implementation.ListPlansAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Create a new scenario definition
+    /// </summary>
+    /// <remarks>
+    /// Creates a reusable scenario definition template.
+    /// <br/>Scenarios are passive building blocks with triggering conditions,
+    /// <br/>phases, mutations, and optional quest hooks.
+    /// </remarks>
+    /// <returns>Scenario definition created</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/create")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> CreateScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CreateScenarioDefinitionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get a scenario definition by ID or code
+    /// </summary>
+    /// <remarks>
+    /// Retrieves a scenario definition by its ID or code.
+    /// <br/>Uses read-through cache for performance.
+    /// </remarks>
+    /// <returns>Scenario definition retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/get")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioDefinitionResponse>> GetScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetScenarioDefinitionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List scenario definitions
+    /// </summary>
+    /// <remarks>
+    /// Lists scenario definitions with optional filtering by realm, game service, and tags.
+    /// <br/>Results are paginated and ordered by priority (descending), then creation time.
+    /// </remarks>
+    /// <returns>Scenarios listed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListScenarioDefinitionsResponse>> ListScenarioDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListScenarioDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ListScenarioDefinitionsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Update a scenario definition
+    /// </summary>
+    /// <remarks>
+    /// Updates an existing scenario definition.
+    /// <br/>Uses ETag for optimistic concurrency control.
+    /// </remarks>
+    /// <returns>Scenario updated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/update")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> UpdateScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UpdateScenarioDefinitionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Deprecate a scenario definition
+    /// </summary>
+    /// <remarks>
+    /// Soft-deletes a scenario definition by marking it deprecated.
+    /// <br/>Deprecated scenarios are not returned by find-available.
+    /// </remarks>
+    /// <returns>Scenario deprecated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/deprecate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeprecateScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var statusCode = await _implementation.DeprecateScenarioDefinitionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Find scenarios matching character state
+    /// </summary>
+    /// <remarks>
+    /// Finds scenarios that match the provided character state.
+    /// <br/>This is a PASSIVE query - the caller (Regional Watcher) provides
+    /// <br/>all character data; the scenario service does not fetch it.
+    /// <br/>
+    /// <br/>Returns scenarios ordered by fit score with cooldown status.
+    /// </remarks>
+    /// <returns>Matching scenarios found</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/find-available")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindAvailableScenariosResponse>> FindAvailableScenarios([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] FindAvailableScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.FindAvailableScenariosAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Dry-run scenario trigger
+    /// </summary>
+    /// <remarks>
+    /// Tests whether a scenario would trigger for a character without
+    /// <br/>actually executing it. Returns detailed condition evaluation results
+    /// <br/>and predicted mutations.
+    /// </remarks>
+    /// <returns>Test result</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/test")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TestScenarioResponse>> TestScenarioTrigger([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TestScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.TestScenarioTriggerAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Score narrative fit without full condition check
+    /// </summary>
+    /// <remarks>
+    /// Lightweight scoring of narrative fit between a scenario and character
+    /// <br/>state. Faster than test but less detailed.
+    /// </remarks>
+    /// <returns>Fit score calculated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/evaluate-fit")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EvaluateFitResponse>> EvaluateScenarioFit([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EvaluateFitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.EvaluateScenarioFitAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Execute a scenario
+    /// </summary>
+    /// <remarks>
+    /// Triggers scenario execution for a character. Applies mutations to
+    /// <br/>character state (personality, backstory, relationships) and spawns
+    /// <br/>quests via quest hooks.
+    /// <br/>
+    /// <br/>Uses distributed locks to prevent double-triggering and idempotency
+    /// <br/>keys for safe retries.
+    /// </remarks>
+    /// <returns>Scenario triggered</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/trigger")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TriggerScenarioResponse>> TriggerScenario([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TriggerScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.TriggerScenarioAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get active scenarios for a character
+    /// </summary>
+    /// <remarks>
+    /// Returns currently executing scenarios for a character.
+    /// </remarks>
+    /// <returns>Active scenarios</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/get-active")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetActiveScenariosResponse>> GetActiveScenarios([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetActiveScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetActiveScenariosAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get scenario execution history
+    /// </summary>
+    /// <remarks>
+    /// Returns historical scenario executions for a character with pagination.
+    /// </remarks>
+    /// <returns>Scenario history</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/scenario/get-history")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioHistoryResponse>> GetScenarioHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetScenarioHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetScenarioHistoryAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
