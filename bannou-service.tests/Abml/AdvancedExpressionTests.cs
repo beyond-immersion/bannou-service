@@ -3,7 +3,7 @@
 // Tests for short-circuit evaluation, cache behavior, thread safety, and edge cases.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Compiler;
+using BeyondImmersion.Bannou.BehaviorExpressions.Compiler;
 using BeyondImmersion.Bannou.BehaviorExpressions.Exceptions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Functions;

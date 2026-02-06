@@ -9,10 +9,7 @@ using BeyondImmersion.Bannou.StorylineTheory.Arcs;
 using BeyondImmersion.Bannou.StorylineTheory.Spectrums;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.CharacterHistory;
-using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Quest;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -63,25 +60,23 @@ public partial class StorylineService : IStorylineService
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IResourceClient _resourceClient;
-    private readonly ILogger<StorylineService> _logger;
-    private readonly StorylineServiceConfiguration _configuration;
+    private readonly IRelationshipClient _relationshipClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly IDistributedLockProvider _lockProvider;
-
-    // Hard L2 dependency - constructor injection, crash if missing
-    private readonly IRelationshipClient _relationshipClient;
+    private readonly ILogger<StorylineService> _logger;
+    private readonly StorylineServiceConfiguration _configuration;
 
     // State stores - use StateStoreDefinitions constants per IMPLEMENTATION TENETS
     private readonly IStateStore<CachedPlan> _planStore;
     private readonly ICacheableStateStore<PlanIndexEntry> _planIndexStore;
 
-    // Scenario state stores
+    // Scenario state stores (MySQL stores use IQueryableStateStore for QueryAsync support)
     private readonly IQueryableStateStore<ScenarioDefinitionModel> _scenarioDefinitionStore;
+    private readonly ICacheableStateStore<ScenarioDefinitionModel> _scenarioCacheStore;
     private readonly IQueryableStateStore<ScenarioExecutionModel> _scenarioExecutionStore;
-    private readonly IStateStore<ScenarioDefinitionModel> _scenarioCacheStore;
-    private readonly IStateStore<CooldownMarker> _scenarioCooldownStore;
+    private readonly ICacheableStateStore<CooldownMarker> _scenarioCooldownStore;
     private readonly ICacheableStateStore<ActiveScenarioEntry> _scenarioActiveStore;
-    private readonly IStateStore<IdempotencyMarker> _scenarioIdempotencyStore;
+    private readonly ICacheableStateStore<IdempotencyMarker> _scenarioIdempotencyStore;
 
     // SDK - direct instantiation (pure computation, not DI)
     private readonly StorylineComposer _composer;
@@ -94,8 +89,8 @@ public partial class StorylineService : IStorylineService
         IStateStoreFactory stateStoreFactory,
         IResourceClient resourceClient,
         IRelationshipClient relationshipClient,
-        IDistributedLockProvider lockProvider,
         IServiceProvider serviceProvider,
+        IDistributedLockProvider lockProvider,
         ILogger<StorylineService> logger,
         StorylineServiceConfiguration configuration)
     {
@@ -104,8 +99,8 @@ public partial class StorylineService : IStorylineService
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
         ArgumentNullException.ThrowIfNull(resourceClient);
         ArgumentNullException.ThrowIfNull(relationshipClient);
-        ArgumentNullException.ThrowIfNull(lockProvider);
         ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(lockProvider);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -113,8 +108,8 @@ public partial class StorylineService : IStorylineService
         _stateStoreFactory = stateStoreFactory;
         _resourceClient = resourceClient;
         _relationshipClient = relationshipClient;
-        _lockProvider = lockProvider;
         _serviceProvider = serviceProvider;
+        _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
 
@@ -122,13 +117,14 @@ public partial class StorylineService : IStorylineService
         _planStore = stateStoreFactory.GetStore<CachedPlan>(StateStoreDefinitions.StorylinePlans);
         _planIndexStore = stateStoreFactory.GetCacheableStore<PlanIndexEntry>(StateStoreDefinitions.StorylinePlanIndex);
 
-        // Scenario state stores
+        // Scenario state stores per IMPLEMENTATION TENETS
+        // MySQL stores use GetQueryableStore for QueryAsync support
         _scenarioDefinitionStore = stateStoreFactory.GetQueryableStore<ScenarioDefinitionModel>(StateStoreDefinitions.StorylineScenarioDefinitions);
+        _scenarioCacheStore = stateStoreFactory.GetCacheableStore<ScenarioDefinitionModel>(StateStoreDefinitions.StorylineScenarioCache);
         _scenarioExecutionStore = stateStoreFactory.GetQueryableStore<ScenarioExecutionModel>(StateStoreDefinitions.StorylineScenarioExecutions);
-        _scenarioCacheStore = stateStoreFactory.GetStore<ScenarioDefinitionModel>(StateStoreDefinitions.StorylineScenarioCache);
-        _scenarioCooldownStore = stateStoreFactory.GetStore<CooldownMarker>(StateStoreDefinitions.StorylineScenarioCooldown);
+        _scenarioCooldownStore = stateStoreFactory.GetCacheableStore<CooldownMarker>(StateStoreDefinitions.StorylineScenarioCooldown);
         _scenarioActiveStore = stateStoreFactory.GetCacheableStore<ActiveScenarioEntry>(StateStoreDefinitions.StorylineScenarioActive);
-        _scenarioIdempotencyStore = stateStoreFactory.GetStore<IdempotencyMarker>(StateStoreDefinitions.StorylineScenarioIdempotency);
+        _scenarioIdempotencyStore = stateStoreFactory.GetCacheableStore<IdempotencyMarker>(StateStoreDefinitions.StorylineScenarioIdempotency);
 
         // SDK instantiation - pure computation, no DI needed
         _composer = new StorylineComposer();
@@ -434,6 +430,1043 @@ public partial class StorylineService : IStorylineService
                 ex.Message,
                 dependency: null,
                 endpoint: "post:/storyline/plan/list",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SCENARIO DEFINITION CRUD
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Creates a new scenario definition.
+    /// </summary>
+    public async Task<(StatusCodes, ScenarioDefinition?)> CreateScenarioDefinitionAsync(
+        CreateScenarioDefinitionRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Creating scenario definition with code {Code}", body.Code);
+
+        try
+        {
+            // Validate code format (uppercase with underscores)
+            var normalizedCode = body.Code.ToUpperInvariant().Replace('-', '_');
+            if (normalizedCode != body.Code)
+            {
+                _logger.LogWarning("Scenario code should be uppercase with underscores: {Code}", body.Code);
+            }
+
+            // Check for duplicate code within scope
+            var existingByCode = await FindScenarioByCodeAsync(normalizedCode, body.RealmId, body.GameServiceId, cancellationToken);
+            if (existingByCode is not null)
+            {
+                _logger.LogWarning("Scenario code {Code} already exists", normalizedCode);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var scenarioId = Guid.NewGuid();
+            var now = DateTimeOffset.UtcNow;
+            var etag = Guid.NewGuid().ToString("N");
+
+            // Create storage model with JSON-serialized nested objects
+            var model = new ScenarioDefinitionModel
+            {
+                ScenarioId = scenarioId,
+                Code = normalizedCode,
+                Name = body.Name,
+                Description = body.Description,
+                TriggerConditionsJson = BannouJson.Serialize(body.TriggerConditions),
+                PhasesJson = BannouJson.Serialize(body.Phases),
+                MutationsJson = body.Mutations is not null ? BannouJson.Serialize(body.Mutations) : null,
+                QuestHooksJson = body.QuestHooks is not null ? BannouJson.Serialize(body.QuestHooks) : null,
+                CooldownSeconds = body.CooldownSeconds,
+                ExclusivityTagsJson = body.ExclusivityTags is not null ? BannouJson.Serialize(body.ExclusivityTags) : null,
+                Priority = body.Priority,
+                Enabled = body.Enabled,
+                RealmId = body.RealmId,
+                GameServiceId = body.GameServiceId,
+                TagsJson = body.Tags is not null ? BannouJson.Serialize(body.Tags) : null,
+                Deprecated = false,
+                CreatedAt = now,
+                UpdatedAt = null,
+                Etag = etag
+            };
+
+            // Save to MySQL (durable store)
+            await _scenarioDefinitionStore.SaveAsync(scenarioId.ToString(), model, null, cancellationToken);
+
+            // Cache in Redis
+            var cacheTtl = _configuration.ScenarioDefinitionCacheTtlSeconds;
+            await _scenarioCacheStore.SaveAsync(
+                scenarioId.ToString(),
+                model,
+                new StateOptions { Ttl = cacheTtl },
+                cancellationToken);
+
+            // Build response
+            var response = BuildScenarioDefinitionResponse(model);
+
+            _logger.LogInformation("Created scenario definition {ScenarioId} with code {Code}", scenarioId, normalizedCode);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating scenario definition");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "CreateScenarioDefinition",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/create",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves a scenario definition by ID or code.
+    /// </summary>
+    public async Task<(StatusCodes, GetScenarioDefinitionResponse?)> GetScenarioDefinitionAsync(
+        GetScenarioDefinitionRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting scenario definition by ID {ScenarioId} or code {Code}",
+            body.ScenarioId, body.Code);
+
+        try
+        {
+            ScenarioDefinitionModel? model = null;
+
+            if (body.ScenarioId.HasValue)
+            {
+                model = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId.Value, cancellationToken);
+            }
+            else if (!string.IsNullOrEmpty(body.Code))
+            {
+                var normalizedCode = body.Code.ToUpperInvariant().Replace('-', '_');
+                model = await FindScenarioByCodeAsync(normalizedCode, realmId: null, gameServiceId: null, cancellationToken);
+            }
+            else
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (model is null)
+            {
+                return (StatusCodes.OK, new GetScenarioDefinitionResponse { Found = false, Scenario = null });
+            }
+
+            var response = new GetScenarioDefinitionResponse
+            {
+                Found = true,
+                Scenario = BuildScenarioDefinitionResponse(model)
+            };
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting scenario definition");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "GetScenarioDefinition",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/get",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Lists scenario definitions with optional filters.
+    /// </summary>
+    public async Task<(StatusCodes, ListScenarioDefinitionsResponse?)> ListScenarioDefinitionsAsync(
+        ListScenarioDefinitionsRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Listing scenario definitions with realm {RealmId}, game {GameServiceId}, tags {Tags}",
+            body.RealmId, body.GameServiceId, body.Tags);
+
+        try
+        {
+            // Query all definitions from MySQL
+            var allDefinitions = await _scenarioDefinitionStore.GetAllAsync(cancellationToken);
+
+            // Apply filters
+            var filtered = allDefinitions.AsEnumerable();
+
+            // Filter by realm (null matches global scenarios)
+            if (body.RealmId.HasValue)
+            {
+                filtered = filtered.Where(d =>
+                    !d.RealmId.HasValue || d.RealmId.Value == body.RealmId.Value);
+            }
+
+            // Filter by game service (null matches global scenarios)
+            if (body.GameServiceId.HasValue)
+            {
+                filtered = filtered.Where(d =>
+                    !d.GameServiceId.HasValue || d.GameServiceId.Value == body.GameServiceId.Value);
+            }
+
+            // Filter by tags (OR logic)
+            if (body.Tags is not null && body.Tags.Count > 0)
+            {
+                var requestedTags = body.Tags.ToHashSet(StringComparer.OrdinalIgnoreCase);
+                filtered = filtered.Where(d =>
+                {
+                    if (string.IsNullOrEmpty(d.TagsJson)) return false;
+                    var tags = BannouJson.Deserialize<List<string>>(d.TagsJson);
+                    return tags is not null && tags.Any(t => requestedTags.Contains(t));
+                });
+            }
+
+            // Filter deprecated
+            if (!body.IncludeDeprecated)
+            {
+                filtered = filtered.Where(d => !d.Deprecated);
+            }
+
+            // Get total count before pagination
+            var filteredList = filtered.ToList();
+            var totalCount = filteredList.Count;
+
+            // Apply pagination
+            var paginated = filteredList
+                .OrderByDescending(d => d.Priority)
+                .ThenBy(d => d.Code)
+                .Skip(body.Offset)
+                .Take(body.Limit)
+                .ToList();
+
+            // Build summaries
+            var summaries = paginated.Select(BuildScenarioSummary).ToList();
+
+            return (StatusCodes.OK, new ListScenarioDefinitionsResponse
+            {
+                Scenarios = summaries,
+                TotalCount = totalCount
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing scenario definitions");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "ListScenarioDefinitions",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/list",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Updates a scenario definition with optimistic concurrency.
+    /// </summary>
+    public async Task<(StatusCodes, ScenarioDefinition?)> UpdateScenarioDefinitionAsync(
+        UpdateScenarioDefinitionRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Updating scenario definition {ScenarioId}", body.ScenarioId);
+
+        try
+        {
+            // Get existing definition
+            var existing = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
+            if (existing is null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check ETag for optimistic concurrency
+            if (existing.Etag != body.Etag)
+            {
+                _logger.LogWarning("ETag mismatch for scenario {ScenarioId}: expected {Expected}, got {Actual}",
+                    body.ScenarioId, existing.Etag, body.Etag);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Apply updates
+            if (body.Name is not null)
+                existing.Name = body.Name;
+            if (body.Description is not null)
+                existing.Description = body.Description;
+            if (body.TriggerConditions is not null)
+                existing.TriggerConditionsJson = BannouJson.Serialize(body.TriggerConditions);
+            if (body.Phases is not null)
+                existing.PhasesJson = BannouJson.Serialize(body.Phases);
+            if (body.Mutations is not null)
+                existing.MutationsJson = BannouJson.Serialize(body.Mutations);
+            if (body.QuestHooks is not null)
+                existing.QuestHooksJson = BannouJson.Serialize(body.QuestHooks);
+            if (body.CooldownSeconds.HasValue)
+                existing.CooldownSeconds = body.CooldownSeconds;
+            if (body.ExclusivityTags is not null)
+                existing.ExclusivityTagsJson = BannouJson.Serialize(body.ExclusivityTags);
+            if (body.Priority.HasValue)
+                existing.Priority = body.Priority.Value;
+            if (body.Enabled.HasValue)
+                existing.Enabled = body.Enabled.Value;
+            if (body.Tags is not null)
+                existing.TagsJson = BannouJson.Serialize(body.Tags);
+
+            existing.UpdatedAt = DateTimeOffset.UtcNow;
+            existing.Etag = Guid.NewGuid().ToString("N");
+
+            // Save to MySQL
+            await _scenarioDefinitionStore.SaveAsync(body.ScenarioId.ToString(), existing, cancellationToken);
+
+            // Invalidate and update cache
+            await _scenarioCacheStore.DeleteAsync(body.ScenarioId.ToString(), cancellationToken);
+            await _scenarioCacheStore.SaveAsync(
+                body.ScenarioId.ToString(),
+                existing,
+                new StateOptions { Ttl = _configuration.ScenarioDefinitionCacheTtlSeconds },
+                cancellationToken);
+
+            var response = BuildScenarioDefinitionResponse(existing);
+            _logger.LogInformation("Updated scenario definition {ScenarioId}", body.ScenarioId);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating scenario definition");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "UpdateScenarioDefinition",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/update",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Soft-deletes a scenario definition.
+    /// </summary>
+    public async Task<StatusCodes> DeprecateScenarioDefinitionAsync(
+        DeprecateScenarioDefinitionRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Deprecating scenario definition {ScenarioId}", body.ScenarioId);
+
+        try
+        {
+            var existing = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
+            if (existing is null)
+            {
+                return StatusCodes.NotFound;
+            }
+
+            existing.Deprecated = true;
+            existing.Enabled = false;
+            existing.UpdatedAt = DateTimeOffset.UtcNow;
+            existing.Etag = Guid.NewGuid().ToString("N");
+
+            await _scenarioDefinitionStore.SaveAsync(body.ScenarioId.ToString(), existing, cancellationToken);
+            await _scenarioCacheStore.DeleteAsync(body.ScenarioId.ToString(), cancellationToken);
+
+            _logger.LogInformation("Deprecated scenario definition {ScenarioId}", body.ScenarioId);
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deprecating scenario definition");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "DeprecateScenarioDefinition",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/deprecate",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCodes.InternalServerError;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SCENARIO DISCOVERY
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Finds scenarios matching character state with fit scores.
+    /// </summary>
+    public async Task<(StatusCodes, FindAvailableScenariosResponse?)> FindAvailableScenariosAsync(
+        FindAvailableScenariosRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Finding available scenarios for character {CharacterId}", body.CharacterId);
+
+        try
+        {
+            // Get all candidate scenarios
+            var allDefinitions = await _scenarioDefinitionStore.GetAllAsync(cancellationToken);
+
+            // Filter by scope and enabled status
+            var candidates = allDefinitions
+                .Where(d => d.Enabled && !d.Deprecated)
+                .Where(d => !d.RealmId.HasValue || d.RealmId == body.RealmId)
+                .Where(d => !d.GameServiceId.HasValue || d.GameServiceId == body.GameServiceId)
+                .ToList();
+
+            // Filter by excluded tags
+            if (body.ExcludeTags is not null && body.ExcludeTags.Count > 0)
+            {
+                var excludedTags = body.ExcludeTags.ToHashSet(StringComparer.OrdinalIgnoreCase);
+                candidates = candidates.Where(d =>
+                {
+                    if (string.IsNullOrEmpty(d.TagsJson)) return true;
+                    var tags = BannouJson.Deserialize<List<string>>(d.TagsJson);
+                    return tags is null || !tags.Any(t => excludedTags.Contains(t));
+                }).ToList();
+            }
+
+            var matches = new List<ScenarioMatch>();
+
+            foreach (var definition in candidates)
+            {
+                var conditions = BannouJson.Deserialize<List<TriggerCondition>>(definition.TriggerConditionsJson)
+                    ?? new List<TriggerCondition>();
+
+                // Evaluate all conditions
+                var (conditionsMet, fitScore) = EvaluateConditions(conditions, body.CharacterState, body.LocationId, body.TimeOfDay, body.WorldState);
+
+                // Check if minimum threshold is met
+                if (fitScore < _configuration.ScenarioFitScoreMinimumThreshold)
+                {
+                    continue;
+                }
+
+                // Check cooldown
+                var cooldownKey = $"{body.CharacterId}:{definition.ScenarioId}";
+                var cooldownMarker = await _scenarioCooldownStore.GetAsync(cooldownKey, cancellationToken);
+                var onCooldown = cooldownMarker is not null;
+
+                matches.Add(new ScenarioMatch
+                {
+                    ScenarioId = definition.ScenarioId,
+                    Code = definition.Code,
+                    Name = definition.Name,
+                    FitScore = fitScore,
+                    ConditionsMet = conditionsMet,
+                    ConditionsTotal = conditions.Count,
+                    OnCooldown = onCooldown,
+                    CooldownExpiresAt = cooldownMarker?.ExpiresAt
+                });
+            }
+
+            // Sort by fit score descending and take max results
+            var sortedMatches = matches
+                .OrderByDescending(m => m.FitScore)
+                .ThenByDescending(m => m.ConditionsMet)
+                .Take(body.MaxResults)
+                .ToList();
+
+            return (StatusCodes.OK, new FindAvailableScenariosResponse { Matches = sortedMatches });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error finding available scenarios");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "FindAvailableScenarios",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/find-available",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Dry-run test of scenario trigger with detailed results.
+    /// </summary>
+    public async Task<(StatusCodes, TestScenarioResponse?)> TestScenarioTriggerAsync(
+        TestScenarioRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Testing scenario {ScenarioId} for character {CharacterId}",
+            body.ScenarioId, body.CharacterId);
+
+        try
+        {
+            var definition = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
+            if (definition is null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var conditions = BannouJson.Deserialize<List<TriggerCondition>>(definition.TriggerConditionsJson)
+                ?? new List<TriggerCondition>();
+
+            // Evaluate each condition with detailed results
+            var conditionResults = new List<ConditionResult>();
+            var allConditionsMet = true;
+
+            foreach (var condition in conditions)
+            {
+                var (met, actualValue, expectedValue, details) = EvaluateSingleCondition(
+                    condition, body.CharacterState, body.LocationId, body.TimeOfDay, body.WorldState);
+
+                conditionResults.Add(new ConditionResult
+                {
+                    ConditionType = condition.ConditionType,
+                    Met = met,
+                    ActualValue = actualValue,
+                    ExpectedValue = expectedValue,
+                    Details = details
+                });
+
+                if (!met)
+                {
+                    allConditionsMet = false;
+                }
+            }
+
+            // Check blocking reasons
+            string? blockingReason = null;
+
+            if (!definition.Enabled)
+            {
+                blockingReason = "Scenario is disabled";
+            }
+            else if (definition.Deprecated)
+            {
+                blockingReason = "Scenario is deprecated";
+            }
+            else if (!allConditionsMet)
+            {
+                blockingReason = "Not all conditions are met";
+            }
+            else
+            {
+                // Check cooldown
+                var cooldownKey = $"{body.CharacterId}:{body.ScenarioId}";
+                var cooldownMarker = await _scenarioCooldownStore.GetAsync(cooldownKey, cancellationToken);
+                if (cooldownMarker is not null)
+                {
+                    blockingReason = $"On cooldown until {cooldownMarker.ExpiresAt:O}";
+                }
+                else
+                {
+                    // Check active scenario limit
+                    var activeKey = body.CharacterId.ToString();
+                    var activeCount = await _scenarioActiveStore.SetCountAsync(activeKey, cancellationToken);
+                    if (activeCount >= _configuration.ScenarioMaxActivePerCharacter)
+                    {
+                        blockingReason = $"Character has {activeCount} active scenarios (max {_configuration.ScenarioMaxActivePerCharacter})";
+                    }
+                }
+            }
+
+            // Predict mutations
+            var predictedMutations = new List<PredictedMutation>();
+            if (allConditionsMet && blockingReason is null)
+            {
+                var mutations = BannouJson.Deserialize<List<ScenarioMutation>>(definition.MutationsJson ?? "[]")
+                    ?? new List<ScenarioMutation>();
+
+                foreach (var mutation in mutations)
+                {
+                    predictedMutations.Add(new PredictedMutation
+                    {
+                        MutationType = mutation.MutationType,
+                        Description = DescribeMutation(mutation)
+                    });
+                }
+            }
+
+            return (StatusCodes.OK, new TestScenarioResponse
+            {
+                WouldTrigger = allConditionsMet && blockingReason is null,
+                ConditionResults = conditionResults,
+                PredictedMutations = predictedMutations,
+                BlockingReason = blockingReason
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error testing scenario trigger");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "TestScenarioTrigger",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/test",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Lightweight fit score evaluation without full condition details.
+    /// </summary>
+    public async Task<(StatusCodes, EvaluateFitResponse?)> EvaluateScenarioFitAsync(
+        EvaluateFitRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Evaluating fit score for scenario {ScenarioId}", body.ScenarioId);
+
+        try
+        {
+            var definition = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
+            if (definition is null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var conditions = BannouJson.Deserialize<List<TriggerCondition>>(definition.TriggerConditionsJson)
+                ?? new List<TriggerCondition>();
+
+            var (conditionsMet, fitScore) = EvaluateConditions(
+                conditions, body.CharacterState, locationId: null, timeOfDay: null, worldState: null);
+
+            return (StatusCodes.OK, new EvaluateFitResponse
+            {
+                FitScore = fitScore,
+                ConditionsMet = conditionsMet,
+                ConditionsTotal = conditions.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error evaluating scenario fit");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "EvaluateScenarioFit",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/evaluate-fit",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SCENARIO EXECUTION
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Triggers scenario execution with distributed locking and mutation application.
+    /// </summary>
+    public async Task<(StatusCodes, TriggerScenarioResponse?)> TriggerScenarioAsync(
+        TriggerScenarioRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Triggering scenario {ScenarioId} for character {CharacterId}",
+            body.ScenarioId, body.CharacterId);
+
+        var stopwatch = Stopwatch.StartNew();
+        var executionId = Guid.NewGuid();
+
+        try
+        {
+            // Check idempotency if key provided
+            if (!string.IsNullOrEmpty(body.IdempotencyKey))
+            {
+                var existingIdempotency = await _scenarioIdempotencyStore.GetAsync(body.IdempotencyKey, cancellationToken);
+                if (existingIdempotency is not null)
+                {
+                    _logger.LogDebug("Returning idempotent result for key {Key}", body.IdempotencyKey);
+                    // Return the existing execution - retrieve it from history
+                    var existingExecution = await _scenarioExecutionStore.GetAsync(
+                        existingIdempotency.ExecutionId.ToString(), cancellationToken);
+                    if (existingExecution is not null)
+                    {
+                        return (StatusCodes.OK, BuildTriggerResponse(existingExecution));
+                    }
+                }
+            }
+
+            // Acquire distributed lock to prevent double-trigger
+            var lockResource = $"scenario-trigger:{body.CharacterId}:{body.ScenarioId}";
+            await using var lockHandle = await _lockProvider.LockAsync(
+                lockResource,
+                executionId.ToString(),
+                _configuration.ScenarioTriggerLockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for scenario trigger {ScenarioId}", body.ScenarioId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Get scenario definition
+            var definition = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
+            if (definition is null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (!definition.Enabled || definition.Deprecated)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate conditions unless skipped
+            if (!body.SkipConditionCheck)
+            {
+                var conditions = BannouJson.Deserialize<List<TriggerCondition>>(definition.TriggerConditionsJson)
+                    ?? new List<TriggerCondition>();
+
+                var (conditionsMet, fitScore) = EvaluateConditions(
+                    conditions, body.CharacterState, body.LocationId, body.TimeOfDay, body.WorldState);
+
+                if (conditionsMet < conditions.Count)
+                {
+                    _logger.LogWarning("Not all conditions met for scenario {ScenarioId}", body.ScenarioId);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+
+            // Check cooldown
+            var cooldownKey = $"{body.CharacterId}:{body.ScenarioId}";
+            var cooldownMarker = await _scenarioCooldownStore.GetAsync(cooldownKey, cancellationToken);
+            if (cooldownMarker is not null)
+            {
+                _logger.LogWarning("Scenario {ScenarioId} on cooldown for character {CharacterId}",
+                    body.ScenarioId, body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check active scenario limit
+            var activeKey = body.CharacterId.ToString();
+            var activeCount = await _scenarioActiveStore.SetCountAsync(activeKey, cancellationToken);
+            if (activeCount >= _configuration.ScenarioMaxActivePerCharacter)
+            {
+                _logger.LogWarning("Character {CharacterId} has max active scenarios", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var phases = BannouJson.Deserialize<List<ScenarioPhase>>(definition.PhasesJson)
+                ?? new List<ScenarioPhase>();
+            var mutations = BannouJson.Deserialize<List<ScenarioMutation>>(definition.MutationsJson ?? "[]")
+                ?? new List<ScenarioMutation>();
+            var questHooks = BannouJson.Deserialize<List<ScenarioQuestHook>>(definition.QuestHooksJson ?? "[]")
+                ?? new List<ScenarioQuestHook>();
+
+            var now = DateTimeOffset.UtcNow;
+
+            // Create execution record
+            var execution = new ScenarioExecutionModel
+            {
+                ExecutionId = executionId,
+                ScenarioId = body.ScenarioId,
+                ScenarioCode = definition.Code,
+                ScenarioName = definition.Name,
+                PrimaryCharacterId = body.CharacterId,
+                AdditionalParticipantsJson = body.AdditionalParticipants is not null
+                    ? BannouJson.Serialize(body.AdditionalParticipants)
+                    : null,
+                OrchestratorId = body.OrchestratorId,
+                RealmId = definition.RealmId,
+                GameServiceId = definition.GameServiceId,
+                Status = ScenarioStatus.Active,
+                CurrentPhase = 1,
+                TotalPhases = phases.Count,
+                FitScore = null,
+                TriggeredAt = now
+            };
+
+            // Save execution record
+            await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, cancellationToken);
+
+            // Add to active set
+            var activeEntry = new ActiveScenarioEntry
+            {
+                ExecutionId = executionId,
+                ScenarioId = body.ScenarioId,
+                ScenarioCode = definition.Code
+            };
+            await _scenarioActiveStore.SetAddAsync(activeKey, BannouJson.Serialize(activeEntry), cancellationToken);
+
+            // Store idempotency key if provided
+            if (!string.IsNullOrEmpty(body.IdempotencyKey))
+            {
+                await _scenarioIdempotencyStore.SaveAsync(
+                    body.IdempotencyKey,
+                    new IdempotencyMarker { ExecutionId = executionId, CreatedAt = now },
+                    new StateOptions { Ttl = _configuration.ScenarioIdempotencyTtlSeconds },
+                    cancellationToken);
+            }
+
+            // Publish triggered event
+            await _messageBus.TryPublishAsync("storyline.scenario.triggered", new ScenarioTriggeredEvent
+            {
+                ExecutionId = executionId,
+                ScenarioId = body.ScenarioId,
+                ScenarioCode = definition.Code,
+                PrimaryCharacterId = body.CharacterId,
+                AdditionalParticipantIds = body.AdditionalParticipants?.Values.ToList(),
+                OrchestratorId = body.OrchestratorId,
+                RealmId = definition.RealmId,
+                GameServiceId = definition.GameServiceId,
+                FitScore = null,
+                PhaseCount = phases.Count,
+                TriggeredAt = now
+            }, cancellationToken: cancellationToken);
+
+            // Apply mutations (Phase 1: all mutations applied immediately)
+            var appliedMutations = new List<AppliedMutation>();
+            foreach (var mutation in mutations)
+            {
+                var (success, details) = await ApplyMutationAsync(
+                    mutation, body.CharacterId, body.AdditionalParticipants, cancellationToken);
+
+                appliedMutations.Add(new AppliedMutation
+                {
+                    MutationType = mutation.MutationType,
+                    Success = success,
+                    TargetCharacterId = body.CharacterId,
+                    Details = details
+                });
+            }
+
+            // Spawn quests (Phase 1: immediate spawn, no delay)
+            var spawnedQuests = new List<SpawnedQuest>();
+            foreach (var hook in questHooks)
+            {
+                var (questId, questSpawned) = await SpawnQuestAsync(hook, body.CharacterId, cancellationToken);
+                if (questSpawned && questId.HasValue)
+                {
+                    spawnedQuests.Add(new SpawnedQuest
+                    {
+                        QuestInstanceId = questId.Value,
+                        QuestCode = hook.QuestCode
+                    });
+                }
+            }
+
+            // Update execution to completed
+            execution.Status = ScenarioStatus.Completed;
+            execution.CurrentPhase = phases.Count;
+            execution.CompletedAt = DateTimeOffset.UtcNow;
+            execution.MutationsAppliedJson = BannouJson.Serialize(appliedMutations);
+            execution.QuestsSpawnedJson = BannouJson.Serialize(spawnedQuests);
+            await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, cancellationToken);
+
+            // Remove from active set
+            await _scenarioActiveStore.SetRemoveAsync(activeKey, BannouJson.Serialize(activeEntry), cancellationToken);
+
+            // Set cooldown
+            var cooldownSeconds = definition.CooldownSeconds ?? _configuration.ScenarioCooldownDefaultSeconds;
+            if (cooldownSeconds > 0)
+            {
+                await _scenarioCooldownStore.SaveAsync(
+                    cooldownKey,
+                    new CooldownMarker { ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(cooldownSeconds) },
+                    new StateOptions { Ttl = cooldownSeconds },
+                    cancellationToken);
+            }
+
+            stopwatch.Stop();
+
+            // Publish completed event
+            await _messageBus.TryPublishAsync("storyline.scenario.completed", new ScenarioCompletedEvent
+            {
+                ExecutionId = executionId,
+                ScenarioId = body.ScenarioId,
+                ScenarioCode = definition.Code,
+                PrimaryCharacterId = body.CharacterId,
+                AdditionalParticipantIds = body.AdditionalParticipants?.Values.ToList(),
+                OrchestratorId = body.OrchestratorId,
+                RealmId = definition.RealmId,
+                GameServiceId = definition.GameServiceId,
+                PhasesCompleted = phases.Count,
+                TotalMutationsApplied = appliedMutations.Count(m => m.Success),
+                TotalQuestsSpawned = spawnedQuests.Count,
+                QuestIds = spawnedQuests.Select(q => q.QuestInstanceId).ToList(),
+                DurationMs = (int)stopwatch.ElapsedMilliseconds,
+                StartedAt = now,
+                CompletedAt = execution.CompletedAt.Value
+            }, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Completed scenario {ScenarioId} execution {ExecutionId} in {DurationMs}ms",
+                body.ScenarioId, executionId, stopwatch.ElapsedMilliseconds);
+
+            return (StatusCodes.OK, new TriggerScenarioResponse
+            {
+                ExecutionId = executionId,
+                ScenarioId = body.ScenarioId,
+                Status = ScenarioStatus.Completed,
+                TriggeredAt = now,
+                MutationsApplied = appliedMutations,
+                QuestsSpawned = spawnedQuests,
+                FailureReason = null
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error triggering scenario");
+
+            // Publish failed event
+            await _messageBus.TryPublishAsync("storyline.scenario.failed", new ScenarioFailedEvent
+            {
+                ExecutionId = executionId,
+                ScenarioId = body.ScenarioId,
+                ScenarioCode = string.Empty,
+                PrimaryCharacterId = body.CharacterId,
+                OrchestratorId = body.OrchestratorId,
+                FailureReason = ex.Message,
+                FailedAt = DateTimeOffset.UtcNow
+            }, cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "TriggerScenario",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/trigger",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets active scenario executions for a character.
+    /// </summary>
+    public async Task<(StatusCodes, GetActiveScenariosResponse?)> GetActiveScenariosAsync(
+        GetActiveScenariosRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting active scenarios for character {CharacterId}", body.CharacterId);
+
+        try
+        {
+            var activeKey = body.CharacterId.ToString();
+            var activeMembers = await _scenarioActiveStore.SetMembersAsync(activeKey, cancellationToken);
+
+            var executions = new List<ScenarioExecution>();
+            foreach (var memberJson in activeMembers)
+            {
+                var entry = BannouJson.Deserialize<ActiveScenarioEntry>(memberJson);
+                if (entry is null) continue;
+
+                var execution = await _scenarioExecutionStore.GetAsync(entry.ExecutionId.ToString(), cancellationToken);
+                if (execution is not null)
+                {
+                    executions.Add(new ScenarioExecution
+                    {
+                        ExecutionId = execution.ExecutionId,
+                        ScenarioId = execution.ScenarioId,
+                        Code = execution.ScenarioCode,
+                        Name = execution.ScenarioName,
+                        Status = execution.Status,
+                        CurrentPhase = execution.CurrentPhase,
+                        TotalPhases = execution.TotalPhases,
+                        TriggeredAt = execution.TriggeredAt,
+                        CompletedAt = execution.CompletedAt
+                    });
+                }
+            }
+
+            return (StatusCodes.OK, new GetActiveScenariosResponse { Executions = executions });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting active scenarios");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "GetActiveScenarios",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/get-active",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets scenario execution history for a character.
+    /// </summary>
+    public async Task<(StatusCodes, GetScenarioHistoryResponse?)> GetScenarioHistoryAsync(
+        GetScenarioHistoryRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting scenario history for character {CharacterId}", body.CharacterId);
+
+        try
+        {
+            // Query all executions for character
+            var allExecutions = await _scenarioExecutionStore.GetAllAsync(cancellationToken);
+
+            var characterExecutions = allExecutions
+                .Where(e => e.PrimaryCharacterId == body.CharacterId)
+                .OrderByDescending(e => e.TriggeredAt)
+                .ToList();
+
+            var totalCount = characterExecutions.Count;
+
+            var paginated = characterExecutions
+                .Skip(body.Offset)
+                .Take(body.Limit)
+                .Select(e => new ScenarioExecution
+                {
+                    ExecutionId = e.ExecutionId,
+                    ScenarioId = e.ScenarioId,
+                    Code = e.ScenarioCode,
+                    Name = e.ScenarioName,
+                    Status = e.Status,
+                    CurrentPhase = e.CurrentPhase,
+                    TotalPhases = e.TotalPhases,
+                    TriggeredAt = e.TriggeredAt,
+                    CompletedAt = e.CompletedAt
+                })
+                .ToList();
+
+            return (StatusCodes.OK, new GetScenarioHistoryResponse
+            {
+                Executions = paginated,
+                TotalCount = totalCount
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting scenario history");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "GetScenarioHistory",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/storyline/scenario/get-history",
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
@@ -967,918 +2000,62 @@ public partial class StorylineService : IStorylineService
             cancellationToken: cancellationToken);
     }
 
-    #endregion
-
-    #region Scenario CRUD Methods
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SCENARIO HELPERS
+    // ═══════════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Creates a new scenario definition.
+    /// Gets a scenario definition with Redis cache-first lookup.
     /// </summary>
-    public async Task<(StatusCodes, ScenarioDefinition?)> CreateScenarioDefinitionAsync(
-        CreateScenarioDefinitionRequest body,
+    private async Task<ScenarioDefinitionModel?> GetScenarioDefinitionWithCacheAsync(
+        Guid scenarioId,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Creating scenario definition {Code}", body.Code);
+        var key = scenarioId.ToString();
 
-        try
+        // Try cache first
+        var cached = await _scenarioCacheStore.GetAsync(key, cancellationToken);
+        if (cached is not null)
         {
-            // Normalize code to uppercase
-            var normalizedCode = body.Code.ToUpperInvariant();
-
-            // Check for duplicate code within scope
-            var existing = await _scenarioDefinitionStore
-                .Query()
-                .Where(s => s.Code == normalizedCode &&
-                           s.Status != ScenarioStatus.Cancelled &&
-                           s.RealmId == body.RealmId &&
-                           s.GameServiceId == body.GameServiceId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (existing != null)
-            {
-                _logger.LogWarning("Scenario code {Code} already exists in scope", normalizedCode);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var scenarioId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            var model = new ScenarioDefinitionModel
-            {
-                ScenarioId = scenarioId,
-                Code = normalizedCode,
-                Name = body.Name,
-                Description = body.Description,
-                RealmId = body.RealmId,
-                GameServiceId = body.GameServiceId,
-                TriggerConditions = BannouJson.Serialize(body.TriggerConditions),
-                Phases = BannouJson.Serialize(body.Phases),
-                Mutations = body.Mutations != null ? BannouJson.Serialize(body.Mutations) : null,
-                QuestHooks = body.QuestHooks != null ? BannouJson.Serialize(body.QuestHooks) : null,
-                CooldownSeconds = body.CooldownSeconds,
-                Tags = body.Tags != null ? BannouJson.Serialize(body.Tags) : null,
-                ExclusivityTags = body.ExclusivityTags != null ? BannouJson.Serialize(body.ExclusivityTags) : null,
-                Status = ScenarioStatus.Active,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            await _scenarioDefinitionStore.SaveAsync(scenarioId.ToString(), model, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Created scenario definition {ScenarioId} with code {Code}", scenarioId, normalizedCode);
-
-            var response = MapToScenarioDefinition(model);
-            return (StatusCodes.OK, response);
+            return cached;
         }
-        catch (Exception ex)
+
+        // Fall back to MySQL
+        var definition = await _scenarioDefinitionStore.GetAsync(key, cancellationToken);
+        if (definition is not null)
         {
-            _logger.LogError(ex, "Error creating scenario definition");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "CreateScenarioDefinition", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/create",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            // Populate cache
+            await _scenarioCacheStore.SaveAsync(
+                key,
+                definition,
+                new StateOptions { Ttl = _configuration.ScenarioDefinitionCacheTtlSeconds },
+                cancellationToken);
         }
+
+        return definition;
     }
 
     /// <summary>
-    /// Retrieves a scenario definition by ID or code.
+    /// Finds a scenario definition by code within scope.
     /// </summary>
-    public async Task<(StatusCodes, GetScenarioDefinitionResponse?)> GetScenarioDefinitionAsync(
-        GetScenarioDefinitionRequest body,
+    private async Task<ScenarioDefinitionModel?> FindScenarioByCodeAsync(
+        string code,
+        Guid? realmId,
+        Guid? gameServiceId,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Getting scenario definition, Id={ScenarioId}, Code={Code}", body.ScenarioId, body.Code);
+        var allDefinitions = await _scenarioDefinitionStore.GetAllAsync(cancellationToken);
 
-        try
-        {
-            ScenarioDefinitionModel? model = null;
-
-            if (body.ScenarioId.HasValue)
-            {
-                // Try cache first
-                var cacheKey = $"id:{body.ScenarioId.Value}";
-                model = await _scenarioCacheStore.GetAsync(cacheKey, cancellationToken);
-
-                if (model == null)
-                {
-                    // Cache miss - fetch from MySQL
-                    model = await _scenarioDefinitionStore.GetAsync(body.ScenarioId.Value.ToString(), cancellationToken);
-                    if (model != null)
-                    {
-                        // Populate cache
-                        var ttl = _configuration.ScenarioDefinitionCacheTtlSeconds;
-                        await _scenarioCacheStore.SaveAsync(cacheKey, model, new StateOptions { Ttl = ttl }, cancellationToken);
-                    }
-                }
-            }
-            else if (!string.IsNullOrEmpty(body.Code))
-            {
-                var normalizedCode = body.Code.ToUpperInvariant();
-
-                // Try cache first
-                var cacheKey = $"code:{normalizedCode}:{body.RealmId}:{body.GameServiceId}";
-                model = await _scenarioCacheStore.GetAsync(cacheKey, cancellationToken);
-
-                if (model == null)
-                {
-                    // Cache miss - query MySQL
-                    model = await _scenarioDefinitionStore
-                        .Query()
-                        .Where(s => s.Code == normalizedCode &&
-                                   s.Status != ScenarioStatus.Cancelled &&
-                                   s.RealmId == body.RealmId &&
-                                   s.GameServiceId == body.GameServiceId)
-                        .FirstOrDefaultAsync(cancellationToken);
-
-                    if (model != null)
-                    {
-                        // Populate cache
-                        var ttl = _configuration.ScenarioDefinitionCacheTtlSeconds;
-                        await _scenarioCacheStore.SaveAsync(cacheKey, model, new StateOptions { Ttl = ttl }, cancellationToken);
-                    }
-                }
-            }
-            else
-            {
-                _logger.LogWarning("GetScenarioDefinition requires either scenarioId or code");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var response = new GetScenarioDefinitionResponse
-            {
-                Found = model != null,
-                Definition = model != null ? MapToScenarioDefinition(model) : null
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting scenario definition");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "GetScenarioDefinition", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/get",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return allDefinitions.FirstOrDefault(d =>
+            d.Code.Equals(code, StringComparison.OrdinalIgnoreCase) &&
+            (!realmId.HasValue || !d.RealmId.HasValue || d.RealmId == realmId) &&
+            (!gameServiceId.HasValue || !d.GameServiceId.HasValue || d.GameServiceId == gameServiceId));
     }
 
     /// <summary>
-    /// Lists scenario definitions with optional filtering.
+    /// Builds API response from storage model.
     /// </summary>
-    public async Task<(StatusCodes, ListScenarioDefinitionsResponse?)> ListScenarioDefinitionsAsync(
-        ListScenarioDefinitionsRequest body,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Listing scenario definitions, Realm={RealmId}, GameService={GameServiceId}, Limit={Limit}",
-            body.RealmId, body.GameServiceId, body.Limit);
-
-        try
-        {
-            var query = _scenarioDefinitionStore.Query()
-                .Where(s => s.Status != ScenarioStatus.Cancelled);
-
-            if (body.RealmId.HasValue)
-            {
-                query = query.Where(s => s.RealmId == body.RealmId);
-            }
-
-            if (body.GameServiceId.HasValue)
-            {
-                query = query.Where(s => s.GameServiceId == body.GameServiceId);
-            }
-
-            if (body.Status.HasValue)
-            {
-                query = query.Where(s => s.Status == body.Status.Value);
-            }
-
-            // Get total count
-            var totalCount = await query.CountAsync(cancellationToken);
-
-            // Apply pagination
-            var models = await query
-                .OrderByDescending(s => s.CreatedAt)
-                .Skip(body.Offset)
-                .Take(body.Limit)
-                .ToListAsync(cancellationToken);
-
-            var summaries = models.Select(m => new ScenarioDefinitionSummary
-            {
-                ScenarioId = m.ScenarioId,
-                Code = m.Code,
-                Name = m.Name,
-                Status = m.Status,
-                RealmId = m.RealmId,
-                GameServiceId = m.GameServiceId,
-                CreatedAt = m.CreatedAt
-            }).ToList();
-
-            return (StatusCodes.OK, new ListScenarioDefinitionsResponse
-            {
-                Definitions = summaries,
-                TotalCount = totalCount
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing scenario definitions");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "ListScenarioDefinitions", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/list",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <summary>
-    /// Updates a scenario definition.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioDefinition?)> UpdateScenarioDefinitionAsync(
-        UpdateScenarioDefinitionRequest body,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Updating scenario definition {ScenarioId}", body.ScenarioId);
-
-        try
-        {
-            var (model, etag) = await _scenarioDefinitionStore.GetWithETagAsync(body.ScenarioId.ToString(), cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (model.Status == ScenarioStatus.Cancelled)
-            {
-                _logger.LogWarning("Cannot update cancelled scenario {ScenarioId}", body.ScenarioId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // ETag check for optimistic concurrency
-            if (!string.IsNullOrEmpty(body.Etag) && body.Etag != etag)
-            {
-                _logger.LogWarning("ETag mismatch for scenario {ScenarioId}", body.ScenarioId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Apply updates
-            if (body.Name != null) model.Name = body.Name;
-            if (body.Description != null) model.Description = body.Description;
-            if (body.TriggerConditions != null) model.TriggerConditions = BannouJson.Serialize(body.TriggerConditions);
-            if (body.Phases != null) model.Phases = BannouJson.Serialize(body.Phases);
-            if (body.Mutations != null) model.Mutations = BannouJson.Serialize(body.Mutations);
-            if (body.QuestHooks != null) model.QuestHooks = BannouJson.Serialize(body.QuestHooks);
-            if (body.CooldownSeconds.HasValue) model.CooldownSeconds = body.CooldownSeconds;
-            if (body.Tags != null) model.Tags = BannouJson.Serialize(body.Tags);
-            if (body.ExclusivityTags != null) model.ExclusivityTags = BannouJson.Serialize(body.ExclusivityTags);
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            var saved = await _scenarioDefinitionStore.TrySaveAsync(body.ScenarioId.ToString(), model, etag, cancellationToken);
-            if (!saved)
-            {
-                _logger.LogWarning("Concurrent modification detected for scenario {ScenarioId}", body.ScenarioId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Invalidate cache
-            await InvalidateScenarioCacheAsync(model, cancellationToken);
-
-            _logger.LogInformation("Updated scenario definition {ScenarioId}", body.ScenarioId);
-
-            return (StatusCodes.OK, MapToScenarioDefinition(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating scenario definition");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "UpdateScenarioDefinition", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/update",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <summary>
-    /// Deprecates (soft-deletes) a scenario definition.
-    /// </summary>
-    public async Task<StatusCodes> DeprecateScenarioDefinitionAsync(
-        DeprecateScenarioDefinitionRequest body,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Deprecating scenario definition {ScenarioId}", body.ScenarioId);
-
-        try
-        {
-            var (model, etag) = await _scenarioDefinitionStore.GetWithETagAsync(body.ScenarioId.ToString(), cancellationToken);
-
-            if (model == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            if (model.Status == ScenarioStatus.Cancelled)
-            {
-                return StatusCodes.OK; // Already deprecated
-            }
-
-            model.Status = ScenarioStatus.Cancelled;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            var saved = await _scenarioDefinitionStore.TrySaveAsync(body.ScenarioId.ToString(), model, etag, cancellationToken);
-            if (!saved)
-            {
-                return StatusCodes.Conflict;
-            }
-
-            // Invalidate cache
-            await InvalidateScenarioCacheAsync(model, cancellationToken);
-
-            _logger.LogInformation("Deprecated scenario definition {ScenarioId}", body.ScenarioId);
-
-            return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deprecating scenario definition");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "DeprecateScenarioDefinition", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/deprecate",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
-    }
-
-    #endregion
-
-    #region Scenario Discovery Methods
-
-    /// <summary>
-    /// Finds available scenarios for a character based on provided state.
-    /// </summary>
-    public async Task<(StatusCodes, FindAvailableScenariosResponse?)> FindAvailableScenariosAsync(
-        FindAvailableScenariosRequest body,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Finding available scenarios for character {CharacterId}", body.CharacterId);
-
-        try
-        {
-            // Query active scenarios within scope
-            var query = _scenarioDefinitionStore.Query()
-                .Where(s => s.Status == ScenarioStatus.Active);
-
-            if (body.RealmId.HasValue)
-            {
-                query = query.Where(s => s.RealmId == null || s.RealmId == body.RealmId);
-            }
-
-            if (body.GameServiceId.HasValue)
-            {
-                query = query.Where(s => s.GameServiceId == null || s.GameServiceId == body.GameServiceId);
-            }
-
-            var scenarios = await query.ToListAsync(cancellationToken);
-
-            var availableScenarios = new List<AvailableScenario>();
-
-            foreach (var scenario in scenarios)
-            {
-                // Check cooldown
-                var cooldownKey = $"{body.CharacterId}:{scenario.ScenarioId}";
-                var onCooldown = await _scenarioCooldownStore.GetAsync(cooldownKey, cancellationToken);
-                if (onCooldown != null)
-                {
-                    continue; // Skip scenarios on cooldown
-                }
-
-                // Check exclusivity
-                if (await IsExcludedByActiveScenarioAsync(body.CharacterId, scenario, cancellationToken))
-                {
-                    continue;
-                }
-
-                // Evaluate conditions against provided state
-                var (conditionsMet, fitScore) = EvaluateConditions(scenario, body.CharacterState);
-
-                if (conditionsMet && fitScore >= _configuration.ScenarioFitScoreMinimumThreshold)
-                {
-                    availableScenarios.Add(new AvailableScenario
-                    {
-                        ScenarioId = scenario.ScenarioId,
-                        Code = scenario.Code,
-                        Name = scenario.Name,
-                        Description = scenario.Description,
-                        FitScore = fitScore,
-                        TriggerRecommended = fitScore >= _configuration.ScenarioFitScoreRecommendThreshold
-                    });
-                }
-            }
-
-            // Sort by fit score descending
-            availableScenarios = availableScenarios.OrderByDescending(s => s.FitScore).ToList();
-
-            // Publish available event if scenarios found
-            if (availableScenarios.Count > 0)
-            {
-                await PublishScenarioAvailableEventAsync(
-                    body.CharacterId,
-                    body.RealmId,
-                    body.GameServiceId,
-                    availableScenarios,
-                    cancellationToken);
-            }
-
-            return (StatusCodes.OK, new FindAvailableScenariosResponse
-            {
-                Scenarios = availableScenarios,
-                TotalAvailable = availableScenarios.Count
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error finding available scenarios");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "FindAvailableScenarios", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/find-available",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <summary>
-    /// Tests scenario trigger conditions without executing.
-    /// </summary>
-    public async Task<(StatusCodes, TestScenarioResponse?)> TestScenarioTriggerAsync(
-        TestScenarioRequest body,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Testing scenario {ScenarioId} for character {CharacterId}",
-            body.ScenarioId, body.CharacterId);
-
-        try
-        {
-            var scenario = await _scenarioDefinitionStore.GetAsync(body.ScenarioId.ToString(), cancellationToken);
-            if (scenario == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var blockingReasons = new List<string>();
-
-            // Check cooldown
-            var cooldownKey = $"{body.CharacterId}:{scenario.ScenarioId}";
-            var cooldownMarker = await _scenarioCooldownStore.GetAsync(cooldownKey, cancellationToken);
-            if (cooldownMarker != null)
-            {
-                blockingReasons.Add($"On cooldown until {cooldownMarker.ExpiresAt:u}");
-            }
-
-            // Check active count
-            var activeCount = await GetActiveScenarioCountAsync(body.CharacterId, cancellationToken);
-            if (activeCount >= _configuration.ScenarioMaxActivePerCharacter)
-            {
-                blockingReasons.Add($"Maximum active scenarios ({_configuration.ScenarioMaxActivePerCharacter}) reached");
-            }
-
-            // Check exclusivity
-            if (await IsExcludedByActiveScenarioAsync(body.CharacterId, scenario, cancellationToken))
-            {
-                blockingReasons.Add("Excluded by active scenario with conflicting exclusivity tag");
-            }
-
-            // Evaluate conditions
-            var (conditionsMet, fitScore) = EvaluateConditions(scenario, body.CharacterState);
-
-            var conditionResults = EvaluateConditionDetails(scenario, body.CharacterState);
-
-            // Predict mutations without applying
-            var predictedMutations = new List<PredictedMutation>();
-            if (!string.IsNullOrEmpty(scenario.Mutations))
-            {
-                var mutations = BannouJson.Deserialize<List<ScenarioMutation>>(scenario.Mutations);
-                if (mutations != null)
-                {
-                    foreach (var mutation in mutations)
-                    {
-                        predictedMutations.Add(new PredictedMutation
-                        {
-                            MutationType = mutation.MutationType,
-                            Description = DescribeMutation(mutation)
-                        });
-                    }
-                }
-            }
-
-            var canTrigger = blockingReasons.Count == 0 && conditionsMet;
-
-            return (StatusCodes.OK, new TestScenarioResponse
-            {
-                CanTrigger = canTrigger,
-                FitScore = fitScore,
-                ConditionResults = conditionResults,
-                BlockingReasons = blockingReasons.Count > 0 ? blockingReasons : null,
-                PredictedMutations = predictedMutations.Count > 0 ? predictedMutations : null,
-                DramaticallyInteresting = canTrigger && fitScore >= _configuration.ScenarioFitScoreRecommendThreshold
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error testing scenario trigger");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "TestScenarioTrigger", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/test",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <summary>
-    /// Evaluates scenario fit score without full condition check.
-    /// </summary>
-    public async Task<(StatusCodes, EvaluateFitResponse?)> EvaluateScenarioFitAsync(
-        EvaluateFitRequest body,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Evaluating fit for scenario {ScenarioId}, character {CharacterId}",
-            body.ScenarioId, body.CharacterId);
-
-        try
-        {
-            var scenario = await _scenarioDefinitionStore.GetAsync(body.ScenarioId.ToString(), cancellationToken);
-            if (scenario == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var (_, fitScore) = EvaluateConditions(scenario, body.CharacterState);
-
-            return (StatusCodes.OK, new EvaluateFitResponse
-            {
-                ScenarioId = scenario.ScenarioId,
-                FitScore = fitScore,
-                MeetsMinimumThreshold = fitScore >= _configuration.ScenarioFitScoreMinimumThreshold,
-                RecommendTrigger = fitScore >= _configuration.ScenarioFitScoreRecommendThreshold
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error evaluating scenario fit");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "EvaluateScenarioFit", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/evaluate-fit",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    #endregion
-
-    #region Scenario Execution Methods
-
-    /// <summary>
-    /// Triggers a scenario for execution.
-    /// </summary>
-    public async Task<(StatusCodes, TriggerScenarioResponse?)> TriggerScenarioAsync(
-        TriggerScenarioRequest body,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Triggering scenario {ScenarioId} for character {CharacterId}",
-            body.ScenarioId, body.PrimaryCharacterId);
-
-        try
-        {
-            // Idempotency check
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
-            {
-                var existing = await _scenarioIdempotencyStore.GetAsync(body.IdempotencyKey, cancellationToken);
-                if (existing != null)
-                {
-                    _logger.LogDebug("Idempotent trigger detected for key {IdempotencyKey}", body.IdempotencyKey);
-                    // Return the existing execution
-                    var existingExecution = await _scenarioExecutionStore.GetAsync(existing.ExecutionId.ToString(), cancellationToken);
-                    if (existingExecution != null)
-                    {
-                        return (StatusCodes.OK, new TriggerScenarioResponse
-                        {
-                            ExecutionId = existingExecution.ExecutionId,
-                            Status = existingExecution.Status,
-                            TriggeredAt = existingExecution.StartedAt
-                        });
-                    }
-                }
-            }
-
-            // Acquire distributed lock per IMPLEMENTATION TENETS (multi-instance safety)
-            var lockResourceId = $"scenario-trigger:{body.PrimaryCharacterId}:{body.ScenarioId}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                resourceId: lockResourceId,
-                lockOwner: Guid.NewGuid().ToString(),
-                expiryInSeconds: _configuration.ScenarioTriggerLockTimeoutSeconds,
-                cancellationToken: cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Failed to acquire lock for scenario trigger");
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Load scenario definition
-            var scenario = await _scenarioDefinitionStore.GetAsync(body.ScenarioId.ToString(), cancellationToken);
-            if (scenario == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (scenario.Status != ScenarioStatus.Active)
-            {
-                _logger.LogWarning("Cannot trigger inactive scenario {ScenarioId}", body.ScenarioId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Check cooldown
-            var cooldownKey = $"{body.PrimaryCharacterId}:{scenario.ScenarioId}";
-            var onCooldown = await _scenarioCooldownStore.GetAsync(cooldownKey, cancellationToken);
-            if (onCooldown != null)
-            {
-                _logger.LogWarning("Scenario {ScenarioId} is on cooldown for character {CharacterId}",
-                    body.ScenarioId, body.PrimaryCharacterId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Check active count
-            var activeCount = await GetActiveScenarioCountAsync(body.PrimaryCharacterId, cancellationToken);
-            if (activeCount >= _configuration.ScenarioMaxActivePerCharacter)
-            {
-                _logger.LogWarning("Character {CharacterId} has maximum active scenarios", body.PrimaryCharacterId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Validate conditions against provided state
-            var (conditionsMet, fitScore) = EvaluateConditions(scenario, body.CharacterState);
-            if (!conditionsMet)
-            {
-                _logger.LogWarning("Conditions not met for scenario {ScenarioId}", body.ScenarioId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Create execution record
-            var executionId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            var execution = new ScenarioExecutionModel
-            {
-                ExecutionId = executionId,
-                ScenarioId = scenario.ScenarioId,
-                ScenarioCode = scenario.Code,
-                PrimaryCharacterId = body.PrimaryCharacterId,
-                AdditionalParticipantIds = body.AdditionalParticipants != null
-                    ? BannouJson.Serialize(body.AdditionalParticipants)
-                    : null,
-                OrchestratorId = body.OrchestratorId,
-                RealmId = scenario.RealmId,
-                GameServiceId = scenario.GameServiceId,
-                FitScore = fitScore,
-                Status = ScenarioStatus.Active,
-                CurrentPhaseIndex = 0,
-                MutationsApplied = 0,
-                QuestsSpawned = 0,
-                StartedAt = now,
-                CompletedAt = null
-            };
-
-            await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, cancellationToken: cancellationToken);
-
-            // Add to active set
-            var activeKey = $"character:{body.PrimaryCharacterId}";
-            await _scenarioActiveStore.SetAddAsync(activeKey, executionId.ToString(), cancellationToken);
-
-            // Store idempotency key if provided
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
-            {
-                var idempotencyTtl = _configuration.ScenarioIdempotencyTtlSeconds;
-                await _scenarioIdempotencyStore.SaveAsync(body.IdempotencyKey, new IdempotencyMarker
-                {
-                    ExecutionId = executionId,
-                    CreatedAt = now
-                }, new StateOptions { Ttl = idempotencyTtl }, cancellationToken);
-            }
-
-            // Publish triggered event
-            await PublishScenarioTriggeredEventAsync(execution, scenario, fitScore, cancellationToken);
-
-            // Apply mutations - track partial progress for failure reporting
-            int mutationsApplied;
-            int questsSpawned;
-            List<Guid> questIds;
-            try
-            {
-                (mutationsApplied, questsSpawned, questIds) = await ApplyMutationsAsync(scenario, execution, cancellationToken);
-            }
-            catch (Exception mutationEx)
-            {
-                // Mutations failed - mark execution as failed
-                execution.Status = ScenarioStatus.Failed;
-                execution.FailureReason = $"Mutation application failed: {mutationEx.Message}";
-                execution.CompletedAt = DateTimeOffset.UtcNow;
-                await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, cancellationToken: cancellationToken);
-
-                // Remove from active set
-                await _scenarioActiveStore.SetRemoveAsync(activeKey, executionId.ToString(), cancellationToken);
-
-                // Publish failed event
-                await PublishScenarioFailedEventAsync(execution, mutationEx.Message, isRecoverable: false, cancellationToken);
-
-                _logger.LogWarning(mutationEx, "Scenario {ScenarioId} failed during mutation for character {CharacterId}",
-                    body.ScenarioId, body.PrimaryCharacterId);
-
-                return (StatusCodes.OK, new TriggerScenarioResponse
-                {
-                    ExecutionId = executionId,
-                    Status = ScenarioStatus.Failed,
-                    TriggeredAt = now,
-                    CompletedAt = execution.CompletedAt
-                });
-            }
-
-            // Update execution with results
-            execution.MutationsApplied = mutationsApplied;
-            execution.QuestsSpawned = questsSpawned;
-            execution.QuestIds = questIds.Count > 0 ? BannouJson.Serialize(questIds) : null;
-            execution.Status = ScenarioStatus.Completed;
-            execution.CompletedAt = DateTimeOffset.UtcNow;
-
-            await _scenarioExecutionStore.SaveAsync(executionId.ToString(), execution, cancellationToken: cancellationToken);
-
-            // Remove from active set
-            await _scenarioActiveStore.SetRemoveAsync(activeKey, executionId.ToString(), cancellationToken);
-
-            // Set cooldown
-            var cooldownSeconds = scenario.CooldownSeconds ?? _configuration.ScenarioCooldownDefaultSeconds;
-            if (cooldownSeconds > 0)
-            {
-                await _scenarioCooldownStore.SaveAsync(cooldownKey, new CooldownMarker
-                {
-                    ScenarioId = scenario.ScenarioId,
-                    CharacterId = body.PrimaryCharacterId,
-                    ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(cooldownSeconds)
-                }, new StateOptions { Ttl = cooldownSeconds }, cancellationToken);
-            }
-
-            // Publish completed event
-            await PublishScenarioCompletedEventAsync(execution, mutationsApplied, questsSpawned, questIds, cancellationToken);
-
-            _logger.LogInformation("Triggered scenario {ScenarioId} for character {CharacterId}, execution {ExecutionId}",
-                body.ScenarioId, body.PrimaryCharacterId, executionId);
-
-            return (StatusCodes.OK, new TriggerScenarioResponse
-            {
-                ExecutionId = executionId,
-                Status = ScenarioStatus.Completed,
-                TriggeredAt = now,
-                CompletedAt = execution.CompletedAt,
-                MutationsApplied = mutationsApplied,
-                QuestsSpawned = questsSpawned,
-                QuestIds = questIds.Count > 0 ? questIds : null
-            });
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Service call failed during scenario trigger with status {Status}", ex.StatusCode);
-            return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error triggering scenario");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "TriggerScenario", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/trigger",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <summary>
-    /// Gets active scenarios for a character.
-    /// </summary>
-    public async Task<(StatusCodes, GetActiveScenariosResponse?)> GetActiveScenariosAsync(
-        GetActiveScenariosRequest body,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Getting active scenarios for character {CharacterId}", body.CharacterId);
-
-        try
-        {
-            var activeKey = $"character:{body.CharacterId}";
-            var executionIds = await _scenarioActiveStore.SetMembersAsync(activeKey, cancellationToken);
-
-            var activeScenarios = new List<ActiveScenario>();
-
-            foreach (var executionIdStr in executionIds)
-            {
-                var execution = await _scenarioExecutionStore.GetAsync(executionIdStr, cancellationToken);
-                if (execution != null && execution.Status == ScenarioStatus.Active)
-                {
-                    activeScenarios.Add(new ActiveScenario
-                    {
-                        ExecutionId = execution.ExecutionId,
-                        ScenarioId = execution.ScenarioId,
-                        ScenarioCode = execution.ScenarioCode,
-                        Status = execution.Status,
-                        CurrentPhaseIndex = execution.CurrentPhaseIndex,
-                        StartedAt = execution.StartedAt
-                    });
-                }
-            }
-
-            return (StatusCodes.OK, new GetActiveScenariosResponse
-            {
-                Scenarios = activeScenarios,
-                Count = activeScenarios.Count
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting active scenarios");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "GetActiveScenarios", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/get-active",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <summary>
-    /// Gets scenario execution history.
-    /// </summary>
-    public async Task<(StatusCodes, GetScenarioHistoryResponse?)> GetScenarioHistoryAsync(
-        GetScenarioHistoryRequest body,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("Getting scenario history for character {CharacterId}", body.CharacterId);
-
-        try
-        {
-            var query = _scenarioExecutionStore.Query()
-                .Where(e => e.PrimaryCharacterId == body.CharacterId);
-
-            if (body.ScenarioId.HasValue)
-            {
-                query = query.Where(e => e.ScenarioId == body.ScenarioId.Value);
-            }
-
-            if (body.Status.HasValue)
-            {
-                query = query.Where(e => e.Status == body.Status.Value);
-            }
-
-            var totalCount = await query.CountAsync(cancellationToken);
-
-            var executions = await query
-                .OrderByDescending(e => e.StartedAt)
-                .Skip(body.Offset)
-                .Take(body.Limit)
-                .ToListAsync(cancellationToken);
-
-            var history = executions.Select(e => new ScenarioExecutionSummary
-            {
-                ExecutionId = e.ExecutionId,
-                ScenarioId = e.ScenarioId,
-                ScenarioCode = e.ScenarioCode,
-                Status = e.Status,
-                FitScore = e.FitScore,
-                MutationsApplied = e.MutationsApplied,
-                QuestsSpawned = e.QuestsSpawned,
-                StartedAt = e.StartedAt,
-                CompletedAt = e.CompletedAt
-            }).ToList();
-
-            return (StatusCodes.OK, new GetScenarioHistoryResponse
-            {
-                Executions = history,
-                TotalCount = totalCount
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting scenario history");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline", "GetScenarioHistory", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/storyline/scenario/get-history",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    #endregion
-
-    #region Scenario Helper Methods
-
-    /// <summary>
-    /// Maps internal model to API response model.
-    /// </summary>
-    private static ScenarioDefinition MapToScenarioDefinition(ScenarioDefinitionModel model)
+    private ScenarioDefinition BuildScenarioDefinitionResponse(ScenarioDefinitionModel model)
     {
         return new ScenarioDefinition
         {
@@ -1886,335 +2063,252 @@ public partial class StorylineService : IStorylineService
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
+            TriggerConditions = BannouJson.Deserialize<List<TriggerCondition>>(model.TriggerConditionsJson)
+                ?? new List<TriggerCondition>(),
+            Phases = BannouJson.Deserialize<List<ScenarioPhase>>(model.PhasesJson)
+                ?? new List<ScenarioPhase>(),
+            Mutations = string.IsNullOrEmpty(model.MutationsJson)
+                ? null
+                : BannouJson.Deserialize<List<ScenarioMutation>>(model.MutationsJson),
+            QuestHooks = string.IsNullOrEmpty(model.QuestHooksJson)
+                ? null
+                : BannouJson.Deserialize<List<ScenarioQuestHook>>(model.QuestHooksJson),
+            CooldownSeconds = model.CooldownSeconds,
+            ExclusivityTags = string.IsNullOrEmpty(model.ExclusivityTagsJson)
+                ? null
+                : BannouJson.Deserialize<List<string>>(model.ExclusivityTagsJson),
+            Priority = model.Priority,
+            Enabled = model.Enabled,
             RealmId = model.RealmId,
             GameServiceId = model.GameServiceId,
-            TriggerConditions = !string.IsNullOrEmpty(model.TriggerConditions)
-                ? BannouJson.Deserialize<List<TriggerCondition>>(model.TriggerConditions) ?? new List<TriggerCondition>()
-                : new List<TriggerCondition>(),
-            Phases = !string.IsNullOrEmpty(model.Phases)
-                ? BannouJson.Deserialize<List<ScenarioPhase>>(model.Phases) ?? new List<ScenarioPhase>()
-                : new List<ScenarioPhase>(),
-            Mutations = !string.IsNullOrEmpty(model.Mutations)
-                ? BannouJson.Deserialize<List<ScenarioMutation>>(model.Mutations)
-                : null,
-            QuestHooks = !string.IsNullOrEmpty(model.QuestHooks)
-                ? BannouJson.Deserialize<List<ScenarioQuestHook>>(model.QuestHooks)
-                : null,
-            CooldownSeconds = model.CooldownSeconds,
-            Tags = !string.IsNullOrEmpty(model.Tags)
-                ? BannouJson.Deserialize<List<string>>(model.Tags)
-                : null,
-            ExclusivityTags = !string.IsNullOrEmpty(model.ExclusivityTags)
-                ? BannouJson.Deserialize<List<string>>(model.ExclusivityTags)
-                : null,
-            Status = model.Status,
+            Tags = string.IsNullOrEmpty(model.TagsJson)
+                ? null
+                : BannouJson.Deserialize<List<string>>(model.TagsJson),
+            Deprecated = model.Deprecated,
             CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt
+            UpdatedAt = model.UpdatedAt,
+            Etag = model.Etag
         };
     }
 
     /// <summary>
-    /// Invalidates cache entries for a scenario definition.
+    /// Builds summary for list response.
     /// </summary>
-    private async Task InvalidateScenarioCacheAsync(ScenarioDefinitionModel model, CancellationToken cancellationToken)
+    private ScenarioDefinitionSummary BuildScenarioSummary(ScenarioDefinitionModel model)
     {
-        await _scenarioCacheStore.DeleteAsync($"id:{model.ScenarioId}", cancellationToken);
-        await _scenarioCacheStore.DeleteAsync($"code:{model.Code}:{model.RealmId}:{model.GameServiceId}", cancellationToken);
+        var conditions = BannouJson.Deserialize<List<TriggerCondition>>(model.TriggerConditionsJson);
+        var phases = BannouJson.Deserialize<List<ScenarioPhase>>(model.PhasesJson);
+        var mutations = string.IsNullOrEmpty(model.MutationsJson)
+            ? null
+            : BannouJson.Deserialize<List<ScenarioMutation>>(model.MutationsJson);
+        var questHooks = string.IsNullOrEmpty(model.QuestHooksJson)
+            ? null
+            : BannouJson.Deserialize<List<ScenarioQuestHook>>(model.QuestHooksJson);
+
+        return new ScenarioDefinitionSummary
+        {
+            ScenarioId = model.ScenarioId,
+            Code = model.Code,
+            Name = model.Name,
+            Priority = model.Priority,
+            Enabled = model.Enabled,
+            Deprecated = model.Deprecated,
+            ConditionCount = conditions?.Count ?? 0,
+            PhaseCount = phases?.Count ?? 0,
+            MutationCount = mutations?.Count ?? 0,
+            QuestHookCount = questHooks?.Count ?? 0,
+            RealmId = model.RealmId,
+            GameServiceId = model.GameServiceId,
+            Tags = string.IsNullOrEmpty(model.TagsJson)
+                ? null
+                : BannouJson.Deserialize<List<string>>(model.TagsJson),
+            CreatedAt = model.CreatedAt
+        };
     }
 
     /// <summary>
-    /// Evaluates trigger conditions against provided character state.
+    /// Evaluates all conditions and calculates fit score.
     /// </summary>
-    private (bool conditionsMet, double fitScore) EvaluateConditions(
-        ScenarioDefinitionModel scenario,
-        CharacterStateSnapshot? state)
+    private (int conditionsMet, double fitScore) EvaluateConditions(
+        List<TriggerCondition> conditions,
+        CharacterStateSnapshot characterState,
+        Guid? locationId,
+        int? timeOfDay,
+        IDictionary<string, string>? worldState)
     {
-        if (string.IsNullOrEmpty(scenario.TriggerConditions))
+        if (conditions.Count == 0)
         {
-            return (true, _configuration.ScenarioFitScoreBaseWeight);
+            return (0, _configuration.ScenarioFitScoreBaseWeight);
         }
 
-        var conditions = BannouJson.Deserialize<List<TriggerCondition>>(scenario.TriggerConditions);
-        if (conditions == null || conditions.Count == 0)
-        {
-            return (true, _configuration.ScenarioFitScoreBaseWeight);
-        }
-
-        if (state == null)
-        {
-            // No state provided - cannot evaluate conditions
-            return (false, 0);
-        }
-
+        var conditionsMet = 0;
         var fitScore = _configuration.ScenarioFitScoreBaseWeight;
-        var allConditionsMet = true;
 
         foreach (var condition in conditions)
         {
-            var (met, bonus) = EvaluateSingleCondition(condition, state);
-            if (!met && condition.Required != false)
-            {
-                allConditionsMet = false;
-            }
+            var (met, _, _, _) = EvaluateSingleCondition(condition, characterState, locationId, timeOfDay, worldState);
             if (met)
             {
-                fitScore += bonus;
+                conditionsMet++;
+                fitScore += GetConditionBonus(condition.ConditionType);
             }
         }
 
-        return (allConditionsMet, Math.Min(1.0, fitScore));
+        // Normalize fit score to 0-1 range
+        return (conditionsMet, Math.Min(1.0, fitScore));
     }
 
     /// <summary>
-    /// Evaluates a single trigger condition.
+    /// Gets the configuration-driven bonus for a condition type.
     /// </summary>
-    private (bool met, double bonus) EvaluateSingleCondition(TriggerCondition condition, CharacterStateSnapshot state)
+    private double GetConditionBonus(TriggerConditionType conditionType)
+    {
+        return conditionType switch
+        {
+            TriggerConditionType.TraitRange => _configuration.ScenarioTraitMatchBonus,
+            TriggerConditionType.BackstoryElement => _configuration.ScenarioBackstoryMatchBonus,
+            TriggerConditionType.RelationshipExists => _configuration.ScenarioRelationshipMatchBonus,
+            TriggerConditionType.RelationshipMissing => _configuration.ScenarioRelationshipMatchBonus,
+            TriggerConditionType.AgeRange => _configuration.ScenarioTraitMatchBonus, // Reuse trait bonus for age
+            TriggerConditionType.LocationAt => _configuration.ScenarioLocationMatchBonus,
+            TriggerConditionType.TimeOfDay => _configuration.ScenarioWorldStateMatchBonus, // Reuse world state bonus for time
+            TriggerConditionType.WorldState => _configuration.ScenarioWorldStateMatchBonus,
+            TriggerConditionType.Custom => 0.0, // Custom conditions not evaluated server-side
+            _ => 0.0
+        };
+    }
+
+    /// <summary>
+    /// Evaluates a single condition with detailed results.
+    /// </summary>
+    private (bool met, string? actualValue, string? expectedValue, string? details) EvaluateSingleCondition(
+        TriggerCondition condition,
+        CharacterStateSnapshot characterState,
+        Guid? locationId,
+        int? timeOfDay,
+        IDictionary<string, string>? worldState)
     {
         switch (condition.ConditionType)
         {
             case TriggerConditionType.TraitRange:
-                if (string.IsNullOrEmpty(condition.TraitAxis) || state.Traits == null)
-                    return (false, 0);
-                if (state.Traits.TryGetValue(condition.TraitAxis, out var traitValue))
-                {
-                    var inRange = (!condition.TraitMin.HasValue || traitValue >= condition.TraitMin.Value) &&
-                                  (!condition.TraitMax.HasValue || traitValue <= condition.TraitMax.Value);
-                    return (inRange, inRange ? _configuration.ScenarioTraitMatchBonus : 0);
-                }
-                return (false, 0);
+            {
+                if (string.IsNullOrEmpty(condition.TraitAxis))
+                    return (false, null, null, "Missing trait axis");
+
+                var trait = characterState.Traits?.FirstOrDefault(t =>
+                    t.Axis.Equals(condition.TraitAxis, StringComparison.OrdinalIgnoreCase));
+
+                if (trait is null)
+                    return (false, "not found", $"{condition.TraitMin}-{condition.TraitMax}", $"Trait {condition.TraitAxis} not in snapshot");
+
+                var inRange = (!condition.TraitMin.HasValue || trait.Value >= condition.TraitMin.Value) &&
+                              (!condition.TraitMax.HasValue || trait.Value <= condition.TraitMax.Value);
+
+                return (inRange, trait.Value.ToString("F2"), $"{condition.TraitMin}-{condition.TraitMax}", null);
+            }
 
             case TriggerConditionType.BackstoryElement:
-                if (string.IsNullOrEmpty(condition.BackstoryKey) || state.BackstoryKeys == null)
-                    return (false, 0);
-                var hasBackstory = state.BackstoryKeys.Contains(condition.BackstoryKey);
-                return (hasBackstory, hasBackstory ? _configuration.ScenarioBackstoryMatchBonus : 0);
+            {
+                if (string.IsNullOrEmpty(condition.BackstoryType))
+                    return (false, null, null, "Missing backstory type");
+
+                var hasElement = characterState.BackstoryElements?.Any(b =>
+                    b.ElementType.Equals(condition.BackstoryType, StringComparison.OrdinalIgnoreCase) &&
+                    (string.IsNullOrEmpty(condition.BackstoryKey) ||
+                     b.Key.Equals(condition.BackstoryKey, StringComparison.OrdinalIgnoreCase))) ?? false;
+
+                return (hasElement, hasElement ? "present" : "absent", "present", null);
+            }
 
             case TriggerConditionType.RelationshipExists:
-                if (string.IsNullOrEmpty(condition.RelationshipType) || state.RelationshipTypes == null)
-                    return (false, 0);
-                var hasRelationship = state.RelationshipTypes.Contains(condition.RelationshipType);
-                return (hasRelationship, hasRelationship ? _configuration.ScenarioRelationshipMatchBonus : 0);
+            {
+                if (string.IsNullOrEmpty(condition.RelationshipTypeCode))
+                    return (false, null, null, "Missing relationship type code");
+
+                var hasRelationship = characterState.Relationships?.Any(r =>
+                    r.RelationshipTypeCode.Equals(condition.RelationshipTypeCode, StringComparison.OrdinalIgnoreCase) &&
+                    (string.IsNullOrEmpty(condition.OtherEntityType) ||
+                     r.OtherEntityType.Equals(condition.OtherEntityType, StringComparison.OrdinalIgnoreCase))) ?? false;
+
+                return (hasRelationship, hasRelationship ? "exists" : "missing", "exists", null);
+            }
 
             case TriggerConditionType.RelationshipMissing:
-                if (string.IsNullOrEmpty(condition.RelationshipType) || state.RelationshipTypes == null)
-                    return (true, _configuration.ScenarioRelationshipMatchBonus); // Missing is true if no data
-                var lacksRelationship = !state.RelationshipTypes.Contains(condition.RelationshipType);
-                return (lacksRelationship, lacksRelationship ? _configuration.ScenarioRelationshipMatchBonus : 0);
+            {
+                if (string.IsNullOrEmpty(condition.RelationshipTypeCode))
+                    return (false, null, null, "Missing relationship type code");
+
+                var hasRelationship = characterState.Relationships?.Any(r =>
+                    r.RelationshipTypeCode.Equals(condition.RelationshipTypeCode, StringComparison.OrdinalIgnoreCase)) ?? false;
+
+                return (!hasRelationship, hasRelationship ? "exists" : "missing", "missing", null);
+            }
 
             case TriggerConditionType.AgeRange:
-                if (!state.Age.HasValue)
-                    return (false, 0);
-                var ageInRange = (!condition.AgeMin.HasValue || state.Age.Value >= condition.AgeMin.Value) &&
-                                 (!condition.AgeMax.HasValue || state.Age.Value <= condition.AgeMax.Value);
-                return (ageInRange, ageInRange ? _configuration.ScenarioTraitMatchBonus : 0);
+            {
+                if (!characterState.Age.HasValue)
+                    return (false, "unknown", $"{condition.AgeMin}-{condition.AgeMax}", "Character age not in snapshot");
+
+                var inRange = (!condition.AgeMin.HasValue || characterState.Age.Value >= condition.AgeMin.Value) &&
+                              (!condition.AgeMax.HasValue || characterState.Age.Value <= condition.AgeMax.Value);
+
+                return (inRange, characterState.Age.Value.ToString(), $"{condition.AgeMin}-{condition.AgeMax}", null);
+            }
 
             case TriggerConditionType.LocationAt:
-                if (!condition.LocationId.HasValue || !state.LocationId.HasValue)
-                    return (false, 0);
-                var atLocation = state.LocationId.Value == condition.LocationId.Value;
-                return (atLocation, atLocation ? _configuration.ScenarioLocationMatchBonus : 0);
+            {
+                if (!condition.LocationId.HasValue)
+                    return (false, null, null, "Missing location ID in condition");
+
+                if (!locationId.HasValue)
+                    return (false, "unknown", condition.LocationId.Value.ToString(), "Location not provided in request");
+
+                var matches = locationId.Value == condition.LocationId.Value;
+                return (matches, locationId.Value.ToString(), condition.LocationId.Value.ToString(), null);
+            }
+
+            case TriggerConditionType.TimeOfDay:
+            {
+                if (!timeOfDay.HasValue)
+                    return (false, "unknown", $"{condition.TimeOfDayMin}-{condition.TimeOfDayMax}", "Time of day not provided in request");
+
+                var inRange = (!condition.TimeOfDayMin.HasValue || timeOfDay.Value >= condition.TimeOfDayMin.Value) &&
+                              (!condition.TimeOfDayMax.HasValue || timeOfDay.Value <= condition.TimeOfDayMax.Value);
+
+                return (inRange, timeOfDay.Value.ToString(), $"{condition.TimeOfDayMin}-{condition.TimeOfDayMax}", null);
+            }
 
             case TriggerConditionType.WorldState:
-                if (string.IsNullOrEmpty(condition.WorldStateKey) || state.WorldState == null)
-                    return (false, 0);
-                if (state.WorldState.TryGetValue(condition.WorldStateKey, out var worldValue))
-                {
-                    var matches = condition.WorldStateValue == null || worldValue == condition.WorldStateValue;
-                    return (matches, matches ? _configuration.ScenarioWorldStateMatchBonus : 0);
-                }
-                return (false, 0);
+            {
+                if (string.IsNullOrEmpty(condition.WorldStateKey))
+                    return (false, null, null, "Missing world state key");
+
+                if (worldState is null || !worldState.TryGetValue(condition.WorldStateKey, out var actualValue))
+                    return (false, "not set", condition.WorldStateValue, $"World state key {condition.WorldStateKey} not provided");
+
+                var matches = string.IsNullOrEmpty(condition.WorldStateValue) ||
+                              actualValue.Equals(condition.WorldStateValue, StringComparison.OrdinalIgnoreCase);
+
+                return (matches, actualValue, condition.WorldStateValue, null);
+            }
 
             case TriggerConditionType.Custom:
                 // Custom conditions are not evaluated server-side
-                return (true, 0);
+                return (true, "custom", "custom", "Custom conditions evaluated by caller");
 
             default:
-                return (false, 0);
+                return (false, null, null, $"Unknown condition type: {condition.ConditionType}");
         }
     }
 
     /// <summary>
-    /// Evaluates conditions with detailed results for testing.
+    /// Applies a mutation via appropriate service client.
+    /// Uses soft dependency pattern for L4 peers.
     /// </summary>
-    private List<ConditionResult> EvaluateConditionDetails(ScenarioDefinitionModel scenario, CharacterStateSnapshot? state)
-    {
-        var results = new List<ConditionResult>();
-
-        if (string.IsNullOrEmpty(scenario.TriggerConditions))
-        {
-            return results;
-        }
-
-        var conditions = BannouJson.Deserialize<List<TriggerCondition>>(scenario.TriggerConditions);
-        if (conditions == null)
-        {
-            return results;
-        }
-
-        foreach (var condition in conditions)
-        {
-            var (met, _) = state != null
-                ? EvaluateSingleCondition(condition, state)
-                : (false, 0);
-
-            results.Add(new ConditionResult
-            {
-                ConditionType = condition.ConditionType,
-                Met = met,
-                Description = DescribeCondition(condition)
-            });
-        }
-
-        return results;
-    }
-
-    /// <summary>
-    /// Describes a condition in human-readable form.
-    /// </summary>
-    private static string DescribeCondition(TriggerCondition condition)
-    {
-        return condition.ConditionType switch
-        {
-            TriggerConditionType.TraitRange => $"Trait {condition.TraitAxis} in range [{condition.TraitMin}, {condition.TraitMax}]",
-            TriggerConditionType.BackstoryElement => $"Has backstory element: {condition.BackstoryKey}",
-            TriggerConditionType.RelationshipExists => $"Has relationship type: {condition.RelationshipType}",
-            TriggerConditionType.RelationshipMissing => $"Lacks relationship type: {condition.RelationshipType}",
-            TriggerConditionType.AgeRange => $"Age in range [{condition.AgeMin}, {condition.AgeMax}]",
-            TriggerConditionType.LocationAt => $"At location: {condition.LocationId}",
-            TriggerConditionType.WorldState => $"World state {condition.WorldStateKey} = {condition.WorldStateValue}",
-            TriggerConditionType.Custom => "Custom condition (client-evaluated)",
-            _ => "Unknown condition"
-        };
-    }
-
-    /// <summary>
-    /// Describes a mutation in human-readable form.
-    /// </summary>
-    private static string DescribeMutation(ScenarioMutation mutation)
-    {
-        return mutation.MutationType switch
-        {
-            MutationType.PersonalityEvolve => $"Evolve personality via experience: {mutation.ExperienceType}",
-            MutationType.BackstoryAdd => $"Add backstory element: {mutation.BackstoryKey}",
-            MutationType.RelationshipCreate => $"Create relationship type: {mutation.RelationshipTypeCode}",
-            MutationType.RelationshipEnd => $"End relationship type: {mutation.RelationshipTypeCode}",
-            MutationType.Custom => $"Custom mutation: {mutation.CustomMutationType}",
-            _ => "Unknown mutation"
-        };
-    }
-
-    /// <summary>
-    /// Gets the count of active scenarios for a character.
-    /// </summary>
-    private async Task<int> GetActiveScenarioCountAsync(Guid characterId, CancellationToken cancellationToken)
-    {
-        var activeKey = $"character:{characterId}";
-        var count = await _scenarioActiveStore.SetCountAsync(activeKey, cancellationToken);
-        return (int)count;
-    }
-
-    /// <summary>
-    /// Checks if a scenario is excluded by an active scenario's exclusivity tags.
-    /// </summary>
-    private async Task<bool> IsExcludedByActiveScenarioAsync(
-        Guid characterId,
-        ScenarioDefinitionModel candidate,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrEmpty(candidate.ExclusivityTags))
-        {
-            return false;
-        }
-
-        var candidateTags = BannouJson.Deserialize<List<string>>(candidate.ExclusivityTags);
-        if (candidateTags == null || candidateTags.Count == 0)
-        {
-            return false;
-        }
-
-        var activeKey = $"character:{characterId}";
-        var executionIds = await _scenarioActiveStore.SetMembersAsync(activeKey, cancellationToken);
-
-        foreach (var executionIdStr in executionIds)
-        {
-            var execution = await _scenarioExecutionStore.GetAsync(executionIdStr, cancellationToken);
-            if (execution == null || execution.Status != ScenarioStatus.Active)
-            {
-                continue;
-            }
-
-            var activeScenario = await _scenarioDefinitionStore.GetAsync(execution.ScenarioId.ToString(), cancellationToken);
-            if (activeScenario == null || string.IsNullOrEmpty(activeScenario.ExclusivityTags))
-            {
-                continue;
-            }
-
-            var activeTags = BannouJson.Deserialize<List<string>>(activeScenario.ExclusivityTags);
-            if (activeTags != null && activeTags.Intersect(candidateTags).Any())
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Applies mutations defined in the scenario.
-    /// </summary>
-    private async Task<(int mutationsApplied, int questsSpawned, List<Guid> questIds)> ApplyMutationsAsync(
-        ScenarioDefinitionModel scenario,
-        ScenarioExecutionModel execution,
-        CancellationToken cancellationToken)
-    {
-        var mutationsApplied = 0;
-        var questsSpawned = 0;
-        var questIds = new List<Guid>();
-
-        // Apply mutations
-        if (!string.IsNullOrEmpty(scenario.Mutations))
-        {
-            var mutations = BannouJson.Deserialize<List<ScenarioMutation>>(scenario.Mutations);
-            if (mutations != null)
-            {
-                foreach (var mutation in mutations)
-                {
-                    var success = await ApplySingleMutationAsync(mutation, execution.PrimaryCharacterId, cancellationToken);
-                    if (success)
-                    {
-                        mutationsApplied++;
-                    }
-                }
-            }
-        }
-
-        // Spawn quests
-        if (!string.IsNullOrEmpty(scenario.QuestHooks))
-        {
-            var questHooks = BannouJson.Deserialize<List<ScenarioQuestHook>>(scenario.QuestHooks);
-            if (questHooks != null)
-            {
-                foreach (var hook in questHooks)
-                {
-                    var questId = await SpawnQuestAsync(hook, execution.PrimaryCharacterId, cancellationToken);
-                    if (questId.HasValue)
-                    {
-                        questsSpawned++;
-                        questIds.Add(questId.Value);
-                    }
-                }
-            }
-        }
-
-        return (mutationsApplied, questsSpawned, questIds);
-    }
-
-    /// <summary>
-    /// Applies a single mutation.
-    /// </summary>
-    private async Task<bool> ApplySingleMutationAsync(
+    private async Task<(bool success, string? details)> ApplyMutationAsync(
         ScenarioMutation mutation,
         Guid characterId,
+        IDictionary<string, Guid>? additionalParticipants,
         CancellationToken cancellationToken)
     {
         try
@@ -2222,344 +2316,249 @@ public partial class StorylineService : IStorylineService
             switch (mutation.MutationType)
             {
                 case MutationType.PersonalityEvolve:
-                    return await ApplyPersonalityMutationAsync(mutation, characterId, cancellationToken);
+                {
+                    // Soft L4 dependency - graceful degradation
+                    var client = _serviceProvider.GetService<CharacterPersonality.ICharacterPersonalityClient>();
+                    if (client is null)
+                    {
+                        _logger.LogDebug("Character personality service unavailable, skipping personality mutation");
+                        return (false, "Character personality service unavailable");
+                    }
+
+                    if (string.IsNullOrEmpty(mutation.ExperienceType))
+                    {
+                        return (false, "Missing experience type for personality mutation");
+                    }
+
+                    var (status, _) = await client.RecordExperienceAsync(
+                        new CharacterPersonality.RecordExperienceRequest
+                        {
+                            CharacterId = characterId,
+                            ExperienceType = mutation.ExperienceType,
+                            Intensity = mutation.ExperienceIntensity ?? 0.5f
+                        }, cancellationToken);
+
+                    return (status == StatusCodes.OK, status == StatusCodes.OK ? "Personality evolved" : $"Failed: {status}");
+                }
 
                 case MutationType.BackstoryAdd:
-                    return await ApplyBackstoryMutationAsync(mutation, characterId, cancellationToken);
+                {
+                    // Soft L4 dependency - graceful degradation
+                    var client = _serviceProvider.GetService<CharacterHistory.ICharacterHistoryClient>();
+                    if (client is null)
+                    {
+                        _logger.LogDebug("Character history service unavailable, skipping backstory mutation");
+                        return (false, "Character history service unavailable");
+                    }
+
+                    if (string.IsNullOrEmpty(mutation.BackstoryElementType) || string.IsNullOrEmpty(mutation.BackstoryKey))
+                    {
+                        return (false, "Missing backstory element type or key");
+                    }
+
+                    var (status, _) = await client.AddBackstoryElementAsync(
+                        new CharacterHistory.AddBackstoryElementRequest
+                        {
+                            CharacterId = characterId,
+                            ElementType = mutation.BackstoryElementType,
+                            Key = mutation.BackstoryKey,
+                            Value = mutation.BackstoryValue,
+                            Strength = mutation.BackstoryStrength ?? 0.5f
+                        }, cancellationToken);
+
+                    return (status == StatusCodes.OK, status == StatusCodes.OK ? "Backstory added" : $"Failed: {status}");
+                }
 
                 case MutationType.RelationshipCreate:
-                    return await ApplyRelationshipCreateMutationAsync(mutation, characterId, cancellationToken);
+                {
+                    // Hard L2 dependency - should always be available
+                    if (string.IsNullOrEmpty(mutation.RelationshipTypeCode))
+                    {
+                        return (false, "Missing relationship type code");
+                    }
+
+                    // Get other participant from additionalParticipants
+                    Guid? otherEntityId = null;
+                    if (!string.IsNullOrEmpty(mutation.OtherParticipantRole) &&
+                        additionalParticipants?.TryGetValue(mutation.OtherParticipantRole, out var participantId) == true)
+                    {
+                        otherEntityId = participantId;
+                    }
+
+                    if (!otherEntityId.HasValue)
+                    {
+                        return (false, $"No participant found for role {mutation.OtherParticipantRole}");
+                    }
+
+                    var (status, _) = await _relationshipClient.CreateRelationshipAsync(
+                        new CreateRelationshipRequest
+                        {
+                            EntityAId = characterId,
+                            EntityAType = "character",
+                            EntityBId = otherEntityId.Value,
+                            EntityBType = "character",
+                            RelationshipTypeCode = mutation.RelationshipTypeCode
+                        }, cancellationToken);
+
+                    return (status == StatusCodes.OK, status == StatusCodes.OK ? "Relationship created" : $"Failed: {status}");
+                }
 
                 case MutationType.RelationshipEnd:
-                    return await ApplyRelationshipEndMutationAsync(mutation, characterId, cancellationToken);
+                {
+                    // Hard L2 dependency - should always be available
+                    if (string.IsNullOrEmpty(mutation.RelationshipTypeCode))
+                    {
+                        return (false, "Missing relationship type code");
+                    }
+
+                    Guid? otherEntityId = null;
+                    if (!string.IsNullOrEmpty(mutation.OtherParticipantRole) &&
+                        additionalParticipants?.TryGetValue(mutation.OtherParticipantRole, out var participantId) == true)
+                    {
+                        otherEntityId = participantId;
+                    }
+
+                    if (!otherEntityId.HasValue)
+                    {
+                        return (false, $"No participant found for role {mutation.OtherParticipantRole}");
+                    }
+
+                    // Find and end the relationship
+                    var (getStatus, getResponse) = await _relationshipClient.GetRelationshipAsync(
+                        new GetRelationshipRequest
+                        {
+                            EntityAId = characterId,
+                            EntityBId = otherEntityId.Value,
+                            RelationshipTypeCode = mutation.RelationshipTypeCode
+                        }, cancellationToken);
+
+                    if (getStatus != StatusCodes.OK || getResponse?.Found != true || getResponse.Relationship is null)
+                    {
+                        return (false, "Relationship not found");
+                    }
+
+                    var (endStatus, _) = await _relationshipClient.EndRelationshipAsync(
+                        new EndRelationshipRequest
+                        {
+                            RelationshipId = getResponse.Relationship.RelationshipId
+                        }, cancellationToken);
+
+                    return (endStatus == StatusCodes.OK, endStatus == StatusCodes.OK ? "Relationship ended" : $"Failed: {endStatus}");
+                }
 
                 case MutationType.Custom:
-                    _logger.LogDebug("Custom mutation type not applied server-side: {CustomType}", mutation.CustomMutationType);
-                    return true;
+                    // Custom mutations not executed server-side
+                    return (true, "Custom mutation - caller must handle");
 
                 default:
-                    _logger.LogWarning("Unknown mutation type: {MutationType}", mutation.MutationType);
-                    return false;
+                    return (false, $"Unknown mutation type: {mutation.MutationType}");
             }
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "API exception during mutation application");
+            return (false, $"API error: {ex.StatusCode}");
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to apply mutation {MutationType}", mutation.MutationType);
-            return false;
+            _logger.LogWarning(ex, "Error applying mutation");
+            return (false, ex.Message);
         }
     }
 
     /// <summary>
-    /// Applies personality mutation via soft L4 dependency.
+    /// Spawns a quest via quest client (soft L4 dependency).
     /// </summary>
-    private async Task<bool> ApplyPersonalityMutationAsync(
-        ScenarioMutation mutation,
-        Guid characterId,
-        CancellationToken cancellationToken)
-    {
-        // Soft L4 dependency - runtime resolution with graceful degradation
-        var client = _serviceProvider.GetService<ICharacterPersonalityClient>();
-        if (client == null)
-        {
-            _logger.LogDebug("Character personality service unavailable, skipping personality mutation");
-            return true; // Graceful degradation, not failure
-        }
-
-        if (!mutation.ExperienceType.HasValue)
-        {
-            _logger.LogWarning("Personality mutation missing experienceType");
-            return false;
-        }
-
-        try
-        {
-            var response = await client.RecordExperienceAsync(new RecordExperienceRequest
-            {
-                CharacterId = characterId,
-                ExperienceType = mutation.ExperienceType.Value,
-                Intensity = mutation.ExperienceIntensity ?? 0.5
-            }, cancellationToken);
-
-            return response.Applied;
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Personality mutation failed, continuing with scenario");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Applies backstory mutation via soft L4 dependency.
-    /// </summary>
-    private async Task<bool> ApplyBackstoryMutationAsync(
-        ScenarioMutation mutation,
-        Guid characterId,
-        CancellationToken cancellationToken)
-    {
-        // Soft L4 dependency - runtime resolution with graceful degradation
-        var client = _serviceProvider.GetService<ICharacterHistoryClient>();
-        if (client == null)
-        {
-            _logger.LogDebug("Character history service unavailable, skipping backstory mutation");
-            return true; // Graceful degradation, not failure
-        }
-
-        if (string.IsNullOrEmpty(mutation.BackstoryKey))
-        {
-            _logger.LogWarning("Backstory mutation missing backstoryKey");
-            return false;
-        }
-
-        try
-        {
-            var (status, _) = await client.AddBackstoryElementAsync(new AddBackstoryElementRequest
-            {
-                CharacterId = characterId,
-                ElementKey = mutation.BackstoryKey,
-                ElementValue = mutation.BackstoryValue ?? string.Empty,
-                Category = mutation.BackstoryCategory
-            }, cancellationToken);
-
-            return status == StatusCodes.OK;
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Backstory mutation failed, continuing with scenario");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Applies relationship create mutation via hard L2 dependency.
-    /// </summary>
-    private async Task<bool> ApplyRelationshipCreateMutationAsync(
-        ScenarioMutation mutation,
-        Guid characterId,
-        CancellationToken cancellationToken)
-    {
-        // Hard L2 dependency - constructor injection, crash if missing
-        if (string.IsNullOrEmpty(mutation.RelationshipTypeCode) || !mutation.TargetEntityId.HasValue)
-        {
-            _logger.LogWarning("Relationship create mutation missing typeCode or targetEntityId");
-            return false;
-        }
-
-        try
-        {
-            var (status, _) = await _relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
-            {
-                SourceEntityId = characterId,
-                SourceEntityType = "character",
-                TargetEntityId = mutation.TargetEntityId.Value,
-                TargetEntityType = mutation.TargetEntityType ?? "character",
-                RelationshipTypeCode = mutation.RelationshipTypeCode
-            }, cancellationToken);
-
-            return status == StatusCodes.OK;
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Relationship create failed with status {Status}", ex.StatusCode);
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Applies relationship end mutation via hard L2 dependency.
-    /// </summary>
-    private async Task<bool> ApplyRelationshipEndMutationAsync(
-        ScenarioMutation mutation,
-        Guid characterId,
-        CancellationToken cancellationToken)
-    {
-        // Hard L2 dependency - constructor injection, crash if missing
-        if (!mutation.RelationshipId.HasValue)
-        {
-            _logger.LogWarning("Relationship end mutation missing relationshipId");
-            return false;
-        }
-
-        try
-        {
-            var status = await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest
-            {
-                RelationshipId = mutation.RelationshipId.Value,
-                Reason = mutation.EndReason ?? "Scenario outcome"
-            }, cancellationToken);
-
-            return status == StatusCodes.OK;
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Relationship end failed with status {Status}", ex.StatusCode);
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Spawns a quest from a quest hook via soft L4 dependency.
-    /// </summary>
-    private async Task<Guid?> SpawnQuestAsync(
+    private async Task<(Guid? questId, bool success)> SpawnQuestAsync(
         ScenarioQuestHook hook,
         Guid characterId,
         CancellationToken cancellationToken)
     {
-        // Soft L4 dependency - runtime resolution with graceful degradation
-        var client = _serviceProvider.GetService<IQuestClient>();
-        if (client == null)
-        {
-            _logger.LogDebug("Quest service unavailable, skipping quest spawn");
-            return null; // Graceful degradation
-        }
-
         try
         {
-            var (status, response) = await client.CreateFromTemplateAsync(new CreateQuestFromTemplateRequest
+            // Soft L4 dependency - graceful degradation
+            var client = _serviceProvider.GetService<Quest.IQuestClient>();
+            if (client is null)
             {
-                TemplateId = hook.QuestTemplateId,
-                OwnerCharacterId = characterId,
-                AutoStart = hook.AutoStart ?? true
-            }, cancellationToken);
-
-            if (status == StatusCodes.OK && response != null)
-            {
-                return response.QuestId;
+                _logger.LogDebug("Quest service unavailable, skipping quest spawn for {QuestCode}", hook.QuestCode);
+                return (null, false);
             }
 
-            return null;
+            // Phase 1: No delayed spawning, spawn immediately
+            if (hook.DelaySeconds > 0)
+            {
+                _logger.LogDebug("Delayed quest spawning not implemented, spawning {QuestCode} immediately", hook.QuestCode);
+            }
+
+            var (status, response) = await client.CreateQuestFromTemplateAsync(
+                new Quest.CreateQuestFromTemplateRequest
+                {
+                    QuestCode = hook.QuestCode,
+                    CharacterId = characterId,
+                    TermOverrides = hook.TermOverrides
+                }, cancellationToken);
+
+            if (status == StatusCodes.OK && response is not null)
+            {
+                return (response.QuestInstanceId, true);
+            }
+
+            _logger.LogWarning("Failed to spawn quest {QuestCode}: {Status}", hook.QuestCode, status);
+            return (null, false);
         }
         catch (ApiException ex)
         {
-            _logger.LogWarning(ex, "Quest spawn failed, continuing with scenario");
-            return null;
+            _logger.LogWarning(ex, "API exception spawning quest {QuestCode}", hook.QuestCode);
+            return (null, false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error spawning quest {QuestCode}", hook.QuestCode);
+            return (null, false);
         }
     }
 
     /// <summary>
-    /// Publishes scenario triggered event.
+    /// Generates a human-readable description of a mutation.
     /// </summary>
-    private async Task PublishScenarioTriggeredEventAsync(
-        ScenarioExecutionModel execution,
-        ScenarioDefinitionModel scenario,
-        double fitScore,
-        CancellationToken cancellationToken)
+    private static string DescribeMutation(ScenarioMutation mutation)
     {
-        var phases = !string.IsNullOrEmpty(scenario.Phases)
-            ? BannouJson.Deserialize<List<ScenarioPhase>>(scenario.Phases)
-            : null;
-
-        var triggeredEvent = new ScenarioTriggeredEvent
+        return mutation.MutationType switch
         {
-            ExecutionId = execution.ExecutionId,
-            ScenarioId = execution.ScenarioId,
-            ScenarioCode = execution.ScenarioCode,
-            PrimaryCharacterId = execution.PrimaryCharacterId,
-            AdditionalParticipantIds = !string.IsNullOrEmpty(execution.AdditionalParticipantIds)
-                ? BannouJson.Deserialize<List<Guid>>(execution.AdditionalParticipantIds)
-                : null,
-            OrchestratorId = execution.OrchestratorId,
-            RealmId = execution.RealmId,
-            GameServiceId = execution.GameServiceId,
-            FitScore = fitScore,
-            PhaseCount = phases?.Count,
-            TriggeredAt = execution.StartedAt
+            MutationType.PersonalityEvolve =>
+                $"Apply {mutation.ExperienceType} experience (intensity: {mutation.ExperienceIntensity ?? 0.5f:F2})",
+            MutationType.BackstoryAdd =>
+                $"Add backstory: {mutation.BackstoryElementType}/{mutation.BackstoryKey}",
+            MutationType.RelationshipCreate =>
+                $"Create relationship: {mutation.RelationshipTypeCode} with {mutation.OtherParticipantRole}",
+            MutationType.RelationshipEnd =>
+                $"End relationship: {mutation.RelationshipTypeCode} with {mutation.OtherParticipantRole}",
+            MutationType.Custom =>
+                "Custom mutation (caller-handled)",
+            _ =>
+                $"Unknown mutation type: {mutation.MutationType}"
         };
-
-        await _messageBus.TryPublishAsync("storyline.scenario.triggered", triggeredEvent, cancellationToken: cancellationToken);
     }
 
     /// <summary>
-    /// Publishes scenario completed event.
+    /// Builds trigger response from execution model.
     /// </summary>
-    private async Task PublishScenarioCompletedEventAsync(
-        ScenarioExecutionModel execution,
-        int mutationsApplied,
-        int questsSpawned,
-        List<Guid> questIds,
-        CancellationToken cancellationToken)
+    private static TriggerScenarioResponse BuildTriggerResponse(ScenarioExecutionModel execution)
     {
-        var completedEvent = new ScenarioCompletedEvent
+        return new TriggerScenarioResponse
         {
             ExecutionId = execution.ExecutionId,
             ScenarioId = execution.ScenarioId,
-            ScenarioCode = execution.ScenarioCode,
-            PrimaryCharacterId = execution.PrimaryCharacterId,
-            AdditionalParticipantIds = !string.IsNullOrEmpty(execution.AdditionalParticipantIds)
-                ? BannouJson.Deserialize<List<Guid>>(execution.AdditionalParticipantIds)
-                : null,
-            OrchestratorId = execution.OrchestratorId,
-            RealmId = execution.RealmId,
-            GameServiceId = execution.GameServiceId,
-            PhasesCompleted = 1, // MVP: single phase
-            TotalMutationsApplied = mutationsApplied,
-            TotalQuestsSpawned = questsSpawned,
-            QuestIds = questIds.Count > 0 ? questIds : null,
-            DurationMs = execution.CompletedAt.HasValue
-                ? (int)(execution.CompletedAt.Value - execution.StartedAt).TotalMilliseconds
-                : null,
-            StartedAt = execution.StartedAt,
-            CompletedAt = execution.CompletedAt ?? DateTimeOffset.UtcNow
+            Status = execution.Status,
+            TriggeredAt = execution.TriggeredAt,
+            MutationsApplied = string.IsNullOrEmpty(execution.MutationsAppliedJson)
+                ? null
+                : BannouJson.Deserialize<List<AppliedMutation>>(execution.MutationsAppliedJson),
+            QuestsSpawned = string.IsNullOrEmpty(execution.QuestsSpawnedJson)
+                ? null
+                : BannouJson.Deserialize<List<SpawnedQuest>>(execution.QuestsSpawnedJson),
+            FailureReason = execution.FailureReason
         };
-
-        await _messageBus.TryPublishAsync("storyline.scenario.completed", completedEvent, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// Publishes scenario failed event.
-    /// </summary>
-    private async Task PublishScenarioFailedEventAsync(
-        ScenarioExecutionModel execution,
-        string failureReason,
-        bool isRecoverable,
-        CancellationToken cancellationToken)
-    {
-        var failedEvent = new ScenarioFailedEvent
-        {
-            ExecutionId = execution.ExecutionId,
-            ScenarioId = execution.ScenarioId,
-            ScenarioCode = execution.ScenarioCode,
-            PrimaryCharacterId = execution.PrimaryCharacterId,
-            OrchestratorId = execution.OrchestratorId,
-            RealmId = execution.RealmId,
-            GameServiceId = execution.GameServiceId,
-            FailureReason = failureReason,
-            FailedAtPhase = execution.CurrentPhaseIndex,
-            FailedAtPhaseName = null, // MVP: single unnamed phase
-            PartialMutationsApplied = execution.MutationsApplied,
-            IsRecoverable = isRecoverable,
-            FailedAt = DateTimeOffset.UtcNow
-        };
-
-        await _messageBus.TryPublishAsync("storyline.scenario.failed", failedEvent, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// Publishes scenario available event.
-    /// </summary>
-    private async Task PublishScenarioAvailableEventAsync(
-        Guid characterId,
-        Guid? realmId,
-        Guid? gameServiceId,
-        List<AvailableScenario> availableScenarios,
-        CancellationToken cancellationToken)
-    {
-        var topFitScore = availableScenarios.Count > 0 ? availableScenarios[0].FitScore : null;
-        var triggerRecommended = availableScenarios.Any(s => s.TriggerRecommended == true);
-
-        var availableEvent = new ScenarioAvailableEvent
-        {
-            CharacterId = characterId,
-            RealmId = realmId,
-            GameServiceId = gameServiceId,
-            AvailableScenarioIds = availableScenarios.Select(s => s.ScenarioId).ToList(),
-            AvailableScenarioCodes = availableScenarios.Select(s => s.Code).ToList(),
-            TopFitScore = topFitScore,
-            TriggerRecommended = triggerRecommended,
-            DetectedAt = DateTimeOffset.UtcNow
-        };
-
-        await _messageBus.TryPublishAsync("storyline.scenario.available", availableEvent, cancellationToken: cancellationToken);
     }
 
     #endregion
@@ -2601,77 +2600,79 @@ internal sealed class PlanIndexEntry
 }
 
 /// <summary>
-/// Internal model for scenario definitions stored in MySQL.
-/// Uses JSON serialization for complex fields per IMPLEMENTATION TENETS.
+/// Internal storage model for scenario definitions (MySQL-backed).
 /// </summary>
 internal sealed class ScenarioDefinitionModel
 {
     public required Guid ScenarioId { get; init; }
-    public required string Code { get; set; }
+    public required string Code { get; init; }
     public required string Name { get; set; }
     public string? Description { get; set; }
-    public Guid? RealmId { get; init; }
-    public Guid? GameServiceId { get; init; }
-    public required string TriggerConditions { get; set; } // JSON serialized
-    public required string Phases { get; set; } // JSON serialized
-    public string? Mutations { get; set; } // JSON serialized
-    public string? QuestHooks { get; set; } // JSON serialized
+    public required string TriggerConditionsJson { get; set; }
+    public required string PhasesJson { get; set; }
+    public string? MutationsJson { get; set; }
+    public string? QuestHooksJson { get; set; }
     public int? CooldownSeconds { get; set; }
-    public string? Tags { get; set; } // JSON serialized
-    public string? ExclusivityTags { get; set; } // JSON serialized
-    public ScenarioStatus Status { get; set; }
-    public DateTimeOffset CreatedAt { get; init; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public string? ExclusivityTagsJson { get; set; }
+    public int Priority { get; set; }
+    public bool Enabled { get; set; } = true;
+    public Guid? RealmId { get; set; }
+    public Guid? GameServiceId { get; set; }
+    public string? TagsJson { get; set; }
+    public bool Deprecated { get; set; }
+    public required DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset? UpdatedAt { get; set; }
+    public required string Etag { get; set; }
 }
 
 /// <summary>
-/// Internal model for scenario executions stored in MySQL.
+/// Internal storage model for scenario executions (MySQL-backed history).
 /// </summary>
 internal sealed class ScenarioExecutionModel
 {
     public required Guid ExecutionId { get; init; }
     public required Guid ScenarioId { get; init; }
     public required string ScenarioCode { get; init; }
+    public required string ScenarioName { get; init; }
     public required Guid PrimaryCharacterId { get; init; }
-    public string? AdditionalParticipantIds { get; init; } // JSON serialized
-    public Guid? OrchestratorId { get; init; }
-    public Guid? RealmId { get; init; }
-    public Guid? GameServiceId { get; init; }
-    public double? FitScore { get; init; }
-    public ScenarioStatus Status { get; set; }
-    public int CurrentPhaseIndex { get; set; }
-    public int MutationsApplied { get; set; }
-    public int QuestsSpawned { get; set; }
-    public string? QuestIds { get; set; } // JSON serialized
+    public string? AdditionalParticipantsJson { get; set; }
+    public Guid? OrchestratorId { get; set; }
+    public Guid? RealmId { get; set; }
+    public Guid? GameServiceId { get; set; }
+    public required ScenarioStatus Status { get; set; }
+    public int CurrentPhase { get; set; }
+    public int TotalPhases { get; set; }
+    public double? FitScore { get; set; }
+    public string? MutationsAppliedJson { get; set; }
+    public string? QuestsSpawnedJson { get; set; }
     public string? FailureReason { get; set; }
-    public DateTimeOffset StartedAt { get; init; }
+    public required DateTimeOffset TriggeredAt { get; init; }
     public DateTimeOffset? CompletedAt { get; set; }
 }
 
 /// <summary>
-/// Internal marker for scenario cooldowns stored in Redis with TTL.
+/// Internal marker for cooldown tracking with TTL.
 /// </summary>
 internal sealed class CooldownMarker
 {
-    public required Guid ScenarioId { get; init; }
-    public required Guid CharacterId { get; init; }
     public required DateTimeOffset ExpiresAt { get; init; }
 }
 
 /// <summary>
-/// Internal entry for active scenarios stored in Redis sets.
-/// </summary>
-internal sealed class ActiveScenarioEntry
-{
-    public required Guid ExecutionId { get; init; }
-    public required DateTimeOffset StartedAt { get; init; }
-}
-
-/// <summary>
-/// Internal marker for idempotency keys stored in Redis with TTL.
+/// Internal marker for idempotency tracking with TTL.
 /// </summary>
 internal sealed class IdempotencyMarker
 {
     public required Guid ExecutionId { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+}
+
+/// <summary>
+/// Internal model for tracking active scenarios per character.
+/// </summary>
+internal sealed class ActiveScenarioEntry
+{
+    public required Guid ExecutionId { get; init; }
+    public required Guid ScenarioId { get; init; }
+    public required string ScenarioCode { get; init; }
 }

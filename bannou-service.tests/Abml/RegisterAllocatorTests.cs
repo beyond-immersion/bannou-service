@@ -3,7 +3,7 @@
 // Tests for register allocation behavior and edge cases.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Compiler;
+using BeyondImmersion.Bannou.BehaviorExpressions.Compiler;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Tests.Abml;
