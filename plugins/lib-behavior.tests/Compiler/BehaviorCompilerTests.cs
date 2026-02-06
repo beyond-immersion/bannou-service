@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.BannouService.Behavior.Runtime;
 using Xunit;
+using AbmlCompiler = BeyondImmersion.Bannou.Behavior.Compiler.BehaviorCompiler;
 
 namespace BeyondImmersion.Bannou.Behavior.Tests.Compiler;
 
@@ -14,7 +15,7 @@ namespace BeyondImmersion.Bannou.Behavior.Tests.Compiler;
 /// </summary>
 public class BehaviorCompilerTests
 {
-    private readonly BehaviorCompiler _compiler = new();
+    private readonly AbmlCompiler _compiler = new();
 
     // =========================================================================
     // BASIC COMPILATION TESTS
