@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Puppetmaster;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;

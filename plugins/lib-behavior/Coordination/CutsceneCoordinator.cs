@@ -209,7 +209,7 @@ public static class CutsceneCoordinatorExtensions
     public static async Task<ICutsceneSession> CreateCoordinatedSessionAsync(
         this ICutsceneCoordinator coordinator,
         string sessionId,
-        Runtime.CinematicRunner controller,
+        CinematicRunner controller,
         CutsceneSessionOptions? options = null,
         CancellationToken ct = default)
     {
