@@ -1084,22 +1084,30 @@ These are interpreted by the runtime handler:
 
 #### Service Actions
 
-> **⚠️ NOT YET IMPLEMENTED**: The `service_call` action is documented but not yet implemented.
-> At runtime, it will silently no-op. See [GitHub Issue #144](https://github.com/beyond-immersion/bannou-service/issues/144)
-> for implementation tracking. When implemented, it will use a whitelisted service approach
-> for security (not unrestricted mesh access).
-
-```yaml
-- service_call:
-    service: economy_service
-    method: purchase_item
-    parameters:
-      item_id: "${selected_item.id}"
-      quantity: 1
-    result_variable: purchase_result
-    on_error:
-      - handle_purchase_error
-```
+> **⛔ SECURITY POLICY**: Generic service call actions (`service_call`, `api_call`, `http_call`,
+> `mesh_call`, `invoke_service`) are **permanently forbidden** in ABML. They will cause a
+> compilation error if used.
+>
+> **Rationale**: Generic service calls would give behaviors unrestricted access to any Bannou
+> service endpoint, violating the principle of least privilege. A behavior could delete accounts,
+> credit unlimited currency, or perform other dangerous operations.
+>
+> **Required approach**: All service interactions must use purpose-built, validated actions that:
+> - Validate inputs before execution
+> - Limit scope to specific, safe operations
+> - Provide clear audit trails
+> - Are explicitly designed for behavior use cases
+>
+> **Purpose-built actions** (implemented or planned):
+> - `load_snapshot:` - Load resource snapshots safely
+> - `prefetch_snapshots:` - Batch prefetch with validation
+> - `actor_command:` - Send validated commands to actors
+> - `actor_query:` - Query actor state (read-only)
+> - `spawn_watcher:` - Spawn regional watchers (puppetmaster-specific)
+> - `emit_event:` - Publish typed, validated events
+>
+> This policy is enforced at both compile-time (SemanticAnalyzer) and runtime (IntentEmitterRegistry)
+> as defense-in-depth.
 
 ### 8.5 Handler Contract
 

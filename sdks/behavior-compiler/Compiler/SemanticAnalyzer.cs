@@ -21,6 +21,20 @@ public sealed class SemanticAnalyzer
     private readonly HashSet<string> _usedVariables = new();
 
     /// <summary>
+    /// Domain action names that are forbidden for security reasons.
+    /// Generic service call actions would give behaviors unrestricted access to any endpoint.
+    /// All service interactions must use purpose-built, validated actions instead.
+    /// </summary>
+    private static readonly HashSet<string> ForbiddenDomainActions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "service_call",
+        "api_call",
+        "http_call",
+        "mesh_call",
+        "invoke_service"
+    };
+
+    /// <summary>
     /// Analyzes an ABML document for semantic errors and warnings.
     /// </summary>
     /// <param name="document">The document to analyze.</param>
@@ -207,6 +221,22 @@ public sealed class SemanticAnalyzer
             case EmitIntentAction emit:
                 ValidateEmitIntent(emit);
                 break;
+
+            case DomainAction domain:
+                ValidateDomainAction(flowName, domain);
+                break;
+        }
+    }
+
+    private void ValidateDomainAction(string flowName, DomainAction action)
+    {
+        if (ForbiddenDomainActions.Contains(action.Name))
+        {
+            _errors.Add(new SemanticError(
+                $"Domain action '{action.Name}' is forbidden in flow '{flowName}'. " +
+                "Generic service call actions violate security policy. " +
+                "Use purpose-built actions instead (e.g., load_snapshot, actor_command, spawn_watcher).",
+                SemanticErrorKind.ForbiddenDomainAction));
         }
     }
 
@@ -372,6 +402,9 @@ public enum SemanticErrorKind
 
     /// <summary>Type mismatch in expression.</summary>
     TypeMismatch,
+
+    /// <summary>Forbidden domain action that violates security policy.</summary>
+    ForbiddenDomainAction,
 
     /// <summary>Other semantic error.</summary>
     Other

@@ -533,6 +533,8 @@ No bugs identified.
 
 18. **GOAP failure response discards actual search effort**: At lines 864-865 of BehaviorService.cs, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
 
+19. **Generic service call actions are forbidden**: The SemanticAnalyzer blocks `service_call`, `api_call`, `http_call`, `mesh_call`, and `invoke_service` domain actions at compile time with `SemanticErrorKind.ForbiddenDomainAction`. The IntentEmitterRegistry also rejects these at runtime as defense-in-depth. All service interactions must use purpose-built actions (e.g., `load_snapshot`, `actor_command`, `spawn_watcher`). See issue #296.
+
 ---
 
 ## Work Tracking

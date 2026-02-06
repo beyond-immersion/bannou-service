@@ -2048,6 +2048,13 @@
             Analyzes ABML documents for semantic correctness before compilation.
             </summary>
         </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.ForbiddenDomainActions">
+            <summary>
+            Domain action names that are forbidden for security reasons.
+            Generic service call actions would give behaviors unrestricted access to any endpoint.
+            All service interactions must use purpose-built, validated actions instead.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.Analyze(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
             <summary>
             Analyzes an ABML document for semantic errors and warnings.
@@ -2122,6 +2129,9 @@
         </member>
         <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.TypeMismatch">
             <summary>Type mismatch in expression.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.ForbiddenDomainAction">
+            <summary>Forbidden domain action that violates security policy.</summary>
         </member>
         <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.Other">
             <summary>Other semantic error.</summary>

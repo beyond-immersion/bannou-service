@@ -61,18 +61,18 @@ flows:
   start_realm_watchers:
     actions:
       - log: { message: "Starting watchers for realm ${event.realmId}" }
-      # API call would be made here when api_call action is implemented
-      # - api_call:
-      #     service: puppetmaster
-      #     endpoint: /puppetmaster/watchers/start-for-realm
-      #     data:
-      #       realmId: "${event.realmId}"
+      # Use purpose-built action when implemented (see #297)
+      # - spawn_watcher:
+      #     realm_id: "${event.realmId}"
+      #     watcher_type: narrative
 
   # Stop all watchers for a realm
   stop_realm_watchers:
     actions:
       - log: { message: "Stopping watchers for realm ${event.realmId}" }
-      # API call would be made here when api_call action is implemented
+      # Use purpose-built action when implemented (see #297)
+      # - stop_watcher:
+      #     realm_id: "${event.realmId}"
 
   # Handle admin commands via puppetmaster.command.* events
   on_admin_command:
