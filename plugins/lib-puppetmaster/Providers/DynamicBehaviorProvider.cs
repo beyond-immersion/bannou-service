@@ -10,13 +10,13 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Providers;
 /// </summary>
 public sealed class DynamicBehaviorProvider : IBehaviorDocumentProvider
 {
-    private readonly BehaviorDocumentCache _cache;
+    private readonly IBehaviorDocumentCache _cache;
 
     /// <summary>
     /// Creates a new dynamic behavior provider.
     /// </summary>
     /// <param name="cache">The behavior document cache.</param>
-    public DynamicBehaviorProvider(BehaviorDocumentCache cache)
+    public DynamicBehaviorProvider(IBehaviorDocumentCache cache)
     {
         _cache = cache;
     }

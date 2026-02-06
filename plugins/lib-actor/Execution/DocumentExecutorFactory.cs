@@ -3,7 +3,6 @@
 // Creates DocumentExecutor instances with cognition handlers registered via DI.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;

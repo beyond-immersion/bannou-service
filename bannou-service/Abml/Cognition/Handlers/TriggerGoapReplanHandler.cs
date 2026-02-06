@@ -6,21 +6,16 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
-using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Behavior;
-using BeyondImmersion.BannouService.Behavior.Goap;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 using GoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
 
-namespace BeyondImmersion.Bannou.Behavior.Handlers;
+namespace BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 
 /// <summary>
 /// ABML action handler for triggering GOAP replanning (Cognition Stage 5).
 /// Invokes the GOAP planner with urgency-based constraints.
-/// Uses IServiceScopeFactory to resolve scoped dependencies on-demand.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -33,6 +28,7 @@ namespace BeyondImmersion.Bannou.Behavior.Handlers;
 ///     behavior_id: "${agent.behavior_id}"
 ///     entity_id: "${agent.id}"
 ///     available_actions: "${agent.goap_actions}"
+///     goal: "${agent.current_goal}"
 ///     result_variable: "replan_status"
 /// </code>
 /// </para>
@@ -42,27 +38,29 @@ namespace BeyondImmersion.Bannou.Behavior.Handlers;
 /// - Medium (0.3-0.7): MaxDepth=6, Timeout=50ms - Quick decision
 /// - High (0.7-1.0): MaxDepth=3, Timeout=20ms - Immediate reaction
 /// </para>
+/// <para>
+/// <b>IMPLEMENTATION TENETS</b>: This handler is "dumb" - it requires all data
+/// (goals, actions, world state) to be provided via parameters or scope.
+/// It does NOT load data from external services. The caller (ActorRunner)
+/// is responsible for loading GOAP metadata and providing it in scope.
+/// </para>
 /// </remarks>
 public sealed class TriggerGoapReplanHandler : IActionHandler
 {
     private const string ACTION_NAME = "trigger_goap_replan";
     private readonly IGoapPlanner _planner;
-    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<TriggerGoapReplanHandler> _logger;
 
     /// <summary>
     /// Creates a new trigger GOAP replan handler.
     /// </summary>
     /// <param name="planner">GOAP planner for creating plans.</param>
-    /// <param name="scopeFactory">Service scope factory for resolving scoped dependencies.</param>
     /// <param name="logger">Logger instance.</param>
     public TriggerGoapReplanHandler(
         IGoapPlanner planner,
-        IServiceScopeFactory scopeFactory,
         ILogger<TriggerGoapReplanHandler> logger)
     {
         _planner = planner;
-        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -121,11 +119,11 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
             PlanningOptions = planningOptions
         };
 
-        // Get available actions - from params, cached metadata, or scope
-        var availableActions = await GetAvailableActionsAsync(evaluatedParams, behaviorId, scope, ct);
+        // Get available actions from params or scope - caller must provide these
+        var availableActions = GetAvailableActions(evaluatedParams, scope);
 
-        // Get the goal to plan for
-        var goal = await GetPlanningGoalAsync(evaluatedParams, affectedGoals, behaviorId, ct);
+        // Get the goal from params or scope - caller must provide this
+        var goal = GetPlanningGoal(evaluatedParams, affectedGoals, scope);
 
         // Execute planning if we have sufficient context
         if (goal != null && availableActions.Count > 0 && worldState.Count > 0)
@@ -184,13 +182,11 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
         return ActionResult.Continue;
     }
 
-    private async Task<IReadOnlyList<GoapAction>> GetAvailableActionsAsync(
+    private static IReadOnlyList<GoapAction> GetAvailableActions(
         IReadOnlyDictionary<string, object?> evaluatedParams,
-        string behaviorId,
-        IVariableScope scope,
-        CancellationToken ct)
+        IVariableScope scope)
     {
-        // First, check if actions were provided directly in parameters
+        // Check if actions were provided directly in parameters
         if (evaluatedParams.TryGetValue("available_actions", out var actionsObj) && actionsObj != null)
         {
             if (actionsObj is IReadOnlyList<GoapAction> actions)
@@ -206,88 +202,46 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
             return scopeActions;
         }
 
-        // Try to load from behavior metadata via bundle manager (use scope for scoped dependency)
-        if (!string.IsNullOrEmpty(behaviorId) && behaviorId != "unknown")
-        {
-            using var serviceScope = _scopeFactory.CreateScope();
-            var bundleManager = serviceScope.ServiceProvider.GetService<IBehaviorBundleManager>();
-            if (bundleManager != null)
-            {
-                var metadata = await bundleManager.GetGoapMetadataAsync(behaviorId, ct);
-                if (metadata != null)
-                {
-                    return ConvertCachedActions(metadata.Actions);
-                }
-            }
-        }
-
+        // No actions available - caller must provide them
         return [];
     }
 
-    private async Task<GoapGoal?> GetPlanningGoalAsync(
+    private static GoapGoal? GetPlanningGoal(
         IReadOnlyDictionary<string, object?> evaluatedParams,
         List<string> affectedGoals,
-        string behaviorId,
-        CancellationToken ct)
+        IVariableScope scope)
     {
-        // First, check if a goal was provided directly in parameters
+        // Check if a goal was provided directly in parameters
         if (evaluatedParams.TryGetValue("goal", out var goalObj) && goalObj is GoapGoal providedGoal)
         {
             return providedGoal;
         }
 
-        // If no affected goals, can't plan
-        if (affectedGoals.Count == 0)
+        // Check if a goal is in scope
+        var scopeGoal = scope.GetValue("current_goal") as GoapGoal;
+        if (scopeGoal != null)
         {
-            return null;
+            return scopeGoal;
         }
 
-        // Try to load goal definition from behavior metadata (use scope for scoped dependency)
-        if (!string.IsNullOrEmpty(behaviorId) && behaviorId != "unknown")
+        // Check for goals list in scope that we can filter by affected goals
+        if (affectedGoals.Count > 0)
         {
-            using var serviceScope = _scopeFactory.CreateScope();
-            var bundleManager = serviceScope.ServiceProvider.GetService<IBehaviorBundleManager>();
-            if (bundleManager != null)
+            var scopeGoals = scope.GetValue("goap_goals") as IReadOnlyList<GoapGoal>;
+            if (scopeGoals != null)
             {
-                var metadata = await bundleManager.GetGoapMetadataAsync(behaviorId, ct);
-                if (metadata != null)
+                var goalName = affectedGoals[0];
+                var matchingGoal = scopeGoals.FirstOrDefault(g =>
+                    g.Name.Equals(goalName, StringComparison.OrdinalIgnoreCase));
+                if (matchingGoal != null)
                 {
-                    // Find the first matching affected goal
-                    var goalName = affectedGoals[0];
-                    var cachedGoal = metadata.Goals.FirstOrDefault(g =>
-                        g.Name.Equals(goalName, StringComparison.OrdinalIgnoreCase));
-
-                    if (cachedGoal != null)
-                    {
-                        return ConvertCachedGoal(cachedGoal);
-                    }
+                    return matchingGoal;
                 }
             }
         }
 
-        // Create a simple placeholder goal if we have a name but no metadata
-        if (affectedGoals.Count > 0)
-        {
-            // Can't create a meaningful goal without conditions
-            return null;
-        }
-
+        // No goal available - caller must provide it
         return null;
-    }
-
-    private static IReadOnlyList<GoapAction> ConvertCachedActions(List<CachedGoapAction> cached)
-    {
-        var actions = new List<GoapAction>();
-        foreach (var c in cached)
-        {
-            actions.Add(GoapAction.FromMetadata(c.FlowName, c.Preconditions, c.Effects, c.Cost));
-        }
-        return actions;
-    }
-
-    private static GoapGoal ConvertCachedGoal(CachedGoapGoal cached)
-    {
-        return GoapGoal.FromMetadata(cached.Name, cached.Priority, cached.Conditions);
     }
 
     private static List<string> ExtractGoalIds(object? goals)

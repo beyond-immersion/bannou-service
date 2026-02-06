@@ -11,22 +11,12 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Tests;
 /// </summary>
 public class DynamicBehaviorProviderTests
 {
-    private readonly Mock<BehaviorDocumentCache> _mockCache;
+    private readonly Mock<IBehaviorDocumentCache> _mockCache;
     private readonly DynamicBehaviorProvider _provider;
 
     public DynamicBehaviorProviderTests()
     {
-        var mockScopeFactory = new Mock<Microsoft.Extensions.DependencyInjection.IServiceScopeFactory>();
-        var mockHttpClientFactory = new Mock<IHttpClientFactory>();
-        var mockCacheLogger = new Mock<ILogger<BehaviorDocumentCache>>();
-        var configuration = new PuppetmasterServiceConfiguration();
-
-        _mockCache = new Mock<BehaviorDocumentCache>(
-            mockScopeFactory.Object,
-            mockHttpClientFactory.Object,
-            mockCacheLogger.Object,
-            configuration);
-
+        _mockCache = new Mock<IBehaviorDocumentCache>();
         _provider = new DynamicBehaviorProvider(_mockCache.Object);
     }
 

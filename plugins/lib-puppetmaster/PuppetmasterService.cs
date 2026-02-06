@@ -39,7 +39,7 @@ public partial class PuppetmasterService : IPuppetmasterService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<PuppetmasterService> _logger;
     private readonly PuppetmasterServiceConfiguration _configuration;
-    private readonly BehaviorDocumentCache _behaviorCache;
+    private readonly IBehaviorDocumentCache _behaviorCache;
 
     /// <summary>
     /// Registry of active watchers indexed by watcher ID.
@@ -65,7 +65,7 @@ public partial class PuppetmasterService : IPuppetmasterService
         IMessageBus messageBus,
         ILogger<PuppetmasterService> logger,
         PuppetmasterServiceConfiguration configuration,
-        BehaviorDocumentCache behaviorCache,
+        IBehaviorDocumentCache behaviorCache,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;

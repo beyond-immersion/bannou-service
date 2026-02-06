@@ -18,7 +18,7 @@ public class PuppetmasterServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<PuppetmasterService>> _mockLogger;
     private readonly PuppetmasterServiceConfiguration _configuration;
-    private readonly Mock<BehaviorDocumentCache> _mockCache;
+    private readonly Mock<IBehaviorDocumentCache> _mockCache;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public PuppetmasterServiceTests()
@@ -27,17 +27,7 @@ public class PuppetmasterServiceTests
         _mockLogger = new Mock<ILogger<PuppetmasterService>>();
         _configuration = new PuppetmasterServiceConfiguration();
         _mockEventConsumer = new Mock<IEventConsumer>();
-
-        // Create mock for the cache - need to provide all constructor args
-        var mockScopeFactory = new Mock<Microsoft.Extensions.DependencyInjection.IServiceScopeFactory>();
-        var mockHttpClientFactory = new Mock<IHttpClientFactory>();
-        var mockCacheLogger = new Mock<ILogger<BehaviorDocumentCache>>();
-
-        _mockCache = new Mock<BehaviorDocumentCache>(
-            mockScopeFactory.Object,
-            mockHttpClientFactory.Object,
-            mockCacheLogger.Object,
-            _configuration);
+        _mockCache = new Mock<IBehaviorDocumentCache>();
     }
 
     private PuppetmasterService CreateService()

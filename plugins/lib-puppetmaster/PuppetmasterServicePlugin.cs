@@ -35,6 +35,7 @@ public class PuppetmasterServicePlugin : BaseBannouPlugin
 
         // Register the behavior document cache as singleton (in-memory caching)
         services.AddSingleton<BehaviorDocumentCache>();
+        services.AddSingleton<IBehaviorDocumentCache>(sp => sp.GetRequiredService<BehaviorDocumentCache>());
 
         // Register the dynamic behavior provider (priority 100 = highest)
         // This enables lib-actor to discover and use our provider via DI
