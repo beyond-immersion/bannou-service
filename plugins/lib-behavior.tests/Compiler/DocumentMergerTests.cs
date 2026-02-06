@@ -10,7 +10,7 @@ using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.BannouService.Abml.Execution;
 using Xunit;
 
-namespace BeyondImmersion.BannouService.Tests.Abml;
+namespace BeyondImmersion.Bannou.Behavior.Tests.Compiler;
 
 /// <summary>
 /// Tests for DocumentMerger - flattening LoadedDocument trees for bytecode compilation.
