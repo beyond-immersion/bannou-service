@@ -19,12 +19,14 @@ public class PuppetmasterServiceTests
     private readonly Mock<ILogger<PuppetmasterService>> _mockLogger;
     private readonly PuppetmasterServiceConfiguration _configuration;
     private readonly Mock<BehaviorDocumentCache> _mockCache;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public PuppetmasterServiceTests()
     {
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<PuppetmasterService>>();
         _configuration = new PuppetmasterServiceConfiguration();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Create mock for the cache - need to provide all constructor args
         var mockScopeFactory = new Mock<Microsoft.Extensions.DependencyInjection.IServiceScopeFactory>();
@@ -44,7 +46,8 @@ public class PuppetmasterServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockCache.Object);
+            _mockCache.Object,
+            _mockEventConsumer.Object);
     }
 
     #region Constructor Validation

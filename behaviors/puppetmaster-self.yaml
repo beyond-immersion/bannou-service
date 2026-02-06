@@ -1,0 +1,128 @@
+version: "2.0"
+
+metadata:
+  id: puppetmaster-self
+  type: event_brain
+  description: |
+    Self-orchestration behavior for the Puppetmaster service.
+    Controls the lifecycle of regional watchers and coordinates
+    encounter orchestration across realms.
+  tags:
+    - orchestration
+    - system
+    - puppetmaster
+  deterministic: false
+
+# Service dependencies for self-orchestration
+context:
+  services:
+    - name: puppetmaster
+      required: true
+    - name: realm
+      required: false
+    - name: actor
+      required: false
+
+# Variables for tracking state
+variables:
+  last_command_time: null
+  active_realm_count: 0
+
+# Entry flow - called when the actor starts
+flows:
+  start:
+    actions:
+      - log: "Puppetmaster self-orchestration started"
+      - set:
+          variable: last_command_time
+          value: "${now()}"
+
+  # Handle realm activation events
+  on_realm_activated:
+    actions:
+      - log: { message: "Realm activated: ${event.realmId}" }
+      - increment:
+          variable: active_realm_count
+          by: 1
+      # Start watchers for the activated realm
+      - call: { flow: start_realm_watchers }
+
+  # Handle realm deactivation events
+  on_realm_deactivated:
+    actions:
+      - log: { message: "Realm deactivated: ${event.realmId}" }
+      - decrement:
+          variable: active_realm_count
+          by: 1
+      # Stop watchers for the deactivated realm
+      - call: { flow: stop_realm_watchers }
+
+  # Start all watchers for a realm
+  start_realm_watchers:
+    actions:
+      - log: { message: "Starting watchers for realm ${event.realmId}" }
+      # API call would be made here when api_call action is implemented
+      # - api_call:
+      #     service: puppetmaster
+      #     endpoint: /puppetmaster/watchers/start-for-realm
+      #     data:
+      #       realmId: "${event.realmId}"
+
+  # Stop all watchers for a realm
+  stop_realm_watchers:
+    actions:
+      - log: { message: "Stopping watchers for realm ${event.realmId}" }
+      # API call would be made here when api_call action is implemented
+
+  # Handle admin commands via puppetmaster.command.* events
+  on_admin_command:
+    actions:
+      - log: { message: "Admin command received: ${event.command}" }
+      - set:
+          variable: last_command_time
+          value: "${now()}"
+      - cond:
+          - when: "${event.command == 'spawn_watcher'}"
+            then:
+              - call: { flow: handle_spawn_watcher }
+          - when: "${event.command == 'stop_watcher'}"
+            then:
+              - call: { flow: handle_stop_watcher }
+          - when: "${event.command == 'list_active'}"
+            then:
+              - call: { flow: handle_list_active }
+          - when: "${event.command == 'status'}"
+            then:
+              - call: { flow: handle_status }
+          - else:
+              - log: { message: "Unknown command: ${event.command}" }
+
+  # Handle spawn_watcher command
+  handle_spawn_watcher:
+    actions:
+      - log: { message: "Spawning watcher: realm=${event.realmId}, type=${event.watcherType}" }
+
+  # Handle stop_watcher command
+  handle_stop_watcher:
+    actions:
+      - log: { message: "Stopping watcher: ${event.watcherId}" }
+
+  # Handle list_active command
+  handle_list_active:
+    actions:
+      - log: "Listing active watchers..."
+
+  # Handle status command
+  handle_status:
+    actions:
+      - log: { message: "Puppetmaster status - Active realms: ${active_realm_count}" }
+
+  # Periodic health check flow (called by tick loop)
+  on_tick:
+    actions:
+      # Minimal processing on each tick
+      # In production, this could check for stale watchers, reconnect dropped connections, etc.
+      - cond:
+          - when: "${tick_count % 100 == 0}"
+            then:
+              - log: "Puppetmaster heartbeat - healthy"
