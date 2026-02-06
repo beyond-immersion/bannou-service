@@ -1,0 +1,194 @@
+openapi: 3.0.0
+info:
+  title: Bannou Puppetmaster Service API
+  description: |
+    Orchestration service for dynamic behaviors, regional watchers, and encounter coordination.
+    Pulls the strings while actors perform on stage.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+x-service-layer: GameFeatures
+servers:
+  - url: http://localhost:5012
+    description: Bannou service endpoint (internal only)
+
+paths:
+  /puppetmaster/status:
+    post:
+      summary: Get service status and statistics
+      description: Returns health status, cached behavior count, and active watcher count.
+      operationId: getStatus
+      tags:
+        - Puppetmaster
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStatusRequest'
+      responses:
+        '200':
+          description: Status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PuppetmasterStatusResponse'
+
+  /puppetmaster/behaviors/invalidate:
+    post:
+      summary: Invalidate cached behavior documents
+      description: |
+        Invalidates one or all cached behavior documents, forcing reload on next access.
+        If behaviorRef is null, invalidates all cached behaviors.
+      operationId: invalidateBehaviors
+      tags:
+        - Behaviors
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvalidateBehaviorsRequest'
+      responses:
+        '200':
+          description: Invalidation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidateBehaviorsResponse'
+
+  /puppetmaster/watchers/list:
+    post:
+      summary: List active regional watchers
+      description: Returns all currently active regional watcher instances.
+      operationId: listWatchers
+      tags:
+        - Watchers
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListWatchersRequest'
+      responses:
+        '200':
+          description: Watchers listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWatchersResponse'
+
+components:
+  schemas:
+    # Request Models
+    GetStatusRequest:
+      type: object
+      additionalProperties: false
+      description: Request for service status (currently empty, reserved for future filters)
+      properties: {}
+
+    InvalidateBehaviorsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to invalidate cached behavior documents
+      properties:
+        behaviorRef:
+          type: string
+          nullable: true
+          description: Specific behavior reference to invalidate. If null, invalidates all cached behaviors.
+
+    ListWatchersRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list active regional watchers
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter to watchers for a specific realm. If null, returns all watchers.
+
+    # Response Models
+    PuppetmasterStatusResponse:
+      type: object
+      additionalProperties: false
+      description: Service status and statistics
+      required:
+        - cachedBehaviorCount
+        - activeWatcherCount
+        - isHealthy
+      properties:
+        cachedBehaviorCount:
+          type: integer
+          description: Number of behavior documents currently cached
+        activeWatcherCount:
+          type: integer
+          description: Number of active regional watcher instances
+        isHealthy:
+          type: boolean
+          description: Overall service health status
+
+    InvalidateBehaviorsResponse:
+      type: object
+      additionalProperties: false
+      description: Result of behavior cache invalidation
+      required:
+        - invalidatedCount
+      properties:
+        invalidatedCount:
+          type: integer
+          description: Number of behaviors invalidated (0 if specific ref not found)
+
+    ListWatchersResponse:
+      type: object
+      additionalProperties: false
+      description: List of active regional watchers
+      required:
+        - watchers
+      properties:
+        watchers:
+          type: array
+          description: Active watcher instances
+          items:
+            $ref: '#/components/schemas/WatcherInfo'
+
+    WatcherInfo:
+      type: object
+      additionalProperties: false
+      description: Information about an active regional watcher
+      required:
+        - watcherId
+        - realmId
+        - watcherType
+        - startedAt
+      properties:
+        watcherId:
+          type: string
+          format: uuid
+          description: Unique identifier for this watcher instance
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this watcher monitors
+        watcherType:
+          type: string
+          description: Type of watcher (e.g., "regional", "dungeon", "event")
+        startedAt:
+          type: string
+          format: date-time
+          description: When this watcher was started
+        behaviorRef:
+          type: string
+          nullable: true
+          description: Behavior document reference this watcher uses
