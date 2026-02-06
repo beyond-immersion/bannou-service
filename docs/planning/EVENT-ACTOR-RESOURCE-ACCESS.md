@@ -1183,4 +1183,4 @@ public sealed class CharacterPersonalityTemplate : IResourceTemplate
 
 ### TENET References
 - [TENETS.md](/home/lysander/repos/bannou/docs/reference/TENETS.md)
-- [SERVICE_HIERARCHY.md](/home/lysander/repos/bannou/docs/reference/SERVICE_HIERARCHY.md)
+- [SERVICE-HIERARCHY.md](/home/lysander/repos/bannou/docs/reference/SERVICE-HIERARCHY.md)

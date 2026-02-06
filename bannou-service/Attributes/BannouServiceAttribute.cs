@@ -45,7 +45,7 @@ public class BannouServiceAttribute : BaseServiceAttribute
     public string Name { get; }
 
     /// <summary>
-    /// The service hierarchy layer per SERVICE_HIERARCHY.md.
+    /// The service hierarchy layer per SERVICE-HIERARCHY.md.
     /// Determines plugin load order and valid dependency directions.
     /// Set via <c>x-service-layer</c> in the service's API schema.
     /// </summary>

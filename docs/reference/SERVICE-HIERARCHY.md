@@ -195,6 +195,7 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 |---------|------|
 | **analytics** | Event aggregation, statistics, skill ratings (see note below) |
 | **behavior** | ABML compiler, GOAP planner |
+| **puppetmaster** | Dynamic behavior orchestration, regional watchers, encounter coordination |
 | **mapping** | Spatial data management |
 | **scene** | Hierarchical composition storage |
 | **matchmaking** | Player matching and queue management |
@@ -786,7 +787,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | **L1** | account, auth, connect, permission, contract, resource |
 | **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory, game-session, actor |
 | **L3** | asset, orchestrator, documentation, website |
-| **L4** | analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
+| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
 | **L5** | (reserved for third-party plugins and internal meta-services) |
 
 † Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.

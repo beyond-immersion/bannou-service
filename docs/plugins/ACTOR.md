@@ -41,7 +41,7 @@ Higher priority providers are checked first. If a provider returns `null`, the n
 
 **Variable Provider Factory Pattern (L2 → L3/L4 Data Access)**
 
-Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, encounters, quests) at runtime. Per SERVICE_HIERARCHY.md, this uses **dependency inversion**:
+Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, encounters, quests) at runtime. Per SERVICE-HIERARCHY.md, this uses **dependency inversion**:
 
 1. `IVariableProviderFactory` interface defined in `bannou-service/Providers/`
 2. L3/L4 services implement and register factories via DI

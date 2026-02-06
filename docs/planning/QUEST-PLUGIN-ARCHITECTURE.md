@@ -676,7 +676,7 @@ See [Scenario Plugin Architecture](SCENARIO_PLUGIN_ARCHITECTURE.md) for details.
 - [ABML/GOAP Expansion Opportunities](ABML_GOAP_EXPANSION_OPPORTUNITIES.md) - Quest generation concepts
 - [Storyline Composer](STORYLINE_COMPOSER.md) - Narrative arc generation
 - [Economy Currency Architecture](ECONOMY_CURRENCY_ARCHITECTURE.md) - Quest reward integration
-- [Service Hierarchy](../reference/SERVICE_HIERARCHY.md) - Layer dependencies
+- [Service Hierarchy](../reference/SERVICE-HIERARCHY.md) - Layer dependencies
 
 ---
 

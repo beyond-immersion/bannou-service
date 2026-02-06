@@ -727,7 +727,7 @@ The lib-resource service is feature-complete for the current integration require
 
 ## Related Documents
 
-- [SERVICE_HIERARCHY.md](../reference/SERVICE_HIERARCHY.md) - Layer placement rationale
+- [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md) - Layer placement rationale
 - [TENETS.md](../reference/TENETS.md) - Compliance requirements
 - [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md) - `x-references` and `x-resource-lifecycle` schema extensions
 - [Planning Document](~/.claude/plans/typed-crunching-muffin.md) - Full implementation plan with phases

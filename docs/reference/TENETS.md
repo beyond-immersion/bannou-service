@@ -20,7 +20,7 @@ When documenting tenet compliance in source code comments, **NEVER use specific 
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
 - `SERVICE HIERARCHY` - for Tenet 2 (service layer dependencies)
 
-> **Note**: Tenets 1 and 2 are special - they reference external documents ([SCHEMA-RULES.md](SCHEMA-RULES.md) and [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md)) for detailed rules. In source code, reference them as `FOUNDATION TENETS` or by their specific names ("per schema-first development", "per service hierarchy").
+> **Note**: Tenets 1 and 2 are special - they reference external documents ([SCHEMA-RULES.md](SCHEMA-RULES.md) and [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md)) for detailed rules. In source code, reference them as `FOUNDATION TENETS` or by their specific names ("per schema-first development", "per service hierarchy").
 
 **Examples:**
 ```csharp
@@ -121,7 +121,7 @@ Schema-first applies to **HTTP APIs and service contracts**. Some components are
 
 **Services are organized into layers. Dependencies may only flow downward.**
 
-Before adding ANY service client dependency, you MUST read [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md). This is not optional.
+Before adding ANY service client dependency, you MUST read [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md). This is not optional.
 
 ### The Hierarchy Layers
 
@@ -161,7 +161,7 @@ public class ActorService  // Layer 4
 
 ### Reference Counting the Right Way
 
-If a foundational service needs to know about references from higher layers (for cleanup eligibility), use **event-driven reference registration** - higher-layer services publish reference events, and the foundational service consumes them. See [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md) for the full pattern.
+If a foundational service needs to know about references from higher layers (for cleanup eligibility), use **event-driven reference registration** - higher-layer services publish reference events, and the foundational service consumes them. See [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md) for the full pattern.
 
 ---
 
@@ -172,12 +172,12 @@ Tenets are organized into categories based on when they're needed:
 | Category | Tenets | When to Reference |
 |----------|--------|-------------------|
 | [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
-| [**Service Hierarchy**](SERVICE_HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
+| [**Service Hierarchy**](SERVICE-HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
 | [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18 | Before starting any new service or feature |
 | [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
-> **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE_HIERARCHY.md) that contain their own detailed rules.
+> **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE-HIERARCHY.md) that contain their own detailed rules.
 
 ---
 
@@ -246,14 +246,14 @@ Tenets are organized into categories based on when they're needed:
 | Shared type defined in events schema | T1 | Move type to `-api.yaml`, use `$ref` in events |
 | API schema `$ref` to events schema | T1 | Reverse the dependency - API is source of truth |
 | Events `$ref` to different service's API | T1 | Use common schema or duplicate the type |
-| Layer 2 service depending on Layer 3 | T2 | Remove dependency; use events instead (see [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md)) |
+| Layer 2 service depending on Layer 3 | T2 | Remove dependency; use events instead (see [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md)) |
 | Layer 2 service depending on Layer 4 | T2 | Remove dependency; higher layer should publish events |
 | Foundation service calling extension client | T2 | Invert the dependency; extension consumes foundation events |
 | Circular service dependencies | T2 | Restructure to respect layer hierarchy |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use generated clients via lib-mesh |
-| Graceful degradation for L0/L1/L2 dependency | T4 | Use constructor injection; see SERVICE_HIERARCHY.md |
+| Graceful degradation for L0/L1/L2 dependency | T4 | Use constructor injection; see SERVICE-HIERARCHY.md |
 | Anonymous event objects | T5 | Define typed event in schema |
 | Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
 | Service class missing `partial` | T6 | Add `partial` keyword |

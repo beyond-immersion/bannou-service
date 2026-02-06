@@ -155,7 +155,7 @@ info:
 
 ### x-service-layer (Service Hierarchy Layer)
 
-Defined at the **root level** of `{service}-api.yaml`, declares the service's position in the service hierarchy per [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md). This controls plugin load order and enables safe cross-layer constructor injection.
+Defined at the **root level** of `{service}-api.yaml`, declares the service's position in the service hierarchy per [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md). This controls plugin load order and enables safe cross-layer constructor injection.
 
 ```yaml
 openapi: 3.0.0
@@ -921,7 +921,7 @@ If your `GetAccountResponse` returns an `AuthMethodInfo` object, then `AccountCr
 
 **Rule**: Do NOT define enums that enumerate services, resources, or entity types from other layers of the service hierarchy.
 
-A service should not "know about" services in higher layers (see [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md)). Creating an enum that lists higher-layer services or their entity types creates implicit coupling that defeats the purpose of layer isolation.
+A service should not "know about" services in higher layers (see [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md)). Creating an enum that lists higher-layer services or their entity types creates implicit coupling that defeats the purpose of layer isolation.
 
 **Examples of FORBIDDEN enums**:
 
@@ -1208,7 +1208,7 @@ Before submitting schema changes, verify:
 - [ ] All endpoints have `x-permissions` (even if empty array)
 - [ ] All properties have `description` fields
 - [ ] `servers` URL uses base endpoint format (`http://localhost:5012`)
-- [ ] `x-service-layer` is set to the correct layer per SERVICE_HIERARCHY.md
+- [ ] `x-service-layer` is set to the correct layer per SERVICE-HIERARCHY.md
 
 ### NRT Compliance
 - [ ] All optional reference types (string, object, array) have `nullable: true`

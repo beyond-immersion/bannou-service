@@ -957,7 +957,7 @@ Note: This applies to TRUE external APIs, not other Bannou services. Bannou-to-B
 
 #### 3. Intentionally Generic Services (Service Hierarchy Isolation)
 
-When a lower-layer service is **intentionally generic** and must not enumerate higher-layer services or entity types, use opaque string identifiers instead of enums. This prevents implicit coupling that violates [SERVICE_HIERARCHY.md](../SERVICE_HIERARCHY.md).
+When a lower-layer service is **intentionally generic** and must not enumerate higher-layer services or entity types, use opaque string identifiers instead of enums. This prevents implicit coupling that violates [SERVICE-HIERARCHY.md](../SERVICE-HIERARCHY.md).
 
 ```csharp
 // ACCEPTABLE: lib-resource (L1) uses strings to avoid enumerating L2+ services

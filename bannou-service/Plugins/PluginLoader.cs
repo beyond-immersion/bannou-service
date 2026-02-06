@@ -164,7 +164,7 @@ public class PluginLoader
             return null; // Indicate fatal failure
         }
 
-        // STAGE 3: Sort enabled plugins by service hierarchy layer per SERVICE_HIERARCHY.md
+        // STAGE 3: Sort enabled plugins by service hierarchy layer per SERVICE-HIERARCHY.md
         // Order: L0 (Infrastructure) → L1 (AppFoundation) → L2 (GameFoundation) →
         //        L3 (AppFeatures) → L4 (GameFeatures) → L5 (Extensions)
         // Within L0, use InfrastructureLoadOrder for internal ordering (telemetry → state → messaging → mesh)
@@ -185,12 +185,12 @@ public class PluginLoader
         DiscoverTypesForRegistration();
 
         // STAGE 5: Validate service hierarchy compliance
-        // This catches services that depend on higher-layer services (violates SERVICE_HIERARCHY.md)
+        // This catches services that depend on higher-layer services (violates SERVICE-HIERARCHY.md)
         if (!ValidateServiceHierarchies())
         {
             _logger.LogCritical(
                 "STARTUP FAILURE: Service hierarchy violations detected. " +
-                "Services cannot depend on higher-layer services per SERVICE_HIERARCHY.md. " +
+                "Services cannot depend on higher-layer services per SERVICE-HIERARCHY.md. " +
                 "Fix the violations listed above before proceeding.");
             return null; // Indicate fatal failure
         }
@@ -799,7 +799,7 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Validates that all enabled services follow the service hierarchy rules per SERVICE_HIERARCHY.md.
+    /// Validates that all enabled services follow the service hierarchy rules per SERVICE-HIERARCHY.md.
     /// Services may only depend on services in lower layers (lower ServiceLayer enum values).
     /// </summary>
     /// <returns>True if all services are compliant; false if violations are found.</returns>
@@ -841,7 +841,7 @@ public class PluginLoader
             }
 
             _logger.LogError(
-                "See SERVICE_HIERARCHY.md for dependency rules. Fix these violations before proceeding.");
+                "See SERVICE-HIERARCHY.md for dependency rules. Fix these violations before proceeding.");
 
             return false;
         }
@@ -943,7 +943,7 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Static registry mapping service names to layers (authoritative per SERVICE_HIERARCHY.md).
+    /// Static registry mapping service names to layers (authoritative per SERVICE-HIERARCHY.md).
     /// </summary>
     private static ServiceLayer GetServiceLayerFromRegistry(string serviceName)
     {

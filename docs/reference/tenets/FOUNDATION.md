@@ -78,7 +78,7 @@ Generated clients are auto-registered as Singletons and use mesh service resolut
 
 ### Dependency Hardness by Layer (ABSOLUTE)
 
-**Rule**: Dependencies on L0/L1/L2 services MUST be hard (fail at startup if missing). Dependencies on L3/L4 MAY be soft (graceful degradation). See [SERVICE_HIERARCHY.md § Dependency Handling Patterns](../SERVICE_HIERARCHY.md#dependency-handling-patterns-mandatory) for the full pattern.
+**Rule**: Dependencies on L0/L1/L2 services MUST be hard (fail at startup if missing). Dependencies on L3/L4 MAY be soft (graceful degradation). See [SERVICE-HIERARCHY.md § Dependency Handling Patterns](../SERVICE-HIERARCHY.md#dependency-handling-patterns-mandatory) for the full pattern.
 
 The SERVICE_HIERARCHY guarantees that L0/L1/L2 services are running when higher layers are enabled. Silent degradation for these guaranteed dependencies hides deployment configuration errors.
 
@@ -632,7 +632,7 @@ When a package changes license, pin to the last permissive version with XML comm
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use IMeshInvocationClient or generated clients via lib-mesh |
-| Graceful degradation for L0/L1/L2 dependency | T4 | Use constructor injection; see SERVICE_HIERARCHY.md |
+| Graceful degradation for L0/L1/L2 dependency | T4 | Use constructor injection; see SERVICE-HIERARCHY.md |
 | Lua script when interface method exists | T4 | Use `ICacheableStateStore` or `IRedisOperations` methods |
 | Inline Lua script string | T4 | Move to `.lua` file with loader class |
 | Loop/iteration in Lua script | T4 | Restructure to avoid iteration; use C# for loops |

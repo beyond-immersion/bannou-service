@@ -121,7 +121,7 @@ public enum StatusCodes
 }
 
 /// <summary>
-/// Defines the service hierarchy layers per SERVICE_HIERARCHY.md.
+/// Defines the service hierarchy layers per SERVICE-HIERARCHY.md.
 /// Lower values load first. Dependencies may only flow to lower layers.
 /// </summary>
 /// <remarks>

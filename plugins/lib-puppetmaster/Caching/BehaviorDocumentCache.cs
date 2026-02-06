@@ -13,12 +13,13 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Caching;
 /// </summary>
 public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
 {
-    private readonly ConcurrentDictionary<string, AbmlDocument> _cache = new();
+    private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<BehaviorDocumentCache> _logger;
     private readonly PuppetmasterServiceConfiguration _configuration;
     private readonly DocumentParser _parser = new();
+    private readonly TimeSpan _ttl;
 
     /// <summary>
     /// Creates a new behavior document cache.
@@ -37,6 +38,7 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _configuration = configuration;
+        _ttl = TimeSpan.FromSeconds(_configuration.BehaviorCacheTtlSeconds);
     }
 
     /// <summary>
@@ -54,8 +56,15 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
     {
         if (_cache.TryGetValue(behaviorRef, out var cached))
         {
-            _logger.LogDebug("Cache hit for behavior {BehaviorRef}", behaviorRef);
-            return cached;
+            if (!cached.IsExpired)
+            {
+                _logger.LogDebug("Cache hit for behavior {BehaviorRef}", behaviorRef);
+                return cached.Document;
+            }
+
+            // Expired entry - remove and reload
+            _cache.TryRemove(behaviorRef, out _);
+            _logger.LogDebug("Cache entry expired for behavior {BehaviorRef}, reloading", behaviorRef);
         }
 
         _logger.LogDebug("Cache miss for behavior {BehaviorRef}, loading from asset service", behaviorRef);
@@ -89,8 +98,9 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
             // Cache the document (with size limit check)
             if (_cache.Count < _configuration.BehaviorCacheMaxSize)
             {
-                _cache.TryAdd(behaviorRef, document);
-                _logger.LogDebug("Cached behavior {BehaviorRef}", behaviorRef);
+                var entry = new CacheEntry(document, DateTimeOffset.UtcNow.Add(_ttl));
+                _cache.TryAdd(behaviorRef, entry);
+                _logger.LogDebug("Cached behavior {BehaviorRef} with TTL {TtlSeconds}s", behaviorRef, _ttl.TotalSeconds);
             }
             else
             {
@@ -180,5 +190,16 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
 
         var yaml = await httpClient.GetStringAsync(asset.DownloadUrl, ct);
         return yaml;
+    }
+
+    /// <summary>
+    /// Cache entry with expiration tracking.
+    /// </summary>
+    private sealed record CacheEntry(AbmlDocument Document, DateTimeOffset ExpiresAt)
+    {
+        /// <summary>
+        /// Returns true if this entry has expired.
+        /// </summary>
+        public bool IsExpired => DateTimeOffset.UtcNow > ExpiresAt;
     }
 }

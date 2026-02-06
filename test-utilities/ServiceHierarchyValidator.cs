@@ -7,7 +7,7 @@ using Xunit;
 namespace BeyondImmersion.BannouService.TestUtilities;
 
 /// <summary>
-/// Validates that service dependencies follow the service hierarchy rules per SERVICE_HIERARCHY.md.
+/// Validates that service dependencies follow the service hierarchy rules per SERVICE-HIERARCHY.md.
 /// Services may only depend on services in lower layers (lower ServiceLayer enum values).
 /// </summary>
 /// <remarks>
@@ -87,7 +87,7 @@ public static partial class ServiceHierarchyValidator
                 $"SERVICE HIERARCHY VIOLATION in {serviceType.Name}:{Environment.NewLine}" +
                 $"Service is {firstViolation.ServiceLayer} (L{(int)firstViolation.ServiceLayer / 100}), but depends on higher-layer clients:{Environment.NewLine}" +
                 violationMessages + Environment.NewLine +
-                "See SERVICE_HIERARCHY.md for dependency rules.");
+                "See SERVICE-HIERARCHY.md for dependency rules.");
         }
     }
 
