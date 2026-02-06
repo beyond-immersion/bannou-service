@@ -81,8 +81,7 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 | `compress-callback:{resourceType}:{sourceType}` | `CompressCallbackDefinition` | Compression endpoint for a source type |
 | `compress-callback-index:{resourceType}` | Set of `string` | Source types with registered compression callbacks |
 | `compress-callback-resource-types` | Set of `string` | Master index of resource types with compression callbacks |
-| `archive-version:{resourceType}:{resourceId}` | `int` (counter) | Current archive version (atomic increment) |
-| `archive:{resourceType}:{resourceId}:{version}` | `ResourceArchiveModel` (MySQL) | Bundled compressed archive data |
+| `archive:{resourceType}:{resourceId}` | `ResourceArchiveModel` (MySQL) | Bundled compressed archive data (single archive per resource, version tracked within model) |
 
 **Snapshot Key Patterns** (resource-snapshots store):
 
@@ -245,8 +244,8 @@ All configuration properties are verified as used in `ResourceService.cs`.
    d. On failure: if `ALL_REQUIRED`, abort immediately; else continue and log
    e. Publish `resource.compress.callback-failed` event on failure
 6. Create `ResourceArchiveModel` with all collected entries
-7. Atomically increment archive version via `ICacheableStateStore.IncrementAsync`
-8. Save archive to MySQL store with key `archive:{resourceType}:{resourceId}:{version}`
+7. Compute new version from existing archive (if any): `(existingArchive?.Version ?? 0) + 1`
+8. Save archive to MySQL store with key `archive:{resourceType}:{resourceId}` (overwrites previous version)
 9. If `deleteSourceData: true`, execute cleanup callbacks via `ExecuteCleanupAsync`
 10. Publish `resource.compressed` event
 11. Release lock, return result
@@ -378,16 +377,14 @@ All configuration properties are verified as used in `ResourceService.cs`.
 │  │ Key: compress-callback-index:{resourceType}                         │   │
 │  │ Type: Redis Set                                                     │   │
 │  │ Members: [ "character-personality", "character-history", ... ]      │   │
-│  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Key: archive-version:{resourceType}:{resourceId}                    │   │
-│  │ Type: Counter (atomic increment for versioning)                     │   │
-│  │ Value: 1, 2, 3... (increments on each re-compression)               │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 │  resource-archives (MySQL)                                                  │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │ Key: archive:{resourceType}:{resourceId}:{version}                  │   │
+│  │ Key: archive:{resourceType}:{resourceId}                            │   │
 │  │ Type: JSON object (ResourceArchiveModel)                            │   │
+│  │ Note: Single archive per resource; version tracked in model;        │   │
+│  │       overwrites previous on re-compression                         │   │
 │  │ Value: {                                                            │   │
 │  │   ArchiveId, ResourceType, ResourceId, Version,                     │   │
 │  │   Entries: [                                                        │   │
@@ -686,7 +683,7 @@ This section tracks active development work on items from the quirks/bugs lists 
   - Unit tests for compression functionality (48 total tests in lib-resource.tests)
   - Compression callbacks registered by L4 services: character-personality, character-history, character-encounter, character (base data)
   - Supports hierarchical archival with priority ordering and decompression for data recovery
-  - Archives stored in MySQL for durability with version tracking via atomic increment
+  - Archives stored in MySQL for durability with version tracking (version derived from existing archive)
 
 - **2026-02-03**: Added cleanup management enhancements:
   - `dryRun` flag on `/resource/cleanup/execute` for previewing what would happen without executing

@@ -461,8 +461,6 @@ Memory Relevance Scoring (Keyword-Based)
 
 5. **Compiler optimizations**: `CompilationOptions.EnableOptimizations` flag exists and `CompilationOptions.Release` preset enables it, but no optimization passes are currently implemented in the compiler pipeline. The flag is a placeholder for future dead-code elimination, constant folding, etc.
 
-6. ~~**Vocalization intent channel**~~: **FIXED**: The `SemanticAnalyzer.ValidateEmitIntent` now validates all five intent channels including `vocalization`. The valid channels list is `["action", "locomotion", "attention", "stance", "vocalization"]`.
-
 ---
 
 ## Potential Extensions
@@ -525,17 +523,15 @@ No bugs identified.
 
 13. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
 
-14. ~~**Memory store unbounded index growth**~~: **FIXED**: `AddToMemoryIndexAsync` now enforces `DefaultMemoryLimit` on write. When the index exceeds capacity, oldest entries are trimmed from the front and their corresponding memory records are deleted (best-effort cleanup). The index is bounded to `DefaultMemoryLimit` (default 100) entries per entity.
+14. **Memory index update forces save after retry exhaustion**: If ETag-based optimistic concurrency fails 3 times (MemoryStoreMaxRetries), the memory index update falls back to unconditional save (lines 289-299 of ActorLocalMemoryStore.cs), potentially losing concurrent updates.
 
-15. **Memory index update forces save after retry exhaustion**: If ETag-based optimistic concurrency fails 3 times (MemoryStoreMaxRetries), the memory index update falls back to unconditional save (lines 289-299 of ActorLocalMemoryStore.cs), potentially losing concurrent updates.
+15. **ClearAsync deletes memories sequentially**: Clearing an entity's memories iterates through each memory ID and issues individual delete calls (lines 234-237 of ActorLocalMemoryStore.cs). An entity with 100 memories generates 101 state store operations (100 deletes + 1 index delete).
 
-16. **ClearAsync deletes memories sequentially**: Clearing an entity's memories iterates through each memory ID and issues individual delete calls (lines 234-237 of ActorLocalMemoryStore.cs). An entity with 100 memories generates 101 state store operations (100 deletes + 1 index delete).
+16. **Unreachable code in BinaryOperator switch**: The `BinaryOperator.In` case at line 207 of StackExpressionCompiler.cs is dead code - the `in` operator is handled by `CompileInOperator` at lines 181-184 before the switch is reached. The throw statement can never execute. Kept as defensive code for future refactoring safety.
 
-17. **Unreachable code in BinaryOperator switch**: The `BinaryOperator.In` case at line 207 of StackExpressionCompiler.cs is dead code - the `in` operator is handled by `CompileInOperator` at lines 181-184 before the switch is reached. The throw statement can never execute. Kept as defensive code for future refactoring safety.
+17. **BehaviorModelCache.GetInterpreter race condition on cold cache**: At lines 142-158 of BehaviorModelCache.cs, two concurrent threads calling `GetInterpreter` for the same character/type/variant can both miss the cache check (line 144), both create separate `BehaviorModelInterpreter` instances (line 155), and both write to the cache via direct assignment. The last writer wins and the earlier caller's interpreter is evicted from the cache while potentially still in use. In practice benign because actors run single-threaded behavior loops, so concurrent access to the same character's interpreter doesn't occur.
 
-18. **BehaviorModelCache.GetInterpreter race condition on cold cache**: At lines 142-158 of BehaviorModelCache.cs, two concurrent threads calling `GetInterpreter` for the same character/type/variant can both miss the cache check (line 144), both create separate `BehaviorModelInterpreter` instances (line 155), and both write to the cache via direct assignment. The last writer wins and the earlier caller's interpreter is evicted from the cache while potentially still in use. In practice benign because actors run single-threaded behavior loops, so concurrent access to the same character's interpreter doesn't occur.
-
-19. **GOAP failure response discards actual search effort**: At lines 864-865 of BehaviorService.cs, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
+18. **GOAP failure response discards actual search effort**: At lines 864-865 of BehaviorService.cs, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
 
 ---
 
@@ -543,12 +539,7 @@ No bugs identified.
 
 ### AUDIT Markers
 
-<!-- AUDIT:2026-01-31:documentation-accuracy - Fixed two documentation inaccuracies:
-     1. ValidateAbml SemanticWarnings: Incorrectly claimed response always returns empty list.
-        Code at BehaviorService.cs:530 correctly propagates result.Warnings.
-     2. Vocalization intent channel: Incorrectly claimed vocalization was not in valid channels.
-        SemanticAnalyzer.cs:259 includes "vocalization" in validChannels array.
-     Both were doc-only fixes - no code changes required. -->
+None active.
 
 ### Implementation Gaps
 
