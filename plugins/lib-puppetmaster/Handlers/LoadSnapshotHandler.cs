@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
 using BeyondImmersion.BannouService.Puppetmaster.Providers;
 using Microsoft.Extensions.Logging;
+using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 
@@ -66,7 +67,7 @@ public sealed class LoadSnapshotHandler : IActionHandler
     /// <inheritdoc/>
     public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
-        ExecutionContext context,
+        AbmlExecutionContext context,
         CancellationToken ct)
     {
         var loadAction = (LoadSnapshotAction)action;

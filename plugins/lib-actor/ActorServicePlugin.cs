@@ -73,6 +73,10 @@ public class ActorServicePlugin : BaseBannouPlugin
         services.AddSingleton<IActionHandler, SetEncounterPhaseHandler>();
         services.AddSingleton<IActionHandler, EndEncounterHandler>();
 
+        // Register Event-to-Character communication handlers
+        services.AddSingleton<IActionHandler, ActorCommandHandler>();
+        services.AddSingleton<IActionHandler, ActorQueryHandler>();
+
         // Register scheduled event manager for delayed event handling
         services.AddSingleton<IScheduledEventManager, ScheduledEventManager>();
 

@@ -2133,6 +2133,12 @@
         <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.ForbiddenDomainAction">
             <summary>Forbidden domain action that violates security policy.</summary>
         </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.MissingRequiredParameter">
+            <summary>Missing required parameter for domain action.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.InvalidIdentifier">
+            <summary>Invalid identifier format.</summary>
+        </member>
         <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticErrorKind.Other">
             <summary>Other semantic error.</summary>
         </member>
