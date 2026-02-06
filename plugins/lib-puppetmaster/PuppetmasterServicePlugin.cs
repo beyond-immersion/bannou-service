@@ -58,6 +58,17 @@ public class PuppetmasterServicePlugin : BaseBannouPlugin
         services.AddSingleton<PrefetchSnapshotsHandler>();
         services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<PrefetchSnapshotsHandler>());
 
+        // Register watcher management handlers for ABML execution
+        // These enable Event Brain actors to spawn, stop, and list regional watchers
+        services.AddSingleton<SpawnWatcherHandler>();
+        services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<SpawnWatcherHandler>());
+
+        services.AddSingleton<StopWatcherHandler>();
+        services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<StopWatcherHandler>());
+
+        services.AddSingleton<ListWatchersHandler>();
+        services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<ListWatchersHandler>());
+
         Logger?.LogDebug("Puppetmaster service dependencies configured");
     }
 

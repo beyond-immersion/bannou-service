@@ -100,6 +100,10 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 | `ResourceSnapshotCache` | `IResourceSnapshotCache` implementation for Event Brain actors |
 | `ResourceArchiveProvider` | `IVariableProvider` implementation (not DI-registered - created per-snapshot for ABML expressions) |
 | `LoadSnapshotHandler` | `IActionHandler` for `load_snapshot:` ABML action - enables Event Brain actors to load resource snapshots |
+| `PrefetchSnapshotsHandler` | `IActionHandler` for `prefetch_snapshots:` ABML action - batch cache warmup for multiple snapshots |
+| `SpawnWatcherHandler` | `IActionHandler` for `spawn_watcher:` ABML action - spawns regional watchers |
+| `StopWatcherHandler` | `IActionHandler` for `stop_watcher:` ABML action - stops regional watchers |
+| `ListWatchersHandler` | `IActionHandler` for `list_watchers:` ABML action - queries active watchers |
 
 ---
 
@@ -135,6 +139,56 @@ Loads a resource snapshot and registers it as a variable provider for expression
 - Uses `ResourceSnapshotCache` for TTL-based caching
 - If snapshot cannot be loaded, registers an empty provider (graceful degradation - returns null for all paths)
 - `resource_id` expression is evaluated at runtime, enabling dynamic resource loading
+
+### spawn_watcher
+
+Spawns a regional watcher for the specified realm via the Puppetmaster service.
+
+**YAML Syntax**:
+```yaml
+- spawn_watcher:
+    watcher_type: regional           # Required - watcher type string
+    realm_id: ${event.realmId}       # Required - realm GUID expression
+    behavior_id: watcher-regional    # Optional - behavior document to use
+    into: spawned_watcher_id         # Optional - variable to store watcher ID
+```
+
+**Implementation Notes**:
+- Calls `IPuppetmasterClient.StartWatcherAsync` via mesh
+- Returns existing watcher if one already exists for realm/type combination
+- If `into` is specified, stores the watcher ID in that variable
+- `realm_id` is required - returns error if not provided
+
+### stop_watcher
+
+Stops a running regional watcher.
+
+**YAML Syntax**:
+```yaml
+- stop_watcher:
+    watcher_id: ${watcher_to_stop}   # Required - watcher GUID expression
+```
+
+**Implementation Notes**:
+- Calls `IPuppetmasterClient.StopWatcherAsync` via mesh
+- Returns success even if watcher doesn't exist (idempotent behavior)
+
+### list_watchers
+
+Queries active watchers with optional filtering.
+
+**YAML Syntax**:
+```yaml
+- list_watchers:
+    into: active_watchers            # Required - variable to store results
+    realm_id: ${realm_id}            # Optional - filter by realm
+    watcher_type: regional           # Optional - filter by type
+```
+
+**Implementation Notes**:
+- Calls `IPuppetmasterClient.ListWatchersAsync` via mesh
+- Client-side filters by `watcher_type` since API only supports realm filter
+- Result is a list of `WatcherInfo` objects with `watcherId`, `realmId`, `watcherType`, `startedAt`, `behaviorRef`, and `actorId` properties
 
 ---
 
@@ -255,4 +309,6 @@ Loads a resource snapshot and registers it as a variable provider for expression
 
 This section tracks active development work. Managed by `/audit-plugin` workflow.
 
-*No active work items.*
+### Completed
+
+- **2026-02-06**: Issue #298 - Added `spawn_watcher`, `stop_watcher`, and `list_watchers` ABML actions for Puppetmaster self-orchestration. Replaced forbidden generic `api_call` with purpose-built handlers.

@@ -217,6 +217,73 @@ public sealed record PrefetchSnapshotsAction(
     IReadOnlyList<string>? Filter = null) : ActionNode;
 
 // ═══════════════════════════════════════════════════════════════════════════
+// WATCHER MANAGEMENT ACTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Spawns a regional watcher for the specified realm.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Creates a new watcher instance via the Puppetmaster service:
+/// <code>
+/// - spawn_watcher:
+///     watcher_type: regional
+///     realm_id: ${event.realmId}
+///     behavior_id: watcher-regional
+///     into: spawned_watcher_id
+/// </code>
+/// </para>
+/// </remarks>
+/// <param name="WatcherType">Expression evaluating to watcher type string (e.g., "regional", "thematic").</param>
+/// <param name="RealmId">Expression evaluating to realm GUID (optional - uses context if not specified).</param>
+/// <param name="BehaviorId">Expression evaluating to behavior document ID (optional - uses default for type).</param>
+/// <param name="Into">Optional variable name to store the created watcher ID.</param>
+public sealed record SpawnWatcherAction(
+    string WatcherType,
+    string? RealmId = null,
+    string? BehaviorId = null,
+    string? Into = null) : ActionNode;
+
+/// <summary>
+/// Stops a running regional watcher.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Stops a watcher by ID via the Puppetmaster service:
+/// <code>
+/// - stop_watcher:
+///     watcher_id: ${watcher_to_stop}
+/// </code>
+/// </para>
+/// </remarks>
+/// <param name="WatcherId">Expression evaluating to watcher GUID to stop.</param>
+public sealed record StopWatcherAction(
+    string WatcherId) : ActionNode;
+
+/// <summary>
+/// Lists active watchers with optional filtering.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Queries active watchers and stores results in a variable:
+/// <code>
+/// - list_watchers:
+///     into: active_watchers
+///     realm_id: ${realm_id}
+///     watcher_type: regional
+/// </code>
+/// </para>
+/// </remarks>
+/// <param name="Into">Required variable name to store the list of watcher info objects.</param>
+/// <param name="RealmId">Optional expression evaluating to realm GUID filter.</param>
+/// <param name="WatcherType">Optional watcher type filter string.</param>
+public sealed record ListWatchersAction(
+    string Into,
+    string? RealmId = null,
+    string? WatcherType = null) : ActionNode;
+
+// ═══════════════════════════════════════════════════════════════════════════
 // DOMAIN ACTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 

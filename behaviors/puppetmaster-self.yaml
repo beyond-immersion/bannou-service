@@ -61,18 +61,26 @@ flows:
   start_realm_watchers:
     actions:
       - log: { message: "Starting watchers for realm ${event.realmId}" }
-      # Use purpose-built action when implemented (see #297)
-      # - spawn_watcher:
-      #     realm_id: "${event.realmId}"
-      #     watcher_type: narrative
+      - spawn_watcher:
+          watcher_type: regional
+          realm_id: "${event.realmId}"
+          into: regional_watcher_id
+      - log: { message: "Started regional watcher: ${regional_watcher_id}" }
 
   # Stop all watchers for a realm
   stop_realm_watchers:
     actions:
       - log: { message: "Stopping watchers for realm ${event.realmId}" }
-      # Use purpose-built action when implemented (see #297)
-      # - stop_watcher:
-      #     realm_id: "${event.realmId}"
+      - list_watchers:
+          into: realm_watchers
+          realm_id: "${event.realmId}"
+      - foreach:
+          variable: watcher
+          collection: "${realm_watchers}"
+          do:
+            - stop_watcher:
+                watcher_id: "${watcher.watcherId}"
+            - log: { message: "Stopped watcher: ${watcher.watcherId}" }
 
   # Handle admin commands via puppetmaster.command.* events
   on_admin_command:
@@ -101,16 +109,26 @@ flows:
   handle_spawn_watcher:
     actions:
       - log: { message: "Spawning watcher: realm=${event.realmId}, type=${event.watcherType}" }
+      - spawn_watcher:
+          watcher_type: "${event.watcherType}"
+          realm_id: "${event.realmId}"
+          into: new_watcher_id
+      - log: { message: "Spawned watcher: ${new_watcher_id}" }
 
   # Handle stop_watcher command
   handle_stop_watcher:
     actions:
       - log: { message: "Stopping watcher: ${event.watcherId}" }
+      - stop_watcher:
+          watcher_id: "${event.watcherId}"
 
   # Handle list_active command
   handle_list_active:
     actions:
       - log: "Listing active watchers..."
+      - list_watchers:
+          into: all_watchers
+      - log: { message: "Active watchers: ${all_watchers | length}" }
 
   # Handle status command
   handle_status:

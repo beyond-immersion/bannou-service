@@ -591,6 +591,9 @@ public sealed class DocumentParser
             "emit_intent" => ParseEmitIntentAction(actionValue, errors),
             "load_snapshot" => ParseLoadSnapshotAction(actionValue, errors),
             "prefetch_snapshots" => ParsePrefetchSnapshotsAction(actionValue, errors),
+            "spawn_watcher" => ParseSpawnWatcherAction(actionValue, errors),
+            "stop_watcher" => ParseStopWatcherAction(actionValue, errors),
+            "list_watchers" => ParseListWatchersAction(actionValue, errors),
             _ => ParseDomainAction(actionName, actionValue, errors)
         };
     }
@@ -1202,6 +1205,95 @@ public sealed class DocumentParser
         }
 
         return new PrefetchSnapshotsAction(resourceType, resourceIds, filter);
+    }
+
+    private SpawnWatcherAction? ParseSpawnWatcherAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'spawn_watcher' must be an object"));
+            return null;
+        }
+
+        // Required: watcher_type
+        if (!dict.TryGetValue("watcher_type", out var typeObj) || typeObj is not string watcherType)
+        {
+            errors.Add(new ParseError("'spawn_watcher' requires 'watcher_type' field"));
+            return null;
+        }
+
+        // Optional: realm_id (expression string)
+        string? realmId = null;
+        if (dict.TryGetValue("realm_id", out var realmIdObj) && realmIdObj is string rid)
+        {
+            realmId = rid;
+        }
+
+        // Optional: behavior_id (expression string)
+        string? behaviorId = null;
+        if (dict.TryGetValue("behavior_id", out var behaviorIdObj) && behaviorIdObj is string bid)
+        {
+            behaviorId = bid;
+        }
+
+        // Optional: into (variable name)
+        string? into = null;
+        if (dict.TryGetValue("into", out var intoObj) && intoObj is string intoVar)
+        {
+            into = intoVar;
+        }
+
+        return new SpawnWatcherAction(watcherType, realmId, behaviorId, into);
+    }
+
+    private StopWatcherAction? ParseStopWatcherAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'stop_watcher' must be an object"));
+            return null;
+        }
+
+        // Required: watcher_id (expression string)
+        if (!dict.TryGetValue("watcher_id", out var watcherIdObj) || watcherIdObj is not string watcherId)
+        {
+            errors.Add(new ParseError("'stop_watcher' requires 'watcher_id' field"));
+            return null;
+        }
+
+        return new StopWatcherAction(watcherId);
+    }
+
+    private ListWatchersAction? ParseListWatchersAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'list_watchers' must be an object"));
+            return null;
+        }
+
+        // Required: into (variable name)
+        if (!dict.TryGetValue("into", out var intoObj) || intoObj is not string into)
+        {
+            errors.Add(new ParseError("'list_watchers' requires 'into' field (variable name to store results)"));
+            return null;
+        }
+
+        // Optional: realm_id (expression string)
+        string? realmId = null;
+        if (dict.TryGetValue("realm_id", out var realmIdObj) && realmIdObj is string rid)
+        {
+            realmId = rid;
+        }
+
+        // Optional: watcher_type (string)
+        string? watcherType = null;
+        if (dict.TryGetValue("watcher_type", out var wtObj) && wtObj is string wt)
+        {
+            watcherType = wt;
+        }
+
+        return new ListWatchersAction(into, realmId, watcherType);
     }
 
     private DomainAction ParseDomainAction(string name, object? value, List<ParseError> errors)

@@ -778,6 +778,109 @@ flows:
                         command: lead_charge
 ```
 
+### Watcher Management
+
+Three purpose-built ABML actions enable Event Brain actors to manage regional watchers via the Puppetmaster service.
+
+#### spawn_watcher
+
+Spawns a new regional watcher for the specified realm.
+
+**Handler Location:** `plugins/lib-puppetmaster/Handlers/SpawnWatcherHandler.cs`
+
+```yaml
+- spawn_watcher:
+    watcher_type: regional           # Required - watcher type string
+    realm_id: ${event.realmId}       # Required - realm GUID expression
+    behavior_id: watcher-regional    # Optional - behavior document to use
+    into: spawned_watcher_id         # Optional - variable to store watcher ID
+```
+
+**Parameters:**
+- `watcher_type` (required): Type of watcher to spawn (e.g., "regional", "thematic", "dungeon")
+- `realm_id` (required): Expression evaluating to the realm GUID
+- `behavior_id` (optional): Behavior document ID for the watcher to execute
+- `into` (optional): Variable name to store the created watcher's ID
+
+**Example:**
+```yaml
+flows:
+  on_realm_activated:
+    actions:
+      - spawn_watcher:
+          watcher_type: regional
+          realm_id: "${event.realmId}"
+          into: regional_watcher_id
+      - log: { message: "Started regional watcher: ${regional_watcher_id}" }
+```
+
+#### stop_watcher
+
+Stops a running regional watcher.
+
+**Handler Location:** `plugins/lib-puppetmaster/Handlers/StopWatcherHandler.cs`
+
+```yaml
+- stop_watcher:
+    watcher_id: ${watcher_to_stop}   # Required - watcher GUID expression
+```
+
+**Parameters:**
+- `watcher_id` (required): Expression evaluating to the watcher GUID to stop
+
+**Example:**
+```yaml
+flows:
+  handle_stop_watcher:
+    actions:
+      - log: { message: "Stopping watcher: ${event.watcherId}" }
+      - stop_watcher:
+          watcher_id: "${event.watcherId}"
+```
+
+#### list_watchers
+
+Queries active watchers with optional filtering and stores results in a variable.
+
+**Handler Location:** `plugins/lib-puppetmaster/Handlers/ListWatchersHandler.cs`
+
+```yaml
+- list_watchers:
+    into: active_watchers            # Required - variable to store results
+    realm_id: ${realm_id}            # Optional - filter by realm
+    watcher_type: regional           # Optional - filter by type
+```
+
+**Parameters:**
+- `into` (required): Variable name to store the list of watcher info objects
+- `realm_id` (optional): Expression evaluating to realm GUID filter
+- `watcher_type` (optional): Watcher type string filter
+
+**Result:** The `into` variable receives a list of `WatcherInfo` objects with properties:
+- `watcherId`: Watcher GUID
+- `realmId`: Realm GUID
+- `watcherType`: Type string
+- `startedAt`: Start timestamp
+- `behaviorRef`: Behavior document reference (nullable)
+- `actorId`: Actor instance ID (nullable)
+
+**Example:**
+```yaml
+flows:
+  stop_realm_watchers:
+    actions:
+      - list_watchers:
+          into: realm_watchers
+          realm_id: "${event.realmId}"
+      - foreach:
+          variable: watcher
+          collection: "${realm_watchers}"
+          do:
+            - stop_watcher:
+                watcher_id: "${watcher.watcherId}"
+            - log: { message: "Stopped watcher: ${watcher.watcherId}" }
+```
+
 ---
 
 ## Work Tracking

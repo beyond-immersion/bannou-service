@@ -2953,6 +2953,140 @@
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.PrefetchSnapshotsAction.Filter">
             <summary>Optional list of source types to include.</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SpawnWatcherAction">
+            <summary>
+            Spawns a regional watcher for the specified realm.
+            </summary>
+            <remarks>
+            <para>
+            Creates a new watcher instance via the Puppetmaster service:
+            <code>
+            - spawn_watcher:
+                watcher_type: regional
+                realm_id: ${event.realmId}
+                behavior_id: watcher-regional
+                into: spawned_watcher_id
+            </code>
+            </para>
+            </remarks>
+            <param name="WatcherType">Expression evaluating to watcher type string (e.g., "regional", "thematic").</param>
+            <param name="RealmId">Expression evaluating to realm GUID (optional - uses context if not specified).</param>
+            <param name="BehaviorId">Expression evaluating to behavior document ID (optional - uses default for type).</param>
+            <param name="Into">Optional variable name to store the created watcher ID.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SpawnWatcherAction.#ctor(System.String,System.String,System.String,System.String)">
+            <summary>
+            Spawns a regional watcher for the specified realm.
+            </summary>
+            <remarks>
+            <para>
+            Creates a new watcher instance via the Puppetmaster service:
+            <code>
+            - spawn_watcher:
+                watcher_type: regional
+                realm_id: ${event.realmId}
+                behavior_id: watcher-regional
+                into: spawned_watcher_id
+            </code>
+            </para>
+            </remarks>
+            <param name="WatcherType">Expression evaluating to watcher type string (e.g., "regional", "thematic").</param>
+            <param name="RealmId">Expression evaluating to realm GUID (optional - uses context if not specified).</param>
+            <param name="BehaviorId">Expression evaluating to behavior document ID (optional - uses default for type).</param>
+            <param name="Into">Optional variable name to store the created watcher ID.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SpawnWatcherAction.WatcherType">
+            <summary>Expression evaluating to watcher type string (e.g., "regional", "thematic").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SpawnWatcherAction.RealmId">
+            <summary>Expression evaluating to realm GUID (optional - uses context if not specified).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SpawnWatcherAction.BehaviorId">
+            <summary>Expression evaluating to behavior document ID (optional - uses default for type).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SpawnWatcherAction.Into">
+            <summary>Optional variable name to store the created watcher ID.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.StopWatcherAction">
+            <summary>
+            Stops a running regional watcher.
+            </summary>
+            <remarks>
+            <para>
+            Stops a watcher by ID via the Puppetmaster service:
+            <code>
+            - stop_watcher:
+                watcher_id: ${watcher_to_stop}
+            </code>
+            </para>
+            </remarks>
+            <param name="WatcherId">Expression evaluating to watcher GUID to stop.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.StopWatcherAction.#ctor(System.String)">
+            <summary>
+            Stops a running regional watcher.
+            </summary>
+            <remarks>
+            <para>
+            Stops a watcher by ID via the Puppetmaster service:
+            <code>
+            - stop_watcher:
+                watcher_id: ${watcher_to_stop}
+            </code>
+            </para>
+            </remarks>
+            <param name="WatcherId">Expression evaluating to watcher GUID to stop.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.StopWatcherAction.WatcherId">
+            <summary>Expression evaluating to watcher GUID to stop.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ListWatchersAction">
+            <summary>
+            Lists active watchers with optional filtering.
+            </summary>
+            <remarks>
+            <para>
+            Queries active watchers and stores results in a variable:
+            <code>
+            - list_watchers:
+                into: active_watchers
+                realm_id: ${realm_id}
+                watcher_type: regional
+            </code>
+            </para>
+            </remarks>
+            <param name="Into">Required variable name to store the list of watcher info objects.</param>
+            <param name="RealmId">Optional expression evaluating to realm GUID filter.</param>
+            <param name="WatcherType">Optional watcher type filter string.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ListWatchersAction.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Lists active watchers with optional filtering.
+            </summary>
+            <remarks>
+            <para>
+            Queries active watchers and stores results in a variable:
+            <code>
+            - list_watchers:
+                into: active_watchers
+                realm_id: ${realm_id}
+                watcher_type: regional
+            </code>
+            </para>
+            </remarks>
+            <param name="Into">Required variable name to store the list of watcher info objects.</param>
+            <param name="RealmId">Optional expression evaluating to realm GUID filter.</param>
+            <param name="WatcherType">Optional watcher type filter string.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ListWatchersAction.Into">
+            <summary>Required variable name to store the list of watcher info objects.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ListWatchersAction.RealmId">
+            <summary>Optional expression evaluating to realm GUID filter.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ListWatchersAction.WatcherType">
+            <summary>Optional watcher type filter string.</summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction">
             <summary>
             Generic domain action (handler-provided).
