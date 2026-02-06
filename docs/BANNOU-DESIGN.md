@@ -94,19 +94,22 @@ When a WebSocket message arrives, the Connect service extracts a 16-byte GUID fr
 Each service is an independent **plugin** - a .NET assembly that can be loaded or excluded at startup:
 
 ```
-plugins/lib-account/    # Account service plugin
-├── Generated/          # Auto-generated from schema (never edit)
+plugins/lib-account/              # Account service plugin
+├── Generated/                    # Auto-generated from schema (never edit)
 │   ├── AccountController.cs
 │   ├── IAccountService.cs
 │   └── AccountModels.cs
-├── AccountService.cs   # Business logic (only manual file)
+├── AccountService.cs             # Business logic implementation
+├── AccountServiceModels.cs       # Internal data models (storage, cache, DTOs)
+├── AccountServiceEvents.cs       # Event handlers (partial class)
+├── AccountServicePlugin.cs       # Plugin registration
 └── lib-account.csproj
 ```
 
 **Key principles**:
 - **One schema, one plugin** - Clear ownership and boundaries
-- **Generated code is untouchable** - Only `*Service.cs` contains manual code
-- **Clean separation** - Framework code (generated) vs. business logic (manual)
+- **Generated code is untouchable** - Never edit files in `Generated/`
+- **Clean separation** - Business logic in `*Service.cs`, internal models in `*ServiceModels.cs`, event handlers in `*ServiceEvents.cs`
 - **Assembly loading** - Plugins loaded based on environment configuration
 
 **Service registration**:

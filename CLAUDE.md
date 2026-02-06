@@ -260,17 +260,20 @@ Reference the Makefile in the repository root for all available commands and est
 
 ### Service Architecture
 ```
-plugins/lib-{service}/                # Single consolidated service plugin
-├── Generated/                        # NSwag auto-generated files
-│   ├── {Service}Controller.cs        # Abstract controller base
-│   ├── I{Service}Service.cs          # Service interface (generated from controller)
-│   ├── {Service}Client.cs            # Service client for inter-service calls
-│   └── {Service}ServiceConfiguration.cs  # Generated configuration class
-├── {Service}Service.cs               # Business logic implementation (ONLY manual file)
-└── lib-{service}.csproj              # Generated project file
+plugins/lib-{service}/                   # Single consolidated service plugin
+├── Generated/                           # NSwag auto-generated files
+│   ├── {Service}Controller.cs           # Abstract controller base
+│   ├── I{Service}Service.cs             # Service interface (generated from controller)
+│   ├── {Service}Client.cs               # Service client for inter-service calls
+│   └── {Service}ServiceConfiguration.cs # Generated configuration class
+├── {Service}Service.cs                  # Business logic implementation
+├── {Service}ServiceModels.cs            # Internal data models (storage, cache, DTOs)
+├── {Service}ServiceEvents.cs            # Event handlers (partial class)
+├── {Service}ServicePlugin.cs            # Plugin lifecycle wrapper
+└── lib-{service}.csproj                 # Generated project file
 ```
 
-**Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Only the service implementation (business logic) is manual.
+**Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Manual files are: `{Service}Service.cs` (business logic), `{Service}ServiceModels.cs` (internal data models), and `{Service}ServiceEvents.cs` (event handlers).
 
 ## Development Workflow
 

@@ -8,15 +8,19 @@ Bannou services are implemented as **plugins** - independent .NET assemblies tha
 
 ```
 plugins/lib-{service}/
-├── Generated/                    # Auto-generated (never edit)
+├── Generated/                       # Auto-generated (never edit)
 │   ├── {Service}Controller.cs
 │   ├── I{Service}Service.cs
 │   ├── {Service}Models.cs
 │   └── {Service}ServiceConfiguration.cs
-├── {Service}Service.cs           # Your business logic (only manual file)
-├── {Service}ServicePlugin.cs     # Plugin registration
+├── {Service}Service.cs              # Business logic implementation
+├── {Service}ServiceModels.cs        # Internal data models (storage, cache, DTOs)
+├── {Service}ServiceEvents.cs        # Event handlers (partial class)
+├── {Service}ServicePlugin.cs        # Plugin registration
 └── lib-{service}.csproj
 ```
+
+> **Manual files**: `{Service}Service.cs`, `{Service}ServiceModels.cs`, and `{Service}ServiceEvents.cs` are the only files you should edit. All files in `Generated/` are auto-generated from schemas.
 
 ## The Automation Advantage
 
@@ -111,7 +115,9 @@ This creates the complete plugin structure with:
 
 ### Step 3: Implement Business Logic
 
-Edit the service implementation file (the only manual file):
+Edit the service implementation file:
+
+> **File organization**: Business logic goes in `{Service}Service.cs`. Internal data models (storage models, cache entries, DTOs not exposed via API) go in `{Service}ServiceModels.cs`. Event handlers go in `{Service}ServiceEvents.cs`.
 
 ```csharp
 // plugins/lib-example/ExampleService.cs

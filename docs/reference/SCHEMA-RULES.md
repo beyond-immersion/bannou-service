@@ -66,8 +66,9 @@ Run `make generate` or `scripts/generate-all-services.sh` to execute the full pi
 | File Pattern | Safe to Edit? | Notes |
 |--------------|---------------|-------|
 | `lib-{service}/{Service}Service.cs` | Yes | Main business logic |
-| `lib-{service}/Services/*.cs` | Yes | Helper services |
+| `lib-{service}/{Service}ServiceModels.cs` | Yes | Internal data models (storage, cache, DTOs) |
 | `lib-{service}/{Service}ServiceEvents.cs` | Yes | Generated once, then manual |
+| `lib-{service}/Services/*.cs` | Yes | Helper services |
 | `lib-{service}/Generated/*.cs` | **Never** | Regenerated on `make generate` |
 | `bannou-service/Generated/*.cs` | **Never** | All generated directories |
 | `schemas/*.yaml` | Yes | Edit schemas, regenerate code |

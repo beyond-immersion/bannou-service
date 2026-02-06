@@ -94,9 +94,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-${SERVICE_NAME}.tests")]
 
 namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 
@@ -122,6 +119,8 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// <para>
 /// <b>RELATED FILES:</b>
 /// <list type="bullet">
+///   <item>Internal data models: ${SERVICE_PASCAL}ServiceModels.cs (storage models, cache entries, internal DTOs)</item>
+///   <item>Event handlers: ${SERVICE_PASCAL}ServiceEvents.cs (event consumer registration and handlers)</item>
 ///   <item>Request/Response models: bannou-service/Generated/Models/${SERVICE_PASCAL}Models.cs</item>
 ///   <item>Event models: bannou-service/Generated/Events/${SERVICE_PASCAL}EventsModels.cs</item>
 ///   <item>Lifecycle events: bannou-service/Generated/Events/${SERVICE_PASCAL}LifecycleEvents.cs</item>
