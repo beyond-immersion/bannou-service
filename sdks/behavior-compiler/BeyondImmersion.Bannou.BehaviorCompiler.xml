@@ -1,0 +1,1032 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.BehaviorCompiler</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument">
+            <summary>
+            Represents a complete ABML document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument.Version">
+            <summary>
+            The ABML version (e.g., "2.0").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument.Metadata">
+            <summary>
+            Document metadata (id, type, description, etc.).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument.Imports">
+            <summary>
+            Import definitions for schemas and other documents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument.Context">
+            <summary>
+            Context definition with variables, requirements, and services.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument.Goals">
+            <summary>
+            GOAP goal definitions for behavior planning.
+            Maps goal name to its definition with priority and conditions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument.Options">
+            <summary>
+            Options block for actor self-description.
+            Enables Event Brain queries via /actor/query-options endpoint.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument.Flows">
+            <summary>
+            Named flows containing action sequences.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument.OnError">
+            <summary>
+            Document-level error handler flow name.
+            Called when an error is not handled by action-level or flow-level handlers.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.DocumentMetadata">
+            <summary>
+            Document metadata.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.DocumentMetadata.Id">
+            <summary>
+            Unique identifier for this document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.DocumentMetadata.Type">
+            <summary>
+            Document type: behavior, dialogue, cutscene, dialplan, or timeline.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.DocumentMetadata.Description">
+            <summary>
+            Human-readable description.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.DocumentMetadata.Tags">
+            <summary>
+            Categorization tags.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.DocumentMetadata.Deterministic">
+            <summary>
+            Hint for runtime that execution is deterministic.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ImportDefinition">
+            <summary>
+            Import definition for schemas or other ABML documents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ImportDefinition.Schema">
+            <summary>
+            Schema file path (for type imports).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ImportDefinition.Types">
+            <summary>
+            Types to import from schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ImportDefinition.File">
+            <summary>
+            ABML document file path (for document imports).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ImportDefinition.As">
+            <summary>
+            Namespace alias for imported document.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ContextDefinition">
+            <summary>
+            Context definition with variables, requirements, and services.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ContextDefinition.Variables">
+            <summary>
+            Variable definitions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ContextDefinition.Requirements">
+            <summary>
+            Requirements that must be met to execute this document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ContextDefinition.Services">
+            <summary>
+            Service dependencies.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.VariableDefinition">
+            <summary>
+            Variable definition within context.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.VariableDefinition.Type">
+            <summary>
+            Variable type (e.g., "int", "string", "bool").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.VariableDefinition.Default">
+            <summary>
+            Default value for the variable.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.VariableDefinition.Source">
+            <summary>
+            Source expression for bound variables.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.VariableDefinition.Computed">
+            <summary>
+            Computed expression for derived variables.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ServiceDependency">
+            <summary>
+            Service dependency declaration.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ServiceDependency.Name">
+            <summary>
+            Service name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ServiceDependency.Required">
+            <summary>
+            Whether the service is required.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Flow">
+            <summary>
+            Represents a named flow containing action sequences.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Flow.Name">
+            <summary>
+            Flow name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Flow.Triggers">
+            <summary>
+            Triggers that can activate this flow.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Flow.Goap">
+            <summary>
+            GOAP metadata for this flow (preconditions, effects, cost).
+            When present, this flow can be used as a GOAP action.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Flow.Actions">
+            <summary>
+            Actions to execute in this flow.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Flow.OnError">
+            <summary>
+            Error handler actions for this flow.
+            When an error occurs, these actions execute with _error variable set.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.FlowTrigger">
+            <summary>
+            Flow trigger definition.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.FlowTrigger.Event">
+            <summary>
+            Event pattern to trigger on.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.FlowTrigger.Condition">
+            <summary>
+            Condition expression that must be true.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.FlowTrigger.TimeRange">
+            <summary>
+            Time range for triggering (e.g., "08:00-17:00").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.FlowTrigger.Schedule">
+            <summary>
+            Cron-style schedule.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.GoapGoalDefinition">
+            <summary>
+            GOAP goal definition from ABML goals: section.
+            Goals define desired world state conditions with priorities.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.GoapGoalDefinition.Priority">
+            <summary>
+            Goal priority (higher = more important).
+            Default is 50 for normal priority.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.GoapGoalDefinition.Conditions">
+            <summary>
+            Conditions that define goal satisfaction.
+            Keys are world state property names, values are literal conditions.
+            Examples: "hunger" -> "&lt;= 0.3", "gold" -> "&gt;= 50"
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionsDefinition">
+            <summary>
+            Options definition for actor self-description.
+            Maps option types (combat, dialogue, etc.) to their option definitions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionsDefinition.OptionsByType">
+            <summary>
+            Options grouped by type (combat, dialogue, social, exploration, or custom).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionDefinition">
+            <summary>
+            Definition of a single option within an options block.
+            Expressions are evaluated at runtime to produce ActorOption values.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionDefinition.ActionId">
+            <summary>
+            Unique identifier for this action within the option type.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionDefinition.Preference">
+            <summary>
+            Preference expression (0-1). Can be a literal float or an expression like "${combat.style == 'aggressive' ? 0.9 : 0.6}".
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionDefinition.Risk">
+            <summary>
+            Risk expression (0-1). Can be a literal float or an expression. Optional.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionDefinition.Available">
+            <summary>
+            Availability expression. Can be a literal bool or an expression like "${equipment.has_sword}".
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionDefinition.Requirements">
+            <summary>
+            Human-readable requirements for this option.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionDefinition.CooldownMs">
+            <summary>
+            Cooldown in milliseconds. Can be a literal int or an expression. Optional.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.OptionDefinition.Tags">
+            <summary>
+            Tags for categorization (e.g., "melee", "offensive", "loud").
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.GoapFlowMetadata">
+            <summary>
+            GOAP metadata from flow goap: block.
+            Describes a flow as a GOAP action with preconditions, effects, and cost.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.GoapFlowMetadata.Preconditions">
+            <summary>
+            Preconditions that must be satisfied to execute this action.
+            Keys are world state property names, values are literal conditions.
+            Examples: "hunger" -> "&gt; 0.6", "gold" -> "&gt;= 5"
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.GoapFlowMetadata.Effects">
+            <summary>
+            Effects applied to world state when action completes.
+            Values can be absolute ("0.5", "tavern") or delta ("-0.8", "+5").
+            Examples: "hunger" -> "-0.8", "location" -> "tavern"
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.GoapFlowMetadata.Cost">
+            <summary>
+            Action cost for A* planning (lower = preferred).
+            Default is 1.0 for unit cost.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode">
+            <summary>
+            Base type for all action nodes in an ABML document.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.IHasOnError">
+            <summary>
+            Interface for actions that support action-level error handling.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.IHasOnError.OnError">
+            <summary>
+            Actions to execute if this action fails.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondAction">
+            <summary>
+            Conditional branching action (if/else-if/else).
+            </summary>
+            <param name="Branches">Ordered list of condition branches.</param>
+            <param name="ElseBranch">Actions to execute if no condition matches.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondAction.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondBranch},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode})">
+            <summary>
+            Conditional branching action (if/else-if/else).
+            </summary>
+            <param name="Branches">Ordered list of condition branches.</param>
+            <param name="ElseBranch">Actions to execute if no condition matches.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondAction.Branches">
+            <summary>Ordered list of condition branches.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondAction.ElseBranch">
+            <summary>Actions to execute if no condition matches.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondBranch">
+            <summary>
+            A single branch in a conditional action.
+            </summary>
+            <param name="When">Condition expression string.</param>
+            <param name="Then">Actions to execute if condition is true.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondBranch.#ctor(System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode})">
+            <summary>
+            A single branch in a conditional action.
+            </summary>
+            <param name="When">Condition expression string.</param>
+            <param name="Then">Actions to execute if condition is true.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondBranch.When">
+            <summary>Condition expression string.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CondBranch.Then">
+            <summary>Actions to execute if condition is true.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ForEachAction">
+            <summary>
+            Iteration over a collection.
+            </summary>
+            <param name="Variable">Loop variable name.</param>
+            <param name="Collection">Expression string evaluating to a collection.</param>
+            <param name="Do">Actions to execute for each item.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ForEachAction.#ctor(System.String,System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode})">
+            <summary>
+            Iteration over a collection.
+            </summary>
+            <param name="Variable">Loop variable name.</param>
+            <param name="Collection">Expression string evaluating to a collection.</param>
+            <param name="Do">Actions to execute for each item.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ForEachAction.Variable">
+            <summary>Loop variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ForEachAction.Collection">
+            <summary>Expression string evaluating to a collection.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ForEachAction.Do">
+            <summary>Actions to execute for each item.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.RepeatAction">
+            <summary>
+            Bounded repetition.
+            </summary>
+            <param name="Times">Number of times to repeat.</param>
+            <param name="Do">Actions to execute each iteration.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.RepeatAction.#ctor(System.Int32,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode})">
+            <summary>
+            Bounded repetition.
+            </summary>
+            <param name="Times">Number of times to repeat.</param>
+            <param name="Do">Actions to execute each iteration.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.RepeatAction.Times">
+            <summary>Number of times to repeat.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.RepeatAction.Do">
+            <summary>Actions to execute each iteration.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GotoAction">
+            <summary>
+            Transfer control to another flow (tail call - does not return).
+            </summary>
+            <param name="Flow">Target flow name.</param>
+            <param name="Args">Arguments to pass to the target flow.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GotoAction.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Transfer control to another flow (tail call - does not return).
+            </summary>
+            <param name="Flow">Target flow name.</param>
+            <param name="Args">Arguments to pass to the target flow.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GotoAction.Flow">
+            <summary>Target flow name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GotoAction.Args">
+            <summary>Arguments to pass to the target flow.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CallAction">
+            <summary>
+            Call another flow as a subroutine (returns to caller).
+            </summary>
+            <param name="Flow">Target flow name.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CallAction.#ctor(System.String)">
+            <summary>
+            Call another flow as a subroutine (returns to caller).
+            </summary>
+            <param name="Flow">Target flow name.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.CallAction.Flow">
+            <summary>Target flow name.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ReturnAction">
+            <summary>
+            Return from the current flow.
+            </summary>
+            <param name="Value">Optional return value expression.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ReturnAction.#ctor(System.String)">
+            <summary>
+            Return from the current flow.
+            </summary>
+            <param name="Value">Optional return value expression.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ReturnAction.Value">
+            <summary>Optional return value expression.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SetAction">
+            <summary>
+            Set a variable, searching scope chain. Creates locally if not found.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SetAction.#ctor(System.String,System.String)">
+            <summary>
+            Set a variable, searching scope chain. Creates locally if not found.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SetAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SetAction.Value">
+            <summary>Expression string for the value.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LocalAction">
+            <summary>
+            Create/set a variable in the current local scope (shadows parent).
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LocalAction.#ctor(System.String,System.String)">
+            <summary>
+            Create/set a variable in the current local scope (shadows parent).
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LocalAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LocalAction.Value">
+            <summary>Expression string for the value.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GlobalAction">
+            <summary>
+            Set a variable in the document root scope.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GlobalAction.#ctor(System.String,System.String)">
+            <summary>
+            Set a variable in the document root scope.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GlobalAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.GlobalAction.Value">
+            <summary>Expression string for the value.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.IncrementAction">
+            <summary>
+            Increment a numeric variable.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="By">Amount to increment by (default 1).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.IncrementAction.#ctor(System.String,System.Int32)">
+            <summary>
+            Increment a numeric variable.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="By">Amount to increment by (default 1).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.IncrementAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.IncrementAction.By">
+            <summary>Amount to increment by (default 1).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DecrementAction">
+            <summary>
+            Decrement a numeric variable.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="By">Amount to decrement by (default 1).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DecrementAction.#ctor(System.String,System.Int32)">
+            <summary>
+            Decrement a numeric variable.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="By">Amount to decrement by (default 1).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DecrementAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DecrementAction.By">
+            <summary>Amount to decrement by (default 1).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ClearAction">
+            <summary>
+            Clear/unset a variable.
+            </summary>
+            <param name="Variable">Variable name to clear.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ClearAction.#ctor(System.String)">
+            <summary>
+            Clear/unset a variable.
+            </summary>
+            <param name="Variable">Variable name to clear.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ClearAction.Variable">
+            <summary>Variable name to clear.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LogAction">
+            <summary>
+            Log a message (for debugging and testing).
+            </summary>
+            <param name="Message">Message to log (may contain expressions).</param>
+            <param name="Level">Log level (info, debug, warn, error).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LogAction.#ctor(System.String,System.String)">
+            <summary>
+            Log a message (for debugging and testing).
+            </summary>
+            <param name="Message">Message to log (may contain expressions).</param>
+            <param name="Level">Log level (info, debug, warn, error).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LogAction.Message">
+            <summary>Message to log (may contain expressions).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.LogAction.Level">
+            <summary>Log level (info, debug, warn, error).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction">
+            <summary>
+            Generic domain action (handler-provided).
+            Supports action-level on_error for handling failures.
+            </summary>
+            <param name="Name">Action name (e.g., "animate", "speak", "move_to", "service_call").</param>
+            <param name="Parameters">Action parameters.</param>
+            <param name="OnError">Optional action-level error handlers.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ActionNode})">
+            <summary>
+            Generic domain action (handler-provided).
+            Supports action-level on_error for handling failures.
+            </summary>
+            <param name="Name">Action name (e.g., "animate", "speak", "move_to", "service_call").</param>
+            <param name="Parameters">Action parameters.</param>
+            <param name="OnError">Optional action-level error handlers.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction.Name">
+            <summary>Action name (e.g., "animate", "speak", "move_to", "service_call").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction.Parameters">
+            <summary>Action parameters.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction.OnError">
+            <summary>Optional action-level error handlers.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitAction">
+            <summary>
+            Emit a signal to other channels.
+            </summary>
+            <param name="Signal">Signal name to emit.</param>
+            <param name="Payload">Optional payload expression.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitAction.#ctor(System.String,System.String)">
+            <summary>
+            Emit a signal to other channels.
+            </summary>
+            <param name="Signal">Signal name to emit.</param>
+            <param name="Payload">Optional payload expression.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitAction.Signal">
+            <summary>Signal name to emit.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitAction.Payload">
+            <summary>Optional payload expression.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WaitForAction">
+            <summary>
+            Wait for a signal from another channel.
+            </summary>
+            <param name="Signal">Signal name to wait for.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WaitForAction.#ctor(System.String)">
+            <summary>
+            Wait for a signal from another channel.
+            </summary>
+            <param name="Signal">Signal name to wait for.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WaitForAction.Signal">
+            <summary>Signal name to wait for.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SyncAction">
+            <summary>
+            Synchronization barrier - all channels wait here until all arrive.
+            </summary>
+            <param name="Point">Sync point name.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SyncAction.#ctor(System.String)">
+            <summary>
+            Synchronization barrier - all channels wait here until all arrive.
+            </summary>
+            <param name="Point">Sync point name.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.SyncAction.Point">
+            <summary>Sync point name.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ContinuationPointAction">
+            <summary>
+            Continuation point for streaming composition.
+            Allows extensions to attach during execution.
+            </summary>
+            <remarks>
+            <para>
+            When execution reaches a continuation point:
+            1. If an extension is attached, control transfers to the extension
+            2. Otherwise, waits up to Timeout for an extension to arrive
+            3. If timeout expires, executes DefaultFlow
+            </para>
+            <para>
+            This enables streaming composition: game server receives complete cinematic,
+            starts executing, and can optionally receive extensions mid-execution.
+            </para>
+            </remarks>
+            <param name="Name">Unique name for this continuation point.</param>
+            <param name="Timeout">Maximum time to wait for extension (e.g., "2s", "500ms").</param>
+            <param name="DefaultFlow">Flow to execute if no extension arrives.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ContinuationPointAction.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Continuation point for streaming composition.
+            Allows extensions to attach during execution.
+            </summary>
+            <remarks>
+            <para>
+            When execution reaches a continuation point:
+            1. If an extension is attached, control transfers to the extension
+            2. Otherwise, waits up to Timeout for an extension to arrive
+            3. If timeout expires, executes DefaultFlow
+            </para>
+            <para>
+            This enables streaming composition: game server receives complete cinematic,
+            starts executing, and can optionally receive extensions mid-execution.
+            </para>
+            </remarks>
+            <param name="Name">Unique name for this continuation point.</param>
+            <param name="Timeout">Maximum time to wait for extension (e.g., "2s", "500ms").</param>
+            <param name="DefaultFlow">Flow to execute if no extension arrives.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ContinuationPointAction.Name">
+            <summary>Unique name for this continuation point.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ContinuationPointAction.Timeout">
+            <summary>Maximum time to wait for extension (e.g., "2s", "500ms").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ContinuationPointAction.DefaultFlow">
+            <summary>Flow to execute if no extension arrives.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction">
+            <summary>
+            Emit an action intent with urgency for multi-model coordination.
+            Used by compiled behavior models for intent channel output.
+            </summary>
+            <param name="Action">Action name (e.g., "attack", "block", "dodge").</param>
+            <param name="Channel">Intent channel (action, locomotion, attention, stance).</param>
+            <param name="Urgency">Urgency expression (0.0-1.0). Higher urgency wins.</param>
+            <param name="Target">Optional target expression.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction.#ctor(System.String,System.String,System.String,System.String)">
+            <summary>
+            Emit an action intent with urgency for multi-model coordination.
+            Used by compiled behavior models for intent channel output.
+            </summary>
+            <param name="Action">Action name (e.g., "attack", "block", "dodge").</param>
+            <param name="Channel">Intent channel (action, locomotion, attention, stance).</param>
+            <param name="Urgency">Urgency expression (0.0-1.0). Higher urgency wins.</param>
+            <param name="Target">Optional target expression.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction.Action">
+            <summary>Action name (e.g., "attack", "block", "dodge").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction.Channel">
+            <summary>Intent channel (action, locomotion, attention, stance).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction.Urgency">
+            <summary>Urgency expression (0.0-1.0). Higher urgency wins.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction.Target">
+            <summary>Optional target expression.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentLoader">
+            <summary>
+            Loads ABML documents with full import resolution.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentLoader.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Parser.IDocumentResolver,BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentParser)">
+            <summary>
+            Creates a new document loader.
+            </summary>
+            <param name="resolver">Document resolver for imports.</param>
+            <param name="parser">Parser for YAML content.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentLoader.LoadAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Loads a document from YAML content with all imports resolved.
+            </summary>
+            <param name="yaml">The YAML content.</param>
+            <param name="sourcePath">Source path for relative import resolution.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The loaded document with resolved imports.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentLoader.LoadAsync(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Loads a pre-parsed document with all imports resolved.
+            </summary>
+            <param name="document">The parsed document.</param>
+            <param name="sourcePath">Source path for relative import resolution.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The loaded document with resolved imports.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.LoadedDocument">
+            <summary>
+            A fully loaded ABML document with resolved imports.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.LoadedDocument.Document">
+            <summary>
+            The main document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.LoadedDocument.SourcePath">
+            <summary>
+            Source path of this document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.LoadedDocument.Imports">
+            <summary>
+            Imported documents keyed by alias.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.LoadedDocument.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,BeyondImmersion.Bannou.BehaviorCompiler.Parser.LoadedDocument})">
+            <summary>
+            Creates a new loaded document.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.LoadedDocument.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument,System.String)">
+            <summary>
+            Creates a loaded document with no imports.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.LoadedDocument.TryResolveFlow(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Documents.Flow@,BeyondImmersion.Bannou.BehaviorCompiler.Parser.LoadedDocument@)">
+            <summary>
+            Tries to resolve a potentially namespaced flow reference.
+            </summary>
+            <param name="flowRef">Flow reference (e.g., "my_flow" or "common.my_flow").</param>
+            <param name="flow">The resolved flow.</param>
+            <param name="resolvedDocument">The document containing the flow.</param>
+            <returns>True if the flow was found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentLoadException">
+            <summary>
+            Exception thrown when a document fails to load.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentLoadException.SourcePath">
+            <summary>
+            The source path that failed to load.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentLoadException.#ctor(System.String,System.String)">
+            <summary>
+            Creates a new document load exception.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.CircularImportException">
+            <summary>
+            Exception thrown when a circular import is detected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.CircularImportException.CircularPath">
+            <summary>
+            The path that caused the circular reference.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.CircularImportException.ImportStack">
+            <summary>
+            The import stack that led to the circular reference.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.CircularImportException.#ctor(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Creates a new circular import exception.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentParser">
+            <summary>
+            Parses ABML YAML documents into AST representation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentParser.#ctor">
+            <summary>
+            Creates a new document parser.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentParser.Parse(System.String)">
+            <summary>
+            Parses a YAML string into an ABML document.
+            </summary>
+            <param name="yaml">The YAML content to parse.</param>
+            <returns>Parse result with document or errors.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentParser.ConvertToExpressionString(System.Object)">
+            <summary>
+            Converts a value to an expression string. Handles literals and expressions.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.IDocumentResolver">
+            <summary>
+            Resolves ABML document paths to parsed documents.
+            Used for handling imports in ABML documents.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.IDocumentResolver.ResolveAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Resolves a document path relative to a base path.
+            </summary>
+            <param name="importPath">The import path from the ABML document.</param>
+            <param name="basePath">The path of the importing document (for relative resolution).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The resolved and parsed document, or null if not found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ResolvedDocument">
+            <summary>
+            A resolved ABML document with its source path.
+            </summary>
+            <param name="Document">The parsed ABML document.</param>
+            <param name="SourcePath">The resolved source path (for nested import resolution).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ResolvedDocument.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument,System.String)">
+            <summary>
+            A resolved ABML document with its source path.
+            </summary>
+            <param name="Document">The parsed ABML document.</param>
+            <param name="SourcePath">The resolved source path (for nested import resolution).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ResolvedDocument.Document">
+            <summary>The parsed ABML document.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ResolvedDocument.SourcePath">
+            <summary>The resolved source path (for nested import resolution).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.InMemoryDocumentResolver">
+            <summary>
+            In-memory document resolver for testing.
+            Maps paths directly to documents without file system access.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.InMemoryDocumentResolver.Register(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
+            <summary>
+            Registers a document at a given path.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.InMemoryDocumentResolver.ResolveAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.FileSystemDocumentResolver">
+            <summary>
+            File system document resolver for production use.
+            Resolves import paths to files on disk and parses them.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.FileSystemDocumentResolver.#ctor(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentParser)">
+            <summary>
+            Creates a new file system document resolver.
+            </summary>
+            <param name="basePath">Base directory for resolving relative paths.</param>
+            <param name="parser">Parser for YAML content.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.FileSystemDocumentResolver.ResolveAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseResult`1">
+            <summary>
+            Result of a parse operation.
+            </summary>
+            <typeparam name="T">The type of the parsed value.</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseResult`1.IsSuccess">
+            <summary>
+            Whether parsing succeeded.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseResult`1.Value">
+            <summary>
+            The parsed value (if successful).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseResult`1.Errors">
+            <summary>
+            Parse errors (if unsuccessful).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseResult`1.Success(`0)">
+            <summary>
+            Creates a successful parse result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseResult`1.Failure(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseError})">
+            <summary>
+            Creates a failed parse result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseResult`1.Failure(BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseError)">
+            <summary>
+            Creates a failed parse result with a single error.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseResult`1.Failure(System.String,System.Int32,System.Int32)">
+            <summary>
+            Creates a failed parse result with a message.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseError">
+            <summary>
+            Represents a parse error with location information.
+            </summary>
+            <param name="Message">Error message.</param>
+            <param name="Line">Line number (1-based).</param>
+            <param name="Column">Column number (1-based).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseError.#ctor(System.String,System.Int32,System.Int32)">
+            <summary>
+            Represents a parse error with location information.
+            </summary>
+            <param name="Message">Error message.</param>
+            <param name="Line">Line number (1-based).</param>
+            <param name="Column">Column number (1-based).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseError.Message">
+            <summary>Error message.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseError.Line">
+            <summary>Line number (1-based).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseError.Column">
+            <summary>Column number (1-based).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseError.ToString">
+            <summary>
+            Returns a formatted error message with location.
+            </summary>
+        </member>
+    </members>
+</doc>
