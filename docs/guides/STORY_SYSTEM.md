@@ -61,7 +61,7 @@ The correct architecture:
 - Behaviors are game-specific content; the plugin is reusable infrastructure
 - This keeps the plugin simple and behaviors expressive
 
-See [Regional Watchers Behavior](../planning/REGIONAL_WATCHERS_BEHAVIOR.md) for active orchestration patterns.
+The watcher's behavior document defines search strategies, scoring, and narrative preferences.
 
 ---
 
@@ -403,7 +403,7 @@ flows:
 
 **The key insight**: The watcher's **behavior document** defines the search strategy. Different watchers can use completely different approaches with the same plugin APIs.
 
-See [Regional Watchers Behavior](../planning/REGIONAL_WATCHERS_BEHAVIOR.md) for detailed patterns.
+The key insight: The watcher's **behavior document** defines the search strategy. Different watchers can use completely different approaches with the same plugin APIs.
 
 **Best for**:
 - Emergent, unpredictable narrative
@@ -1261,7 +1261,7 @@ flows:
 | Plugin query patterns | Narrative preferences |
 | Storyline tracking | Domain-specific logic |
 
-See [Regional Watchers Behavior](../planning/REGIONAL_WATCHERS_BEHAVIOR.md) for complete patterns.
+Game-specific watchers extend this template with their own search strategies and scoring formulas.
 
 ---
 
@@ -1302,21 +1302,20 @@ Are you implementing narrative systems?
 
 ### Authoritative YAML Schemas
 
-The SDK implementations load these schemas directly - they are the source of truth:
+The SDKs load these schemas as embedded resources at runtime:
 
-- [`schemas/storyline/narrative-state.yaml`](../../schemas/storyline/narrative-state.yaml) - 10 Life Value spectrums, genre mappings
-- [`schemas/storyline/emotional-arcs.yaml`](../../schemas/storyline/emotional-arcs.yaml) - 6 Reagan arcs with control points
-- [`schemas/storyline/story-grid-genres.yaml`](../../schemas/storyline/story-grid-genres.yaml) - 12 genres, subgenre arc mappings
-- [`schemas/storyline/story-actions.yaml`](../../schemas/storyline/story-actions.yaml) - 46+ GOAP actions
-- [`schemas/storyline/story-templates.yaml`](../../schemas/storyline/story-templates.yaml) - 6 arc-based templates
-- [`schemas/storyline/GAP_ANALYSIS.md`](../../schemas/storyline/GAP_ANALYSIS.md) - Implementation tracking
+**storyline-theory SDK** (`sdks/storyline-theory/Data/`):
+- [`narrative-state.yaml`](../../sdks/storyline-theory/Data/narrative-state.yaml) - 10 Life Value spectrums, genre mappings
+- [`emotional-arcs.yaml`](../../sdks/storyline-theory/Data/emotional-arcs.yaml) - 6 Reagan arcs with control points
 
-### Planning Documents
+**storyline-storyteller SDK** (`sdks/storyline-storyteller/Data/`):
+- [`story-actions.yaml`](../../sdks/storyline-storyteller/Data/story-actions.yaml) - 46+ GOAP actions
+- [`story-templates.yaml`](../../sdks/storyline-storyteller/Data/story-templates.yaml) - 6 arc-based templates
 
-- [Quest Plugin Architecture](../planning/QUEST_PLUGIN_ARCHITECTURE.md) - Quest system design (planning stage)
-- [Scenario Plugin Architecture](../planning/SCENARIO_PLUGIN_ARCHITECTURE.md) - Scenario system design (planning stage)
-- [EVENT_ACTOR_RESOURCE_ACCESS](../planning/EVENT_ACTOR_RESOURCE_ACCESS.md) - Regional Watcher archive access (planning stage)
-- [Storyline Composer](../planning/STORYLINE_COMPOSER.md) - Original design doc (partially obsolete - SDK architecture sections superseded by actual implementation)
+**Reference documentation** (`sdks/storyline-theory/Docs/`):
+- `story-grid-genres.yaml` - Full Story Grid genre specification (reference only, genre mappings are in narrative-state.yaml)
+- `propp-functions.yaml` - 31 Propp narrative functions (inspiration, not runtime)
+- `save-the-cat-beats.yaml` - 16 STC beats (reference for template design)
 
 ### Research Sources
 
@@ -1410,16 +1409,16 @@ Live entity snapshots are **fully implemented** in lib-resource, enabling storyl
 | `/storyline/instantiate` | ✅ SDK complete | ❌ Not exposed | Needs Quest/Scenario plugins |
 | `/storyline/discover` | 📋 SDK planned | ❌ Not exposed | Needs EVENT_ACTOR_RESOURCE_ACCESS patterns |
 
-### Dependent Systems (Planning Stage)
+### Dependent Systems (Not Yet Built)
 
-These capabilities require other plugins that are still in planning:
+These capabilities require other plugins that are not yet implemented:
 
-| Capability | Blocking Dependency | Planning Doc |
-|------------|---------------------|--------------|
-| Scenario definitions | Merged into lib-storyline (planned) | [SCENARIO_PLUGIN_ARCHITECTURE.md](../planning/SCENARIO_PLUGIN_ARCHITECTURE.md) |
-| Quest spawning via hooks | lib-quest (planned) | [QUEST_PLUGIN_ARCHITECTURE.md](../planning/QUEST_PLUGIN_ARCHITECTURE.md) |
-| Regional Watcher archive access | EVENT_ACTOR_RESOURCE_ACCESS (planned) | [EVENT_ACTOR_RESOURCE_ACCESS.md](../planning/EVENT_ACTOR_RESOURCE_ACCESS.md) |
-| Entity spawning (`/instantiate`) | lib-quest + scenarios | [STORYLINE_COMPOSER.md](../planning/STORYLINE_COMPOSER.md) |
+| Capability | Blocking Dependency | Notes |
+|------------|---------------------|-------|
+| Scenario definitions | lib-storyline extension | Concrete game-world implementations of story templates |
+| Quest spawning via hooks | lib-quest | Thin orchestration layer over lib-contract |
+| Regional Watcher archive access | Actor system extension | Typed archive access for Event Brain actors |
+| Entity spawning (`/instantiate`) | lib-quest + scenarios | Creates NPCs, items, locations from storyline plans |
 
 ### Quest Plugin (lib-quest) - Planning Stage
 
