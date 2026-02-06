@@ -766,6 +766,721 @@
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.EmitIntentAction.Target">
             <summary>Optional target expression.</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent">
+            <summary>
+            Attention intent with blendable gaze targets.
+            </summary>
+            <remarks>
+            <para>
+            Unlike simple exclusive channels, attention supports "blending" by providing
+            multiple targets with weights. The game's animation system can then interpolate
+            gaze direction between targets based on their weights.
+            </para>
+            <para>
+            Since entity IDs (Guids) cannot be mathematically blended, this struct provides
+            primary and secondary targets with urgency-derived weights. The game resolves
+            entity positions and performs actual gaze interpolation.
+            </para>
+            <para>
+            Example: Combat model wants to watch the threat (urgency 0.8), Movement model
+            wants to look at the path ahead (urgency 0.4). Game blends gaze 67% toward
+            threat, 33% toward path.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.PrimaryTarget">
+            <summary>
+            Primary attention target entity (highest urgency contributor).
+            Null if no attention targets.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.PrimaryUrgency">
+            <summary>
+            Urgency of the primary attention target [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.SecondaryTarget">
+            <summary>
+            Secondary attention target entity (second-highest urgency contributor).
+            Null if only one model contributed attention.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.SecondaryUrgency">
+            <summary>
+            Urgency of the secondary attention target [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.BlendWeight">
+            <summary>
+            Blend weight for primary target [0.0 - 1.0].
+            The game should blend gaze: BlendWeight toward primary, (1-BlendWeight) toward secondary.
+            If no secondary target, this will be 1.0.
+            </summary>
+            <remarks>
+            Calculated as: PrimaryUrgency / (PrimaryUrgency + SecondaryUrgency)
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.TotalUrgency">
+            <summary>
+            Combined urgency for animation transition speed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.None">
+            <summary>
+            Empty attention intent (not looking at anything specific).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.IsValid">
+            <summary>
+            Whether this intent has a valid attention target.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.HasSecondaryTarget">
+            <summary>
+            Whether this intent has multiple targets to blend between.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.CreateSingle(System.Guid,System.Single)">
+            <summary>
+            Creates an attention intent with a single target (no blending needed).
+            </summary>
+            <param name="target">The target entity to look at.</param>
+            <param name="urgency">Attention urgency [0-1].</param>
+            <returns>A new AttentionIntent instance.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.CreateBlended(System.Guid,System.Single,System.Guid,System.Single)">
+            <summary>
+            Creates an attention intent with two blended targets.
+            </summary>
+            <param name="primaryTarget">Primary target entity (higher urgency).</param>
+            <param name="primaryUrgency">Primary target urgency [0-1].</param>
+            <param name="secondaryTarget">Secondary target entity.</param>
+            <param name="secondaryUrgency">Secondary target urgency [0-1].</param>
+            <returns>A new AttentionIntent instance with calculated blend weight.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.AttentionIntent.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput">
+            <summary>
+            Structured output from a single behavior model evaluation.
+            Extracted from raw output buffer based on IntentSlotLayout conventions.
+            </summary>
+            <remarks>
+            <para>
+            Each behavior model (combat, movement, interaction, idle) produces one
+            BehaviorOutput. The IntentMerger combines these into a single MergedIntent.
+            </para>
+            <para>
+            Output extraction uses the standardized slot layout:
+            - Slots 0-1: Action intent + urgency
+            - Slots 2-3: Locomotion intent + urgency
+            - Slots 4-5: Attention target + urgency
+            - Slots 6-7: Stance intent + urgency
+            - Slots 8-9: Vocalization intent + urgency
+            - Slots 10-12: Locomotion target Vector3 (optional)
+            - Slot 13: Action target entity ID (optional)
+            - Slot 14: Attention target entity ID (optional)
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.ActionIntent">
+            <summary>
+            Action intent name (e.g., "attack", "block", "use", "talk").
+            Null if no action output.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.ActionUrgency">
+            <summary>
+            Action channel urgency [0.0 - 1.0].
+            Higher urgency wins in conflict resolution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.ActionTarget">
+            <summary>
+            Target entity for the action (e.g., attack target, item to pick up).
+            Null if action doesn't require a target.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.LocomotionIntent">
+            <summary>
+            Locomotion intent name (e.g., "walk_to", "run_away", "strafe").
+            Null if no locomotion output.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.LocomotionUrgency">
+            <summary>
+            Locomotion channel urgency [0.0 - 1.0].
+            Used for blending when multiple models contribute locomotion.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.LocomotionTarget">
+            <summary>
+            Target position for locomotion in world space.
+            Null if locomotion doesn't specify a target.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.AttentionTarget">
+            <summary>
+            Target entity for attention/gaze direction.
+            Null if not looking at a specific entity.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.AttentionUrgency">
+            <summary>
+            Attention channel urgency [0.0 - 1.0].
+            Higher urgency overrides lower urgency attention targets.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.StanceIntent">
+            <summary>
+            Stance intent name (e.g., "combat_ready", "defensive", "relaxed").
+            Null if no stance change.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.StanceUrgency">
+            <summary>
+            Stance channel urgency [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.VocalizationIntent">
+            <summary>
+            Vocalization intent name (e.g., "battle_cry", "greeting", "pain").
+            Null if no vocalization.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.VocalizationUrgency">
+            <summary>
+            Vocalization channel urgency [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.FromOutputBuffer(System.ReadOnlySpan{System.Double},System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>
+            Extracts BehaviorOutput from raw interpreter output buffer.
+            </summary>
+            <param name="outputState">Raw output buffer from interpreter.</param>
+            <param name="stringTable">String table for intent name lookup.</param>
+            <returns>Structured behavior output.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.GetIntent(System.ReadOnlySpan{System.Double},System.Collections.Generic.IReadOnlyList{System.String},System.Int32)">
+            <summary>
+            Safely gets intent string from output slot.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.GetUrgency(System.ReadOnlySpan{System.Double},System.Int32)">
+            <summary>
+            Safely gets urgency value from output slot.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.GetGuid(System.ReadOnlySpan{System.Double},System.Int32)">
+            <summary>
+            Safely gets Guid from output slot.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.GetVector3(System.ReadOnlySpan{System.Double},System.Int32)">
+            <summary>
+            Safely gets Vector3 from consecutive output slots.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.Empty">
+            <summary>
+            Creates an empty behavior output (no intents).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.HasAnyIntent">
+            <summary>
+            Whether this output has any non-zero urgency intents.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelContribution">
+            <summary>
+            A single contribution from a behavior model to a channel.
+            </summary>
+            <param name="Source">The behavior model type that contributed.</param>
+            <param name="Intent">The intent string (or target for attention).</param>
+            <param name="Urgency">The urgency value [0.0 - 1.0].</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelContribution.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType,System.String,System.Single)">
+            <summary>
+            A single contribution from a behavior model to a channel.
+            </summary>
+            <param name="Source">The behavior model type that contributed.</param>
+            <param name="Intent">The intent string (or target for attention).</param>
+            <param name="Urgency">The urgency value [0.0 - 1.0].</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelContribution.Source">
+            <summary>The behavior model type that contributed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelContribution.Intent">
+            <summary>The intent string (or target for attention).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelContribution.Urgency">
+            <summary>The urgency value [0.0 - 1.0].</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelResolution">
+            <summary>
+            Resolution result for a single channel.
+            </summary>
+            <param name="Channel">The intent channel.</param>
+            <param name="Winner">The winning behavior model type (null for blended channels).</param>
+            <param name="WinningUrgency">The winning/combined urgency value.</param>
+            <param name="AllContributions">All contributions to this channel.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelResolution.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelContribution[])">
+            <summary>
+            Resolution result for a single channel.
+            </summary>
+            <param name="Channel">The intent channel.</param>
+            <param name="Winner">The winning behavior model type (null for blended channels).</param>
+            <param name="WinningUrgency">The winning/combined urgency value.</param>
+            <param name="AllContributions">All contributions to this channel.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelResolution.Channel">
+            <summary>The intent channel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelResolution.Winner">
+            <summary>The winning behavior model type (null for blended channels).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelResolution.WinningUrgency">
+            <summary>The winning/combined urgency value.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelResolution.AllContributions">
+            <summary>All contributions to this channel.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ContributionTrace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds to avoid allocation in release.
+            </summary>
+            <remarks>
+            <para>
+            This trace helps understand why a particular action was chosen.
+            For example, if Combat model's "attack" was chosen over Interaction
+            model's "talk", the trace shows both contributions and their urgencies.
+            </para>
+            <para>
+            Usage in game debugger:
+            <code>
+            var merged = evaluator.EvaluateCharacter(characterId, inputs);
+            if (merged.Trace != null)
+            {
+                foreach (var resolution in merged.Trace.Channels)
+                {
+                    Debug.Log($"{resolution.Channel}: Winner={resolution.Winner}");
+                    foreach (var contrib in resolution.AllContributions)
+                    {
+                        Debug.Log($"  {contrib.Source}: {contrib.Intent} ({contrib.Urgency:F2})");
+                    }
+                }
+            }
+            </code>
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ContributionTrace.Timestamp">
+            <summary>
+            Timestamp when this trace was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ContributionTrace.Channels">
+            <summary>
+            All channel resolutions in this trace.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ContributionTrace.AddResolution(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.BehaviorCompiler.Intent.ChannelContribution[])">
+            <summary>
+            Adds a channel resolution to the trace.
+            </summary>
+            <param name="channel">The intent channel.</param>
+            <param name="winner">The winning model type (null for blended).</param>
+            <param name="winningUrgency">The winning/combined urgency.</param>
+            <param name="contributions">All contributions to this channel.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ContributionTrace.GetResolution(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel)">
+            <summary>
+            Gets the resolution for a specific channel.
+            </summary>
+            <param name="channel">The intent channel to look up.</param>
+            <returns>The resolution for that channel, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ContributionTrace.HasContributionFrom(BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType)">
+            <summary>
+            Gets whether a specific model contributed to any channel.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>True if the model contributed to at least one channel.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ContributionTrace.GetChannelsWonBy(BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType)">
+            <summary>
+            Gets all channels where the specified model won.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>Channels won by this model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.ContributionTrace.ToString">
+            <summary>
+            Formats the trace as a human-readable string.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType">
+            <summary>
+            The fixed set of behavior model types for multi-model coordination.
+            Each character can have up to 4 simultaneously-active behavior models.
+            </summary>
+            <remarks>
+            <para>
+            These are intentionally fixed (not configurable) for simplicity.
+            The IntentMerger knows how to blend outputs from these 4 model types.
+            </para>
+            <para>
+            Mapping to IntentChannels:
+            - Any model can emit to any channel
+            - Combat typically emits to Action, Stance
+            - Movement emits to Locomotion
+            - Interaction emits to Action, Attention
+            - Idle emits to all channels with low urgency
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType.Combat">
+            <summary>Attack, defend, combo management.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType.Movement">
+            <summary>Navigation, pathfinding, steering.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType.Interaction">
+            <summary>Item use, dialogue, environment interaction.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType.Idle">
+            <summary>Ambient behavior, waiting, breathing.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout">
+            <summary>
+            Output slot layout convention for EmitIntent opcode.
+            Each intent channel uses 2 consecutive output slots: [action_index, urgency].
+            </summary>
+            <remarks>
+            <para>
+            Output buffer layout (10 slots minimum):
+            <code>
+            [0] Action intent (string table index)
+            [1] Action urgency (0.0 - 1.0)
+            [2] Locomotion intent (string table index)
+            [3] Locomotion urgency (0.0 - 1.0)
+            [4] Attention target (entity ID or 0)
+            [5] Attention urgency (0.0 - 1.0)
+            [6] Stance intent (string table index)
+            [7] Stance urgency (0.0 - 1.0)
+            [8] Vocalization intent (string table index)
+            [9] Vocalization urgency (0.0 - 1.0)
+            </code>
+            </para>
+            <para>
+            Extended slots (10+) can be used for:
+            - Locomotion target position (Vector3: slots 10-12)
+            - Action target entity (slot 13)
+            - Additional channel-specific data
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.SlotsPerChannel">
+            <summary>
+            Number of output slots per intent channel (intent + urgency).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.ChannelCount">
+            <summary>
+            Total number of channels (Action, Locomotion, Attention, Stance, Vocalization).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.MinimumOutputSlots">
+            <summary>
+            Minimum required output buffer size for all intent channels.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.LocomotionTargetXSlot">
+            <summary>
+            Slot index for locomotion target X coordinate.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.LocomotionTargetYSlot">
+            <summary>
+            Slot index for locomotion target Y coordinate.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.LocomotionTargetZSlot">
+            <summary>
+            Slot index for locomotion target Z coordinate.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.ActionTargetSlot">
+            <summary>
+            Slot index for action target entity ID.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.AttentionTargetSlot">
+            <summary>
+            Slot index for attention target entity ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.IntentSlot(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel)">
+            <summary>
+            Gets the output slot index for a channel's intent value.
+            </summary>
+            <param name="channel">The intent channel.</param>
+            <returns>The slot index for the intent string table index.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentSlotLayout.UrgencySlot(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel)">
+            <summary>
+            Gets the output slot index for a channel's urgency value.
+            </summary>
+            <param name="channel">The intent channel.</param>
+            <returns>The slot index for the urgency value.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger">
+            <summary>
+            Merges behavior outputs from multiple models using urgency-based resolution.
+            </summary>
+            <remarks>
+            <para>
+            Each character can have up to 4 simultaneously-active behavior models.
+            The IntentMerger resolves which model's output wins for each channel.
+            </para>
+            <para>
+            Resolution strategies:
+            - Exclusive channels (Action, Stance, Vocalization): Highest urgency wins
+            - Blendable channels (Locomotion): Weighted blend by urgency
+            - Attention: Blendable (outputs primary/secondary targets with weights for gaze interpolation)
+            </para>
+            <para>
+            Zero-urgency outputs are ignored (model didn't emit for that channel).
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.UrgencyThreshold">
+            <summary>
+            Minimum urgency threshold. Outputs below this are treated as zero.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.Merge(System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput})">
+            <summary>
+            Merge outputs from all active behavior models into a single MergedIntent.
+            </summary>
+            <param name="combat">Output from combat behavior model (may be null).</param>
+            <param name="movement">Output from movement behavior model (may be null).</param>
+            <param name="interaction">Output from interaction behavior model (may be null).</param>
+            <param name="idle">Output from idle behavior model (may be null).</param>
+            <returns>Merged intent for game engine consumption.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.SelectExclusiveAction(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType}[])">
+            <summary>
+            Selects the action with highest urgency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.BlendLocomotion(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType}[])">
+            <summary>
+            Blends locomotion from all contributors weighted by urgency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.BlendAttention(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType}[])">
+            <summary>
+            Blends attention from all contributors, outputting primary and secondary targets with weights.
+            </summary>
+            <remarks>
+            Entity IDs (Guids) cannot be mathematically blended, so we output the top two
+            contributors with their urgency-derived weights. The game resolves entity positions
+            and performs actual gaze interpolation.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.SelectExclusiveStance(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType}[])">
+            <summary>
+            Selects the stance with highest urgency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.SelectExclusiveVocalization(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType}[])">
+            <summary>
+            Selects the vocalization with highest urgency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.CollectContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType}[],System.Func{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput,System.ValueTuple{System.String,System.Single}})">
+            <summary>
+            Collects contributions for debugging from all outputs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.CollectLocomotionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects locomotion contributions for debugging.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.IntentMerger.CollectAttentionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorOutput},BeyondImmersion.Bannou.BehaviorCompiler.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects attention contributions for debugging.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent">
+            <summary>
+            Locomotion intent with blendable target position.
+            </summary>
+            <remarks>
+            <para>
+            Unlike other intent channels which are exclusive (highest urgency wins),
+            locomotion can blend multiple contributors weighted by urgency.
+            </para>
+            <para>
+            Example: Combat model wants to strafe left (urgency 0.8), Movement model
+            wants to walk forward (urgency 0.4). Result: diagonal movement weighted
+            toward strafing.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent.Intent">
+            <summary>
+            Movement intent name (e.g., "walk_to", "run_away", "strafe", "dodge").
+            Null if no locomotion intent.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent.Target">
+            <summary>
+            Blended target position in world space.
+            Null if the intent doesn't specify a target (e.g., "stop", "idle").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent.Speed">
+            <summary>
+            Normalized movement speed multiplier [0.0 - 1.0].
+            0.0 = stationary, 1.0 = maximum speed for this intent.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent.Urgency">
+            <summary>
+            Combined urgency of all contributing locomotion intents.
+            Used by animation system to determine transition speed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent.None">
+            <summary>
+            Empty locomotion intent (no movement).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent.IsValid">
+            <summary>
+            Whether this intent represents valid locomotion data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent.Create(System.String,System.Numerics.Vector3,System.Single,System.Single)">
+            <summary>
+            Creates a locomotion intent with target position.
+            </summary>
+            <param name="intent">Movement intent name.</param>
+            <param name="target">Target world position.</param>
+            <param name="speed">Normalized speed [0-1].</param>
+            <param name="urgency">Intent urgency [0-1].</param>
+            <returns>A new LocomotionIntent instance.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent.CreateWithoutTarget(System.String,System.Single)">
+            <summary>
+            Creates a locomotion intent without target (for intents like "stop", "idle").
+            </summary>
+            <param name="intent">Movement intent name.</param>
+            <param name="urgency">Intent urgency [0-1].</param>
+            <returns>A new LocomotionIntent instance.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.LocomotionIntent.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent">
+            <summary>
+            The merged result of all behavior model outputs.
+            This is what the game engine acts on each frame.
+            </summary>
+            <remarks>
+            <para>
+            MergedIntent represents the final decision after the IntentMerger resolves
+            conflicts between multiple simultaneously-active behavior models.
+            </para>
+            <para>
+            Resolution rules:
+            - Action: Exclusive (highest urgency wins)
+            - Locomotion: Blendable (targets weighted by urgency)
+            - Attention: Blendable (multiple targets with weights for gaze interpolation)
+            - Stance: Exclusive (highest urgency wins)
+            - Vocalization: Exclusive (highest urgency wins)
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.Action">
+            <summary>
+            Winning action intent from highest-urgency contributor.
+            Null if no model emitted an action.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.ActionTarget">
+            <summary>
+            Target entity for the winning action.
+            Null if the action doesn't require a target.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.ActionUrgency">
+            <summary>
+            Urgency of the winning action [0.0 - 1.0].
+            Useful for animation blending speed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.Locomotion">
+            <summary>
+            Blended locomotion intent from all contributors.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.Attention">
+            <summary>
+            Blended attention intent from all contributors.
+            Contains primary and secondary targets with weights for gaze interpolation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.Stance">
+            <summary>
+            Winning stance intent from highest-urgency contributor.
+            Null if no model emitted a stance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.StanceUrgency">
+            <summary>
+            Urgency of the winning stance [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.Vocalization">
+            <summary>
+            Winning vocalization intent from highest-urgency contributor.
+            Null if no model emitted a vocalization.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.VocalizationUrgency">
+            <summary>
+            Urgency of the winning vocalization [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.Trace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.Empty">
+            <summary>
+            Empty merged intent (no actions, no movement).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.HasAnyIntent">
+            <summary>
+            Whether this intent has any actionable content.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Intent.MergedIntent.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Parser.DocumentLoader">
             <summary>
             Loads ABML documents with full import resolution.
@@ -1026,6 +1741,1111 @@
         <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Parser.ParseError.ToString">
             <summary>
             Returns a formatted error message with location.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel">
+            <summary>
+            A compiled behavior model ready for execution.
+            Contains bytecode, state schema, constant pool, string table, and optional debug info.
+            </summary>
+            <remarks>
+            <para>
+            Binary format:
+            - Header (32 bytes)
+            - Extension header (24 bytes, optional)
+            - State schema (variable)
+            - Continuation points table (variable, optional)
+            - Constant pool (variable)
+            - String table (variable)
+            - Bytecode (variable)
+            - Debug info (variable, optional)
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Header">
+            <summary>
+            Model header containing version, flags, ID, and checksum.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.ExtensionHeader">
+            <summary>
+            Extension header (only present if model is an extension).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Schema">
+            <summary>
+            Input/output state schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.ContinuationPoints">
+            <summary>
+            Continuation points for streaming composition.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.ConstantPool">
+            <summary>
+            Constant pool containing literal values.
+            All values are stored as doubles.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.StringTable">
+            <summary>
+            String table for string literals.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Bytecode">
+            <summary>
+            Compiled bytecode.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.DebugInfo">
+            <summary>
+            Debug info (only present if HasDebugInfo flag set).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Id">
+            <summary>
+            Unique model identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Version">
+            <summary>
+            Format version.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Flags">
+            <summary>
+            Model flags.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.IsExtension">
+            <summary>
+            Whether this model is an extension that attaches to another model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.MaxStackDepth">
+            <summary>
+            Maximum stack depth required for execution.
+            Computed from bytecode analysis during loading.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.LocalCount">
+            <summary>
+            Number of local variables used.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader,System.Nullable{BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ExtensionHeader},BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema,BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable,System.Collections.Generic.IReadOnlyList{System.Double},System.Collections.Generic.IReadOnlyList{System.String},System.Byte[],BeyondImmersion.Bannou.BehaviorCompiler.Runtime.DebugInfo)">
+            <summary>
+            Creates a new behavior model.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Deserialize(System.Byte[])">
+            <summary>
+            Deserializes a behavior model from binary data.
+            </summary>
+            <param name="data">Binary model data.</param>
+            <returns>Deserialized model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a behavior model from a binary reader.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Serialize">
+            <summary>
+            Serializes the behavior model to binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the behavior model to a binary writer.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.AnalyzeBytecode(System.Byte[])">
+            <summary>
+            Analyzes bytecode to determine stack depth and local count requirements.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.GetStackDelta(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode)">
+            <summary>
+            Gets the stack delta for an opcode (positive = push, negative = pop).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel.GetOperandSize(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode)">
+            <summary>
+            Gets the size of operands for an opcode.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.DebugInfo">
+            <summary>
+            Debug information for a behavior model.
+            Maps bytecode offsets to source locations.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.DebugInfo.SourcePath">
+            <summary>
+            Source file path or identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.DebugInfo.LineMap">
+            <summary>
+            Line number mappings: bytecode offset -> source line.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.DebugInfo.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Int32})">
+            <summary>
+            Creates new debug info.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.DebugInfo.GetLine(System.Int32)">
+            <summary>
+            Gets the source line for a bytecode offset.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.DebugInfo.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes debug info from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.DebugInfo.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes debug info to binary data.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader">
+            <summary>
+            Fixed-size header for behavior model binary format (32 bytes).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.Magic">
+            <summary>
+            Magic bytes identifying the format: "ABML" (0x4C4D4241).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.CurrentVersion">
+            <summary>
+            Current format version.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.Size">
+            <summary>
+            Header size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.Version">
+            <summary>
+            Format version number.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.Flags">
+            <summary>
+            Model flags.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.ModelId">
+            <summary>
+            Unique model identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.Checksum">
+            <summary>
+            CRC32 checksum of the model data (excluding header).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.Reserved">
+            <summary>
+            Reserved for future use.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.#ctor(System.UInt16,BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelFlags,System.Guid,System.UInt32)">
+            <summary>
+            Creates a new header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a header from binary data.
+            </summary>
+            <param name="reader">Binary reader positioned at start of header.</param>
+            <returns>Deserialized header.</returns>
+            <exception cref="T:System.IO.InvalidDataException">If magic bytes don't match.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the header to binary data.
+            </summary>
+            <param name="writer">Binary writer.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.IsCompatible">
+            <summary>
+            Checks if this model version is compatible with the current runtime.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.HasDebugInfo">
+            <summary>
+            Checks if this model has debug info.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.HasContinuationPoints">
+            <summary>
+            Checks if this model has continuation points.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelHeader.IsExtension">
+            <summary>
+            Checks if this model is an extension.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ExtensionHeader">
+            <summary>
+            Extension header for models that attach to other models (only present if IsExtension flag set).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ExtensionHeader.Size">
+            <summary>
+            Extension header size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ExtensionHeader.ParentModelId">
+            <summary>
+            Parent model ID that this extension attaches to.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ExtensionHeader.AttachPointHash">
+            <summary>
+            Hash of the continuation point name this extension attaches to.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ExtensionHeader.ReplacementFlowOffset">
+            <summary>
+            Offset to the replacement flow in bytecode.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ExtensionHeader.#ctor(System.Guid,System.UInt32,System.UInt32)">
+            <summary>
+            Creates a new extension header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ExtensionHeader.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes an extension header from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ExtensionHeader.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the extension header to binary data.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter">
+            <summary>
+            Lightweight interpreter for compiled ABML behavior models.
+            Designed for per-frame evaluation with zero allocations after initialization.
+            </summary>
+            <remarks>
+            <para>
+            This interpreter uses a stack-based architecture for simplicity and cache efficiency.
+            All values are stored as doubles to avoid boxing and enable SIMD-friendly operations.
+            </para>
+            <para>
+            The interpreter is NOT thread-safe. Each character should have its own interpreter instance.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.Model">
+            <summary>
+            The model being interpreted.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.ModelId">
+            <summary>
+            Model ID for identification.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.InputSchema">
+            <summary>
+            Input schema for this model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.StringTable">
+            <summary>
+            String table for output string lookup.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModel)">
+            <summary>
+            Creates an interpreter for the given behavior model.
+            </summary>
+            <param name="model">The compiled behavior model to interpret.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.SetRandomSeed(System.Int32)">
+            <summary>
+            Sets the random seed for deterministic execution.
+            Call before Evaluate() for reproducible results.
+            </summary>
+            <param name="seed">Random seed (e.g., frame number for replays).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.Evaluate(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Evaluates the behavior model with the given input state.
+            Returns the output state (action intent).
+            </summary>
+            <remarks>
+            This method is allocation-free after initial setup.
+            </remarks>
+            <param name="inputState">Current game state values (must match input schema).</param>
+            <param name="outputState">Pre-allocated output buffer (must match output schema).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.ReadUInt16">
+            <summary>
+            Reads a 16-bit unsigned integer from bytecode (little-endian).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.CurrentStackDepth">
+            <summary>
+            Gets the current stack depth (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.CurrentInstructionPointer">
+            <summary>
+            Gets the current instruction pointer (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.IsPaused">
+            <summary>
+            Whether evaluation is currently paused at a continuation point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.PausedContinuationPointIndex">
+            <summary>
+            Index of the continuation point where evaluation is paused (-1 if not paused).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.EvaluateWithPause(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Evaluates the behavior model with continuation point pause support.
+            When a CONTINUATION_POINT opcode is reached, evaluation pauses and
+            returns a result indicating the pause. Call Resume methods to continue.
+            </summary>
+            <remarks>
+            <para>
+            This method is allocation-free after initial setup, maintaining the same
+            performance characteristics as <see cref="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.Evaluate(System.ReadOnlySpan{System.Double},System.Span{System.Double})"/>.
+            </para>
+            <para>
+            When resuming from a paused state, the instruction pointer continues from
+            where it left off. The stack and locals are preserved across evaluations.
+            </para>
+            </remarks>
+            <param name="inputState">Current game state values (must match input schema).</param>
+            <param name="outputState">Pre-allocated output buffer (must match output schema).</param>
+            <returns>Result indicating whether evaluation completed or paused.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.ResumeWithDefaultFlow(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Resumes evaluation with the default flow after pausing at a continuation point.
+            </summary>
+            <remarks>
+            Call this when no extension is available or the timeout has expired.
+            </remarks>
+            <param name="inputState">Current game state values.</param>
+            <param name="outputState">Pre-allocated output buffer.</param>
+            <returns>Result of continued evaluation.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if not paused at a continuation point.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.ResumeWithExtension(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter,System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Resumes evaluation by executing an extension model instead of the default flow.
+            </summary>
+            <remarks>
+            <para>
+            The extension interpreter runs to completion, and its output replaces
+            the current output state. After the extension completes, the base model
+            continues from after the continuation point's default flow.
+            </para>
+            </remarks>
+            <param name="extensionInterpreter">The extension interpreter to execute.</param>
+            <param name="inputState">Current game state values.</param>
+            <param name="outputState">Pre-allocated output buffer.</param>
+            <exception cref="T:System.InvalidOperationException">Thrown if not paused at a continuation point.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelInterpreter.ClearPauseState">
+            <summary>
+            Clears the pause state without resuming execution.
+            </summary>
+            <remarks>
+            Use this to abandon a paused evaluation without continuing.
+            </remarks>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode">
+            <summary>
+            Stack-based bytecode opcodes for behavior model execution.
+            Different from the register-based expression opcodes in bannou-service.
+            </summary>
+            <remarks>
+            Instruction encoding: [Opcode:8][Operand1:8][Operand2:8][Operand3:8]
+            Most instructions are 1-2 bytes. Jump targets use 16-bit offsets.
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.PushConst">
+            <summary>Push constant from pool. [PUSH_CONST idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.PushInput">
+            <summary>Push input variable value. [PUSH_INPUT idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.PushLocal">
+            <summary>Push local variable value. [PUSH_LOCAL idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.StoreLocal">
+            <summary>Pop and store to local variable. [STORE_LOCAL idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Pop">
+            <summary>Discard top of stack. [POP]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Dup">
+            <summary>Duplicate top of stack. [DUP]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Swap">
+            <summary>Swap top two stack values. [SWAP]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.PushString">
+            <summary>Push string from string table. [PUSH_STRING idx:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Add">
+            <summary>Pop a, b; push a + b. [ADD]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Sub">
+            <summary>Pop a, b; push a - b. [SUB]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Mul">
+            <summary>Pop a, b; push a * b. [MUL]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Div">
+            <summary>Pop a, b; push a / b. [DIV]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Mod">
+            <summary>Pop a, b; push a % b. [MOD]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Neg">
+            <summary>Pop a; push -a. [NEG]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Eq">
+            <summary>Pop a, b; push 1.0 if a == b, else 0.0. [EQ]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Ne">
+            <summary>Pop a, b; push 1.0 if a != b, else 0.0. [NE]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Lt">
+            <summary>Pop a, b; push 1.0 if a &lt; b, else 0.0. [LT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Le">
+            <summary>Pop a, b; push 1.0 if a &lt;= b, else 0.0. [LE]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Gt">
+            <summary>Pop a, b; push 1.0 if a &gt; b, else 0.0. [GT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Ge">
+            <summary>Pop a, b; push 1.0 if a &gt;= b, else 0.0. [GE]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.And">
+            <summary>Pop a, b; push 1.0 if both truthy, else 0.0. [AND]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Or">
+            <summary>Pop a, b; push 1.0 if either truthy, else 0.0. [OR]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Not">
+            <summary>Pop a; push 1.0 if falsy, else 0.0. [NOT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Jmp">
+            <summary>Unconditional jump. [JMP offset:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.JmpIf">
+            <summary>Jump if top of stack is truthy. [JMP_IF offset:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.JmpUnless">
+            <summary>Jump if top of stack is falsy. [JMP_UNLESS offset:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Call">
+            <summary>Call subroutine. [CALL flow_idx:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Ret">
+            <summary>Return from subroutine. [RET]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Halt">
+            <summary>Stop execution. [HALT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.SwitchJmp">
+            <summary>Jump table for switch-like constructs. [SWITCH_JMP cases:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.SetOutput">
+            <summary>Pop value and store in output variable. [SET_OUTPUT idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.EmitIntent">
+            <summary>
+            Emit action intent with urgency. [EMIT_INTENT channel:8]
+            Expects stack: [action_string_idx, urgency]
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Rand">
+            <summary>Push random float [0, 1). [RAND]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.RandInt">
+            <summary>Push random int in range. [RAND_INT] Stack: [min, max]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Lerp">
+            <summary>Linear interpolation. [LERP] Stack: [a, b, t] -> a + (b - a) * t</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Clamp">
+            <summary>Clamp value to range. [CLAMP] Stack: [value, min, max]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Abs">
+            <summary>Absolute value. [ABS] Stack: [a] -> |a|</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Floor">
+            <summary>Floor. [FLOOR] Stack: [a] -> floor(a)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Ceil">
+            <summary>Ceiling. [CEIL] Stack: [a] -> ceil(a)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Min">
+            <summary>Minimum of two values. [MIN] Stack: [a, b]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Max">
+            <summary>Maximum of two values. [MAX] Stack: [a, b]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.ContinuationPoint">
+            <summary>
+            Pause for possible extension attachment.
+            [CONTINUATION_POINT cp_idx:16]
+            Interpreter checks for attached extension at this point.
+            If extension available: transfers control to extension flow.
+            If no extension and timeout expires: jumps to default flow.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.ExtensionAvailable">
+            <summary>
+            Check if extension is available.
+            [EXTENSION_AVAILABLE cp_idx:16]
+            Push 1.0 if extension attached, 0.0 otherwise.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.YieldToExtension">
+            <summary>
+            Transfer control to attached extension.
+            [YIELD_TO_EXTENSION cp_idx:16]
+            Used internally when extension is attached.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Breakpoint">
+            <summary>Debug breakpoint. [BREAKPOINT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Trace">
+            <summary>Debug trace with string. [TRACE str_idx:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorOpcode.Nop">
+            <summary>No-operation. [NOP]</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelFlags">
+            <summary>
+            Flags for behavior model header.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelFlags.None">
+            <summary>No special flags.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelFlags.HasDebugInfo">
+            <summary>Model includes debug info section.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelFlags.HasContinuationPoints">
+            <summary>Model has continuation points for streaming composition.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelFlags.IsExtension">
+            <summary>Model is an extension that attaches to another model.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorModelFlags.DeterministicRandom">
+            <summary>Model uses deterministic random (seeded RNG).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType">
+            <summary>
+            Variable types supported in state schemas.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType.Bool">
+            <summary>Boolean (stored as 0.0 or 1.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType.Int">
+            <summary>Integer (stored as double).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType.Float">
+            <summary>Floating point.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType.String">
+            <summary>String (stored as string table index).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType.Enum">
+            <summary>Enum value (stored as int, validated against enum def).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType.EntityId">
+            <summary>Entity reference (stored as int ID).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType.Vector3">
+            <summary>Vector3 (stored as 3 consecutive doubles).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel">
+            <summary>
+            Intent channel identifiers for multi-model coordination.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel.Action">
+            <summary>Primary action channel (attack, block, use, talk).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel.Locomotion">
+            <summary>Movement/locomotion channel.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel.Attention">
+            <summary>Attention/gaze direction channel.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel.Stance">
+            <summary>Combat stance channel.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IntentChannel.Vocalization">
+            <summary>Vocalization channel.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint">
+            <summary>
+            Defines a point in execution where the interpreter pauses for possible extension attachment.
+            Used for streaming composition in cinematics.
+            </summary>
+            <remarks>
+            <para>
+            Continuation points enable runtime extension of executing behaviors. A game server
+            receives a complete, executable cinematic, starts executing immediately, and can
+            optionally receive extensions that attach to named points.
+            </para>
+            <para>
+            Execution flow:
+            1. Interpreter reaches CONTINUATION_POINT opcode
+            2. Checks if extension is attached at this point
+            3. If extension available: transfers control to extension
+            4. If no extension: waits up to timeout, then executes default flow
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.NameHash">
+            <summary>
+            FNV-1a hash of the continuation point name for fast lookup.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.NameStringIndex">
+            <summary>
+            Index into string table for continuation point name (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.TimeoutMs">
+            <summary>
+            Maximum time to wait for extension attachment (milliseconds).
+            If 0, no wait - immediately use default if no extension.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.DefaultFlowOffset">
+            <summary>
+            Bytecode offset of the default flow to execute if no extension arrives.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.BytecodeOffset">
+            <summary>
+            Bytecode offset where the CONTINUATION_POINT opcode is located.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.#ctor(System.UInt32,System.Int32,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            Creates a new continuation point.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a continuation point from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the continuation point to binary data.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.Timeout">
+            <summary>
+            Gets the timeout as a TimeSpan.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint.Create(System.String,System.Int32,System.TimeSpan,System.UInt32,System.UInt32)">
+            <summary>
+            Creates a continuation point from a name.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable">
+            <summary>
+            Table of continuation points in a behavior model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable.Points">
+            <summary>
+            All continuation points in the model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable.Count">
+            <summary>
+            Number of continuation points.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint})">
+            <summary>
+            Creates a new continuation point table.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable.Item(System.Int32)">
+            <summary>
+            Gets a continuation point by index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable.TryGetByHash(System.UInt32,BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint@)">
+            <summary>
+            Tries to find a continuation point by name hash.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable.TryGetByName(System.String,BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPoint@)">
+            <summary>
+            Tries to find a continuation point by name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable.Empty">
+            <summary>
+            Empty table with no continuation points.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a continuation point table from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.ContinuationPointTable.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the continuation point table to binary data.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationResult">
+            <summary>
+            Result of a behavior model evaluation. Allocation-free readonly struct.
+            </summary>
+            <remarks>
+            <para>
+            When evaluation completes normally, use <see cref="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationResult.Completed"/>.
+            When evaluation pauses at a continuation point, the result contains
+            the continuation point index and timeout for extension injection.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationResult.Completed">
+            <summary>
+            Evaluation completed normally without pause.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationResult.Status">
+            <summary>
+            Status of the evaluation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationResult.ContinuationPointIndex">
+            <summary>
+            Index of continuation point if paused (-1 if not paused).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationResult.TimeoutMs">
+            <summary>
+            Timeout in milliseconds if paused (0 if not paused or no timeout).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationResult.IsPaused">
+            <summary>
+            Whether evaluation is paused at a continuation point.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationResult.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationStatus,System.Int32,System.UInt32)">
+            <summary>
+            Creates a new evaluation result.
+            </summary>
+            <param name="status">The evaluation status.</param>
+            <param name="cpIndex">Continuation point index (-1 if not paused).</param>
+            <param name="timeoutMs">Timeout in milliseconds (0 if no timeout).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationResult.PausedAt(System.Int32,System.UInt32)">
+            <summary>
+            Creates a result indicating pause at a continuation point.
+            </summary>
+            <param name="cpIndex">The continuation point index.</param>
+            <param name="timeoutMs">The timeout in milliseconds.</param>
+            <returns>An evaluation result indicating pause.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationStatus">
+            <summary>
+            Status of a behavior model evaluation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationStatus.Completed">
+            <summary>
+            Evaluation completed normally (reached end or Halt opcode).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationStatus.PausedAtContinuationPoint">
+            <summary>
+            Evaluation paused at a continuation point waiting for extension.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.EvaluationStatus.ExtensionExecuting">
+            <summary>
+            An extension model is currently executing.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter">
+            <summary>
+            Interface for behavior model interpreters, enabling DI and testability.
+            </summary>
+            <remarks>
+            <para>
+            The interpreter executes compiled ABML bytecode against a provided input state.
+            Each character should have its own interpreter instance (not thread-safe).
+            </para>
+            <para>
+            This interface enables:
+            - Dependency injection in server-side services
+            - Testability through mocking
+            - Future pooling/caching implementations
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.Model">
+            <summary>
+            The model being interpreted.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.ModelId">
+            <summary>
+            Model ID for identification.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.InputSchema">
+            <summary>
+            Input schema for this model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.StringTable">
+            <summary>
+            String table for output string lookup.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.SetRandomSeed(System.Int32)">
+            <summary>
+            Sets the random seed for deterministic execution.
+            Call before Evaluate() for reproducible results.
+            </summary>
+            <param name="seed">Random seed (e.g., frame number for replays).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.Evaluate(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Evaluates the behavior model with the given input state.
+            Returns the output state (action intent).
+            </summary>
+            <remarks>
+            This method is allocation-free after initial setup.
+            </remarks>
+            <param name="inputState">Current game state values (must match input schema).</param>
+            <param name="outputState">Pre-allocated output buffer (must match output schema).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.EvaluateWithPause(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Evaluates the behavior model with continuation point pause support.
+            When a CONTINUATION_POINT opcode is reached, evaluation pauses and
+            returns a result indicating the pause. Call Resume methods to continue.
+            </summary>
+            <param name="inputState">Current game state values (must match input schema).</param>
+            <param name="outputState">Pre-allocated output buffer (must match output schema).</param>
+            <returns>Result indicating whether evaluation completed or paused.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.CurrentStackDepth">
+            <summary>
+            Gets the current stack depth (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.CurrentInstructionPointer">
+            <summary>
+            Gets the current instruction pointer (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.IsPaused">
+            <summary>
+            Whether evaluation is currently paused at a continuation point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.PausedContinuationPointIndex">
+            <summary>
+            Index of the continuation point where evaluation is paused (-1 if not paused).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.ResumeWithDefaultFlow(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Resumes evaluation with the default flow after pausing at a continuation point.
+            </summary>
+            <param name="inputState">Current game state values.</param>
+            <param name="outputState">Pre-allocated output buffer.</param>
+            <returns>Result of continued evaluation.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.ResumeWithExtension(BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter,System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Resumes evaluation by executing an extension model instead of the default flow.
+            </summary>
+            <param name="extensionInterpreter">The extension interpreter to execute.</param>
+            <param name="inputState">Current game state values.</param>
+            <param name="outputState">Pre-allocated output buffer.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.IBehaviorModelInterpreter.ClearPauseState">
+            <summary>
+            Clears the pause state without resuming execution.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema">
+            <summary>
+            Defines the input and output variables for a behavior model.
+            Used by the interpreter to map game state to model inputs and model outputs to intents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.Inputs">
+            <summary>
+            Input variable definitions (provided by game client each evaluation).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.Outputs">
+            <summary>
+            Output variable definitions (produced by model evaluation).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.InputCount">
+            <summary>
+            Number of input variables.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.OutputCount">
+            <summary>
+            Number of output variables.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition})">
+            <summary>
+            Creates a new state schema.
+            </summary>
+            <param name="inputs">Input variable definitions.</param>
+            <param name="outputs">Output variable definitions.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.TryGetInputIndex(System.UInt32,System.Int32@)">
+            <summary>
+            Gets the index of an input variable by name hash.
+            </summary>
+            <param name="nameHash">FNV-1a hash of the variable name.</param>
+            <param name="index">The index if found.</param>
+            <returns>True if the variable exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.TryGetOutputIndex(System.UInt32,System.Int32@)">
+            <summary>
+            Gets the index of an output variable by name hash.
+            </summary>
+            <param name="nameHash">FNV-1a hash of the variable name.</param>
+            <param name="index">The index if found.</param>
+            <returns>True if the variable exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.GetInputDefault(System.Int32)">
+            <summary>
+            Gets the default value for an input variable.
+            </summary>
+            <param name="index">Variable index.</param>
+            <returns>Default value as double.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.GetInputName(System.Int32,System.String[])">
+            <summary>
+            Gets the input variable name (for debugging).
+            </summary>
+            <param name="index">Variable index.</param>
+            <param name="stringTable">String table for name lookup.</param>
+            <returns>Variable name.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.Empty">
+            <summary>
+            Empty schema with no inputs or outputs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a state schema from binary data.
+            </summary>
+            <param name="reader">Binary reader positioned at schema data.</param>
+            <returns>Deserialized schema.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.StateSchema.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the state schema to binary data.
+            </summary>
+            <param name="writer">Binary writer.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition">
+            <summary>
+            Definition of a single input or output variable.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition.NameHash">
+            <summary>
+            FNV-1a hash of the variable name for fast lookup.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition.NameStringIndex">
+            <summary>
+            Index into string table for variable name (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition.Type">
+            <summary>
+            Variable type.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition.DefaultValue">
+            <summary>
+            Default value (as double for all types).
+            For strings, this is the string table index.
+            For Vector3, this is the first component (use Vector3Default for all).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition.#ctor(System.UInt32,System.Int32,BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType,System.Double)">
+            <summary>
+            Creates a new variable definition.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a variable definition from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the variable definition to binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition.Create(System.String,System.Int32,BeyondImmersion.Bannou.BehaviorCompiler.Runtime.BehaviorVariableType,System.Double)">
+            <summary>
+            Creates a variable definition from a name.
+            </summary>
+            <param name="name">Variable name.</param>
+            <param name="nameStringIndex">Index in string table.</param>
+            <param name="type">Variable type.</param>
+            <param name="defaultValue">Default value.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Runtime.VariableDefinition.HashName(System.String)">
+            <summary>
+            FNV-1a hash for variable name lookup.
             </summary>
         </member>
     </members>
