@@ -416,6 +416,7 @@ public partial class PuppetmasterController
             ],
             "properties": {
                 "watcher": {
+                    "description": "The watcher that was started or already existed",
                     "$ref": "#/$defs/WatcherInfo"
                 },
                 "alreadyExisted": {

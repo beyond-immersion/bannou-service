@@ -299,6 +299,7 @@ components:
         - alreadyExisted
       properties:
         watcher:
+          description: The watcher that was started or already existed
           $ref: '#/components/schemas/WatcherInfo'
         alreadyExisted:
           type: boolean

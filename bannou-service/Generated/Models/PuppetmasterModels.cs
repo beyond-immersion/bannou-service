@@ -219,6 +219,9 @@ public partial class StartWatcherRequest
 public partial class StartWatcherResponse
 {
 
+    /// <summary>
+    /// The watcher that was started or already existed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("watcher")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]

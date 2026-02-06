@@ -189,24 +189,25 @@ paths:
         ,\n    \"$defs\": {\n        \"StartWatcherResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after starting a watcher\",\n            \"required\": [\n     \
         \           \"watcher\",\n                \"alreadyExisted\"\n            ],\n            \"properties\": {\n    \
-        \            \"watcher\": {\n                    \"$ref\": \"#/$defs/WatcherInfo\"\n                },\n         \
-        \       \"alreadyExisted\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        True if a matching watcher was already running\"\n                }\n            }\n        },\n        \"WatcherInfo\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Information about an active regional watcher\",\n            \"required\": [\n                \"watcherId\",\n\
-        \                \"realmId\",\n                \"watcherType\",\n                \"startedAt\"\n            ],\n \
-        \           \"properties\": {\n                \"watcherId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this watcher instance\"\
-        \n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uuid\",\n                    \"description\": \"Realm this watcher monitors\"\n               \
-        \ },\n                \"watcherType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Type of watcher (e.g., \\\"regional\\\", \\\"dungeon\\\", \\\"event\\\")\"\n                },\n             \
-        \   \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this watcher was started\"\n                },\n                \"behaviorRef\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Behavior document reference this watcher uses\"\n                },\n                \"actorId\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Actor instance ID running this watcher's behavior\"\n                }\n            }\n        }\n    }\n}"
+        \            \"watcher\": {\n                    \"description\": \"The watcher that was started or already existed\"\
+        ,\n                    \"$ref\": \"#/$defs/WatcherInfo\"\n                },\n                \"alreadyExisted\":
+        {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if a matching watcher was
+        already running\"\n                }\n            }\n        },\n        \"WatcherInfo\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Information about an active
+        regional watcher\",\n            \"required\": [\n                \"watcherId\",\n                \"realmId\",\n \
+        \               \"watcherType\",\n                \"startedAt\"\n            ],\n            \"properties\": {\n \
+        \               \"watcherId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique identifier for this watcher instance\"\n                },\n    \
+        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Realm this watcher monitors\"\n                },\n                \"watcherType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of watcher (e.g., \\\"\
+        regional\\\", \\\"dungeon\\\", \\\"event\\\")\"\n                },\n                \"startedAt\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this watcher was started\"\n                },\n                \"behaviorRef\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Behavior document
+        reference this watcher uses\"\n                },\n                \"actorId\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Actor instance ID running
+        this watcher's behavior\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Manually start a regional watcher\",\n    \"description\": \"Starts a regional
         watcher for the specified realm with the given behavior.\\nIf a watcher already exists for this realm and watcher
         type, returns the existing watcher.\\n\",\n    \"tags\": [\n        \"Watchers\"\n    ],\n    \"deprecated\": false,\n\
@@ -436,6 +437,7 @@ components:
       - alreadyExisted
       properties:
         watcher:
+          description: The watcher that was started or already existed
           $ref: '#/components/schemas/WatcherInfo'
         alreadyExisted:
           type: boolean

@@ -22290,6 +22290,7 @@ export interface components {
     };
     /** @description Response after starting a watcher */
     StartWatcherResponse: {
+      /** @description The watcher that was started or already existed */
       watcher: components['schemas']['WatcherInfo'];
       /** @description True if a matching watcher was already running */
       alreadyExisted: boolean;
