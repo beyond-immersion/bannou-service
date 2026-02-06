@@ -2,6 +2,7 @@
 // ABML Expression Cache (LRU, Thread-Safe)
 // ═══════════════════════════════════════════════════════════════════════════
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
 using BeyondImmersion.BannouService.Abml.Compiler;
 using System.Collections.Concurrent;
 

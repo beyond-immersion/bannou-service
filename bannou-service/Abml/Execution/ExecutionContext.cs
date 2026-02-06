@@ -3,9 +3,9 @@
 // Runtime state for document execution.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Parser;
 using BeyondImmersion.BannouService.Abml.Runtime;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;

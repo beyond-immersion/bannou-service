@@ -3,7 +3,8 @@
 // Interface for action execution handlers.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;

@@ -6,7 +6,7 @@
 using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Behavior;
 
-namespace BeyondImmersion.Bannou.Behavior.Goap;
+namespace BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 
 /// <summary>
 /// Extension methods bridging cognition types to GOAP planning options.

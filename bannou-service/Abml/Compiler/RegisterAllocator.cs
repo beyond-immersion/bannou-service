@@ -2,6 +2,8 @@
 // ABML Register Allocator
 // ═══════════════════════════════════════════════════════════════════════════
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+
 namespace BeyondImmersion.BannouService.Abml.Compiler;
 
 /// <summary>

@@ -3,10 +3,10 @@
 // Tree-walking interpreter for ABML documents.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Documents;
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Parser;
 using BeyondImmersion.BannouService.Abml.Runtime;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;

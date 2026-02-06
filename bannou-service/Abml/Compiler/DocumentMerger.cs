@@ -4,9 +4,9 @@
 // bytecode compilation.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Documents;
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
-using BeyondImmersion.BannouService.Abml.Parser;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 
 namespace BeyondImmersion.BannouService.Abml.Compiler;
 

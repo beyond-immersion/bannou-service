@@ -4,6 +4,7 @@
 // Implementations provided by lib-behavior plugin.
 // ═══════════════════════════════════════════════════════════════════════════
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using System.Numerics;
 
 namespace BeyondImmersion.BannouService.Behavior;

@@ -3,8 +3,8 @@
 // Abstract base class providing common evaluation and merge logic.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Behavior.Intent;
-using BeyondImmersion.BannouService.Behavior.Runtime;
+using BeyondImmersion.Bannou.BehaviorCompiler.Intent;
+using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 
 namespace BeyondImmersion.BannouService.Behavior;
 

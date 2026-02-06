@@ -3,7 +3,7 @@
 // Executes local variable assignment actions (shadows parent scope).
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Expressions;
 
 namespace BeyondImmersion.BannouService.Abml.Execution.Handlers;

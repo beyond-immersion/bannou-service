@@ -3,7 +3,8 @@
 // Handles domain-specific actions by routing to Intent Emitters.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Behavior;
 

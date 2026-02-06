@@ -3,7 +3,7 @@
 // Executes global variable assignment actions (writes to root scope).
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Expressions;
 
 namespace BeyondImmersion.BannouService.Abml.Execution.Handlers;

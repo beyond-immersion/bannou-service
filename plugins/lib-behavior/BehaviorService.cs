@@ -1,9 +1,9 @@
-using BeyondImmersion.Bannou.Behavior.Compiler;
-using BeyondImmersion.Bannou.Behavior.Goap;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Abml.Cognition;
-using BeyondImmersion.BannouService.Abml.Parser;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -16,8 +16,8 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using InternalCompilationOptions = BeyondImmersion.Bannou.Behavior.Compiler.CompilationOptions;
-using InternalGoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
+using InternalCompilationOptions = BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions;
+using InternalGoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Behavior;
 

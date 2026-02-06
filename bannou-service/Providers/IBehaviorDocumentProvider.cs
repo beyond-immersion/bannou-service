@@ -3,7 +3,7 @@
 // Abstraction for loading ABML behavior documents from various sources.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 
 namespace BeyondImmersion.BannouService.Providers;
 

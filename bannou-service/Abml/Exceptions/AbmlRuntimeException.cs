@@ -2,6 +2,8 @@
 // ABML Runtime Exception
 // ═══════════════════════════════════════════════════════════════════════════
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Exceptions;
+
 namespace BeyondImmersion.BannouService.Abml.Exceptions;
 
 /// <summary>

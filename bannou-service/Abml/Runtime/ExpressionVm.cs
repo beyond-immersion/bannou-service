@@ -2,6 +2,7 @@
 // ABML Bytecode Virtual Machine
 // ═══════════════════════════════════════════════════════════════════════════
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
 using BeyondImmersion.BannouService.Abml.Compiler;
 using BeyondImmersion.BannouService.Abml.Exceptions;
 using BeyondImmersion.BannouService.Abml.Expressions;

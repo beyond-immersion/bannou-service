@@ -2,6 +2,7 @@
 // ABML Template Engine (Fluid-based Liquid Templates)
 // ═══════════════════════════════════════════════════════════════════════════
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Exceptions;
 using BeyondImmersion.BannouService.Abml.Exceptions;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using Fluid;
