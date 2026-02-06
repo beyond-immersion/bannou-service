@@ -3,6 +3,7 @@
 // Manages behavior stacks for all entities.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;

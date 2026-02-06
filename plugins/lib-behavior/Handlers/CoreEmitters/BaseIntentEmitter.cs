@@ -3,6 +3,7 @@
 // Common base class for intent emitters.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Extensions;
 

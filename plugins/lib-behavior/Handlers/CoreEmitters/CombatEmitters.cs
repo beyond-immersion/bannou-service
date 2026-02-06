@@ -3,6 +3,7 @@
 // Intent emitters for combat actions.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;

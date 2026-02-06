@@ -3,6 +3,7 @@
 // Filters behavior stack outputs based on control state.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Control;

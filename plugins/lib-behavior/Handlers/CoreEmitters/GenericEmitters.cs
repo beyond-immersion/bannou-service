@@ -3,6 +3,7 @@
 // Direct intent emission for fine-grained control.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Extensions;
 

@@ -3,6 +3,7 @@
 // Intent emitters for attention/gaze actions.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;

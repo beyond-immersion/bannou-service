@@ -3,6 +3,7 @@
 // Intent emitters for facial expression actions.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
