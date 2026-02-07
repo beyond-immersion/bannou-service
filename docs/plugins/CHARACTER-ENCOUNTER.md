@@ -356,6 +356,7 @@ No stubs or unimplemented features remain.
 1. **Encounter aggregation**: Pre-compute and cache sentiment values per character pair, updating on encounter record/delete/perspective-update to avoid O(N) computation on every GetSentiment call.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/312 -->
 2. **Location-based encounter proximity**: Integrate with location hierarchy to find encounters "near" a location (ancestor/descendant queries).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/313 -->
 3. **Memory decay curves**: Support non-linear decay (exponential, logarithmic) via configurable decay function, allowing traumatic encounters to persist longer than casual ones.
 4. **Encounter archival**: Instead of hard-deleting pruned encounters, move them to a compressed archive format for historical queries.
 
