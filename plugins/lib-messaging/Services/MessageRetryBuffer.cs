@@ -32,6 +32,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
     private readonly RabbitMQConnectionManager _connectionManager;
     private readonly MessagingServiceConfiguration _configuration;
     private readonly ILogger<MessageRetryBuffer> _logger;
+    private readonly IProcessTerminator _processTerminator;
 
     private readonly ConcurrentQueue<BufferedMessage> _buffer = new();
     private readonly Timer _retryTimer;
@@ -45,14 +46,20 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
     /// <summary>
     /// Creates a new MessageRetryBuffer.
     /// </summary>
+    /// <param name="connectionManager">RabbitMQ connection manager.</param>
+    /// <param name="configuration">Messaging service configuration.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="processTerminator">Process terminator for crash-fast behavior (optional, defaults to Environment.FailFast).</param>
     public MessageRetryBuffer(
         RabbitMQConnectionManager connectionManager,
         MessagingServiceConfiguration configuration,
-        ILogger<MessageRetryBuffer> logger)
+        ILogger<MessageRetryBuffer> logger,
+        IProcessTerminator? processTerminator = null)
     {
         _connectionManager = connectionManager;
         _configuration = configuration;
         _logger = logger;
+        _processTerminator = processTerminator ?? new DefaultProcessTerminator();
 
         if (_configuration.RetryBufferEnabled)
         {
@@ -211,7 +218,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
             var message = $"FATAL: Message retry buffer exceeded max size ({_bufferCount} >= {_configuration.RetryBufferMaxSize}). " +
                         "RabbitMQ connection has been down too long. Crashing node for restart.";
             _logger.LogCritical(message);
-            Environment.FailFast(message);
+            _processTerminator.TerminateProcess(message);
         }
 
         // Check age threshold (oldest message in queue)
@@ -223,15 +230,31 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
                 var message = $"FATAL: Oldest buffered message is {age.TotalSeconds:F0}s old (max: {_configuration.RetryBufferMaxAgeSeconds}s). " +
                             "RabbitMQ connection has been down too long. Crashing node for restart.";
                 _logger.LogCritical(message);
-                Environment.FailFast(message);
+                _processTerminator.TerminateProcess(message);
             }
         }
     }
 
     /// <summary>
     /// Timer callback to process the retry buffer.
+    /// Uses fire-and-forget pattern with proper error handling via ProcessRetryBufferAsync.
     /// </summary>
-    private async void ProcessRetryBuffer(object? state)
+    /// <remarks>
+    /// IMPLEMENTATION TENETS (T23): Timer callbacks cannot be async directly.
+    /// We use fire-and-forget with discard operator, but all exceptions are
+    /// handled inside ProcessRetryBufferAsync to prevent process crashes.
+    /// </remarks>
+    private void ProcessRetryBuffer(object? state)
+    {
+        // Fire-and-forget with proper error handling inside the async method
+        _ = ProcessRetryBufferAsync();
+    }
+
+    /// <summary>
+    /// Async implementation of retry buffer processing.
+    /// All exceptions are caught and logged to prevent process crashes.
+    /// </summary>
+    private async Task ProcessRetryBufferAsync()
     {
         if (_disposed || _isProcessing || _bufferCount == 0)
         {
@@ -250,10 +273,11 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
         try
         {
             _isProcessing = true;
-            await ProcessBufferedMessagesAsync();
+            await ProcessBufferedMessagesInternalAsync();
         }
         catch (Exception ex)
         {
+            // Catch all exceptions to prevent process crash from fire-and-forget
             _logger.LogError(ex, "Error processing retry buffer");
         }
         finally
@@ -266,7 +290,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
     /// <summary>
     /// Processes buffered messages, retrying failed publishes.
     /// </summary>
-    private async Task ProcessBufferedMessagesAsync()
+    private async Task ProcessBufferedMessagesInternalAsync()
     {
         if (_bufferCount == 0)
         {

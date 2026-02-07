@@ -234,9 +234,9 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// Uses compare-exchange pattern to safely limit pool size without races.
-    /// Channels that can't be pooled are closed synchronously (unavoidable in sync method).
+    /// Channels that can't be pooled are closed asynchronously.
     /// </remarks>
-    public void ReturnChannel(IChannel channel)
+    public async ValueTask ReturnChannelAsync(IChannel channel)
     {
         if (!channel.IsOpen)
         {
@@ -255,8 +255,7 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
                 Interlocked.Decrement(ref _totalActiveChannels);
                 try
                 {
-                    // Note: This blocks on async - addressed in Task #6 (T24 fix)
-                    channel.CloseAsync().GetAwaiter().GetResult();
+                    await channel.CloseAsync();
                 }
                 catch
                 {
