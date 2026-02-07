@@ -16,11 +16,27 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 /// Event-backed cache invalidation ensures all instances stay synchronized.
 /// </summary>
 /// <remarks>
-/// Design follows IMPLEMENTATION TENETS (Multi-Instance Safety):
-/// - Redis stores authoritative state via Lua scripts for atomicity
-/// - Local ConcurrentDictionary provides 0ms reads on hot path
-/// - RabbitMQ pub/sub propagates state changes across instances
-/// - Graceful degradation: returns Closed when Redis unavailable
+/// <para><b>Design follows IMPLEMENTATION TENETS (Multi-Instance Safety):</b></para>
+/// <list type="bullet">
+///   <item>Redis stores authoritative state via Lua scripts for atomicity</item>
+///   <item>Local ConcurrentDictionary provides 0ms reads on hot path</item>
+///   <item>RabbitMQ pub/sub propagates state changes across instances</item>
+///   <item>Graceful degradation: returns Closed when Redis unavailable</item>
+/// </list>
+///
+/// <para><b>State Store Pattern (FOUNDATION TENETS - schema-first):</b></para>
+/// <para>
+/// This class uses <see cref="StateStoreDefinitions.MeshCircuitBreaker"/> for the Redis key prefix
+/// only, not as a full state store via <see cref="IStateStoreFactory"/>. The reason is that circuit
+/// breaker operations require atomic read-modify-write semantics that can only be achieved via
+/// Lua scripts executed through <see cref="IRedisOperations"/>. The state store abstraction doesn't
+/// support Lua scripts because it's designed for generic CRUD operations across multiple backends.
+/// </para>
+/// <para>
+/// The key prefix is still sourced from the schema-defined state store configuration to maintain
+/// consistency with the schema-first principle - the prefix <c>mesh:cb:</c> is defined in
+/// <c>schemas/state-stores.yaml</c> under the <c>mesh-circuit-breaker</c> store definition.
+/// </para>
 /// </remarks>
 public sealed class DistributedCircuitBreaker
 {
@@ -58,7 +74,9 @@ public sealed class DistributedCircuitBreaker
         _threshold = threshold;
         _resetTimeout = resetTimeout;
 
-        // Use schema-defined key prefix from StateStoreDefinitions (per FOUNDATION TENETS - schema-first)
+        // Load key prefix from schema-defined state store configuration (per FOUNDATION TENETS - schema-first).
+        // We use only the prefix, not the full state store, because Lua scripts require IRedisOperations
+        // for atomic read-modify-write operations. See class remarks for full explanation.
         var config = StateStoreDefinitions.Configurations[StateStoreDefinitions.MeshCircuitBreaker];
         _keyPrefix = config.KeyPrefix ?? throw new InvalidOperationException(
             $"MeshCircuitBreaker store configuration missing KeyPrefix in state-stores.yaml");

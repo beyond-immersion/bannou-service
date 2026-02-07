@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Mesh;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Mesh;
 
@@ -65,6 +80,7 @@ public partial class MeshEndpoint
     /// Service port (typically 80)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("port")]
+    [System.ComponentModel.DataAnnotations.Range(1, 65535)]
     public int Port { get; set; } = default!;
 
     /// <summary>
@@ -80,22 +96,25 @@ public partial class MeshEndpoint
     /// Current load as percentage (0-100)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loadPercent")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 100F)]
     public float LoadPercent { get; set; } = 0F;
 
     /// <summary>
-    /// Maximum concurrent connections
+    /// Maximum concurrent connections this endpoint can handle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxConnections")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MaxConnections { get; set; } = default!;
 
     /// <summary>
     /// Current active connections
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CurrentConnections { get; set; } = default!;
 
     /// <summary>
-    /// List of service names hosted on this endpoint
+    /// List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
     public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
@@ -356,6 +375,7 @@ public partial class RegisterEndpointRequest
     /// Service port
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("port")]
+    [System.ComponentModel.DataAnnotations.Range(1, 65535)]
     public int Port { get; set; } = 80;
 
     /// <summary>
@@ -365,16 +385,11 @@ public partial class RegisterEndpointRequest
     public System.Collections.Generic.ICollection<string>? Services { get; set; } = default!;
 
     /// <summary>
-    /// Maximum concurrent connections
+    /// Maximum concurrent connections this endpoint can handle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxConnections")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MaxConnections { get; set; } = 1000;
-
-    /// <summary>
-    /// Optional metadata key-value pairs (null if none)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
 }
 
@@ -444,12 +459,14 @@ public partial class HeartbeatRequest
     /// Current load 0-100 (null defaults to 0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loadPercent")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 100F)]
     public float? LoadPercent { get; set; } = default!;
 
     /// <summary>
     /// Current active connections (null defaults to 0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? CurrentConnections { get; set; } = default!;
 
     /// <summary>
@@ -497,17 +514,17 @@ public partial class GetRouteRequest
     public string AppId { get; set; } = default!;
 
     /// <summary>
-    /// Optional service name for affinity routing (null for no affinity)
+    /// Optional filter to select only endpoints hosting this specific service (null for any endpoint)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     public string? ServiceName { get; set; } = default!;
 
     /// <summary>
-    /// Load balancing algorithm to use for endpoint selection
+    /// Load balancing algorithm to use for endpoint selection (null uses service default from configuration)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("algorithm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public LoadBalancerAlgorithm Algorithm { get; set; } = default!;
+    public LoadBalancerAlgorithm? Algorithm { get; set; } = default!;
 
 }
 
@@ -568,7 +585,7 @@ public partial class GetMappingsResponse
     /// Default app-id when no mapping exists
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
-    public string DefaultAppId { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DefaultAppId { get; set; } = "bannou";
 
     /// <summary>
     /// Mapping version for change detection

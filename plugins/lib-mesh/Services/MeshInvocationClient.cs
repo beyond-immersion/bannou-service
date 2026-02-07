@@ -86,7 +86,9 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             handler?.Dispose(); // Only executes if ownership transfer failed
         }
 
-        _endpointCache = new EndpointCache(TimeSpan.FromSeconds(configuration.EndpointCacheTtlSeconds));
+        _endpointCache = new EndpointCache(
+            TimeSpan.FromSeconds(configuration.EndpointCacheTtlSeconds),
+            configuration.EndpointCacheMaxSize);
 
         // Create distributed circuit breaker (shares state across instances via Redis + events)
         _circuitBreaker = new DistributedCircuitBreaker(
@@ -734,17 +736,24 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     }
 
     /// <summary>
-    /// Simple in-memory cache for endpoint resolution.
+    /// Simple in-memory cache for endpoint resolution with optional size limit.
     /// Uses ConcurrentDictionary per IMPLEMENTATION TENETS (Multi-Instance Safety).
     /// </summary>
     private sealed class EndpointCache
     {
         private readonly TimeSpan _ttl;
+        private readonly int _maxSize;
         private readonly ConcurrentDictionary<string, (MeshEndpoint Endpoint, DateTimeOffset Expiry)> _cache = new();
 
-        public EndpointCache(TimeSpan ttl)
+        /// <summary>
+        /// Creates a new endpoint cache.
+        /// </summary>
+        /// <param name="ttl">Time-to-live for cached entries.</param>
+        /// <param name="maxSize">Maximum number of entries (0 for unlimited).</param>
+        public EndpointCache(TimeSpan ttl, int maxSize = 0)
         {
             _ttl = ttl;
+            _maxSize = maxSize;
         }
 
         public bool TryGet(string appId, out MeshEndpoint? endpoint)
@@ -767,6 +776,34 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 
         public void Set(string appId, MeshEndpoint endpoint)
         {
+            // Enforce size limit if configured (0 means unlimited)
+            if (_maxSize > 0 && _cache.Count >= _maxSize && !_cache.ContainsKey(appId))
+            {
+                // Evict expired entries first
+                var now = DateTimeOffset.UtcNow;
+                foreach (var key in _cache.Keys.ToList())
+                {
+                    if (_cache.TryGetValue(key, out var entry) && entry.Expiry <= now)
+                    {
+                        _cache.TryRemove(key, out _);
+                    }
+                }
+
+                // If still at limit, evict oldest entry
+                if (_cache.Count >= _maxSize)
+                {
+                    var oldestKey = _cache
+                        .OrderBy(kv => kv.Value.Expiry)
+                        .Select(kv => kv.Key)
+                        .FirstOrDefault();
+
+                    if (oldestKey != null)
+                    {
+                        _cache.TryRemove(oldestKey, out _);
+                    }
+                }
+            }
+
             _cache[appId] = (endpoint, DateTimeOffset.UtcNow.Add(_ttl));
         }
 

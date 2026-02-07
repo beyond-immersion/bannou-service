@@ -101,6 +101,8 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `PooledConnectionLifetimeMinutes` | `MESH_POOLED_CONNECTION_LIFETIME_MINUTES` | `2` | HTTP connection pool lifetime |
 | `ConnectTimeoutSeconds` | `MESH_CONNECT_TIMEOUT_SECONDS` | `10` | TCP connection timeout |
 | `EndpointCacheTtlSeconds` | `MESH_ENDPOINT_CACHE_TTL_SECONDS` | `5` | TTL for cached endpoint resolution |
+| `EndpointCacheMaxSize` | `MESH_ENDPOINT_CACHE_MAX_SIZE` | `0` | Max app-ids in endpoint cache (0 = unlimited) |
+| `LoadBalancingStateMaxAppIds` | `MESH_LOAD_BALANCING_STATE_MAX_APP_IDS` | `0` | Max app-ids in load balancing state (0 = unlimited) |
 | `MaxTopEndpointsReturned` | `MESH_MAX_TOP_ENDPOINTS_RETURNED` | `2` | Max alternates in route response |
 | `MaxServiceMappingsDisplayed` | `MESH_MAX_SERVICE_MAPPINGS_DISPLAYED` | `10` | Max mappings in diagnostic logs |
 
@@ -229,9 +231,6 @@ Event-Driven Auto-Registration
 1. **Local routing mode is minimal**: `LocalMeshStateManager` provides in-memory state for testing but does not simulate failure scenarios or load balancing nuances. All calls return the same local endpoint regardless of app-id.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/162 -->
 
-2. **RegisterEndpointRequest.metadata**: Defined in schema but never stored - metadata is silently discarded.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/161 -->
-
 ---
 
 ## Potential Extensions
@@ -248,10 +247,7 @@ Event-Driven Auto-Registration
 
 ### Bugs (Fix Immediately)
 
-1. **`RegisterEndpointRequest.Metadata` not stored**: The schema defines `metadata` on `RegisterEndpointRequest` but `RegisterEndpointAsync` in `MeshService.cs:172-198` never reads or stores `body.Metadata`. Any metadata passed by clients is silently discarded.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/161 -->
-
-2. **Circuit breaker bypasses state store factory**: `mesh-circuit-breaker` is defined in `state-stores.yaml` with prefix `mesh:cb` and `StateStoreDefinitions.MeshCircuitBreaker` is generated, but `DistributedCircuitBreaker` uses a hardcoded `_keyPrefix = "mesh:cb:"` with raw `IRedisOperations` instead. This violates schema-first principles - either refactor to use the state store definition or remove the unused schema entry.
+*No known bugs requiring immediate attention.*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -259,7 +255,7 @@ Event-Driven Auto-Registration
 
 2. **GetRoute falls back to all endpoints**: If both degradation-threshold filtering and load-threshold filtering eliminate all endpoints, the algorithm falls back to the original unfiltered list. Prevents total routing failure at the cost of routing to potentially degraded endpoints.
 
-3. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, int>` for per-appId counters. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field. Different approaches for the same problem - not a bug, but worth noting.
+3. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, RoundRobinCounter>` for per-appId counters with `Interlocked.Increment`. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field (no per-appId tracking). Different approaches for the same problem - not a bug, but worth noting.
 
 4. **Distributed circuit breaker uses eventual consistency**: Circuit breaker state is shared across instances via Redis + RabbitMQ events. All instances see the same circuit state within event propagation latency (~milliseconds). During the propagation window, different instances may briefly disagree about circuit state.
 
@@ -279,7 +275,7 @@ Event-Driven Auto-Registration
 
 3. **State manager lazy initialization**: `MeshStateManager.InitializeAsync()` must be called before use. Uses `Interlocked.CompareExchange` for thread-safe first initialization and resets `_initialized` flag on failure to allow retry.
 
-4. **Static load balancing state in MeshService**: Both `_roundRobinCounters` (for RoundRobin) and `_weightedRoundRobinCurrentWeights` (for WeightedRoundRobin) are static, meaning they persist across scoped service instances. These dictionaries can grow unbounded as new app-ids/endpoints are encountered (no eviction). Use `ResetLoadBalancingStateForTesting()` to clear in tests.
+4. **Static load balancing state in MeshService**: Both `_roundRobinCounters` (for RoundRobin) and `_weightedRoundRobinCurrentWeights` (for WeightedRoundRobin) are static, meaning they persist across scoped service instances. Configure `LoadBalancingStateMaxAppIds` to limit growth (default 0 = unlimited). Use `ResetLoadBalancingStateForTesting()` to clear in tests.
 
 5. **Three overlapping endpoint resolution paths**: MeshService.GetRoute (for API callers), MeshInvocationClient.ResolveEndpointAsync (for generated clients), and heartbeat-based auto-registration all resolve/manage endpoints with subtly different logic. This is intentional separation of concerns but requires awareness when debugging routing issues.
 
@@ -299,3 +295,12 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-30**: Implemented weighted round-robin load balancing. Added `WeightedRoundRobin` to `LoadBalancerAlgorithm` enum in `mesh-api.yaml`, updated configuration to reference the API enum via `$ref`, and implemented `SelectWeightedRoundRobin` method using nginx-style smooth weighted round-robin algorithm. Static `_weightedRoundRobinCurrentWeights` dictionary tracks current weights per endpoint.
 - **2026-02-01**: Created [#219](https://github.com/beyond-immersion/bannou-service/issues/219) for distributed circuit breaker design - needs decisions on performance tradeoffs (Redis latency per invocation), atomicity mechanism (Lua scripts vs distributed locks vs optimistic concurrency), configuration model (opt-in vs automatic), and whether endpoint cache also needs distribution.
 - **2026-02-01**: Implemented [#219](https://github.com/beyond-immersion/bannou-service/issues/219) distributed circuit breaker. Uses event-backed local cache pattern: Redis stores authoritative state via atomic Lua scripts, local `ConcurrentDictionary` cache for 0ms hot path reads, `mesh.circuit.changed` events for cross-instance sync. No new configuration - always-on when `CircuitBreakerEnabled=true`. Gracefully degrades to local-only when Redis unavailable. Also fixed `EndpointCache` to use `ConcurrentDictionary`.
+- **2026-02-07**: Closed [#219](https://github.com/beyond-immersion/bannou-service/issues/219) - distributed circuit breaker implementation verified complete.
+- **2026-02-07**: Closed [#161](https://github.com/beyond-immersion/bannou-service/issues/161) - removed `metadata` field from `RegisterEndpointRequest` schema. Schema-first meta endpoints via Connect service cover dynamic introspection needs.
+- **2026-02-07**: Added validation constraints (minimum/maximum) to all numeric fields in mesh-api.yaml and mesh-configuration.yaml.
+- **2026-02-07**: Fixed event topic naming inconsistency: renamed `bannou.service-heartbeats` to `bannou.service-heartbeat` (singular) for consistency with event name.
+- **2026-02-07**: Added `EndpointCacheMaxSize` and `LoadBalancingStateMaxAppIds` configuration properties with LRU eviction to prevent unbounded memory growth.
+- **2026-02-07**: Fixed round-robin race condition in MeshService by using `RoundRobinCounter` wrapper class with `Interlocked.Increment`.
+- **2026-02-07**: Added clarifying XML documentation to `DistributedCircuitBreaker` explaining the state store usage pattern (key prefix only, Lua scripts via IRedisOperations for atomicity).
+- **2026-02-07**: Created [#322](https://github.com/beyond-immersion/bannou-service/issues/322) as master issue for lib-mesh production readiness fixes.
+- **2026-02-07**: Created [#323](https://github.com/beyond-immersion/bannou-service/issues/323) for future degradation events (tied to Orchestrator response).

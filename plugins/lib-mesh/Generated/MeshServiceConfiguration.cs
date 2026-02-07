@@ -81,18 +81,21 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Recommended interval between heartbeats
     /// Environment variable: MESH_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int HeartbeatIntervalSeconds { get; set; } = 30;
 
     /// <summary>
     /// TTL for endpoint registration (should be > 2x heartbeat interval)
     /// Environment variable: MESH_ENDPOINT_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int EndpointTtlSeconds { get; set; } = 90;
 
     /// <summary>
     /// Time without heartbeat before marking endpoint as degraded
     /// Environment variable: MESH_DEGRADATION_THRESHOLD_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DegradationThresholdSeconds { get; set; } = 60;
 
     /// <summary>
@@ -105,7 +108,15 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Load percentage above which an endpoint is considered high-load
     /// Environment variable: MESH_LOAD_THRESHOLD_PERCENT
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 100)]
     public int LoadThresholdPercent { get; set; } = 80;
+
+    /// <summary>
+    /// Maximum number of app-ids to track in load balancing state (round-robin counters, weighted state). Use 0 for unlimited.
+    /// Environment variable: MESH_LOAD_BALANCING_STATE_MAX_APP_IDS
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public int LoadBalancingStateMaxAppIds { get; set; } = 0;
 
     /// <summary>
     /// Whether to subscribe to FullServiceMappingsEvent for routing updates
@@ -123,12 +134,14 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Interval between active health checks
     /// Environment variable: MESH_HEALTH_CHECK_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int HealthCheckIntervalSeconds { get; set; } = 60;
 
     /// <summary>
     /// Timeout for health check requests
     /// Environment variable: MESH_HEALTH_CHECK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int HealthCheckTimeoutSeconds { get; set; } = 5;
 
     /// <summary>
@@ -153,6 +166,7 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Seconds before attempting to close circuit
     /// Environment variable: MESH_CIRCUIT_BREAKER_RESET_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int CircuitBreakerResetSeconds { get; set; } = 30;
 
     /// <summary>
@@ -171,24 +185,35 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// How long to keep pooled HTTP connections alive in minutes
     /// Environment variable: MESH_POOLED_CONNECTION_LIFETIME_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int PooledConnectionLifetimeMinutes { get; set; } = 2;
 
     /// <summary>
     /// TCP connection timeout in seconds
     /// Environment variable: MESH_CONNECT_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ConnectTimeoutSeconds { get; set; } = 10;
 
     /// <summary>
     /// TTL in seconds for cached service endpoints
     /// Environment variable: MESH_ENDPOINT_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int EndpointCacheTtlSeconds { get; set; } = 5;
 
     /// <summary>
-    /// Delay in seconds before health check service starts probing endpoints
+    /// Maximum number of app-ids to cache endpoint resolutions for. Use 0 for unlimited.
+    /// Environment variable: MESH_ENDPOINT_CACHE_MAX_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public int EndpointCacheMaxSize { get; set; } = 0;
+
+    /// <summary>
+    /// Delay in seconds before health check service starts probing endpoints (0 means start immediately)
     /// Environment variable: MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int HealthCheckStartupDelaySeconds { get; set; } = 10;
 
     /// <summary>

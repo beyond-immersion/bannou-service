@@ -25,11 +25,24 @@ public partial class MeshService : IMeshService
     private readonly IServiceAppMappingResolver _mappingResolver;
 
     // Round-robin counter for load balancing (per app-id)
-    private static readonly ConcurrentDictionary<string, int> _roundRobinCounters = new();
+    // Uses wrapper class for thread-safe atomic increments
+    private static readonly ConcurrentDictionary<string, RoundRobinCounter> _roundRobinCounters = new();
 
     // Weighted round-robin current weights (key: "appId:instanceId" -> currentWeight)
     // Uses smooth weighted round-robin algorithm (nginx-style)
     private static readonly ConcurrentDictionary<string, double> _weightedRoundRobinCurrentWeights = new();
+
+    /// <summary>
+    /// Thread-safe round-robin counter using Interlocked.Increment.
+    /// Each app-id gets its own counter instance for independent round-robin selection.
+    /// </summary>
+    private sealed class RoundRobinCounter
+    {
+        private int _value;
+
+        /// <summary>Gets the next value and increments atomically.</summary>
+        public int GetNext() => Interlocked.Increment(ref _value);
+    }
 
     // Track service start time for uptime
     private static readonly DateTimeOffset _serviceStartTime = DateTimeOffset.UtcNow;
@@ -411,13 +424,8 @@ public partial class MeshService : IMeshService
                 healthyEndpoints = endpoints;
             }
 
-            // Determine effective algorithm (use configured default when request uses default value)
-            var effectiveAlgorithm = body.Algorithm;
-            if (effectiveAlgorithm == default)
-            {
-                // Cast config enum to API enum (both have same values in same order)
-                effectiveAlgorithm = (LoadBalancerAlgorithm)_configuration.DefaultLoadBalancer;
-            }
+            // Determine effective algorithm (use configured default when null or not specified)
+            var effectiveAlgorithm = body.Algorithm ?? (LoadBalancerAlgorithm)_configuration.DefaultLoadBalancer;
 
             // Apply load balancing algorithm
             var selectedEndpoint = SelectEndpoint(healthyEndpoints, body.AppId, effectiveAlgorithm);
@@ -589,12 +597,23 @@ public partial class MeshService : IMeshService
 
     private MeshEndpoint SelectRoundRobin(List<MeshEndpoint> endpoints, string appId)
     {
-        var counter = _roundRobinCounters.AddOrUpdate(
-            appId,
-            0,
-            (_, current) => (current + 1) % endpoints.Count);
+        // Enforce cache size limit if configured (0 means unlimited)
+        if (_configuration.LoadBalancingStateMaxAppIds > 0 &&
+            _roundRobinCounters.Count >= _configuration.LoadBalancingStateMaxAppIds &&
+            !_roundRobinCounters.ContainsKey(appId))
+        {
+            // Evict oldest entry (FIFO approximation - ConcurrentDictionary doesn't track order,
+            // so we evict an arbitrary entry which provides eventual fairness)
+            var keyToRemove = _roundRobinCounters.Keys.FirstOrDefault();
+            if (keyToRemove != null)
+            {
+                _roundRobinCounters.TryRemove(keyToRemove, out _);
+            }
+        }
 
-        return endpoints[counter % endpoints.Count];
+        var counter = _roundRobinCounters.GetOrAdd(appId, _ => new RoundRobinCounter());
+        var index = counter.GetNext() % endpoints.Count;
+        return endpoints[index];
     }
 
     private static MeshEndpoint SelectLeastConnections(List<MeshEndpoint> endpoints)
@@ -631,7 +650,7 @@ public partial class MeshService : IMeshService
     /// Less loaded endpoints receive proportionally more requests while
     /// maintaining a deterministic distribution pattern.
     /// </summary>
-    private static MeshEndpoint SelectWeightedRoundRobin(List<MeshEndpoint> endpoints, string appId)
+    private MeshEndpoint SelectWeightedRoundRobin(List<MeshEndpoint> endpoints, string appId)
     {
         // Calculate effective weights based on inverse of load (less loaded = higher weight)
         var weighted = endpoints
@@ -642,6 +661,36 @@ public partial class MeshService : IMeshService
             .ToList();
 
         var totalEffectiveWeight = weighted.Sum(w => w.EffectiveWeight);
+
+        // Enforce cache size limit if configured (0 means unlimited)
+        // Note: This is a soft limit - we evict before adding new keys, but the dictionary
+        // uses endpoint keys which are more granular than appId keys
+        if (_configuration.LoadBalancingStateMaxAppIds > 0)
+        {
+            var currentUniqueAppIds = _weightedRoundRobinCurrentWeights.Keys
+                .Select(k => k.Split(':')[0])
+                .Distinct()
+                .Count();
+
+            if (currentUniqueAppIds >= _configuration.LoadBalancingStateMaxAppIds &&
+                !_weightedRoundRobinCurrentWeights.Keys.Any(k => k.StartsWith($"{appId}:")))
+            {
+                // Evict all entries for an arbitrary app-id to make room
+                var appIdToRemove = _weightedRoundRobinCurrentWeights.Keys
+                    .Select(k => k.Split(':')[0])
+                    .FirstOrDefault();
+
+                if (appIdToRemove != null)
+                {
+                    foreach (var key in _weightedRoundRobinCurrentWeights.Keys
+                        .Where(k => k.StartsWith($"{appIdToRemove}:"))
+                        .ToList())
+                    {
+                        _weightedRoundRobinCurrentWeights.TryRemove(key, out _);
+                    }
+                }
+            }
+        }
 
         // Update current weights and find the endpoint with highest current weight
         MeshEndpoint? selected = null;
