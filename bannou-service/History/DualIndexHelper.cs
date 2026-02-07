@@ -175,7 +175,15 @@ public class DualIndexHelper<TRecord> : IDualIndexHelper<TRecord> where TRecord 
             if (primaryIndex != null)
             {
                 primaryIndex.RecordIds.Remove(recordId);
-                await indexStore.SaveAsync(primaryIndexKey, primaryIndex, cancellationToken: cancellationToken);
+                // Delete empty index documents to avoid accumulating stale data
+                if (primaryIndex.RecordIds.Count == 0)
+                {
+                    await indexStore.DeleteAsync(primaryIndexKey, cancellationToken);
+                }
+                else
+                {
+                    await indexStore.SaveAsync(primaryIndexKey, primaryIndex, cancellationToken: cancellationToken);
+                }
             }
         }
 
@@ -187,7 +195,15 @@ public class DualIndexHelper<TRecord> : IDualIndexHelper<TRecord> where TRecord 
             if (secondaryIndex != null)
             {
                 secondaryIndex.RecordIds.Remove(recordId);
-                await indexStore.SaveAsync(secondaryIndexKey, secondaryIndex, cancellationToken: cancellationToken);
+                // Delete empty index documents to avoid accumulating stale data
+                if (secondaryIndex.RecordIds.Count == 0)
+                {
+                    await indexStore.DeleteAsync(secondaryIndexKey, cancellationToken);
+                }
+                else
+                {
+                    await indexStore.SaveAsync(secondaryIndexKey, secondaryIndex, cancellationToken: cancellationToken);
+                }
             }
         }
 
@@ -246,8 +262,9 @@ public class DualIndexHelper<TRecord> : IDualIndexHelper<TRecord> where TRecord 
                 .ToList();
             var secondaryIndices = await indexStore.GetBulkAsync(secondaryIndexKeys, cancellationToken);
 
-            // Update indices in-memory
+            // Update indices in-memory, separating empty from non-empty
             var updatedIndices = new Dictionary<string, HistoryIndexData>();
+            var emptyIndexKeys = new List<string>();
             foreach (var (secondaryKey, recordIdsToRemove) in recordsBySecondaryKey)
             {
                 var indexKey = $"{_secondaryIndexPrefix}{secondaryKey}";
@@ -257,14 +274,28 @@ public class DualIndexHelper<TRecord> : IDualIndexHelper<TRecord> where TRecord 
                     {
                         index.RecordIds.Remove(recordId);
                     }
-                    updatedIndices[indexKey] = index;
+                    // Track empty indices for deletion, non-empty for update
+                    if (index.RecordIds.Count == 0)
+                    {
+                        emptyIndexKeys.Add(indexKey);
+                    }
+                    else
+                    {
+                        updatedIndices[indexKey] = index;
+                    }
                 }
             }
 
-            // Bulk save updated secondary indices (1 operation instead of N)
+            // Bulk save non-empty secondary indices
             if (updatedIndices.Count > 0)
             {
                 await indexStore.SaveBulkAsync(updatedIndices, cancellationToken: cancellationToken);
+            }
+
+            // Bulk delete empty secondary indices to avoid accumulating stale data
+            if (emptyIndexKeys.Count > 0)
+            {
+                await indexStore.DeleteBulkAsync(emptyIndexKeys, cancellationToken);
             }
         }
 

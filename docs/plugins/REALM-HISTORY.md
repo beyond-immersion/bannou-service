@@ -192,7 +192,8 @@ None identified.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **GetLore returns OK with empty list**: Unlike DeleteLore (which returns NotFound for missing lore), GetLore always returns 200 OK with an empty elements list. Read operations are lenient; delete operations are strict.
+1. **GetLore returns OK with empty list**: Unlike DeleteLore (which returns NotFound for missing lore), GetLore always returns 200 OK with an empty elements list. Read operations are lenient; delete operations are strict. This differs from character-history's `GetBackstory` which returns 404 NotFound for missing backstory.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/309 -->
 
 2. **Summarize doesn't publish any event**: `SummarizeRealmHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
 
@@ -212,8 +213,9 @@ None identified.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/307 -->
 
 4. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure with no schema validation. Enables flexibility but sacrifices type safety and queryability.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/308 -->
 
-5. **DeleteParticipation doesn't delete empty indices**: Realm and event indices are updated by removing the participation ID but don't delete the index documents when they become empty. This leaves empty index documents in the database.
+5. ~~**DeleteParticipation doesn't delete empty indices**~~: **FIXED** (2026-02-06) - DualIndexHelper.RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Applies to both realm-history and character-history since they share the DualIndexHelper infrastructure.
 
 6. **DeleteAll is O(n) with N+1 queries**: Iterates through all participations for the realm individually, fetching each to find its eventId, then updating each event index separately. For realms with thousands of events, this could be slow. Uses bulk operations for participation records but not for event index updates.
 
@@ -224,6 +226,8 @@ None identified.
 ## Work Tracking
 
 ### Pending Design Review
+- **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history (parallel service API consistency; GetLore returns OK with empty list while GetBackstory returns NotFound)
+- **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
 - **2026-02-06**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Concurrency control for DualIndexHelper index updates (read-modify-write pattern without locking; shared infrastructure with character-history)
 - **2026-02-06**: [#306](https://github.com/beyond-immersion/bannou-service/issues/306) - Single-document storage for lore elements (evaluate whether document storage is problematic for large lore collections; shared pattern with character-history via BackstoryStorageHelper)
 - **2026-02-02**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations (shared issue with character-history; in-memory pagination causes memory pressure for realms with many participations)
@@ -234,4 +238,4 @@ None identified.
 
 ### Completed
 
-*No items currently marked as completed.*
+- **2026-02-06**: Fixed empty index cleanup in DualIndexHelper - RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Shared fix affects both realm-history and character-history.

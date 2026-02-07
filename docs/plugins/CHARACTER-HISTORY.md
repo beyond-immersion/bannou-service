@@ -76,9 +76,9 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| --- | --- | --- | No service-specific configuration properties |
+| `BackstoryCacheTtlSeconds` | `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS` | 600 | TTL in seconds for backstory cache entries |
 
-The generated `CharacterHistoryServiceConfiguration` contains only the framework-level `ForceServiceId` property.
+The generated `CharacterHistoryServiceConfiguration` is injected into `BackstoryCache` for TTL configuration.
 
 ---
 
@@ -234,8 +234,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-1. **Hardcoded cache TTL (T21 violation)**: `BackstoryCache` has `private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);` with a TODO comment. Per IMPLEMENTATION TENETS, all tunables must be in the configuration schema. Fix: Add `BackstoryCacheTtlSeconds` property to `character-history-configuration.yaml` and reference it in `BackstoryCache`.
-<!-- AUDIT:IN_PROGRESS:2026-02-06 -->
+1. ~~**Hardcoded cache TTL (T21 violation)**~~: **FIXED** (2026-02-06) - Added `BackstoryCacheTtlSeconds` to configuration schema (default 600 seconds). `BackstoryCache` now injects `CharacterHistoryServiceConfiguration` and uses configurable TTL.
 
 ### Intentional Quirks
 
@@ -254,10 +253,12 @@ None. The service is feature-complete for its scope.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/207 -->
 
 3. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure. On deserialization from JSON, becomes `JsonElement` or similar untyped object. No schema validation.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/308 -->
 
 4. **Parallel service pattern with realm-history**: Both services use nearly identical patterns (dual-index participations, document-based lore/backstory, template summarization) but with subtle behavioral differences (NotFound vs empty list for missing data).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/309 -->
 
-5. **Empty indices left behind after RemoveRecordAsync**: When removing a single participation, `RemoveRecordAsync` updates both primary and secondary indices but doesn't delete them when they become empty. Only `RemoveAllByPrimaryKeyAsync` (called by DeleteAll) deletes the primary index. This leaves orphaned empty index documents in the state store.
+5. ~~**Empty indices left behind after RemoveRecordAsync**~~: **FIXED** (2026-02-06) - DualIndexHelper.RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Applies to both character-history and realm-history since they share the DualIndexHelper infrastructure.
 
 6. **Summarize doesn't publish any event**: Unlike all other operations which publish typed events (recorded, deleted, created, updated), `SummarizeHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
 
@@ -278,6 +279,8 @@ None. The service is feature-complete for its scope.
 ## Work Tracking
 
 ### Pending Design Review
+- **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history (parallel service API consistency)
+- **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
 - **2026-01-31**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations (in-memory pagination causes memory pressure for characters with many participations)
 - **2026-01-31**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Add configurable backstory element count limit (prevent unbounded growth)
 - **2026-02-01**: [#230](https://github.com/beyond-immersion/bannou-service/issues/230) - AI-powered summarization (requires building new LLM service infrastructure)
@@ -285,4 +288,4 @@ None. The service is feature-complete for its scope.
 
 ### Completed
 
-*(Historical entries cleared during maintenance - see git history for details)*
+- **2026-02-06**: Fixed hardcoded cache TTL (T21 violation) - Added `BackstoryCacheTtlSeconds` configuration property
