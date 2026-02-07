@@ -34,20 +34,15 @@ public partial class MeshService
 // ============================================================================
 // INTERNAL DATA MODELS
 // ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class MeshStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record MeshCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+
+/// <summary>
+/// Thread-safe round-robin counter using Interlocked.Increment.
+/// Each app-id gets its own counter instance for independent round-robin selection.
+/// </summary>
+internal sealed class RoundRobinCounter
+{
+    private int _value;
+
+    /// <summary>Gets the next value and increments atomically.</summary>
+    public int GetNext() => Interlocked.Increment(ref _value);
+}

@@ -1474,12 +1474,26 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         var hashKey = GetHashKey(key);
-        var deleted = await _database.HashDeleteAsync(hashKey, field);
 
-        _logger.LogDebug("Deleted hash field '{Field}' from hash '{Key}' in store '{Store}' (existed: {Existed})",
-            field, key, _keyPrefix, deleted);
+        try
+        {
+            var deleted = await _database.HashDeleteAsync(hashKey, field);
 
-        return deleted;
+            _logger.LogDebug("Deleted hash field '{Field}' from hash '{Key}' in store '{Store}' (existed: {Existed})",
+                field, key, _keyPrefix, deleted);
+
+            return deleted;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed deleting hash field '{Field}' from hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout deleting hash field '{Field}' from hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -1489,7 +1503,21 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         var hashKey = GetHashKey(key);
-        return await _database.HashExistsAsync(hashKey, field);
+
+        try
+        {
+            return await _database.HashExistsAsync(hashKey, field);
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed checking hash field existence for '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout checking hash field existence for '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -1501,13 +1529,26 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
     {
         var hashKey = GetHashKey(key);
 
-        // HINCRBY is atomic
-        var newValue = await _database.HashIncrementAsync(hashKey, field, increment);
+        try
+        {
+            // HINCRBY is atomic
+            var newValue = await _database.HashIncrementAsync(hashKey, field, increment);
 
-        _logger.LogDebug("Incremented hash field '{Field}' in hash '{Key}' in store '{Store}' by {Increment} to {Value}",
-            field, key, _keyPrefix, increment, newValue);
+            _logger.LogDebug("Incremented hash field '{Field}' in hash '{Key}' in store '{Store}' by {Increment} to {Value}",
+                field, key, _keyPrefix, increment, newValue);
 
-        return newValue;
+            return newValue;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed incrementing hash field '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout incrementing hash field '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -1516,22 +1557,36 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         var hashKey = GetHashKey(key);
-        var entries = await _database.HashGetAllAsync(hashKey);
 
-        var result = new Dictionary<string, TField>();
-        foreach (var entry in entries)
+        try
         {
-            var fieldValue = BannouJson.Deserialize<TField>(entry.Value!);
-            if (fieldValue != null)
+            var entries = await _database.HashGetAllAsync(hashKey);
+
+            var result = new Dictionary<string, TField>();
+            foreach (var entry in entries)
             {
-                result[entry.Name!] = fieldValue;
+                var fieldValue = BannouJson.Deserialize<TField>(entry.Value!);
+                if (fieldValue != null)
+                {
+                    result[entry.Name!] = fieldValue;
+                }
             }
+
+            _logger.LogDebug("Retrieved {Count} fields from hash '{Key}' in store '{Store}'",
+                result.Count, key, _keyPrefix);
+
+            return result;
         }
-
-        _logger.LogDebug("Retrieved {Count} fields from hash '{Key}' in store '{Store}'",
-            result.Count, key, _keyPrefix);
-
-        return result;
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed getting all hash fields from hash '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout getting all hash fields from hash '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -1540,7 +1595,21 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         var hashKey = GetHashKey(key);
-        return await _database.HashLengthAsync(hashKey);
+
+        try
+        {
+            return await _database.HashLengthAsync(hashKey);
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed getting hash count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout getting hash count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -1549,12 +1618,26 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         var hashKey = GetHashKey(key);
-        var deleted = await _database.KeyDeleteAsync(hashKey);
 
-        _logger.LogDebug("Deleted hash '{Key}' from store '{Store}' (existed: {Existed})",
-            key, _keyPrefix, deleted);
+        try
+        {
+            var deleted = await _database.KeyDeleteAsync(hashKey);
 
-        return deleted;
+            _logger.LogDebug("Deleted hash '{Key}' from store '{Store}' (existed: {Existed})",
+                key, _keyPrefix, deleted);
+
+            return deleted;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed deleting hash '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout deleting hash '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -1564,11 +1647,25 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         var hashKey = GetHashKey(key);
-        var updated = await _database.KeyExpireAsync(hashKey, TimeSpan.FromSeconds(ttlSeconds));
 
-        _logger.LogDebug("Refreshed TTL on hash '{Key}' in store '{Store}' to {Ttl}s (existed: {Existed})",
-            key, _keyPrefix, ttlSeconds, updated);
+        try
+        {
+            var updated = await _database.KeyExpireAsync(hashKey, TimeSpan.FromSeconds(ttlSeconds));
 
-        return updated;
+            _logger.LogDebug("Refreshed TTL on hash '{Key}' in store '{Store}' to {Ttl}s (existed: {Existed})",
+                key, _keyPrefix, ttlSeconds, updated);
+
+            return updated;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed refreshing TTL on hash '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout refreshing TTL on hash '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 }

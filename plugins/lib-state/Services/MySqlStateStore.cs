@@ -699,6 +699,15 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
+        // Prevent OOM by enforcing configurable limit on in-memory fallback
+        if (entries.Count > _inMemoryFallbackLimit)
+        {
+            throw new InvalidOperationException(
+                $"CountAsync in-memory fallback would load {entries.Count} entries from store '{_storeName}' " +
+                $"(limit: {_inMemoryFallbackLimit}). Use JsonCountAsync with explicit conditions for large datasets, " +
+                "or simplify the predicate to enable SQL translation.");
+        }
+
         var deserializedValues = new List<TValue>();
         foreach (var entry in entries)
         {

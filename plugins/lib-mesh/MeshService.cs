@@ -25,24 +25,12 @@ public partial class MeshService : IMeshService
     private readonly IServiceAppMappingResolver _mappingResolver;
 
     // Round-robin counter for load balancing (per app-id)
-    // Uses wrapper class for thread-safe atomic increments
+    // Uses RoundRobinCounter from MeshServiceModels.cs for thread-safe atomic increments
     private static readonly ConcurrentDictionary<string, RoundRobinCounter> _roundRobinCounters = new();
 
     // Weighted round-robin current weights (key: "appId:instanceId" -> currentWeight)
     // Uses smooth weighted round-robin algorithm (nginx-style)
     private static readonly ConcurrentDictionary<string, double> _weightedRoundRobinCurrentWeights = new();
-
-    /// <summary>
-    /// Thread-safe round-robin counter using Interlocked.Increment.
-    /// Each app-id gets its own counter instance for independent round-robin selection.
-    /// </summary>
-    private sealed class RoundRobinCounter
-    {
-        private int _value;
-
-        /// <summary>Gets the next value and increments atomically.</summary>
-        public int GetNext() => Interlocked.Increment(ref _value);
-    }
 
     // Track service start time for uptime
     private static readonly DateTimeOffset _serviceStartTime = DateTimeOffset.UtcNow;
