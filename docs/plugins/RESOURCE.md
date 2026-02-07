@@ -559,26 +559,52 @@ None currently.
 
 ### Compression Callbacks (For Higher-Layer Services)
 
-1. **At startup (OnRunningAsync)**: Register compression callbacks via `/resource/compress/define`
+**Schema-Driven Registration (Preferred)**: Use the `x-compression-callback` schema extension in your API schema.
+The code generator produces a `{Service}CompressionCallbacks.RegisterAsync()` method that you call in your plugin.
 
-   ```csharp
-   // In YourServicePlugin.OnRunningAsync():
-   var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
-   await resourceClient.DefineCompressCallbackAsync(
-       new DefineCompressCallbackRequest
-       {
-           ResourceType = "character",
-           SourceType = "character-personality",
-           ServiceName = "character-personality",
-           CompressEndpoint = "/character-personality/get-compress-data",
-           CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
-           DecompressEndpoint = "/character-personality/restore-from-archive",
-           DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
-           Priority = 10,
-           Description = "Personality traits and combat preferences"
-       },
-       ct);
-   ```
+See [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md#x-compression-callback-compression-callback-registration) for full documentation.
+
+```yaml
+# In your-service-api.yaml
+x-compression-callback:
+  resourceType: character
+  sourceType: character-personality
+  priority: 10
+  description: Personality traits and combat preferences
+  compressEndpoint: /character-personality/get-compress-data
+  compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+  decompressEndpoint: /character-personality/restore-from-archive
+  decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'
+```
+
+```csharp
+// In YourServicePlugin.OnRunningAsync():
+if (await YourServiceCompressionCallbacks.RegisterAsync(resourceClient, ct))
+{
+    Logger?.LogInformation("Registered compression callback with lib-resource");
+}
+```
+
+**Manual Registration (Legacy)**: For cases not yet migrated to schema-driven approach:
+
+```csharp
+// In YourServicePlugin.OnRunningAsync():
+var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+await resourceClient.DefineCompressCallbackAsync(
+    new DefineCompressCallbackRequest
+    {
+        ResourceType = "character",
+        SourceType = "character-personality",
+        ServiceName = "character-personality",
+        CompressEndpoint = "/character-personality/get-compress-data",
+        CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+        DecompressEndpoint = "/character-personality/restore-from-archive",
+        DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
+        Priority = 10,
+        Description = "Personality traits and combat preferences"
+    },
+    ct);
+```
 
    **Priority**: Lower values execute earlier. Use for dependency ordering:
    - Priority 0: Base entity data (e.g., character core fields)
@@ -720,11 +746,14 @@ The lib-resource service is feature-complete for the current integration require
 - lib-character-history: `x-references` schema, `/character-history/delete-all` cleanup
 - lib-character-personality: `x-references` schema, `/character-personality/cleanup-by-character` endpoint
 
-**Integrated Consumers** (Compression):
-- lib-character: `/character/get-compress-data` (priority 0)
+**Integrated Consumers** (Compression - all using `x-compression-callback` schema extension):
+- lib-character: `/character/get-compress-data` (priority 0, resourceType: character)
 - lib-character-personality: `/character-personality/get-compress-data`, `/character-personality/restore-from-archive` (priority 10)
 - lib-character-history: `/character-history/get-compress-data`, `/character-history/restore-from-archive` (priority 20)
 - lib-character-encounter: `/character-encounter/get-compress-data`, `/character-encounter/restore-from-archive` (priority 30)
+- lib-quest: `/quest/get-compress-data` (priority 50)
+- lib-storyline: `/storyline/get-compress-data` (priority 60)
+- lib-realm-history: `/realm-history/get-compress-data`, `/realm-history/restore-from-archive` (priority 0, resourceType: realm)
 
 **Foundation Consumer**:
 - lib-character: Queries `/resource/check` in `CheckCharacterReferencesAsync`, invokes `/resource/compress/execute` for character archival
@@ -739,5 +768,5 @@ The lib-resource service is feature-complete for the current integration require
 
 - [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md) - Layer placement rationale
 - [TENETS.md](../reference/TENETS.md) - Compliance requirements
-- [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md) - `x-references` and `x-resource-lifecycle` schema extensions
+- [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md) - `x-references`, `x-resource-lifecycle`, and `x-compression-callback` schema extensions
 - [Planning Document](~/.claude/plans/typed-crunching-muffin.md) - Full implementation plan with phases

@@ -142,6 +142,16 @@ public class CharacterHistoryServicePlugin : BaseBannouPlugin
                 {
                     Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
                 }
+
+                // Register compression callback (generated from x-compression-callback)
+                if (await CharacterHistoryCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
+                {
+                    Logger?.LogInformation("Registered character-history compression callback with lib-resource");
+                }
+                else
+                {
+                    Logger?.LogWarning("Failed to register character-history compression callback with lib-resource");
+                }
             }
             else
             {

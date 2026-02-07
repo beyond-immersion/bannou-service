@@ -144,7 +144,7 @@ def generate_compression_callbacks_code(
 
 #nullable enable
 
-using BeyondImmersion.BannouService;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.{service_pascal};

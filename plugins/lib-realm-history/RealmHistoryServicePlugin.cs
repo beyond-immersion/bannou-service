@@ -135,6 +135,16 @@ public class RealmHistoryServicePlugin : BaseBannouPlugin
                 {
                     Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
                 }
+
+                // Register compression callback (generated from x-compression-callback)
+                if (await RealmHistoryCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
+                {
+                    Logger?.LogInformation("Registered realm-history compression callback with lib-resource");
+                }
+                else
+                {
+                    Logger?.LogWarning("Failed to register realm-history compression callback with lib-resource");
+                }
             }
             else
             {

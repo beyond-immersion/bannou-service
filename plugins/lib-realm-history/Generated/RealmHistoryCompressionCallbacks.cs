@@ -5,7 +5,7 @@
 
 #nullable enable
 
-using BeyondImmersion.BannouService;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.RealmHistory;
