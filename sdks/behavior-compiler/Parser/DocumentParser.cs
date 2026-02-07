@@ -136,7 +136,8 @@ public sealed class DocumentParser
             Type = meta.TryGetValue("type", out var t) ? t as string : null,
             Description = meta.TryGetValue("description", out var d) ? d as string : null,
             Tags = ParseStringList(meta.TryGetValue("tags", out var tags) ? tags : null),
-            Deterministic = meta.TryGetValue("deterministic", out var det) && ParseBool(det)
+            Deterministic = meta.TryGetValue("deterministic", out var det) && ParseBool(det),
+            ResourceTemplates = ParseStringList(meta.TryGetValue("resource_templates", out var rt) ? rt : null)
         };
     }
 

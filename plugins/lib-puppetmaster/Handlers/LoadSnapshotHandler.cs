@@ -88,14 +88,32 @@ public sealed class LoadSnapshotHandler : IActionHandler
                     $"load_snapshot: resource_id must be a valid GUID, got: {resourceIdValue}");
             }
 
-            // 2. Load snapshot from cache (handles Resource service calls internally)
+            // 2. Determine effective filter:
+            //    - Explicit filter from action takes priority
+            //    - Fall back to behavior's declared resource_templates
+            //    - null means no filtering
+            IReadOnlyList<string>? effectiveFilter = loadAction.Filter;
+
+            if (effectiveFilter == null || effectiveFilter.Count == 0)
+            {
+                var declaredTemplates = context.Document.Metadata.ResourceTemplates;
+                if (declaredTemplates.Count > 0)
+                {
+                    effectiveFilter = declaredTemplates;
+                    _logger.LogDebug(
+                        "load_snapshot: Using declared resource_templates as filter: {Templates}",
+                        string.Join(", ", declaredTemplates));
+                }
+            }
+
+            // 3. Load snapshot from cache (handles Resource service calls internally)
             var snapshot = await _cache.GetOrLoadAsync(
                 loadAction.ResourceType,
                 resourceId,
-                loadAction.Filter,
+                effectiveFilter,
                 ct);
 
-            // 3. Create and register provider
+            // 4. Create and register provider
             ResourceArchiveProvider provider;
             if (snapshot == null)
             {
@@ -112,7 +130,7 @@ public sealed class LoadSnapshotHandler : IActionHandler
                 provider = new ResourceArchiveProvider(loadAction.Name, snapshot);
             }
 
-            // 4. Register provider in root scope for document-wide access
+            // 5. Register provider in root scope for document-wide access
             if (context.RootScope is VariableScope rootScope)
             {
                 rootScope.RegisterProvider(provider);
@@ -126,7 +144,7 @@ public sealed class LoadSnapshotHandler : IActionHandler
                     "load_snapshot: Cannot register provider - unexpected scope type");
             }
 
-            // 5. Log for debugging
+            // 6. Log for debugging
             context.Logs.Add(new LogEntry(
                 "load_snapshot",
                 $"Registered '{loadAction.Name}' for {loadAction.ResourceType}:{resourceId}",

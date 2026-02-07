@@ -712,6 +712,63 @@ flows:
                   urgency: 0.8
 ```
 
+#### resource_templates metadata (automatic filter defaults)
+
+The `resource_templates` metadata field declares which resource snapshot types a behavior document uses. When specified, it provides automatic filtering optimization for `load_snapshot` actions that don't specify an explicit filter.
+
+**Document metadata declaration:**
+```yaml
+abml: "2.0"
+meta:
+  id: combat-coordinator
+  type: behavior
+  description: Coordinates combat between NPCs
+  resource_templates:
+    - character-personality
+    - character-history
+    - character-encounter
+```
+
+**Behavior:**
+- When `load_snapshot` has an explicit `filter` parameter, that filter is used (explicit takes priority)
+- When `load_snapshot` has no filter (or empty filter), the declared `resource_templates` are used as the default
+- When neither explicit filter nor `resource_templates` are declared, no filtering occurs (all snapshot entries loaded)
+
+**Compile-time validation:**
+- Template names must be lowercase with hyphens (regex: `^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
+- Examples: `character-personality`, `realm-lore`, `quest-state`
+- Invalid formats produce compilation errors (e.g., `CharacterPersonality`, `character_personality`)
+- Duplicate template names produce warnings
+
+**Example - no explicit filter uses declared templates:**
+```yaml
+abml: "2.0"
+meta:
+  id: encounter-evaluator
+  resource_templates:
+    - character-personality
+    - character-encounter
+
+flows:
+  main:
+    actions:
+      # No filter specified - uses resource_templates as default
+      - load_snapshot:
+          name: candidate
+          resource_type: character
+          resource_id: ${target_id}
+      # Equivalent to:
+      # - load_snapshot:
+      #     name: candidate
+      #     resource_type: character
+      #     resource_id: ${target_id}
+      #     filter:
+      #       - character-personality
+      #       - character-encounter
+```
+
+**Future enhancements (Issue #294):** When `IResourceTemplateRegistry` is implemented, the compiler will additionally validate that declared template names exist in the registry and that expression paths (e.g., `${candidate.personality.aggression}`) match the template schemas.
+
 #### prefetch_snapshots (batch cache warmup)
 
 Batch-loads multiple resource snapshots into cache before iteration. Use before `foreach` loops to convert N sequential API calls into 1 batch call + N cache hits.

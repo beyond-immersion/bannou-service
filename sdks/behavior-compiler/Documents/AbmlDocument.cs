@@ -86,6 +86,13 @@ public sealed class DocumentMetadata
     /// Hint for runtime that execution is deterministic.
     /// </summary>
     public bool Deterministic { get; init; }
+
+    /// <summary>
+    /// Resource snapshot types this behavior accesses.
+    /// Used as default filter for load_snapshot when no explicit filter provided.
+    /// Enables compile-time path validation when IResourceTemplateRegistry is available.
+    /// </summary>
+    public IReadOnlyList<string> ResourceTemplates { get; init; } = [];
 }
 
 /// <summary>

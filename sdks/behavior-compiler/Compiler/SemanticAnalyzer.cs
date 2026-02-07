@@ -3,6 +3,7 @@
 // Validates ABML documents before compilation.
 // =============================================================================
 
+using System.Text.RegularExpressions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 
@@ -35,6 +36,14 @@ public sealed class SemanticAnalyzer
     };
 
     /// <summary>
+    /// Pattern for valid resource template names: lowercase with hyphens.
+    /// Examples: character-personality, realm-lore, quest-state
+    /// </summary>
+    private static readonly Regex ResourceTemplatePattern = new(
+        @"^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+        RegexOptions.Compiled);
+
+    /// <summary>
     /// Analyzes an ABML document for semantic errors and warnings.
     /// </summary>
     /// <param name="document">The document to analyze.</param>
@@ -49,6 +58,9 @@ public sealed class SemanticAnalyzer
         _definedVariables.Clear();
         _usedVariables.Clear();
 
+        // Phase 0: Validate metadata (resource templates)
+        ValidateResourceTemplates(document.Metadata);
+
         // Phase 1: Collect declarations
         CollectDeclarations(document);
 
@@ -62,6 +74,43 @@ public sealed class SemanticAnalyzer
             _errors.Count == 0,
             _errors.ToList(),
             _warnings.ToList());
+    }
+
+    private void ValidateResourceTemplates(DocumentMetadata metadata)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var template in metadata.ResourceTemplates)
+        {
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                _errors.Add(new SemanticError(
+                    "resource_templates: empty template name not allowed",
+                    SemanticErrorKind.InvalidResourceTemplate));
+                continue;
+            }
+
+            if (!ResourceTemplatePattern.IsMatch(template))
+            {
+                _errors.Add(new SemanticError(
+                    $"resource_templates: '{template}' must be lowercase with hyphens (e.g., 'character-personality')",
+                    SemanticErrorKind.InvalidResourceTemplate));
+                continue;
+            }
+
+            // Check for duplicates
+            if (!seen.Add(template))
+            {
+                _warnings.Add(new SemanticWarning(
+                    $"resource_templates: '{template}' declared multiple times",
+                    SemanticWarningLevel.Warning));
+            }
+        }
+
+        // TODO: Full path validation requires IResourceTemplateRegistry (#294)
+        // When #294 is complete:
+        // 1. Validate template names exist in registry (warning, not error)
+        // 2. Validate expression paths like ${x.personality.traits} against declared templates
     }
 
     private void CollectDeclarations(AbmlDocument document)
@@ -504,6 +553,9 @@ public enum SemanticErrorKind
 
     /// <summary>Invalid identifier format.</summary>
     InvalidIdentifier,
+
+    /// <summary>Invalid resource template format in metadata.</summary>
+    InvalidResourceTemplate,
 
     /// <summary>Other semantic error.</summary>
     Other
