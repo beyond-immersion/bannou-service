@@ -213,14 +213,25 @@ public class InMemoryHashTests : IDisposable
     }
 
     [Fact]
-    public async Task HashGetAsync_WithWrongType_ThrowsJsonException()
+    public async Task HashGetAsync_WithWrongType_ReturnsDefaultAndLogsError()
     {
         // Arrange - Store a string
         await _store.HashSetAsync("user:123", "data", "not-an-int");
 
-        // Act & Assert - Try to read as int should throw JsonException
-        await Assert.ThrowsAsync<System.Text.Json.JsonException>(async () =>
-            await _store.HashGetAsync<int>("user:123", "data"));
+        // Act - Try to read as int returns default instead of throwing
+        // (IMPLEMENTATION TENETS: Deserialize failures log error and return default)
+        var result = await _store.HashGetAsync<int>("user:123", "data");
+
+        // Assert
+        Assert.Equal(default, result);
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("JSON deserialization failed")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     #endregion
@@ -409,14 +420,25 @@ public class InMemoryHashTests : IDisposable
     }
 
     [Fact]
-    public async Task HashIncrementAsync_WithNonNumericField_ThrowsJsonException()
+    public async Task HashIncrementAsync_WithNonNumericField_DefaultsToZeroAndLogsError()
     {
         // Arrange - Store a non-numeric value
         await _store.HashSetAsync("counters", "name", "Alice");
 
-        // Act & Assert - Increment on non-numeric field throws JsonException
-        await Assert.ThrowsAsync<System.Text.Json.JsonException>(async () =>
-            await _store.HashIncrementAsync("counters", "name", 5));
+        // Act - Increment on non-numeric field defaults to 0 and increments from there
+        // (IMPLEMENTATION TENETS: Deserialize failures log error and default to 0)
+        var result = await _store.HashIncrementAsync("counters", "name", 5);
+
+        // Assert
+        Assert.Equal(5, result); // 0 + 5 = 5
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("JSON deserialization failed")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     #endregion

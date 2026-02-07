@@ -216,14 +216,26 @@ public sealed class RabbitMQMessageBus : IMessageBus
             {
                 _logger.LogWarning(
                     ex,
-                    "Failed to publish {EventType} to exchange '{Exchange}', buffering for retry",
+                    "Failed to publish {EventType} to exchange '{Exchange}', attempting to buffer for retry",
                     typeof(TEvent).Name,
                     exchange);
 
-                // Buffer for retry - this may crash the node if buffer is full/stale
-                _retryBuffer.EnqueueForRetry(topic, body, options, effectiveMessageId);
-                success = true; // Buffered successfully, will be retried
-                return true;
+                // Buffer for retry - may return false if backpressure is active
+                if (_retryBuffer.TryEnqueueForRetry(topic, body, options, effectiveMessageId))
+                {
+                    success = true; // Buffered successfully, will be retried
+                    return true;
+                }
+                else
+                {
+                    // Backpressure active - cannot buffer, message will be lost
+                    _logger.LogError(
+                        "BACKPRESSURE: Message dropped for topic '{Topic}' (messageId: {MessageId}). " +
+                        "Buffer at capacity, RabbitMQ connection failure persisting.",
+                        topic, effectiveMessageId);
+                    activity?.SetStatus(ActivityStatusCode.Error, "Backpressure - message dropped");
+                    return false;
+                }
             }
             finally
             {
@@ -334,12 +346,23 @@ public sealed class RabbitMQMessageBus : IMessageBus
             {
                 _logger.LogWarning(
                     ex,
-                    "Failed to publish raw message to exchange '{Exchange}', buffering for retry",
+                    "Failed to publish raw message to exchange '{Exchange}', attempting to buffer for retry",
                     exchange);
 
-                // Buffer for retry - this may crash the node if buffer is full/stale
-                _retryBuffer.EnqueueForRetry(topic, payload.ToArray(), options, effectiveMessageId);
-                return true; // Buffered successfully, will be retried
+                // Buffer for retry - may return false if backpressure is active
+                if (_retryBuffer.TryEnqueueForRetry(topic, payload.ToArray(), options, effectiveMessageId))
+                {
+                    return true; // Buffered successfully, will be retried
+                }
+                else
+                {
+                    // Backpressure active - cannot buffer, message will be lost
+                    _logger.LogError(
+                        "BACKPRESSURE: Raw message dropped for topic '{Topic}' (messageId: {MessageId}). " +
+                        "Buffer at capacity, RabbitMQ connection failure persisting.",
+                        topic, effectiveMessageId);
+                    return false;
+                }
             }
             finally
             {

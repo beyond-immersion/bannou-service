@@ -112,14 +112,25 @@ x-service-configuration:
       default: "bannou-dlx"
     RetryMaxAttempts:
       type: integer
-      description: "Maximum retry attempts before dead-lettering (NOT YET IMPLEMENTED: intended for tracked retry with x-death headers)"
+      description: Maximum retry attempts before discarding message to dead-letter topic
       env: MESSAGING_RETRY_MAX_ATTEMPTS
-      default: 3
+      default: 5
+      minimum: 1
+      maximum: 20
     RetryDelayMs:
       type: integer
-      description: "Delay between retry attempts in milliseconds (NOT YET IMPLEMENTED: intended for delayed requeue mechanism)"
+      description: Base delay between retry attempts in milliseconds (doubles with each retry)
       env: MESSAGING_RETRY_DELAY_MS
       default: 5000
+      minimum: 100
+      maximum: 60000
+    RetryMaxBackoffMs:
+      type: integer
+      description: Maximum backoff delay between retries in milliseconds (caps exponential growth)
+      env: MESSAGING_RETRY_MAX_BACKOFF_MS
+      default: 60000
+      minimum: 1000
+      maximum: 300000
 
     # Retry Buffer Settings (for handling transient publish failures)
     RetryBufferEnabled:
@@ -129,19 +140,30 @@ x-service-configuration:
       default: true
     RetryBufferMaxSize:
       type: integer
-      description: Maximum number of messages in retry buffer before node crash
+      description: Maximum number of messages in retry buffer before node crash (500k = ~5s at 100k msg/sec)
       env: MESSAGING_RETRY_BUFFER_MAX_SIZE
-      default: 10000
+      default: 500000
+      minimum: 10000
+      maximum: 2000000
     RetryBufferMaxAgeSeconds:
       type: integer
-      description: Maximum age of buffered messages before node crash (prevents stale events)
+      description: Maximum age of buffered messages before node crash (gives operators time to respond)
       env: MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS
-      default: 300
+      default: 600
+      minimum: 60
+      maximum: 1800
     RetryBufferIntervalSeconds:
       type: integer
       description: Interval between retry attempts for buffered messages
       env: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
       default: 5
+    RetryBufferBackpressureThreshold:
+      type: number
+      description: When buffer reaches this percentage full, start rejecting new publishes (0.0-1.0)
+      env: MESSAGING_RETRY_BUFFER_BACKPRESSURE_THRESHOLD
+      default: 0.8
+      minimum: 0.5
+      maximum: 0.95
 
     # HTTP Callback Settings (for dynamic subscriptions)
     CallbackRetryMaxAttempts:

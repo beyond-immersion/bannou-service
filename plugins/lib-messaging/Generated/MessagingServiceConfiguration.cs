@@ -159,16 +159,25 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public string DeadLetterExchange { get; set; } = "bannou-dlx";
 
     /// <summary>
-    /// Maximum retry attempts before dead-lettering (NOT YET IMPLEMENTED: intended for tracked retry with x-death headers)
+    /// Maximum retry attempts before discarding message to dead-letter topic
     /// Environment variable: MESSAGING_RETRY_MAX_ATTEMPTS
     /// </summary>
-    public int RetryMaxAttempts { get; set; } = 3;
+    [ConfigRange(Minimum = 1, Maximum = 20)]
+    public int RetryMaxAttempts { get; set; } = 5;
 
     /// <summary>
-    /// Delay between retry attempts in milliseconds (NOT YET IMPLEMENTED: intended for delayed requeue mechanism)
+    /// Base delay between retry attempts in milliseconds (doubles with each retry)
     /// Environment variable: MESSAGING_RETRY_DELAY_MS
     /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 60000)]
     public int RetryDelayMs { get; set; } = 5000;
+
+    /// <summary>
+    /// Maximum backoff delay between retries in milliseconds (caps exponential growth)
+    /// Environment variable: MESSAGING_RETRY_MAX_BACKOFF_MS
+    /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 300000)]
+    public int RetryMaxBackoffMs { get; set; } = 60000;
 
     /// <summary>
     /// Enable retry buffer for failed event publishes
@@ -177,22 +186,31 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public bool RetryBufferEnabled { get; set; } = true;
 
     /// <summary>
-    /// Maximum number of messages in retry buffer before node crash
+    /// Maximum number of messages in retry buffer before node crash (500k = ~5s at 100k msg/sec)
     /// Environment variable: MESSAGING_RETRY_BUFFER_MAX_SIZE
     /// </summary>
-    public int RetryBufferMaxSize { get; set; } = 10000;
+    [ConfigRange(Minimum = 10000, Maximum = 2000000)]
+    public int RetryBufferMaxSize { get; set; } = 500000;
 
     /// <summary>
-    /// Maximum age of buffered messages before node crash (prevents stale events)
+    /// Maximum age of buffered messages before node crash (gives operators time to respond)
     /// Environment variable: MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS
     /// </summary>
-    public int RetryBufferMaxAgeSeconds { get; set; } = 300;
+    [ConfigRange(Minimum = 60, Maximum = 1800)]
+    public int RetryBufferMaxAgeSeconds { get; set; } = 600;
 
     /// <summary>
     /// Interval between retry attempts for buffered messages
     /// Environment variable: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
     /// </summary>
     public int RetryBufferIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// When buffer reaches this percentage full, start rejecting new publishes (0.0-1.0)
+    /// Environment variable: MESSAGING_RETRY_BUFFER_BACKPRESSURE_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 0.5, Maximum = 0.95)]
+    public double RetryBufferBackpressureThreshold { get; set; } = 0.8;
 
     /// <summary>
     /// Maximum retry attempts for HTTP callback delivery (network failures only)

@@ -40,6 +40,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
     private int _bufferCount;
     private bool _disposed;
     private bool _isProcessing;
+    private bool _backpressureLogged;
 
     /// <summary>
     /// Creates a new MessageRetryBuffer.
@@ -82,13 +83,45 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
     public bool IsEnabled => _configuration.RetryBufferEnabled;
 
     /// <summary>
-    /// Adds a message to the retry buffer.
+    /// Gets whether backpressure is currently active (buffer at or above threshold).
+    /// </summary>
+    /// <remarks>
+    /// When backpressure is active, new messages will be rejected rather than buffered.
+    /// Callers should check this before publishing to implement their own overflow strategy.
+    /// </remarks>
+    public bool IsBackpressureActive
+    {
+        get
+        {
+            if (!_configuration.RetryBufferEnabled)
+            {
+                return false;
+            }
+
+            var threshold = (int)(_configuration.RetryBufferMaxSize * _configuration.RetryBufferBackpressureThreshold);
+            return _bufferCount >= threshold;
+        }
+    }
+
+    /// <summary>
+    /// Gets the backpressure threshold count (computed from config).
+    /// </summary>
+    public int BackpressureThreshold => (int)(_configuration.RetryBufferMaxSize * _configuration.RetryBufferBackpressureThreshold);
+
+    /// <summary>
+    /// Attempts to add a message to the retry buffer.
     /// </summary>
     /// <param name="topic">The topic/routing key</param>
     /// <param name="jsonPayload">The serialized JSON payload</param>
     /// <param name="options">Publish options (exchange, routing key, etc.)</param>
     /// <param name="messageId">The message ID to track</param>
-    public void EnqueueForRetry(
+    /// <returns>True if message was buffered, false if rejected due to backpressure.</returns>
+    /// <remarks>
+    /// When backpressure is active (buffer at threshold), new messages are rejected.
+    /// Callers should handle the false return by implementing their own overflow strategy
+    /// (e.g., dropping, external queue, rate limiting).
+    /// </remarks>
+    public bool TryEnqueueForRetry(
         string topic,
         byte[] jsonPayload,
         PublishOptions? options,
@@ -96,7 +129,32 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
     {
         if (!_configuration.RetryBufferEnabled)
         {
-            throw new InvalidOperationException("Retry buffer is disabled");
+            return false;
+        }
+
+        // Check backpressure before enqueueing
+        var threshold = BackpressureThreshold;
+        var currentCount = _bufferCount;
+        if (currentCount >= threshold)
+        {
+            if (!_backpressureLogged)
+            {
+                _backpressureLogged = true;
+                _logger.LogWarning(
+                    "Retry buffer backpressure active - rejecting new messages " +
+                    "(current: {Current}, threshold: {Threshold}, max: {Max})",
+                    currentCount, threshold, _configuration.RetryBufferMaxSize);
+            }
+            return false;
+        }
+
+        // Reset backpressure logged flag if we're below threshold
+        if (_backpressureLogged && currentCount < threshold * 0.9)
+        {
+            _backpressureLogged = false;
+            _logger.LogInformation(
+                "Retry buffer backpressure released (current: {Current}, threshold: {Threshold})",
+                currentCount, threshold);
         }
 
         var message = new BufferedMessage
@@ -106,7 +164,8 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
             Options = options,
             MessageId = messageId,
             QueuedAt = DateTimeOffset.UtcNow,
-            RetryCount = 0
+            RetryCount = 0,
+            NextRetryAt = DateTimeOffset.UtcNow // Retry immediately on first attempt
         };
 
         _buffer.Enqueue(message);
@@ -118,6 +177,27 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
 
         // Check buffer health after enqueue
         CheckBufferHealth();
+        return true;
+    }
+
+    /// <summary>
+    /// Adds a message to the retry buffer. Throws if buffer is disabled.
+    /// </summary>
+    /// <remarks>
+    /// Prefer <see cref="TryEnqueueForRetry"/> for new code - this method exists for backwards compatibility.
+    /// </remarks>
+    [Obsolete("Use TryEnqueueForRetry instead for backpressure support")]
+    public void EnqueueForRetry(
+        string topic,
+        byte[] jsonPayload,
+        PublishOptions? options,
+        Guid messageId)
+    {
+        if (!TryEnqueueForRetry(topic, jsonPayload, options, messageId))
+        {
+            throw new InvalidOperationException(
+                "Retry buffer rejected message due to backpressure or being disabled");
+        }
     }
 
     /// <summary>
@@ -210,13 +290,44 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
         {
             var processedCount = 0;
             var failedCount = 0;
+            var discardedCount = 0;
+            var deferredCount = 0;
             var messagesToRequeue = new List<BufferedMessage>();
+            var now = DateTimeOffset.UtcNow;
 
             // Process all messages currently in the queue
             var initialCount = _bufferCount;
             for (var i = 0; i < initialCount && _buffer.TryDequeue(out var message); i++)
             {
                 Interlocked.Decrement(ref _bufferCount);
+
+                // Check if message has exceeded max retry attempts (poison message)
+                if (message.RetryCount >= _configuration.RetryMaxAttempts)
+                {
+                    discardedCount++;
+                    _logger.LogError(
+                        "Message exceeded max retries ({RetryCount}/{MaxAttempts}) for topic '{Topic}', " +
+                        "discarding to dead-letter. MessageId: {MessageId}, Age: {Age:F1}s",
+                        message.RetryCount,
+                        _configuration.RetryMaxAttempts,
+                        message.Topic,
+                        message.MessageId,
+                        (now - message.QueuedAt).TotalSeconds);
+
+                    // Attempt to publish to dead-letter topic for investigation
+                    await TryPublishToDeadLetterAsync(channel, message);
+                    continue;
+                }
+
+                // Check if message is still in backoff period
+                if (message.NextRetryAt > now)
+                {
+                    deferredCount++;
+                    // Put back for later processing
+                    _buffer.Enqueue(message);
+                    Interlocked.Increment(ref _bufferCount);
+                    continue;
+                }
 
                 try
                 {
@@ -255,10 +366,18 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
                     failedCount++;
                     message.RetryCount++;
 
+                    // Calculate exponential backoff with cap
+                    var backoffMs = Math.Min(
+                        _configuration.RetryDelayMs * (int)Math.Pow(2, message.RetryCount - 1),
+                        _configuration.RetryMaxBackoffMs);
+                    message.NextRetryAt = now.AddMilliseconds(backoffMs);
+
                     _logger.LogWarning(
                         ex,
-                        "Failed to retry buffered message (topic: {Topic}, messageId: {MessageId}, retryCount: {RetryCount})",
-                        message.Topic, message.MessageId, message.RetryCount);
+                        "Failed to retry buffered message (topic: {Topic}, messageId: {MessageId}, " +
+                        "retryCount: {RetryCount}/{MaxRetries}, nextRetryIn: {BackoffMs}ms)",
+                        message.Topic, message.MessageId, message.RetryCount,
+                        _configuration.RetryMaxAttempts, backoffMs);
 
                     // Re-queue for next attempt
                     messagesToRequeue.Add(message);
@@ -272,11 +391,12 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
                 Interlocked.Increment(ref _bufferCount);
             }
 
-            if (processedCount > 0 || failedCount > 0)
+            if (processedCount > 0 || failedCount > 0 || discardedCount > 0)
             {
                 _logger.LogInformation(
-                    "Retry buffer processing complete (processed: {Processed}, failed: {Failed}, remaining: {Remaining})",
-                    processedCount, failedCount, _bufferCount);
+                    "Retry buffer processing complete (processed: {Processed}, failed: {Failed}, " +
+                    "discarded: {Discarded}, deferred: {Deferred}, remaining: {Remaining})",
+                    processedCount, failedCount, discardedCount, deferredCount, _bufferCount);
             }
         }
         finally
@@ -289,6 +409,65 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
     /// Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access).
     /// </summary>
     private readonly ConcurrentDictionary<string, byte> _declaredExchanges = new();
+
+    /// <summary>
+    /// Attempts to publish a discarded message to the dead-letter topic for investigation.
+    /// </summary>
+    /// <remarks>
+    /// This is best-effort - if publishing to DLX fails, we log and continue.
+    /// The message is already being discarded, so we don't want to re-queue it.
+    /// </remarks>
+    private async Task TryPublishToDeadLetterAsync(IChannel channel, BufferedMessage message)
+    {
+        try
+        {
+            var dlxExchange = _configuration.DeadLetterExchange;
+
+            // Ensure DLX exists
+            await EnsureExchangeAsync(channel, dlxExchange, PublishOptionsExchangeType.Topic);
+
+            // Build properties with additional context headers
+            var properties = new BasicProperties
+            {
+                MessageId = message.MessageId.ToString(),
+                ContentType = "application/json",
+                DeliveryMode = DeliveryModes.Persistent,
+                Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds()),
+                Headers = new Dictionary<string, object?>
+                {
+                    ["x-original-topic"] = message.Topic,
+                    ["x-original-exchange"] = message.Options?.Exchange ?? _connectionManager.DefaultExchange,
+                    ["x-retry-count"] = message.RetryCount,
+                    ["x-queued-at"] = message.QueuedAt.ToUnixTimeMilliseconds(),
+                    ["x-discarded-at"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    ["x-discard-reason"] = "max-retries-exceeded"
+                }
+            };
+
+            // Route to dead-letter topic based on original topic
+            var dlxRoutingKey = $"dead-letter.{message.Topic}";
+
+            await channel.BasicPublishAsync(
+                exchange: dlxExchange,
+                routingKey: dlxRoutingKey,
+                mandatory: false,
+                basicProperties: properties,
+                body: message.JsonPayload);
+
+            _logger.LogDebug(
+                "Published discarded message to dead-letter (topic: {DlxTopic}, originalTopic: {OriginalTopic}, messageId: {MessageId})",
+                dlxRoutingKey, message.Topic, message.MessageId);
+        }
+        catch (Exception ex)
+        {
+            // Best-effort - log and continue, don't re-throw
+            _logger.LogWarning(
+                ex,
+                "Failed to publish discarded message to dead-letter (topic: {Topic}, messageId: {MessageId}). " +
+                "Message will be lost.",
+                message.Topic, message.MessageId);
+        }
+    }
 
     /// <summary>
     /// Ensures an exchange is declared.
@@ -351,5 +530,6 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
         public required Guid MessageId { get; init; }
         public required DateTimeOffset QueuedAt { get; init; }
         public int RetryCount { get; set; }
+        public DateTimeOffset NextRetryAt { get; set; }
     }
 }
