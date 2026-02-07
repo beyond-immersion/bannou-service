@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Mesh;
 
@@ -10,6 +11,13 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// </summary>
 public partial class MeshService
 {
+    /// <summary>
+    /// Cache for degradation event deduplication.
+    /// Key = "{instanceId}:{reason}", Value = last publish time.
+    /// Static because MeshService is scoped but we want dedup across requests.
+    /// Follows lib-state deduplication pattern per IMPLEMENTATION TENETS.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, DateTimeOffset> _degradationEventDeduplicationCache = new();
     /// <summary>
     /// Register event consumers for mesh service.
     /// Called from constructor after all dependencies are initialized.
@@ -50,15 +58,30 @@ public partial class MeshService
             {
                 // Update heartbeat for existing endpoint
                 // Preserve existing issues - event-based heartbeats don't report issues
-                var status = MapHeartbeatStatus(evt.Status);
+                var newStatus = MapHeartbeatStatus(evt.Status);
+                var previousStatus = existingEndpoint.Status;
+
                 await _stateManager.UpdateHeartbeatAsync(
                     existingEndpoint.InstanceId,
                     evt.AppId,
-                    status,
+                    newStatus,
                     evt.Capacity?.CpuUsage ?? 0,
                     evt.Capacity?.CurrentConnections ?? 0,
                     existingEndpoint.Issues,
                     _configuration.EndpointTtlSeconds);
+
+                // Detect and publish degradation transition
+                if (newStatus == EndpointStatus.Degraded && previousStatus != EndpointStatus.Degraded)
+                {
+                    var reason = DetermineDegradationReason(evt, existingEndpoint);
+                    await TryPublishDegradationEventAsync(
+                        existingEndpoint,
+                        previousStatus,
+                        newStatus,
+                        reason,
+                        loadPercent: evt.Capacity?.CpuUsage,
+                        lastHeartbeatAt: existingEndpoint.LastSeen);
+                }
 
                 _logger.LogDebug(
                     "Updated heartbeat for existing endpoint {InstanceId}",

@@ -34,6 +34,13 @@ public class MeshHealthCheckService : BackgroundService
     private readonly ConcurrentDictionary<Guid, int> _failureCounters = new();
 
     /// <summary>
+    /// Cache for health check failure event deduplication.
+    /// Key = instanceId.ToString(), Value = last publish time.
+    /// Follows lib-state deduplication pattern per IMPLEMENTATION TENETS.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _healthCheckEventDeduplicationCache = new();
+
+    /// <summary>
     /// Creates a new MeshHealthCheckService.
     /// </summary>
     public MeshHealthCheckService(
@@ -193,11 +200,12 @@ public class MeshHealthCheckService : BackgroundService
             }
             else
             {
+                var errorMessage = $"HTTP {(int)response.StatusCode}";
                 _logger.LogWarning(
                     "Endpoint {AppId}@{Host}:{Port} returned {StatusCode}",
                     endpoint.AppId, endpoint.Host, endpoint.Port, (int)response.StatusCode);
 
-                await HandleFailedProbeAsync(endpoint, stateManager, cancellationToken);
+                await HandleFailedProbeAsync(endpoint, stateManager, errorMessage, cancellationToken);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -211,17 +219,18 @@ public class MeshHealthCheckService : BackgroundService
                 "Endpoint {AppId}@{Host}:{Port} health check failed: {Error}",
                 endpoint.AppId, endpoint.Host, endpoint.Port, ex.Message);
 
-            await HandleFailedProbeAsync(endpoint, stateManager, cancellationToken);
+            await HandleFailedProbeAsync(endpoint, stateManager, ex.Message, cancellationToken);
         }
     }
 
     /// <summary>
     /// Handles a failed health check probe by incrementing failure counter,
-    /// marking as unavailable, and potentially deregistering.
+    /// publishing failure event, marking as unavailable, and potentially deregistering.
     /// </summary>
     private async Task HandleFailedProbeAsync(
         MeshEndpoint endpoint,
         IMeshStateManager stateManager,
+        string? lastError,
         CancellationToken cancellationToken)
     {
         // Increment failure counter
@@ -231,6 +240,9 @@ public class MeshHealthCheckService : BackgroundService
             (_, current) => current + 1);
 
         var threshold = _configuration.HealthCheckFailureThreshold;
+
+        // Publish health check failure event (with deduplication)
+        await TryPublishHealthCheckFailedEventAsync(endpoint, failureCount, lastError, cancellationToken);
 
         // Check if we should deregister (threshold > 0 enables deregistration)
         if (threshold > 0 && failureCount >= threshold)
@@ -310,6 +322,67 @@ public class MeshHealthCheckService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish deregistration event for endpoint {InstanceId}", instanceId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a health check failure event if not deduplicated.
+    /// Follows lib-state deduplication pattern per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task TryPublishHealthCheckFailedEventAsync(
+        MeshEndpoint endpoint,
+        int consecutiveFailures,
+        string? lastError,
+        CancellationToken cancellationToken)
+    {
+        var dedupKey = endpoint.InstanceId.ToString();
+        var windowSeconds = _configuration.HealthCheckEventDeduplicationWindowSeconds;
+        var now = DateTimeOffset.UtcNow;
+
+        // Check dedup cache - skip if we published this event recently
+        if (_healthCheckEventDeduplicationCache.TryGetValue(dedupKey, out var lastPublished))
+        {
+            if (now - lastPublished < TimeSpan.FromSeconds(windowSeconds))
+            {
+                _logger.LogDebug(
+                    "Skipping duplicate health check failed event for endpoint {InstanceId} (last published {Seconds:F1}s ago)",
+                    endpoint.InstanceId, (now - lastPublished).TotalSeconds);
+                return;
+            }
+        }
+
+        // Update cache before publishing to prevent races
+        _healthCheckEventDeduplicationCache[dedupKey] = now;
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
+
+            var evt = new MeshEndpointHealthCheckFailedEvent
+            {
+                EventName = "mesh.endpoint_health_check_failed",
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                InstanceId = endpoint.InstanceId,
+                AppId = endpoint.AppId,
+                ConsecutiveFailures = consecutiveFailures,
+                FailureThreshold = _configuration.HealthCheckFailureThreshold,
+                LastError = lastError
+            };
+
+            await messageBus.TryPublishAsync(
+                "mesh.endpoint.health.failed",
+                evt,
+                cancellationToken: cancellationToken);
+
+            _logger.LogDebug(
+                "Published health check failed event for endpoint {InstanceId} ({Failures}/{Threshold})",
+                endpoint.InstanceId, consecutiveFailures, _configuration.HealthCheckFailureThreshold);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish health check failed event for endpoint {InstanceId}", endpoint.InstanceId);
         }
     }
 

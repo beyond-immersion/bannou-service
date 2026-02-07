@@ -151,6 +151,20 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public int HealthCheckFailureThreshold { get; set; } = 3;
 
     /// <summary>
+    /// Time window in seconds for deduplicating health check failure events per endpoint. Events for the same endpoint are published at most once per window.
+    /// Environment variable: MESH_HEALTH_CHECK_EVENT_DEDUPLICATION_WINDOW_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
+    public int HealthCheckEventDeduplicationWindowSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Time window in seconds for deduplicating degradation events per endpoint+reason. Events with the same endpoint and reason are published at most once per window.
+    /// Environment variable: MESH_DEGRADATION_EVENT_DEDUPLICATION_WINDOW_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
+    public int DegradationEventDeduplicationWindowSeconds { get; set; } = 60;
+
+    /// <summary>
     /// Whether to enable circuit breaker for failed endpoints
     /// Environment variable: MESH_CIRCUIT_BREAKER_ENABLED
     /// </summary>

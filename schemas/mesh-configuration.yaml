@@ -139,6 +139,25 @@ x-service-configuration:
       default: 3
 
     # =========================================================================
+    # Event Deduplication Configuration
+    # =========================================================================
+    HealthCheckEventDeduplicationWindowSeconds:
+      type: integer
+      minimum: 1
+      maximum: 3600
+      description: Time window in seconds for deduplicating health check failure events per endpoint. Events for the same endpoint are published at most once per window.
+      env: MESH_HEALTH_CHECK_EVENT_DEDUPLICATION_WINDOW_SECONDS
+      default: 60
+
+    DegradationEventDeduplicationWindowSeconds:
+      type: integer
+      minimum: 1
+      maximum: 3600
+      description: Time window in seconds for deduplicating degradation events per endpoint+reason. Events with the same endpoint and reason are published at most once per window.
+      env: MESH_DEGRADATION_EVENT_DEDUPLICATION_WINDOW_SECONDS
+      default: 60
+
+    # =========================================================================
     # Circuit Breaker Configuration
     # =========================================================================
     CircuitBreakerEnabled:
