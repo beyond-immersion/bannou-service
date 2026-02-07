@@ -212,9 +212,10 @@ public sealed class RabbitMQConnectionManager : IChannelManager
             }
 
             // Create new channel with publisher confirms if configured
+            // With tracking enabled, BasicPublishAsync awaits broker confirmation (RabbitMQ.Client 7.x pattern)
             var channelOptions = new CreateChannelOptions(
                 publisherConfirmationsEnabled: _configuration.EnablePublisherConfirms,
-                publisherConfirmationTrackingEnabled: false);
+                publisherConfirmationTrackingEnabled: _configuration.EnablePublisherConfirms);
 
             var newChannel = await _connection.CreateChannelAsync(channelOptions, cancellationToken);
             Interlocked.Increment(ref _totalActiveChannels);
