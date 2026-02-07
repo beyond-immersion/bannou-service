@@ -80,6 +80,7 @@ Both types share the same state store, distinguished by key prefix.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
+| `CacheTtlMinutes` | `CHARACTER_PERSONALITY_CACHE_TTL_MINUTES` | `5` | TTL in minutes for personality and combat preferences cache entries |
 | `BaseEvolutionProbability` | `CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY` | `0.15` | Base chance for trait shift per evolution event |
 | `MaxTraitShift` | `CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT` | `0.1` | Maximum magnitude of trait change |
 | `MinTraitShift` | `CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT` | `0.02` | Minimum magnitude of trait change |
@@ -305,7 +306,7 @@ None.
 3. **Combat style transitions are asymmetric**: Some styles (BERSERKER) have very few exit paths (only DEFEAT with 40% chance), while others (BALANCED) can transition in multiple directions. This may create style "traps" where characters get stuck in certain combat modes.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/264 -->
 
-4. **Cache TTL hardcoded**: `PersonalityDataCache` uses a hardcoded 5-minute TTL. There's a TODO comment to add a configuration property to the schema. lib-actor has `PersonalityCacheTtlMinutes` in its config, but that's not used by this cache (which lives in lib-character-personality).
+4. ~~**Cache TTL hardcoded**~~: **FIXED** (2026-02-06) - Added `CacheTtlMinutes` configuration property (default 5) to control cache TTL. `PersonalityDataCache` now injects `CharacterPersonalityServiceConfiguration` and uses the configured value.
 
 ---
 
@@ -314,3 +315,7 @@ None.
 This section tracks active development work on items from the quirks/bugs lists above.
 
 See AUDIT markers in Potential Extensions and Design Considerations sections for items awaiting design decisions.
+
+### Completed
+
+- **2026-02-06**: Cache TTL now configurable via `CacheTtlMinutes` (Design Considerations #4)

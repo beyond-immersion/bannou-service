@@ -20,22 +20,21 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PersonalityDataCache> _logger;
+    private readonly TimeSpan _cacheTtl;
     private readonly ConcurrentDictionary<Guid, CachedPersonality> _personalityCache = new();
     private readonly ConcurrentDictionary<Guid, CachedCombatPreferences> _combatCache = new();
-
-    // Default 5 minute TTL - matches original lib-actor implementation
-    // TODO: Add configuration property to CharacterPersonalityServiceConfiguration schema
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
     /// <summary>
     /// Creates a new personality data cache.
     /// </summary>
     public PersonalityDataCache(
         IServiceScopeFactory scopeFactory,
-        ILogger<PersonalityDataCache> logger)
+        ILogger<PersonalityDataCache> logger,
+        CharacterPersonalityServiceConfiguration config)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _cacheTtl = TimeSpan.FromMinutes(config.CacheTtlMinutes);
     }
 
     /// <inheritdoc/>
@@ -62,7 +61,7 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
 
             if (response != null)
             {
-                var newCached = new CachedPersonality(response, DateTimeOffset.UtcNow.Add(CacheTtl));
+                var newCached = new CachedPersonality(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
                 _personalityCache[characterId] = newCached;
                 _logger.LogDebug("Cached personality for character {CharacterId}, version {Version}",
                     characterId, response.Version);
@@ -106,7 +105,7 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
 
             if (response != null)
             {
-                var newCached = new CachedCombatPreferences(response, DateTimeOffset.UtcNow.Add(CacheTtl));
+                var newCached = new CachedCombatPreferences(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
                 _combatCache[characterId] = newCached;
                 _logger.LogDebug("Cached combat preferences for character {CharacterId}", characterId);
             }

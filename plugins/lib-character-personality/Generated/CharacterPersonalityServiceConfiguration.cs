@@ -72,6 +72,12 @@ public class CharacterPersonalityServiceConfiguration : IServiceConfiguration
     public double MinTraitShift { get; set; } = 0.02;
 
     /// <summary>
+    /// TTL in minutes for personality and combat preferences cache entries
+    /// Environment variable: CHARACTER_PERSONALITY_CACHE_TTL_MINUTES
+    /// </summary>
+    public int CacheTtlMinutes { get; set; } = 5;
+
+    /// <summary>
     /// Maximum number of characters allowed in batch operations
     /// Environment variable: CHARACTER_PERSONALITY_MAX_BATCH_SIZE
     /// </summary>

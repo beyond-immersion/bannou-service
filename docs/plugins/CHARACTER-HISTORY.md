@@ -276,7 +276,8 @@ None. The service is feature-complete for its scope.
 
 9. ~~**GetBulkAsync results silently drop missing records**~~: **RECLASSIFIED** (2026-02-06) - Moved to Intentional Quirks. This is self-healing behavior: if an index contains stale record IDs (records deleted without index cleanup), bulk retrieval silently excludes them rather than throwing. This is the correct design - throwing would crash callers for edge cases.
 
-10. **Empty/null entityId returns silently without logging**: Multiple helper methods (GetAsync, DeleteAsync, ExistsAsync in BackstoryStorageHelper; GetRecordAsync, GetRecordIdsByPrimaryKeyAsync, etc. in DualIndexHelper) check `string.IsNullOrEmpty(entityId)` and return null/false/0 without any logging. Invalid calls produce no trace.
+10. **Empty string entityId returns silently instead of throwing**: Helper methods (DualIndexHelper, BackstoryStorageHelper) check `string.IsNullOrEmpty(entityId)` and return null/empty/false. With NRTs, null is a compile-time warning (redundant check). But empty string `""` is a runtime bug that should throw `ArgumentException`, not silently return null. This hides programmer errors.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/310 -->
 
 11. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
 
@@ -285,6 +286,7 @@ None. The service is feature-complete for its scope.
 ## Work Tracking
 
 ### Pending Design Review
+- **2026-02-06**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - Empty string entityId should throw, not return null silently (part of systemic silent-failure pattern fix)
 - **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history (parallel service API consistency)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
 - **2026-01-31**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations (in-memory pagination causes memory pressure for characters with many participations)
@@ -294,6 +296,7 @@ None. The service is feature-complete for its scope.
 
 ### Completed
 
+- **2026-02-06**: Reclassified "GetBulkAsync silently drops missing records" from Design Considerations to Intentional Quirks. This is correct self-healing behavior - silently excluding stale index entries is better than crashing callers.
 - **2026-02-06**: Reclassified "FormatValue is simplistic transformation" from Design Considerations to Intentional Quirks. The method correctly handles snake_case per the documented schema convention; supporting other formats would be scope creep.
 - **2026-02-06**: Reclassified "unknown element types fallback" and "unknown participation roles fallback" from Design Considerations to Intentional Quirks. Both switch expressions handle all defined enum values; the `_ =>` defaults are defensive programming for compiler exhaustiveness and future-proofing, not bugs.
 - **2026-02-06**: Fixed empty index cleanup in DualIndexHelper - RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Shared fix affects both character-history and realm-history.
