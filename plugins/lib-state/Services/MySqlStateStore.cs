@@ -130,6 +130,13 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        // MySQL stores do not support TTL - use Redis for ephemeral data
+        if (options?.Ttl != null)
+        {
+            throw new InvalidOperationException(
+                $"TTL is not supported for MySQL stores. Store '{_storeName}' uses MySQL backend. " +
+                "For ephemeral data requiring expiration, use a Redis-backed store instead.");
+        }
 
         var json = BannouJson.Serialize(value);
         var etag = GenerateETag(key, json);
@@ -320,6 +327,14 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        // MySQL stores do not support TTL - use Redis for ephemeral data
+        if (options?.Ttl != null)
+        {
+            throw new InvalidOperationException(
+                $"TTL is not supported for MySQL stores. Store '{_storeName}' uses MySQL backend. " +
+                "For ephemeral data requiring expiration, use a Redis-backed store instead.");
+        }
+
         var itemList = items.ToList();
         if (itemList.Count == 0)
         {

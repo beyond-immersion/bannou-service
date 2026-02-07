@@ -293,7 +293,7 @@ None currently identified.
 
 4. **MySQL JSON query operators**: `Contains` and `FullText` both use `LIKE %value%`. These are simplified implementations, not true full-text search on MySQL.
 
-5. **TrySaveAsync empty ETag semantics differ by backend**: In Redis and MySQL, empty ETag means "create new entry if it doesn't exist" with atomic conflict detection. In InMemoryStateStore, TrySaveAsync requires a valid version number as ETag; empty or non-numeric ETags return null immediately (no create-on-empty semantics). Use `SaveAsync` for initial creation in InMemory mode.
+5. ~~**TrySaveAsync empty ETag semantics differ by backend**~~: **FIXED** (2026-02-07) - InMemoryStateStore now matches Redis/MySQL semantics: empty ETag means "create new entry if it doesn't exist" with atomic conflict detection via `TryAdd`.
 
 6. **RedisSearchStateStore falls back to string storage**: The `GetAsync` and `GetWithETagAsync` methods catch `WRONGTYPE` errors and fall back to `StringGet` for backwards compatibility with keys stored as strings before search was enabled.
 
