@@ -93,7 +93,7 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Default exchange name for publishing
     /// Environment variable: MESSAGING_DEFAULT_EXCHANGE
     /// </summary>
-    public string DefaultExchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DefaultExchange { get; set; } = "bannou";
 
     /// <summary>
     /// Enable RabbitMQ publisher confirms for reliability
@@ -123,7 +123,22 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Maximum number of channels in the publisher channel pool
     /// Environment variable: MESSAGING_CHANNEL_POOL_SIZE
     /// </summary>
-    public int ChannelPoolSize { get; set; } = 10;
+    [ConfigRange(Minimum = 10, Maximum = 500)]
+    public int ChannelPoolSize { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum concurrent channel creation requests (backpressure semaphore count)
+    /// Environment variable: MESSAGING_MAX_CONCURRENT_CHANNEL_CREATION
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 200)]
+    public int MaxConcurrentChannelCreation { get; set; } = 50;
+
+    /// <summary>
+    /// Hard limit on total active channels per connection (RabbitMQ typically allows 2048)
+    /// Environment variable: MESSAGING_MAX_TOTAL_CHANNELS
+    /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 2000)]
+    public int MaxTotalChannels { get; set; } = 1000;
 
     /// <summary>
     /// Default prefetch count for subscriptions

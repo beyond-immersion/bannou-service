@@ -77,7 +77,23 @@ x-service-configuration:
       type: integer
       description: Maximum number of channels in the publisher channel pool
       env: MESSAGING_CHANNEL_POOL_SIZE
-      default: 10
+      default: 100
+      minimum: 10
+      maximum: 500
+    MaxConcurrentChannelCreation:
+      type: integer
+      description: Maximum concurrent channel creation requests (backpressure semaphore count)
+      env: MESSAGING_MAX_CONCURRENT_CHANNEL_CREATION
+      default: 50
+      minimum: 10
+      maximum: 200
+    MaxTotalChannels:
+      type: integer
+      description: Hard limit on total active channels per connection (RabbitMQ typically allows 2048)
+      env: MESSAGING_MAX_TOTAL_CHANNELS
+      default: 1000
+      minimum: 100
+      maximum: 2000
     # Subscription Settings
     DefaultPrefetchCount:
       type: integer

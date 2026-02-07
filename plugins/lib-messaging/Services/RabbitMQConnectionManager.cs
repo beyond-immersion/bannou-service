@@ -29,6 +29,9 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
     private IConnection? _connection;
     private readonly ConcurrentBag<IChannel> _channelPool = new();
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
+    private SemaphoreSlim? _channelCreationSemaphore;
+    private int _totalActiveChannels;
+    private int _pooledChannelCount;
     private bool _disposed;
 
     /// <summary>
@@ -40,6 +43,9 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
     {
         _logger = logger;
         _configuration = configuration;
+        _channelCreationSemaphore = new SemaphoreSlim(
+            configuration.MaxConcurrentChannelCreation,
+            configuration.MaxConcurrentChannelCreation);
     }
 
     /// <summary>
@@ -51,6 +57,21 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
     /// Gets the default prefetch count from configuration.
     /// </summary>
     public int DefaultPrefetchCount => _configuration.DefaultPrefetchCount;
+
+    /// <summary>
+    /// Gets the current number of active channels (pooled + in-use + consumer channels).
+    /// </summary>
+    public int TotalActiveChannels => Volatile.Read(ref _totalActiveChannels);
+
+    /// <summary>
+    /// Gets the current number of channels in the pool.
+    /// </summary>
+    public int PooledChannelCount => Volatile.Read(ref _pooledChannelCount);
+
+    /// <summary>
+    /// Gets the maximum allowed total channels from configuration.
+    /// </summary>
+    public int MaxTotalChannels => _configuration.MaxTotalChannels;
 
     /// <summary>
     /// Initialize the RabbitMQ connection with retry logic.
@@ -146,11 +167,13 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
         // Try to get from pool
         while (_channelPool.TryTake(out var channel))
         {
+            Interlocked.Decrement(ref _pooledChannelCount);
             if (channel.IsOpen)
             {
                 return channel; // Ownership transferred to caller
             }
             // Channel was closed, close it properly before trying next
+            Interlocked.Decrement(ref _totalActiveChannels);
             try
             {
                 await channel.CloseAsync(cancellationToken);
@@ -161,34 +184,95 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
             }
         }
 
-        // No usable channel in pool, create new one with publisher confirms if configured
-        var channelOptions = new CreateChannelOptions(
-            publisherConfirmationsEnabled: _configuration.EnablePublisherConfirms,
-            publisherConfirmationTrackingEnabled: false);
+        // No usable channel in pool - check if we can create more
+        var currentTotal = Volatile.Read(ref _totalActiveChannels);
+        if (currentTotal >= _configuration.MaxTotalChannels)
+        {
+            throw new InvalidOperationException(
+                $"Maximum channel limit reached ({_configuration.MaxTotalChannels}). " +
+                "This indicates extremely high concurrent publish load. Consider increasing " +
+                "MaxTotalChannels or reducing publish concurrency.");
+        }
 
-        return await _connection.CreateChannelAsync(channelOptions, cancellationToken);
+        // Use semaphore to limit concurrent channel creation (backpressure)
+        var semaphore = _channelCreationSemaphore
+            ?? throw new InvalidOperationException("Channel creation semaphore not initialized");
+        await semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            // Double-check limit after acquiring semaphore (another thread may have created channels)
+            currentTotal = Volatile.Read(ref _totalActiveChannels);
+            if (currentTotal >= _configuration.MaxTotalChannels)
+            {
+                throw new InvalidOperationException(
+                    $"Maximum channel limit reached ({_configuration.MaxTotalChannels}).");
+            }
+
+            // Create new channel with publisher confirms if configured
+            var channelOptions = new CreateChannelOptions(
+                publisherConfirmationsEnabled: _configuration.EnablePublisherConfirms,
+                publisherConfirmationTrackingEnabled: false);
+
+            var newChannel = await _connection.CreateChannelAsync(channelOptions, cancellationToken);
+            Interlocked.Increment(ref _totalActiveChannels);
+
+            _logger.LogDebug(
+                "Created new channel (total active: {TotalActive}, pool size: {PoolSize})",
+                Volatile.Read(ref _totalActiveChannels),
+                Volatile.Read(ref _pooledChannelCount));
+
+            return newChannel;
+        }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 
     /// <summary>
     /// Returns a channel to the pool for reuse.
     /// </summary>
+    /// <remarks>
+    /// Uses compare-exchange pattern to safely limit pool size without races.
+    /// Channels that can't be pooled are closed synchronously (unavoidable in sync method).
+    /// </remarks>
     public void ReturnChannel(IChannel channel)
     {
-        if (channel.IsOpen && _channelPool.Count < _configuration.ChannelPoolSize)
+        if (!channel.IsOpen)
         {
-            _channelPool.Add(channel);
+            // Channel is closed, just decrement the counter
+            Interlocked.Decrement(ref _totalActiveChannels);
+            return;
         }
-        else
+
+        // Use compare-exchange to atomically check and increment pool count
+        while (true)
         {
-            // Pool is full or channel is closed, dispose it
-            try
+            var currentPooled = Volatile.Read(ref _pooledChannelCount);
+            if (currentPooled >= _configuration.ChannelPoolSize)
             {
-                channel.CloseAsync().GetAwaiter().GetResult();
+                // Pool is full, close this channel
+                Interlocked.Decrement(ref _totalActiveChannels);
+                try
+                {
+                    // Note: This blocks on async - addressed in Task #6 (T24 fix)
+                    channel.CloseAsync().GetAwaiter().GetResult();
+                }
+                catch
+                {
+                    // Ignore errors during close
+                }
+                return;
             }
-            catch
+
+            // Try to atomically increment pool count
+            if (Interlocked.CompareExchange(ref _pooledChannelCount, currentPooled + 1, currentPooled) == currentPooled)
             {
-                // Ignore errors during close
+                // Successfully reserved a spot in the pool
+                _channelPool.Add(channel);
+                return;
             }
+            // Another thread beat us, retry
         }
     }
 
@@ -196,6 +280,10 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
     /// Creates a dedicated channel for a consumer (not pooled).
     /// Consumer channels should be disposed when the consumer is done.
     /// </summary>
+    /// <remarks>
+    /// Consumer channels are tracked in the total channel count but not pooled.
+    /// Callers are responsible for calling <see cref="TrackChannelClosed"/> when done.
+    /// </remarks>
     public async Task<IChannel> CreateConsumerChannelAsync(CancellationToken cancellationToken = default)
     {
         if (_connection == null || !_connection.IsOpen)
@@ -212,7 +300,16 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
             throw new InvalidOperationException("RabbitMQ connection is null after initialization");
         }
 
+        // Check total channel limit
+        var currentTotal = Volatile.Read(ref _totalActiveChannels);
+        if (currentTotal >= _configuration.MaxTotalChannels)
+        {
+            throw new InvalidOperationException(
+                $"Maximum channel limit reached ({_configuration.MaxTotalChannels}).");
+        }
+
         var channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        Interlocked.Increment(ref _totalActiveChannels);
 
         // Set QoS for consumer channels
         await channel.BasicQosAsync(
@@ -222,6 +319,15 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
             cancellationToken: cancellationToken);
 
         return channel;
+    }
+
+    /// <summary>
+    /// Tracks that a consumer channel has been closed.
+    /// Call this when disposing a consumer channel to maintain accurate counts.
+    /// </summary>
+    public void TrackChannelClosed()
+    {
+        Interlocked.Decrement(ref _totalActiveChannels);
     }
 
     /// <summary>
@@ -250,6 +356,8 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
         // Close all pooled channels
         while (_channelPool.TryTake(out var channel))
         {
+            Interlocked.Decrement(ref _pooledChannelCount);
+            Interlocked.Decrement(ref _totalActiveChannels);
             try
             {
                 await channel.CloseAsync();
@@ -274,6 +382,10 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
         }
 
         _connectionLock.Dispose();
-        _logger.LogInformation("RabbitMQConnectionManager disposed");
+        _channelCreationSemaphore?.Dispose();
+
+        _logger.LogInformation(
+            "RabbitMQConnectionManager disposed (final channel count: {TotalActive})",
+            Volatile.Read(ref _totalActiveChannels));
     }
 }
