@@ -96,17 +96,10 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public string DefaultExchange { get; set; } = "bannou";
 
     /// <summary>
-    /// Enable RabbitMQ publisher confirms for reliability
+    /// Enable RabbitMQ publisher confirms for reliability. When enabled, BasicPublishAsync waits for broker confirmation (RabbitMQ.Client 7.x pattern).
     /// Environment variable: MESSAGING_ENABLE_CONFIRMS
     /// </summary>
     public bool EnablePublisherConfirms { get; set; } = true;
-
-    /// <summary>
-    /// Timeout in seconds for publisher confirmation when confirms enabled
-    /// Environment variable: MESSAGING_PUBLISHER_CONFIRM_TIMEOUT_SECONDS
-    /// </summary>
-    [ConfigRange(Minimum = 1, Maximum = 30)]
-    public int PublisherConfirmTimeoutSeconds { get; set; } = 5;
 
     /// <summary>
     /// Number of connection retry attempts

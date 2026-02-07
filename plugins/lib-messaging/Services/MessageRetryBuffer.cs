@@ -1,6 +1,8 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Collections.Concurrent;
@@ -33,6 +35,7 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
     private readonly MessagingServiceConfiguration _configuration;
     private readonly ILogger<MessageRetryBuffer> _logger;
     private readonly IProcessTerminator _processTerminator;
+    private readonly IMessageBus? _messageBus;
 
     private readonly ConcurrentQueue<BufferedMessage> _buffer = new();
     private readonly Timer _retryTimer;
@@ -50,16 +53,19 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
     /// <param name="configuration">Messaging service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="processTerminator">Process terminator for crash-fast behavior (optional, defaults to Environment.FailFast).</param>
+    /// <param name="messageBus">Message bus for publishing error events (optional to avoid circular dependency).</param>
     public MessageRetryBuffer(
         IChannelManager channelManager,
         MessagingServiceConfiguration configuration,
         ILogger<MessageRetryBuffer> logger,
-        IProcessTerminator? processTerminator = null)
+        IProcessTerminator? processTerminator = null,
+        IMessageBus? messageBus = null)
     {
         _channelManager = channelManager;
         _configuration = configuration;
         _logger = logger;
         _processTerminator = processTerminator ?? new DefaultProcessTerminator();
+        _messageBus = messageBus;
 
         if (_configuration.RetryBufferEnabled)
         {
@@ -329,6 +335,8 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
                 if (message.RetryCount >= _configuration.RetryMaxAttempts)
                 {
                     discardedCount++;
+                    var messageAge = (now - message.QueuedAt).TotalSeconds;
+
                     _logger.LogError(
                         "Message exceeded max retries ({RetryCount}/{MaxAttempts}) for topic '{Topic}', " +
                         "discarding to dead-letter. MessageId: {MessageId}, Age: {Age:F1}s",
@@ -336,7 +344,30 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
                         _configuration.RetryMaxAttempts,
                         message.Topic,
                         message.MessageId,
-                        (now - message.QueuedAt).TotalSeconds);
+                        messageAge);
+
+                    // IMPLEMENTATION TENETS (T7): Publish error event for monitoring/alerting
+                    // Poison messages are unexpected infrastructure failures that operators need to know about
+                    if (_messageBus != null)
+                    {
+                        await _messageBus.TryPublishErrorAsync(
+                            serviceName: "messaging",
+                            operation: "retry-buffer",
+                            errorType: "PoisonMessage",
+                            message: $"Message exceeded max retries ({message.RetryCount}/{_configuration.RetryMaxAttempts}) for topic '{message.Topic}'",
+                            dependency: "RabbitMQ",
+                            endpoint: "publish",
+                            severity: ServiceErrorEventSeverity.Error,
+                            details: new
+                            {
+                                MessageId = message.MessageId,
+                                Topic = message.Topic,
+                                RetryCount = message.RetryCount,
+                                MaxAttempts = _configuration.RetryMaxAttempts,
+                                AgeSeconds = messageAge,
+                                Exchange = message.Options?.Exchange ?? _channelManager.DefaultExchange
+                            });
+                    }
 
                     // Attempt to publish to dead-letter topic for investigation
                     await TryPublishToDeadLetterAsync(channel, message);

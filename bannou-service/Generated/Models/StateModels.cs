@@ -73,7 +73,7 @@ public partial class GetStateRequest
 }
 
 /// <summary>
-/// Response containing a retrieved state value with its metadata and ETag
+/// Response containing a retrieved state value with its ETag for optimistic concurrency
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetStateResponse
@@ -90,12 +90,6 @@ public partial class GetStateResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
     public string? Etag { get; set; } = default!;
-
-    /// <summary>
-    /// Metadata about the state entry including timestamps and version
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public StateMetadata Metadata { get; set; } = default!;
 
 }
 
@@ -218,34 +212,6 @@ public partial class StateOptions
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string? Etag { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Metadata associated with a state entry including creation time, last update time, and version
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class StateMetadata
-{
-
-    /// <summary>
-    /// When the state was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    public System.DateTimeOffset? CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// When the state was last updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Version number for optimistic concurrency
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int Version { get; set; } = default!;
 
 }
 

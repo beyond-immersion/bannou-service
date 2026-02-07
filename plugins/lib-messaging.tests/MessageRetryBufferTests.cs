@@ -1,7 +1,9 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -18,6 +20,7 @@ public class MessageRetryBufferTests : IAsyncDisposable
     private readonly Mock<IChannelManager> _mockChannelManager;
     private readonly Mock<ILogger<MessageRetryBuffer>> _mockLogger;
     private readonly Mock<IProcessTerminator> _mockProcessTerminator;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private MessageRetryBuffer? _buffer;
 
     public MessageRetryBufferTests()
@@ -25,6 +28,7 @@ public class MessageRetryBufferTests : IAsyncDisposable
         _mockChannelManager = new Mock<IChannelManager>();
         _mockLogger = new Mock<ILogger<MessageRetryBuffer>>();
         _mockProcessTerminator = new Mock<IProcessTerminator>();
+        _mockMessageBus = new Mock<IMessageBus>();
 
         // Setup default channel manager behavior
         _mockChannelManager.Setup(x => x.DefaultExchange).Returns("bannou");
@@ -62,14 +66,15 @@ public class MessageRetryBufferTests : IAsyncDisposable
         };
     }
 
-    private MessageRetryBuffer CreateBuffer(MessagingServiceConfiguration? config = null)
+    private MessageRetryBuffer CreateBuffer(MessagingServiceConfiguration? config = null, bool includeMessageBus = true)
     {
         config ??= CreateConfig();
         _buffer = new MessageRetryBuffer(
             _mockChannelManager.Object,
             config,
             _mockLogger.Object,
-            _mockProcessTerminator.Object);
+            _mockProcessTerminator.Object,
+            includeMessageBus ? _mockMessageBus.Object : null);
         return _buffer;
     }
 
@@ -308,6 +313,213 @@ public class MessageRetryBufferTests : IAsyncDisposable
         _mockProcessTerminator.Verify(
             x => x.TerminateProcess(It.IsAny<string>()),
             Times.Never);
+    }
+
+    #endregion
+
+    #region Poison Message Tests
+
+    [Fact]
+    public async Task ProcessRetryBuffer_WhenMessageExceedsMaxAttempts_PublishesErrorEvent()
+    {
+        // Arrange - setup mock channel that always fails to trigger retries
+        var mockChannel = new Mock<IChannel>();
+        mockChannel.Setup(x => x.IsOpen).Returns(true);
+
+        // First call to GetChannelAsync fails (to buffer the message)
+        // Subsequent calls succeed (for retry processing)
+        var callCount = 0;
+        _mockChannelManager.Setup(x => x.GetChannelAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                return mockChannel.Object;
+            });
+
+        _mockChannelManager.Setup(x => x.ReturnChannelAsync(It.IsAny<IChannel>()))
+            .Returns(ValueTask.CompletedTask);
+
+        // Make BasicPublishAsync fail to increment retry count
+        mockChannel.Setup(x => x.BasicPublishAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<bool>(),
+            It.IsAny<BasicProperties>(),
+            It.IsAny<ReadOnlyMemory<byte>>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Simulated publish failure"));
+
+        // Allow exchange declaration to succeed
+        mockChannel.Setup(x => x.ExchangeDeclareAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<bool>(),
+            It.IsAny<bool>(),
+            It.IsAny<IDictionary<string, object?>>(),
+            It.IsAny<bool>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Create buffer with max 2 retry attempts and short interval
+        var config = CreateConfig(retryMaxAttempts: 2, retryDelayMs: 10, retryMaxBackoffMs: 50, intervalSeconds: 1);
+        var buffer = CreateBuffer(config);
+        var payload = System.Text.Encoding.UTF8.GetBytes("{\"test\":true}");
+        var messageId = Guid.NewGuid();
+
+        // Act - enqueue a message
+        buffer.TryEnqueueForRetry("test.poison", payload, null, messageId);
+
+        // Wait for retry processing to occur multiple times (message should fail and be discarded)
+        // With max 2 attempts and short delays, this should trigger within a few seconds
+        await Task.Delay(3000);
+
+        // Assert - verify TryPublishErrorAsync was called for poison message
+        _mockMessageBus.Verify(
+            x => x.TryPublishErrorAsync(
+                It.Is<string>(s => s == "messaging"),
+                It.Is<string>(s => s == "retry-buffer"),
+                It.Is<string>(s => s == "PoisonMessage"),
+                It.Is<string>(s => s.Contains("test.poison") && s.Contains("exceeded max retries")),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<ServiceErrorEventSeverity>(),
+                It.IsAny<object?>(),
+                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task ProcessRetryBuffer_WhenMessageExceedsMaxAttempts_LogsError()
+    {
+        // Arrange
+        var mockChannel = new Mock<IChannel>();
+        mockChannel.Setup(x => x.IsOpen).Returns(true);
+
+        _mockChannelManager.Setup(x => x.GetChannelAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockChannel.Object);
+
+        _mockChannelManager.Setup(x => x.ReturnChannelAsync(It.IsAny<IChannel>()))
+            .Returns(ValueTask.CompletedTask);
+
+        // Make BasicPublishAsync fail to increment retry count
+        mockChannel.Setup(x => x.BasicPublishAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<bool>(),
+            It.IsAny<BasicProperties>(),
+            It.IsAny<ReadOnlyMemory<byte>>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Simulated publish failure"));
+
+        mockChannel.Setup(x => x.ExchangeDeclareAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<bool>(),
+            It.IsAny<bool>(),
+            It.IsAny<IDictionary<string, object?>>(),
+            It.IsAny<bool>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var config = CreateConfig(retryMaxAttempts: 2, retryDelayMs: 10, retryMaxBackoffMs: 50, intervalSeconds: 1);
+        var buffer = CreateBuffer(config);
+        var payload = System.Text.Encoding.UTF8.GetBytes("{\"test\":true}");
+
+        // Act
+        buffer.TryEnqueueForRetry("test.topic", payload, null, Guid.NewGuid());
+        await Task.Delay(3000);
+
+        // Assert - verify error was logged for max retries exceeded
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("exceeded max retries") &&
+                    v.ToString()!.Contains("discarding to dead-letter")),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task ProcessRetryBuffer_WhenMessageExceedsMaxAttempts_AttemptsDeadLetterPublish()
+    {
+        // Arrange
+        var mockChannel = new Mock<IChannel>();
+        mockChannel.Setup(x => x.IsOpen).Returns(true);
+
+        _mockChannelManager.Setup(x => x.GetChannelAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockChannel.Object);
+
+        _mockChannelManager.Setup(x => x.ReturnChannelAsync(It.IsAny<IChannel>()))
+            .Returns(ValueTask.CompletedTask);
+
+        // First publish (retry) fails, second publish (dead letter) should be attempted
+        var publishCalls = new List<string>();
+        mockChannel.Setup(x => x.BasicPublishAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<bool>(),
+            It.IsAny<BasicProperties>(),
+            It.IsAny<ReadOnlyMemory<byte>>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, string, bool, BasicProperties, ReadOnlyMemory<byte>, CancellationToken>(
+                (exchange, routingKey, mandatory, props, body, ct) =>
+                {
+                    publishCalls.Add($"{exchange}:{routingKey}");
+                    // Only fail on non-DLX publishes
+                    if (!exchange.Contains("dlx"))
+                    {
+                        throw new Exception("Simulated publish failure");
+                    }
+                })
+            .Returns(ValueTask.CompletedTask);
+
+        mockChannel.Setup(x => x.ExchangeDeclareAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<bool>(),
+            It.IsAny<bool>(),
+            It.IsAny<IDictionary<string, object?>>(),
+            It.IsAny<bool>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var config = CreateConfig(retryMaxAttempts: 2, retryDelayMs: 10, retryMaxBackoffMs: 50, intervalSeconds: 1);
+        var buffer = CreateBuffer(config);
+        var payload = System.Text.Encoding.UTF8.GetBytes("{\"test\":true}");
+
+        // Act
+        buffer.TryEnqueueForRetry("test.topic", payload, null, Guid.NewGuid());
+        await Task.Delay(3000);
+
+        // Assert - verify dead letter publish was attempted
+        Assert.Contains(publishCalls, call => call.Contains("dlx") && call.Contains("dead-letter.test.topic"));
+    }
+
+    [Fact]
+    public void Constructor_WithMessageBus_StoresReference()
+    {
+        // Arrange & Act - create with message bus
+        var buffer = CreateBuffer(includeMessageBus: true);
+
+        // Assert - buffer created successfully with message bus
+        Assert.NotNull(buffer);
+        Assert.True(buffer.IsEnabled);
+    }
+
+    [Fact]
+    public void Constructor_WithoutMessageBus_CreatesSuccessfully()
+    {
+        // Arrange & Act - create without message bus (null)
+        var buffer = CreateBuffer(includeMessageBus: false);
+
+        // Assert - buffer created successfully without message bus
+        Assert.NotNull(buffer);
+        Assert.True(buffer.IsEnabled);
     }
 
     #endregion

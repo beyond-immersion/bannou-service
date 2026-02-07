@@ -113,9 +113,8 @@ This plugin does not consume external events (it IS the event infrastructure).
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `EnablePublisherConfirms` | `MESSAGING_ENABLE_CONFIRMS` | `true` | Enable broker confirmation for at-least-once delivery |
-| `PublisherConfirmTimeoutSeconds` | `MESSAGING_PUBLISHER_CONFIRM_TIMEOUT_SECONDS` | `5` | Timeout for publisher confirmation (via CancellationToken) |
 
-When `EnablePublisherConfirms` is true, `BasicPublishAsync` waits for broker confirmation before returning (RabbitMQ.Client 7.x pattern).
+When `EnablePublisherConfirms` is true, `BasicPublishAsync` waits for broker confirmation before returning (RabbitMQ.Client 7.x pattern). The timeout is managed internally by RabbitMQ.Client 7.x and is not configurable.
 
 ### Publish Batching (High-Throughput)
 
@@ -343,6 +342,10 @@ This section tracks active development work on items from the quirks/bugs lists 
   - Added DLX queue size/TTL limits
   - Fixed temp ServiceProvider disposal
   - Fixed publisher confirms configuration (tracking enabled)
+  - **Audit fixes (2026-02-07)**:
+    - Fixed T7 violation: Added error event publishing (`TryPublishErrorAsync`) when poison messages are discarded
+    - Fixed T21 violation: Removed dead config `PublisherConfirmTimeoutSeconds` (RabbitMQ.Client 7.x manages timeout internally)
+    - Added unit tests for poison message discard scenario
 
 ### Active
 

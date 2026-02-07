@@ -238,7 +238,7 @@ components:
           description: Key to retrieve
 
     GetStateResponse:
-      description: Response containing a retrieved state value with its metadata and ETag
+      description: Response containing a retrieved state value with its ETag for optimistic concurrency
       type: object
       additionalProperties: false
       properties:
@@ -251,9 +251,6 @@ components:
           type: string
           nullable: true
           description: ETag for optimistic concurrency
-        metadata:
-          $ref: '#/components/schemas/StateMetadata'
-          description: Metadata about the state entry including timestamps and version
 
     SaveStateRequest:
       description: Request to save a state value to a state store with optional TTL and consistency settings
@@ -340,26 +337,6 @@ components:
           maxLength: 100
           nullable: true
           description: Optimistic concurrency check - save fails if ETag mismatch
-
-    StateMetadata:
-      description: Metadata associated with a state entry including creation time, last update time, and version
-      type: object
-      additionalProperties: false
-      properties:
-        createdAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the state was created
-        updatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the state was last updated
-        version:
-          type: integer
-          minimum: 0
-          description: Version number for optimistic concurrency
 
     QueryStateRequest:
       description: Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis

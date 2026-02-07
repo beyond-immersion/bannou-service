@@ -290,18 +290,18 @@ public class TenetComplianceTests
     #region Public API Surface Tests
 
     [Fact]
-    public void IMessageBus_PublishAsync_ReturnsTask()
+    public void IMessageBus_TryPublishAsync_ReturnsTask()
     {
         // Verify the interface methods return Task for async patterns
         var methods = typeof(IMessageBus).GetMethods()
-            .Where(m => m.Name == "PublishAsync");
+            .Where(m => m.Name == "TryPublishAsync");
 
-        Assert.True(methods.Any(), "IMessageBus should have PublishAsync method(s).");
+        Assert.True(methods.Any(), "IMessageBus should have TryPublishAsync method(s).");
 
         foreach (var method in methods)
         {
             Assert.True(typeof(Task).IsAssignableFrom(method.ReturnType),
-                "IMessageBus.PublishAsync must return Task for async/await support.");
+                "IMessageBus.TryPublishAsync must return Task for async/await support.");
         }
     }
 

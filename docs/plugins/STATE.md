@@ -72,14 +72,14 @@ All services depend on state infrastructure. The HTTP API (`IStateClient`) is us
 
 **Self-managed**: This plugin defines and manages all state stores across Bannou.
 
-**Store Registry**: `schemas/state-stores.yaml` (~35 stores)
+**Store Registry**: `schemas/state-stores.yaml` (~107 stores as of 2026-02)
 
 ### Backend Distribution
 
 | Backend | Count | Use Case |
 |---------|-------|----------|
-| Redis | ~10 | Sessions, caches, ephemeral state, leaderboards |
-| MySQL | ~25 | Durable entity data, queryable records |
+| Redis | ~70 | Sessions, caches, ephemeral state, leaderboards, locks, indexes |
+| MySQL | ~37 | Durable entity data, queryable records, archives |
 | Memory | 0 (runtime only) | Testing with `UseInMemory=true` |
 
 ### Key Structure (Redis)
@@ -158,6 +158,7 @@ This plugin does not consume external events.
 | `GetCacheableStoreAsync<T>(name)` | `ICacheableStateStore<T>` | Async version |
 | `GetSearchableStore<T>(name)` | `ISearchableStateStore<T>` | Full-text search (RedisSearch only) |
 | `GetRedisOperations()` | `IRedisOperations?` | Lua scripts, transactions only; null when `UseInMemory=true` |
+| `GetKeyCountAsync(name)` | `long?` | Key count for store (O(1) InMemory, COUNT MySQL, null Redis) |
 
 ### Store Implementation Classes
 
@@ -174,7 +175,7 @@ This plugin does not consume external events.
 
 ### Get (`/state/get`)
 
-Returns value with ETag for concurrent-safe retrieval. Uses `GetWithETagAsync()` internally. Returns NotFound if store doesn't exist or key not found. Includes empty `StateMetadata` in response (timestamps not populated).
+Returns value with ETag for concurrent-safe retrieval. Uses `GetWithETagAsync()` internally. Returns NotFound if store doesn't exist or key not found.
 
 ### Save (`/state/save`)
 
@@ -192,9 +193,17 @@ Routes to MySQL for conditions-based queries (JSON path expressions) or Redis Se
 
 Uses `GetBulkAsync()` for efficient multi-key retrieval. Returns per-key `Found` flags. Redis uses MGET; MySQL uses multi-key IN query.
 
+### Bulk Exists (`/state/bulk-exists`)
+
+Checks existence of multiple keys in a single operation. Returns a set of keys that exist. Redis uses EXISTS command; MySQL uses IN query on StoreName+Key.
+
+### Bulk Delete (`/state/bulk-delete`)
+
+Deletes multiple keys in a single operation. Returns count of keys actually deleted. Uses transactions/batching for efficiency.
+
 ### List Stores (`/state/list-stores`)
 
-Returns registered store names with backend info. Optional backend filter (Redis/MySQL). `KeyCount` always null (not implemented).
+Returns registered store names with backend info. Optional backend filter (Redis/MySQL). `KeyCount` is backend-dependent: O(1) for InMemory, COUNT(*) query for MySQL, null for Redis (SCAN is O(N) on total keys).
 
 ---
 
@@ -253,10 +262,7 @@ State Store Architecture (Interface Hierarchy)
 
 ## Stubs & Unimplemented Features
 
-1. **KeyCount in ListStores**: Always returns null. Would require DBSIZE for Redis or COUNT for MySQL.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/174 -->
-2. **StateMetadata population**: `GetStateResponse.Metadata` returns empty object; timestamps not retrieved from backend.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/177 -->
+None.
 
 ---
 

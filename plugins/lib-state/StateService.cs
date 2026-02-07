@@ -60,8 +60,7 @@ public partial class StateService : IStateService
             return (StatusCodes.OK, new GetStateResponse
             {
                 Value = value,
-                Etag = etag,
-                Metadata = new StateMetadata()
+                Etag = etag
             });
         }
         catch (Exception ex)

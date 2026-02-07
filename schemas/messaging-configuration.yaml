@@ -55,16 +55,9 @@ x-service-configuration:
       default: "bannou"
     EnablePublisherConfirms:
       type: boolean
-      description: Enable RabbitMQ publisher confirms for reliability
+      description: Enable RabbitMQ publisher confirms for reliability. When enabled, BasicPublishAsync waits for broker confirmation (RabbitMQ.Client 7.x pattern).
       env: MESSAGING_ENABLE_CONFIRMS
       default: true
-    PublisherConfirmTimeoutSeconds:
-      type: integer
-      description: Timeout in seconds for publisher confirmation when confirms enabled
-      env: MESSAGING_PUBLISHER_CONFIRM_TIMEOUT_SECONDS
-      default: 5
-      minimum: 1
-      maximum: 30
     ConnectionRetryCount:
       type: integer
       description: Number of connection retry attempts
