@@ -685,8 +685,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             // Bulk load all encounters
             var encountersDict = await BulkLoadEncountersAsync(encounterIds, cancellationToken);
 
-            // Apply encounter-level filters and build response
-            var encounters = new List<EncounterResponse>();
+            // Apply encounter-level filters
+            var filteredEncounterIds = new List<Guid>();
 
             foreach (var encounterId in encounterIds)
             {
@@ -706,8 +706,21 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 if (body.ToTimestamp.HasValue && encounterTimestamp > body.ToTimestamp.Value)
                     continue;
 
-                // Get all perspectives for this encounter (now uses optimized index lookup)
-                var encounterPerspectives = await GetEncounterPerspectivesAsync(encounterId, cancellationToken);
+                filteredEncounterIds.Add(encounterId);
+            }
+
+            // Bulk load all perspectives for filtered encounters (eliminates N+1 pattern)
+            var allPerspectivesDict = await BulkLoadAllEncounterPerspectivesAsync(filteredEncounterIds, cancellationToken);
+
+            // Build response
+            var encounters = new List<EncounterResponse>();
+            foreach (var encounterId in filteredEncounterIds)
+            {
+                if (!encountersDict.TryGetValue(encounterId, out var encounter)) continue;
+
+                var encounterPerspectives = allPerspectivesDict.TryGetValue(encounterId, out var perspectives)
+                    ? perspectives
+                    : new List<EncounterPerspectiveModel>();
 
                 encounters.Add(new EncounterResponse
                 {
@@ -779,8 +792,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             // Bulk load all encounters
             var encountersDict = await BulkLoadEncountersAsync(encounterIds, cancellationToken);
 
-            var encounters = new List<EncounterResponse>();
-
+            // Apply type filter first (can do before loading perspectives)
+            var typeFilteredEncounterIds = new List<Guid>();
             foreach (var encounterId in encounterIds)
             {
                 if (!encountersDict.TryGetValue(encounterId, out var encounter)) continue;
@@ -790,8 +803,21 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     !encounter.EncounterTypeCode.Equals(body.EncounterTypeCode, StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                // Get perspectives with optimized index lookup
-                var perspectives = await GetEncounterPerspectivesAsync(encounterId, cancellationToken);
+                typeFilteredEncounterIds.Add(encounterId);
+            }
+
+            // Bulk load all perspectives for type-filtered encounters (eliminates N+1 pattern)
+            var allPerspectivesDict = await BulkLoadAllEncounterPerspectivesAsync(typeFilteredEncounterIds, cancellationToken);
+
+            // Build response with memory strength filter applied
+            var encounters = new List<EncounterResponse>();
+            foreach (var encounterId in typeFilteredEncounterIds)
+            {
+                if (!encountersDict.TryGetValue(encounterId, out var encounter)) continue;
+
+                var perspectives = allPerspectivesDict.TryGetValue(encounterId, out var perspectivesList)
+                    ? perspectivesList
+                    : new List<EncounterPerspectiveModel>();
 
                 // Apply memory strength filter
                 if (body.MinimumMemoryStrength.HasValue)
@@ -872,8 +898,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             // Bulk load all encounters
             var encountersDict = await BulkLoadEncountersAsync(encounterIds, cancellationToken);
 
-            var encounters = new List<EncounterResponse>();
-
+            // Apply encounter-level filters first
+            var filteredEncounterIds = new List<Guid>();
             foreach (var encounterId in encounterIds)
             {
                 if (!encountersDict.TryGetValue(encounterId, out var encounter)) continue;
@@ -887,8 +913,21 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 if (body.FromTimestamp.HasValue && encounterTimestamp < body.FromTimestamp.Value)
                     continue;
 
-                // Get perspectives with optimized index lookup
-                var perspectives = await GetEncounterPerspectivesAsync(encounterId, cancellationToken);
+                filteredEncounterIds.Add(encounterId);
+            }
+
+            // Bulk load all perspectives for filtered encounters (eliminates N+1 pattern)
+            var allPerspectivesDict = await BulkLoadAllEncounterPerspectivesAsync(filteredEncounterIds, cancellationToken);
+
+            // Build response
+            var encounters = new List<EncounterResponse>();
+            foreach (var encounterId in filteredEncounterIds)
+            {
+                if (!encountersDict.TryGetValue(encounterId, out var encounter)) continue;
+
+                var perspectives = allPerspectivesDict.TryGetValue(encounterId, out var perspectivesList)
+                    ? perspectivesList
+                    : new List<EncounterPerspectiveModel>();
 
                 encounters.Add(new EncounterResponse
                 {
@@ -2770,6 +2809,80 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 result[id] = encounter;
             }
         }
+        return result;
+    }
+
+    /// <summary>
+    /// Bulk loads all perspectives for multiple encounters at once.
+    /// Uses parallel index lookups followed by a single bulk perspective load.
+    /// </summary>
+    private async Task<Dictionary<Guid, List<EncounterPerspectiveModel>>> BulkLoadAllEncounterPerspectivesAsync(
+        IEnumerable<Guid> encounterIds,
+        CancellationToken cancellationToken)
+    {
+        var idList = encounterIds.ToList();
+        if (idList.Count == 0) return new Dictionary<Guid, List<EncounterPerspectiveModel>>();
+
+        // Step 1: Parallel fetch perspective IDs for all encounters
+        var indexTasks = idList.Select(async encounterId =>
+        {
+            var perspectiveIds = await GetEncounterPerspectiveIdsAsync(encounterId, cancellationToken);
+            return (encounterId, perspectiveIds);
+        });
+        var indexResults = await Task.WhenAll(indexTasks);
+
+        // Build mapping: perspectiveId -> encounterId and collect all perspective IDs
+        var perspectiveToEncounter = new Dictionary<Guid, Guid>();
+        var allPerspectiveIds = new List<Guid>();
+        var encountersThatNeedLegacyFallback = new List<Guid>();
+
+        foreach (var (encounterId, perspectiveIds) in indexResults)
+        {
+            if (perspectiveIds.Count > 0)
+            {
+                foreach (var perspectiveId in perspectiveIds)
+                {
+                    perspectiveToEncounter[perspectiveId] = encounterId;
+                    allPerspectiveIds.Add(perspectiveId);
+                }
+            }
+            else
+            {
+                // No index entry - will need legacy fallback
+                encountersThatNeedLegacyFallback.Add(encounterId);
+            }
+        }
+
+        // Step 2: Single bulk load of all perspectives with parallel decay
+        var allPerspectives = await BulkLoadPerspectivesWithDecayAsync(allPerspectiveIds, cancellationToken);
+
+        // Step 3: Group perspectives by encounter ID
+        var result = new Dictionary<Guid, List<EncounterPerspectiveModel>>();
+        foreach (var perspective in allPerspectives)
+        {
+            if (perspectiveToEncounter.TryGetValue(perspective.PerspectiveId, out var encounterId))
+            {
+                if (!result.ContainsKey(encounterId))
+                {
+                    result[encounterId] = new List<EncounterPerspectiveModel>();
+                }
+                result[encounterId].Add(MapToPerspectiveModel(perspective));
+            }
+        }
+
+        // Step 4: Handle legacy fallback for encounters without index (pre-existing data)
+        if (encountersThatNeedLegacyFallback.Count > 0)
+        {
+            foreach (var encounterId in encountersThatNeedLegacyFallback)
+            {
+                var legacyPerspectives = await GetEncounterPerspectivesAsync(encounterId, cancellationToken);
+                if (legacyPerspectives.Count > 0)
+                {
+                    result[encounterId] = legacyPerspectives;
+                }
+            }
+        }
+
         return result;
     }
 

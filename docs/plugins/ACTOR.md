@@ -469,8 +469,7 @@ Actor State Model
 
 1. **Session disconnection handling**: `HandleSessionDisconnectedAsync` is stubbed. Actors are not tied to player sessions - NPC brains continue running when players disconnect. Future: session-bound actors that stop on disconnect.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/191 -->
-2. **GOAP integration partial**: GOAP configuration exists (replan threshold, max depth, timeout) but the full planning integration with the behavior loop is minimal. Planning triggers exist but action execution is delegated to ABML flows.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/316 -->
+2. ~~**GOAP integration partial**~~: **FIXED** (2026-02-07) - ActorRunner now extracts GOAP goals and actions from loaded ABML documents via `GoapMetadataConverter` and populates `goap_goals`, `goap_actions`, `world_state`, and `current_goal` in the execution scope. WorldState is built from actor feelings, goal parameters, and working memory flags. The `trigger_goap_replan:` handler can now execute planning successfully.
 3. **Auto-scale deployment mode**: Declared as a valid `DeploymentMode` value but no auto-scaling logic is implemented. Pool nodes must be manually managed or pre-provisioned.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/318 -->
 
@@ -535,6 +534,10 @@ No bugs identified.
 ---
 
 ## Work Tracking
+
+### Completed
+
+- **2026-02-07**: Issue #316 - GOAP scope population implemented in ActorRunner. Goals and actions extracted from ABML documents via `GoapMetadataConverter`. WorldState built from actor feelings, goal parameters, and working memory.
 
 ### Implementation Gaps
 
