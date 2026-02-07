@@ -36,6 +36,10 @@ public static class ServiceClientsDependencyInjection
         // ABML runtime services (required by actor plugin for behavior execution)
         services.AddSingleton<IExpressionEvaluator, ExpressionEvaluator>();
 
+        // Event template registry for emit_event: ABML action
+        // Plugins register templates during OnRunningAsync, handler looks up by name
+        services.AddSingleton<IEventTemplateRegistry, EventTemplateRegistry>();
+
         // ServiceNavigator aggregates all service clients with session context
         // Scoped lifetime ensures per-request client instances
         services.AddScoped<IServiceNavigator, ServiceNavigator>();

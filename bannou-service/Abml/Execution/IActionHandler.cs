@@ -6,6 +6,9 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;
 
@@ -87,14 +90,20 @@ public sealed class ActionHandlerRegistry : IActionHandlerRegistry
     /// <param name="emitters">Optional intent emitter registry for domain action integration.</param>
     /// <param name="archetypes">Optional archetype registry for entity type resolution.</param>
     /// <param name="controlGates">Optional control gate registry for emission filtering.</param>
+    /// <param name="eventTemplateRegistry">Optional event template registry for emit_event action.</param>
+    /// <param name="messageBus">Optional message bus for emit_event action.</param>
+    /// <param name="emitEventLogger">Optional logger for emit_event handler.</param>
     /// <returns>A registry with all built-in handlers.</returns>
     public static ActionHandlerRegistry CreateWithBuiltins(
         IIntentEmitterRegistry? emitters = null,
         IArchetypeRegistry? archetypes = null,
-        IControlGateRegistry? controlGates = null)
+        IControlGateRegistry? controlGates = null,
+        IEventTemplateRegistry? eventTemplateRegistry = null,
+        IMessageBus? messageBus = null,
+        ILogger<Handlers.EmitEventHandler>? emitEventLogger = null)
     {
         var registry = new ActionHandlerRegistry();
-        registry.RegisterBuiltinHandlers(emitters, archetypes, controlGates);
+        registry.RegisterBuiltinHandlers(emitters, archetypes, controlGates, eventTemplateRegistry, messageBus, emitEventLogger);
         return registry;
     }
 
@@ -104,10 +113,16 @@ public sealed class ActionHandlerRegistry : IActionHandlerRegistry
     /// <param name="emitters">Optional intent emitter registry for domain action integration.</param>
     /// <param name="archetypes">Optional archetype registry for entity type resolution.</param>
     /// <param name="controlGates">Optional control gate registry for emission filtering.</param>
+    /// <param name="eventTemplateRegistry">Optional event template registry for emit_event action.</param>
+    /// <param name="messageBus">Optional message bus for emit_event action.</param>
+    /// <param name="emitEventLogger">Optional logger for emit_event handler.</param>
     public void RegisterBuiltinHandlers(
         IIntentEmitterRegistry? emitters = null,
         IArchetypeRegistry? archetypes = null,
-        IControlGateRegistry? controlGates = null)
+        IControlGateRegistry? controlGates = null,
+        IEventTemplateRegistry? eventTemplateRegistry = null,
+        IMessageBus? messageBus = null,
+        ILogger<Handlers.EmitEventHandler>? emitEventLogger = null)
     {
         Register(new Handlers.CondHandler());
         Register(new Handlers.ForEachHandler());
@@ -121,6 +136,13 @@ public sealed class ActionHandlerRegistry : IActionHandlerRegistry
         Register(new Handlers.NumericOperationHandler());
         Register(new Handlers.ClearHandler());
         Register(new Handlers.LogHandler());
+
+        // Register emit_event handler BEFORE domain action handler
+        // (DomainActionHandler is a catch-all, so specific handlers must come first)
+        if (eventTemplateRegistry != null && messageBus != null && emitEventLogger != null)
+        {
+            Register(new Handlers.EmitEventHandler(eventTemplateRegistry, messageBus, emitEventLogger));
+        }
 
         // Register domain action handler with or without intent emission support
         if (emitters != null && archetypes != null && controlGates != null)
