@@ -842,11 +842,11 @@
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.WatchCompiler">
             <summary>
             Compiles watch actions.
-            Watch actions subscribe to resource change notifications via Puppetmaster.
-            In bytecode, these emit a trace marker; actual subscription is handled at runtime.
+            Watch actions subscribe to resource change notifications.
+            In bytecode, these emit a trace marker; actual subscription is handled by the runtime.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.WatchCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.WatchCompiler.#ctor">
             <summary>Creates a new watch compiler.</summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.WatchCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
@@ -855,8 +855,8 @@
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.UnwatchCompiler">
             <summary>
             Compiles unwatch actions.
-            Unwatch actions unsubscribe from resource change notifications via Puppetmaster.
-            In bytecode, these emit a trace marker; actual unsubscription is handled at runtime.
+            Unwatch actions unsubscribe from resource change notifications.
+            In bytecode, these emit a trace marker; actual unsubscription is handled by the runtime.
             </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.UnwatchCompiler.#ctor">
