@@ -770,15 +770,23 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var deserializedValues = new List<TValue>();
         foreach (var entry in entries)
         {
-            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (value == null)
+            try
             {
-                _logger.LogError(
-                    "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
-                    entry.Key, _storeName);
-                continue;
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value == null)
+                {
+                    _logger.LogError(
+                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                        entry.Key, _storeName);
+                    continue;
+                }
+                deserializedValues.Add(value);
             }
-            deserializedValues.Add(value);
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
+            }
         }
 
         var filteredCount = deserializedValues
@@ -817,10 +825,18 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var results = new List<JsonQueryResult<TValue>>();
         foreach (var entry in entries)
         {
-            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (value != null)
+            try
             {
-                results.Add(new JsonQueryResult<TValue>(entry.Key, value));
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value != null)
+                {
+                    results.Add(new JsonQueryResult<TValue>(entry.Key, value));
+                }
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
             }
         }
 
