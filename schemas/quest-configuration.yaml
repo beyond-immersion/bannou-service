@@ -40,6 +40,13 @@ x-service-configuration:
       env: QUEST_PROGRESS_CACHE_TTL_SECONDS
       description: TTL for objective progress cache
 
+    # === In-Memory Cache Settings ===
+    QuestDataCacheTtlSeconds:
+      type: integer
+      default: 120
+      env: QUEST_DATA_CACHE_TTL_SECONDS
+      description: TTL for in-memory quest data cache used by actor behavior expressions (2 minutes default)
+
     CooldownCacheTtlSeconds:
       type: integer
       default: 86400

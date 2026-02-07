@@ -84,6 +84,12 @@ public class QuestServiceConfiguration : IServiceConfiguration
     public int ProgressCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
+    /// TTL for in-memory quest data cache used by actor behavior expressions (2 minutes default)
+    /// Environment variable: QUEST_DATA_CACHE_TTL_SECONDS
+    /// </summary>
+    public int QuestDataCacheTtlSeconds { get; set; } = 120;
+
+    /// <summary>
     /// TTL for quest cooldown tracking
     /// Environment variable: QUEST_COOLDOWN_CACHE_TTL_SECONDS
     /// </summary>

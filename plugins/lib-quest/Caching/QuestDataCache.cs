@@ -20,20 +20,19 @@ public sealed class QuestDataCache : IQuestDataCache
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<QuestDataCache> _logger;
     private readonly ConcurrentDictionary<Guid, CachedQuests> _cache = new();
-
-    // Default 2 minute TTL for quest data (changes more frequently than personality)
-    // TODO: Add configuration property to QuestServiceConfiguration schema
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(2);
+    private readonly TimeSpan _cacheTtl;
 
     /// <summary>
     /// Creates a new quest data cache.
     /// </summary>
     public QuestDataCache(
         IServiceScopeFactory scopeFactory,
-        ILogger<QuestDataCache> logger)
+        ILogger<QuestDataCache> logger,
+        QuestServiceConfiguration configuration)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _cacheTtl = TimeSpan.FromSeconds(configuration.QuestData_cacheTtlSeconds);
     }
 
     /// <inheritdoc/>
@@ -64,7 +63,7 @@ public sealed class QuestDataCache : IQuestDataCache
 
             // Cache the result (response is never null from client, but be defensive)
             var result = response ?? new ListQuestsResponse { Quests = new List<QuestInstanceResponse>(), Total = 0 };
-            var newCached = new CachedQuests(result, DateTimeOffset.UtcNow.Add(CacheTtl));
+            var newCached = new CachedQuests(result, DateTimeOffset.UtcNow.Add(_cacheTtl));
             _cache[characterId] = newCached;
 
             _logger.LogDebug("Cached {QuestCount} active quests for character {CharacterId}",
@@ -77,7 +76,7 @@ public sealed class QuestDataCache : IQuestDataCache
             // Character has no quests - valid state, return empty response
             _logger.LogDebug("No quests found for character {CharacterId}", characterId);
             var emptyResponse = new ListQuestsResponse { Quests = new List<QuestInstanceResponse>(), Total = 0 };
-            _cache[characterId] = new CachedQuests(emptyResponse, DateTimeOffset.UtcNow.Add(CacheTtl));
+            _cache[characterId] = new CachedQuests(emptyResponse, DateTimeOffset.UtcNow.Add(_cacheTtl));
             return emptyResponse;
         }
         catch (ApiException ex)

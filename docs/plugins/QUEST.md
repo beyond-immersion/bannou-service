@@ -280,6 +280,7 @@ Quest integrates with the Actor service (L2) via the Variable Provider Factory p
 ### Bugs (Fix Immediately)
 
 1. **Hardcoded QuestDataCache TTL**: `QuestDataCache.cs:26` uses `TimeSpan.FromMinutes(2)` with a TODO comment to add configuration. Should use `QuestServiceConfiguration` property. This is a T21 violation (hardcoded tunable).
+<!-- AUDIT:IN_PROGRESS:2026-02-07 -->
 
 ### Intentional Quirks (Documented Behavior)
 
