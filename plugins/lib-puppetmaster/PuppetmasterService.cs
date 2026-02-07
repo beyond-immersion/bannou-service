@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
+using BeyondImmersion.BannouService.Puppetmaster.Watches;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,9 +38,13 @@ namespace BeyondImmersion.BannouService.Puppetmaster;
 public partial class PuppetmasterService : IPuppetmasterService
 {
     private readonly IMessageBus _messageBus;
+    private readonly IMessageSubscriber _messageSubscriber;
     private readonly ILogger<PuppetmasterService> _logger;
     private readonly PuppetmasterServiceConfiguration _configuration;
     private readonly IBehaviorDocumentCache _behaviorCache;
+    private readonly WatchRegistry _watchRegistry;
+    private readonly ResourceEventMapping _resourceEventMapping;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     /// <summary>
     /// Registry of active watchers indexed by watcher ID.
@@ -57,21 +62,33 @@ public partial class PuppetmasterService : IPuppetmasterService
     /// Creates a new Puppetmaster service instance.
     /// </summary>
     /// <param name="messageBus">Message bus for event publishing.</param>
+    /// <param name="messageSubscriber">Message subscriber for lifecycle events.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="behaviorCache">Behavior document cache.</param>
+    /// <param name="watchRegistry">Watch registry for resource subscriptions.</param>
+    /// <param name="resourceEventMapping">Resource event topic mapping.</param>
+    /// <param name="scopeFactory">Service scope factory for IActorClient access.</param>
     /// <param name="eventConsumer">Event consumer for pub/sub fan-out.</param>
     public PuppetmasterService(
         IMessageBus messageBus,
+        IMessageSubscriber messageSubscriber,
         ILogger<PuppetmasterService> logger,
         PuppetmasterServiceConfiguration configuration,
         IBehaviorDocumentCache behaviorCache,
+        WatchRegistry watchRegistry,
+        ResourceEventMapping resourceEventMapping,
+        IServiceScopeFactory scopeFactory,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
+        _messageSubscriber = messageSubscriber;
         _logger = logger;
         _configuration = configuration;
         _behaviorCache = behaviorCache;
+        _watchRegistry = watchRegistry;
+        _resourceEventMapping = resourceEventMapping;
+        _scopeFactory = scopeFactory;
 
         // Register event handlers via partial class (PuppetmasterServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);

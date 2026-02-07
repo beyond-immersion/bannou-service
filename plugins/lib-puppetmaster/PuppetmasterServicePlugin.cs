@@ -74,6 +74,9 @@ public class PuppetmasterServicePlugin : BaseBannouPlugin
         // This is an in-memory, ephemeral registry - watches are lost on restart
         services.AddSingleton<WatchRegistry>();
 
+        // Register resource event mapping for lifecycle event → resource type mapping
+        services.AddSingleton<ResourceEventMapping>();
+
         // Register watch/unwatch handlers for ABML execution
         // These enable Event Brain actors to subscribe to resource change notifications
         services.AddSingleton<WatchHandler>();

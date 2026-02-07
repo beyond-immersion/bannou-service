@@ -3,8 +3,10 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Puppetmaster;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
+using BeyondImmersion.BannouService.Puppetmaster.Watches;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -16,27 +18,39 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Tests;
 public class PuppetmasterServiceTests
 {
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
     private readonly Mock<ILogger<PuppetmasterService>> _mockLogger;
     private readonly PuppetmasterServiceConfiguration _configuration;
     private readonly Mock<IBehaviorDocumentCache> _mockCache;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly WatchRegistry _watchRegistry;
+    private readonly ResourceEventMapping _resourceEventMapping;
+    private readonly Mock<IServiceScopeFactory> _mockScopeFactory;
 
     public PuppetmasterServiceTests()
     {
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockMessageSubscriber = new Mock<IMessageSubscriber>();
         _mockLogger = new Mock<ILogger<PuppetmasterService>>();
         _configuration = new PuppetmasterServiceConfiguration();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockCache = new Mock<IBehaviorDocumentCache>();
+        _watchRegistry = new WatchRegistry();
+        _resourceEventMapping = new ResourceEventMapping();
+        _mockScopeFactory = new Mock<IServiceScopeFactory>();
     }
 
     private PuppetmasterService CreateService()
     {
         return new PuppetmasterService(
             _mockMessageBus.Object,
+            _mockMessageSubscriber.Object,
             _mockLogger.Object,
             _configuration,
             _mockCache.Object,
+            _watchRegistry,
+            _resourceEventMapping,
+            _mockScopeFactory.Object,
             _mockEventConsumer.Object);
     }
 
