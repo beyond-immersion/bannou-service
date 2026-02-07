@@ -30,14 +30,21 @@ public sealed class ResourceEventMapping
     /// </summary>
     public ResourceEventMapping()
     {
-        // Character-related source types
+        // Character-related source types (change events)
         AddMapping("character-personality", "personality.updated", "characterId", "character");
         AddMapping("character-personality", "personality.combat-preferences-updated", "characterId", "character");
         AddMapping("character-history", "character-history.event-recorded", "characterId", "character");
         AddMapping("character-encounter", "character-encounter.perspective-updated", "characterId", "character");
 
-        // Realm-related source types
+        // Character-related deletion events
+        // When a character is deleted, all watchers receive a final perception
+        AddMapping("character-deleted", "character.deleted", "characterId", "character", isDeletion: true);
+
+        // Realm-related source types (change events)
         AddMapping("realm-history", "realm-history.event-recorded", "realmId", "realm");
+
+        // Realm-related deletion events
+        AddMapping("realm-deleted", "realm.deleted", "realmId", "realm", isDeletion: true);
     }
 
     /// <summary>
@@ -47,9 +54,15 @@ public sealed class ResourceEventMapping
     /// <param name="eventTopic">The RabbitMQ event topic (e.g., "personality.updated").</param>
     /// <param name="resourceIdField">The JSON field name containing the resource ID.</param>
     /// <param name="resourceType">The resource type this source belongs to.</param>
-    public void AddMapping(string sourceType, string eventTopic, string resourceIdField, string resourceType)
+    /// <param name="isDeletion">True if this event indicates the resource was deleted.</param>
+    public void AddMapping(
+        string sourceType,
+        string eventTopic,
+        string resourceIdField,
+        string resourceType,
+        bool isDeletion = false)
     {
-        _sourceToMapping[sourceType] = new SourceTypeMapping(eventTopic, resourceIdField, resourceType);
+        _sourceToMapping[sourceType] = new SourceTypeMapping(eventTopic, resourceIdField, resourceType, isDeletion);
 
         if (!_resourceToSources.TryGetValue(resourceType, out var sources))
         {
@@ -112,7 +125,9 @@ public sealed class ResourceEventMapping
 /// <param name="EventTopic">The RabbitMQ event topic to subscribe to.</param>
 /// <param name="ResourceIdField">The JSON field name containing the resource ID.</param>
 /// <param name="ResourceType">The resource type this source belongs to.</param>
+/// <param name="IsDeletion">True if this event indicates the resource was deleted.</param>
 public sealed record SourceTypeMapping(
     string EventTopic,
     string ResourceIdField,
-    string ResourceType);
+    string ResourceType,
+    bool IsDeletion = false);

@@ -507,4 +507,56 @@ public class BehaviorCompilerTests
         var index = context.GetOrAllocateLocal("existing");
         Assert.Equal((byte)0, index);
     }
+
+    // =========================================================================
+    // WATCH/UNWATCH ACTION TESTS
+    // =========================================================================
+
+    [Fact]
+    public void CompileYaml_WatchAction_ParsesSuccessfully()
+    {
+        var yaml = TestFixtures.Load("compiler_watch");
+
+        var result = _compiler.CompileYaml(yaml);
+
+        // Output diagnostic info if test fails
+        if (!result.Success)
+        {
+            var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
+            Assert.Fail($"Compilation failed with errors: {errorMessages}");
+        }
+        Assert.NotNull(result.Bytecode);
+    }
+
+    [Fact]
+    public void CompileYaml_UnwatchAction_ParsesSuccessfully()
+    {
+        var yaml = TestFixtures.Load("compiler_unwatch");
+
+        var result = _compiler.CompileYaml(yaml);
+
+        // Output diagnostic info if test fails
+        if (!result.Success)
+        {
+            var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
+            Assert.Fail($"Compilation failed with errors: {errorMessages}");
+        }
+        Assert.NotNull(result.Bytecode);
+    }
+
+    [Fact]
+    public void CompileYaml_WatchWithOnChange_ParsesSuccessfully()
+    {
+        var yaml = TestFixtures.Load("compiler_watch_on_change");
+
+        var result = _compiler.CompileYaml(yaml);
+
+        // Output diagnostic info if test fails
+        if (!result.Success)
+        {
+            var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
+            Assert.Fail($"Compilation failed with errors: {errorMessages}");
+        }
+        Assert.NotNull(result.Bytecode);
+    }
 }

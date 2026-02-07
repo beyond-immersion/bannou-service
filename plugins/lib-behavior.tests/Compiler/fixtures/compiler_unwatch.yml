@@ -1,0 +1,10 @@
+# Test fixture for unwatch action parsing
+model_id: test_unwatch
+flows:
+  main:
+    actions:
+      - set:
+          target_id: 123e4567-e89b-12d3-a456-426614174000
+      - unwatch:
+          resource_type: character
+          resource_id: ${target_id}

@@ -1,0 +1,13 @@
+# Test fixture for watch action parsing
+model_id: test_watch
+flows:
+  main:
+    actions:
+      - set:
+          target_id: 123e4567-e89b-12d3-a456-426614174000
+      - watch:
+          resource_type: character
+          resource_id: ${target_id}
+          sources:
+            - character-personality
+            - character-history

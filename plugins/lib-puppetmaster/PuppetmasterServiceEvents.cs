@@ -119,27 +119,54 @@ public partial class PuppetmasterService
             var watchers = _watchRegistry.GetWatchers(mapping.ResourceType, resourceId);
             if (watchers.Count == 0) continue;
 
-            _logger.LogDebug(
-                "Dispatching {SourceType} change for {ResourceType}:{ResourceId} to {WatcherCount} actors",
-                sourceType, mapping.ResourceType, resourceId, watchers.Count);
+            // Create appropriate perception based on whether this is a deletion event
+            WatchPerception perception;
+            if (mapping.IsDeletion)
+            {
+                _logger.LogDebug(
+                    "Dispatching deletion for {ResourceType}:{ResourceId} to {WatcherCount} actors",
+                    mapping.ResourceType, resourceId, watchers.Count);
 
-            // Create perception and dispatch to each watcher
-            var perception = WatchPerception.ResourceChanged(
-                mapping.ResourceType,
-                resourceId,
-                sourceType,
-                eventTopic,
-                eventData);
+                perception = WatchPerception.ResourceDeleted(
+                    mapping.ResourceType,
+                    resourceId,
+                    sourceType,
+                    eventTopic);
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "Dispatching {SourceType} change for {ResourceType}:{ResourceId} to {WatcherCount} actors",
+                    sourceType, mapping.ResourceType, resourceId, watchers.Count);
+
+                perception = WatchPerception.ResourceChanged(
+                    mapping.ResourceType,
+                    resourceId,
+                    sourceType,
+                    eventTopic,
+                    eventData);
+            }
 
             foreach (var actorId in watchers)
             {
-                // Check if this actor's watch matches the source type
-                if (!_watchRegistry.HasMatchingWatch(actorId, mapping.ResourceType, resourceId, sourceType))
+                // For deletion events, notify all watchers regardless of source filter
+                // For change events, check if the actor's watch matches the source type
+                if (!mapping.IsDeletion &&
+                    !_watchRegistry.HasMatchingWatch(actorId, mapping.ResourceType, resourceId, sourceType))
                 {
                     continue;
                 }
 
                 await InjectWatchPerceptionAsync(actorId, perception, ct);
+
+                // For deletion events, automatically unwatch after sending final perception
+                if (mapping.IsDeletion)
+                {
+                    _watchRegistry.RemoveWatch(actorId, mapping.ResourceType, resourceId);
+                    _logger.LogDebug(
+                        "Auto-unwatched {ResourceType}:{ResourceId} for actor {ActorId} after deletion",
+                        mapping.ResourceType, resourceId, actorId);
+                }
             }
         }
     }
