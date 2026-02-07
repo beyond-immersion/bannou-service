@@ -124,15 +124,20 @@ public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAs
         }
 
         // Pass cleanup callback to remove lock on disposal (only if we acquired it)
+        // Capture the exact entry we created so we can do atomic compare-and-remove
+        var ourEntry = acquired ? entry : null;
         Action<string, string>? cleanupCallback = acquired
             ? (key, owner) =>
             {
-                // Only remove if we still own it (concurrent-safe check)
-                _inMemoryLocks.TryRemove(key, out var currentEntry);
-                if (currentEntry != null && currentEntry.Owner != owner)
+                // Atomic compare-and-remove: only removes if both key AND value match exactly.
+                // ConcurrentDictionary implements ICollection<KeyValuePair> with atomic Remove.
+                // Since InMemoryLockEntry is a record, value comparison uses structural equality.
+                // If someone else acquired the lock after ours expired, their entry will have
+                // different Owner/Value/ExpiresAt, so this Remove will safely fail (no-op).
+                if (ourEntry != null)
                 {
-                    // Someone else took the lock (after expiration) - restore it
-                    _inMemoryLocks.TryAdd(key, currentEntry);
+                    ((ICollection<KeyValuePair<string, InMemoryLockEntry>>)_inMemoryLocks)
+                        .Remove(new KeyValuePair<string, InMemoryLockEntry>(key, ourEntry));
                 }
             }
             : null;
