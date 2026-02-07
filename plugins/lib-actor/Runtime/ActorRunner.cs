@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
@@ -36,6 +37,8 @@ public sealed class ActorRunner : IActorRunner
     private readonly IExpressionEvaluator _expressionEvaluator;
 
     private AbmlDocument? _behavior;
+    private IReadOnlyList<GoapGoal>? _goapGoals;
+    private IReadOnlyList<GoapAction>? _goapActions;
     private ActorStatus _status = ActorStatus.Pending;
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
@@ -616,6 +619,15 @@ public sealed class ActorRunner : IActorRunner
                     ActorId, _template.BehaviorRef);
                 return;
             }
+
+            // Extract and cache GOAP metadata from behavior document (one-time on load)
+            if (GoapMetadataConverter.HasGoapContent(_behavior))
+            {
+                (_goapGoals, _goapActions) = GoapMetadataConverter.ExtractAll(_behavior);
+                _logger.LogInformation(
+                    "Actor {ActorId} extracted GOAP metadata: {GoalCount} goals, {ActionCount} actions",
+                    ActorId, _goapGoals.Count, _goapActions.Count);
+            }
         }
 
         // 2. Create scope with current actor state
@@ -724,6 +736,26 @@ public sealed class ActorRunner : IActorRunner
         mergedConfig["goap_plan_timeout_ms"] = _config.GoapPlanTimeoutMs;
         scope.SetValue("config", mergedConfig);
 
+        // GOAP planning data (if behavior has GOAP content)
+        if (_goapGoals != null && _goapActions != null)
+        {
+            scope.SetValue("goap_goals", _goapGoals);
+            scope.SetValue("goap_actions", _goapActions);
+
+            // Build world state from actor's current state (feelings as numeric properties)
+            var worldState = BuildWorldStateFromActorState(goals);
+            scope.SetValue("world_state", worldState);
+
+            // Determine current goal from actor's primary goal (lookup in extracted goals)
+            var primaryGoalName = goals.PrimaryGoal;
+            if (!string.IsNullOrEmpty(primaryGoalName))
+            {
+                var currentGoal = _goapGoals.FirstOrDefault(g =>
+                    g.Name.Equals(primaryGoalName, StringComparison.OrdinalIgnoreCase));
+                scope.SetValue("current_goal", currentGoal);
+            }
+        }
+
         // Current perceptions (collected from queue this tick)
         scope.SetValue("perceptions", CollectCurrentPerceptions());
 
@@ -792,6 +824,64 @@ public sealed class ActorRunner : IActorRunner
         }
 
         return perceptions;
+    }
+
+    /// <summary>
+    /// Builds a GOAP WorldState from the actor's current state.
+    /// Populates numeric properties from feelings and goal parameters.
+    /// ABML behaviors can augment this via set: before calling trigger_goap_replan.
+    /// </summary>
+    /// <param name="goals">Current actor goals.</param>
+    /// <returns>WorldState populated from actor state.</returns>
+    private WorldState BuildWorldStateFromActorState(GoalStateData goals)
+    {
+        var worldState = new WorldState();
+
+        // Add all feelings as numeric properties (e.g., hunger: 0.7, fear: 0.3)
+        foreach (var (name, value) in _state.GetAllFeelings())
+        {
+            worldState = worldState.SetNumeric(name, (float)value);
+        }
+
+        // Add goal parameters as additional properties
+        // These may include context like location, target_id, etc.
+        if (goals.GoalParameters != null)
+        {
+            foreach (var (key, value) in goals.GoalParameters)
+            {
+                if (value == null) continue;
+
+                worldState = value switch
+                {
+                    float f => worldState.SetNumeric(key, f),
+                    double d => worldState.SetNumeric(key, (float)d),
+                    int i => worldState.SetNumeric(key, i),
+                    bool b => worldState.SetBoolean(key, b),
+                    string s => worldState.SetString(key, s),
+                    _ => worldState.SetValue(key, value)
+                };
+            }
+        }
+
+        // Add relevant working memory flags (booleans for state flags)
+        var workingMemory = _state.GetAllWorkingMemory();
+        foreach (var (key, value) in workingMemory)
+        {
+            // Skip perception entries (they're handled separately)
+            if (key.StartsWith("perception:", StringComparison.Ordinal)) continue;
+
+            // Add state flags (e.g., in_combat, has_weapon, etc.)
+            if (value is bool b)
+            {
+                worldState = worldState.SetBoolean(key, b);
+            }
+            else if (value is string s)
+            {
+                worldState = worldState.SetString(key, s);
+            }
+        }
+
+        return worldState;
     }
 
     /// <summary>

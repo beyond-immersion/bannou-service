@@ -52,6 +52,7 @@ Character encounter tracking service for memorable interactions between characte
 | `global-char-idx` | `GlobalCharacterIndexData` | All character IDs with encounter data (for bulk decay) |
 | `custom-type-idx` | `CustomTypeIndexData` | All custom encounter type codes (for enumeration) |
 | `type-enc-idx-{CODE}` | `TypeEncounterIndexData` | List of encounter IDs using this type code (for type-in-use validation) |
+| `enc-pers-idx-{encounterId}` | `EncounterPerspectiveIndexData` | List of perspective IDs for an encounter (enables O(1) perspective lookup) |
 
 ---
 
@@ -337,10 +338,16 @@ Index Architecture
   | encounterId       |---->| participants     |<----| [enc1, enc2,...] |
   | emotionalImpact   |     | type, outcome    |     +------------------+
   | memoryStrength    |     | realm, location  |<----+
-  | sentimentShift    |     +------------------+     +------------------+
-  +-------------------+                              | loc-idx-{locId}  |
-                                                     | [enc1, enc2,...] |
-                                                     +------------------+
+  | sentimentShift    |     +--------+---------+     +------------------+
+  +-------------------+              |               | loc-idx-{locId}  |
+           ^                         |               | [enc1, enc2,...] |
+           |                         v               +------------------+
+           |              +------------------------+
+           +--------------| enc-pers-idx-{encId}   |
+                          | [pA1, pB1, pC1, ...]   |
+                          +------------------------+
+                          Enables O(1) lookup of all
+                          perspectives for an encounter
 ```
 
 ---
@@ -384,8 +391,7 @@ No bugs identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **N+1 query pattern everywhere**: All query operations (QueryByCharacter, QueryBetween, QueryByLocation) load perspectives and encounters individually by key. A character with 1000 encounters generates thousands of state store calls per query. The pair index and character index approach mitigates this for lookups but not for loading.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/319 -->
+1. ~~**N+1 query pattern everywhere**~~: **FIXED** (2026-02-07) - Added `enc-pers-idx-{encounterId}` index for O(1) encounter-to-perspectives lookup, converted all queries to use `GetBulkAsync`, parallelized lazy decay writes with `Task.WhenAll`. See Issue #319.
 
 2. **No pagination for GetAllPerspectiveIdsAsync**: The `DecayMemories` endpoint with no characterId specified loads ALL perspective IDs from ALL characters via the global index. With many characters and encounters, this could exhaust memory. The code comments acknowledge this: "in production, this would need batching."
 
@@ -395,11 +401,11 @@ No bugs identified.
 
 5. **Lazy decay write amplification**: Every read of a perspective older than one decay interval triggers a write-back. High-read workloads on stale data will generate significant write traffic. The `encounter.memory.faded` event is also published on read paths.
 
-6. **BatchGetSentiment is sequential**: The batch endpoint calls `GetSentimentAsync` in a loop. Each call does its own pair index lookup and perspective scanning. No parallelism or batching optimization. With MaxBatchSize=100 targets and many encounters per pair, this could be very slow.
+6. ~~**BatchGetSentiment is sequential**~~: **FIXED** (2026-02-07) - Parallelized with `Task.WhenAll` for concurrent sentiment calculations. See Issue #319.
 
 7. **Global character index unbounded growth**: The `global-char-idx` list grows without bound as new characters encounter each other. Even after `DeleteByCharacter` removes a character, the global index is cleaned up, but during active operation this list could contain tens of thousands of character IDs.
 
-8. **FindPerspective scans character index**: Finding a specific perspective by (encounterId, characterId) requires loading the character's entire perspective index and then loading each perspective until finding one matching the encounter. There is no direct encounter-to-perspective index.
+8. ~~**FindPerspective scans character index**~~: **FIXED** (2026-02-07) - Added `enc-pers-idx-{encounterId}` index for direct O(1) lookup of perspectives by encounter ID. Legacy fallback path retained for pre-existing encounters. See Issue #319.
 
 ---
 
@@ -407,4 +413,6 @@ No bugs identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-No active work items.
+### Completed
+
+- **2026-02-07**: Issue #319 - N+1 query optimization. Added `enc-pers-idx-{encounterId}` index, converted all queries to use `GetBulkAsync`, parallelized lazy decay with `Task.WhenAll`, parallelized `BatchGetSentiment`.
