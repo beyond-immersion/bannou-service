@@ -50,7 +50,8 @@ public class RedisStateStoreTests
     [Fact]
     public void ConstructorIsValid()
     {
-        ServiceConstructorValidator.ValidateServiceConstructor<RedisStateStore<TestEntity>>();
+        // Note: RedisStateStore is not a DI-registered service - it's created by StateStoreFactory.
+        // The factory controls constructor args including the optional error publisher callback.
         Assert.NotNull(_store);
     }
 

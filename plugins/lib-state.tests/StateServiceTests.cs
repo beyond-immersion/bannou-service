@@ -11,11 +11,16 @@ public class StateServiceTests
     private readonly Mock<ILogger<StateService>> _mockLogger = new();
     private readonly StateServiceConfiguration _configuration = new();
     private readonly Mock<IMessageBus> _mockMessageBus = new();
+    private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory = new();
     private readonly Mock<IStateStore<object>> _mockStateStore = new();
 
     public StateServiceTests()
     {
+        // Setup service provider to return message bus when requested
+        _mockServiceProvider
+            .Setup(sp => sp.GetService(typeof(IMessageBus)))
+            .Returns(_mockMessageBus.Object);
     }
 
     private StateService CreateService()
@@ -23,7 +28,7 @@ public class StateServiceTests
         return new StateService(
             _mockLogger.Object,
             _configuration,
-            _mockMessageBus.Object,
+            _mockServiceProvider.Object,
             _mockStateStoreFactory.Object);
     }
 

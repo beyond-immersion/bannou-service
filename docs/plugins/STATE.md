@@ -130,8 +130,20 @@ This plugin does not consume external events.
 | `ConnectionRetryCount` | `STATE_CONNECTION_RETRY_COUNT` | `10` | Max MySQL connection retry attempts |
 | `MinRetryDelayMs` | `STATE_MIN_RETRY_DELAY_MS` | `1000` | Min delay between MySQL retry attempts |
 | `InMemoryFallbackLimit` | `STATE_INMEMORY_FALLBACK_LIMIT` | `10000` | Max entries for in-memory query fallback (throws if exceeded) |
+| `EnableErrorEventPublishing` | `STATE_ENABLE_ERROR_EVENT_PUBLISHING` | `true` | Publish error events when state store operations fail |
+| `ErrorEventDeduplicationWindowSeconds` | `STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS` | `60` | Time window for deduplicating identical error events |
 
 **Note:** `DefaultConsistency`, `EnableMetrics`, and `EnableTracing` were removed as dead config. Telemetry is now controlled centrally via lib-telemetry. Consistency is specified per-request via `StateOptions.Consistency`.
+
+### Error Event Publishing
+
+When infrastructure errors occur (Redis connection failures, timeouts, etc.), the state stores can publish `ServiceErrorEvent` messages via `IMessageBus.TryPublishErrorAsync`. This provides observability into state store health without impacting caller latency.
+
+**Deduplication**: To prevent event storms during infrastructure failures, events are deduplicated using a key-based time window. Events with the same `storeName + operation + errorType` are published at most once per deduplication window (default: 60 seconds).
+
+**Fire-and-Forget**: Error publishing is non-blocking (`_ = _errorPublisher?.Invoke(...)`) and does not affect the exception behavior - stores still throw as before.
+
+**Disable**: Set `STATE_ENABLE_ERROR_EVENT_PUBLISHING=false` to disable error event publishing entirely.
 
 ---
 

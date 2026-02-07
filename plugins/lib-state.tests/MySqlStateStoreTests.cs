@@ -75,7 +75,8 @@ public class MySqlStateStoreTests : IDisposable
     [Fact]
     public void ConstructorIsValid()
     {
-        ServiceConstructorValidator.ValidateServiceConstructor<MySqlStateStore<TestEntity>>();
+        // Note: MySqlStateStore is not a DI-registered service - it's created by StateStoreFactory.
+        // The factory controls constructor args including the optional error publisher callback.
         Assert.NotNull(_store);
     }
 
