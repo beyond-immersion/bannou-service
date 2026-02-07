@@ -73,7 +73,7 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             return new RabbitMQMessageBus(connectionManager, retryBuffer, appConfig, logger, telemetryProvider);
         });
 
-        // Use factory registration to pass telemetry provider
+        // Use factory registration to pass telemetry provider and message bus
         // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
         services.AddSingleton<IMessageSubscriber>(sp =>
         {
@@ -81,8 +81,9 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             var logger = sp.GetRequiredService<ILogger<RabbitMQMessageSubscriber>>();
             var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
             var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            var messageBus = sp.GetRequiredService<IMessageBus>();
 
-            return new RabbitMQMessageSubscriber(connectionManager, logger, msgConfig, telemetryProvider);
+            return new RabbitMQMessageSubscriber(connectionManager, logger, msgConfig, telemetryProvider, messageBus);
         });
 
         // Register message tap for forwarding events between exchanges

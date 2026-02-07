@@ -32,6 +32,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     private readonly ILogger<RabbitMQMessageSubscriber> _logger;
     private readonly MessagingServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IMessageBus _messageBus;
 
     // Track static subscriptions by topic
     private readonly ConcurrentDictionary<string, StaticSubscription> _staticSubscriptions = new();
@@ -46,16 +47,19 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Messaging service configuration.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
+    /// <param name="messageBus">Message bus for publishing error events.</param>
     public RabbitMQMessageSubscriber(
         RabbitMQConnectionManager connectionManager,
         ILogger<RabbitMQMessageSubscriber> logger,
         MessagingServiceConfiguration configuration,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IMessageBus messageBus)
     {
         _connectionManager = connectionManager;
         _logger = logger;
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
+        _messageBus = messageBus;
 
         if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
@@ -151,11 +155,26 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
                     if (eventData == null)
                     {
-                        _logger.LogWarning(
-                            "Failed to deserialize message on topic '{Topic}' to {EventType}",
+                        // Truncate payload for logging (avoid memory issues with large payloads)
+                        var truncatedPayload = json.Length > 500 ? json[..500] + "..." : json;
+
+                        _logger.LogError(
+                            "Failed to deserialize message on topic '{Topic}' to {EventType}. Payload (truncated): {Payload}",
                             topic,
-                            typeof(TEvent).Name);
+                            typeof(TEvent).Name,
+                            truncatedPayload);
+
                         activity?.SetStatus(ActivityStatusCode.Error, "Deserialization failed");
+
+                        // Publish error event for observability
+                        await _messageBus.TryPublishErrorAsync(
+                            serviceName: "messaging",
+                            operation: "deserialize",
+                            errorType: "DeserializationFailed",
+                            message: $"Failed to deserialize message on topic '{topic}' to {typeof(TEvent).Name}",
+                            details: new { Topic = topic, EventType = typeof(TEvent).Name, PayloadLength = json.Length },
+                            cancellationToken: cancellationToken);
+
                         await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                         return;
                     }
@@ -293,11 +312,27 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
                     if (eventData == null)
                     {
-                        _logger.LogWarning(
-                            "Failed to deserialize message on dynamic subscription {SubscriptionId} topic '{Topic}'",
+                        // Truncate payload for logging (avoid memory issues with large payloads)
+                        var truncatedPayload = json.Length > 500 ? json[..500] + "..." : json;
+
+                        _logger.LogError(
+                            "Failed to deserialize message on dynamic subscription {SubscriptionId} topic '{Topic}' to {EventType}. Payload (truncated): {Payload}",
                             subscriptionId,
-                            topic);
+                            topic,
+                            typeof(TEvent).Name,
+                            truncatedPayload);
+
                         activity?.SetStatus(ActivityStatusCode.Error, "Deserialization failed");
+
+                        // Publish error event for observability
+                        await _messageBus.TryPublishErrorAsync(
+                            serviceName: "messaging",
+                            operation: "deserialize",
+                            errorType: "DeserializationFailed",
+                            message: $"Failed to deserialize message on dynamic subscription {subscriptionId} topic '{topic}' to {typeof(TEvent).Name}",
+                            details: new { SubscriptionId = subscriptionId, Topic = topic, EventType = typeof(TEvent).Name, PayloadLength = json.Length },
+                            cancellationToken: cancellationToken);
+
                         await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                         return;
                     }
