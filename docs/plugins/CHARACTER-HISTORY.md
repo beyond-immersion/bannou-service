@@ -235,6 +235,7 @@ None. The service is feature-complete for its scope.
 ### Bugs (Fix Immediately)
 
 1. **Hardcoded cache TTL (T21 violation)**: `BackstoryCache` has `private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);` with a TODO comment. Per IMPLEMENTATION TENETS, all tunables must be in the configuration schema. Fix: Add `BackstoryCacheTtlSeconds` property to `character-history-configuration.yaml` and reference it in `BackstoryCache`.
+<!-- AUDIT:IN_PROGRESS:2026-02-06 -->
 
 ### Intentional Quirks
 

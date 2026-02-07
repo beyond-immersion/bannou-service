@@ -21,20 +21,19 @@ public sealed class BackstoryCache : IBackstoryCache
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<BackstoryCache> _logger;
     private readonly ConcurrentDictionary<Guid, CachedBackstory> _backstoryCache = new();
-
-    // Default 10 minute TTL for backstory (nearly immutable data)
-    // TODO: Add configuration property to CharacterHistoryServiceConfiguration schema
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
+    private readonly TimeSpan _cacheTtl;
 
     /// <summary>
     /// Creates a new backstory cache.
     /// </summary>
     public BackstoryCache(
         IServiceScopeFactory scopeFactory,
-        ILogger<BackstoryCache> logger)
+        ILogger<BackstoryCache> logger,
+        CharacterHistoryServiceConfiguration config)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _cacheTtl = TimeSpan.FromSeconds(config.BackstoryCacheTtlSeconds);
     }
 
     /// <inheritdoc/>
@@ -61,7 +60,7 @@ public sealed class BackstoryCache : IBackstoryCache
 
             if (response != null)
             {
-                var newCached = new CachedBackstory(response, DateTimeOffset.UtcNow.Add(CacheTtl));
+                var newCached = new CachedBackstory(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
                 _backstoryCache[characterId] = newCached;
                 _logger.LogDebug("Cached backstory for character {CharacterId} with {ElementCount} elements",
                     characterId, response.Elements.Count);

@@ -53,4 +53,10 @@ public class CharacterHistoryServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public Guid? ForceServiceId { get; set; }
 
+    /// <summary>
+    /// TTL in seconds for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.
+    /// Environment variable: CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS
+    /// </summary>
+    public int BackstoryCacheTtlSeconds { get; set; } = 600;
+
 }
