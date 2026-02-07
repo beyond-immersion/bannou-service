@@ -444,6 +444,85 @@ condition: "${candidate.personality.archetypeHint} != null"
 condition: "${candidate.personality.nonexistent_field}"
 ```
 
+### x-event-template (Event Template Generation)
+
+Defined on **individual event schema definitions** in `{service}-events.yaml`, this extension declares that the event should have an auto-generated template for use with `emit_event:` ABML actions. This replaces manual `EventTemplate` registration in plugin code.
+
+```yaml
+# In character-encounter-events.yaml
+components:
+  schemas:
+    EncounterRecordedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a new encounter is recorded
+      x-event-template:
+        name: encounter_recorded    # Template name for ABML emit_event
+        topic: encounter.recorded   # Event topic (RabbitMQ routing key)
+      required:
+        - eventId
+        - encounterId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        encounterId:
+          type: string
+          format: uuid
+        # ... more properties
+```
+
+**Field definitions**:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Template identifier used in ABML `emit_event:` actions (e.g., `encounter_recorded`) |
+| `topic` | Yes | RabbitMQ topic to publish to (e.g., `encounter.recorded`) |
+
+**PayloadTemplate generation rules**:
+- `type: string` (non-nullable) → `"{{propertyName}}"` (quoted)
+- `type: string` (nullable) → `{{propertyName}}` (unquoted, TemplateSubstitutor handles null)
+- `type: integer`, `type: number`, `type: boolean` → `{{propertyName}}` (unquoted)
+- `type: array`, `type: object` → `{{propertyName}}` (unquoted, pre-serialized JSON)
+
+**Generated output** (`lib-{service}/Generated/{Service}EventTemplates.cs`):
+```csharp
+public static class CharacterEncounterEventTemplates
+{
+    public static readonly EventTemplate EncounterRecorded = new(
+        Name: "encounter_recorded",
+        Topic: "encounter.recorded",
+        EventType: typeof(EncounterRecordedEvent),
+        PayloadTemplate: @"{
+            ""eventId"": ""{{eventId}}"",
+            ""encounterId"": ""{{encounterId}}""
+        }",
+        Description: "Published when a new encounter is recorded");
+
+    public static void RegisterAll(IEventTemplateRegistry registry)
+    {
+        registry.Register(EncounterRecorded);
+    }
+}
+```
+
+**Plugin usage**:
+```csharp
+// In OnRunningAsync - one line replaces manual template definitions
+CharacterEncounterEventTemplates.RegisterAll(eventTemplateRegistry);
+```
+
+**ABML usage**:
+```yaml
+- emit_event:
+    template: encounter_recorded
+    eventId: ${new_guid()}
+    encounterId: ${encounter.id}
+    encounterTypeCode: "COMBAT"
+    outcome: ${outcome}
+    # ... other properties
+```
+
 ### Service Hierarchy Compliance
 
 The x-references pattern ensures compliance with the service hierarchy:
@@ -1424,6 +1503,14 @@ Before submitting schema changes, verify:
 - [ ] `priority` is set appropriately (0 for base data, 10-30 for extensions, 50-100 for optional)
 - [ ] `decompressEndpoint` (if specified) exists in the schema's paths section
 - [ ] Plugin's `OnRunningAsync` calls the generated `*CompressionCallbacks.RegisterAsync()` method
+
+### Event Templates (x-event-template)
+- [ ] Events used with `emit_event:` ABML action declare `x-event-template` in their event schema
+- [ ] `name` is unique across all services (template name used in ABML)
+- [ ] `topic` matches the topic in `x-event-publications` (if applicable)
+- [ ] All properties that behaviors need to provide have corresponding `{{property}}` in the generated template
+- [ ] Plugin's `OnRunningAsync` calls the generated `*EventTemplates.RegisterAll()` method
+- [ ] No manual `EventTemplate` definitions remain in plugin code (replaced by generated)
 
 ### Resource Cleanup Contract (CRITICAL - Producer Side)
 

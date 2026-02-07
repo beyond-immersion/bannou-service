@@ -122,8 +122,7 @@ public class StorylineServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Registers event templates for emit_event: ABML action.
-    /// Templates allow behaviors to emit storyline events using flat parameters.
+    /// Registers event templates for emit_event: ABML action (generated from x-event-template).
     /// </summary>
     private void RegisterEventTemplates()
     {
@@ -135,27 +134,7 @@ public class StorylineServicePlugin : BaseBannouPlugin
             var eventTemplateRegistry = scope.ServiceProvider.GetService<IEventTemplateRegistry>();
             if (eventTemplateRegistry != null)
             {
-                // Template for storyline composition events
-                // Used by puppetmaster/gods when storylines are composed
-                eventTemplateRegistry.Register(new EventTemplate(
-                    Name: "storyline_composed",
-                    Topic: "storyline.composed",
-                    EventType: typeof(StorylineComposedEvent),
-                    PayloadTemplate: """
-                        {
-                            "planId": "{{planId}}",
-                            "realmId": {{realmId}},
-                            "goal": "{{goal}}",
-                            "arcType": "{{arcType}}",
-                            "primarySpectrum": {{primarySpectrum}},
-                            "confidence": {{confidence}},
-                            "genre": {{genre}},
-                            "archiveIds": {{archiveIds}},
-                            "snapshotIds": {{snapshotIds}}
-                        }
-                        """,
-                    Description: "Published when a storyline plan is generated"));
-
+                StorylineEventTemplates.RegisterAll(eventTemplateRegistry);
                 Logger?.LogInformation("Registered storyline event templates");
             }
             else

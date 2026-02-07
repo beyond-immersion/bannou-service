@@ -91,6 +91,9 @@ components:
       type: object
       additionalProperties: false
       description: Published when objective progress changes
+      x-event-template:
+        name: quest_objective_progressed
+        topic: quest.objective.progressed
       required:
         - eventId
         - timestamp

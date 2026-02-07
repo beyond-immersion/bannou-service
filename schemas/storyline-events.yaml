@@ -66,6 +66,9 @@ components:
       type: object
       additionalProperties: false
       description: Event published when a storyline plan is generated
+      x-event-template:
+        name: storyline_composed
+        topic: storyline.composed
       required:
       - planId
       - goal

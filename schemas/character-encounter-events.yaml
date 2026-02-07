@@ -45,6 +45,9 @@ components:
       type: object
       additionalProperties: false
       description: Published when a new encounter is recorded between characters
+      x-event-template:
+        name: encounter_recorded
+        topic: encounter.recorded
       required:
         - eventId
         - timestamp
@@ -148,6 +151,9 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's memory of an encounter is strengthened
+      x-event-template:
+        name: encounter_memory_refreshed
+        topic: encounter.memory.refreshed
       x-resource-mapping:
         resource_type: character
         resource_id_field: characterId

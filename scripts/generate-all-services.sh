@@ -386,6 +386,16 @@ else
 fi
 echo ""
 
+# Generate event template registration code (for x-event-template declarations)
+echo -e "${BLUE}📨 Generating event template registration code...${NC}"
+if python3 "$SCRIPT_DIR/generate-event-templates.py"; then
+    echo -e "${GREEN}✅ Event templates generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate event templates${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate client event registry (for typed event subscriptions)
 echo -e "${BLUE}📡 Generating client event registry...${NC}"
 if python3 "$SCRIPT_DIR/generate-client-event-registry.py"; then

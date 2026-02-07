@@ -129,8 +129,7 @@ public class QuestServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Registers event templates for emit_event: ABML action.
-    /// Templates allow behaviors to emit quest events using flat parameters.
+    /// Registers event templates for emit_event: ABML action (generated from x-event-template).
     /// </summary>
     private void RegisterEventTemplates()
     {
@@ -142,27 +141,7 @@ public class QuestServicePlugin : BaseBannouPlugin
             var eventTemplateRegistry = scope.ServiceProvider.GetService<IEventTemplateRegistry>();
             if (eventTemplateRegistry != null)
             {
-                // Template for objective progress events (common for NPC quest triggers)
-                // Usage: emit_event: { template: quest_objective_progressed, questInstanceId: ${quest.id}, ... }
-                eventTemplateRegistry.Register(new EventTemplate(
-                    Name: "quest_objective_progressed",
-                    Topic: "quest.objective.progressed",
-                    EventType: typeof(QuestObjectiveProgressedEvent),
-                    PayloadTemplate: """
-                        {
-                            "eventId": "{{eventId}}",
-                            "timestamp": "{{timestamp}}",
-                            "questInstanceId": "{{questInstanceId}}",
-                            "definitionId": "{{definitionId}}",
-                            "objectiveIndex": {{objectiveIndex}},
-                            "previousProgress": {{previousProgress}},
-                            "newProgress": {{newProgress}},
-                            "targetProgress": {{targetProgress}},
-                            "objectiveCompleted": {{objectiveCompleted}}
-                        }
-                        """,
-                    Description: "Published when objective progress changes"));
-
+                QuestEventTemplates.RegisterAll(eventTemplateRegistry);
                 Logger?.LogInformation("Registered quest event templates");
             }
             else
