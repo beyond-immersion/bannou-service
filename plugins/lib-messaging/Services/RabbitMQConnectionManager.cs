@@ -80,17 +80,16 @@ public sealed class RabbitMQConnectionManager : IChannelManager
     /// <summary>
     /// Initialize the RabbitMQ connection with retry logic.
     /// </summary>
+    /// <remarks>
+    /// Always takes the lock to avoid TOCTOU race conditions.
+    /// The performance cost is negligible since initialization is rare.
+    /// </remarks>
     public async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
-        if (_connection?.IsOpen == true)
-        {
-            return true;
-        }
-
         await _connectionLock.WaitAsync(cancellationToken);
         try
         {
-            // Double-check after acquiring lock
+            // Check connection state under lock
             if (_connection?.IsOpen == true)
             {
                 return true;
