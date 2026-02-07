@@ -909,10 +909,11 @@ components:
           items:
             $ref: '#/components/schemas/FamilyMember'
           description: Sibling relationships (including half-siblings)
-        spouse:
-          $ref: '#/components/schemas/FamilyMember'
-          nullable: true
-          description: Current spouse (if any)
+        spouses:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyMember'
+          description: Spousal relationships (spouse, husband, wife)
         pastLives:
           type: array
           items:

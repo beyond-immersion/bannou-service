@@ -25,13 +25,6 @@ x-service-configuration:
       description: Default page size when not specified
       env: CHARACTER_DEFAULT_PAGE_SIZE
       default: 20
-
-    # Character Lifecycle
-    CharacterRetentionDays:
-      type: integer
-      description: Number of days to retain deleted characters before permanent removal
-      env: CHARACTER_RETENTION_DAYS
-      default: 90
     # Concurrency Configuration
     RealmIndexUpdateMaxRetries:
       type: integer

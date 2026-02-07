@@ -37,6 +37,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IStateStore<CharacterArchiveModel>> _mockArchiveStore;
     private readonly Mock<IStateStore<RefCountData>> _mockRefCountStore;
+    private readonly Mock<IJsonQueryableStateStore<CharacterModel>> _mockJsonQueryableStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<CharacterService>> _mockLogger;
@@ -61,6 +62,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockArchiveStore = new Mock<IStateStore<CharacterArchiveModel>>();
         _mockRefCountStore = new Mock<IStateStore<RefCountData>>();
+        _mockJsonQueryableStore = new Mock<IJsonQueryableStateStore<CharacterModel>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<CharacterService>>();
@@ -88,6 +90,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockStateStoreFactory
             .Setup(f => f.GetStore<RefCountData>(STATE_STORE))
             .Returns(_mockRefCountStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetJsonQueryableStore<CharacterModel>(STATE_STORE))
+            .Returns(_mockJsonQueryableStore.Object);
 
         // Default lock acquisition to succeed
         var mockLockResponse = new Mock<ILockResponse>();
@@ -475,13 +480,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             PageSize = 20
         };
 
-        // Setup realm index
-        _mockListStore
-            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { characterId.ToString() });
-
-        // Setup bulk character retrieval - IStateStore.GetBulkAsync returns IReadOnlyDictionary
-        var characterModel = new CharacterModel
+        var character = new CharacterModel
         {
             CharacterId = characterId,
             Name = "Test Character",
@@ -492,10 +491,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
-        SetupBulkStateAsync(new Dictionary<string, CharacterModel>
-        {
-            { $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", characterModel }
-        });
+        SetupJsonQueryPagedAsync(new List<CharacterModel> { character }, totalCount: 1);
 
         // Act
         var (status, response) = await service.ListCharactersAsync(request);
@@ -509,11 +505,17 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     }
 
     [Fact]
-    public async Task ListCharactersAsync_WithoutRealmFilter_ShouldReturnEmptyList()
+    public async Task ListCharactersAsync_WithEmptyRealm_ShouldReturnEmptyList()
     {
         // Arrange
         var service = CreateService();
-        var request = new ListCharactersRequest { Page = 1, PageSize = 20 };
+        var request = new ListCharactersRequest
+        {
+            RealmId = Guid.NewGuid(),
+            Page = 1,
+            PageSize = 20
+        };
+        SetupJsonQueryPagedAsync(new List<CharacterModel>(), totalCount: 0);
 
         // Act
         var (status, response) = await service.ListCharactersAsync(request);
@@ -526,25 +528,19 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     }
 
     [Fact]
-    public async Task ListCharactersAsync_WithStatusFilter_ShouldFilterByStatus()
+    public async Task ListCharactersAsync_WithStatusFilter_ShouldPassFilterToQuery()
     {
         // Arrange
         var service = CreateService();
         var realmId = Guid.NewGuid();
         var aliveCharId = Guid.NewGuid();
-        var deadCharId = Guid.NewGuid();
         var request = new ListCharactersRequest
         {
             RealmId = realmId,
             Status = CharacterStatus.Alive
         };
 
-        // Setup realm index with both characters
-        _mockListStore
-            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { aliveCharId.ToString(), deadCharId.ToString() });
-
-        // Setup bulk character retrieval for both characters
+        // Server-side query returns only alive characters (filter applied in MySQL)
         var aliveCharacter = new CharacterModel
         {
             CharacterId = aliveCharId,
@@ -556,22 +552,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
-        var deadCharacter = new CharacterModel
-        {
-            CharacterId = deadCharId,
-            Name = "Dead Character",
-            RealmId = realmId,
-            SpeciesId = Guid.NewGuid(),
-            Status = CharacterStatus.Dead,
-            BirthDate = DateTimeOffset.UtcNow,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
-        };
-        SetupBulkStateAsync(new Dictionary<string, CharacterModel>
-        {
-            { $"{CHARACTER_KEY_PREFIX}{realmId}:{aliveCharId}", aliveCharacter },
-            { $"{CHARACTER_KEY_PREFIX}{realmId}:{deadCharId}", deadCharacter }
-        });
+        SetupJsonQueryPagedAsync(new List<CharacterModel> { aliveCharacter }, totalCount: 1);
 
         // Act
         var (status, response) = await service.ListCharactersAsync(request);
@@ -581,6 +562,14 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.NotNull(response);
         Assert.Single(response.Characters);
         Assert.Equal("Alive Character", response.Characters.First().Name);
+
+        // Verify query conditions included status filter
+        _mockJsonQueryableStore.Verify(s => s.JsonQueryPagedAsync(
+            It.Is<IReadOnlyList<QueryCondition>?>(c => c != null && c.Any(q => q.Path == "$.Status")),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -589,7 +578,6 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         // Arrange
         var service = CreateService();
         var realmId = Guid.NewGuid();
-        var characterIds = Enumerable.Range(0, 5).Select(_ => Guid.NewGuid()).ToList();
         var request = new ListCharactersRequest
         {
             RealmId = realmId,
@@ -597,19 +585,13 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             PageSize = 2
         };
 
-        // Setup realm index with 5 characters
-        _mockListStore
-            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(characterIds.Select(id => id.ToString()).ToList());
-
-        // Setup bulk character retrieval for all 5 characters
-        var bulkItems = new Dictionary<string, CharacterModel>();
-        for (int i = 0; i < characterIds.Count; i++)
+        // Server returns page 2 (offset 2, limit 2) of 5 total characters
+        var pageCharacters = new List<CharacterModel>();
+        for (int i = 2; i < 4; i++)
         {
-            var charId = characterIds[i];
-            bulkItems[$"{CHARACTER_KEY_PREFIX}{realmId}:{charId}"] = new CharacterModel
+            pageCharacters.Add(new CharacterModel
             {
-                CharacterId = charId,
+                CharacterId = Guid.NewGuid(),
                 Name = $"Character {i}",
                 RealmId = realmId,
                 SpeciesId = Guid.NewGuid(),
@@ -617,9 +599,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
                 BirthDate = DateTimeOffset.UtcNow,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
-            };
+            });
         }
-        SetupBulkStateAsync(bulkItems);
+        SetupJsonQueryPagedAsync(pageCharacters, totalCount: 5, offset: 2, limit: 2);
 
         // Act
         var (status, response) = await service.ListCharactersAsync(request);
@@ -652,13 +634,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             PageSize = 20
         };
 
-        // Setup realm index
-        _mockListStore
-            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { characterId.ToString() });
-
-        // Setup bulk character retrieval
-        var characterModel = new CharacterModel
+        var character = new CharacterModel
         {
             CharacterId = characterId,
             Name = "Realm Character",
@@ -669,10 +645,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
-        SetupBulkStateAsync(new Dictionary<string, CharacterModel>
-        {
-            { $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", characterModel }
-        });
+        SetupJsonQueryPagedAsync(new List<CharacterModel> { character }, totalCount: 1);
 
         // Act
         var (status, response) = await service.GetCharactersByRealmAsync(request);
@@ -685,15 +658,13 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     }
 
     [Fact]
-    public async Task GetCharactersByRealmAsync_WithSpeciesFilter_ShouldFilterBySpecies()
+    public async Task GetCharactersByRealmAsync_WithSpeciesFilter_ShouldPassFilterToQuery()
     {
         // Arrange
         var service = CreateService();
         var realmId = Guid.NewGuid();
         var targetSpeciesId = Guid.NewGuid();
-        var otherSpeciesId = Guid.NewGuid();
         var targetCharId = Guid.NewGuid();
-        var otherCharId = Guid.NewGuid();
 
         var request = new GetCharactersByRealmRequest
         {
@@ -701,12 +672,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             SpeciesId = targetSpeciesId
         };
 
-        // Setup realm index
-        _mockListStore
-            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { targetCharId.ToString(), otherCharId.ToString() });
-
-        // Setup bulk character retrieval for both characters
+        // Server-side query returns only matching species (filter applied in MySQL)
         var targetCharacter = new CharacterModel
         {
             CharacterId = targetCharId,
@@ -718,22 +684,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
-        var otherCharacter = new CharacterModel
-        {
-            CharacterId = otherCharId,
-            Name = "Other Species Character",
-            RealmId = realmId,
-            SpeciesId = otherSpeciesId,
-            Status = CharacterStatus.Alive,
-            BirthDate = DateTimeOffset.UtcNow,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
-        };
-        SetupBulkStateAsync(new Dictionary<string, CharacterModel>
-        {
-            { $"{CHARACTER_KEY_PREFIX}{realmId}:{targetCharId}", targetCharacter },
-            { $"{CHARACTER_KEY_PREFIX}{realmId}:{otherCharId}", otherCharacter }
-        });
+        SetupJsonQueryPagedAsync(new List<CharacterModel> { targetCharacter }, totalCount: 1);
 
         // Act
         var (status, response) = await service.GetCharactersByRealmAsync(request);
@@ -743,6 +694,14 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.NotNull(response);
         Assert.Single(response.Characters);
         Assert.Equal("Target Species Character", response.Characters.First().Name);
+
+        // Verify query conditions included species filter
+        _mockJsonQueryableStore.Verify(s => s.JsonQueryPagedAsync(
+            It.Is<IReadOnlyList<QueryCondition>?>(c => c != null && c.Any(q => q.Path == "$.SpeciesId")),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -1425,6 +1384,27 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync((IReadOnlyDictionary<string, CharacterModel>)items);
     }
 
+    private void SetupJsonQueryPagedAsync(
+        List<CharacterModel> items,
+        long totalCount,
+        int offset = 0,
+        int limit = 20)
+    {
+        var queryResults = items.Select(m =>
+            new JsonQueryResult<CharacterModel>($"character:{m.RealmId}:{m.CharacterId}", m))
+            .ToList();
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<CharacterModel>(
+                queryResults, totalCount, offset, limit));
+    }
+
     #endregion
 }
 
@@ -1440,6 +1420,5 @@ public class CharacterConfigurationTests
         Assert.NotNull(config);
         Assert.Equal(20, config.DefaultPageSize);
         Assert.Equal(100, config.MaxPageSize);
-        Assert.Equal(90, config.CharacterRetentionDays);
     }
 }

@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -1242,6 +1243,7 @@ public partial class CharacterService : ICharacterService
                 Parents = new List<FamilyMember>(),
                 Children = new List<FamilyMember>(),
                 Siblings = new List<FamilyMember>(),
+                Spouses = new List<FamilyMember>(),
                 PastLives = new List<PastLifeReference>()
             };
 
@@ -1326,13 +1328,13 @@ public partial class CharacterService : ICharacterService
                 // Spouse relationship
                 else if (typeCode == "SPOUSE" || typeCode == "HUSBAND" || typeCode == "WIFE")
                 {
-                    familyTree.Spouse = new FamilyMember
+                    familyTree.Spouses.Add(new FamilyMember
                     {
                         CharacterId = relatedId,
                         Name = name,
                         RelationshipType = typeCode,
                         IsAlive = isAlive
-                    };
+                    });
                 }
                 // Past life (reincarnation)
                 else if (typeCode == "INCARNATION")
@@ -1470,8 +1472,11 @@ public partial class CharacterService : ICharacterService
 
         var parts = new List<string>();
 
-        if (familyTree.Spouse != null)
-            parts.Add($"married to {familyTree.Spouse.Name ?? "unknown"}");
+        if (familyTree.Spouses?.Count > 0)
+        {
+            var spouseNames = familyTree.Spouses.Select(s => s.Name ?? "unknown");
+            parts.Add($"married to {string.Join(" and ", spouseNames)}");
+        }
 
         var childCount = familyTree.Children?.Count ?? 0;
         if (childCount > 0)
@@ -1623,69 +1628,79 @@ public partial class CharacterService : ICharacterService
         int pageSize,
         CancellationToken cancellationToken)
     {
-        // Step 1: Get character IDs from realm index (single query)
-        var realmIndexKey = BuildRealmIndexKey(realmId);
-        var characterIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character)
-            .GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
+        var jsonStore = _stateStoreFactory.GetJsonQueryableStore<CharacterModel>(StateStoreDefinitions.Character);
+        var offset = (page - 1) * pageSize;
 
-        if (characterIds.Count == 0)
+        var conditions = BuildCharacterQueryConditions(realmId, statusFilter, speciesFilter);
+
+        var sortSpec = new JsonSortSpec
         {
-            return (StatusCodes.OK, new CharacterListResponse
-            {
-                Characters = new List<CharacterResponse>(),
-                TotalCount = 0,
-                Page = page,
-                PageSize = pageSize,
-                HasNextPage = false,
-                HasPreviousPage = false
-            });
-        }
+            Path = "$.Name",
+            Descending = false
+        };
 
-        // Step 2: Build keys for bulk retrieval
-        var keys = characterIds
-            .Select(id => BuildCharacterKey(realmId, id))
-            .ToList();
+        var result = await jsonStore.JsonQueryPagedAsync(
+            conditions,
+            offset,
+            pageSize,
+            sortSpec,
+            cancellationToken);
 
-        // Step 3: Bulk load all characters (single query instead of N queries)
-        var bulkResults = await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
-            .GetBulkAsync(keys, cancellationToken);
-
-        // Step 4: Filter results
-        var filteredCharacters = new List<CharacterModel>();
-        foreach (var (_, character) in bulkResults)
-        {
-            if (character == null)
-                continue;
-
-            // Apply filters
-            if (statusFilter.HasValue && character.Status != statusFilter.Value)
-                continue;
-            if (speciesFilter.HasValue && character.SpeciesId != speciesFilter.Value)
-                continue;
-
-            filteredCharacters.Add(character);
-        }
-
-        // Step 5: Paginate
-        var totalCount = filteredCharacters.Count;
-        var skip = (page - 1) * pageSize;
-        var pagedCharacters = filteredCharacters
-            .Skip(skip)
-            .Take(pageSize)
-            .Select(MapToCharacterResponse)
+        var pagedCharacters = result.Items
+            .Select(item => MapToCharacterResponse(item.Value))
             .ToList();
 
         var response = new CharacterListResponse
         {
             Characters = pagedCharacters,
-            TotalCount = totalCount,
+            TotalCount = (int)result.TotalCount,
             Page = page,
             PageSize = pageSize,
-            HasNextPage = skip + pageSize < totalCount,
+            HasNextPage = result.HasMore,
             HasPreviousPage = page > 1
         };
 
         return (StatusCodes.OK, response);
+    }
+
+    /// <summary>
+    /// Builds MySQL JSON query conditions for character listing.
+    /// Uses server-side filtering to avoid loading all characters into memory.
+    /// </summary>
+    private static List<QueryCondition> BuildCharacterQueryConditions(
+        string realmId,
+        CharacterStatus? statusFilter,
+        Guid? speciesFilter)
+    {
+        var conditions = new List<QueryCondition>
+        {
+            // Type discriminator: only CharacterModel records have CharacterId
+            new QueryCondition { Path = "$.CharacterId", Operator = QueryOperator.Exists, Value = true },
+            // Realm filter: server-side partition by realm
+            new QueryCondition { Path = "$.RealmId", Operator = QueryOperator.Equals, Value = realmId }
+        };
+
+        if (statusFilter.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.Status",
+                Operator = QueryOperator.Equals,
+                Value = statusFilter.Value.ToString()
+            });
+        }
+
+        if (speciesFilter.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.SpeciesId",
+                Operator = QueryOperator.Equals,
+                Value = speciesFilter.Value.ToString()
+            });
+        }
+
+        return conditions;
     }
 
     private async Task AddCharacterToRealmIndexAsync(string realmId, string characterId, CancellationToken cancellationToken)

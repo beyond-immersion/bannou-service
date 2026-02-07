@@ -92,7 +92,6 @@ This plugin does not consume external events.
 | `RealmIndexUpdateMaxRetries` | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | `3` | Optimistic concurrency retry limit for realm index |
 | `LockTimeoutSeconds` | `CHARACTER_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed lock acquisition |
 | `CleanupGracePeriodDays` | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | `30` | Days at zero references before cleanup eligible |
-| `CharacterRetentionDays` | `CHARACTER_RETENTION_DAYS` | `90` | ⚠️ **STUB** - days to retain deleted characters (unimplemented purge feature) |
 
 ---
 
@@ -125,7 +124,7 @@ Service lifetime is **Scoped** (per-request).
 - **Get**: Two-step lookup via global index (characterId -> realmId) then data fetch.
 - **Update**: Smart field tracking with `ChangedFields` list. Setting `DeathDate` automatically sets `Status` to `Dead`. `SpeciesId` is mutable (supports species merge migrations).
 - **Delete**: Checks for L4 references via lib-resource, executes cleanup callbacks (CASCADE) to delete dependent data in CharacterPersonality/CharacterHistory/etc., then removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates. Returns Conflict if cleanup is blocked by RESTRICT policy.
-- **List/ByRealm**: Gets realm index, bulk-fetches all characters, filters in-memory (status, species), then paginates. Clamps page size to `MaxPageSize`.
+- **List/ByRealm**: Server-side filtering and pagination via `IJsonQueryableStateStore` MySQL JSON queries. Builds query conditions for realm, status, and species filters, delegates to `JsonQueryPagedAsync` for O(log N + P) performance. Clamps page size to `MaxPageSize`.
 - **TransferRealm**: Moves a character to a different realm. Validates target realm is active, acquires distributed lock, deletes from old realm-partitioned key, saves to new realm-partitioned key, updates indexes, and publishes `character.realm.left` (reason: "transfer"), `character.realm.joined` (with previousRealmId), and `character.updated` events.
 
 ### Enriched Character (`/character/get-enriched`)
@@ -145,7 +144,7 @@ If L4 enrichment flags are set, the service logs a debug message explaining the 
 - Parents: PARENT, MOTHER, FATHER, STEP_PARENT
 - Children: CHILD, SON, DAUGHTER, STEP_CHILD
 - Siblings: SIBLING, BROTHER, SISTER, HALF_SIBLING
-- Spouse: SPOUSE, HUSBAND, WIFE
+- Spouses: SPOUSE, HUSBAND, WIFE (array - supports multiple spousal relationships)
 - Reincarnation: INCARNATION (tracks past lives)
 
 ### Compression (Centralized via Resource Service)
@@ -158,7 +157,7 @@ Preconditions: Must be `Status=Dead` with `DeathDate` set. Returns `BadRequest` 
 
 Called by Resource service during `ExecuteCompressAsync`. Returns character base data for archival:
 - Core character fields (name, realm, species, birth/death dates, status)
-- Family summary text: "married to Elena, parent of 3, orphaned" (from Relationship service, L2)
+- Family summary text: "married to Elena and Marcus, parent of 3, orphaned" (from Relationship service, L2)
 
 Returns `NotFound` if character doesn't exist, `BadRequest` if character is alive.
 
@@ -225,17 +224,12 @@ Character Key Architecture (Realm-Partitioned)
   GET /character/by-realm (realm query)
        │
        ▼
-  realm-index:{realmId}
-       │ returns [id1, id2, id3, ...]
+  IJsonQueryableStateStore<CharacterModel>
+       │ JsonQueryPagedAsync(conditions, offset, limit)
+       │ conditions: $.RealmId, $.Status, $.SpeciesId
        ▼
-  BulkGet: character:{realmId}:{id1}, character:{realmId}:{id2}, ...
-       │ returns [CharacterModel, ...]
-       ▼
-  In-memory filter (status, species)
-       │
-       ▼
-  Paginate (page, pageSize)
-       │
+  MySQL: WHERE JSON_EXTRACT(...) with LIMIT/OFFSET
+       │ returns page of CharacterModel + TotalCount
        ▼
   [CharacterListResponse]
 ```
@@ -244,8 +238,7 @@ Character Key Architecture (Realm-Partitioned)
 
 ## Stubs & Unimplemented Features
 
-1. **`CharacterRetentionDays` config placeholder**: Defined for future retention/purge feature but not yet referenced in service code.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/212 -->
+None currently tracked.
 
 ---
 
@@ -253,7 +246,7 @@ Character Key Architecture (Realm-Partitioned)
 
 1. **Batch compression**: Compress multiple dead characters in one operation. Would need to be implemented in Resource service as a batch variant of `/resource/compress/execute`.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
-2. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
+2. **Character purge background service**: Automated purge of characters eligible for cleanup (zero references past grace period). Deferred until operational need arises.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/263 -->
 
 ---
@@ -278,7 +271,7 @@ None currently tracked.
 
 6. **Global index double-write on create/delete/transfer**: Both realm index (`realm-index:{realmId}` → list of character IDs) and global index (`character-global-index:{characterId}` → realm ID) are maintained. This enables O(1) character lookup by ID (global index → realm ID → character data) without scanning realm indexes. The extra write is intentional for performance: `FindCharacterByIdAsync` reads the global index first to resolve the realm, then fetches the character data with the full realm-partitioned key.
 
-7. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be resolved (type deleted, RelationshipType service unavailable), the relationship is excluded from the family tree with no indication in the response. This is intentional graceful degradation: partial valid data is preferred over failing the entire enrichment. A warning is logged (`"Could not look up relationship type {TypeId}"`) for observability. The alternative (returning uncategorized relationships) would break the structured Parents/Children/Siblings/Spouse/PastLives response format.
+7. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be resolved (type deleted, RelationshipType service unavailable), the relationship is excluded from the family tree with no indication in the response. This is intentional graceful degradation: partial valid data is preferred over failing the entire enrichment. A warning is logged (`"Could not look up relationship type {TypeId}"`) for observability. The alternative (returning uncategorized relationships) would break the structured Parents/Children/Siblings/Spouses/PastLives response format.
 
 8. **INCARNATION tracking is directional (past lives only)**: The `PastLives` field only populates when the queried character is Entity2 in an INCARNATION relationship. This is semantically correct: INCARNATION means "Entity1 died and was reincarnated as Entity2". When querying Entity2, Entity1 is correctly shown as a past life. When querying Entity1, Entity2 is NOT shown because that would be a "future incarnation" (you wouldn't know your future incarnations). The field is named `PastLives`, not `Incarnations`, reinforcing this semantic meaning.
 
@@ -288,11 +281,7 @@ None currently tracked.
 
 ### Design Considerations (Requires Planning)
 
-1. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/267 -->
-
-2. **Multiple spouses = last one wins**: Uses simple assignment for spouse. If a character has multiple spouse relationships, only the last one processed appears in the response.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/271 -->
+None currently tracked.
 
 ---
 
@@ -306,6 +295,9 @@ No active work items.
 
 ### Historical
 
+- **2026-02-07**: Replaced in-memory list filtering with server-side MySQL JSON queries via `IJsonQueryableStateStore<CharacterModel>.JsonQueryPagedAsync`. List/ByRealm operations now use server-side filtering (realm, status, species) and pagination (OFFSET/LIMIT), enabling O(log N + P) performance for 100k+ characters per realm.
+- **2026-02-07**: Changed `spouse` (single FamilyMember) to `spouses` (array of FamilyMember) in `FamilyTreeResponse` schema. Breaking API change to support multiple spousal relationships. Updated `BuildFamilyTreeAsync` to append to list instead of overwrite, and `GenerateFamilySummaryAsync` to join multiple spouse names. Closes [GitHub Issue #271](https://github.com/beyond-immersion/bannou-service/issues/271).
+- **2026-02-07**: Removed dead `CharacterRetentionDays` configuration property (T21 violation). Was defined in schema with default 90 but never referenced in service code. Closes [GitHub Issue #212](https://github.com/beyond-immersion/bannou-service/issues/212).
 - **2026-02-03**: Added centralized compression support via Resource service (L1). Character now provides `/character/get-compress-data` callback endpoint (returns base character data + family summary) invoked by Resource service during hierarchical compression. Full character compression (including L4 data from CharacterPersonality, CharacterHistory, CharacterEncounter) is now orchestrated by `/resource/compress/execute`. The legacy `/character/compress` endpoint remains but only archives L2 data.
 - **2026-02-03**: Fixed Character's delete flow to call `ExecuteCleanupAsync` via lib-resource, properly triggering CASCADE cleanup in L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor) via their registered cleanup callbacks. This follows the x-references contract pattern (see `docs/reference/SCHEMA-RULES.md`).
 - **2026-02-02**: Removed FIXED item from Potential Extensions (parallel family tree lookups) - verified implemented via `Task.WhenAll` and `GetBulkAsync`, no quirks remain.

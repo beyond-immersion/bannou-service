@@ -66,12 +66,6 @@ public class CharacterServiceConfiguration : IServiceConfiguration
     public int DefaultPageSize { get; set; } = 20;
 
     /// <summary>
-    /// Number of days to retain deleted characters before permanent removal
-    /// Environment variable: CHARACTER_RETENTION_DAYS
-    /// </summary>
-    public int CharacterRetentionDays { get; set; } = 90;
-
-    /// <summary>
     /// Maximum retry attempts when updating realm character index (optimistic concurrency)
     /// Environment variable: CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES
     /// </summary>
