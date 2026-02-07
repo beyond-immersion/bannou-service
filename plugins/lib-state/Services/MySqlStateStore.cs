@@ -27,6 +27,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     private readonly string _storeName;
     private readonly int _inMemoryFallbackLimit;
     private readonly ILogger<MySqlStateStore<TValue>> _logger;
+    private readonly StateErrorPublisherAsync? _errorPublisher;
 
     /// <summary>
     /// Creates a new MySQL state store.
@@ -35,16 +36,19 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// <param name="storeName">Name of this state store.</param>
     /// <param name="inMemoryFallbackLimit">Maximum entries to load when falling back to in-memory filtering.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="errorPublisher">Optional callback for publishing state errors with deduplication.</param>
     public MySqlStateStore(
         DbContextOptions<StateDbContext> options,
         string storeName,
         int inMemoryFallbackLimit,
-        ILogger<MySqlStateStore<TValue>> logger)
+        ILogger<MySqlStateStore<TValue>> logger,
+        StateErrorPublisherAsync? errorPublisher = null)
     {
         _options = options;
         _storeName = storeName;
         _inMemoryFallbackLimit = inMemoryFallbackLimit;
         _logger = logger;
+        _errorPublisher = errorPublisher;
     }
 
     /// <summary>

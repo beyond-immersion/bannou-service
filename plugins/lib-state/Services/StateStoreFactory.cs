@@ -83,7 +83,7 @@ public class StateStoreFactoryConfiguration
 /// <param name="operation">Operation that failed (e.g., "GetAsync", "SaveAsync").</param>
 /// <param name="exception">The exception that occurred.</param>
 /// <param name="key">Optional key being accessed when error occurred.</param>
-internal delegate Task StateErrorPublisherAsync(
+public delegate Task StateErrorPublisherAsync(
     string storeName,
     string operation,
     Exception exception,

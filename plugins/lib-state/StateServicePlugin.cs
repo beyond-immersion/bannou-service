@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
@@ -64,13 +65,15 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
 
         // Register state store factory with telemetry instrumentation
         // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
+        // IMessageBus is optional for error event publishing - may be null during minimal startup
         services.AddSingleton<IStateStoreFactory>(sp =>
         {
             var config = sp.GetRequiredService<StateStoreFactoryConfiguration>();
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
             var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            var messageBus = sp.GetService<IMessageBus>();
 
-            return new StateStoreFactory(config, loggerFactory, telemetryProvider);
+            return new StateStoreFactory(config, loggerFactory, telemetryProvider, messageBus);
         });
 
         // Register distributed lock provider (used by Permission service and others)
@@ -95,7 +98,9 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ConnectionTimeoutSeconds = stateConfig.ConnectionTimeoutSeconds,
             ConnectionRetryCount = stateConfig.ConnectionRetryCount,
             MinRetryDelayMs = stateConfig.MinRetryDelayMs,
-            InMemoryFallbackLimit = stateConfig.InMemoryFallbackLimit
+            InMemoryFallbackLimit = stateConfig.InMemoryFallbackLimit,
+            EnableErrorEventPublishing = stateConfig.EnableErrorEventPublishing,
+            ErrorEventDeduplicationWindowSeconds = stateConfig.ErrorEventDeduplicationWindowSeconds
         };
 
         // Load store configurations from generated definitions (schema-first approach)

@@ -128,6 +128,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
 {
     private readonly string _storeName;
     private readonly ILogger<InMemoryStateStore<TValue>> _logger;
+    private readonly StateErrorPublisherAsync? _errorPublisher;
 
     // Instance references to the shared static stores for this store name
     private readonly ConcurrentDictionary<string, InMemoryStoreData.StoreEntry> _store;
@@ -141,12 +142,15 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     /// </summary>
     /// <param name="storeName">Store name for namespacing.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="errorPublisher">Optional callback for publishing state errors with deduplication.</param>
     public InMemoryStateStore(
         string storeName,
-        ILogger<InMemoryStateStore<TValue>> logger)
+        ILogger<InMemoryStateStore<TValue>> logger,
+        StateErrorPublisherAsync? errorPublisher = null)
     {
         _storeName = storeName;
         _logger = logger;
+        _errorPublisher = errorPublisher;
 
         // Get or create the store for this name from the shared static holder
         _store = InMemoryStoreData.AllStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, InMemoryStoreData.StoreEntry>());

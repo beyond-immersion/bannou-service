@@ -28,6 +28,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
     private readonly ILogger<RedisSearchStateStore<TValue>> _logger;
     private readonly SearchCommands _searchCommands;
     private readonly JsonCommands _jsonCommands;
+    private readonly StateErrorPublisherAsync? _errorPublisher;
 
     /// <summary>
     /// Creates a new Redis search state store.
@@ -36,16 +37,19 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
     /// <param name="keyPrefix">Key prefix for namespacing.</param>
     /// <param name="defaultTtl">Default TTL for entries (null = no expiration).</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="errorPublisher">Optional callback for publishing state errors with deduplication.</param>
     public RedisSearchStateStore(
         IDatabase database,
         string keyPrefix,
         TimeSpan? defaultTtl,
-        ILogger<RedisSearchStateStore<TValue>> logger)
+        ILogger<RedisSearchStateStore<TValue>> logger,
+        StateErrorPublisherAsync? errorPublisher = null)
     {
         _database = database;
         _keyPrefix = keyPrefix;
         _defaultTtl = defaultTtl;
         _logger = logger;
+        _errorPublisher = errorPublisher;
         _searchCommands = _database.FT();
         _jsonCommands = _database.JSON();
     }
@@ -551,6 +555,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         {
             _logger.LogError(ex, "Failed to create search index '{Index}' for store '{Store}'",
                 indexName, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "CreateIndexAsync", ex, indexName);
             throw;
         }
     }
@@ -671,6 +676,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         catch (RedisException ex)
         {
             _logger.LogError(ex, "Search failed for query '{Query}' on index '{Index}'", query, indexName);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SearchAsync", ex, indexName);
             throw;
         }
     }
@@ -709,6 +715,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         catch (RedisException ex)
         {
             _logger.LogError(ex, "Suggest failed for prefix '{Prefix}' on index '{Index}'", prefix, indexName);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SuggestAsync", ex, indexName);
             throw;
         }
     }
@@ -770,6 +777,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         catch (RedisException ex)
         {
             _logger.LogError(ex, "Failed to list search indexes");
+            _ = _errorPublisher?.Invoke(_keyPrefix, "ListIndexesAsync", ex, null);
             throw;
         }
     }

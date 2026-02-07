@@ -18,18 +18,25 @@ public partial class StateService : IStateService
 {
     private readonly ILogger<StateService> _logger;
     private readonly StateServiceConfiguration _configuration;
-    private readonly IMessageBus _messageBus;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IStateStoreFactory _stateStoreFactory;
+
+    /// <summary>
+    /// Lazily resolved IMessageBus. State loads before Messaging in L0 infrastructure order,
+    /// so we cannot inject IMessageBus directly in the constructor. Instead, we resolve it
+    /// on first use when all plugins are guaranteed to be loaded.
+    /// </summary>
+    private IMessageBus MessageBus => _serviceProvider.GetRequiredService<IMessageBus>();
 
     public StateService(
         ILogger<StateService> logger,
         StateServiceConfiguration configuration,
-        IMessageBus messageBus,
+        IServiceProvider serviceProvider,
         IStateStoreFactory stateStoreFactory)
     {
         _logger = logger;
         _configuration = configuration;
-        _messageBus = messageBus;
+        _serviceProvider = serviceProvider;
         _stateStoreFactory = stateStoreFactory;
     }
 
@@ -66,7 +73,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get state from store {StoreName} with key {Key}", body.StoreName, body.Key);
-            await _messageBus.TryPublishErrorAsync(
+            await MessageBus.TryPublishErrorAsync(
                 "state",
                 "GetState",
                 ex.GetType().Name,
@@ -122,7 +129,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save state to store {StoreName} with key {Key}", body.StoreName, body.Key);
-            await _messageBus.TryPublishErrorAsync(
+            await MessageBus.TryPublishErrorAsync(
                 "state",
                 "SaveState",
                 ex.GetType().Name,
@@ -160,7 +167,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete state from store {StoreName} with key {Key}", body.StoreName, body.Key);
-            await _messageBus.TryPublishErrorAsync(
+            await MessageBus.TryPublishErrorAsync(
                 "state",
                 "DeleteState",
                 ex.GetType().Name,
@@ -209,7 +216,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to query state from store {StoreName}", body.StoreName);
-            await _messageBus.TryPublishErrorAsync(
+            await MessageBus.TryPublishErrorAsync(
                 "state",
                 "QueryState",
                 ex.GetType().Name,
@@ -392,7 +399,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bulk get from store {StoreName}", body.StoreName);
-            await _messageBus.TryPublishErrorAsync(
+            await MessageBus.TryPublishErrorAsync(
                 "state",
                 "BulkGetState",
                 ex.GetType().Name,
@@ -439,7 +446,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bulk save to store {StoreName}", body.StoreName);
-            await _messageBus.TryPublishErrorAsync(
+            await MessageBus.TryPublishErrorAsync(
                 "state",
                 "BulkSaveState",
                 ex.GetType().Name,
@@ -479,7 +486,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bulk check existence in store {StoreName}", body.StoreName);
-            await _messageBus.TryPublishErrorAsync(
+            await MessageBus.TryPublishErrorAsync(
                 "state",
                 "BulkExistsState",
                 ex.GetType().Name,
@@ -519,7 +526,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bulk delete from store {StoreName}", body.StoreName);
-            await _messageBus.TryPublishErrorAsync(
+            await MessageBus.TryPublishErrorAsync(
                 "state",
                 "BulkDeleteState",
                 ex.GetType().Name,
@@ -587,7 +594,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list state stores");
-            await _messageBus.TryPublishErrorAsync(
+            await MessageBus.TryPublishErrorAsync(
                 "state",
                 "ListStores",
                 ex.GetType().Name,
@@ -610,7 +617,7 @@ public partial class StateService : IStateService
     public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering State service permissions...");
-        await StatePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
+        await StatePermissionRegistration.RegisterViaEventAsync(MessageBus, appId, _logger);
     }
 
     #endregion
