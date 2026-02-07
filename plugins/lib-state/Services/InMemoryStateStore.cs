@@ -283,13 +283,38 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     {
         await Task.CompletedTask;
 
+        var json = BannouJson.Serialize(value);
+
+        // Empty etag means "create new entry if it doesn't exist" (matches Redis/MySQL semantics)
+        if (string.IsNullOrEmpty(etag))
+        {
+            var newEntry = new InMemoryStoreData.StoreEntry
+            {
+                Json = json,
+                Version = 1,
+                ExpiresAt = null
+            };
+
+            // TryAdd is atomic - returns false if key already exists
+            if (_store.TryAdd(key, newEntry))
+            {
+                _logger.LogDebug("Created new key '{Key}' in store '{Store}'", key, _storeName);
+                return "1";
+            }
+            else
+            {
+                _logger.LogDebug("Key '{Key}' already exists in store '{Store}' but empty etag provided (concurrent create)",
+                    key, _storeName);
+                return null;
+            }
+        }
+
+        // Non-empty etag means "update existing entry with matching version"
         if (!long.TryParse(etag, out var expectedVersion))
         {
             _logger.LogDebug("Invalid ETag format for key '{Key}' in store '{Store}'", key, _storeName);
             return null;
         }
-
-        var json = BannouJson.Serialize(value);
 
         // Use CompareExchange pattern for optimistic concurrency
         if (_store.TryGetValue(key, out var existing))
@@ -301,7 +326,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
                 return null;
             }
 
-            var newEntry = new InMemoryStoreData.StoreEntry
+            var updatedEntry = new InMemoryStoreData.StoreEntry
             {
                 Json = json,
                 Version = existing.Version + 1,
@@ -309,10 +334,10 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             };
 
             // Attempt atomic update
-            if (_store.TryUpdate(key, newEntry, existing))
+            if (_store.TryUpdate(key, updatedEntry, existing))
             {
                 _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _storeName);
-                return newEntry.Version.ToString();
+                return updatedEntry.Version.ToString();
             }
         }
 
