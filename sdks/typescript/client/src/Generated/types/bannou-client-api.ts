@@ -5305,6 +5305,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/quest/get-compress-data': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get quest data for compression
+     * @description Called by Resource service during character compression.
+     *     Returns active quests, completion counts, and category breakdown for archival.
+     */
+    post: operations['getCompressData'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/realm/get': {
     parameters: {
       query?: never;
@@ -7058,6 +7079,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/storyline/get-compress-data': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get storyline data for compression
+     * @description Called by Resource service during character compression.
+     *     Returns scenario participations, active arcs, and completion counts for archival.
+     */
+    post: operations['getCompressData'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/subscription/account/list': {
     parameters: {
       query?: never;
@@ -7558,6 +7600,29 @@ export interface components {
       value: unknown;
       /** @description How the effect is applied */
       cardinality?: components['schemas']['EffectCardinality'];
+    };
+    /** @description Summary of an active quest for archive purposes */
+    ActiveQuestSummary: {
+      /**
+       * Format: uuid
+       * @description Quest instance ID
+       */
+      questId: string;
+      /** @description Quest code for lookup */
+      questCode: string;
+      /** @description Quest display name */
+      name: string;
+      /** @description Number of completed objectives */
+      currentObjective: number;
+      /** @description Total number of objectives */
+      totalObjectives: number;
+      /**
+       * Format: date-time
+       * @description When the quest was accepted
+       */
+      startedAt: string;
+      /** @description Quest category (if available) */
+      category?: components['schemas']['QuestCategory'];
     };
     /**
      * @description Actor-specific capabilities that affect affordance evaluation.
@@ -13619,6 +13684,13 @@ export interface components {
        * @default false
        */
       dryRun: boolean;
+      /**
+       * @description Optional list of source types to include in the snapshot.
+       *     Only compression callbacks matching these source types will be executed.
+       *     If omitted or empty, all registered compression callbacks are executed.
+       *     Example: ["character-personality", "character-history"]
+       */
+      filterSourceTypes?: string[] | null;
     };
     /** @description Result of snapshot execution */
     ExecuteSnapshotResponse: {
@@ -15327,6 +15399,12 @@ export interface components {
        * @description ID of the snapshot to retrieve
        */
       snapshotId: string;
+      /**
+       * @description Optional filter for which entries to return from the snapshot.
+       *     Only entries with matching source types are returned.
+       *     If omitted or empty, all entries are returned.
+       */
+      filterSourceTypes?: string[] | null;
     };
     /** @description Response containing snapshot data */
     GetSnapshotResponse: {
@@ -19666,6 +19744,26 @@ export interface components {
       totalCount: number;
     };
     /**
+     * @description Complete quest data for archive storage and storyline SDK consumption.
+     *     Inherits base archive properties from ResourceArchiveBase.
+     *     The characterId field equals resourceId for convenience.
+     */
+    QuestArchive: {
+      /**
+       * Format: uuid
+       * @description Character this data belongs to (equals resourceId)
+       */
+      characterId: string;
+      /** @description Summary of currently active quests */
+      activeQuests: components['schemas']['ActiveQuestSummary'][];
+      /** @description Total count of completed quests */
+      completedQuests: number;
+      /** @description Breakdown of completed quests by category (main, side, bounty, etc.) */
+      questCategories: {
+        [key: string]: number;
+      };
+    } & components['schemas']['ResourceArchiveBase'];
+    /**
      * @description Category of quest for organization
      * @enum {string}
      */
@@ -22375,6 +22473,24 @@ export interface components {
       stopped: boolean;
     };
     /**
+     * @description Complete storyline participation data for archive storage and SDK consumption.
+     *     Inherits base archive properties from ResourceArchiveBase.
+     *     The characterId field equals resourceId for convenience.
+     */
+    StorylineArchive: {
+      /**
+       * Format: uuid
+       * @description Character this data belongs to (equals resourceId)
+       */
+      characterId: string;
+      /** @description All scenario participations (completed and active) */
+      participations: components['schemas']['StorylineParticipation'][];
+      /** @description Story arcs the character is currently involved in */
+      activeArcs: string[];
+      /** @description Total count of completed scenarios */
+      completedStorylines: number;
+    } & components['schemas']['ResourceArchiveBase'];
+    /**
      * @description High-level story goal that drives arc selection.
      *     revenge: Character seeks vengeance for past wrongs
      *     resurrection: Restoring something/someone lost
@@ -22392,6 +22508,43 @@ export interface components {
       targetRole: string;
       /** @description Type of relationship (e.g., "opposes", "allies_with", "seeks") */
       linkType: string;
+    };
+    /** @description Summary of a scenario participation for archive purposes */
+    StorylineParticipation: {
+      /**
+       * Format: uuid
+       * @description Scenario execution ID
+       */
+      executionId: string;
+      /**
+       * Format: uuid
+       * @description Scenario definition ID (if available)
+       */
+      scenarioId?: string | null;
+      /** @description Scenario code for lookup */
+      scenarioCode: string;
+      /** @description Scenario display name */
+      scenarioName?: string | null;
+      /** @description Character's role in the scenario (primary, secondary, witness) */
+      role: string;
+      /** @description Current phase number (or final phase if completed) */
+      phase: number;
+      /** @description Total number of phases in the scenario */
+      totalPhases: number;
+      /** @description Current status of the scenario execution */
+      status: components['schemas']['ScenarioStatus'];
+      /**
+       * Format: date-time
+       * @description When the scenario was triggered
+       */
+      startedAt: string;
+      /**
+       * Format: date-time
+       * @description When the scenario completed (null if still active)
+       */
+      completedAt?: string | null;
+      /** @description Key choices made during the scenario (for narrative hooks) */
+      choices?: string[] | null;
     };
     /** @description A planned action in the storyline (SDK type) */
     StorylinePlanAction: {
@@ -32149,6 +32302,37 @@ export interface operations {
       };
     };
   };
+  getCompressData: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetCompressDataRequest'];
+      };
+    };
+    responses: {
+      /** @description Compressed data returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestArchive'];
+        };
+      };
+      /** @description No quest data for character */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   getRealm: {
     parameters: {
       query?: never;
@@ -34588,6 +34772,37 @@ export interface operations {
         content: {
           'application/json': components['schemas']['GetScenarioHistoryResponse'];
         };
+      };
+    };
+  };
+  getCompressData: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetCompressDataRequest'];
+      };
+    };
+    responses: {
+      /** @description Compressed data returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StorylineArchive'];
+        };
+      };
+      /** @description No storyline data for character */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

@@ -543,7 +543,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
 
                 // Fill batch up to max size (non-blocking)
                 while (batch.Count < _messagingConfiguration.PublishBatchSize &&
-                       _batchChannel!.Reader.TryRead(out var pending))
+                        _batchChannel!.Reader.TryRead(out var pending))
                 {
                     batch.Add(pending);
                 }

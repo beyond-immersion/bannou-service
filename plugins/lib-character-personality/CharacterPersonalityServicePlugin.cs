@@ -1,11 +1,11 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Templates;
 using BeyondImmersion.BannouService.CharacterPersonality.Caching;
 using BeyondImmersion.BannouService.CharacterPersonality.Providers;
+using BeyondImmersion.BannouService.Generated.ResourceTemplates;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Generated.ResourceTemplates;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

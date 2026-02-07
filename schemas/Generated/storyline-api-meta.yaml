@@ -19,6 +19,13 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  x-compression-callback:
+    resourceType: character
+    sourceType: storyline
+    compressEndpoint: /storyline/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 60
+    description: Storyline participation (scenario history, active arcs, completed count)
 x-service-layer: GameFeatures
 servers:
 - url: http://localhost:5012
@@ -2072,6 +2079,91 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Get scenario execution history\",\n    \"description\": \"Returns historical
         scenario executions for a character with pagination.\\n\",\n    \"tags\": [\n        \"Scenario Execution\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"GetScenarioHistory\"\n}"
+  /storyline/get-compress-data:
+    post:
+      summary: Get storyline data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns scenario participations, active arcs, and completion counts for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorylineArchive'
+        '404':
+          description: No storyline data for character
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCompressDataRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCompressDataRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get storyline data for compression\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n                \"\
+        characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
+        \           \"description\": \"ID of the character to get compress data for\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StorylineArchive\"\
+        ,\n    \"$defs\": {\n        \"StorylineArchive\": {\n            \"type\": \"object\",\n            \"x-archive-type\"\
+        : true,\n            \"description\": \"Complete storyline participation data for archive storage and SDK consumption.\\
+        nInherits base archive properties from ResourceArchiveBase.\\nThe characterId field equals resourceId for convenience.\\\
+        n\",\n            \"allOf\": [\n                {\n                    \"type\": \"object\"\n                }\n \
+        \           ],\n            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\"\
+        ,\n                \"participations\",\n                \"activeArcs\",\n                \"completedStorylines\"\n\
+        \            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character this data
+        belongs to (equals resourceId)\"\n                },\n                \"participations\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylineParticipation\"\
+        \n                    },\n                    \"description\": \"All scenario participations (completed and active)\"\
+        \n                },\n                \"activeArcs\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"\
+        description\": \"Story arcs the character is currently involved in\"\n                },\n                \"completedStorylines\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Total count of completed scenarios\"\n                }\n            }\n        },\n        \"StorylineParticipation\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Summary of a scenario participation for archive
+        purposes\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"executionId\"\
+        ,\n                \"scenarioCode\",\n                \"role\",\n                \"phase\",\n                \"totalPhases\"\
+        ,\n                \"status\",\n                \"startedAt\"\n            ],\n            \"properties\": {\n   \
+        \             \"executionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Scenario execution ID\"\n                },\n                \"scenarioId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Scenario definition ID (if available)\"\n              \
+        \  },\n                \"scenarioCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Scenario code for lookup\"\n                },\n                \"scenarioName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Scenario display name\"\
+        \n                },\n                \"role\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Character's role in the scenario (primary, secondary, witness)\"\n                },\n      \
+        \          \"phase\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Current phase number (or final phase if completed)\"\n                },\n      \
+        \          \"totalPhases\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n \
+        \                   \"description\": \"Total number of phases in the scenario\"\n                },\n            \
+        \    \"status\": {\n                    \"$ref\": \"#/$defs/ScenarioStatus\",\n                    \"description\"\
+        : \"Current status of the scenario execution\"\n                },\n                \"startedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the scenario was triggered\"\n                },\n                \"completedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When the scenario completed (null if still active)\"\n                },\n\
+        \                \"choices\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Key choices made during the scenario (for narrative hooks)\"\n                }\n\
+        \            }\n        },\n        \"ScenarioStatus\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Active\",\n                \"Completed\",\n                \"Failed\",\n                \"\
+        Cancelled\"\n            ],\n            \"description\": \"Current status of a scenario execution instance.\\nActive:
+        Scenario is currently executing\\nCompleted: Scenario finished successfully\\nFailed: Scenario failed during execution\\
+        nCancelled: Scenario was cancelled externally\\n\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get storyline data for compression\",\n    \"description\": \"Called by
+        Resource service during character compression.\\nReturns scenario participations, active arcs, and completion counts
+        for archival.\\n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"getCompressData\"\n}"
 components:
   schemas:
     StorylineGoal:
@@ -3840,6 +3932,109 @@ components:
         totalCount:
           type: integer
           description: Total count for pagination
+    GetCompressDataRequest:
+      type: object
+      description: Request to get storyline data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+    StorylineArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete storyline participation data for archive storage and SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - participations
+      - activeArcs
+      - completedStorylines
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylineParticipation'
+          description: All scenario participations (completed and active)
+        activeArcs:
+          type: array
+          items:
+            type: string
+          description: Story arcs the character is currently involved in
+        completedStorylines:
+          type: integer
+          minimum: 0
+          description: Total count of completed scenarios
+    StorylineParticipation:
+      type: object
+      description: Summary of a scenario participation for archive purposes
+      additionalProperties: false
+      required:
+      - executionId
+      - scenarioCode
+      - role
+      - phase
+      - totalPhases
+      - status
+      - startedAt
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Scenario execution ID
+        scenarioId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Scenario definition ID (if available)
+        scenarioCode:
+          type: string
+          description: Scenario code for lookup
+        scenarioName:
+          type: string
+          nullable: true
+          description: Scenario display name
+        role:
+          type: string
+          description: Character's role in the scenario (primary, secondary, witness)
+        phase:
+          type: integer
+          minimum: 0
+          description: Current phase number (or final phase if completed)
+        totalPhases:
+          type: integer
+          minimum: 0
+          description: Total number of phases in the scenario
+        status:
+          $ref: '#/components/schemas/ScenarioStatus'
+          description: Current status of the scenario execution
+        startedAt:
+          type: string
+          format: date-time
+          description: When the scenario was triggered
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario completed (null if still active)
+        choices:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Key choices made during the scenario (for narrative hooks)
 tags:
 - name: Composition
   description: Storyline plan composition
@@ -3851,3 +4046,5 @@ tags:
   description: Find and test scenarios for characters
 - name: Scenario Execution
   description: Trigger and track scenario executions
+- name: Compression
+  description: Resource service compression integration

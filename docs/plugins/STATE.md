@@ -268,12 +268,8 @@ None.
 
 ## Potential Extensions
 
-1. **TTL support for MySQL**: Currently Redis-only. MySQL stores never expire data.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/182 -->
-2. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
+1. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/190 -->
-3. **Prefix query support**: Add SCAN-based prefix queries for Redis (with careful iteration limits).
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/194 -->
 
 ---
 
@@ -317,6 +313,8 @@ None currently identified.
     - Boolean property access: `x.IsActive` (treats as `x.IsActive == true`)
 
     Unsupported patterns fall back to in-memory filtering with a configurable limit (`InMemoryFallbackLimit`, default 10000). Exceeding this limit throws `InvalidOperationException` to prevent OOM. Use `JsonQueryAsync` with explicit `QueryCondition` objects for complex queries on large datasets.
+
+11. **MySQL stores reject TTL requests**: Passing `StateOptions.Ttl` to `SaveAsync` or `SaveBulkAsync` on a MySQL store throws `InvalidOperationException`. This is by design: MySQL stores are for durable/queryable data that should not auto-expire. For ephemeral data requiring TTL, use a Redis-backed store instead. This enforces the architectural separation between Redis (ephemeral/session) and MySQL (durable/queryable) data.
 
 ### Design Considerations (Requires Planning)
 

@@ -309,4 +309,22 @@ public sealed class QuestProxy
         return _client.SendEventAsync<QuestCompletedCallback>(
             "/quest/internal/quest-completed", request, channel, cancellationToken);
     }
+
+    /// <summary>
+    /// Get quest data for compression
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing QuestArchive on success.</returns>
+    public Task<ApiResponse<QuestArchive>> GetCompressDataAsync(
+        GetCompressDataRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetCompressDataRequest, QuestArchive>(
+            "/quest/get-compress-data", request, channel, timeout, cancellationToken);
+    }
 }

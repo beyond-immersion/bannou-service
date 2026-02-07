@@ -275,4 +275,22 @@ public sealed class StorylineProxy
         return _client.InvokeAsync<GetScenarioHistoryRequest, GetScenarioHistoryResponse>(
             "/storyline/scenario/get-history", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Get storyline data for compression
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing StorylineArchive on success.</returns>
+    public Task<ApiResponse<StorylineArchive>> GetCompressDataAsync(
+        GetCompressDataRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetCompressDataRequest, StorylineArchive>(
+            "/storyline/get-compress-data", request, channel, timeout, cancellationToken);
+    }
 }

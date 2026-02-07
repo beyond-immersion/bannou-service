@@ -10534,6 +10534,46 @@
         }
       }
     },
+    "/quest/get-compress-data": {
+      "post": {
+        "summary": "Get quest data for compression",
+        "operationId": "getCompressData",
+        "tags": [
+          "Compression"
+        ],
+        "description": "Called by Resource service during character compression.\nReturns active quests, completion counts, and category breakdown for archival.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCompressDataRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Compressed data returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestArchive"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No quest data for character"
+          }
+        }
+      }
+    },
     "/realm/get": {
       "post": {
         "summary": "Get realm by ID",
@@ -13799,6 +13839,46 @@
         }
       }
     },
+    "/storyline/get-compress-data": {
+      "post": {
+        "summary": "Get storyline data for compression",
+        "operationId": "getCompressData",
+        "tags": [
+          "Compression"
+        ],
+        "description": "Called by Resource service during character compression.\nReturns scenario participations, active arcs, and completion counts for archival.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCompressDataRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Compressed data returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorylineArchive"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No storyline data for character"
+          }
+        }
+      }
+    },
     "/subscription/account/list": {
       "post": {
         "summary": "Get subscriptions for an account",
@@ -14971,6 +15051,54 @@
           "cardinality": {
             "$ref": "#/components/schemas/EffectCardinality",
             "description": "How the effect is applied"
+          }
+        }
+      },
+      "ActiveQuestSummary": {
+        "type": "object",
+        "description": "Summary of an active quest for archive purposes",
+        "additionalProperties": false,
+        "required": [
+          "questId",
+          "questCode",
+          "name",
+          "currentObjective",
+          "totalObjectives",
+          "startedAt"
+        ],
+        "properties": {
+          "questId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Quest instance ID"
+          },
+          "questCode": {
+            "type": "string",
+            "description": "Quest code for lookup"
+          },
+          "name": {
+            "type": "string",
+            "description": "Quest display name"
+          },
+          "currentObjective": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of completed objectives"
+          },
+          "totalObjectives": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Total number of objectives"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the quest was accepted"
+          },
+          "category": {
+            "$ref": "#/components/schemas/QuestCategory",
+            "nullable": true,
+            "description": "Quest category (if available)"
           }
         }
       },
@@ -26239,6 +26367,14 @@
             "type": "boolean",
             "default": false,
             "description": "If true, return what would be captured without storing"
+          },
+          "filterSourceTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Optional list of source types to include in the snapshot.\nOnly compression callbacks matching these source types will be executed.\nIf omitted or empty, all registered compression callbacks are executed.\nExample: [\"character-personality\", \"character-history\"]\n"
           }
         }
       },
@@ -29478,6 +29614,14 @@
             "type": "string",
             "format": "uuid",
             "description": "ID of the snapshot to retrieve"
+          },
+          "filterSourceTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Optional filter for which entries to return from the snapshot.\nOnly entries with matching source types are returned.\nIf omitted or empty, all entries are returned.\n"
           }
         }
       },
@@ -37743,6 +37887,49 @@
           }
         }
       },
+      "QuestArchive": {
+        "type": "object",
+        "x-archive-type": true,
+        "description": "Complete quest data for archive storage and storyline SDK consumption.\nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResourceArchiveBase"
+          }
+        ],
+        "additionalProperties": false,
+        "required": [
+          "characterId",
+          "activeQuests",
+          "completedQuests",
+          "questCategories"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character this data belongs to (equals resourceId)"
+          },
+          "activeQuests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActiveQuestSummary"
+            },
+            "description": "Summary of currently active quests"
+          },
+          "completedQuests": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total count of completed quests"
+          },
+          "questCategories": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Breakdown of completed quests by category (main, side, bounty, etc.)"
+          }
+        }
+      },
       "QuestCategory": {
         "type": "string",
         "enum": [
@@ -42854,6 +43041,49 @@
           }
         }
       },
+      "StorylineArchive": {
+        "type": "object",
+        "x-archive-type": true,
+        "description": "Complete storyline participation data for archive storage and SDK consumption.\nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResourceArchiveBase"
+          }
+        ],
+        "additionalProperties": false,
+        "required": [
+          "characterId",
+          "participations",
+          "activeArcs",
+          "completedStorylines"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character this data belongs to (equals resourceId)"
+          },
+          "participations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorylineParticipation"
+            },
+            "description": "All scenario participations (completed and active)"
+          },
+          "activeArcs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Story arcs the character is currently involved in"
+          },
+          "completedStorylines": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total count of completed scenarios"
+          }
+        }
+      },
       "StorylineGoal": {
         "type": "string",
         "enum": [
@@ -42886,6 +43116,79 @@
           "linkType": {
             "type": "string",
             "description": "Type of relationship (e.g., \"opposes\", \"allies_with\", \"seeks\")"
+          }
+        }
+      },
+      "StorylineParticipation": {
+        "type": "object",
+        "description": "Summary of a scenario participation for archive purposes",
+        "additionalProperties": false,
+        "required": [
+          "executionId",
+          "scenarioCode",
+          "role",
+          "phase",
+          "totalPhases",
+          "status",
+          "startedAt"
+        ],
+        "properties": {
+          "executionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Scenario execution ID"
+          },
+          "scenarioId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Scenario definition ID (if available)"
+          },
+          "scenarioCode": {
+            "type": "string",
+            "description": "Scenario code for lookup"
+          },
+          "scenarioName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Scenario display name"
+          },
+          "role": {
+            "type": "string",
+            "description": "Character's role in the scenario (primary, secondary, witness)"
+          },
+          "phase": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Current phase number (or final phase if completed)"
+          },
+          "totalPhases": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of phases in the scenario"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ScenarioStatus",
+            "description": "Current status of the scenario execution"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the scenario was triggered"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the scenario completed (null if still active)"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Key choices made during the scenario (for narrative hooks)"
           }
         }
       },

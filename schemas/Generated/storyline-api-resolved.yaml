@@ -19,6 +19,14 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
+  x-compression-callback:
+    resourceType: character
+    sourceType: storyline
+    compressEndpoint: /storyline/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 60
+    description: Storyline participation (scenario history, active arcs, completed count)
 x-service-layer: GameFeatures
 
 servers:

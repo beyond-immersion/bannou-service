@@ -87,15 +87,15 @@ public sealed class WatchPerception
         string sourceType,
         string eventTopic,
         JsonElement? eventData) => new()
-    {
-        Type = "watch:resource_changed",
-        ResourceType = resourceType,
-        ResourceId = resourceId,
-        SourceType = sourceType,
-        EventTopic = eventTopic,
-        EventData = eventData,
-        Deleted = false
-    };
+        {
+            Type = "watch:resource_changed",
+            ResourceType = resourceType,
+            ResourceId = resourceId,
+            SourceType = sourceType,
+            EventTopic = eventTopic,
+            EventData = eventData,
+            Deleted = false
+        };
 
     /// <summary>
     /// Creates a resource deleted perception.
@@ -105,14 +105,14 @@ public sealed class WatchPerception
         Guid resourceId,
         string sourceType,
         string eventTopic) => new()
-    {
-        Type = "watch:resource_deleted",
-        Urgency = 0.9f, // Higher urgency for deletions
-        ResourceType = resourceType,
-        ResourceId = resourceId,
-        SourceType = sourceType,
-        EventTopic = eventTopic,
-        EventData = null,
-        Deleted = true
-    };
+        {
+            Type = "watch:resource_deleted",
+            Urgency = 0.9f, // Higher urgency for deletions
+            ResourceType = resourceType,
+            ResourceId = resourceId,
+            SourceType = sourceType,
+            EventTopic = eventTopic,
+            EventData = null,
+            Deleted = true
+        };
 }

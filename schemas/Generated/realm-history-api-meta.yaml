@@ -43,6 +43,15 @@ info:
     cleanup:
       endpoint: /realm-history/delete-all
       payloadTemplate: '{"realmId": "{{resourceId}}"}'
+  x-compression-callback:
+    resourceType: realm
+    sourceType: realm-history
+    compressEndpoint: /realm-history/get-compress-data
+    compressPayloadTemplate: '{"realmId": "{{resourceId}}"}'
+    priority: 0
+    description: Realm historical events and lore elements
+    decompressEndpoint: /realm-history/restore-from-archive
+    decompressPayloadTemplate: '{"realmId": "{{resourceId}}", "data": "{{data}}"}'
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)

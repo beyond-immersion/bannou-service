@@ -43,6 +43,17 @@ info:
     cleanup:
       endpoint: /character-personality/cleanup-by-character
       payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  x-compression-callback:
+    resourceType: character
+    sourceType: character-personality
+    compressEndpoint: /character-personality/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 10
+    templateNamespace: personality
+    description: Personality traits and combat preferences
+    decompressEndpoint: /character-personality/restore-from-archive
+    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'
+x-service-layer: GameFeatures
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)

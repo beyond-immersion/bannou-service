@@ -1292,7 +1292,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         if (binary.NodeType == ExpressionType.AndAlso)
         {
             return TryVisitExpression(binary.Left, parameter, conditions) &&
-                   TryVisitExpression(binary.Right, parameter, conditions);
+                    TryVisitExpression(binary.Right, parameter, conditions);
         }
 
         // Handle OR - not supported for SQL translation
@@ -1574,10 +1574,10 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         {
             var genericDef = type.GetGenericTypeDefinition();
             return genericDef == typeof(List<>) ||
-                   genericDef == typeof(HashSet<>) ||
-                   genericDef == typeof(IList<>) ||
-                   genericDef == typeof(ICollection<>) ||
-                   genericDef == typeof(IEnumerable<>);
+                    genericDef == typeof(HashSet<>) ||
+                    genericDef == typeof(IList<>) ||
+                    genericDef == typeof(ICollection<>) ||
+                    genericDef == typeof(IEnumerable<>);
         }
         return false;
     }

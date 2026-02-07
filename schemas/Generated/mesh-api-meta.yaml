@@ -84,27 +84,30 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Bannou app-id (e.g., \\\"bannou\\\
         \", \\\"bannou-npc-01\\\")\"\n                },\n                \"host\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Hostname or IP address\"\n                },\n                \"port\":
-        {\n                    \"type\": \"integer\",\n                    \"description\": \"Service port (typically 80)\"\
-        \n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n \
-        \                   \"description\": \"Current health status of the endpoint\"\n                },\n             \
-        \   \"loadPercent\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n  \
-        \                  \"description\": \"Current load as percentage (0-100)\",\n                    \"default\": 0\n\
-        \                },\n                \"maxConnections\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Maximum concurrent connections\"\n                },\n                \"currentConnections\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Current active connections\"\
-        \n                },\n                \"services\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"List of service names hosted on this endpoint\"\n                },\n                \"lastSeen\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
-        heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n        \
-        \    \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\":
-        [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n               \
-        \ \"ShuttingDown\"\n            ]\n        }\n    }\n}"
+        {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
+        : 65535,\n                    \"description\": \"Service port (typically 80)\"\n                },\n             \
+        \   \"status\": {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n                    \"description\"\
+        : \"Current health status of the endpoint\"\n                },\n                \"loadPercent\": {\n            \
+        \        \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n\
+        \                    \"maximum\": 100,\n                    \"description\": \"Current load as percentage (0-100)\"\
+        ,\n                    \"default\": 0\n                },\n                \"maxConnections\": {\n               \
+        \     \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Maximum
+        concurrent connections this endpoint can handle\"\n                },\n                \"currentConnections\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Current active connections\"\n                },\n                \"services\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"description\": \"List of service names hosted on this endpoint (without lib- prefix, e.g.,
+        'account', 'auth')\"\n                },\n                \"lastSeen\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Last heartbeat timestamp\"\
+        \n                },\n                \"registeredAt\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"date-time\",\n                    \"description\": \"When endpoint was first registered\"\n\
+        \                },\n                \"issues\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"List of non-critical issues reported via heartbeat (null if none)\"\
+        \n                }\n            }\n        },\n        \"EndpointStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Health status of an endpoint\",\n            \"enum\": [\n                \"Healthy\"\
+        ,\n                \"Degraded\",\n                \"Unavailable\",\n                \"ShuttingDown\"\n           \
+        \ ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get endpoints for a service\",\n    \"description\": \"Returns all healthy
         endpoints for the specified app-id.\\nUsed by IMeshClient to resolve target hosts for service invocation.\\n\",\n\
         \    \"tags\": [\n        \"Service Discovery\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getEndpoints\"\
@@ -160,37 +163,40 @@ paths:
         \  \"appId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Bannou app-id (e.g.,
         \\\"bannou\\\", \\\"bannou-npc-01\\\")\"\n                },\n                \"host\": {\n                    \"\
         type\": \"string\",\n                    \"description\": \"Hostname or IP address\"\n                },\n       \
-        \         \"port\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Service
-        port (typically 80)\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EndpointStatus\"\
-        ,\n                    \"description\": \"Current health status of the endpoint\"\n                },\n          \
-        \      \"loadPercent\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n\
-        \                    \"description\": \"Current load as percentage (0-100)\",\n                    \"default\": 0\n\
-        \                },\n                \"maxConnections\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Maximum concurrent connections\"\n                },\n                \"currentConnections\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Current active connections\"\
-        \n                },\n                \"services\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"List of service names hosted on this endpoint\"\n                },\n                \"lastSeen\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
-        heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n        \
-        \    \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\":
-        [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n               \
-        \ \"ShuttingDown\"\n            ]\n        },\n        \"EndpointSummary\": {\n            \"type\": \"object\",\n\
-        \            \"description\": \"Summary statistics for endpoints\",\n            \"additionalProperties\": false,\n\
-        \            \"properties\": {\n                \"totalEndpoints\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Total number of registered endpoints\"\n                },\n             \
-        \   \"healthyCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
-        of endpoints with Healthy status\"\n                },\n                \"degradedCount\": {\n                   \
-        \ \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Degraded status\"\n    \
-        \            },\n                \"unavailableCount\": {\n                    \"type\": \"integer\",\n           \
-        \         \"description\": \"Number of endpoints with Unavailable status\"\n                },\n                \"\
-        uniqueAppIds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of unique
-        app-ids across all endpoints\"\n                }\n            }\n        }\n    }\n}"
+        \         \"port\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n         \
+        \           \"maximum\": 65535,\n                    \"description\": \"Service port (typically 80)\"\n          \
+        \      },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n            \
+        \        \"description\": \"Current health status of the endpoint\"\n                },\n                \"loadPercent\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0,\n                    \"maximum\": 100,\n                    \"description\": \"Current load as percentage
+        (0-100)\",\n                    \"default\": 0\n                },\n                \"maxConnections\": {\n      \
+        \              \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Maximum concurrent connections this endpoint can handle\"\n                },\n                \"currentConnections\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Current active connections\"\n                },\n                \"services\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"description\": \"List of service names hosted on this endpoint (without lib- prefix, e.g.,
+        'account', 'auth')\"\n                },\n                \"lastSeen\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Last heartbeat timestamp\"\
+        \n                },\n                \"registeredAt\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"date-time\",\n                    \"description\": \"When endpoint was first registered\"\n\
+        \                },\n                \"issues\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"List of non-critical issues reported via heartbeat (null if none)\"\
+        \n                }\n            }\n        },\n        \"EndpointStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Health status of an endpoint\",\n            \"enum\": [\n                \"Healthy\"\
+        ,\n                \"Degraded\",\n                \"Unavailable\",\n                \"ShuttingDown\"\n           \
+        \ ]\n        },\n        \"EndpointSummary\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        Summary statistics for endpoints\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"totalEndpoints\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total number of registered endpoints\"\n                },\n                \"healthyCount\": {\n            \
+        \        \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Healthy status\"\n\
+        \                },\n                \"degradedCount\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Number of endpoints with Degraded status\"\n                },\n                \"unavailableCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Unavailable
+        status\"\n                },\n                \"uniqueAppIds\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"description\": \"Number of unique app-ids across all endpoints\"\n                }\n       \
+        \     }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all registered endpoints\",\n    \"description\": \"Returns all registered
         service endpoints across all app-ids.\\nAdmin-only endpoint for monitoring and debugging.\\n\",\n    \"tags\": [\n\
         \        \"Service Discovery\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listEndpoints\"\n}"
@@ -230,15 +236,14 @@ paths:
         \                 \"description\": \"App-id for this instance\"\n                },\n                \"host\": {\n\
         \                    \"type\": \"string\",\n                    \"description\": \"Hostname or IP address to register\"\
         \n                },\n                \"port\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"default\": 80,\n                    \"description\": \"Service port\"\n                },\n                \"\
-        services\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
-        \  \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"List of service names hosted on this endpoint (null for none)\"\n                },\n                \"maxConnections\"\
-        : {\n                    \"type\": \"integer\",\n                    \"default\": 1000,\n                    \"description\"\
-        : \"Maximum concurrent connections\"\n                },\n                \"metadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Optional
-        metadata key-value pairs (null if none)\"\n                }\n            }\n        }\n    }\n}"
+        \  \"default\": 80,\n                    \"minimum\": 1,\n                    \"maximum\": 65535,\n              \
+        \      \"description\": \"Service port\"\n                },\n                \"services\": {\n                  \
+        \  \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n        \
+        \            },\n                    \"nullable\": true,\n                    \"description\": \"List of service names
+        hosted on this endpoint (null for none)\"\n                },\n                \"maxConnections\": {\n           \
+        \         \"type\": \"integer\",\n                    \"default\": 1000,\n                    \"minimum\": 0,\n  \
+        \                  \"description\": \"Maximum concurrent connections this endpoint can handle\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterEndpointResponse\"\
         ,\n    \"$defs\": {\n        \"RegisterEndpointResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after registering endpoint\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -255,27 +260,29 @@ paths:
         type\": \"string\",\n                    \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\
         \")\"\n                },\n                \"host\": {\n                    \"type\": \"string\",\n              \
         \      \"description\": \"Hostname or IP address\"\n                },\n                \"port\": {\n            \
-        \        \"type\": \"integer\",\n                    \"description\": \"Service port (typically 80)\"\n          \
-        \      },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n            \
-        \        \"description\": \"Current health status of the endpoint\"\n                },\n                \"loadPercent\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        description\": \"Current load as percentage (0-100)\",\n                    \"default\": 0\n                },\n \
-        \               \"maxConnections\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent connections\"\n                },\n                \"currentConnections\": {\n            \
-        \        \"type\": \"integer\",\n                    \"description\": \"Current active connections\"\n           \
-        \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        List of service names hosted on this endpoint\"\n                },\n                \"lastSeen\": {\n           \
-        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
-        heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n        \
-        \    \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\":
-        [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n               \
-        \ \"ShuttingDown\"\n            ]\n        }\n    }\n}"
+        \        \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 65535,\n  \
+        \                  \"description\": \"Service port (typically 80)\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n                    \"description\": \"Current health
+        status of the endpoint\"\n                },\n                \"loadPercent\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"\
+        maximum\": 100,\n                    \"description\": \"Current load as percentage (0-100)\",\n                  \
+        \  \"default\": 0\n                },\n                \"maxConnections\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Maximum concurrent connections this
+        endpoint can handle\"\n                },\n                \"currentConnections\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current active connections\"\
+        \n                },\n                \"services\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')\"\n             \
+        \   },\n                \"lastSeen\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"Last heartbeat timestamp\"\n                },\n        \
+        \        \"registeredAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When endpoint was first registered\"\n                },\n             \
+        \   \"issues\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"List of non-critical issues reported via heartbeat (null if none)\"\n                }\n    \
+        \        }\n        },\n        \"EndpointStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Health status of an endpoint\",\n            \"enum\": [\n                \"Healthy\",\n                \"Degraded\"\
+        ,\n                \"Unavailable\",\n                \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Register a service endpoint\",\n    \"description\": \"Registers this instance's
         endpoint in the service mesh.\\nCalled during service startup to announce availability.\\nEndpoint TTL is refreshed
         on each heartbeat.\\n\",\n    \"tags\": [\n        \"Registration\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -346,9 +353,10 @@ paths:
         \              \"$ref\": \"#/$defs/EndpointStatus\"\n                        }\n                    ],\n         \
         \           \"nullable\": true,\n                    \"description\": \"Current health status of the endpoint (null
         defaults to Healthy)\"\n                },\n                \"loadPercent\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Current load 0-100 (null defaults to 0)\"\n                },\n                \"currentConnections\": {\n   \
-        \                 \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        ,\n                    \"format\": \"float\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 0,\n                    \"maximum\": 100,\n                    \"description\": \"Current load 0-100 (null defaults
+        to 0)\"\n                },\n                \"currentConnections\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current active connections (null defaults to 0)\"\n                },\n                \"issues\": {\n       \
         \             \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
         \n                    },\n                    \"nullable\": true,\n                    \"description\": \"List of
@@ -397,13 +405,15 @@ paths:
         \ \"required\": [\n                \"appId\"\n            ],\n            \"properties\": {\n                \"appId\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Target app-id to route to\"\
         \n                },\n                \"serviceName\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Optional service name for affinity routing (null
-        for no affinity)\"\n                },\n                \"algorithm\": {\n                    \"$ref\": \"#/$defs/LoadBalancerAlgorithm\"\
-        ,\n                    \"description\": \"Load balancing algorithm to use for endpoint selection\"\n             \
-        \   }\n            }\n        },\n        \"LoadBalancerAlgorithm\": {\n            \"type\": \"string\",\n      \
-        \      \"description\": \"Load balancing algorithm\",\n            \"enum\": [\n                \"RoundRobin\",\n\
-        \                \"LeastConnections\",\n                \"Weighted\",\n                \"WeightedRoundRobin\",\n \
-        \               \"Random\"\n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Optional filter to select only endpoints hosting
+        this specific service (null for any endpoint)\"\n                },\n                \"algorithm\": {\n          \
+        \          \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/LoadBalancerAlgorithm\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Load balancing algorithm to use for endpoint selection (null uses service default from configuration)\"\
+        \n                }\n            }\n        },\n        \"LoadBalancerAlgorithm\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Load balancing algorithm\",\n            \"enum\": [\n                \"RoundRobin\"\
+        ,\n                \"LeastConnections\",\n                \"Weighted\",\n                \"WeightedRoundRobin\",\n\
+        \                \"Random\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRouteResponse\"\
         ,\n    \"$defs\": {\n        \"GetRouteResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Selected route for service call\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -421,27 +431,29 @@ paths:
         type\": \"string\",\n                    \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\
         \")\"\n                },\n                \"host\": {\n                    \"type\": \"string\",\n              \
         \      \"description\": \"Hostname or IP address\"\n                },\n                \"port\": {\n            \
-        \        \"type\": \"integer\",\n                    \"description\": \"Service port (typically 80)\"\n          \
-        \      },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n            \
-        \        \"description\": \"Current health status of the endpoint\"\n                },\n                \"loadPercent\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        description\": \"Current load as percentage (0-100)\",\n                    \"default\": 0\n                },\n \
-        \               \"maxConnections\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent connections\"\n                },\n                \"currentConnections\": {\n            \
-        \        \"type\": \"integer\",\n                    \"description\": \"Current active connections\"\n           \
-        \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        List of service names hosted on this endpoint\"\n                },\n                \"lastSeen\": {\n           \
-        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
-        heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n        \
-        \    \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\":
-        [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n               \
-        \ \"ShuttingDown\"\n            ]\n        }\n    }\n}"
+        \        \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 65535,\n  \
+        \                  \"description\": \"Service port (typically 80)\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n                    \"description\": \"Current health
+        status of the endpoint\"\n                },\n                \"loadPercent\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"\
+        maximum\": 100,\n                    \"description\": \"Current load as percentage (0-100)\",\n                  \
+        \  \"default\": 0\n                },\n                \"maxConnections\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Maximum concurrent connections this
+        endpoint can handle\"\n                },\n                \"currentConnections\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current active connections\"\
+        \n                },\n                \"services\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')\"\n             \
+        \   },\n                \"lastSeen\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"Last heartbeat timestamp\"\n                },\n        \
+        \        \"registeredAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When endpoint was first registered\"\n                },\n             \
+        \   \"issues\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"List of non-critical issues reported via heartbeat (null if none)\"\n                }\n    \
+        \        }\n        },\n        \"EndpointStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Health status of an endpoint\",\n            \"enum\": [\n                \"Healthy\",\n                \"Degraded\"\
+        ,\n                \"Unavailable\",\n                \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get optimal endpoint for routing\",\n    \"description\": \"Returns a single
         endpoint for the specified app-id, selected by the\\nconfigured load balancing algorithm (round-robin, least-connections,
         weighted).\\n\",\n    \"tags\": [\n        \"Routing\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -557,24 +569,27 @@ paths:
         type\": \"string\",\n                    \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\
         \")\"\n                },\n                \"host\": {\n                    \"type\": \"string\",\n              \
         \      \"description\": \"Hostname or IP address\"\n                },\n                \"port\": {\n            \
-        \        \"type\": \"integer\",\n                    \"description\": \"Service port (typically 80)\"\n          \
-        \      },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n            \
-        \        \"description\": \"Current health status of the endpoint\"\n                },\n                \"loadPercent\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        description\": \"Current load as percentage (0-100)\",\n                    \"default\": 0\n                },\n \
-        \               \"maxConnections\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent connections\"\n                },\n                \"currentConnections\": {\n            \
-        \        \"type\": \"integer\",\n                    \"description\": \"Current active connections\"\n           \
-        \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        List of service names hosted on this endpoint\"\n                },\n                \"lastSeen\": {\n           \
-        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
-        heartbeat (null if none)\"\n                }\n            }\n        }\n    }\n}"
+        \        \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 65535,\n  \
+        \                  \"description\": \"Service port (typically 80)\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/EndpointStatus\",\n                    \"description\": \"Current health
+        status of the endpoint\"\n                },\n                \"loadPercent\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"\
+        maximum\": 100,\n                    \"description\": \"Current load as percentage (0-100)\",\n                  \
+        \  \"default\": 0\n                },\n                \"maxConnections\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Maximum concurrent connections this
+        endpoint can handle\"\n                },\n                \"currentConnections\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current active connections\"\
+        \n                },\n                \"services\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')\"\n             \
+        \   },\n                \"lastSeen\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"Last heartbeat timestamp\"\n                },\n        \
+        \        \"registeredAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When endpoint was first registered\"\n                },\n             \
+        \   \"issues\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"List of non-critical issues reported via heartbeat (null if none)\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get mesh health status\",\n    \"description\": \"Returns overall health
         of the service mesh including:\\n- Total registered endpoints\\n- Healthy/degraded/unavailable counts\\n- Redis connectivity
         status\\n\",\n    \"tags\": [\n        \"Diagnostics\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -604,6 +619,8 @@ components:
           description: Hostname or IP address
         port:
           type: integer
+          minimum: 1
+          maximum: 65535
           description: Service port (typically 80)
         status:
           $ref: '#/components/schemas/EndpointStatus'
@@ -611,19 +628,23 @@ components:
         loadPercent:
           type: number
           format: float
+          minimum: 0
+          maximum: 100
           description: Current load as percentage (0-100)
           default: 0
         maxConnections:
           type: integer
-          description: Maximum concurrent connections
+          minimum: 0
+          description: Maximum concurrent connections this endpoint can handle
         currentConnections:
           type: integer
+          minimum: 0
           description: Current active connections
         services:
           type: array
           items:
             type: string
-          description: List of service names hosted on this endpoint
+          description: List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')
         lastSeen:
           type: string
           format: date-time
@@ -767,6 +788,8 @@ components:
         port:
           type: integer
           default: 80
+          minimum: 1
+          maximum: 65535
           description: Service port
         services:
           type: array
@@ -777,13 +800,8 @@ components:
         maxConnections:
           type: integer
           default: 1000
-          description: Maximum concurrent connections
-        metadata:
-          type: object
-          additionalProperties:
-            type: string
-          nullable: true
-          description: Optional metadata key-value pairs (null if none)
+          minimum: 0
+          description: Maximum concurrent connections this endpoint can handle
     RegisterEndpointResponse:
       type: object
       description: Response after registering endpoint
@@ -828,10 +846,13 @@ components:
           type: number
           format: float
           nullable: true
+          minimum: 0
+          maximum: 100
           description: Current load 0-100 (null defaults to 0)
         currentConnections:
           type: integer
           nullable: true
+          minimum: 0
           description: Current active connections (null defaults to 0)
         issues:
           type: array
@@ -863,10 +884,13 @@ components:
         serviceName:
           type: string
           nullable: true
-          description: Optional service name for affinity routing (null for no affinity)
+          description: Optional filter to select only endpoints hosting this specific service (null for any endpoint)
         algorithm:
-          $ref: '#/components/schemas/LoadBalancerAlgorithm'
-          description: Load balancing algorithm to use for endpoint selection
+          allOf:
+          - $ref: '#/components/schemas/LoadBalancerAlgorithm'
+          nullable: true
+          description: Load balancing algorithm to use for endpoint selection (null uses service default from 
+            configuration)
     GetRouteResponse:
       type: object
       description: Selected route for service call

@@ -3,9 +3,9 @@
 // Exposes resource snapshot data as an IVariableProvider for ABML expressions.
 // =============================================================================
 
-using System.Text.Json;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
+using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Providers;
 

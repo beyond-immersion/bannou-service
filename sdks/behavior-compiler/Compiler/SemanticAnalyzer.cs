@@ -3,10 +3,10 @@
 // Validates ABML documents before compilation.
 // =============================================================================
 
-using System.Text.RegularExpressions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Templates;
+using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
 

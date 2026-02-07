@@ -12,7 +12,14 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
-x-service-layer: GameFeatures
+  x-compression-callback:
+    resourceType: character
+    sourceType: quest
+    compressEndpoint: /quest/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 50
+    description: Quest state (active quests, completed counts, category breakdown)
+x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -1841,6 +1848,80 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Handle quest completion callback\",\n    \"description\": \"Called when
         all required milestones are done.\",\n    \"tags\": [\n        \"Internal\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"handleQuestCompleted\"\n}"
+  /quest/get-compress-data:
+    post:
+      summary: Get quest data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns active quests, completion counts, and category breakdown for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestArchive'
+        '404':
+          description: No quest data for character
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCompressDataRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCompressDataRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get quest data for compression\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterId\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the character to get compress data for\"\n                }\n            }\n        }\n   \
+        \ }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuestArchive\"\
+        ,\n    \"$defs\": {\n        \"QuestArchive\": {\n            \"type\": \"object\",\n            \"x-archive-type\"\
+        : true,\n            \"description\": \"Complete quest data for archive storage and storyline SDK consumption.\\nInherits
+        base archive properties from ResourceArchiveBase.\\nThe characterId field equals resourceId for convenience.\\n\"\
+        ,\n            \"allOf\": [\n                {\n                    \"type\": \"object\"\n                }\n    \
+        \        ],\n            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\"\
+        ,\n                \"activeQuests\",\n                \"completedQuests\",\n                \"questCategories\"\n\
+        \            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character this data
+        belongs to (equals resourceId)\"\n                },\n                \"activeQuests\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ActiveQuestSummary\"\
+        \n                    },\n                    \"description\": \"Summary of currently active quests\"\n          \
+        \      },\n                \"completedQuests\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"minimum\": 0,\n                    \"description\": \"Total count of completed quests\"\n                },\n\
+        \                \"questCategories\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"integer\"\n                    },\n                    \"description\": \"\
+        Breakdown of completed quests by category (main, side, bounty, etc.)\"\n                }\n            }\n       \
+        \ },\n        \"ActiveQuestSummary\": {\n            \"type\": \"object\",\n            \"description\": \"Summary
+        of an active quest for archive purposes\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"questId\",\n                \"questCode\",\n                \"name\",\n                \"currentObjective\"\
+        ,\n                \"totalObjectives\",\n                \"startedAt\"\n            ],\n            \"properties\"\
+        : {\n                \"questId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Quest instance ID\"\n                },\n                \"questCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Quest code for lookup\"\n \
+        \               },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Quest display name\"\n                },\n                \"currentObjective\": {\n             \
+        \       \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
+        of completed objectives\"\n                },\n                \"totalObjectives\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Total number of objectives\"\
+        \n                },\n                \"startedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the quest was accepted\"\n        \
+        \        },\n                \"category\": {\n                    \"$ref\": \"#/$defs/QuestCategory\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Quest category (if available)\"\n        \
+        \        }\n            }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n         \
+        \   \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n             \
+        \   \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n          \
+        \  ],\n            \"description\": \"Category of quest for organization\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get quest data for compression\",\n    \"description\": \"Called by Resource
+        service during character compression.\\nReturns active quests, completion counts, and category breakdown for archival.\\\
+        n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCompressData\"\
+        \n}"
 components:
   schemas:
     QuestStatus:
@@ -1904,6 +1985,15 @@ components:
       - ITEM_OWNED
       - CURRENCY_AMOUNT
       description: Type of prerequisite check
+    PrerequisiteValidationMode:
+      type: string
+      enum:
+      - FAIL_FAST
+      - CHECK_ALL
+      description: |
+        Controls how prerequisite validation handles multiple prerequisites.
+        FAIL_FAST: Stop on first failure, return that failure.
+        CHECK_ALL: Check all prerequisites, return all failures for richer error info.
     CreateQuestDefinitionRequest:
       type: object
       description: Request to create a new quest definition with objectives and rewards
@@ -2104,6 +2194,62 @@ components:
           type: string
           nullable: true
           description: Faction code for REPUTATION rewards
+    FailedPrerequisite:
+      type: object
+      description: Details about a failed prerequisite check during quest acceptance
+      additionalProperties: false
+      required:
+      - type
+      - reason
+      properties:
+        type:
+          $ref: '#/components/schemas/PrerequisiteType'
+          description: Type of prerequisite that failed
+        code:
+          type: string
+          nullable: true
+          description: Specific code (quest code, currency code, item code, etc.)
+        reason:
+          type: string
+          description: Human-readable failure reason
+        currentValue:
+          type: string
+          nullable: true
+          description: Current value (e.g., "50 gold", "3 wolf pelts")
+        requiredValue:
+          type: string
+          nullable: true
+          description: Required value (e.g., "100 gold", "5 wolf pelts")
+    AcceptQuestErrorCode:
+      type: string
+      enum:
+      - PREREQUISITES_NOT_MET
+      - ALREADY_ACTIVE
+      - ON_COOLDOWN
+      - MAX_QUESTS_REACHED
+      - DEFINITION_NOT_FOUND
+      - DEFINITION_DEPRECATED
+      description: Specific error codes for quest acceptance failures
+    AcceptQuestErrorResponse:
+      type: object
+      description: Error response when quest acceptance fails
+      additionalProperties: false
+      required:
+      - errorCode
+      - message
+      properties:
+        errorCode:
+          $ref: '#/components/schemas/AcceptQuestErrorCode'
+          description: Specific error code indicating failure type
+        message:
+          type: string
+          description: Human-readable error message
+        failedPrerequisites:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/FailedPrerequisite'
+          description: List of prerequisites that were not met (only for PREREQUISITES_NOT_MET)
     QuestDefinitionResponse:
       type: object
       description: Complete quest definition including objectives, prerequisites, and rewards
@@ -2735,3 +2881,86 @@ components:
           type: string
           format: uuid
           description: Contract instance ID
+    GetCompressDataRequest:
+      type: object
+      description: Request to get quest data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+    QuestArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete quest data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - activeQuests
+      - completedQuests
+      - questCategories
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        activeQuests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveQuestSummary'
+          description: Summary of currently active quests
+        completedQuests:
+          type: integer
+          minimum: 0
+          description: Total count of completed quests
+        questCategories:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Breakdown of completed quests by category (main, side, bounty, etc.)
+    ActiveQuestSummary:
+      type: object
+      description: Summary of an active quest for archive purposes
+      additionalProperties: false
+      required:
+      - questId
+      - questCode
+      - name
+      - currentObjective
+      - totalObjectives
+      - startedAt
+      properties:
+        questId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        questCode:
+          type: string
+          description: Quest code for lookup
+        name:
+          type: string
+          description: Quest display name
+        currentObjective:
+          type: integer
+          minimum: 0
+          description: Number of completed objectives
+        totalObjectives:
+          type: integer
+          minimum: 1
+          description: Total number of objectives
+        startedAt:
+          type: string
+          format: date-time
+          description: When the quest was accepted
+        category:
+          $ref: '#/components/schemas/QuestCategory'
+          nullable: true
+          description: Quest category (if available)

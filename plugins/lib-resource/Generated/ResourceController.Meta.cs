@@ -2271,6 +2271,14 @@ public partial class ResourceController
                     "type": "boolean",
                     "default": false,
                     "description": "If true, return what would be captured without storing"
+                },
+                "filterSourceTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Optional list of source types to include in the snapshot.\nOnly compression callbacks matching these source types will be executed.\nIf omitted or empty, all registered compression callbacks are executed.\nExample: [\"character-personality\", \"character-history\"]\n"
                 }
             }
         },
@@ -2476,6 +2484,14 @@ public partial class ResourceController
                     "type": "string",
                     "format": "uuid",
                     "description": "ID of the snapshot to retrieve"
+                },
+                "filterSourceTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Optional filter for which entries to return from the snapshot.\nOnly entries with matching source types are returned.\nIf omitted or empty, all entries are returned.\n"
                 }
             }
         }

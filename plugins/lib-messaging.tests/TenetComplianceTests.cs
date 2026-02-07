@@ -224,7 +224,7 @@ public class TenetComplianceTests
                 continue;
 
             var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Static |
-                                           BindingFlags.Public | BindingFlags.NonPublic);
+                                            BindingFlags.Public | BindingFlags.NonPublic);
 
             foreach (var method in methods)
             {

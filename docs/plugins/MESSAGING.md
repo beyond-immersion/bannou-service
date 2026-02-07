@@ -41,6 +41,7 @@ The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. 
 | lib-state (`IStateStoreFactory`) | Persisting external subscription metadata for recovery |
 | lib-core (`BannouJson`) | Consistent JSON serialization via `BannouJson.Serialize/Deserialize` |
 | lib-core (`IBannouEvent`) | Event interface for generic envelope pattern |
+| lib-telemetry (`ITelemetryProvider`) | OpenTelemetry traces and metrics (NullProvider if telemetry disabled) |
 
 ---
 
@@ -140,15 +141,15 @@ When `EnablePublisherConfirms` is true, `BasicPublishAsync` waits for broker con
 | `DeadLetterTtlMs` | `MESSAGING_DEAD_LETTER_TTL_MS` | `604800000` | TTL for DLX messages (7 days) |
 | `DeadLetterOverflowBehavior` | `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | `"drop-head"` | Behavior when DLX exceeds max length |
 
-### Poison Message Handling
+### Poison Message Handling (Retry Buffer)
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `RetryMaxAttempts` | `MESSAGING_RETRY_MAX_ATTEMPTS` | `5` | Max retry attempts before dead-lettering |
+| `RetryMaxAttempts` | `MESSAGING_RETRY_MAX_ATTEMPTS` | `5` | Max retry attempts before discarding to dead-letter |
 | `RetryDelayMs` | `MESSAGING_RETRY_DELAY_MS` | `5000` | Base delay between retries (doubles each retry) |
 | `RetryMaxBackoffMs` | `MESSAGING_RETRY_MAX_BACKOFF_MS` | `60000` | Maximum backoff delay (caps exponential growth) |
 
-Messages are tracked via `x-bannou-retry-count` header. After `RetryMaxAttempts`, messages are dead-lettered.
+These settings apply to the **MessageRetryBuffer** (publish failures). After `RetryMaxAttempts`, messages are discarded to the dead-letter exchange with `x-retry-count` header.
 
 ### Retry Buffer Settings (Transient Failures)
 
@@ -179,11 +180,13 @@ Messages are tracked via `x-bannou-retry-count` header. After `RetryMaxAttempts`
 | `IMessageBus` | Singleton | Event publishing (RabbitMQ or InMemory) |
 | `IMessageSubscriber` | Singleton | Topic subscriptions (static and dynamic) |
 | `IMessageTap` | Singleton | Event tapping/forwarding between exchanges |
+| `IChannelManager` | Singleton | Interface for channel pooling (testability) |
 | `RabbitMQConnectionManager` | Singleton | Connection pooling (configurable via `ChannelPoolSize`) |
-| `MessageRetryBuffer` | Singleton | Transient publish failure recovery |
+| `IRetryBuffer` | Singleton | Interface for retry buffer (testability) |
+| `MessageRetryBuffer` | Singleton | Transient publish failure recovery with crash-fast |
 | `NativeEventConsumerBackend` | HostedService | Bridges IEventConsumer fan-out to RabbitMQ |
 | `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup, refreshes TTL |
-| `MessagingService` | Singleton | HTTP API implementation |
+| `MessagingService` | Singleton | HTTP API implementation (also registered as concrete for recovery service) |
 
 Service lifetime is **Singleton** (infrastructure must persist across requests).
 
@@ -194,6 +197,7 @@ Service lifetime is **Singleton** (infrastructure must persist across requests).
 | `GenericMessageEnvelope` | Wraps arbitrary JSON payloads for MassTransit compatibility; implements `IBannouEvent` |
 | `TappedMessageEnvelope` | Extended envelope with tap routing metadata for multi-stream forwarding |
 | `ExternalSubscriptionData` | Record type for persisting HTTP callback subscriptions |
+| `IProcessTerminator` | Interface for crash-fast behavior; `EnvironmentProcessTerminator` calls `Environment.Exit(1)` |
 
 ---
 
@@ -304,13 +308,13 @@ No bugs identified.
 
 6. **Static subscriptions prevent duplicates**: `RabbitMQMessageSubscriber.SubscribeAsync()` logs a warning and returns early if already subscribed to the same topic. This prevents duplicate handlers but can mask subscription misuse.
 
-7. **Poison message handling with exponential backoff**: Messages that fail processing are requeued with increasing delays (up to `RetryMaxBackoffMs`). After `RetryMaxAttempts` (default 5), messages are dead-lettered. Retry count tracked via `x-bannou-retry-count` header.
+7. **Subscriber requeue behavior**: When a handler throws `HandlerError`, messages are requeued once (if not already redelivered via RabbitMQ's `Redelivered` flag). This is a single retry only - no exponential backoff or retry counting. For multi-attempt retries with backoff, that logic is in the **MessageRetryBuffer** for publish failures (tracked via `x-retry-count` header).
 
 8. **DLX queue size limits**: Dead letter queue has configurable max length (default 100k messages) and TTL (default 7 days). When limits are exceeded, oldest messages are dropped (`drop-head` policy).
 
 ### Design Considerations (Requires Planning)
 
-1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch).
+1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
 
 2. **No graceful drain on shutdown**: `DisposeAsync` iterates subscriptions without timeout. A hung subscription disposal could hang the entire shutdown process.
 

@@ -33,10 +33,14 @@ public partial class StateController
             "properties": {
                 "storeName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Name of the state store"
                 },
                 "key": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Key to retrieve"
                 }
             }
@@ -51,7 +55,7 @@ public partial class StateController
     "$ref": "#/$defs/GetStateResponse",
     "$defs": {
         "GetStateResponse": {
-            "description": "Response containing a retrieved state value with its metadata and ETag",
+            "description": "Response containing a retrieved state value with its ETag for optimistic concurrency",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -65,33 +69,6 @@ public partial class StateController
                     "type": "string",
                     "nullable": true,
                     "description": "ETag for optimistic concurrency"
-                },
-                "metadata": {
-                    "$ref": "#/$defs/StateMetadata",
-                    "description": "Metadata about the state entry including timestamps and version"
-                }
-            }
-        },
-        "StateMetadata": {
-            "description": "Metadata associated with a state entry including creation time, last update time, and version",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the state was created"
-                },
-                "updatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the state was last updated"
-                },
-                "version": {
-                    "type": "integer",
-                    "description": "Version number for optimistic concurrency"
                 }
             }
         }
@@ -172,10 +149,14 @@ public partial class StateController
             "properties": {
                 "storeName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Name of the state store"
                 },
                 "key": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Key to save"
                 },
                 "value": {
@@ -197,11 +178,15 @@ public partial class StateController
             "properties": {
                 "ttl": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 31536000,
                     "nullable": true,
-                    "description": "TTL in seconds (Redis only)"
+                    "description": "TTL in seconds (Redis only). Maximum 1 year (31536000 seconds)."
                 },
                 "etag": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Optimistic concurrency check - save fails if ETag mismatch"
                 }
@@ -223,6 +208,8 @@ public partial class StateController
             "properties": {
                 "etag": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "New ETag after save"
                 }
             }
@@ -303,10 +290,14 @@ public partial class StateController
             "properties": {
                 "storeName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Name of the state store"
                 },
                 "key": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Key to delete"
                 }
             }
@@ -406,6 +397,8 @@ public partial class StateController
             "properties": {
                 "storeName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Name of the state store (MySQL or Redis with search enabled)"
                 },
                 "conditions": {
@@ -413,16 +406,21 @@ public partial class StateController
                     "items": {
                         "$ref": "#/$defs/QueryCondition"
                     },
+                    "maxItems": 50,
                     "nullable": true,
                     "description": "Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.\nFor Redis search, use indexName and query properties instead.\n"
                 },
                 "indexName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Redis search index name. Defaults to \"{storeName}-idx\".\nOnly used for Redis stores with search enabled.\n"
                 },
                 "query": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "RedisSearch query string (e.g., \"@name:John\", \"@age:[18 +inf]\", \"*\").\nDefaults to \"*\" (match all). Only used for Redis stores with search enabled.\n"
                 },
@@ -431,16 +429,20 @@ public partial class StateController
                     "items": {
                         "$ref": "#/$defs/SortField"
                     },
+                    "maxItems": 10,
                     "nullable": true,
                     "description": "Sort order (first field only is used) (null for default ordering)"
                 },
                 "page": {
                     "type": "integer",
+                    "minimum": 0,
                     "default": 0,
                     "description": "Page number (0-indexed)"
                 },
                 "pageSize": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
                     "default": 100,
                     "description": "Items per page (max 1000)"
                 }
@@ -456,6 +458,8 @@ public partial class StateController
             "properties": {
                 "path": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "JSON path to query (e.g., \"$.name\", \"$.address.city\", \"$.tags[0]\")"
                 },
                 "operator": {
@@ -494,6 +498,8 @@ public partial class StateController
             "properties": {
                 "field": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Field name to sort by (JSON path for MySQL, field name for Redis)"
                 },
                 "order": {
@@ -531,14 +537,18 @@ public partial class StateController
                 },
                 "totalCount": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Total matching items (for pagination)"
                 },
                 "page": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current page number"
                 },
                 "pageSize": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
                     "description": "Items per page"
                 }
             }
@@ -619,13 +629,19 @@ public partial class StateController
             "properties": {
                 "storeName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Name of the state store"
                 },
                 "keys": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
                     },
+                    "minItems": 1,
+                    "maxItems": 1000,
                     "description": "Keys to retrieve"
                 }
             }
@@ -660,6 +676,8 @@ public partial class StateController
             "properties": {
                 "key": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "The key"
                 },
                 "value": {
@@ -670,6 +688,8 @@ public partial class StateController
                 },
                 "etag": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "ETag for this item"
                 },
@@ -755,6 +775,8 @@ public partial class StateController
             "properties": {
                 "storeName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Name of the state store"
                 },
                 "items": {
@@ -762,6 +784,8 @@ public partial class StateController
                     "items": {
                         "$ref": "#/$defs/BulkSaveItem"
                     },
+                    "minItems": 1,
+                    "maxItems": 1000,
                     "description": "Items to save"
                 },
                 "options": {
@@ -786,6 +810,8 @@ public partial class StateController
             "properties": {
                 "key": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "The key to save"
                 },
                 "value": {
@@ -802,11 +828,15 @@ public partial class StateController
             "properties": {
                 "ttl": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 31536000,
                     "nullable": true,
-                    "description": "TTL in seconds (Redis only)"
+                    "description": "TTL in seconds (Redis only). Maximum 1 year (31536000 seconds)."
                 },
                 "etag": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Optimistic concurrency check - save fails if ETag mismatch"
                 }
@@ -849,10 +879,14 @@ public partial class StateController
             "properties": {
                 "key": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "The key that was saved"
                 },
                 "etag": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "New ETag after save"
                 }
             }
@@ -933,13 +967,19 @@ public partial class StateController
             "properties": {
                 "storeName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Name of the state store"
                 },
                 "keys": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
                     },
+                    "minItems": 1,
+                    "maxItems": 1000,
                     "description": "Keys to check for existence"
                 }
             }
@@ -1046,13 +1086,19 @@ public partial class StateController
             "properties": {
                 "storeName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Name of the state store"
                 },
                 "keys": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
                     },
+                    "minItems": 1,
+                    "maxItems": 1000,
                     "description": "Keys to delete"
                 }
             }
@@ -1076,6 +1122,7 @@ public partial class StateController
             "properties": {
                 "deletedCount": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of keys actually deleted"
                 }
             }
@@ -1196,6 +1243,8 @@ public partial class StateController
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Store name"
                 },
                 "backend": {
@@ -1208,6 +1257,7 @@ public partial class StateController
                 },
                 "keyCount": {
                     "type": "integer",
+                    "minimum": 0,
                     "nullable": true,
                     "description": "Number of keys (only if includeStats=true)"
                 }

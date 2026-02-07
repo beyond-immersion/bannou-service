@@ -112,6 +112,8 @@ public partial class MeshController
                 },
                 "port": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "Service port (typically 80)"
                 },
                 "status": {
@@ -121,15 +123,19 @@ public partial class MeshController
                 "loadPercent": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
+                    "maximum": 100,
                     "description": "Current load as percentage (0-100)",
                     "default": 0
                 },
                 "maxConnections": {
                     "type": "integer",
-                    "description": "Maximum concurrent connections"
+                    "minimum": 0,
+                    "description": "Maximum concurrent connections this endpoint can handle"
                 },
                 "currentConnections": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current active connections"
                 },
                 "services": {
@@ -137,7 +143,7 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint"
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
                 },
                 "lastSeen": {
                     "type": "string",
@@ -319,6 +325,8 @@ public partial class MeshController
                 },
                 "port": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "Service port (typically 80)"
                 },
                 "status": {
@@ -328,15 +336,19 @@ public partial class MeshController
                 "loadPercent": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
+                    "maximum": 100,
                     "description": "Current load as percentage (0-100)",
                     "default": 0
                 },
                 "maxConnections": {
                     "type": "integer",
-                    "description": "Maximum concurrent connections"
+                    "minimum": 0,
+                    "description": "Maximum concurrent connections this endpoint can handle"
                 },
                 "currentConnections": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current active connections"
                 },
                 "services": {
@@ -344,7 +356,7 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint"
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
                 },
                 "lastSeen": {
                     "type": "string",
@@ -495,6 +507,8 @@ public partial class MeshController
                 "port": {
                     "type": "integer",
                     "default": 80,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "Service port"
                 },
                 "services": {
@@ -508,15 +522,8 @@ public partial class MeshController
                 "maxConnections": {
                     "type": "integer",
                     "default": 1000,
-                    "description": "Maximum concurrent connections"
-                },
-                "metadata": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "nullable": true,
-                    "description": "Optional metadata key-value pairs (null if none)"
+                    "minimum": 0,
+                    "description": "Maximum concurrent connections this endpoint can handle"
                 }
             }
         }
@@ -574,6 +581,8 @@ public partial class MeshController
                 },
                 "port": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "Service port (typically 80)"
                 },
                 "status": {
@@ -583,15 +592,19 @@ public partial class MeshController
                 "loadPercent": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
+                    "maximum": 100,
                     "description": "Current load as percentage (0-100)",
                     "default": 0
                 },
                 "maxConnections": {
                     "type": "integer",
-                    "description": "Maximum concurrent connections"
+                    "minimum": 0,
+                    "description": "Maximum concurrent connections this endpoint can handle"
                 },
                 "currentConnections": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current active connections"
                 },
                 "services": {
@@ -599,7 +612,7 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint"
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
                 },
                 "lastSeen": {
                     "type": "string",
@@ -806,11 +819,14 @@ public partial class MeshController
                     "type": "number",
                     "format": "float",
                     "nullable": true,
+                    "minimum": 0,
+                    "maximum": 100,
                     "description": "Current load 0-100 (null defaults to 0)"
                 },
                 "currentConnections": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Current active connections (null defaults to 0)"
                 },
                 "issues": {
@@ -937,11 +953,16 @@ public partial class MeshController
                 "serviceName": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Optional service name for affinity routing (null for no affinity)"
+                    "description": "Optional filter to select only endpoints hosting this specific service (null for any endpoint)"
                 },
                 "algorithm": {
-                    "$ref": "#/$defs/LoadBalancerAlgorithm",
-                    "description": "Load balancing algorithm to use for endpoint selection"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/LoadBalancerAlgorithm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Load balancing algorithm to use for endpoint selection (null uses service default from configuration)"
                 }
             }
         },
@@ -1013,6 +1034,8 @@ public partial class MeshController
                 },
                 "port": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "Service port (typically 80)"
                 },
                 "status": {
@@ -1022,15 +1045,19 @@ public partial class MeshController
                 "loadPercent": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
+                    "maximum": 100,
                     "description": "Current load as percentage (0-100)",
                     "default": 0
                 },
                 "maxConnections": {
                     "type": "integer",
-                    "description": "Maximum concurrent connections"
+                    "minimum": 0,
+                    "description": "Maximum concurrent connections this endpoint can handle"
                 },
                 "currentConnections": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current active connections"
                 },
                 "services": {
@@ -1038,7 +1065,7 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint"
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
                 },
                 "lastSeen": {
                     "type": "string",
@@ -1373,6 +1400,8 @@ public partial class MeshController
                 },
                 "port": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "Service port (typically 80)"
                 },
                 "status": {
@@ -1382,15 +1411,19 @@ public partial class MeshController
                 "loadPercent": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
+                    "maximum": 100,
                     "description": "Current load as percentage (0-100)",
                     "default": 0
                 },
                 "maxConnections": {
                     "type": "integer",
-                    "description": "Maximum concurrent connections"
+                    "minimum": 0,
+                    "description": "Maximum concurrent connections this endpoint can handle"
                 },
                 "currentConnections": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current active connections"
                 },
                 "services": {
@@ -1398,7 +1431,7 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint"
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
                 },
                 "lastSeen": {
                     "type": "string",

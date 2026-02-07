@@ -5236,4 +5236,197 @@ public partial class QuestController
             _HandleQuestCompleted_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for GetCompressData
+
+    private static readonly string _GetCompressData_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCompressDataRequest",
+    "$defs": {
+        "GetCompressDataRequest": {
+            "type": "object",
+            "description": "Request to get quest data for compression",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to get compress data for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QuestArchive",
+    "$defs": {
+        "QuestArchive": {
+            "type": "object",
+            "x-archive-type": true,
+            "description": "Complete quest data for archive storage and storyline SDK consumption.\nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "activeQuests",
+                "completedQuests",
+                "questCategories"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character this data belongs to (equals resourceId)"
+                },
+                "activeQuests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ActiveQuestSummary"
+                    },
+                    "description": "Summary of currently active quests"
+                },
+                "completedQuests": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Total count of completed quests"
+                },
+                "questCategories": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Breakdown of completed quests by category (main, side, bounty, etc.)"
+                }
+            }
+        },
+        "ActiveQuestSummary": {
+            "type": "object",
+            "description": "Summary of an active quest for archive purposes",
+            "additionalProperties": false,
+            "required": [
+                "questId",
+                "questCode",
+                "name",
+                "currentObjective",
+                "totalObjectives",
+                "startedAt"
+            ],
+            "properties": {
+                "questId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Quest instance ID"
+                },
+                "questCode": {
+                    "type": "string",
+                    "description": "Quest code for lookup"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Quest display name"
+                },
+                "currentObjective": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of completed objectives"
+                },
+                "totalObjectives": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Total number of objectives"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the quest was accepted"
+                },
+                "category": {
+                    "$ref": "#/$defs/QuestCategory",
+                    "nullable": true,
+                    "description": "Quest category (if available)"
+                }
+            }
+        },
+        "QuestCategory": {
+            "type": "string",
+            "enum": [
+                "MAIN",
+                "SIDE",
+                "BOUNTY",
+                "DAILY",
+                "WEEKLY",
+                "EVENT",
+                "TUTORIAL"
+            ],
+            "description": "Category of quest for organization"
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_Info = """
+{
+    "summary": "Get quest data for compression",
+    "description": "Called by Resource service during character compression.\nReturns active quests, completion counts, and category breakdown for archival.\n",
+    "tags": [
+        "Compression"
+    ],
+    "deprecated": false,
+    "operationId": "getCompressData"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/get-compress-data/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Quest",
+            "POST",
+            "/quest/get-compress-data",
+            _GetCompressData_Info));
+
+    /// <summary>Returns request schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/get-compress-data/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Quest",
+            "POST",
+            "/quest/get-compress-data",
+            "request-schema",
+            _GetCompressData_RequestSchema));
+
+    /// <summary>Returns response schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/get-compress-data/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Quest",
+            "POST",
+            "/quest/get-compress-data",
+            "response-schema",
+            _GetCompressData_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/get-compress-data/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Quest",
+            "POST",
+            "/quest/get-compress-data",
+            _GetCompressData_Info,
+            _GetCompressData_RequestSchema,
+            _GetCompressData_ResponseSchema));
+
+    #endregion
 }

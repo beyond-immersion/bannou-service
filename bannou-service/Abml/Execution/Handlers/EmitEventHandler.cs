@@ -67,7 +67,7 @@ public sealed class EmitEventHandler : IActionHandler
     public bool CanHandle(ActionNode action)
     {
         return action is DomainAction da &&
-               da.Name.Equals("emit_event", StringComparison.OrdinalIgnoreCase);
+                da.Name.Equals("emit_event", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <inheritdoc/>

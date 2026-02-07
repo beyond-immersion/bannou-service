@@ -975,8 +975,13 @@ paths:
         nIf not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).\\n\"\n                },\n \
         \               \"dryRun\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
         \                    \"description\": \"If true, return what would be captured without storing\"\n               \
-        \ }\n            }\n        },\n        \"CompressionPolicy\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n            \"description\"\
+        \ },\n                \"filterSourceTypes\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional list of source types to include in the snapshot.\\nOnly compression
+        callbacks matching these source types will be executed.\\nIf omitted or empty, all registered compression callbacks
+        are executed.\\nExample: [\\\"character-personality\\\", \\\"character-history\\\"]\\n\"\n                }\n    \
+        \        }\n        },\n        \"CompressionPolicy\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n            \"description\"\
         : \"Policy for compression callback execution.\\nBEST_EFFORT: Create archive even if some callbacks fail (partial
         archive)\\nALL_REQUIRED: Abort compression if any callback fails\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteSnapshotResponse\"\
@@ -1061,7 +1066,11 @@ paths:
         : false,\n            \"description\": \"Request to retrieve a snapshot\",\n            \"required\": [\n        \
         \        \"snapshotId\"\n            ],\n            \"properties\": {\n                \"snapshotId\": {\n      \
         \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the snapshot to retrieve\"\n                }\n            }\n        }\n    }\n}"
+        : \"ID of the snapshot to retrieve\"\n                },\n                \"filterSourceTypes\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n   \
+        \                 },\n                    \"nullable\": true,\n                    \"description\": \"Optional filter
+        for which entries to return from the snapshot.\\nOnly entries with matching source types are returned.\\nIf omitted
+        or empty, all entries are returned.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSnapshotResponse\"\
         ,\n    \"$defs\": {\n        \"GetSnapshotResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing snapshot data\",\n            \"required\": [\n     \
@@ -2220,6 +2229,16 @@ components:
           type: boolean
           default: false
           description: If true, return what would be captured without storing
+        filterSourceTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Optional list of source types to include in the snapshot.
+            Only compression callbacks matching these source types will be executed.
+            If omitted or empty, all registered compression callbacks are executed.
+            Example: ["character-personality", "character-history"]
     ExecuteSnapshotResponse:
       type: object
       additionalProperties: false
@@ -2277,6 +2296,15 @@ components:
           type: string
           format: uuid
           description: ID of the snapshot to retrieve
+        filterSourceTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Optional filter for which entries to return from the snapshot.
+            Only entries with matching source types are returned.
+            If omitted or empty, all entries are returned.
     GetSnapshotResponse:
       type: object
       additionalProperties: false

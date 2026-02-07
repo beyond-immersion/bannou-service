@@ -140,7 +140,7 @@ public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAs
                         .Remove(new KeyValuePair<string, InMemoryLockEntry>(key, ourEntry));
                 }
             }
-            : null;
+        : null;
 
         return new InMemoryLockResponse(acquired, lockKey, lockOwner, _logger, cleanupCallback);
     }

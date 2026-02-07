@@ -53,6 +53,7 @@ info:
     compressEndpoint: /character-personality/get-compress-data
     compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
     priority: 10
+    templateNamespace: personality
     description: Personality traits and combat preferences
     decompressEndpoint: /character-personality/restore-from-archive
     decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'

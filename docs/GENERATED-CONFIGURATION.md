@@ -570,6 +570,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_DEFAULT_MAX_CONNECTIONS` | int | `1000` | Default max connections for auto-registered endpoints when h... |
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
 | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to FullServiceMappingsEvent for routing... |
+| `MESH_ENDPOINT_CACHE_MAX_SIZE` | int | `0` | Maximum number of app-ids to cache endpoint resolutions for.... |
 | `MESH_ENDPOINT_CACHE_TTL_SECONDS` | int | `5` | TTL in seconds for cached service endpoints |
 | `MESH_ENDPOINT_HOST` | string | **REQUIRED** | Hostname/IP for mesh endpoint registration. Defaults to app-... |
 | `MESH_ENDPOINT_PORT` | int | `80` | Port for mesh endpoint registration. |
@@ -580,6 +581,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | int | `10` | Delay in seconds before health check service starts probing ... |
 | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | int | `5` | Timeout for health check requests |
 | `MESH_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended interval between heartbeats |
+| `MESH_LOAD_BALANCING_STATE_MAX_APP_IDS` | int | `0` | Maximum number of app-ids to track in load balancing state (... |
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_MAX_SERVICE_MAPPINGS_DISPLAYED` | int | `10` | Maximum service mappings shown in diagnostic logs |
@@ -594,28 +596,38 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `MESSAGING_CALLBACK_RETRY_DELAY_MS` | int | `1000` | Delay between HTTP callback retry attempts in milliseconds |
 | `MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for HTTP callback delivery (network f... |
-| `MESSAGING_CHANNEL_POOL_SIZE` | int | `10` | Maximum number of channels in the publisher channel pool |
+| `MESSAGING_CHANNEL_POOL_SIZE` | int | `100` | Maximum number of channels in the publisher channel pool |
 | `MESSAGING_CONNECTION_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay for connection retries in milliseconds |
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
 | `MESSAGING_DEAD_LETTER_EXCHANGE` | string | `bannou-dlx` | Dead letter exchange name for failed messages |
+| `MESSAGING_DEAD_LETTER_MAX_LENGTH` | int | `100000` | Maximum messages in dead letter queue before oldest dropped |
+| `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | string | `drop-head` | Behavior when DLX queue exceeds max length (drop-head drops ... |
+| `MESSAGING_DEAD_LETTER_TTL_MS` | int | `604800000` | Time-to-live for dead letter messages in milliseconds (defau... |
 | `MESSAGING_DEFAULT_AUTO_ACK` | bool | `false` | Default auto-acknowledge setting for subscriptions |
 | `MESSAGING_DEFAULT_EXCHANGE` | string | `bannou` | Default exchange name for publishing |
 | `MESSAGING_DEFAULT_PREFETCH_COUNT` | int | `10` | Default prefetch count for subscriptions |
-| `MESSAGING_ENABLE_CONFIRMS` | bool | `true` | Enable RabbitMQ publisher confirms for reliability |
+| `MESSAGING_ENABLE_CONFIRMS` | bool | `true` | Enable RabbitMQ publisher confirms for reliability. When ena... |
+| `MESSAGING_ENABLE_PUBLISH_BATCHING` | bool | `false` | Enable batched publishing for high-throughput scenarios. Whe... |
 | `MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS` | int | `86400` | TTL in seconds for external HTTP callback subscriptions (def... |
+| `MESSAGING_MAX_CONCURRENT_CHANNEL_CREATION` | int | `50` | Maximum concurrent channel creation requests (backpressure s... |
+| `MESSAGING_MAX_TOTAL_CHANNELS` | int | `1000` | Hard limit on total active channels per connection (RabbitMQ... |
+| `MESSAGING_PUBLISH_BATCH_SIZE` | int | `100` | Maximum number of messages to batch before sending. Batch is... |
+| `MESSAGING_PUBLISH_BATCH_TIMEOUT_MS` | int | `10` | Maximum delay in milliseconds before flushing a partial batc... |
 | `MESSAGING_RABBITMQ_HOST` | string | `rabbitmq` | RabbitMQ server hostname |
 | `MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS` | int | `10` | Interval in seconds between RabbitMQ connection recovery att... |
 | `MESSAGING_RABBITMQ_PASSWORD` | string | `guest` (insecure) | RabbitMQ password |
 | `MESSAGING_RABBITMQ_PORT` | int | `5672` | RabbitMQ server port |
 | `MESSAGING_RABBITMQ_USERNAME` | string | `guest` (insecure) | RabbitMQ username |
 | `MESSAGING_RABBITMQ_VHOST` | string | `/` | RabbitMQ virtual host |
+| `MESSAGING_RETRY_BUFFER_BACKPRESSURE_THRESHOLD` | double | `0.8` | When buffer reaches this percentage full, start rejecting ne... |
 | `MESSAGING_RETRY_BUFFER_ENABLED` | bool | `true` | Enable retry buffer for failed event publishes |
 | `MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS` | int | `5` | Interval between retry attempts for buffered messages |
-| `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | int | `300` | Maximum age of buffered messages before node crash (prevents... |
-| `MESSAGING_RETRY_BUFFER_MAX_SIZE` | int | `10000` | Maximum number of messages in retry buffer before node crash |
-| `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Delay between retry attempts in milliseconds (NOT YET IMPLEM... |
-| `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts before dead-lettering (NOT YET IMPLEM... |
+| `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | int | `600` | Maximum age of buffered messages before node crash (gives op... |
+| `MESSAGING_RETRY_BUFFER_MAX_SIZE` | int | `500000` | Maximum number of messages in retry buffer before node crash... |
+| `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Base delay between retry attempts in milliseconds (doubles w... |
+| `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `5` | Maximum retry attempts before discarding message to dead-let... |
+| `MESSAGING_RETRY_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay between retries in milliseconds (caps ... |
 | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | int | `2` | Delay in seconds before starting subscription recovery servi... |
 | `MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS` | int | `6` | Interval in hours between subscription TTL refresh operation... |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
@@ -706,6 +718,8 @@ Final ... |
 | `QUEST_MAX_ACTIVE_QUESTS_PER_CHARACTER` | int | `25` | Maximum concurrent active quests per character |
 | `QUEST_MAX_CONCURRENCY_RETRIES` | int | `5` | ETag concurrency retry attempts |
 | `QUEST_MAX_QUESTORS_PER_QUEST` | int | `5` | Maximum party members per quest instance |
+| `QUEST_PREREQUISITE_VALIDATION_MODE` | string | `CHECK_ALL` | Controls prerequisite validation behavior.
+CHECK_ALL (defaul... |
 | `QUEST_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL for objective progress cache |
 
 ### Relationship Type
@@ -807,6 +821,7 @@ Final ... |
 |---------------------|------|---------|-------------|
 | `STATE_CONNECTION_RETRY_COUNT` | int | `10` | Maximum number of connection retry attempts for MySQL initia... |
 | `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
+| `STATE_INMEMORY_FALLBACK_LIMIT` | int | `10000` | Maximum entries for in-memory LINQ fallback before throwing ... |
 | `STATE_MIN_RETRY_DELAY_MS` | int | `1000` | Minimum delay in milliseconds between MySQL connection retry... |
 | `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
 | `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
@@ -902,9 +917,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 676
+- **Total properties**: 690
 - **Required (no default)**: 41
-- **Optional (has default)**: 635
+- **Optional (has default)**: 649
 
 ## Environment Variable Naming Convention
 

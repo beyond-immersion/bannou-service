@@ -5389,4 +5389,219 @@ public partial class StorylineController
             _GetScenarioHistory_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for GetCompressData
+
+    private static readonly string _GetCompressData_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCompressDataRequest",
+    "$defs": {
+        "GetCompressDataRequest": {
+            "type": "object",
+            "description": "Request to get storyline data for compression",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to get compress data for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StorylineArchive",
+    "$defs": {
+        "StorylineArchive": {
+            "type": "object",
+            "x-archive-type": true,
+            "description": "Complete storyline participation data for archive storage and SDK consumption.\ nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "participations",
+                "activeArcs",
+                "completedStorylines"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character this data belongs to (equals resourceId)"
+                },
+                "participations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/StorylineParticipation"
+                    },
+                    "description": "All scenario participations (completed and active)"
+                },
+                "activeArcs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Story arcs the character is currently involved in"
+                },
+                "completedStorylines": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Total count of completed scenarios"
+                }
+            }
+        },
+        "StorylineParticipation": {
+            "type": "object",
+            "description": "Summary of a scenario participation for archive purposes",
+            "additionalProperties": false,
+            "required": [
+                "executionId",
+                "scenarioCode",
+                "role",
+                "phase",
+                "totalPhases",
+                "status",
+                "startedAt"
+            ],
+            "properties": {
+                "executionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario execution ID"
+                },
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scenario definition ID (if available)"
+                },
+                "scenarioCode": {
+                    "type": "string",
+                    "description": "Scenario code for lookup"
+                },
+                "scenarioName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Scenario display name"
+                },
+                "role": {
+                    "type": "string",
+                    "description": "Character's role in the scenario (primary, secondary, witness)"
+                },
+                "phase": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Current phase number (or final phase if completed)"
+                },
+                "totalPhases": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Total number of phases in the scenario"
+                },
+                "status": {
+                    "$ref": "#/$defs/ScenarioStatus",
+                    "description": "Current status of the scenario execution"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the scenario was triggered"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the scenario completed (null if still active)"
+                },
+                "choices": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Key choices made during the scenario (for narrative hooks)"
+                }
+            }
+        },
+        "ScenarioStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Completed",
+                "Failed",
+                "Cancelled"
+            ],
+            "description": "Current status of a scenario execution instance.\nActive: Scenario is currently executing\nCompleted: Scenario finished successfully\nFailed: Scenario failed during execution\ nCancelled: Scenario was cancelled externally\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_Info = """
+{
+    "summary": "Get storyline data for compression",
+    "description": "Called by Resource service during character compression.\nReturns scenario participations, active arcs, and completion counts for archival.\n",
+    "tags": [
+        "Compression"
+    ],
+    "deprecated": false,
+    "operationId": "getCompressData"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/get-compress-data/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/get-compress-data",
+            _GetCompressData_Info));
+
+    /// <summary>Returns request schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/get-compress-data/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/get-compress-data",
+            "request-schema",
+            _GetCompressData_RequestSchema));
+
+    /// <summary>Returns response schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/get-compress-data/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/get-compress-data",
+            "response-schema",
+            _GetCompressData_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/get-compress-data/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/get-compress-data",
+            _GetCompressData_Info,
+            _GetCompressData_RequestSchema,
+            _GetCompressData_ResponseSchema));
+
+    #endregion
 }

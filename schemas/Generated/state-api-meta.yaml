@@ -47,28 +47,18 @@ paths:
         value by key from a state store\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"storeName\",\n                \"key\"\n            ],\n          \
         \  \"properties\": {\n                \"storeName\": {\n                    \"type\": \"string\",\n              \
-        \      \"description\": \"Name of the state store\"\n                },\n                \"key\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Key to retrieve\"\n                }\n    \
-        \        }\n        }\n    }\n}"
+        \      \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Name of
+        the state store\"\n                },\n                \"key\": {\n                    \"type\": \"string\",\n   \
+        \                 \"minLength\": 1,\n                    \"maxLength\": 255,\n                    \"description\"\
+        : \"Key to retrieve\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetStateResponse\"\
         ,\n    \"$defs\": {\n        \"GetStateResponse\": {\n            \"description\": \"Response containing a retrieved
-        state value with its metadata and ETag\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        state value with its ETag for optimistic concurrency\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"properties\": {\n                \"value\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": false,\n                    \"nullable\": true,\n                 \
         \   \"description\": \"The stored value (null if not found)\"\n                },\n                \"etag\": {\n \
         \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"ETag for optimistic concurrency\"\n                },\n                \"metadata\": {\n                    \"\
-        $ref\": \"#/$defs/StateMetadata\",\n                    \"description\": \"Metadata about the state entry including
-        timestamps and version\"\n                }\n            }\n        },\n        \"StateMetadata\": {\n           \
-        \ \"description\": \"Metadata associated with a state entry including creation time, last update time, and version\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
-        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When the state was created\"\n\
-        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        When the state was last updated\"\n                },\n                \"version\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Version number for optimistic concurrency\"\n             \
-        \   }\n            }\n        }\n    }\n}"
+        : \"ETag for optimistic concurrency\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get state value by key\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getState\"\n}"
   /state/save:
@@ -96,25 +86,29 @@ paths:
         to a state store with optional TTL and consistency settings\",\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"required\": [\n                \"storeName\",\n                \"key\"\
         ,\n                \"value\"\n            ],\n            \"properties\": {\n                \"storeName\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Name of the state store\"\n     \
-        \           },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Key to save\"\n                },\n                \"value\": {\n                    \"type\": \"object\",\n \
-        \                   \"additionalProperties\": false,\n                    \"description\": \"Value to store\"\n  \
-        \              },\n                \"options\": {\n                    \"nullable\": true,\n                    \"\
-        $ref\": \"#/$defs/StateOptions\",\n                    \"description\": \"Optional settings for the save operation
-        including TTL and consistency\"\n                }\n            }\n        },\n        \"StateOptions\": {\n     \
-        \       \"description\": \"Configuration options for state save operations including TTL, consistency level, and optimistic
-        concurrency\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
-        : {\n                \"ttl\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"TTL in seconds (Redis only)\"\n                },\n                \"etag\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optimistic concurrency check - save fails if ETag mismatch\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        \                  \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Name of the state store\"\n                },\n                \"key\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 255,\n                    \"description\": \"Key to save\"\n                },\n                \"value\": {\n \
+        \                   \"type\": \"object\",\n                    \"additionalProperties\": false,\n                \
+        \    \"description\": \"Value to store\"\n                },\n                \"options\": {\n                   \
+        \ \"nullable\": true,\n                    \"$ref\": \"#/$defs/StateOptions\",\n                    \"description\"\
+        : \"Optional settings for the save operation including TTL and consistency\"\n                }\n            }\n \
+        \       },\n        \"StateOptions\": {\n            \"description\": \"Configuration options for state save operations
+        including TTL, consistency level, and optimistic concurrency\",\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"properties\": {\n                \"ttl\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 31536000,\n          \
+        \          \"nullable\": true,\n                    \"description\": \"TTL in seconds (Redis only). Maximum 1 year
+        (31536000 seconds).\"\n                },\n                \"etag\": {\n                    \"type\": \"string\",\n\
+        \                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Optimistic concurrency check - save fails if ETag mismatch\"\n   \
+        \             }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveStateResponse\"\
         ,\n    \"$defs\": {\n        \"SaveStateResponse\": {\n            \"description\": \"Response from a save operation
         containing the new ETag\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
         \        \"properties\": {\n                \"etag\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"New ETag after save\"\n                }\n            }\n        }\n    }\n}"
+        \       \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"New ETag
+        after save\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Save state value\",\n    \"description\": \"\",\n    \"tags\": [\n    \
         \    \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"saveState\"\n}"
   /state/delete:
@@ -142,9 +136,10 @@ paths:
         by key from a state store\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
         \          \"required\": [\n                \"storeName\",\n                \"key\"\n            ],\n            \"\
         properties\": {\n                \"storeName\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Name of the state store\"\n                },\n                \"key\": {\n                 \
-        \   \"type\": \"string\",\n                    \"description\": \"Key to delete\"\n                }\n           \
-        \ }\n        }\n    }\n}"
+        \ \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Name of the state
+        store\"\n                },\n                \"key\": {\n                    \"type\": \"string\",\n             \
+        \       \"minLength\": 1,\n                    \"maxLength\": 255,\n                    \"description\": \"Key to
+        delete\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteStateResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteStateResponse\": {\n            \"description\": \"Response from a delete operation
         indicating whether the key was removed\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -182,55 +177,61 @@ paths:
         with filtering, sorting, and pagination support for MySQL and Redis backends\",\n            \"type\": \"object\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"storeName\"\n    \
         \        ],\n            \"properties\": {\n                \"storeName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Name of the state store (MySQL or Redis with search enabled)\"\n       \
-        \         },\n                \"conditions\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/QueryCondition\"\n                    },\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Query conditions for MySQL JSON queries. Multiple
-        conditions are combined with AND.\\nFor Redis search, use indexName and query properties instead.\\n\"\n         \
-        \       },\n                \"indexName\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Redis search index name. Defaults to \\\"{storeName}-idx\\\".\\nOnly
-        used for Redis stores with search enabled.\\n\"\n                },\n                \"query\": {\n              \
-        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"RedisSearch
-        query string (e.g., \\\"@name:John\\\", \\\"@age:[18 +inf]\\\", \\\"*\\\").\\nDefaults to \\\"*\\\" (match all). Only
-        used for Redis stores with search enabled.\\n\"\n                },\n                \"sort\": {\n               \
-        \     \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/SortField\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Sort order
-        (first field only is used) (null for default ordering)\"\n                },\n                \"page\": {\n      \
-        \              \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"\
-        Page number (0-indexed)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 100,\n                    \"description\": \"Items per page (max 1000)\"\n   \
-        \             }\n            }\n        },\n        \"QueryCondition\": {\n            \"type\": \"object\",\n   \
-        \         \"additionalProperties\": false,\n            \"description\": \"A single query condition for MySQL JSON
-        queries\",\n            \"required\": [\n                \"path\"\n            ],\n            \"properties\": {\n\
-        \                \"path\": {\n                    \"type\": \"string\",\n                    \"description\": \"JSON
-        path to query (e.g., \\\"$.name\\\", \\\"$.address.city\\\", \\\"$.tags[0]\\\")\"\n                },\n          \
-        \      \"operator\": {\n                    \"$ref\": \"#/$defs/QueryOperator\",\n                    \"description\"\
-        : \"Comparison operator to use for the condition\"\n                },\n                \"value\": {\n           \
-        \         \"description\": \"Value to compare against. Not required for exists/notExists operators.\"\n          \
-        \      }\n            }\n        },\n        \"QueryOperator\": {\n            \"type\": \"string\",\n           \
-        \ \"description\": \"Comparison operator for query conditions\",\n            \"enum\": [\n                \"equals\"\
-        ,\n                \"notEquals\",\n                \"greaterThan\",\n                \"greaterThanOrEqual\",\n   \
-        \             \"lessThan\",\n                \"lessThanOrEqual\",\n                \"contains\",\n               \
-        \ \"startsWith\",\n                \"endsWith\",\n                \"in\",\n                \"exists\",\n         \
-        \       \"notExists\",\n                \"fullText\"\n            ],\n            \"default\": \"equals\"\n      \
-        \  },\n        \"SortField\": {\n            \"description\": \"Specifies a field and direction for sorting query
-        results\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
-        : {\n                \"field\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Field name to sort by (JSON path for MySQL, field name for Redis)\"\n                },\n                \"order\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"asc\",\n\
-        \                        \"desc\"\n                    ],\n                    \"default\": \"asc\",\n           \
-        \         \"description\": \"Sort direction\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Name of the state store (MySQL or Redis with search enabled)\"\n                },\n                \"conditions\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/QueryCondition\"\n                    },\n                    \"maxItems\": 50,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Query conditions for MySQL JSON queries. Multiple conditions
+        are combined with AND.\\nFor Redis search, use indexName and query properties instead.\\n\"\n                },\n\
+        \                \"indexName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Redis search index name. Defaults to \\\"{storeName}-idx\\\".\\nOnly used for Redis stores with search enabled.\\\
+        n\"\n                },\n                \"query\": {\n                    \"type\": \"string\",\n               \
+        \     \"minLength\": 1,\n                    \"maxLength\": 1000,\n                    \"nullable\": true,\n     \
+        \               \"description\": \"RedisSearch query string (e.g., \\\"@name:John\\\", \\\"@age:[18 +inf]\\\", \\\"\
+        *\\\").\\nDefaults to \\\"*\\\" (match all). Only used for Redis stores with search enabled.\\n\"\n              \
+        \  },\n                \"sort\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
+        \                       \"$ref\": \"#/$defs/SortField\"\n                    },\n                    \"maxItems\"\
+        : 10,\n                    \"nullable\": true,\n                    \"description\": \"Sort order (first field only
+        is used) (null for default ordering)\"\n                },\n                \"page\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 0,\n                    \"default\": 0,\n                    \"description\"\
+        : \"Page number (0-indexed)\"\n                },\n                \"pageSize\": {\n                    \"type\":
+        \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000,\n                    \"\
+        default\": 100,\n                    \"description\": \"Items per page (max 1000)\"\n                }\n         \
+        \   }\n        },\n        \"QueryCondition\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A single query condition for MySQL JSON queries\",\n            \"required\"\
+        : [\n                \"path\"\n            ],\n            \"properties\": {\n                \"path\": {\n      \
+        \              \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 200,\n\
+        \                    \"description\": \"JSON path to query (e.g., \\\"$.name\\\", \\\"$.address.city\\\", \\\"$.tags[0]\\\
+        \")\"\n                },\n                \"operator\": {\n                    \"$ref\": \"#/$defs/QueryOperator\"\
+        ,\n                    \"description\": \"Comparison operator to use for the condition\"\n                },\n   \
+        \             \"value\": {\n                    \"description\": \"Value to compare against. Not required for exists/notExists
+        operators.\"\n                }\n            }\n        },\n        \"QueryOperator\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Comparison operator for query conditions\",\n            \"enum\": [\n \
+        \               \"equals\",\n                \"notEquals\",\n                \"greaterThan\",\n                \"\
+        greaterThanOrEqual\",\n                \"lessThan\",\n                \"lessThanOrEqual\",\n                \"contains\"\
+        ,\n                \"startsWith\",\n                \"endsWith\",\n                \"in\",\n                \"exists\"\
+        ,\n                \"notExists\",\n                \"fullText\"\n            ],\n            \"default\": \"equals\"\
+        \n        },\n        \"SortField\": {\n            \"description\": \"Specifies a field and direction for sorting
+        query results\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
+        properties\": {\n                \"field\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Field name to sort by (JSON
+        path for MySQL, field name for Redis)\"\n                },\n                \"order\": {\n                    \"\
+        type\": \"string\",\n                    \"enum\": [\n                        \"asc\",\n                        \"\
+        desc\"\n                    ],\n                    \"default\": \"asc\",\n                    \"description\": \"\
+        Sort direction\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryStateResponse\"\
         ,\n    \"$defs\": {\n        \"QueryStateResponse\": {\n            \"description\": \"Response containing paginated
         query results with total count information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"properties\": {\n                \"results\": {\n                    \"type\": \"array\",\n\
         \                    \"items\": {\n                        \"type\": \"object\",\n                        \"additionalProperties\"\
         : false\n                    },\n                    \"description\": \"Query results\"\n                },\n    \
-        \            \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Total matching items (for pagination)\"\n                },\n                \"page\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Current page number\"\n                },\n               \
-        \ \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Items per page\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \            \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Total matching items (for pagination)\"\n                },\n            \
+        \    \"page\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current page number\"\n                },\n                \"pageSize\": {\n           \
+        \         \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000,\n  \
+        \                  \"description\": \"Items per page\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query state (MySQL JSON queries or Redis with search enabled)\",\n    \"\
         description\": \"\",\n    \"tags\": [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"queryState\"\n}"
@@ -259,10 +260,12 @@ paths:
         state values by key in a single operation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"storeName\",\n                \"keys\"\n            ],\n\
         \            \"properties\": {\n                \"storeName\": {\n                    \"type\": \"string\",\n    \
-        \                \"description\": \"Name of the state store\"\n                },\n                \"keys\": {\n \
-        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Keys to retrieve\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        \                \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\":
+        \"Name of the state store\"\n                },\n                \"keys\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\",\n                        \"minLength\"\
+        : 1,\n                        \"maxLength\": 255\n                    },\n                    \"minItems\": 1,\n \
+        \                   \"maxItems\": 1000,\n                    \"description\": \"Keys to retrieve\"\n             \
+        \   }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkGetStateResponse\"\
         ,\n    \"$defs\": {\n        \"BulkGetStateResponse\": {\n            \"description\": \"Response containing the results
         of a bulk get operation for multiple keys\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -272,13 +275,14 @@ paths:
         \        \"BulkStateItem\": {\n            \"description\": \"A single item result from a bulk get operation including
         the key, value, ETag, and found status\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"properties\": {\n                \"key\": {\n                    \"type\": \"string\",\n \
-        \                   \"description\": \"The key\"\n                },\n                \"value\": {\n             \
-        \       \"type\": \"object\",\n                    \"additionalProperties\": false,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"The value (null if not found)\"\n                },\n            \
-        \    \"etag\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"ETag for this item\"\n                },\n                \"found\": {\n            \
-        \        \"type\": \"boolean\",\n                    \"description\": \"Whether the key was found\"\n            \
-        \    }\n            }\n        }\n    }\n}"
+        \                   \"minLength\": 1,\n                    \"maxLength\": 255,\n                    \"description\"\
+        : \"The key\"\n                },\n                \"value\": {\n                    \"type\": \"object\",\n     \
+        \               \"additionalProperties\": false,\n                    \"nullable\": true,\n                    \"\
+        description\": \"The value (null if not found)\"\n                },\n                \"etag\": {\n              \
+        \      \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"ETag for this item\"\n             \
+        \   },\n                \"found\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether the key was found\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bulk get multiple keys\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkGetState\"\n}"
   /state/bulk-save:
@@ -306,26 +310,29 @@ paths:
         key-value pairs in a single operation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"storeName\",\n                \"items\"\n            ],\n\
         \            \"properties\": {\n                \"storeName\": {\n                    \"type\": \"string\",\n    \
-        \                \"description\": \"Name of the state store\"\n                },\n                \"items\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/BulkSaveItem\"\n                    },\n                    \"description\": \"Items to save\"\n         \
-        \       },\n                \"options\": {\n                    \"nullable\": true,\n                    \"allOf\"\
-        : [\n                        {\n                            \"$ref\": \"#/$defs/StateOptions\"\n                 \
-        \       }\n                    ],\n                    \"description\": \"Optional settings applied to all items\"\
-        \n                }\n            }\n        },\n        \"BulkSaveItem\": {\n            \"description\": \"A single
-        item to save in a bulk operation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"key\",\n                \"value\"\n            ],\n            \"\
-        properties\": {\n                \"key\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"The key to save\"\n                },\n                \"value\": {\n                    \"type\": \"object\"\
-        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"The value to store\"\
-        \n                }\n            }\n        },\n        \"StateOptions\": {\n            \"description\": \"Configuration
-        options for state save operations including TTL, consistency level, and optimistic concurrency\",\n            \"\
-        type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n               \
-        \ \"ttl\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"TTL in seconds (Redis only)\"\n                },\n                \"etag\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optimistic concurrency check - save fails if ETag mismatch\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        \                \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\":
+        \"Name of the state store\"\n                },\n                \"items\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/BulkSaveItem\"\n                \
+        \    },\n                    \"minItems\": 1,\n                    \"maxItems\": 1000,\n                    \"description\"\
+        : \"Items to save\"\n                },\n                \"options\": {\n                    \"nullable\": true,\n\
+        \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/StateOptions\"\
+        \n                        }\n                    ],\n                    \"description\": \"Optional settings applied
+        to all items\"\n                }\n            }\n        },\n        \"BulkSaveItem\": {\n            \"description\"\
+        : \"A single item to save in a bulk operation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"key\",\n                \"value\"\n            ],\n     \
+        \       \"properties\": {\n                \"key\": {\n                    \"type\": \"string\",\n               \
+        \     \"minLength\": 1,\n                    \"maxLength\": 255,\n                    \"description\": \"The key to
+        save\"\n                },\n                \"value\": {\n                    \"type\": \"object\",\n            \
+        \        \"additionalProperties\": true,\n                    \"description\": \"The value to store\"\n          \
+        \      }\n            }\n        },\n        \"StateOptions\": {\n            \"description\": \"Configuration options
+        for state save operations including TTL, consistency level, and optimistic concurrency\",\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"ttl\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
+        : 31536000,\n                    \"nullable\": true,\n                    \"description\": \"TTL in seconds (Redis
+        only). Maximum 1 year (31536000 seconds).\"\n                },\n                \"etag\": {\n                   \
+        \ \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Optimistic concurrency check - save fails
+        if ETag mismatch\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkSaveStateResponse\"\
         ,\n    \"$defs\": {\n        \"BulkSaveStateResponse\": {\n            \"description\": \"Response from a bulk save
         operation with ETags for each saved item\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -336,9 +343,11 @@ paths:
         \           \"description\": \"Result for a single item in a bulk save operation\",\n            \"type\": \"object\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"key\",\n         \
         \       \"etag\"\n            ],\n            \"properties\": {\n                \"key\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"The key that was saved\"\n                },\n       \
-        \         \"etag\": {\n                    \"type\": \"string\",\n                    \"description\": \"New ETag
-        after save\"\n                }\n            }\n        }\n    }\n}"
+        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 255,\n            \
+        \        \"description\": \"The key that was saved\"\n                },\n                \"etag\": {\n          \
+        \          \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n\
+        \                    \"description\": \"New ETag after save\"\n                }\n            }\n        }\n    }\n\
+        }"
       x-endpoint-info-json: "{\n    \"summary\": \"Bulk save multiple key-value pairs\",\n    \"description\": \"\",\n   \
         \ \"tags\": [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkSaveState\"\n}"
   /state/bulk-exists:
@@ -365,11 +374,13 @@ paths:
         ,\n    \"$defs\": {\n        \"BulkExistsStateRequest\": {\n            \"description\": \"Request to check existence
         of multiple keys\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"storeName\",\n                \"keys\"\n            ],\n            \"properties\"\
-        : {\n                \"storeName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Name of the state store\"\n                },\n                \"keys\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"description\": \"Keys to check for existence\"\n                }\n            }\n        }\n   \
-        \ }\n}"
+        : {\n                \"storeName\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Name of the state store\"\n\
+        \                },\n                \"keys\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\",\n                        \"minLength\": 1,\n           \
+        \             \"maxLength\": 255\n                    },\n                    \"minItems\": 1,\n                 \
+        \   \"maxItems\": 1000,\n                    \"description\": \"Keys to check for existence\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkExistsStateResponse\"\
         ,\n    \"$defs\": {\n        \"BulkExistsStateResponse\": {\n            \"description\": \"Response indicating which
         keys exist in the store\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
@@ -403,16 +414,19 @@ paths:
         ,\n    \"$defs\": {\n        \"BulkDeleteStateRequest\": {\n            \"description\": \"Request to delete multiple
         keys\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"storeName\",\n                \"keys\"\n            ],\n            \"properties\": {\n   \
-        \             \"storeName\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Name of the state store\"\n                },\n                \"keys\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"description\": \"Keys to delete\"\n                }\n            }\n        }\n    }\n}"
+        \             \"storeName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Name of the state store\"\n     \
+        \           },\n                \"keys\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\",\n                        \"minLength\": 1,\n                  \
+        \      \"maxLength\": 255\n                    },\n                    \"minItems\": 1,\n                    \"maxItems\"\
+        : 1000,\n                    \"description\": \"Keys to delete\"\n                }\n            }\n        }\n  \
+        \  }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkDeleteStateResponse\"\
         ,\n    \"$defs\": {\n        \"BulkDeleteStateResponse\": {\n            \"description\": \"Response from a bulk delete
         operation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"deletedCount\"\n            ],\n            \"properties\": {\n                \"deletedCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of keys actually deleted\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of keys actually deleted\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete multiple keys\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkDeleteState\"\n}"
   /state/list-stores:
@@ -453,12 +467,13 @@ paths:
         \    \"StoreInfo\": {\n            \"description\": \"Information about a configured state store including its name,
         backend type, and optional key count\",\n            \"type\": \"object\",\n            \"additionalProperties\":
         false,\n            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n  \
-        \                  \"description\": \"Store name\"\n                },\n                \"backend\": {\n         \
-        \           \"type\": \"string\",\n                    \"enum\": [\n                        \"redis\",\n         \
-        \               \"mysql\"\n                    ],\n                    \"description\": \"Backend type\"\n       \
-        \         },\n                \"keyCount\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Number of keys (only if includeStats=true)\"\n         \
-        \       }\n            }\n        }\n    }\n}"
+        \                  \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Store name\"\n                },\n                \"backend\": {\n                    \"type\": \"string\",\n\
+        \                    \"enum\": [\n                        \"redis\",\n                        \"mysql\"\n        \
+        \            ],\n                    \"description\": \"Backend type\"\n                },\n                \"keyCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Number of keys (only if includeStats=true)\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List configured state stores\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listStores\"\n}"
 components:
@@ -473,12 +488,16 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Key to retrieve
     GetStateResponse:
-      description: Response containing a retrieved state value with its metadata and ETag
+      description: Response containing a retrieved state value with its ETag for optimistic concurrency
       type: object
       additionalProperties: false
       properties:
@@ -491,9 +510,6 @@ components:
           type: string
           nullable: true
           description: ETag for optimistic concurrency
-        metadata:
-          $ref: '#/components/schemas/StateMetadata'
-          description: Metadata about the state entry including timestamps and version
     SaveStateRequest:
       description: Request to save a state value to a state store with optional TTL and consistency settings
       type: object
@@ -505,9 +521,13 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Key to save
         value:
           type: object
@@ -524,6 +544,8 @@ components:
       properties:
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           description: New ETag after save
     DeleteStateRequest:
       description: Request to delete a state value by key from a state store
@@ -535,9 +557,13 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Key to delete
     DeleteStateResponse:
       description: Response from a delete operation indicating whether the key was removed
@@ -555,30 +581,16 @@ components:
       properties:
         ttl:
           type: integer
+          minimum: 1
+          maximum: 31536000
           nullable: true
-          description: TTL in seconds (Redis only)
+          description: TTL in seconds (Redis only). Maximum 1 year (31536000 seconds).
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           nullable: true
           description: Optimistic concurrency check - save fails if ETag mismatch
-    StateMetadata:
-      description: Metadata associated with a state entry including creation time, last update time, and version
-      type: object
-      additionalProperties: false
-      properties:
-        createdAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the state was created
-        updatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the state was last updated
-        version:
-          type: integer
-          description: Version number for optimistic concurrency
     QueryStateRequest:
       description: Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis 
         backends
@@ -589,23 +601,30 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store (MySQL or Redis with search enabled)
         conditions:
           type: array
           items:
             $ref: '#/components/schemas/QueryCondition'
+          maxItems: 50
           nullable: true
           description: |
             Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.
             For Redis search, use indexName and query properties instead.
         indexName:
           type: string
+          minLength: 1
+          maxLength: 100
           nullable: true
           description: |
             Redis search index name. Defaults to "{storeName}-idx".
             Only used for Redis stores with search enabled.
         query:
           type: string
+          minLength: 1
+          maxLength: 1000
           nullable: true
           description: |
             RedisSearch query string (e.g., "@name:John", "@age:[18 +inf]", "*").
@@ -614,14 +633,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SortField'
+          maxItems: 10
           nullable: true
           description: Sort order (first field only is used) (null for default ordering)
         page:
           type: integer
+          minimum: 0
           default: 0
           description: Page number (0-indexed)
         pageSize:
           type: integer
+          minimum: 1
+          maximum: 1000
           default: 100
           description: Items per page (max 1000)
     SortField:
@@ -631,6 +654,8 @@ components:
       properties:
         field:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Field name to sort by (JSON path for MySQL, field name for Redis)
         order:
           type: string
@@ -648,6 +673,8 @@ components:
       properties:
         path:
           type: string
+          minLength: 1
+          maxLength: 200
           description: JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]")
         operator:
           $ref: '#/components/schemas/QueryOperator'
@@ -685,12 +712,16 @@ components:
           description: Query results
         totalCount:
           type: integer
+          minimum: 0
           description: Total matching items (for pagination)
         page:
           type: integer
+          minimum: 0
           description: Current page number
         pageSize:
           type: integer
+          minimum: 1
+          maximum: 1000
           description: Items per page
     BulkGetStateRequest:
       description: Request to retrieve multiple state values by key in a single operation
@@ -702,11 +733,17 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         keys:
           type: array
           items:
             type: string
+            minLength: 1
+            maxLength: 255
+          minItems: 1
+          maxItems: 1000
           description: Keys to retrieve
     BulkGetStateResponse:
       description: Response containing the results of a bulk get operation for multiple keys
@@ -725,6 +762,8 @@ components:
       properties:
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: The key
         value:
           type: object
@@ -733,6 +772,8 @@ components:
           description: The value (null if not found)
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           nullable: true
           description: ETag for this item
         found:
@@ -748,11 +789,15 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         items:
           type: array
           items:
             $ref: '#/components/schemas/BulkSaveItem'
+          minItems: 1
+          maxItems: 1000
           description: Items to save
         options:
           nullable: true
@@ -769,6 +814,8 @@ components:
       properties:
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: The key to save
         value:
           type: object
@@ -796,9 +843,13 @@ components:
       properties:
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: The key that was saved
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           description: New ETag after save
     BulkExistsStateRequest:
       description: Request to check existence of multiple keys
@@ -810,11 +861,17 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         keys:
           type: array
           items:
             type: string
+            minLength: 1
+            maxLength: 255
+          minItems: 1
+          maxItems: 1000
           description: Keys to check for existence
     BulkExistsStateResponse:
       description: Response indicating which keys exist in the store
@@ -838,11 +895,17 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         keys:
           type: array
           items:
             type: string
+            minLength: 1
+            maxLength: 255
+          minItems: 1
+          maxItems: 1000
           description: Keys to delete
     BulkDeleteStateResponse:
       description: Response from a bulk delete operation
@@ -853,6 +916,7 @@ components:
       properties:
         deletedCount:
           type: integer
+          minimum: 0
           description: Number of keys actually deleted
     ListStoresRequest:
       type: object
@@ -887,6 +951,8 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Store name
         backend:
           type: string
@@ -896,5 +962,6 @@ components:
           description: Backend type
         keyCount:
           type: integer
+          minimum: 0
           nullable: true
           description: Number of keys (only if includeStats=true)
