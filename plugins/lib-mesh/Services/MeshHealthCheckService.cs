@@ -200,7 +200,7 @@ public class MeshHealthCheckService : BackgroundService
             }
             else
             {
-                var errorMessage = $"HTTP {(int)response.StatusCode}";
+                var errorMessage = $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}";
                 _logger.LogWarning(
                     "Endpoint {AppId}@{Host}:{Port} returned {StatusCode}",
                     endpoint.AppId, endpoint.Host, endpoint.Port, (int)response.StatusCode);
