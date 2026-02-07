@@ -387,17 +387,65 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         Expression<Func<TValue, bool>> predicate,
         CancellationToken cancellationToken = default)
     {
+        // IMPLEMENTATION TENETS: Try SQL-level filtering first to avoid loading entire store
+        // into memory. Falls back to in-memory for complex expressions that can't be translated.
+        if (TryConvertExpressionToConditions(predicate, out var conditions))
+        {
+            _logger.LogDebug(
+                "QueryAsync using SQL-level filtering with {ConditionCount} conditions for store '{Store}'",
+                conditions.Count, _storeName);
 
-        // Load all values for this store, deserialize, then filter
-        // Note: For true efficiency with large datasets, use SQL JSON functions
-        using var context = CreateContext();
-        var entries = await context.StateEntries
+            var (whereClauses, parameters) = BuildWhereClause(conditions);
+
+            var sql = $@"
+                SELECT `StoreName`, `Key`, `ValueJson`, `ETag`, `CreatedAt`, `UpdatedAt`, `Version`
+                FROM `state_entries`
+                WHERE `StoreName` = @p0
+                {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+            var allParams = new List<object?> { _storeName };
+            allParams.AddRange(parameters);
+
+            using var context = CreateContext();
+            var entries = await context.StateEntries
+                .FromSqlRaw(sql, allParams.ToArray())
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            var results = new List<TValue>();
+            foreach (var entry in entries)
+            {
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value != null)
+                {
+                    results.Add(value);
+                }
+                else
+                {
+                    _logger.LogError(
+                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                        entry.Key, _storeName);
+                }
+            }
+
+            _logger.LogDebug("SQL-level query on store '{Store}' returned {Count} results", _storeName, results.Count);
+            return results;
+        }
+
+        // Fallback to in-memory filtering for complex expressions
+        _logger.LogWarning(
+            "QueryAsync falling back to in-memory filtering for store '{Store}' - " +
+            "expression could not be translated to SQL. Consider using JsonQueryAsync for large datasets.",
+            _storeName);
+
+        using var fallbackContext = CreateContext();
+        var allEntries = await fallbackContext.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
         var deserializedValues = new List<TValue>();
-        foreach (var entry in entries)
+        foreach (var entry in allEntries)
         {
             var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
             if (value == null)
@@ -415,7 +463,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .Where(predicate)
             .ToList();
 
-        _logger.LogDebug("Query on store '{Store}' returned {Count} results", _storeName, values.Count);
+        _logger.LogDebug("In-memory query on store '{Store}' returned {Count} results", _storeName, values.Count);
 
         return values;
     }
@@ -432,15 +480,117 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         if (page < 0) throw new ArgumentOutOfRangeException(nameof(page));
         if (pageSize <= 0) throw new ArgumentOutOfRangeException(nameof(pageSize));
 
-        // Load all values for this store
-        using var context = CreateContext();
-        var entries = await context.StateEntries
+        // IMPLEMENTATION TENETS: Try SQL-level filtering when possible
+        // Note: orderBy expression translation is not yet supported - use JsonQueryPagedAsync for full SQL
+        if (predicate == null || TryConvertExpressionToConditions(predicate, out var conditions))
+        {
+            conditions ??= Array.Empty<QueryCondition>();
+
+            // Try to extract sort path from orderBy expression
+            string? sortPath = null;
+            if (orderBy != null && TryGetMemberPath(orderBy.Body, orderBy.Parameters[0], out var path))
+            {
+                sortPath = path;
+            }
+            else if (orderBy != null)
+            {
+                // Can't translate orderBy - fall back to in-memory
+                _logger.LogDebug(
+                    "QueryPagedAsync orderBy expression could not be translated - using in-memory fallback");
+                goto InMemoryFallback;
+            }
+
+            _logger.LogDebug(
+                "QueryPagedAsync using SQL-level filtering with {ConditionCount} conditions for store '{Store}'",
+                conditions.Count, _storeName);
+
+            var (whereClauses, parameters) = BuildWhereClause(conditions);
+
+            // Build ORDER BY clause
+            var orderByClause = "ORDER BY `UpdatedAt` DESC"; // Default ordering
+            if (sortPath != null)
+            {
+                var escapedPath = EscapeJsonPath(sortPath);
+                var direction = descending ? "DESC" : "ASC";
+                orderByClause = $"ORDER BY JSON_UNQUOTE(JSON_EXTRACT(`ValueJson`, '{escapedPath}')) {direction}";
+            }
+
+            // Count query
+            var countSql = $@"
+                SELECT COUNT(*) AS Value
+                FROM `state_entries`
+                WHERE `StoreName` = @p0
+                {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+            var allParams = new List<object?> { _storeName };
+            allParams.AddRange(parameters);
+
+            using var context = CreateContext();
+            var totalCount = await context.Database
+                .SqlQueryRaw<long>(countSql, allParams.Where(p => p != null).ToArray()!)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            // Data query with pagination
+            var dataSql = $@"
+                SELECT `StoreName`, `Key`, `ValueJson`, `ETag`, `CreatedAt`, `UpdatedAt`, `Version`
+                FROM `state_entries`
+                WHERE `StoreName` = @p0
+                {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}
+                {orderByClause}
+                LIMIT @pLimit OFFSET @pOffset";
+
+            var dataParams = new List<object?> { _storeName };
+            dataParams.AddRange(parameters);
+
+            var paramIndex = dataParams.Count;
+            dataSql = dataSql.Replace("@pLimit", $"@p{paramIndex}");
+            dataParams.Add(pageSize);
+            paramIndex++;
+            dataSql = dataSql.Replace("@pOffset", $"@p{paramIndex}");
+            dataParams.Add(page * pageSize);
+
+            var entries = await context.StateEntries
+                .FromSqlRaw(dataSql, dataParams.ToArray())
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            var items = new List<TValue>();
+            foreach (var entry in entries)
+            {
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value != null)
+                {
+                    items.Add(value);
+                }
+                else
+                {
+                    _logger.LogError(
+                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                        entry.Key, _storeName);
+                }
+            }
+
+            _logger.LogDebug("SQL-level paged query on store '{Store}' returned page {Page} with {Count} items (total: {Total})",
+                _storeName, page, items.Count, totalCount);
+
+            return new PagedResult<TValue>(items, (int)totalCount, page, pageSize);
+        }
+
+        InMemoryFallback:
+        // Fallback to in-memory filtering
+        _logger.LogWarning(
+            "QueryPagedAsync falling back to in-memory filtering for store '{Store}' - " +
+            "expression could not be translated to SQL.",
+            _storeName);
+
+        using var fallbackContext = CreateContext();
+        var allEntries = await fallbackContext.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
         var deserializedValues = new List<TValue>();
-        foreach (var entry in entries)
+        foreach (var entry in allEntries)
         {
             var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
             if (value == null)
@@ -462,7 +612,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         }
 
         // Get total count before pagination
-        var totalCount = query.Count();
+        var inMemoryTotalCount = query.Count();
 
         // Apply ordering
         if (orderBy != null)
@@ -473,15 +623,15 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         }
 
         // Apply pagination
-        var items = query
+        var inMemoryItems = query
             .Skip(page * pageSize)
             .Take(pageSize)
             .ToList();
 
-        _logger.LogDebug("Paged query on store '{Store}' returned page {Page} with {Count} items (total: {Total})",
-            _storeName, page, items.Count, totalCount);
+        _logger.LogDebug("In-memory paged query on store '{Store}' returned page {Page} with {Count} items (total: {Total})",
+            _storeName, page, inMemoryItems.Count, inMemoryTotalCount);
 
-        return new PagedResult<TValue>(items, totalCount, page, pageSize);
+        return new PagedResult<TValue>(inMemoryItems, inMemoryTotalCount, page, pageSize);
     }
 
     /// <inheritdoc/>
@@ -500,7 +650,38 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
                 .LongCountAsync(cancellationToken);
         }
 
-        // Slow path: load, deserialize, and filter
+        // IMPLEMENTATION TENETS: Try SQL-level counting first
+        if (TryConvertExpressionToConditions(predicate, out var conditions))
+        {
+            _logger.LogDebug(
+                "CountAsync using SQL-level filtering with {ConditionCount} conditions for store '{Store}'",
+                conditions.Count, _storeName);
+
+            var (whereClauses, parameters) = BuildWhereClause(conditions);
+
+            // EF Core 8 SqlQueryRaw<T> requires column named 'Value'
+            var sql = $@"
+                SELECT COUNT(*) AS Value
+                FROM `state_entries`
+                WHERE `StoreName` = @p0
+                {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+            var allParams = new List<object?> { _storeName };
+            allParams.AddRange(parameters);
+
+            var count = await context.Database
+                .SqlQueryRaw<long>(sql, allParams.Where(p => p != null).ToArray()!)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return count;
+        }
+
+        // Fallback: load, deserialize, and filter
+        _logger.LogWarning(
+            "CountAsync falling back to in-memory filtering for store '{Store}' - " +
+            "expression could not be translated to SQL.",
+            _storeName);
+
         var entries = await context.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
@@ -520,12 +701,12 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             deserializedValues.Add(value);
         }
 
-        var count = deserializedValues
+        var filteredCount = deserializedValues
             .AsQueryable()
             .Where(predicate)
             .LongCount();
 
-        return count;
+        return filteredCount;
     }
 
     #region IJsonQueryableStateStore Implementation
@@ -881,6 +1062,293 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             bool b => b.ToString().ToLowerInvariant(),
             _ => value.ToString()
         };
+    }
+
+    #endregion
+
+    #region Expression to QueryCondition Translator
+
+    /// <summary>
+    /// Attempts to convert a LINQ expression to QueryCondition objects for SQL-level filtering.
+    /// Supports simple property comparisons and AND combinations. Returns false for complex
+    /// expressions that require in-memory evaluation.
+    /// </summary>
+    /// <remarks>
+    /// IMPLEMENTATION TENETS: This enables SQL-level filtering for common query patterns,
+    /// avoiding the O(N) memory issue of loading all entries for large datasets.
+    /// Supported patterns:
+    /// - Property equality: x => x.Name == "John"
+    /// - Numeric comparisons: x => x.Age > 25
+    /// - Boolean properties: x => x.IsActive (implicitly == true)
+    /// - AND combinations: x => x.Name == "John" &amp;&amp; x.Age > 25
+    /// - String methods: x.Name.Contains("oh"), x.Name.StartsWith("J")
+    /// Unsupported (falls back to in-memory):
+    /// - OR combinations, NOT operators, method calls on non-string types
+    /// - Nested property access beyond first level
+    /// - Complex expressions involving calculations
+    /// </remarks>
+    private bool TryConvertExpressionToConditions(
+        Expression<Func<TValue, bool>> predicate,
+        out IReadOnlyList<QueryCondition> conditions)
+    {
+        conditions = Array.Empty<QueryCondition>();
+
+        try
+        {
+            var result = new List<QueryCondition>();
+            if (TryVisitExpression(predicate.Body, predicate.Parameters[0], result))
+            {
+                conditions = result;
+                return true;
+            }
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to convert expression to QueryConditions - will use in-memory fallback");
+            return false;
+        }
+    }
+
+    private static bool TryVisitExpression(
+        Expression expression,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
+    {
+        return expression switch
+        {
+            BinaryExpression binary => TryVisitBinaryExpression(binary, parameter, conditions),
+            MethodCallExpression methodCall => TryVisitMethodCallExpression(methodCall, parameter, conditions),
+            UnaryExpression unary when unary.NodeType == ExpressionType.Not =>
+                false, // NOT operations not supported
+            MemberExpression member => TryVisitBooleanMemberExpression(member, parameter, conditions),
+            _ => false
+        };
+    }
+
+    private static bool TryVisitBinaryExpression(
+        BinaryExpression binary,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
+    {
+        // Handle AND combinations
+        if (binary.NodeType == ExpressionType.AndAlso)
+        {
+            return TryVisitExpression(binary.Left, parameter, conditions) &&
+                   TryVisitExpression(binary.Right, parameter, conditions);
+        }
+
+        // Handle OR - not supported for SQL translation
+        if (binary.NodeType == ExpressionType.OrElse)
+        {
+            return false;
+        }
+
+        // Handle comparison operators
+        if (!TryGetMemberPath(binary.Left, parameter, out var path))
+        {
+            // Try reversed (e.g., "John" == x.Name)
+            if (!TryGetMemberPath(binary.Right, parameter, out path))
+            {
+                return false;
+            }
+            // Swap for reversed comparison
+            var temp = binary.Left;
+            binary = Expression.MakeBinary(
+                GetReversedOperator(binary.NodeType),
+                binary.Right,
+                temp) as BinaryExpression ?? binary;
+        }
+
+        if (!TryGetConstantValue(binary.Right, out var value))
+        {
+            // Try reversed
+            if (!TryGetConstantValue(binary.Left, out value))
+            {
+                return false;
+            }
+        }
+
+        var queryOperator = binary.NodeType switch
+        {
+            ExpressionType.Equal => QueryOperator.Equals,
+            ExpressionType.NotEqual => QueryOperator.NotEquals,
+            ExpressionType.GreaterThan => QueryOperator.GreaterThan,
+            ExpressionType.GreaterThanOrEqual => QueryOperator.GreaterThanOrEqual,
+            ExpressionType.LessThan => QueryOperator.LessThan,
+            ExpressionType.LessThanOrEqual => QueryOperator.LessThanOrEqual,
+            _ => (QueryOperator?)null
+        };
+
+        if (queryOperator == null)
+        {
+            return false;
+        }
+
+        conditions.Add(new QueryCondition
+        {
+            Path = path,
+            Operator = queryOperator.Value,
+            Value = value ?? new object() // Handle null comparison
+        });
+
+        return true;
+    }
+
+    private static ExpressionType GetReversedOperator(ExpressionType type)
+    {
+        return type switch
+        {
+            ExpressionType.GreaterThan => ExpressionType.LessThan,
+            ExpressionType.GreaterThanOrEqual => ExpressionType.LessThanOrEqual,
+            ExpressionType.LessThan => ExpressionType.GreaterThan,
+            ExpressionType.LessThanOrEqual => ExpressionType.GreaterThanOrEqual,
+            _ => type // Equal/NotEqual are symmetric
+        };
+    }
+
+    private static bool TryVisitMethodCallExpression(
+        MethodCallExpression methodCall,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
+    {
+        // Handle string methods: Contains, StartsWith, EndsWith
+        if (methodCall.Method.DeclaringType == typeof(string))
+        {
+            if (methodCall.Object == null) return false;
+
+            if (!TryGetMemberPath(methodCall.Object, parameter, out var path))
+            {
+                return false;
+            }
+
+            if (methodCall.Arguments.Count != 1)
+            {
+                return false;
+            }
+
+            if (!TryGetConstantValue(methodCall.Arguments[0], out var value))
+            {
+                return false;
+            }
+
+            var queryOperator = methodCall.Method.Name switch
+            {
+                "Contains" => QueryOperator.Contains,
+                "StartsWith" => QueryOperator.StartsWith,
+                "EndsWith" => QueryOperator.EndsWith,
+                _ => (QueryOperator?)null
+            };
+
+            if (queryOperator == null)
+            {
+                return false;
+            }
+
+            conditions.Add(new QueryCondition
+            {
+                Path = path,
+                Operator = queryOperator.Value,
+                Value = value ?? string.Empty
+            });
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryVisitBooleanMemberExpression(
+        MemberExpression member,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
+    {
+        // Handle standalone boolean property access: x => x.IsActive (means x.IsActive == true)
+        if (member.Type == typeof(bool) && TryGetMemberPath(member, parameter, out var path))
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = path,
+                Operator = QueryOperator.Equals,
+                Value = true
+            });
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryGetMemberPath(
+        Expression expression,
+        ParameterExpression parameter,
+        out string path)
+    {
+        path = string.Empty;
+
+        if (expression is not MemberExpression member)
+        {
+            // Handle conversion expressions (e.g., nullable value types)
+            if (expression is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
+            {
+                return TryGetMemberPath(unary.Operand, parameter, out path);
+            }
+            return false;
+        }
+
+        // Build the path from inner to outer
+        var pathParts = new List<string>();
+        var current = member;
+
+        while (current != null)
+        {
+            pathParts.Insert(0, current.Member.Name);
+
+            if (current.Expression == parameter)
+            {
+                // We've reached the parameter - build the JSON path
+                path = "$." + string.Join(".", pathParts);
+                return true;
+            }
+
+            current = current.Expression as MemberExpression;
+        }
+
+        return false;
+    }
+
+    private static bool TryGetConstantValue(Expression expression, out object? value)
+    {
+        value = null;
+
+        // Direct constant
+        if (expression is ConstantExpression constant)
+        {
+            value = constant.Value;
+            return true;
+        }
+
+        // Member access on a constant (captured variable)
+        if (expression is MemberExpression member && member.Expression is ConstantExpression constExpr)
+        {
+            var container = constExpr.Value;
+            if (container == null) return false;
+
+            value = member.Member switch
+            {
+                System.Reflection.FieldInfo field => field.GetValue(container),
+                System.Reflection.PropertyInfo prop => prop.GetValue(container),
+                _ => null
+            };
+            return true;
+        }
+
+        // Handle conversion expressions
+        if (expression is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
+        {
+            return TryGetConstantValue(unary.Operand, out value);
+        }
+
+        return false;
     }
 
     #endregion
