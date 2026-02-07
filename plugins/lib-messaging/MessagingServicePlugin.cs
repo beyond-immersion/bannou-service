@@ -59,20 +59,23 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         services.AddSingleton<IChannelManager>(sp => sp.GetRequiredService<RabbitMQConnectionManager>());
 
         // Register retry buffer for handling transient publish failures
+        // The interface (IRetryBuffer) allows mocking in tests
         services.AddSingleton<MessageRetryBuffer>();
+        services.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 
         // Register messaging interfaces with direct RabbitMQ implementations
         // Use factory registration to pass optional telemetry provider
         services.AddSingleton<IMessageBus>(sp =>
         {
             var channelManager = sp.GetRequiredService<IChannelManager>();
-            var retryBuffer = sp.GetRequiredService<MessageRetryBuffer>();
+            var retryBuffer = sp.GetRequiredService<IRetryBuffer>();
             var appConfig = sp.GetRequiredService<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
+            var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
             // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
             var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
 
-            return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, logger, telemetryProvider);
+            return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider);
         });
 
         // Use factory registration to pass telemetry provider and message bus

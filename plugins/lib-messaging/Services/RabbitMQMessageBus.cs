@@ -45,7 +45,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
 {
     private readonly IChannelManager _channelManager;
-    private readonly MessageRetryBuffer _retryBuffer;
+    private readonly IRetryBuffer _retryBuffer;
     private readonly AppConfiguration _appConfiguration;
     private readonly MessagingServiceConfiguration _messagingConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
@@ -76,7 +76,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public RabbitMQMessageBus(
         IChannelManager channelManager,
-        MessageRetryBuffer retryBuffer,
+        IRetryBuffer retryBuffer,
         AppConfiguration appConfiguration,
         MessagingServiceConfiguration messagingConfiguration,
         ILogger<RabbitMQMessageBus> logger,
@@ -163,6 +163,22 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                     typeof(TEvent).Name, topic);
                 activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 return false;
+            }
+
+            // If batching is enabled, queue the message and wait for batch flush
+            if (_batchChannel != null)
+            {
+                var pending = new PendingPublish(
+                    topic,
+                    body,
+                    options,
+                    effectiveMessageId,
+                    new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously));
+
+                await _batchChannel.Writer.WriteAsync(pending, cancellationToken);
+                success = await pending.Completion.Task;
+                activity?.SetStatus(success ? ActivityStatusCode.Ok : ActivityStatusCode.Error, success ? null : "Batch publish failed");
+                return success;
             }
 
             var channel = await _channelManager.GetChannelAsync(cancellationToken);
@@ -488,4 +504,209 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
 
         _logger.LogDebug("Declared exchange '{Exchange}' of type {Type}", exchange, type);
     }
+
+    /// <summary>
+    /// Background task that processes batches of pending publishes.
+    /// </summary>
+    private async Task ProcessBatchesAsync(CancellationToken cancellationToken)
+    {
+        var batch = new List<PendingPublish>(_messagingConfiguration.PublishBatchSize);
+        var timeoutMs = _messagingConfiguration.PublishBatchTimeoutMs;
+
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                batch.Clear();
+
+                // Wait for at least one message
+                try
+                {
+                    // Use a timeout to ensure we flush partial batches
+                    using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    timeoutCts.CancelAfter(timeoutMs);
+
+                    // Read first message (blocking with timeout)
+                    if (await _batchChannel!.Reader.WaitToReadAsync(timeoutCts.Token))
+                    {
+                        if (_batchChannel.Reader.TryRead(out var first))
+                        {
+                            batch.Add(first);
+                        }
+                    }
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // Timeout without messages - continue to check for shutdown
+                    continue;
+                }
+
+                // Fill batch up to max size (non-blocking)
+                while (batch.Count < _messagingConfiguration.PublishBatchSize &&
+                       _batchChannel!.Reader.TryRead(out var pending))
+                {
+                    batch.Add(pending);
+                }
+
+                if (batch.Count == 0)
+                {
+                    continue;
+                }
+
+                // Publish the batch
+                await PublishBatchAsync(batch, cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Normal shutdown - flush remaining messages
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Batch processor failed unexpectedly");
+        }
+
+        // Flush remaining messages on shutdown
+        while (_batchChannel!.Reader.TryRead(out var pending))
+        {
+            batch.Add(pending);
+        }
+
+        if (batch.Count > 0)
+        {
+            _logger.LogInformation("Flushing {Count} remaining messages on shutdown", batch.Count);
+            await PublishBatchAsync(batch, CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a batch of pending messages.
+    /// </summary>
+    private async Task PublishBatchAsync(List<PendingPublish> batch, CancellationToken cancellationToken)
+    {
+        IChannel? channel = null;
+        try
+        {
+            channel = await _channelManager.GetChannelAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get channel for batch publish - marking all {Count} messages as failed", batch.Count);
+            foreach (var pending in batch)
+            {
+                pending.Completion.TrySetResult(false);
+            }
+            return;
+        }
+
+        try
+        {
+            foreach (var pending in batch)
+            {
+                try
+                {
+                    var exchange = pending.Options?.Exchange ?? _channelManager.DefaultExchange;
+                    var exchangeType = pending.Options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
+                    var routingKey = pending.Options?.RoutingKey ?? pending.Topic;
+
+                    // Ensure exchange exists
+                    await EnsureExchangeAsync(channel, exchange, exchangeType, cancellationToken);
+
+                    // Build properties
+                    var properties = new BasicProperties
+                    {
+                        MessageId = pending.MessageId.ToString(),
+                        ContentType = "application/json",
+                        DeliveryMode = (pending.Options?.Persistent ?? true) ? DeliveryModes.Persistent : DeliveryModes.Transient,
+                        Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                    };
+
+                    if (pending.Options?.CorrelationId.HasValue == true)
+                    {
+                        properties.CorrelationId = pending.Options.CorrelationId.Value.ToString();
+                    }
+
+                    if (pending.Options?.Expiration.HasValue == true)
+                    {
+                        properties.Expiration = ((int)pending.Options.Expiration.Value.TotalMilliseconds).ToString();
+                    }
+
+                    if (pending.Options?.Priority > 0)
+                    {
+                        properties.Priority = (byte)Math.Min(pending.Options.Priority, 9);
+                    }
+
+                    var effectiveRoutingKey = exchangeType == PublishOptionsExchangeType.Fanout ? "" : routingKey;
+
+                    await channel.BasicPublishAsync(
+                        exchange: exchange,
+                        routingKey: effectiveRoutingKey,
+                        mandatory: false,
+                        basicProperties: properties,
+                        body: pending.Body,
+                        cancellationToken: cancellationToken);
+
+                    pending.Completion.TrySetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to publish message in batch (topic: {Topic}, messageId: {MessageId})",
+                        pending.Topic, pending.MessageId);
+
+                    // Try to buffer for retry
+                    if (_retryBuffer.TryEnqueueForRetry(pending.Topic, pending.Body, pending.Options, pending.MessageId))
+                    {
+                        pending.Completion.TrySetResult(true); // Buffered successfully
+                    }
+                    else
+                    {
+                        pending.Completion.TrySetResult(false); // Failed and couldn't buffer
+                    }
+                }
+            }
+
+            _logger.LogDebug("Batch published {Count} messages", batch.Count);
+        }
+        finally
+        {
+            await _channelManager.ReturnChannelAsync(channel);
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        if (_batchProcessorCts != null && _batchProcessorTask != null)
+        {
+            // Signal shutdown and wait for processor to complete
+            await _batchProcessorCts.CancelAsync();
+            _batchChannel?.Writer.Complete();
+
+            try
+            {
+                await _batchProcessorTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+            catch (TimeoutException)
+            {
+                _logger.LogWarning("Batch processor did not complete within timeout");
+            }
+
+            _batchProcessorCts.Dispose();
+        }
+
+        _logger.LogInformation("RabbitMQMessageBus disposed");
+    }
+
+    /// <summary>
+    /// Represents a message pending batch publication.
+    /// </summary>
+    private sealed record PendingPublish(
+        string Topic,
+        byte[] Body,
+        PublishOptions? Options,
+        Guid MessageId,
+        TaskCompletionSource<bool> Completion);
 }

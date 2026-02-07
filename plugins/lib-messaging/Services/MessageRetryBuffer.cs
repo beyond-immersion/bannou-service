@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// - The crash is visible in monitoring/alerting
 /// </para>
 /// </remarks>
-public sealed class MessageRetryBuffer : IAsyncDisposable
+public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
 {
     private readonly IChannelManager _channelManager;
     private readonly MessagingServiceConfiguration _configuration;
