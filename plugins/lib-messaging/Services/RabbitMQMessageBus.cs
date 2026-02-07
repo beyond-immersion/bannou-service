@@ -248,14 +248,6 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                     body: body,
                     cancellationToken: cancellationToken);
 
-                // Wait for publisher confirms if enabled (T21: config must be functional)
-                if (_messagingConfiguration.EnablePublisherConfirms)
-                {
-                    await channel.WaitForConfirmsOrDieAsync(
-                        TimeSpan.FromSeconds(_messagingConfiguration.PublisherConfirmTimeoutSeconds),
-                        cancellationToken);
-                }
-
                 _logger.LogDebug(
                     "Published {EventType} to exchange '{Exchange}' (type: {ExchangeType}, routingKey: '{RoutingKey}') with MessageId {MessageId}",
                     typeof(TEvent).Name,
@@ -388,14 +380,6 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                     basicProperties: properties,
                     body: payload,
                     cancellationToken: cancellationToken);
-
-                // Wait for publisher confirms if enabled (T21: config must be functional)
-                if (_messagingConfiguration.EnablePublisherConfirms)
-                {
-                    await channel.WaitForConfirmsOrDieAsync(
-                        TimeSpan.FromSeconds(_messagingConfiguration.PublisherConfirmTimeoutSeconds),
-                        cancellationToken);
-                }
 
                 _logger.LogDebug(
                     "Published raw message ({Size} bytes, {ContentType}) to exchange '{Exchange}' with MessageId {MessageId}",
@@ -661,14 +645,6 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                         basicProperties: properties,
                         body: pending.Body,
                         cancellationToken: cancellationToken);
-
-                    // Wait for publisher confirms if enabled (T21: config must be functional)
-                    if (_messagingConfiguration.EnablePublisherConfirms)
-                    {
-                        await channel.WaitForConfirmsOrDieAsync(
-                            TimeSpan.FromSeconds(_messagingConfiguration.PublisherConfirmTimeoutSeconds),
-                            cancellationToken);
-                    }
 
                     pending.Completion.TrySetResult(true);
                 }
