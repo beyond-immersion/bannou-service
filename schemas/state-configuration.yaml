@@ -52,6 +52,17 @@ x-service-configuration:
       description: Minimum delay in milliseconds between MySQL connection retry attempts
       env: STATE_MIN_RETRY_DELAY_MS
       default: 1000
+    InMemoryFallbackLimit:
+      type: integer
+      minimum: 100
+      maximum: 1000000
+      description: |
+        Maximum entries to load when LINQ expression cannot be translated to SQL and falls back
+        to in-memory filtering. Queries exceeding this limit will throw InvalidOperationException.
+        Use JsonQueryAsync with explicit conditions for large datasets.
+        This prevents OOM errors when queries unexpectedly fall back to loading all data.
+      env: STATE_INMEMORY_FALLBACK_LIMIT
+      default: 10000
     # Note: DefaultConsistency was removed as dead config (IMPLEMENTATION TENETS T21).
     # Consistency is specified per-request via StateOptions.Consistency, not as a global default.
     # The ConsistencyLevel enum remains available in state-api.yaml for per-request use.

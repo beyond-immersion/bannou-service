@@ -1010,10 +1010,15 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
                 return $"JSON_CONTAINS(`ValueJson`, @p{paramIndex++}, '{escapedPath}')";
 
             case QueryOperator.Exists:
-                return $"JSON_CONTAINS_PATH(`ValueJson`, 'one', '{escapedPath}')";
+                // Check if value is non-null (covers both "path exists with non-null value" cases)
+                // Uses IS NOT NULL which returns false for missing paths OR JSON null values
+                return $"JSON_EXTRACT(`ValueJson`, '{escapedPath}') IS NOT NULL";
 
             case QueryOperator.NotExists:
-                return $"NOT JSON_CONTAINS_PATH(`ValueJson`, 'one', '{escapedPath}')";
+                // Check if value is null (covers both "path missing" and "path exists with null value")
+                // Uses IS NULL which returns true for missing paths OR JSON null values
+                // This matches C# null comparison semantics: x.Field == null
+                return $"JSON_EXTRACT(`ValueJson`, '{escapedPath}') IS NULL";
 
             case QueryOperator.FullText:
                 // Full-text search requires a FULLTEXT index on the column
@@ -1041,7 +1046,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     }
 
     /// <summary>
-    /// Serializes a value for SQL parameter.
+    /// Serializes a value for SQL parameter comparison.
+    /// Must match BannouJson serialization behavior for consistent query results.
     /// </summary>
     private static object? SerializeValue(object? value)
     {
@@ -1049,7 +1055,11 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         {
             null => null,
             string s => s,
-            bool b => b.ToString().ToLowerInvariant(),
+            bool b => b.ToString().ToLowerInvariant(), // JSON boolean: true/false
+            Enum e => e.ToString(), // Match JsonStringEnumConverter: enum name as string
+            Guid g => g.ToString(), // Explicit GUID handling
+            DateTime dt => dt.ToString("O"), // ISO 8601 format
+            DateTimeOffset dto => dto.ToString("O"), // ISO 8601 format
             _ => value.ToString()
         };
     }
@@ -1068,13 +1078,14 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// avoiding the O(N) memory issue of loading all entries for large datasets.
     /// Supported patterns:
     /// - Property equality: x => x.Name == "John"
+    /// - Null comparisons: x => x.Field == null, x => x.Field != null
     /// - Numeric comparisons: x => x.Age > 25
     /// - Boolean properties: x => x.IsActive (implicitly == true)
     /// - AND combinations: x => x.Name == "John" &amp;&amp; x.Age > 25
     /// - String methods: x.Name.Contains("oh"), x.Name.StartsWith("J")
+    /// - Nested properties: x => x.Address.City == "NYC"
     /// Unsupported (falls back to in-memory):
     /// - OR combinations, NOT operators, method calls on non-string types
-    /// - Nested property access beyond first level
     /// - Complex expressions involving calculations
     /// </remarks>
     private bool TryConvertExpressionToConditions(
@@ -1134,6 +1145,13 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             return false;
         }
 
+        // Handle null comparisons: x.Field == null or x.Field != null
+        // Must check before normal flow since null requires special SQL (IS NULL / IS NOT NULL)
+        if (TryHandleNullComparison(binary, parameter, conditions))
+        {
+            return true;
+        }
+
         // Handle comparison operators
         if (!TryGetMemberPath(binary.Left, parameter, out var path))
         {
@@ -1159,6 +1177,13 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             }
         }
 
+        // If value is null at this point, we should have caught it in TryHandleNullComparison
+        // but as a safety net, fall back to in-memory filtering
+        if (value == null)
+        {
+            return false;
+        }
+
         var queryOperator = binary.NodeType switch
         {
             ExpressionType.Equal => QueryOperator.Equals,
@@ -1179,10 +1204,80 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         {
             Path = path,
             Operator = queryOperator.Value,
-            Value = value ?? new object() // Handle null comparison
+            Value = value
         });
 
         return true;
+    }
+
+    /// <summary>
+    /// Handles null comparison expressions: x.Field == null or x.Field != null.
+    /// Uses SQL IS NULL / IS NOT NULL semantics via special QueryCondition markers.
+    /// </summary>
+    private static bool TryHandleNullComparison(
+        BinaryExpression binary,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
+    {
+        // Only handle equality/inequality with null
+        if (binary.NodeType != ExpressionType.Equal && binary.NodeType != ExpressionType.NotEqual)
+        {
+            return false;
+        }
+
+        // Check if either side is a null constant
+        var leftIsNull = IsNullConstant(binary.Left);
+        var rightIsNull = IsNullConstant(binary.Right);
+
+        if (!leftIsNull && !rightIsNull)
+        {
+            return false; // Neither side is null, not a null comparison
+        }
+
+        // Get the member path from the non-null side
+        var memberExpr = leftIsNull ? binary.Right : binary.Left;
+        if (!TryGetMemberPath(memberExpr, parameter, out var path))
+        {
+            return false;
+        }
+
+        // x.Field == null uses NotExists (JSON_EXTRACT IS NULL covers both missing and JSON null)
+        // x.Field != null uses Exists (JSON_EXTRACT IS NOT NULL)
+        var isEqualToNull = binary.NodeType == ExpressionType.Equal;
+        conditions.Add(new QueryCondition
+        {
+            Path = path,
+            Operator = isEqualToNull ? QueryOperator.NotExists : QueryOperator.Exists,
+            Value = new object() // Placeholder, not used by Exists/NotExists operators
+        });
+
+        return true;
+    }
+
+    /// <summary>
+    /// Checks if an expression is a null constant.
+    /// </summary>
+    private static bool IsNullConstant(Expression expression)
+    {
+        // Direct null constant
+        if (expression is ConstantExpression { Value: null })
+        {
+            return true;
+        }
+
+        // Handle default(T) which compiles to null for reference types
+        if (expression is DefaultExpression)
+        {
+            return true;
+        }
+
+        // Handle Convert(null) for nullable value types
+        if (expression is UnaryExpression { NodeType: ExpressionType.Convert } unary)
+        {
+            return IsNullConstant(unary.Operand);
+        }
+
+        return false;
     }
 
     private static ExpressionType GetReversedOperator(ExpressionType type)

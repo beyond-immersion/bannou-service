@@ -120,55 +120,67 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
         var json = BannouJson.Serialize(value);
         // Convert int? TTL (seconds) to TimeSpan?
         var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
 
-        // Use transaction for atomicity
-        var transaction = _database.CreateTransaction();
-
-        // Set the value
-        if (ttl.HasValue)
+        try
         {
-            _ = transaction.StringSetAsync(fullKey, json, ttl.Value);
+            // Use transaction for atomicity
+            var transaction = _database.CreateTransaction();
+
+            // Set the value
+            if (ttl.HasValue)
+            {
+                _ = transaction.StringSetAsync(fullKey, json, ttl.Value);
+            }
+            else
+            {
+                _ = transaction.StringSetAsync(fullKey, json);
+            }
+
+            // Update metadata
+            var newVersion = transaction.HashIncrementAsync(metaKey, "version", 1);
+            _ = transaction.HashSetAsync(metaKey, new HashEntry[]
+            {
+                new("updated", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+            });
+
+            // Set TTL on metadata too
+            if (ttl.HasValue)
+            {
+                _ = transaction.KeyExpireAsync(metaKey, ttl);
+            }
+
+            // IMPLEMENTATION TENETS: Check transaction result and handle failures
+            var executed = await transaction.ExecuteAsync();
+            if (!executed)
+            {
+                // Unconditional transactions should always succeed - log unexpected failure
+                _logger.LogError(
+                    "Redis transaction unexpectedly failed for key '{Key}' in store '{Store}' - data may be inconsistent",
+                    key, _keyPrefix);
+                throw new InvalidOperationException($"Redis transaction failed unexpectedly for key '{key}'");
+            }
+
+            var version = await newVersion;
+            _logger.LogDebug("Saved key '{Key}' in store '{Store}' (version: {Version})",
+                key, _keyPrefix, version);
+
+            return version.ToString();
         }
-        else
+        catch (RedisConnectionException ex)
         {
-            _ = transaction.StringSetAsync(fullKey, json);
+            _logger.LogError(ex, "Redis connection failed saving key '{Key}' to store '{Store}'", key, _keyPrefix);
+            throw;
         }
-
-        // Update metadata
-        var newVersion = transaction.HashIncrementAsync(metaKey, "version", 1);
-        _ = transaction.HashSetAsync(metaKey, new HashEntry[]
+        catch (RedisTimeoutException ex)
         {
-            new("updated", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
-        });
-
-        // Set TTL on metadata too
-        if (ttl.HasValue)
-        {
-            _ = transaction.KeyExpireAsync(metaKey, ttl);
+            _logger.LogError(ex, "Redis timeout saving key '{Key}' to store '{Store}'", key, _keyPrefix);
+            throw;
         }
-
-        // IMPLEMENTATION TENETS (T7): Check transaction result and handle failures
-        var executed = await transaction.ExecuteAsync();
-        if (!executed)
-        {
-            // Unconditional transactions should always succeed - log unexpected failure
-            _logger.LogError(
-                "Redis transaction unexpectedly failed for key '{Key}' in store '{Store}' - data may be inconsistent",
-                key, _keyPrefix);
-            throw new InvalidOperationException($"Redis transaction failed unexpectedly for key '{key}'");
-        }
-
-        var version = await newVersion;
-        _logger.LogDebug("Saved key '{Key}' in store '{Store}' (version: {Version})",
-            key, _keyPrefix, version);
-
-        return version.ToString();
     }
 
     /// <inheritdoc/>
@@ -183,76 +195,89 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         var json = BannouJson.Serialize(value);
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        // Empty etag means "create new entry if it doesn't exist"
-        if (string.IsNullOrEmpty(etag))
+        try
         {
-            // Check if key already exists
-            var exists = await _database.KeyExistsAsync(fullKey);
-            if (exists)
+            // Empty etag means "create new entry if it doesn't exist"
+            if (string.IsNullOrEmpty(etag))
             {
-                _logger.LogDebug("Key '{Key}' already exists in store '{Store}' but empty etag provided (concurrent create)",
-                    key, _keyPrefix);
+                // Check if key already exists
+                var exists = await _database.KeyExistsAsync(fullKey);
+                if (exists)
+                {
+                    _logger.LogDebug("Key '{Key}' already exists in store '{Store}' but empty etag provided (concurrent create)",
+                        key, _keyPrefix);
+                    return null;
+                }
+
+                // Use transaction to atomically create only if key doesn't exist
+                var createTransaction = _database.CreateTransaction();
+                createTransaction.AddCondition(Condition.KeyNotExists(fullKey));
+
+                _ = createTransaction.StringSetAsync(fullKey, json);
+                _ = createTransaction.HashSetAsync(metaKey, new HashEntry[]
+                {
+                    new("version", 1),
+                    new("created", now),
+                    new("updated", now)
+                });
+
+                var createSuccess = await createTransaction.ExecuteAsync();
+                if (createSuccess)
+                {
+                    _logger.LogDebug("Created new key '{Key}' in store '{Store}'", key, _keyPrefix);
+                    return "1";
+                }
+                else
+                {
+                    _logger.LogDebug("Concurrent create conflict for key '{Key}' in store '{Store}'", key, _keyPrefix);
+                    return null;
+                }
+            }
+
+            // Non-empty etag means "update existing entry with matching version"
+            var currentVersion = await _database.HashGetAsync(metaKey, "version");
+            if (currentVersion.ToString() != etag)
+            {
+                _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected}, actual: {Actual})",
+                    key, _keyPrefix, etag, currentVersion.ToString());
                 return null;
             }
 
-            // Use transaction to atomically create only if key doesn't exist
-            var createTransaction = _database.CreateTransaction();
-            createTransaction.AddCondition(Condition.KeyNotExists(fullKey));
+            // Perform optimistic update
+            var transaction = _database.CreateTransaction();
+            transaction.AddCondition(Condition.HashEqual(metaKey, "version", etag));
 
-            _ = createTransaction.StringSetAsync(fullKey, json);
-            _ = createTransaction.HashSetAsync(metaKey, new HashEntry[]
+            _ = transaction.StringSetAsync(fullKey, json);
+            _ = transaction.HashIncrementAsync(metaKey, "version", 1);
+            _ = transaction.HashSetAsync(metaKey, new HashEntry[]
             {
-                new("version", 1),
-                new("created", now),
                 new("updated", now)
             });
 
-            var createSuccess = await createTransaction.ExecuteAsync();
-            if (createSuccess)
+            var success = await transaction.ExecuteAsync();
+
+            if (success)
             {
-                _logger.LogDebug("Created new key '{Key}' in store '{Store}'", key, _keyPrefix);
-                return "1";
+                var newVersion = long.Parse(etag) + 1;
+                _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _keyPrefix);
+                return newVersion.ToString();
             }
             else
             {
-                _logger.LogDebug("Concurrent create conflict for key '{Key}' in store '{Store}'", key, _keyPrefix);
+                _logger.LogDebug("Optimistic save failed (concurrent modification) for key '{Key}' in store '{Store}'",
+                    key, _keyPrefix);
                 return null;
             }
         }
-
-        // Non-empty etag means "update existing entry with matching version"
-        var currentVersion = await _database.HashGetAsync(metaKey, "version");
-        if (currentVersion.ToString() != etag)
+        catch (RedisConnectionException ex)
         {
-            _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected}, actual: {Actual})",
-                key, _keyPrefix, etag, currentVersion.ToString());
-            return null;
+            _logger.LogError(ex, "Redis connection failed during optimistic save for key '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
         }
-
-        // Perform optimistic update
-        var transaction = _database.CreateTransaction();
-        transaction.AddCondition(Condition.HashEqual(metaKey, "version", etag));
-
-        _ = transaction.StringSetAsync(fullKey, json);
-        _ = transaction.HashIncrementAsync(metaKey, "version", 1);
-        _ = transaction.HashSetAsync(metaKey, new HashEntry[]
+        catch (RedisTimeoutException ex)
         {
-            new("updated", now)
-        });
-
-        var success = await transaction.ExecuteAsync();
-
-        if (success)
-        {
-            var newVersion = long.Parse(etag) + 1;
-            _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _keyPrefix);
-            return newVersion.ToString();
-        }
-        else
-        {
-            _logger.LogDebug("Optimistic save failed (concurrent modification) for key '{Key}' in store '{Store}'",
-                key, _keyPrefix);
-            return null;
+            _logger.LogError(ex, "Redis timeout during optimistic save for key '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
         }
     }
 
@@ -311,34 +336,46 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         IEnumerable<string> keys,
         CancellationToken cancellationToken = default)
     {
-
         var keyList = keys.ToList();
         if (keyList.Count == 0)
         {
             return new Dictionary<string, TValue>();
         }
 
-        // Create RedisKey array for MGET
-        var redisKeys = keyList.Select(k => (RedisKey)GetFullKey(k)).ToArray();
-        var values = await _database.StringGetAsync(redisKeys);
-
-        var result = new Dictionary<string, TValue>();
-        for (var i = 0; i < keyList.Count; i++)
+        try
         {
-            if (!values[i].IsNullOrEmpty)
+            // Create RedisKey array for MGET
+            var redisKeys = keyList.Select(k => (RedisKey)GetFullKey(k)).ToArray();
+            var values = await _database.StringGetAsync(redisKeys);
+
+            var result = new Dictionary<string, TValue>();
+            for (var i = 0; i < keyList.Count; i++)
             {
-                var deserialized = BannouJson.Deserialize<TValue>(values[i]!);
-                if (deserialized != null)
+                if (!values[i].IsNullOrEmpty)
                 {
-                    result[keyList[i]] = deserialized;
+                    var deserialized = BannouJson.Deserialize<TValue>(values[i]!);
+                    if (deserialized != null)
+                    {
+                        result[keyList[i]] = deserialized;
+                    }
                 }
             }
+
+            _logger.LogDebug("Bulk get {RequestedCount} keys from store '{Store}', found {FoundCount}",
+                keyList.Count, _keyPrefix, result.Count);
+
+            return result;
         }
-
-        _logger.LogDebug("Bulk get {RequestedCount} keys from store '{Store}', found {FoundCount}",
-            keyList.Count, _keyPrefix, result.Count);
-
-        return result;
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed during bulk get of {Count} keys from store '{Store}'", keyList.Count, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout during bulk get of {Count} keys from store '{Store}'", keyList.Count, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -356,61 +393,74 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        // Use a transaction for atomicity
-        var transaction = _database.CreateTransaction();
-        var versionTasks = new List<(string Key, Task<long> VersionTask)>();
-
-        foreach (var (key, value) in itemList)
+        try
         {
-            var fullKey = GetFullKey(key);
-            var metaKey = GetMetaKey(key);
-            var json = BannouJson.Serialize(value);
+            // Use a transaction for atomicity
+            var transaction = _database.CreateTransaction();
+            var versionTasks = new List<(string Key, Task<long> VersionTask)>();
 
-            // Set the value
-            if (ttl.HasValue)
+            foreach (var (key, value) in itemList)
             {
-                _ = transaction.StringSetAsync(fullKey, json, ttl.Value);
+                var fullKey = GetFullKey(key);
+                var metaKey = GetMetaKey(key);
+                var json = BannouJson.Serialize(value);
+
+                // Set the value
+                if (ttl.HasValue)
+                {
+                    _ = transaction.StringSetAsync(fullKey, json, ttl.Value);
+                }
+                else
+                {
+                    _ = transaction.StringSetAsync(fullKey, json);
+                }
+
+                // Update metadata
+                var versionTask = transaction.HashIncrementAsync(metaKey, "version", 1);
+                _ = transaction.HashSetAsync(metaKey, new HashEntry[]
+                {
+                    new("updated", now)
+                });
+
+                // Set TTL on metadata too
+                if (ttl.HasValue)
+                {
+                    _ = transaction.KeyExpireAsync(metaKey, ttl);
+                }
+
+                versionTasks.Add((key, versionTask));
             }
-            else
+
+            // IMPLEMENTATION TENETS: Check transaction result and handle failures
+            var executed = await transaction.ExecuteAsync();
+            if (!executed)
             {
-                _ = transaction.StringSetAsync(fullKey, json);
+                // Unconditional transactions should always succeed - log unexpected failure
+                _logger.LogError(
+                    "Redis bulk transaction unexpectedly failed for store '{Store}' ({Count} items) - data may be inconsistent",
+                    _keyPrefix, itemList.Count);
+                throw new InvalidOperationException($"Redis bulk transaction failed unexpectedly for {itemList.Count} items");
             }
 
-            // Update metadata
-            var versionTask = transaction.HashIncrementAsync(metaKey, "version", 1);
-            _ = transaction.HashSetAsync(metaKey, new HashEntry[]
+            var result = new Dictionary<string, string>();
+            foreach (var (key, versionTask) in versionTasks)
             {
-                new("updated", now)
-            });
-
-            // Set TTL on metadata too
-            if (ttl.HasValue)
-            {
-                _ = transaction.KeyExpireAsync(metaKey, ttl);
+                result[key] = (await versionTask).ToString();
             }
 
-            versionTasks.Add((key, versionTask));
+            _logger.LogDebug("Bulk save {Count} items to store '{Store}'", itemList.Count, _keyPrefix);
+            return result;
         }
-
-        // IMPLEMENTATION TENETS (T7): Check transaction result and handle failures
-        var executed = await transaction.ExecuteAsync();
-        if (!executed)
+        catch (RedisConnectionException ex)
         {
-            // Unconditional transactions should always succeed - log unexpected failure
-            _logger.LogError(
-                "Redis bulk transaction unexpectedly failed for store '{Store}' ({Count} items) - data may be inconsistent",
-                _keyPrefix, itemList.Count);
-            throw new InvalidOperationException($"Redis bulk transaction failed unexpectedly for {itemList.Count} items");
+            _logger.LogError(ex, "Redis connection failed during bulk save of {Count} items to store '{Store}'", itemList.Count, _keyPrefix);
+            throw;
         }
-
-        var result = new Dictionary<string, string>();
-        foreach (var (key, versionTask) in versionTasks)
+        catch (RedisTimeoutException ex)
         {
-            result[key] = (await versionTask).ToString();
+            _logger.LogError(ex, "Redis timeout during bulk save of {Count} items to store '{Store}'", itemList.Count, _keyPrefix);
+            throw;
         }
-
-        _logger.LogDebug("Bulk save {Count} items to store '{Store}'", itemList.Count, _keyPrefix);
-        return result;
     }
 
     /// <inheritdoc/>
@@ -424,22 +474,35 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             return new HashSet<string>();
         }
 
-        // Pipeline exists checks for efficiency
-        var tasks = keyList.Select(k => _database.KeyExistsAsync(GetFullKey(k))).ToArray();
-        var results = await Task.WhenAll(tasks);
-
-        var existing = new HashSet<string>();
-        for (var i = 0; i < keyList.Count; i++)
+        try
         {
-            if (results[i])
-            {
-                existing.Add(keyList[i]);
-            }
-        }
+            // Pipeline exists checks for efficiency
+            var tasks = keyList.Select(k => _database.KeyExistsAsync(GetFullKey(k))).ToArray();
+            var results = await Task.WhenAll(tasks);
 
-        _logger.LogDebug("Bulk exists check {RequestedCount} keys from store '{Store}', found {FoundCount}",
-            keyList.Count, _keyPrefix, existing.Count);
-        return existing;
+            var existing = new HashSet<string>();
+            for (var i = 0; i < keyList.Count; i++)
+            {
+                if (results[i])
+                {
+                    existing.Add(keyList[i]);
+                }
+            }
+
+            _logger.LogDebug("Bulk exists check {RequestedCount} keys from store '{Store}', found {FoundCount}",
+                keyList.Count, _keyPrefix, existing.Count);
+            return existing;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed during bulk exists check of {Count} keys in store '{Store}'", keyList.Count, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout during bulk exists check of {Count} keys in store '{Store}'", keyList.Count, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -453,22 +516,35 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             return 0;
         }
 
-        // Delete both value keys and metadata keys
-        var allKeys = new List<RedisKey>();
-        foreach (var key in keyList)
+        try
         {
-            allKeys.Add(GetFullKey(key));
-            allKeys.Add(GetMetaKey(key));
+            // Delete both value keys and metadata keys
+            var allKeys = new List<RedisKey>();
+            foreach (var key in keyList)
+            {
+                allKeys.Add(GetFullKey(key));
+                allKeys.Add(GetMetaKey(key));
+            }
+
+            var totalDeleted = await _database.KeyDeleteAsync(allKeys.ToArray());
+            // Each logical delete is 2 keys (value + meta), return logical count
+            // But only count those that actually existed (value key)
+            var deletedCount = (int)(totalDeleted / 2);
+
+            _logger.LogDebug("Bulk delete {RequestedCount} keys from store '{Store}', deleted {DeletedCount}",
+                keyList.Count, _keyPrefix, deletedCount);
+            return deletedCount;
         }
-
-        var totalDeleted = await _database.KeyDeleteAsync(allKeys.ToArray());
-        // Each logical delete is 2 keys (value + meta), return logical count
-        // But only count those that actually existed (value key)
-        var deletedCount = (int)(totalDeleted / 2);
-
-        _logger.LogDebug("Bulk delete {RequestedCount} keys from store '{Store}', deleted {DeletedCount}",
-            keyList.Count, _keyPrefix, deletedCount);
-        return deletedCount;
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed during bulk delete of {Count} keys from store '{Store}'", keyList.Count, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout during bulk delete of {Count} keys from store '{Store}'", keyList.Count, _keyPrefix);
+            throw;
+        }
     }
 
     // ==================== Set Operations ====================
@@ -482,22 +558,35 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-
         var setKey = GetSetKey(key);
         var json = BannouJson.Serialize(item);
-        var added = await _database.SetAddAsync(setKey, json);
 
-        // Apply TTL if specified
-        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
-        if (ttl.HasValue)
+        try
         {
-            await _database.KeyExpireAsync(setKey, ttl);
+            var added = await _database.SetAddAsync(setKey, json);
+
+            // Apply TTL if specified
+            var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+            if (ttl.HasValue)
+            {
+                await _database.KeyExpireAsync(setKey, ttl);
+            }
+
+            _logger.LogDebug("Added item to set '{Key}' in store '{Store}' (new: {IsNew})",
+                key, _keyPrefix, added);
+
+            return added;
         }
-
-        _logger.LogDebug("Added item to set '{Key}' in store '{Store}' (new: {IsNew})",
-            key, _keyPrefix, added);
-
-        return added;
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed adding item to set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout adding item to set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -507,7 +596,6 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-
         var itemList = items.ToList();
         if (itemList.Count == 0)
         {
@@ -516,19 +604,33 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
 
         var setKey = GetSetKey(key);
         var values = itemList.Select(item => (RedisValue)BannouJson.Serialize(item)).ToArray();
-        var added = await _database.SetAddAsync(setKey, values);
 
-        // Apply TTL if specified
-        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
-        if (ttl.HasValue)
+        try
         {
-            await _database.KeyExpireAsync(setKey, ttl);
+            var added = await _database.SetAddAsync(setKey, values);
+
+            // Apply TTL if specified
+            var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+            if (ttl.HasValue)
+            {
+                await _database.KeyExpireAsync(setKey, ttl);
+            }
+
+            _logger.LogDebug("Added {Count} items to set '{Key}' in store '{Store}' (new: {Added})",
+                itemList.Count, key, _keyPrefix, added);
+
+            return added;
         }
-
-        _logger.LogDebug("Added {Count} items to set '{Key}' in store '{Store}' (new: {Added})",
-            itemList.Count, key, _keyPrefix, added);
-
-        return added;
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed adding {Count} items to set '{Key}' in store '{Store}'", itemList.Count, key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout adding {Count} items to set '{Key}' in store '{Store}'", itemList.Count, key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -537,15 +639,28 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         TItem item,
         CancellationToken cancellationToken = default)
     {
-
         var setKey = GetSetKey(key);
         var json = BannouJson.Serialize(item);
-        var removed = await _database.SetRemoveAsync(setKey, json);
 
-        _logger.LogDebug("Removed item from set '{Key}' in store '{Store}' (existed: {Existed})",
-            key, _keyPrefix, removed);
+        try
+        {
+            var removed = await _database.SetRemoveAsync(setKey, json);
 
-        return removed;
+            _logger.LogDebug("Removed item from set '{Key}' in store '{Store}' (existed: {Existed})",
+                key, _keyPrefix, removed);
+
+            return removed;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed removing item from set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout removing item from set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -553,33 +668,46 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-
         var setKey = GetSetKey(key);
-        var members = await _database.SetMembersAsync(setKey);
 
-        if (members.Length == 0)
+        try
         {
-            _logger.LogDebug("Set '{Key}' is empty or not found in store '{Store}'", key, _keyPrefix);
-            return Array.Empty<TItem>();
-        }
+            var members = await _database.SetMembersAsync(setKey);
 
-        var result = new List<TItem>(members.Length);
-        foreach (var member in members)
-        {
-            if (!member.IsNullOrEmpty)
+            if (members.Length == 0)
             {
-                var item = BannouJson.Deserialize<TItem>(member!);
-                if (item != null)
+                _logger.LogDebug("Set '{Key}' is empty or not found in store '{Store}'", key, _keyPrefix);
+                return Array.Empty<TItem>();
+            }
+
+            var result = new List<TItem>(members.Length);
+            foreach (var member in members)
+            {
+                if (!member.IsNullOrEmpty)
                 {
-                    result.Add(item);
+                    var item = BannouJson.Deserialize<TItem>(member!);
+                    if (item != null)
+                    {
+                        result.Add(item);
+                    }
                 }
             }
+
+            _logger.LogDebug("Retrieved {Count} items from set '{Key}' in store '{Store}'",
+                result.Count, key, _keyPrefix);
+
+            return result;
         }
-
-        _logger.LogDebug("Retrieved {Count} items from set '{Key}' in store '{Store}'",
-            result.Count, key, _keyPrefix);
-
-        return result;
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed getting set '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout getting set '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -588,10 +716,23 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         TItem item,
         CancellationToken cancellationToken = default)
     {
-
         var setKey = GetSetKey(key);
         var json = BannouJson.Serialize(item);
-        return await _database.SetContainsAsync(setKey, json);
+
+        try
+        {
+            return await _database.SetContainsAsync(setKey, json);
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed checking set membership for '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout checking set membership for '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -599,9 +740,22 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-
         var setKey = GetSetKey(key);
-        return await _database.SetLengthAsync(setKey);
+
+        try
+        {
+            return await _database.SetLengthAsync(setKey);
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed getting set count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout getting set count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -609,14 +763,27 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-
         var setKey = GetSetKey(key);
-        var deleted = await _database.KeyDeleteAsync(setKey);
 
-        _logger.LogDebug("Deleted set '{Key}' from store '{Store}' (existed: {Existed})",
-            key, _keyPrefix, deleted);
+        try
+        {
+            var deleted = await _database.KeyDeleteAsync(setKey);
 
-        return deleted;
+            _logger.LogDebug("Deleted set '{Key}' from store '{Store}' (existed: {Existed})",
+                key, _keyPrefix, deleted);
+
+            return deleted;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed deleting set '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout deleting set '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -625,15 +792,28 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         int ttlSeconds,
         CancellationToken cancellationToken = default)
     {
-
         var setKey = GetSetKey(key);
         var ttl = TimeSpan.FromSeconds(ttlSeconds);
-        var updated = await _database.KeyExpireAsync(setKey, ttl);
 
-        _logger.LogDebug("Refreshed TTL on set '{Key}' in store '{Store}' to {Ttl}s (existed: {Existed})",
-            key, _keyPrefix, ttlSeconds, updated);
+        try
+        {
+            var updated = await _database.KeyExpireAsync(setKey, ttl);
 
-        return updated;
+            _logger.LogDebug("Refreshed TTL on set '{Key}' in store '{Store}' to {Ttl}s (existed: {Existed})",
+                key, _keyPrefix, ttlSeconds, updated);
+
+            return updated;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed refreshing TTL on set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout refreshing TTL on set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     // ==================== Sorted Set Operations ====================
@@ -648,21 +828,34 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-
         var sortedSetKey = GetSortedSetKey(key);
-        var added = await _database.SortedSetAddAsync(sortedSetKey, member, score);
 
-        // Apply TTL if specified
-        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
-        if (ttl.HasValue)
+        try
         {
-            await _database.KeyExpireAsync(sortedSetKey, ttl);
+            var added = await _database.SortedSetAddAsync(sortedSetKey, member, score);
+
+            // Apply TTL if specified
+            var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+            if (ttl.HasValue)
+            {
+                await _database.KeyExpireAsync(sortedSetKey, ttl);
+            }
+
+            _logger.LogDebug("Added member '{Member}' to sorted set '{Key}' with score {Score} (new: {IsNew})",
+                member, key, score, added);
+
+            return added;
         }
-
-        _logger.LogDebug("Added member '{Member}' to sorted set '{Key}' with score {Score} (new: {IsNew})",
-            member, key, score, added);
-
-        return added;
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed adding member to sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout adding member to sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -672,7 +865,6 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-
         var entryList = entries.ToList();
         if (entryList.Count == 0)
         {
@@ -684,19 +876,32 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             .Select(e => new SortedSetEntry(e.member, e.score))
             .ToArray();
 
-        var added = await _database.SortedSetAddAsync(sortedSetKey, sortedSetEntries);
-
-        // Apply TTL if specified
-        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
-        if (ttl.HasValue)
+        try
         {
-            await _database.KeyExpireAsync(sortedSetKey, ttl);
+            var added = await _database.SortedSetAddAsync(sortedSetKey, sortedSetEntries);
+
+            // Apply TTL if specified
+            var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+            if (ttl.HasValue)
+            {
+                await _database.KeyExpireAsync(sortedSetKey, ttl);
+            }
+
+            _logger.LogDebug("Added {Count} members to sorted set '{Key}' (new: {Added})",
+                entryList.Count, key, added);
+
+            return added;
         }
-
-        _logger.LogDebug("Added {Count} members to sorted set '{Key}' (new: {Added})",
-            entryList.Count, key, added);
-
-        return added;
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed adding {Count} members to sorted set '{Key}' in store '{Store}'", entryList.Count, key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout adding {Count} members to sorted set '{Key}' in store '{Store}'", entryList.Count, key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -705,14 +910,27 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         string member,
         CancellationToken cancellationToken = default)
     {
-
         var sortedSetKey = GetSortedSetKey(key);
-        var removed = await _database.SortedSetRemoveAsync(sortedSetKey, member);
 
-        _logger.LogDebug("Removed member '{Member}' from sorted set '{Key}' (existed: {Existed})",
-            member, key, removed);
+        try
+        {
+            var removed = await _database.SortedSetRemoveAsync(sortedSetKey, member);
 
-        return removed;
+            _logger.LogDebug("Removed member '{Member}' from sorted set '{Key}' (existed: {Existed})",
+                member, key, removed);
+
+            return removed;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed removing member from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout removing member from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -721,11 +939,22 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         string member,
         CancellationToken cancellationToken = default)
     {
-
         var sortedSetKey = GetSortedSetKey(key);
-        var score = await _database.SortedSetScoreAsync(sortedSetKey, member);
 
-        return score;
+        try
+        {
+            return await _database.SortedSetScoreAsync(sortedSetKey, member);
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed getting score from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout getting score from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -735,16 +964,28 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         bool descending = true,
         CancellationToken cancellationToken = default)
     {
-
         var sortedSetKey = GetSortedSetKey(key);
 
-        // ZRANK returns rank in ascending order (lowest score = rank 0)
-        // ZREVRANK returns rank in descending order (highest score = rank 0)
-        var rank = descending
-            ? await _database.SortedSetRankAsync(sortedSetKey, member, Order.Descending)
-            : await _database.SortedSetRankAsync(sortedSetKey, member, Order.Ascending);
+        try
+        {
+            // ZRANK returns rank in ascending order (lowest score = rank 0)
+            // ZREVRANK returns rank in descending order (highest score = rank 0)
+            var rank = descending
+                ? await _database.SortedSetRankAsync(sortedSetKey, member, Order.Descending)
+                : await _database.SortedSetRankAsync(sortedSetKey, member, Order.Ascending);
 
-        return rank;
+            return rank;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed getting rank from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout getting rank from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -755,22 +996,34 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         bool descending = true,
         CancellationToken cancellationToken = default)
     {
-
         var sortedSetKey = GetSortedSetKey(key);
 
-        // ZRANGE with WITHSCORES - use REV for descending
-        var entries = descending
-            ? await _database.SortedSetRangeByRankWithScoresAsync(sortedSetKey, start, stop, Order.Descending)
-            : await _database.SortedSetRangeByRankWithScoresAsync(sortedSetKey, start, stop, Order.Ascending);
+        try
+        {
+            // ZRANGE with WITHSCORES - use REV for descending
+            var entries = descending
+                ? await _database.SortedSetRangeByRankWithScoresAsync(sortedSetKey, start, stop, Order.Descending)
+                : await _database.SortedSetRangeByRankWithScoresAsync(sortedSetKey, start, stop, Order.Ascending);
 
-        var result = entries
-            .Select(e => (member: e.Element.ToString(), score: e.Score))
-            .ToList();
+            var result = entries
+                .Select(e => (member: e.Element.ToString(), score: e.Score))
+                .ToList();
 
-        _logger.LogDebug("Retrieved {Count} entries from sorted set '{Key}' (range: {Start}-{Stop}, descending: {Descending})",
-            result.Count, key, start, stop, descending);
+            _logger.LogDebug("Retrieved {Count} entries from sorted set '{Key}' (range: {Start}-{Stop}, descending: {Descending})",
+                result.Count, key, start, stop, descending);
 
-        return result;
+            return result;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed getting range from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout getting range from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -785,35 +1038,48 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
     {
         var sortedSetKey = GetSortedSetKey(key);
 
-        // ZRANGEBYSCORE with LIMIT offset count
-        // For descending, we use ZREVRANGEBYSCORE (swap min/max)
-        var entries = descending
-            ? await _database.SortedSetRangeByScoreWithScoresAsync(
-                sortedSetKey,
-                minScore,
-                maxScore,
-                Exclude.None,
-                Order.Descending,
-                offset,
-                count)
-            : await _database.SortedSetRangeByScoreWithScoresAsync(
-                sortedSetKey,
-                minScore,
-                maxScore,
-                Exclude.None,
-                Order.Ascending,
-                offset,
-                count);
+        try
+        {
+            // ZRANGEBYSCORE with LIMIT offset count
+            // For descending, we use ZREVRANGEBYSCORE (swap min/max)
+            var entries = descending
+                ? await _database.SortedSetRangeByScoreWithScoresAsync(
+                    sortedSetKey,
+                    minScore,
+                    maxScore,
+                    Exclude.None,
+                    Order.Descending,
+                    offset,
+                    count)
+                : await _database.SortedSetRangeByScoreWithScoresAsync(
+                    sortedSetKey,
+                    minScore,
+                    maxScore,
+                    Exclude.None,
+                    Order.Ascending,
+                    offset,
+                    count);
 
-        var result = entries
-            .Select(e => (member: e.Element.ToString(), score: e.Score))
-            .ToList();
+            var result = entries
+                .Select(e => (member: e.Element.ToString(), score: e.Score))
+                .ToList();
 
-        _logger.LogDebug(
-            "Retrieved {Count} entries from sorted set '{Key}' by score (min: {Min}, max: {Max}, offset: {Offset}, count: {RequestedCount}, descending: {Descending})",
-            result.Count, key, minScore, maxScore, offset, count, descending);
+            _logger.LogDebug(
+                "Retrieved {Count} entries from sorted set '{Key}' by score (min: {Min}, max: {Max}, offset: {Offset}, count: {RequestedCount}, descending: {Descending})",
+                result.Count, key, minScore, maxScore, offset, count, descending);
 
-        return result;
+            return result;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed getting score range from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout getting score range from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -821,9 +1087,22 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-
         var sortedSetKey = GetSortedSetKey(key);
-        return await _database.SortedSetLengthAsync(sortedSetKey);
+
+        try
+        {
+            return await _database.SortedSetLengthAsync(sortedSetKey);
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed getting sorted set count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout getting sorted set count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -833,14 +1112,27 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         double increment,
         CancellationToken cancellationToken = default)
     {
-
         var sortedSetKey = GetSortedSetKey(key);
-        var newScore = await _database.SortedSetIncrementAsync(sortedSetKey, member, increment);
 
-        _logger.LogDebug("Incremented member '{Member}' in sorted set '{Key}' by {Increment} (new score: {NewScore})",
-            member, key, increment, newScore);
+        try
+        {
+            var newScore = await _database.SortedSetIncrementAsync(sortedSetKey, member, increment);
 
-        return newScore;
+            _logger.LogDebug("Incremented member '{Member}' in sorted set '{Key}' by {Increment} (new score: {NewScore})",
+                member, key, increment, newScore);
+
+            return newScore;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed incrementing member in sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout incrementing member in sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -848,14 +1140,27 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-
         var sortedSetKey = GetSortedSetKey(key);
-        var deleted = await _database.KeyDeleteAsync(sortedSetKey);
 
-        _logger.LogDebug("Deleted sorted set '{Key}' from store '{Store}' (existed: {Existed})",
-            key, _keyPrefix, deleted);
+        try
+        {
+            var deleted = await _database.KeyDeleteAsync(sortedSetKey);
 
-        return deleted;
+            _logger.LogDebug("Deleted sorted set '{Key}' from store '{Store}' (existed: {Existed})",
+                key, _keyPrefix, deleted);
+
+            return deleted;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed deleting sorted set '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout deleting sorted set '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     // ==================== Atomic Counter Operations ====================
@@ -872,19 +1177,32 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         var counterKey = GetCounterKey(key);
         var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
 
-        // INCRBY is atomic - no transaction needed
-        var newValue = await _database.StringIncrementAsync(counterKey, increment);
-
-        // Set TTL if specified (separate operation)
-        if (ttl.HasValue)
+        try
         {
-            await _database.KeyExpireAsync(counterKey, ttl);
+            // INCRBY is atomic - no transaction needed
+            var newValue = await _database.StringIncrementAsync(counterKey, increment);
+
+            // Set TTL if specified (separate operation)
+            if (ttl.HasValue)
+            {
+                await _database.KeyExpireAsync(counterKey, ttl);
+            }
+
+            _logger.LogDebug("Incremented counter '{Key}' in store '{Store}' by {Increment} to {Value}",
+                key, _keyPrefix, increment, newValue);
+
+            return newValue;
         }
-
-        _logger.LogDebug("Incremented counter '{Key}' in store '{Store}' by {Increment} to {Value}",
-            key, _keyPrefix, increment, newValue);
-
-        return newValue;
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed incrementing counter '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout incrementing counter '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
