@@ -1,9 +1,9 @@
 #nullable enable
 
-using System.Collections.Concurrent;
-using System.Reflection;
 using BeyondImmersion.BannouService.Utilities;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Events;
 

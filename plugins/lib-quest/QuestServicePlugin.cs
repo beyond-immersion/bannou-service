@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Quest.Caching;
@@ -117,10 +118,61 @@ public class QuestServicePlugin : BaseBannouPlugin
 
             // Register compression callback with lib-resource (generated from x-compression-callback)
             await RegisterCompressionCallbackAsync();
+
+            // Register event templates for emit_event: ABML action
+            RegisterEventTemplates();
         }
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during Quest service running phase");
+        }
+    }
+
+    /// <summary>
+    /// Registers event templates for emit_event: ABML action.
+    /// Templates allow behaviors to emit quest events using flat parameters.
+    /// </summary>
+    private void RegisterEventTemplates()
+    {
+        if (_serviceProvider == null) return;
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var eventTemplateRegistry = scope.ServiceProvider.GetService<IEventTemplateRegistry>();
+            if (eventTemplateRegistry != null)
+            {
+                // Template for objective progress events (common for NPC quest triggers)
+                // Usage: emit_event: { template: quest_objective_progressed, questInstanceId: ${quest.id}, ... }
+                eventTemplateRegistry.Register(new EventTemplate(
+                    Name: "quest_objective_progressed",
+                    Topic: "quest.objective.progressed",
+                    EventType: typeof(QuestObjectiveProgressedEvent),
+                    PayloadTemplate: """
+                        {
+                            "eventId": "{{eventId}}",
+                            "timestamp": "{{timestamp}}",
+                            "questInstanceId": "{{questInstanceId}}",
+                            "definitionId": "{{definitionId}}",
+                            "objectiveIndex": {{objectiveIndex}},
+                            "previousProgress": {{previousProgress}},
+                            "newProgress": {{newProgress}},
+                            "targetProgress": {{targetProgress}},
+                            "objectiveCompleted": {{objectiveCompleted}}
+                        }
+                        """,
+                    Description: "Published when objective progress changes"));
+
+                Logger?.LogInformation("Registered quest event templates");
+            }
+            else
+            {
+                Logger?.LogDebug("IEventTemplateRegistry not available - event templates not registered");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(ex, "Failed to register event templates");
         }
     }
 

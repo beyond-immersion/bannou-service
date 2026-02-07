@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.CharacterEncounter.Caching;
 using BeyondImmersion.BannouService.CharacterEncounter.Providers;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
@@ -166,6 +167,74 @@ public class CharacterEncounterServicePlugin : BaseBannouPlugin
         {
             Logger?.LogWarning(ex, "Failed to register cleanup callbacks with lib-resource");
         }
+
+        // Register event templates for emit_event: ABML action
+        // Behaviors can use these templates to emit encounter events without knowing infrastructure details
+        try
+        {
+            using var scope = serviceProvider.CreateScope();
+            var eventTemplateRegistry = scope.ServiceProvider.GetService<IEventTemplateRegistry>();
+            if (eventTemplateRegistry != null)
+            {
+                RegisterEventTemplates(eventTemplateRegistry);
+                Logger?.LogInformation("Registered character-encounter event templates");
+            }
+            else
+            {
+                Logger?.LogDebug("IEventTemplateRegistry not available - event templates not registered");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(ex, "Failed to register event templates");
+        }
+    }
+
+    /// <summary>
+    /// Registers event templates for emit_event: ABML action.
+    /// Templates allow behaviors to emit typed events using flat parameters.
+    /// </summary>
+    private void RegisterEventTemplates(IEventTemplateRegistry registry)
+    {
+        // Template for recording a new encounter between characters
+        // Usage: emit_event: { template: encounter_recorded, encounterId: ${encounter.id}, ... }
+        registry.Register(new EventTemplate(
+            Name: "encounter_recorded",
+            Topic: "encounter.recorded",
+            EventType: typeof(EncounterRecordedEvent),
+            PayloadTemplate: """
+                {
+                    "eventId": "{{eventId}}",
+                    "timestamp": "{{timestamp}}",
+                    "encounterId": "{{encounterId}}",
+                    "encounterTypeCode": "{{encounterTypeCode}}",
+                    "outcome": "{{outcome}}",
+                    "realmId": "{{realmId}}",
+                    "locationId": {{locationId}},
+                    "participantIds": {{participantIds}},
+                    "context": {{context}},
+                    "encounterTimestamp": "{{encounterTimestamp}}"
+                }
+                """,
+            Description: "Records a new encounter between characters"));
+
+        // Template for memory refresh events
+        registry.Register(new EventTemplate(
+            Name: "encounter_memory_refreshed",
+            Topic: "encounter.memory.refreshed",
+            EventType: typeof(EncounterMemoryRefreshedEvent),
+            PayloadTemplate: """
+                {
+                    "eventId": "{{eventId}}",
+                    "timestamp": "{{timestamp}}",
+                    "encounterId": "{{encounterId}}",
+                    "characterId": "{{characterId}}",
+                    "perspectiveId": "{{perspectiveId}}",
+                    "previousStrength": {{previousStrength}},
+                    "newStrength": {{newStrength}}
+                }
+                """,
+            Description: "Published when a character's memory of an encounter is strengthened"));
     }
 
     /// <summary>

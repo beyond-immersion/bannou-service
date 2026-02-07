@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -110,10 +111,61 @@ public class StorylineServicePlugin : BaseBannouPlugin
 
             // Register compression callback with lib-resource (generated from x-compression-callback)
             await RegisterCompressionCallbackAsync();
+
+            // Register event templates for emit_event: ABML action
+            RegisterEventTemplates();
         }
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during Storyline service running phase");
+        }
+    }
+
+    /// <summary>
+    /// Registers event templates for emit_event: ABML action.
+    /// Templates allow behaviors to emit storyline events using flat parameters.
+    /// </summary>
+    private void RegisterEventTemplates()
+    {
+        if (_serviceProvider == null) return;
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var eventTemplateRegistry = scope.ServiceProvider.GetService<IEventTemplateRegistry>();
+            if (eventTemplateRegistry != null)
+            {
+                // Template for storyline composition events
+                // Used by puppetmaster/gods when storylines are composed
+                eventTemplateRegistry.Register(new EventTemplate(
+                    Name: "storyline_composed",
+                    Topic: "storyline.composed",
+                    EventType: typeof(StorylineComposedEvent),
+                    PayloadTemplate: """
+                        {
+                            "planId": "{{planId}}",
+                            "realmId": {{realmId}},
+                            "goal": "{{goal}}",
+                            "arcType": "{{arcType}}",
+                            "primarySpectrum": {{primarySpectrum}},
+                            "confidence": {{confidence}},
+                            "genre": {{genre}},
+                            "archiveIds": {{archiveIds}},
+                            "snapshotIds": {{snapshotIds}}
+                        }
+                        """,
+                    Description: "Published when a storyline plan is generated"));
+
+                Logger?.LogInformation("Registered storyline event templates");
+            }
+            else
+            {
+                Logger?.LogDebug("IEventTemplateRegistry not available - event templates not registered");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(ex, "Failed to register event templates");
         }
     }
 

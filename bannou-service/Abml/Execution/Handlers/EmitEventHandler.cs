@@ -5,6 +5,7 @@
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
@@ -157,22 +158,27 @@ public sealed class EmitEventHandler : IActionHandler
             return ActionResult.Continue;
         }
 
-        // Publish the event
-        try
-        {
-            await _messageBus.PublishAsync(template.Topic, eventInstance, ct);
+        // Publish the event using raw bytes (we already have validated JSON)
+        var payloadBytes = System.Text.Encoding.UTF8.GetBytes(substitutedPayload);
+        var published = await _messageBus.TryPublishRawAsync(
+            template.Topic,
+            payloadBytes,
+            "application/json",
+            ct);
 
+        if (published)
+        {
             _logger.LogDebug("emit_event: published '{Template}' to '{Topic}'",
                 templateName, template.Topic);
             context.Logs.Add(new LogEntry("emit_event",
                 $"{templateName} → {template.Topic}", DateTime.UtcNow));
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "emit_event: failed to publish '{Template}' to '{Topic}'",
+            _logger.LogError("emit_event: failed to publish '{Template}' to '{Topic}'",
                 templateName, template.Topic);
             context.Logs.Add(new LogEntry("error",
-                $"emit_event: publish failed - {ex.Message}", DateTime.UtcNow));
+                $"emit_event: publish failed for {templateName}", DateTime.UtcNow));
         }
 
         return ActionResult.Continue;
