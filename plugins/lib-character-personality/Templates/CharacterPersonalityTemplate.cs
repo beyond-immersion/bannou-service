@@ -6,7 +6,7 @@
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.ResourceTemplates;
 
-namespace BeyondImmersion.LibCharacterPersonality.Templates;
+namespace BeyondImmersion.BannouService.CharacterPersonality.Templates;
 
 /// <summary>
 /// Resource template for character personality snapshot data.

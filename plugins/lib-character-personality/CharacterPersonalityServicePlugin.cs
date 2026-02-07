@@ -5,7 +5,7 @@ using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.LibCharacterPersonality.Templates;
+using BeyondImmersion.BannouService.CharacterPersonality.Templates;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -1,7 +1,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Templates;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Resource;
-using BeyondImmersion.LibCharacter.Templates;
+using BeyondImmersion.BannouService.Character.Templates;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 

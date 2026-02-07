@@ -6,7 +6,7 @@
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.ResourceTemplates;
 
-namespace BeyondImmersion.LibCharacterHistory.Templates;
+namespace BeyondImmersion.BannouService.CharacterHistory.Templates;
 
 /// <summary>
 /// Resource template for character history archive data.
