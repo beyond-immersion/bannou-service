@@ -129,6 +129,7 @@ This plugin does not consume external events.
 | `ConnectionTimeoutSeconds` | `STATE_CONNECTION_TIMEOUT_SECONDS` | `60` | Database connection timeout |
 | `ConnectionRetryCount` | `STATE_CONNECTION_RETRY_COUNT` | `10` | Max MySQL connection retry attempts |
 | `MinRetryDelayMs` | `STATE_MIN_RETRY_DELAY_MS` | `1000` | Min delay between MySQL retry attempts |
+| `InMemoryFallbackLimit` | `STATE_INMEMORY_FALLBACK_LIMIT` | `10000` | Max entries for in-memory query fallback (throws if exceeded) |
 
 **Note:** `DefaultConsistency`, `EnableMetrics`, and `EnableTracing` were removed as dead config. Telemetry is now controlled centrally via lib-telemetry. Consistency is specified per-request via `StateOptions.Consistency`.
 
@@ -302,10 +303,18 @@ None currently identified.
 
 9. **Asymmetric connection retry between MySQL and Redis**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry. This is intentional: StackExchange.Redis has built-in auto-reconnect functionality that handles connection failures and reconnection automatically. EF Core/MySQL does not have this capability, so explicit retry logic is required for MySQL only.
 
+10. **MySQL expression translator limitations**: `QueryAsync` and `QueryPagedAsync` attempt to translate LINQ expressions to SQL-level `JSON_EXTRACT` queries. Supported patterns include:
+    - Simple comparisons: `x.Field == value`, `x.Field != value`, `x.Field > value`
+    - Null comparisons: `x.Field == null`, `x.Field != null`
+    - String operations: `x.Field.Contains("s")`, `x.Field.StartsWith("s")`, `x.Field.EndsWith("s")`
+    - Collection membership: `ids.Contains(x.Id)` (generates SQL `IN` clause)
+    - Boolean property access: `x.IsActive` (treats as `x.IsActive == true`)
+
+    Unsupported patterns fall back to in-memory filtering with a configurable limit (`InMemoryFallbackLimit`, default 10000). Exceeding this limit throws `InvalidOperationException` to prevent OOM. Use `JsonQueryAsync` with explicit `QueryCondition` objects for complex queries on large datasets.
+
 ### Design Considerations (Requires Planning)
 
-1. **MySQL query loads all into memory**: `QueryAsync` and `QueryPagedAsync` in MySqlStateStore load all entries from the store, deserialize each one, then filter in memory. For very large stores this could be memory-intensive. Consider SQL-level filtering.
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/251 -->
+None currently identified.
 
 ---
 

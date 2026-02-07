@@ -70,7 +70,16 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
                 return null;
             }
 
-            return BannouJson.Deserialize<TValue>(value.ToString());
+            try
+            {
+                return BannouJson.Deserialize<TValue>(value.ToString());
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+                return null;
+            }
         }
         catch (RedisException ex) when (ex.Message.Contains("WRONGTYPE"))
         {
@@ -80,7 +89,16 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             {
                 return null;
             }
-            return BannouJson.Deserialize<TValue>(stringValue!);
+            try
+            {
+                return BannouJson.Deserialize<TValue>(stringValue!);
+            }
+            catch (System.Text.Json.JsonException ex2)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+                _logger.LogError(ex2, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+                return null;
+            }
         }
     }
 
@@ -109,7 +127,16 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             }
 
             var etag = version.HasValue ? version.ToString() : "0";
-            return (BannouJson.Deserialize<TValue>(value.ToString()), etag);
+            try
+            {
+                return (BannouJson.Deserialize<TValue>(value.ToString()), etag);
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+                return (null, null);
+            }
         }
         catch (RedisException ex) when (ex.Message.Contains("WRONGTYPE"))
         {
@@ -123,7 +150,16 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             }
 
             var etag = version.HasValue ? version.ToString() : "0";
-            return (BannouJson.Deserialize<TValue>(stringValue!), etag);
+            try
+            {
+                return (BannouJson.Deserialize<TValue>(stringValue!), etag);
+            }
+            catch (System.Text.Json.JsonException ex2)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+                _logger.LogError(ex2, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+                return (null, null);
+            }
         }
     }
 

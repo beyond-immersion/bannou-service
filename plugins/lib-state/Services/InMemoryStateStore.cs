@@ -191,7 +191,16 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
                 return null;
             }
 
-            return BannouJson.Deserialize<TValue>(entry.Json);
+            try
+            {
+                return BannouJson.Deserialize<TValue>(entry.Json);
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _storeName);
+                return null;
+            }
         }
 
         _logger.LogDebug("Key '{Key}' not found in store '{Store}'", key, _storeName);
@@ -213,8 +222,17 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
                 return (null, null);
             }
 
-            var value = BannouJson.Deserialize<TValue>(entry.Json);
-            return (value, entry.Version.ToString());
+            try
+            {
+                var value = BannouJson.Deserialize<TValue>(entry.Json);
+                return (value, entry.Version.ToString());
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _storeName);
+                return (null, null);
+            }
         }
 
         return (null, null);
@@ -345,10 +363,18 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         {
             if (_store.TryGetValue(key, out var entry) && !IsExpired(entry))
             {
-                var value = BannouJson.Deserialize<TValue>(entry.Json);
-                if (value != null)
+                try
                 {
-                    result[key] = value;
+                    var value = BannouJson.Deserialize<TValue>(entry.Json);
+                    if (value != null)
+                    {
+                        result[key] = value;
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                    _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", key, _storeName);
                 }
             }
         }
@@ -651,10 +677,18 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             var result = new List<TItem>(entry.Items.Count);
             foreach (var json in entry.Items)
             {
-                var item = BannouJson.Deserialize<TItem>(json);
-                if (item != null)
+                try
                 {
-                    result.Add(item);
+                    var item = BannouJson.Deserialize<TItem>(json);
+                    if (item != null)
+                    {
+                        result.Add(item);
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                    _logger.LogError(ex, "JSON deserialization failed for set item in '{Key}' in store '{Store}' - skipping corrupted item", key, _storeName);
                 }
             }
 
@@ -1278,15 +1312,33 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             // Check string fields first
             if (entry.Fields.TryGetValue(field, out var json))
             {
-                return BannouJson.Deserialize<TField>(json);
+                try
+                {
+                    return BannouJson.Deserialize<TField>(json);
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+                    _logger.LogError(ex, "JSON deserialization failed for hash field '{Field}' in hash '{Key}' in store '{Store}' - data may be corrupted", field, key, _storeName);
+                    return default;
+                }
             }
 
             // Check numeric fields (used by HashIncrementAsync)
             if (entry.NumericFields.TryGetValue(field, out var numValue))
             {
-                // Serialize then deserialize to convert to TField
-                var numJson = BannouJson.Serialize(numValue);
-                return BannouJson.Deserialize<TField>(numJson);
+                try
+                {
+                    // Serialize then deserialize to convert to TField
+                    var numJson = BannouJson.Serialize(numValue);
+                    return BannouJson.Deserialize<TField>(numJson);
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+                    _logger.LogError(ex, "JSON deserialization failed for numeric hash field '{Field}' in hash '{Key}' in store '{Store}' - data may be corrupted", field, key, _storeName);
+                    return default;
+                }
             }
 
             return default;
@@ -1463,8 +1515,17 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
                 // Try to parse from string field if exists
                 if (entry.Fields.TryGetValue(field, out var json))
                 {
-                    var parsed = BannouJson.Deserialize<long?>(json);
-                    currentValue = parsed ?? 0;
+                    try
+                    {
+                        var parsed = BannouJson.Deserialize<long?>(json);
+                        currentValue = parsed ?? 0;
+                    }
+                    catch (System.Text.Json.JsonException ex)
+                    {
+                        // IMPLEMENTATION TENETS: Log data corruption as error, default to 0
+                        _logger.LogError(ex, "JSON deserialization failed for hash field '{Field}' in hash '{Key}' in store '{Store}' - defaulting to 0", field, key, _storeName);
+                        currentValue = 0;
+                    }
                 }
                 else
                 {
@@ -1510,21 +1571,37 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             // Get string fields
             foreach (var (fieldName, json) in entry.Fields)
             {
-                var value = BannouJson.Deserialize<TField>(json);
-                if (value != null)
+                try
                 {
-                    result[fieldName] = value;
+                    var value = BannouJson.Deserialize<TField>(json);
+                    if (value != null)
+                    {
+                        result[fieldName] = value;
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the field
+                    _logger.LogError(ex, "JSON deserialization failed for hash field '{Field}' in hash '{Key}' in store '{Store}' - skipping corrupted field", fieldName, key, _storeName);
                 }
             }
 
             // Get numeric fields (convert to TField if possible)
             foreach (var (fieldName, numValue) in entry.NumericFields)
             {
-                var json = BannouJson.Serialize(numValue);
-                var value = BannouJson.Deserialize<TField>(json);
-                if (value != null)
+                try
                 {
-                    result[fieldName] = value;
+                    var json = BannouJson.Serialize(numValue);
+                    var value = BannouJson.Deserialize<TField>(json);
+                    if (value != null)
+                    {
+                        result[fieldName] = value;
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the field
+                    _logger.LogError(ex, "JSON deserialization failed for numeric hash field '{Field}' in hash '{Key}' in store '{Store}' - skipping corrupted field", fieldName, key, _storeName);
                 }
             }
 
