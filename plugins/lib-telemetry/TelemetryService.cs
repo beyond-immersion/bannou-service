@@ -1,7 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,7 +28,6 @@ namespace BeyondImmersion.BannouService.Telemetry;
 [BannouService("telemetry", typeof(ITelemetryService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.Infrastructure)]
 public partial class TelemetryService : ITelemetryService
 {
-    private readonly IMessageBus _messageBus;
     private readonly ILogger<TelemetryService> _logger;
     private readonly TelemetryServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
@@ -37,17 +35,14 @@ public partial class TelemetryService : ITelemetryService
     /// <summary>
     /// Creates a new TelemetryService instance.
     /// </summary>
-    /// <param name="messageBus">Message bus for error publishing.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Telemetry service configuration.</param>
     /// <param name="appConfiguration">Application configuration for effective app-id.</param>
     public TelemetryService(
-        IMessageBus messageBus,
         ILogger<TelemetryService> logger,
         TelemetryServiceConfiguration configuration,
         AppConfiguration appConfiguration)
     {
-        _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
         _appConfiguration = appConfiguration;

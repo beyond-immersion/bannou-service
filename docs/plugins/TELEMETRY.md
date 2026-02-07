@@ -17,13 +17,12 @@ The Telemetry service provides unified observability infrastructure for Bannou s
 
 | Dependency | Usage |
 |------------|-------|
-| lib-messaging (IMessageBus) | Error event publishing (injected but only used for potential error scenarios) |
 | AppConfiguration | Fallback service name from EffectiveAppId when ServiceName not configured |
 | OpenTelemetry SDK | Core tracing and metrics infrastructure |
 | OpenTelemetry.Exporter.OpenTelemetryProtocol | OTLP trace export (gRPC or HTTP) |
 | OpenTelemetry.Exporter.Prometheus.AspNetCore | Prometheus metrics scraping endpoint |
 
-**Note**: This plugin has **no dependencies on other Bannou plugins** - it is **optional Layer 0 infrastructure** per SERVICE_HIERARCHY. Unlike required L0 components (state, messaging, mesh) which cannot be disabled, telemetry can be freely disabled. When enabled, it loads FIRST so that required infrastructure libs can use `ITelemetryProvider` for instrumentation.
+**Note**: This plugin has **no dependencies on other Bannou plugins** - it is **optional Layer 0 infrastructure** per SERVICE_HIERARCHY. Unlike required L0 components (state, messaging, mesh) which cannot be disabled, telemetry can be freely disabled. When enabled, it loads FIRST so that required infrastructure libs can use `ITelemetryProvider` for instrumentation. Telemetry intentionally does not use lib-messaging for error events to avoid circular instrumentation concerns.
 
 ---
 
@@ -32,7 +31,7 @@ The Telemetry service provides unified observability infrastructure for Bannou s
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-state (StateStoreFactory) | Injects `ITelemetryProvider` to wrap state stores with instrumentation |
-| lib-messaging (RabbitMQMessageBus, RabbitMQMessageSubscriber) | Injects `ITelemetryProvider` for messaging operation tracing and metrics |
+| lib-messaging (RabbitMQMessageBus, RabbitMQMessageSubscriber, NativeEventConsumerBackend) | Injects `ITelemetryProvider` for messaging operation tracing and metrics |
 | lib-mesh (MeshInvocationClient) | Injects `ITelemetryProvider` for service mesh call tracing and metrics |
 
 **Key Design**: `ITelemetryProvider` interface is defined in `bannou-service/Services/ITelemetryProvider.cs` (not in lib-telemetry) so infrastructure libs can depend on it without depending on the telemetry plugin. A `NullTelemetryProvider` is registered by default; when lib-telemetry loads, it overrides with the real implementation.
@@ -80,7 +79,6 @@ This plugin does not consume external events.
 |---------|------|
 | `ILogger<TelemetryService>` | Structured logging |
 | `TelemetryServiceConfiguration` | Typed configuration access |
-| `IMessageBus` | Event publishing (error scenarios) |
 | `AppConfiguration` | Access to EffectiveAppId for service name fallback |
 | `ITelemetryProvider` (Singleton) | Main instrumentation interface registered by plugin |
 | `TelemetryProvider` | Implementation that manages ActivitySources and Meters |
@@ -108,6 +106,8 @@ This plugin does not consume external events.
 | `POST /telemetry/status` | Returns full configuration details including sampling ratio, service name, namespace, environment, and OTLP protocol |
 
 Both endpoints are simple configuration introspection - no state access or side effects.
+
+**Trace Filtering**: The OpenTelemetry SDK is configured to exclude `/health`, `/telemetry/health`, and `/metrics` paths from automatic ASP.NET Core tracing to reduce noise. Similarly, HttpClient instrumentation excludes requests with "health" in the path.
 
 ---
 
@@ -158,7 +158,11 @@ Both endpoints are simple configuration introspection - no state access or side 
 │  Standard Metrics (TelemetryMetrics):                               │
 │  • bannou.state.operations, bannou.state.duration_seconds           │
 │  • bannou.messaging.published, bannou.messaging.consumed            │
+│  • bannou.messaging.publish_duration_seconds,                       │
+│    bannou.messaging.consume_duration_seconds                        │
 │  • bannou.mesh.invocations, bannou.mesh.duration_seconds            │
+│  • bannou.mesh.circuit_breaker_state, ...state_changes, ...retries  │
+│  • bannou.mesh.raw_invocations (no circuit breaker participation)   │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -197,7 +201,7 @@ None currently identified.
 
 4. **Temporary service provider during setup**: `ConfigureOpenTelemetry` builds a temporary `ServiceProvider` to access configuration during SDK setup. This is documented as "the standard pattern for OpenTelemetry SDK setup when config is needed" but creates duplicate service instances temporarily.
 
-5. **Counter/Histogram creation on first use**: Counters and histograms are created lazily via `GetOrCreateCounter`/`GetOrCreateHistogram`. The null-coalescing to `null!` in these methods when meter is null is a code smell but is guarded by MetricsEnabled check upstream.
+5. **Counter/Histogram creation on first use**: Counters and histograms are created lazily via `GetOrCreateCounter`/`GetOrCreateHistogram`. The `return null!;` in these methods when meter is null is a code smell but is guarded by MetricsEnabled check upstream (so the branch should never execute in practice).
 
 6. **Parent-based trace sampling**: The `TracingSamplingRatio` is applied via a `ParentBasedSampler` wrapping a `TraceIdRatioBasedSampler`. This means child spans respect their parent's sampling decision, and only root spans are subject to ratio-based sampling. This is the recommended OpenTelemetry pattern for distributed tracing.
 
