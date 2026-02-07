@@ -490,6 +490,246 @@ public partial class ItemInstanceUnboundEvent
 
 }
 
+/// <summary>
+/// Published when items are successfully used, batched with deduplication by templateId+userId
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemUsedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When this batched event was published
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for this deduplication batch window
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("batchId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid BatchId { get; set; } = default!;
+
+    /// <summary>
+    /// Individual item use records included in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("uses")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ItemUseRecord> Uses { get; set; } = new System.Collections.ObjectModel.Collection<ItemUseRecord>();
+
+    /// <summary>
+    /// Total number of uses in this deduplication window including any deduplicated entries
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when item use attempts fail, batched with deduplication by templateId+userId
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemUseFailedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When this batched event was published
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for this deduplication batch window
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("batchId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid BatchId { get; set; } = default!;
+
+    /// <summary>
+    /// Individual item use failure records included in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failures")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ItemUseFailureRecord> Failures { get; set; } = new System.Collections.ObjectModel.Collection<ItemUseFailureRecord>();
+
+    /// <summary>
+    /// Total number of failures in this deduplication window including any deduplicated entries
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Record of a single successful item use within a batched event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemUseRecord
+{
+
+    /// <summary>
+    /// Unique identifier of the item instance that was used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the item template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable code of the item template for debugging and analytics
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the entity that used the item
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid UserId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of user entity (e.g., character, account, actor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string UserType { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the target entity if item was used on a target
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetId")]
+    public System.Guid? TargetId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of target entity when targetId is present
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetType")]
+    public string? TargetType { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the item was successfully used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("usedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UsedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the item was consumed (quantity decremented or item destroyed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consumed")]
+    public bool Consumed { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the contract instance that executed the use behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    public System.Guid? ContractInstanceId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Record of a single failed item use attempt within a batched event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemUseFailureRecord
+{
+
+    /// <summary>
+    /// Unique identifier of the item instance that failed to be used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the item template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable code of the item template for debugging and analytics
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the entity that attempted to use the item
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid UserId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of user entity (e.g., character, account, actor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string UserType { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the use attempt failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset FailedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable reason why the item use failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

@@ -376,6 +376,41 @@ paths:
       - role: developer
         states: {}
 
+  /item/use:
+    post:
+      operationId: useItem
+      tags:
+      - Item Instance
+      summary: Use an item (execute its behavior contract)
+      description: |
+        Uses an item by executing its behavior contract. The item's template must have
+        a useBehaviorContractTemplateId defined. Creates a transient contract instance,
+        completes the "use" milestone (triggering prebound APIs), and consumes the item
+        on success if the template defines it as consumable. Returns failure if the
+        contract's prebound APIs fail.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseItemRequest'
+      responses:
+        '200':
+          description: Item used successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UseItemResponse'
+        '400':
+          description: Item template has no behavior contract or invalid request
+        '404':
+          description: Item instance not found
+        '422':
+          description: Item use failed (contract prebound APIs failed)
+      x-permissions:
+      - role: user
+        states: {}
+
   # ===========================================================================
   # Item Queries (3 endpoints)
   # ===========================================================================
@@ -681,6 +716,11 @@ components:
           type: object
           nullable: true
           description: Any other game-specific data
+        useBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template ID for executable item behavior. When set, the item can be "used" via /item/use, which creates a transient contract instance, completes its "use" milestone (triggering prebound APIs), and optionally consumes the item.
 
     GetItemTemplateRequest:
       type: object
@@ -860,6 +900,11 @@ components:
           type: boolean
           nullable: true
           description: Active status
+        useBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template ID for executable item behavior (null to clear)
 
     DeprecateItemTemplateRequest:
       type: object
@@ -1023,6 +1068,11 @@ components:
           type: object
           nullable: true
           description: Other game-specific data
+        useBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template ID for executable item behavior (null if not usable)
         isActive:
           type: boolean
           description: Whether template is active
@@ -1463,3 +1513,83 @@ components:
             type: string
             format: uuid
           description: Instance IDs that were not found
+
+    # =========================================================================
+    # Item Use Models
+    # =========================================================================
+
+    UseItemRequest:
+      type: object
+      description: Request to use an item instance by executing its behavior contract
+      additionalProperties: false
+      required:
+      - instanceId
+      - userId
+      - userType
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item instance to use
+        userId:
+          type: string
+          format: uuid
+          description: Unique identifier of the entity using the item (character, account, or actor)
+        userType:
+          type: string
+          maxLength: 64
+          description: Type of user entity performing the use action (e.g., character, account, actor)
+        targetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional unique identifier of the target entity for directional item effects
+        targetType:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Type of target entity when targetId is provided
+        context:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional context data passed to contract template value substitution
+
+    UseItemResponse:
+      type: object
+      description: Response containing the result of an item use attempt
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - templateId
+      - consumed
+      properties:
+        success:
+          type: boolean
+          description: Whether the item use behavior executed successfully
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item instance that was used
+        templateId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item template defining the used item
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique identifier of the contract instance created for this use (null if creation failed)
+        consumed:
+          type: boolean
+          description: Whether the item was consumed (quantity decremented or destroyed)
+        remainingQuantity:
+          type: number
+          format: double
+          nullable: true
+          description: Remaining quantity after use (null if item was fully consumed or destroyed)
+        failureReason:
+          type: string
+          nullable: true
+          description: Human-readable reason for failure when success is false

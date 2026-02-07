@@ -19,6 +19,7 @@ Dual-model item management with templates (definitions/prototypes) and instances
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence + Redis caching for templates and instances |
 | lib-messaging (`IMessageBus`) | Publishing item lifecycle events; error event publishing |
+| lib-contract (`IContractClient`) | Execute item use behaviors via contract prebound APIs |
 
 ---
 
@@ -68,6 +69,9 @@ Dual-model item management with templates (definitions/prototypes) and instances
 | `item-instance.modified` | `ItemInstanceModifiedEvent` | Instance durability/stats/name changed |
 | `item-instance.destroyed` | `ItemInstanceDestroyedEvent` | Instance permanently deleted |
 | `item-instance.bound` | `ItemInstanceBoundEvent` | Instance bound to character |
+| `item-instance.unbound` | `ItemInstanceUnboundEvent` | Instance binding removed |
+| `item.used` | `ItemUsedEvent` | Batched item use successes (deduped by templateId+userId) |
+| `item.use-failed` | `ItemUseFailedEvent` | Batched item use failures (deduped by templateId+userId) |
 
 ### Consumed Events
 
@@ -89,6 +93,11 @@ This plugin does not consume external events.
 | `BindingAllowAdminOverride` | `ITEM_BINDING_ALLOW_ADMIN_OVERRIDE` | `true` | Allow rebinding soulbound items |
 | `ListOperationMaxRetries` | `ITEM_LIST_OPERATION_MAX_RETRIES` | `3` | Optimistic concurrency retry budget |
 | `LockTimeoutSeconds` | `ITEM_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout for item modifications |
+| `UseEventDeduplicationWindowSeconds` | `ITEM_USE_EVENT_DEDUPLICATION_WINDOW_SECONDS` | `60` | Deduplication window for batched use events |
+| `UseEventBatchMaxSize` | `ITEM_USE_EVENT_BATCH_MAX_SIZE` | `100` | Max records per batched use event |
+| `UseMilestoneCode` | `ITEM_USE_MILESTONE_CODE` | `use` | Contract milestone code to complete on item use |
+| `SystemPartyId` | `ITEM_SYSTEM_PARTY_ID` | *(computed)* | System party ID for use contracts (null = derive from gameId) |
+| `SystemPartyType` | `ITEM_SYSTEM_PARTY_TYPE` | `system` | Entity type for system party in use contracts |
 
 ---
 
@@ -97,10 +106,11 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<ItemService>` | Scoped | Structured logging |
-| `ItemServiceConfiguration` | Singleton | All 10 config properties |
+| `ItemServiceConfiguration` | Singleton | All 15 config properties |
 | `IStateStoreFactory` | Singleton | Access to 5 state stores (4 data + 1 lock) |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IDistributedLockProvider` | Scoped | Distributed locks for container change operations |
+| `IContractClient` | Scoped | Contract service for item use behavior execution (L1 hard dependency) |
 
 Service lifetime is **Scoped** (per-request). No background services.
 
@@ -116,13 +126,14 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **UpdateItemTemplate** (`/item/template/update`): Updates mutable fields only. Invalidates template cache after save. Publishes `item-template.updated`.
 - **DeprecateItemTemplate** (`/item/template/deprecate`): Marks template inactive. Optional `migrationTargetId` for upgrade paths. Existing instances remain valid. Invalidates cache. Publishes `item-template.deprecated`.
 
-### Instance Operations (5 endpoints)
+### Instance Operations (6 endpoints)
 
 - **CreateItemInstance** (`/item/instance/create`): Validates template exists and is active (but not IsDeprecated - see quirk #9). Quantity enforcement: Unique→1, Discrete→floor(value) capped at MaxStackSize, Continuous→as-is. Populates instance cache. Updates container index and template index (optimistic concurrency). Publishes `item-instance.created`.
 - **GetItemInstance** (`/item/instance/get`): Cache read-through pattern. Returns instance with template reference.
 - **ModifyItemInstance** (`/item/instance/modify`): Updates durability (delta), quantityDelta, customStats, customName, instanceMetadata, container/slot position. Container changes use distributed lock via `item-lock` store to prevent race conditions on index updates. Non-container changes skip locking. Invalidates instance cache. Publishes `item-instance.modified`.
 - **BindItemInstance** (`/item/instance/bind`): Binds instance to character ID. Checks `BindingAllowAdminOverride` for rebinding. Enriches event with template code (fallback: `missing:{templateId}` if template not found). Publishes `item-instance.bound`.
 - **DestroyItemInstance** (`/item/instance/destroy`): Validates template's `Destroyable` flag unless reason="admin". Removes from container and template indexes. Invalidates cache. Publishes `item-instance.destroyed`.
+- **UseItem** (`/item/use`): Executes item behavior via Contract service. Requires template to have `useBehaviorContractTemplateId` set. Creates two-party contract (user + deterministic system party), completes the "use" milestone triggering prebound APIs, then consumes the item on success (decrements quantity or destroys if last). Events are batched with deduplication by templateId+userId. Returns BadRequest if template has no behavior contract or milestone fails. Publishes batched `item.used` or `item.use-failed`.
 
 ### Query Operations (3 endpoints)
 
@@ -289,6 +300,8 @@ No bugs identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-02-07**: Itemize Anything - Items as Executable Contracts ([#280](https://github.com/beyond-immersion/bannou-service/issues/280)). Added `useBehaviorContractTemplateId` to ItemTemplate for contract-delegated item behavior. New `/item/use` endpoint creates two-party contracts (user + deterministic system party), completes the "use" milestone triggering prebound APIs, and consumes items on success. Events are batched with deduplication window (configurable, default 60s) by templateId+userId key. Added IContractClient as L1 hard dependency per SERVICE-HIERARCHY. Five new config properties for use behavior tuning.
 
 - **2026-01-31**: Unbind endpoint implementation - Added `/item/instance/unbind` endpoint with `UnbindItemInstanceAsync` method. Admin-only permission, clears binding state, and publishes `ItemInstanceUnboundEvent` with reason and previous character ID. Returns BadRequest (400) if item is not bound. Schema, generated code, and service implementation all updated.
 

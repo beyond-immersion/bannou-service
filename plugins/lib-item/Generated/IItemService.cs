@@ -85,6 +85,11 @@ public partial interface IItemService : IBannouService
         Task<(StatusCodes, DestroyItemInstanceResponse?)> DestroyItemInstanceAsync(DestroyItemInstanceRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// UseItem operation
+        /// </summary>
+        Task<(StatusCodes, UseItemResponse?)> UseItemAsync(UseItemRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// ListItemsByContainer operation
         /// </summary>
         Task<(StatusCodes, ListItemsResponse?)> ListItemsByContainerAsync(ListItemsByContainerRequest body, CancellationToken cancellationToken = default(CancellationToken));

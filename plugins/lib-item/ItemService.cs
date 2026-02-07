@@ -1,6 +1,10 @@
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -20,13 +24,26 @@ public partial class ItemService : IItemService
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IContractClient _contractClient;
     private readonly ILogger<ItemService> _logger;
     private readonly ItemServiceConfiguration _configuration;
 
-    // Parsed config defaults (boundary parsing per T25)
+    // Parsed config defaults (boundary parsing per IMPLEMENTATION TENETS)
     private readonly ItemRarity _defaultRarity;
     private readonly WeightPrecision _defaultWeightPrecision;
     private readonly SoulboundType _defaultSoulboundType;
+
+    /// <summary>
+    /// Thread-safe dictionary for batching item use events by templateId+userId key.
+    /// Key format: "{templateId}:{userId}". Values track uses within deduplication window.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, ItemUseBatchState> _useBatches = new();
+
+    /// <summary>
+    /// Thread-safe dictionary for batching item use failure events by templateId+userId key.
+    /// Key format: "{templateId}:{userId}". Values track failures within deduplication window.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, ItemUseFailureBatchState> _failureBatches = new();
 
     // Template store key prefixes
     private const string TPL_PREFIX = "tpl:";
@@ -42,20 +59,28 @@ public partial class ItemService : IItemService
     /// <summary>
     /// Initializes a new instance of the ItemService.
     /// </summary>
+    /// <param name="messageBus">Message bus for event publishing.</param>
+    /// <param name="stateStoreFactory">Factory for accessing state stores.</param>
+    /// <param name="lockProvider">Provider for distributed locks.</param>
+    /// <param name="contractClient">Client for Contract service (L1) - hard dependency per SERVICE HIERARCHY.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Service configuration.</param>
     public ItemService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         IDistributedLockProvider lockProvider,
+        IContractClient contractClient,
         ILogger<ItemService> logger,
         ItemServiceConfiguration configuration)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _lockProvider = lockProvider;
+        _contractClient = contractClient;
         _logger = logger;
         _configuration = configuration;
 
-        // Configuration already provides typed enums (T25 compliant)
+        // Configuration already provides typed enums (IMPLEMENTATION TENETS compliant)
         _defaultRarity = _configuration.DefaultRarity;
         _defaultWeightPrecision = _configuration.DefaultWeightPrecision;
         _defaultSoulboundType = _configuration.DefaultSoulboundType;
@@ -120,6 +145,7 @@ public partial class ItemService : IItemService
                 Requirements = body.Requirements is not null ? BannouJson.Serialize(body.Requirements) : null,
                 Display = body.Display is not null ? BannouJson.Serialize(body.Display) : null,
                 Metadata = body.Metadata is not null ? BannouJson.Serialize(body.Metadata) : null,
+                UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId,
                 IsActive = true,
                 IsDeprecated = false,
                 CreatedAt = now,
@@ -311,6 +337,9 @@ public partial class ItemService : IItemService
             if (body.Requirements is not null) model.Requirements = BannouJson.Serialize(body.Requirements);
             if (body.Display is not null) model.Display = BannouJson.Serialize(body.Display);
             if (body.Metadata is not null) model.Metadata = BannouJson.Serialize(body.Metadata);
+            // UseBehaviorContractTemplateId: null in request means "don't change", explicit value updates it
+            // To clear, caller must pass the null GUID explicitly via a separate endpoint or admin action
+            if (body.UseBehaviorContractTemplateId.HasValue) model.UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId;
             if (body.IsActive.HasValue) model.IsActive = body.IsActive.Value;
             model.UpdatedAt = now;
 
@@ -914,6 +943,602 @@ public partial class ItemService : IItemService
 
     #endregion
 
+    #region Item Use Operations
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, UseItemResponse?)> UseItemAsync(
+        UseItemRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug(
+                "Using item instance {InstanceId} by user {UserId} ({UserType})",
+                body.InstanceId, body.UserId, body.UserType);
+
+            // 1. Load instance
+            var instance = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
+            if (instance is null)
+            {
+                _logger.LogDebug("Item instance {InstanceId} not found", body.InstanceId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // 2. Load template (uses cache)
+            var template = await GetTemplateWithCacheAsync(instance.TemplateId.ToString(), cancellationToken);
+            if (template is null)
+            {
+                _logger.LogWarning(
+                    "Template {TemplateId} not found for instance {InstanceId}, possible data inconsistency",
+                    instance.TemplateId, body.InstanceId);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // 3. Validate template has behavior contract
+            if (!template.UseBehaviorContractTemplateId.HasValue)
+            {
+                _logger.LogDebug(
+                    "Item template {TemplateId} ({Code}) has no behavior contract",
+                    template.TemplateId, template.Code);
+                return (StatusCodes.BadRequest, new UseItemResponse
+                {
+                    Success = false,
+                    InstanceId = body.InstanceId,
+                    TemplateId = template.TemplateId,
+                    Consumed = false,
+                    FailureReason = "Item template has no use behavior defined"
+                });
+            }
+
+            // 4. Create contract instance with user + system parties
+            var systemPartyId = GetOrComputeSystemPartyId(template.GameId);
+            var contractInstanceId = await CreateItemUseContractInstanceAsync(
+                template.UseBehaviorContractTemplateId.Value,
+                body.UserId,
+                body.UserType,
+                systemPartyId,
+                body.InstanceId,
+                template.TemplateId,
+                body.Context,
+                cancellationToken);
+
+            if (!contractInstanceId.HasValue)
+            {
+                _logger.LogWarning(
+                    "Failed to create contract instance for item use: template={TemplateId}, user={UserId}",
+                    template.UseBehaviorContractTemplateId.Value, body.UserId);
+
+                await RecordUseFailureAsync(
+                    body.InstanceId,
+                    template.TemplateId,
+                    template.Code,
+                    body.UserId,
+                    body.UserType,
+                    "Failed to create contract instance",
+                    cancellationToken);
+
+                return (StatusCodes.BadRequest, new UseItemResponse
+                {
+                    Success = false,
+                    InstanceId = body.InstanceId,
+                    TemplateId = template.TemplateId,
+                    Consumed = false,
+                    FailureReason = "Failed to create contract instance"
+                });
+            }
+
+            // 5. Complete the "use" milestone (triggers prebound APIs)
+            var milestoneSuccess = await CompleteUseMilestoneAsync(
+                contractInstanceId.Value,
+                cancellationToken);
+
+            if (!milestoneSuccess)
+            {
+                _logger.LogWarning(
+                    "Use milestone failed for item {InstanceId}, contract {ContractId}",
+                    body.InstanceId, contractInstanceId.Value);
+
+                await RecordUseFailureAsync(
+                    body.InstanceId,
+                    template.TemplateId,
+                    template.Code,
+                    body.UserId,
+                    body.UserType,
+                    "Contract use milestone failed",
+                    cancellationToken);
+
+                return (StatusCodes.BadRequest, new UseItemResponse
+                {
+                    Success = false,
+                    InstanceId = body.InstanceId,
+                    TemplateId = template.TemplateId,
+                    ContractInstanceId = contractInstanceId.Value,
+                    Consumed = false,
+                    FailureReason = "Item use behavior execution failed"
+                });
+            }
+
+            // 6. Consume item on success (decrement quantity or destroy)
+            var (consumed, remainingQuantity) = await ConsumeItemAsync(
+                body.InstanceId,
+                instance,
+                template,
+                cancellationToken);
+
+            // 7. Record success for batched event publishing
+            await RecordUseSuccessAsync(
+                body.InstanceId,
+                template.TemplateId,
+                template.Code,
+                body.UserId,
+                body.UserType,
+                body.TargetId,
+                body.TargetType,
+                consumed,
+                contractInstanceId.Value,
+                cancellationToken);
+
+            _logger.LogDebug(
+                "Item {InstanceId} used successfully, consumed={Consumed}, remaining={Remaining}",
+                body.InstanceId, consumed, remainingQuantity);
+
+            return (StatusCodes.OK, new UseItemResponse
+            {
+                Success = true,
+                InstanceId = body.InstanceId,
+                TemplateId = template.TemplateId,
+                ContractInstanceId = contractInstanceId.Value,
+                Consumed = consumed,
+                RemainingQuantity = remainingQuantity
+            });
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "API error using item instance {InstanceId}", body.InstanceId);
+            return (StatusCodes.InternalServerError, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error using item instance {InstanceId}", body.InstanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "item", "UseItem", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/item/use",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Computes or retrieves the deterministic system party ID for item use contracts.
+    /// Uses SHA-256 hash of game ID to generate a deterministic UUID v5.
+    /// </summary>
+    /// <param name="gameId">The game ID to derive the system party ID from.</param>
+    /// <returns>The system party ID (from config if set, otherwise computed).</returns>
+    private Guid GetOrComputeSystemPartyId(string gameId)
+    {
+        // If configured explicitly, use that
+        if (!string.IsNullOrEmpty(_configuration.SystemPartyId) &&
+            Guid.TryParse(_configuration.SystemPartyId, out var configuredId))
+        {
+            return configuredId;
+        }
+
+        // Compute deterministic UUID from game ID using SHA-256
+        // This ensures the same game always gets the same system party ID across instances
+        var inputBytes = Encoding.UTF8.GetBytes($"item-system-party:{gameId}");
+        var hashBytes = SHA256.HashData(inputBytes);
+
+        // Take first 16 bytes of hash and convert to GUID
+        // Set version (4 bits) and variant (2 bits) per UUID v5 spec
+        var guidBytes = new byte[16];
+        Array.Copy(hashBytes, guidBytes, 16);
+        guidBytes[6] = (byte)((guidBytes[6] & 0x0F) | 0x50); // Version 5
+        guidBytes[8] = (byte)((guidBytes[8] & 0x3F) | 0x80); // Variant 1
+
+        return new Guid(guidBytes);
+    }
+
+    /// <summary>
+    /// Creates a transient contract instance for item use with user and system parties.
+    /// </summary>
+    /// <returns>Contract instance ID if successful, null otherwise.</returns>
+    private async Task<Guid?> CreateItemUseContractInstanceAsync(
+        Guid templateId,
+        Guid userId,
+        string userType,
+        Guid systemPartyId,
+        Guid instanceId,
+        Guid itemTemplateId,
+        object? context,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Parse user entity type from string
+            if (!TryParseEntityType(userType, out var userEntityType))
+            {
+                _logger.LogWarning(
+                    "Invalid user entity type {UserType} for item use contract",
+                    userType);
+                return null;
+            }
+
+            // Parse system entity type from config
+            if (!TryParseEntityType(_configuration.SystemPartyType, out var systemEntityType))
+            {
+                _logger.LogWarning(
+                    "Invalid system entity type {SystemType} in configuration",
+                    _configuration.SystemPartyType);
+                return null;
+            }
+
+            // Build game metadata with item context for prebound API substitution
+            var gameMetadata = new Dictionary<string, object>
+            {
+                ["itemInstanceId"] = instanceId.ToString(),
+                ["itemTemplateId"] = itemTemplateId.ToString(),
+                ["userId"] = userId.ToString(),
+                ["userType"] = userType
+            };
+
+            // Merge any additional context provided by caller
+            if (context is IDictionary<string, object> contextDict)
+            {
+                foreach (var kvp in contextDict)
+                {
+                    gameMetadata[kvp.Key] = kvp.Value;
+                }
+            }
+
+            var request = new CreateContractInstanceRequest
+            {
+                TemplateId = templateId,
+                Parties = new List<ContractPartyInput>
+                {
+                    new()
+                    {
+                        EntityId = userId,
+                        EntityType = userEntityType,
+                        Role = "user"
+                    },
+                    new()
+                    {
+                        EntityId = systemPartyId,
+                        EntityType = systemEntityType,
+                        Role = "system"
+                    }
+                },
+                GameMetadata = gameMetadata
+            };
+
+            var response = await _contractClient.CreateContractInstanceAsync(request, cancellationToken);
+            return response.ContractId;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex,
+                "API error creating contract instance for template {TemplateId}",
+                templateId);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Unexpected error creating contract instance for template {TemplateId}",
+                templateId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Parses a string entity type to the EntityType enum.
+    /// </summary>
+    private static bool TryParseEntityType(string value, out EntityType result)
+    {
+        // Try exact match first (case-insensitive)
+        if (Enum.TryParse<EntityType>(value, ignoreCase: true, out result))
+        {
+            return true;
+        }
+
+        // Handle common string variants
+        result = value.ToLowerInvariant() switch
+        {
+            "system" => EntityType.System,
+            "account" => EntityType.Account,
+            "character" => EntityType.Character,
+            "actor" => EntityType.Actor,
+            "guild" => EntityType.Guild,
+            _ => default
+        };
+
+        return result != default || value.Equals("system", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Completes the "use" milestone on the contract instance, triggering prebound APIs.
+    /// </summary>
+    /// <returns>True if milestone completed successfully, false otherwise.</returns>
+    private async Task<bool> CompleteUseMilestoneAsync(
+        Guid contractInstanceId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var request = new CompleteMilestoneRequest
+            {
+                ContractId = contractInstanceId,
+                MilestoneCode = _configuration.UseMilestoneCode
+            };
+
+            var response = await _contractClient.CompleteMilestoneAsync(request, cancellationToken);
+
+            // Check if milestone was actually completed by checking its status
+            return response.Milestone.Status == MilestoneStatus.Completed;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex,
+                "API error completing milestone for contract {ContractId}",
+                contractInstanceId);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Unexpected error completing milestone for contract {ContractId}",
+                contractInstanceId);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Consumes the item after successful use (decrements quantity or destroys).
+    /// </summary>
+    /// <returns>Tuple of (wasConsumed, remainingQuantity or null if destroyed).</returns>
+    private async Task<(bool Consumed, double? RemainingQuantity)> ConsumeItemAsync(
+        Guid instanceId,
+        ItemInstanceModel instance,
+        ItemTemplateModel template,
+        CancellationToken cancellationToken)
+    {
+        // For now, always consume on use (MVP behavior)
+        // Future: per-template configuration for consumable vs reusable items
+        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+
+        if (instance.Quantity <= 1)
+        {
+            // Last item - destroy the instance
+            await RemoveFromListAsync(
+                StateStoreDefinitions.ItemInstanceStore,
+                $"{INST_CONTAINER_INDEX}{instance.ContainerId}",
+                instanceId.ToString(),
+                cancellationToken);
+            await RemoveFromListAsync(
+                StateStoreDefinitions.ItemInstanceStore,
+                $"{INST_TEMPLATE_INDEX}{instance.TemplateId}",
+                instanceId.ToString(),
+                cancellationToken);
+            await instanceStore.DeleteAsync($"{INST_PREFIX}{instanceId}", cancellationToken);
+            await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
+
+            // Publish destroy event
+            await _messageBus.TryPublishAsync("item-instance.destroyed", new ItemInstanceDestroyedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                InstanceId = instanceId,
+                TemplateId = instance.TemplateId,
+                ContainerId = instance.ContainerId,
+                RealmId = instance.RealmId,
+                Quantity = instance.Quantity,
+                OriginType = instance.OriginType,
+                CreatedAt = instance.CreatedAt,
+                ModifiedAt = DateTimeOffset.UtcNow
+            }, cancellationToken);
+
+            return (true, null);
+        }
+        else
+        {
+            // Decrement quantity
+            instance.Quantity -= 1;
+            instance.ModifiedAt = DateTimeOffset.UtcNow;
+            await instanceStore.SaveAsync($"{INST_PREFIX}{instanceId}", instance, cancellationToken: cancellationToken);
+            await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
+
+            // Publish modify event
+            await _messageBus.TryPublishAsync("item-instance.modified", new ItemInstanceModifiedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                InstanceId = instanceId,
+                TemplateId = instance.TemplateId,
+                ContainerId = instance.ContainerId,
+                RealmId = instance.RealmId,
+                Quantity = instance.Quantity,
+                OriginType = instance.OriginType,
+                CreatedAt = instance.CreatedAt,
+                ModifiedAt = instance.ModifiedAt
+            }, cancellationToken);
+
+            return (true, instance.Quantity);
+        }
+    }
+
+    /// <summary>
+    /// Records a successful item use for batched event publishing.
+    /// Events are batched by templateId+userId within the deduplication window.
+    /// </summary>
+    private async Task RecordUseSuccessAsync(
+        Guid instanceId,
+        Guid templateId,
+        string templateCode,
+        Guid userId,
+        string userType,
+        Guid? targetId,
+        string? targetType,
+        bool consumed,
+        Guid contractInstanceId,
+        CancellationToken cancellationToken)
+    {
+        var batchKey = $"{templateId}:{userId}";
+        var now = DateTimeOffset.UtcNow;
+        var windowSeconds = _configuration.UseEventDeduplicationWindowSeconds;
+        var maxBatchSize = _configuration.UseEventBatchMaxSize;
+
+        var record = new ItemUseRecord
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            TemplateCode = templateCode,
+            UserId = userId,
+            UserType = userType,
+            TargetId = targetId,
+            TargetType = targetType,
+            UsedAt = now,
+            Consumed = consumed,
+            ContractInstanceId = contractInstanceId
+        };
+
+        // Get or create batch state, checking for window expiry
+        var batch = _useBatches.AddOrUpdate(
+            batchKey,
+            _ => new ItemUseBatchState(),
+            (_, existing) =>
+            {
+                // If window expired, start a new batch
+                if ((now - existing.WindowStart).TotalSeconds >= windowSeconds)
+                {
+                    return new ItemUseBatchState();
+                }
+                return existing;
+            });
+
+        var totalCount = batch.AddRecord(record);
+
+        // Check if we should publish (batch full or this is the first record in a new window)
+        var shouldPublish = totalCount >= maxBatchSize;
+        var windowExpired = (now - batch.WindowStart).TotalSeconds >= windowSeconds && totalCount > 0;
+
+        if (shouldPublish || windowExpired)
+        {
+            // Try to remove and publish (only one thread will succeed)
+            if (_useBatches.TryRemove(batchKey, out var publishBatch))
+            {
+                await PublishItemUsedEventAsync(publishBatch, cancellationToken);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Records a failed item use for batched event publishing.
+    /// Events are batched by templateId+userId within the deduplication window.
+    /// </summary>
+    private async Task RecordUseFailureAsync(
+        Guid instanceId,
+        Guid templateId,
+        string templateCode,
+        Guid userId,
+        string userType,
+        string reason,
+        CancellationToken cancellationToken)
+    {
+        var batchKey = $"{templateId}:{userId}";
+        var now = DateTimeOffset.UtcNow;
+        var windowSeconds = _configuration.UseEventDeduplicationWindowSeconds;
+        var maxBatchSize = _configuration.UseEventBatchMaxSize;
+
+        var record = new ItemUseFailureRecord
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            TemplateCode = templateCode,
+            UserId = userId,
+            UserType = userType,
+            FailedAt = now,
+            Reason = reason
+        };
+
+        // Get or create batch state, checking for window expiry
+        var batch = _failureBatches.AddOrUpdate(
+            batchKey,
+            _ => new ItemUseFailureBatchState(),
+            (_, existing) =>
+            {
+                // If window expired, start a new batch
+                if ((now - existing.WindowStart).TotalSeconds >= windowSeconds)
+                {
+                    return new ItemUseFailureBatchState();
+                }
+                return existing;
+            });
+
+        var totalCount = batch.AddRecord(record);
+
+        // Check if we should publish (batch full)
+        if (totalCount >= maxBatchSize)
+        {
+            // Try to remove and publish (only one thread will succeed)
+            if (_failureBatches.TryRemove(batchKey, out var publishBatch))
+            {
+                await PublishItemUseFailedEventAsync(publishBatch, cancellationToken);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Publishes a batched ItemUsedEvent.
+    /// </summary>
+    private async Task PublishItemUsedEventAsync(
+        ItemUseBatchState batch,
+        CancellationToken cancellationToken)
+    {
+        var (records, totalCount) = batch.GetSnapshot();
+        if (records.Count == 0) return;
+
+        var evt = new ItemUsedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            BatchId = batch.BatchId,
+            Uses = records,
+            TotalCount = totalCount
+        };
+
+        await _messageBus.TryPublishAsync("item.used", evt, cancellationToken);
+        _logger.LogDebug(
+            "Published batched item.used event: batchId={BatchId}, records={Count}, total={Total}",
+            batch.BatchId, records.Count, totalCount);
+    }
+
+    /// <summary>
+    /// Publishes a batched ItemUseFailedEvent.
+    /// </summary>
+    private async Task PublishItemUseFailedEventAsync(
+        ItemUseFailureBatchState batch,
+        CancellationToken cancellationToken)
+    {
+        var (records, totalCount) = batch.GetSnapshot();
+        if (records.Count == 0) return;
+
+        var evt = new ItemUseFailedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            BatchId = batch.BatchId,
+            Failures = records,
+            TotalCount = totalCount
+        };
+
+        await _messageBus.TryPublishAsync("item.use-failed", evt, cancellationToken);
+        _logger.LogDebug(
+            "Published batched item.use-failed event: batchId={BatchId}, records={Count}, total={Total}",
+            batch.BatchId, records.Count, totalCount);
+    }
+
+    #endregion
+
     #region Query Operations
 
     /// <inheritdoc/>
@@ -1346,6 +1971,7 @@ public partial class ItemService : IItemService
             Requirements = model.Requirements is not null ? BannouJson.Deserialize<object>(model.Requirements) : null,
             Display = model.Display is not null ? BannouJson.Deserialize<object>(model.Display) : null,
             Metadata = model.Metadata is not null ? BannouJson.Deserialize<object>(model.Metadata) : null,
+            UseBehaviorContractTemplateId = model.UseBehaviorContractTemplateId,
             IsActive = model.IsActive,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
@@ -1428,6 +2054,12 @@ internal class ItemTemplateModel
     public Guid? MigrationTargetId { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Contract template ID for executable item behavior.
+    /// When set, the item can be "used" via /item/use endpoint.
+    /// </summary>
+    public Guid? UseBehaviorContractTemplateId { get; set; }
 }
 
 /// <summary>
@@ -1454,6 +2086,102 @@ internal class ItemInstanceModel
     public Guid? OriginId { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? ModifiedAt { get; set; }
+}
+
+/// <summary>
+/// Tracks batched item use events within a deduplication window.
+/// Thread-safe via lock on the instance.
+/// </summary>
+internal sealed class ItemUseBatchState
+{
+    private readonly object _lock = new();
+
+    /// <summary>Unique identifier for this batch window.</summary>
+    public Guid BatchId { get; } = Guid.NewGuid();
+
+    /// <summary>When this batch window started.</summary>
+    public DateTimeOffset WindowStart { get; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Individual use records in this batch.</summary>
+    public List<ItemUseRecord> Records { get; } = new();
+
+    /// <summary>Total count including any that were deduplicated (same instance used multiple times).</summary>
+    public int TotalCount { get; private set; }
+
+    /// <summary>
+    /// Thread-safe addition of a use record to this batch.
+    /// </summary>
+    /// <param name="record">The use record to add.</param>
+    /// <returns>Current total count after addition.</returns>
+    public int AddRecord(ItemUseRecord record)
+    {
+        lock (_lock)
+        {
+            Records.Add(record);
+            TotalCount++;
+            return TotalCount;
+        }
+    }
+
+    /// <summary>
+    /// Thread-safe snapshot of current state for publishing.
+    /// </summary>
+    /// <returns>Tuple of (records copy, total count).</returns>
+    public (List<ItemUseRecord> Records, int TotalCount) GetSnapshot()
+    {
+        lock (_lock)
+        {
+            return (new List<ItemUseRecord>(Records), TotalCount);
+        }
+    }
+}
+
+/// <summary>
+/// Tracks batched item use failure events within a deduplication window.
+/// Thread-safe via lock on the instance.
+/// </summary>
+internal sealed class ItemUseFailureBatchState
+{
+    private readonly object _lock = new();
+
+    /// <summary>Unique identifier for this batch window.</summary>
+    public Guid BatchId { get; } = Guid.NewGuid();
+
+    /// <summary>When this batch window started.</summary>
+    public DateTimeOffset WindowStart { get; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Individual failure records in this batch.</summary>
+    public List<ItemUseFailureRecord> Records { get; } = new();
+
+    /// <summary>Total count including any that were deduplicated.</summary>
+    public int TotalCount { get; private set; }
+
+    /// <summary>
+    /// Thread-safe addition of a failure record to this batch.
+    /// </summary>
+    /// <param name="record">The failure record to add.</param>
+    /// <returns>Current total count after addition.</returns>
+    public int AddRecord(ItemUseFailureRecord record)
+    {
+        lock (_lock)
+        {
+            Records.Add(record);
+            TotalCount++;
+            return TotalCount;
+        }
+    }
+
+    /// <summary>
+    /// Thread-safe snapshot of current state for publishing.
+    /// </summary>
+    /// <returns>Tuple of (records copy, total count).</returns>
+    public (List<ItemUseFailureRecord> Records, int TotalCount) GetSnapshot()
+    {
+        lock (_lock)
+        {
+            return (new List<ItemUseFailureRecord>(Records), TotalCount);
+        }
+    }
 }
 
 #endregion

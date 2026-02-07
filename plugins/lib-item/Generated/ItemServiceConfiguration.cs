@@ -113,4 +113,38 @@ public class ItemServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int LockTimeoutSeconds { get; set; } = 30;
 
+    /// <summary>
+    /// Time window in seconds for deduplicating item use events by templateId+userId combination
+    /// Environment variable: ITEM_USE_EVENT_DEDUPLICATION_WINDOW_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
+    public int UseEventDeduplicationWindowSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Maximum number of use records per batched event before forced publish
+    /// Environment variable: ITEM_USE_EVENT_BATCH_MAX_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
+    public int UseEventBatchMaxSize { get; set; } = 100;
+
+    /// <summary>
+    /// Milestone code to complete when using items via contract behavior
+    /// Environment variable: ITEM_USE_MILESTONE_CODE
+    /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 64)]
+    public string UseMilestoneCode { get; set; } = "use";
+
+    /// <summary>
+    /// System party ID for item use contracts (null uses deterministic UUID from game ID)
+    /// Environment variable: ITEM_SYSTEM_PARTY_ID
+    /// </summary>
+    public string? SystemPartyId { get; set; }
+
+    /// <summary>
+    /// Entity type string for the system party in item use contracts
+    /// Environment variable: ITEM_SYSTEM_PARTY_TYPE
+    /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 64)]
+    public string SystemPartyType { get; set; } = "system";
+
 }

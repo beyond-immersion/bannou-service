@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Item;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Item;
 
@@ -433,6 +448,12 @@ public partial class CreateItemTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Contract template ID for executable item behavior. When set, the item can be "used" via /item/use, which creates a transient contract instance, completes its "use" milestone (triggering prebound APIs), and optionally consumes the item.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("useBehaviorContractTemplateId")]
+    public System.Guid? UseBehaviorContractTemplateId { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -692,6 +713,12 @@ public partial class UpdateItemTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool? IsActive { get; set; } = default!;
 
+    /// <summary>
+    /// Contract template ID for executable item behavior (null to clear)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("useBehaviorContractTemplateId")]
+    public System.Guid? UseBehaviorContractTemplateId { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -938,6 +965,12 @@ public partial class ItemTemplateResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template ID for executable item behavior (null if not usable)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("useBehaviorContractTemplateId")]
+    public System.Guid? UseBehaviorContractTemplateId { get; set; } = default!;
 
     /// <summary>
     /// Whether template is active
@@ -1563,6 +1596,114 @@ public partial class BatchGetItemInstancesResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> NotFound { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+}
+
+/// <summary>
+/// Request to use an item instance by executing its behavior contract
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UseItemRequest
+{
+
+    /// <summary>
+    /// Unique identifier of the item instance to use
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the entity using the item (character, account, or actor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid UserId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of user entity performing the use action (e.g., character, account, actor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string UserType { get; set; } = default!;
+
+    /// <summary>
+    /// Optional unique identifier of the target entity for directional item effects
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetId")]
+    public System.Guid? TargetId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of target entity when targetId is provided
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetType")]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string? TargetType { get; set; } = default!;
+
+    /// <summary>
+    /// Additional context data passed to contract template value substitution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("context")]
+    public object? Context { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response containing the result of an item use attempt
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UseItemResponse
+{
+
+    /// <summary>
+    /// Whether the item use behavior executed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the item instance that was used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the item template defining the used item
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the contract instance created for this use (null if creation failed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    public System.Guid? ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the item was consumed (quantity decremented or destroyed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consumed")]
+    public bool Consumed { get; set; } = default!;
+
+    /// <summary>
+    /// Remaining quantity after use (null if item was fully consumed or destroyed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("remainingQuantity")]
+    public double? RemainingQuantity { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable reason for failure when success is false
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failureReason")]
+    public string? FailureReason { get; set; } = default!;
 
 }
 

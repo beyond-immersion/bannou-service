@@ -68,3 +68,43 @@ x-service-configuration:
       env: ITEM_LOCK_TIMEOUT_SECONDS
       default: 30
       description: Timeout in seconds for distributed locks on item instance modifications
+
+    # Item Use Configuration
+    useEventDeduplicationWindowSeconds:
+      type: integer
+      minimum: 1
+      maximum: 3600
+      env: ITEM_USE_EVENT_DEDUPLICATION_WINDOW_SECONDS
+      default: 60
+      description: Time window in seconds for deduplicating item use events by templateId+userId combination
+
+    useEventBatchMaxSize:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      env: ITEM_USE_EVENT_BATCH_MAX_SIZE
+      default: 100
+      description: Maximum number of use records per batched event before forced publish
+
+    useMilestoneCode:
+      type: string
+      minLength: 1
+      maxLength: 64
+      env: ITEM_USE_MILESTONE_CODE
+      default: "use"
+      description: Milestone code to complete when using items via contract behavior
+
+    systemPartyId:
+      type: string
+      format: uuid
+      nullable: true
+      env: ITEM_SYSTEM_PARTY_ID
+      description: System party ID for item use contracts (null uses deterministic UUID from game ID)
+
+    systemPartyType:
+      type: string
+      minLength: 1
+      maxLength: 64
+      env: ITEM_SYSTEM_PARTY_TYPE
+      default: "system"
+      description: Entity type string for the system party in item use contracts
