@@ -365,10 +365,18 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             {
                 if (!values[i].IsNullOrEmpty)
                 {
-                    var deserialized = BannouJson.Deserialize<TValue>(values[i]!);
-                    if (deserialized != null)
+                    try
                     {
-                        result[keyList[i]] = deserialized;
+                        var deserialized = BannouJson.Deserialize<TValue>(values[i]!);
+                        if (deserialized != null)
+                        {
+                            result[keyList[i]] = deserialized;
+                        }
+                    }
+                    catch (System.Text.Json.JsonException ex)
+                    {
+                        // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                        _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", keyList[i], _keyPrefix);
                     }
                 }
             }
@@ -697,10 +705,18 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             {
                 if (!member.IsNullOrEmpty)
                 {
-                    var item = BannouJson.Deserialize<TItem>(member!);
-                    if (item != null)
+                    try
                     {
-                        result.Add(item);
+                        var item = BannouJson.Deserialize<TItem>(member!);
+                        if (item != null)
+                        {
+                            result.Add(item);
+                        }
+                    }
+                    catch (System.Text.Json.JsonException ex)
+                    {
+                        // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                        _logger.LogError(ex, "JSON deserialization failed for set member in '{Key}' in store '{Store}' - skipping corrupted item", key, _keyPrefix);
                     }
                 }
             }
@@ -1392,6 +1408,12 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             _logger.LogError(ex, "Redis timeout getting hash field '{Field}' from hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
             throw;
         }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+            _logger.LogError(ex, "JSON deserialization failed for hash field '{Field}' in hash '{Key}' in store '{Store}' - data may be corrupted", field, key, _keyPrefix);
+            return default;
+        }
     }
 
     /// <inheritdoc/>
@@ -1577,10 +1599,18 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             var result = new Dictionary<string, TField>();
             foreach (var entry in entries)
             {
-                var fieldValue = BannouJson.Deserialize<TField>(entry.Value!);
-                if (fieldValue != null)
+                try
                 {
-                    result[entry.Name!] = fieldValue;
+                    var fieldValue = BannouJson.Deserialize<TField>(entry.Value!);
+                    if (fieldValue != null)
+                    {
+                        result[entry.Name!] = fieldValue;
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the field
+                    _logger.LogError(ex, "JSON deserialization failed for hash field '{Field}' in hash '{Key}' in store '{Store}' - skipping corrupted field", entry.Name, key, _keyPrefix);
                 }
             }
 

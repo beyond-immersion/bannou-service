@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Collections;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -81,7 +82,16 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             return null;
         }
 
-        return BannouJson.Deserialize<TValue>(entry.ValueJson);
+        try
+        {
+            return BannouJson.Deserialize<TValue>(entry.ValueJson);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+            _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _storeName);
+            return null;
+        }
     }
 
     /// <inheritdoc/>
@@ -101,7 +111,16 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             return (null, null);
         }
 
-        return (BannouJson.Deserialize<TValue>(entry.ValueJson), entry.ETag);
+        try
+        {
+            return (BannouJson.Deserialize<TValue>(entry.ValueJson), entry.ETag);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+            _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _storeName);
+            return (null, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -274,10 +293,18 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var result = new Dictionary<string, TValue>();
         foreach (var entry in entries)
         {
-            var deserialized = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (deserialized != null)
+            try
             {
-                result[entry.Key] = deserialized;
+                var deserialized = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (deserialized != null)
+                {
+                    result[entry.Key] = deserialized;
+                }
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
             }
         }
 
@@ -419,16 +446,24 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             var results = new List<TValue>();
             foreach (var entry in entries)
             {
-                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-                if (value != null)
+                try
                 {
-                    results.Add(value);
+                    var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                    if (value != null)
+                    {
+                        results.Add(value);
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                            entry.Key, _storeName);
+                    }
                 }
-                else
+                catch (System.Text.Json.JsonException ex)
                 {
-                    _logger.LogError(
-                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
-                        entry.Key, _storeName);
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                    _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
                 }
             }
 
@@ -460,15 +495,23 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var deserializedValues = new List<TValue>();
         foreach (var entry in allEntries)
         {
-            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (value == null)
+            try
             {
-                _logger.LogError(
-                    "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
-                    entry.Key, _storeName);
-                continue;
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value == null)
+                {
+                    _logger.LogError(
+                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                        entry.Key, _storeName);
+                    continue;
+                }
+                deserializedValues.Add(value);
             }
-            deserializedValues.Add(value);
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
+            }
         }
 
         var values = deserializedValues
@@ -561,16 +604,24 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             var items = new List<TValue>();
             foreach (var entry in entries)
             {
-                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-                if (value != null)
+                try
                 {
-                    items.Add(value);
+                    var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                    if (value != null)
+                    {
+                        items.Add(value);
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                            entry.Key, _storeName);
+                    }
                 }
-                else
+                catch (System.Text.Json.JsonException ex)
                 {
-                    _logger.LogError(
-                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
-                        entry.Key, _storeName);
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                    _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
                 }
             }
 
@@ -604,15 +655,23 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var deserializedValues = new List<TValue>();
         foreach (var entry in allEntries)
         {
-            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (value == null)
+            try
             {
-                _logger.LogError(
-                    "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
-                    entry.Key, _storeName);
-                continue;
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value == null)
+                {
+                    _logger.LogError(
+                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                        entry.Key, _storeName);
+                    continue;
+                }
+                deserializedValues.Add(value);
             }
-            deserializedValues.Add(value);
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
+            }
         }
 
         var query = deserializedValues.AsQueryable();
@@ -1035,10 +1094,33 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
                 return $"{jsonUnquote} LIKE @p{paramIndex++}";
 
             case QueryOperator.In:
-                // For array containment: JSON_CONTAINS(ValueJson, '"value"', '$.path')
-                var jsonValue = BannouJson.Serialize(condition.Value);
-                parameters.Add(jsonValue);
-                return $"JSON_CONTAINS(`ValueJson`, @p{paramIndex++}, '{escapedPath}')";
+                // Check if value is a collection (from Enumerable.Contains pattern)
+                if (condition.Value is IEnumerable enumerable && condition.Value is not string)
+                {
+                    // Generate: JSON_UNQUOTE(JSON_EXTRACT(ValueJson, '$.path')) IN (@p1, @p2, ...)
+                    var inParams = new List<string>();
+                    foreach (var item in enumerable)
+                    {
+                        parameters.Add(SerializeValue(item));
+                        inParams.Add($"@p{paramIndex++}");
+                    }
+
+                    if (inParams.Count == 0)
+                    {
+                        // Empty collection - never matches
+                        return "1 = 0";
+                    }
+
+                    return $"{jsonUnquote} IN ({string.Join(", ", inParams)})";
+                }
+                else
+                {
+                    // Legacy behavior: For array containment in JSON
+                    // JSON_CONTAINS(ValueJson, '"value"', '$.path')
+                    var jsonValue = BannouJson.Serialize(condition.Value);
+                    parameters.Add(jsonValue);
+                    return $"JSON_CONTAINS(`ValueJson`, @p{paramIndex++}, '{escapedPath}')";
+                }
 
             case QueryOperator.Exists:
                 // Check if value is non-null (covers both "path exists with non-null value" cases)
@@ -1371,6 +1453,89 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             return true;
         }
 
+        // Handle Enumerable.Contains(collection, item) - static extension method
+        // Pattern: ids.Contains(x.Id) compiles to Enumerable.Contains(ids, x.Id)
+        if (methodCall.Method.Name == "Contains" &&
+            methodCall.Method.DeclaringType == typeof(Enumerable) &&
+            methodCall.Arguments.Count == 2)
+        {
+            // Arguments[0] is the collection, Arguments[1] is the item (member access)
+            if (!TryGetConstantValue(methodCall.Arguments[0], out var collection))
+            {
+                return false;
+            }
+
+            if (!TryGetMemberPath(methodCall.Arguments[1], parameter, out var path))
+            {
+                return false;
+            }
+
+            if (collection == null)
+            {
+                return false;
+            }
+
+            conditions.Add(new QueryCondition
+            {
+                Path = path,
+                Operator = QueryOperator.In,
+                Value = collection
+            });
+
+            return true;
+        }
+
+        // Handle List<T>.Contains(item) - instance method
+        // Pattern: myList.Contains(x.Id)
+        if (methodCall.Method.Name == "Contains" &&
+            methodCall.Object != null &&
+            methodCall.Arguments.Count == 1 &&
+            IsCollectionType(methodCall.Object.Type))
+        {
+            // Object is the collection, Arguments[0] is the item (member access)
+            if (!TryGetConstantValue(methodCall.Object, out var collection))
+            {
+                return false;
+            }
+
+            if (!TryGetMemberPath(methodCall.Arguments[0], parameter, out var path))
+            {
+                return false;
+            }
+
+            if (collection == null)
+            {
+                return false;
+            }
+
+            conditions.Add(new QueryCondition
+            {
+                Path = path,
+                Operator = QueryOperator.In,
+                Value = collection
+            });
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a type is a collection type (List, Array, HashSet, etc.)
+    /// </summary>
+    private static bool IsCollectionType(Type type)
+    {
+        if (type.IsArray) return true;
+        if (type.IsGenericType)
+        {
+            var genericDef = type.GetGenericTypeDefinition();
+            return genericDef == typeof(List<>) ||
+                   genericDef == typeof(HashSet<>) ||
+                   genericDef == typeof(IList<>) ||
+                   genericDef == typeof(ICollection<>) ||
+                   genericDef == typeof(IEnumerable<>);
+        }
         return false;
     }
 
