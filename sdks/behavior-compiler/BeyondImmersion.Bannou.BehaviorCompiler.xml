@@ -3118,18 +3118,21 @@
                 sources:
                   - character-personality
                   - character-history
+                on_change: handle_target_changed
             </code>
             </para>
             <para>
-            When the watched resource changes, a perception is injected into the
-            actor's bounded channel with the updated snapshot data.
+            When the watched resource changes, either:
+            - If on_change is specified, the named flow is invoked with the change perception
+            - Otherwise, a perception is injected into the actor's bounded channel
             </para>
             </remarks>
             <param name="ResourceType">Resource type (e.g., "character", "realm").</param>
             <param name="ResourceId">Expression evaluating to resource GUID.</param>
             <param name="Sources">Optional list of source types to watch (e.g., ["character-personality"]).</param>
+            <param name="OnChange">Optional flow name to invoke when the resource changes.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction.#ctor(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.String})">
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction.#ctor(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.String},System.String)">
             <summary>
             Subscribe to change notifications for a resource.
             </summary>
@@ -3144,16 +3147,19 @@
                 sources:
                   - character-personality
                   - character-history
+                on_change: handle_target_changed
             </code>
             </para>
             <para>
-            When the watched resource changes, a perception is injected into the
-            actor's bounded channel with the updated snapshot data.
+            When the watched resource changes, either:
+            - If on_change is specified, the named flow is invoked with the change perception
+            - Otherwise, a perception is injected into the actor's bounded channel
             </para>
             </remarks>
             <param name="ResourceType">Resource type (e.g., "character", "realm").</param>
             <param name="ResourceId">Expression evaluating to resource GUID.</param>
             <param name="Sources">Optional list of source types to watch (e.g., ["character-personality"]).</param>
+            <param name="OnChange">Optional flow name to invoke when the resource changes.</param>
         </member>
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction.ResourceType">
             <summary>Resource type (e.g., "character", "realm").</summary>
@@ -3163,6 +3169,9 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction.Sources">
             <summary>Optional list of source types to watch (e.g., ["character-personality"]).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction.OnChange">
+            <summary>Optional flow name to invoke when the resource changes.</summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.UnwatchAction">
             <summary>

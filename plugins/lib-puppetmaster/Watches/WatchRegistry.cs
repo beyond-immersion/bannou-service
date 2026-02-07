@@ -44,10 +44,11 @@ public sealed class WatchRegistry
     /// <param name="resourceType">Resource type (e.g., "character").</param>
     /// <param name="resourceId">Resource GUID.</param>
     /// <param name="sources">Optional list of source types to filter (null = all sources).</param>
-    public void AddWatch(Guid actorId, string resourceType, Guid resourceId, IReadOnlyList<string>? sources)
+    /// <param name="onChange">Optional flow name to invoke when the resource changes.</param>
+    public void AddWatch(Guid actorId, string resourceType, Guid resourceId, IReadOnlyList<string>? sources, string? onChange = null)
     {
         var resourceKey = MakeResourceKey(resourceType, resourceId);
-        var entry = new WatchEntry(resourceType, resourceId, sources);
+        var entry = new WatchEntry(resourceType, resourceId, sources, onChange);
 
         // Add to actor's watch set
         var actorWatches = _actorWatches.GetOrAdd(actorId, _ => new ConcurrentDictionary<string, WatchEntry>());
@@ -240,7 +241,9 @@ public sealed class WatchRegistry
 /// <param name="ResourceType">Resource type (e.g., "character", "realm").</param>
 /// <param name="ResourceId">Resource GUID.</param>
 /// <param name="Sources">Optional filter - only notify for changes from these source types.</param>
+/// <param name="OnChange">Optional flow name to invoke when the resource changes.</param>
 public sealed record WatchEntry(
     string ResourceType,
     Guid ResourceId,
-    IReadOnlyList<string>? Sources);
+    IReadOnlyList<string>? Sources,
+    string? OnChange);

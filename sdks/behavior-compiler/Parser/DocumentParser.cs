@@ -1349,7 +1349,14 @@ public sealed class DocumentParser
             }
         }
 
-        return new WatchAction(resourceType, resourceId, sources);
+        // Optional: on_change (flow name string)
+        string? onChange = null;
+        if (dict.TryGetValue("on_change", out var onChangeObj) && onChangeObj is string oc)
+        {
+            onChange = oc;
+        }
+
+        return new WatchAction(resourceType, resourceId, sources, onChange);
     }
 
     private UnwatchAction? ParseUnwatchAction(object? value, List<ParseError> errors)

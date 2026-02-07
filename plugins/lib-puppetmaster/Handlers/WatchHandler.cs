@@ -90,12 +90,13 @@ public sealed class WatchHandler : IActionHandler
             var actorId = context.ActorId.Value;
 
             // 3. Register watch in registry
-            _registry.AddWatch(actorId, watchAction.ResourceType, resourceId, watchAction.Sources);
+            _registry.AddWatch(actorId, watchAction.ResourceType, resourceId, watchAction.Sources, watchAction.OnChange);
 
             _logger.LogDebug(
-                "watch: Actor {ActorId} watching {ResourceType}:{ResourceId} with sources: {Sources}",
+                "watch: Actor {ActorId} watching {ResourceType}:{ResourceId} with sources: {Sources}, on_change: {OnChange}",
                 actorId, watchAction.ResourceType, resourceId,
-                watchAction.Sources != null ? string.Join(", ", watchAction.Sources) : "(all)");
+                watchAction.Sources != null ? string.Join(", ", watchAction.Sources) : "(all)",
+                watchAction.OnChange ?? "(queue)");
 
             // 4. Log for debugging
             context.Logs.Add(new LogEntry(

@@ -301,20 +301,24 @@ public sealed record ListWatchersAction(
 ///     sources:
 ///       - character-personality
 ///       - character-history
+///     on_change: handle_target_changed
 /// </code>
 /// </para>
 /// <para>
-/// When the watched resource changes, a perception is injected into the
-/// actor's bounded channel with the updated snapshot data.
+/// When the watched resource changes, either:
+/// - If on_change is specified, the named flow is invoked with the change perception
+/// - Otherwise, a perception is injected into the actor's bounded channel
 /// </para>
 /// </remarks>
 /// <param name="ResourceType">Resource type (e.g., "character", "realm").</param>
 /// <param name="ResourceId">Expression evaluating to resource GUID.</param>
 /// <param name="Sources">Optional list of source types to watch (e.g., ["character-personality"]).</param>
+/// <param name="OnChange">Optional flow name to invoke when the resource changes.</param>
 public sealed record WatchAction(
     string ResourceType,
     string ResourceId,
-    IReadOnlyList<string>? Sources = null) : ActionNode;
+    IReadOnlyList<string>? Sources = null,
+    string? OnChange = null) : ActionNode;
 
 /// <summary>
 /// Unsubscribe from change notifications for a resource.
