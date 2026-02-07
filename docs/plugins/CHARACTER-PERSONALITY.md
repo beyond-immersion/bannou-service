@@ -19,7 +19,7 @@ Machine-readable personality traits and combat preferences for NPC behavior deci
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for personality and combat preference data |
 | lib-messaging (`IMessageBus`) | Publishing personality/combat lifecycle events, evolution events, and resource reference events |
-| lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| lib-messaging (`IEventConsumer`) | Event handler registration for cache invalidation (personality.evolved, combat-preferences.evolved) |
 | lib-resource (via events) | Publishes `resource.reference.registered` / `resource.reference.unregistered` events for character reference tracking |
 
 ---
@@ -28,9 +28,10 @@ Machine-readable personality traits and combat preferences for NPC behavior deci
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-actor (`PersonalityCache`) | Caches personality traits, combat preferences, and backstory with configurable TTL via `PersonalityCacheTtlMinutes`; loads via `ICharacterPersonalityClient` on miss; returns stale data if load fails |
-| lib-character | References `ICharacterPersonalityClient` for enriched character responses (includes personality traits and combat prefs via query params) |
+| lib-actor | Discovers `PersonalityProviderFactory` and `CombatPreferencesProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection for ABML expression evaluation. Providers use `IPersonalityDataCache` internally. |
 | lib-resource | Receives `resource.reference.registered/unregistered` events for cleanup coordination; calls `/cleanup-by-character` endpoint on cascade delete |
+
+**Note**: lib-character (L2) does NOT depend on lib-character-personality (L4) per SERVICE_HIERARCHY. The enrichment query params (`includePersonality`, `includeCombatPreferences`) are logged but ignored; callers should aggregate from L4 services directly.
 
 ---
 
@@ -66,7 +67,12 @@ Both types share the same state store, distinguished by key prefix.
 
 ### Consumed Events
 
-This plugin does not consume external events. `IEventConsumer` is injected but only used for registration pattern compliance; no handlers are registered.
+| Topic | Handler | Action |
+|-------|---------|--------|
+| `personality.evolved` | `HandlePersonalityEvolvedAsync` | Invalidates `IPersonalityDataCache` for affected character (cache lives in this service) |
+| `combat-preferences.evolved` | `HandleCombatPreferencesEvolvedAsync` | Invalidates `IPersonalityDataCache` for affected character |
+
+**Note**: The service subscribes to its own events for internal cache invalidation. This ensures running actors using the `IVariableProviderFactory` instances get fresh data on their next behavior tick.
 
 ---
 
@@ -95,10 +101,17 @@ This plugin does not consume external events. `IEventConsumer` is injected but o
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CharacterPersonalityService>` | Scoped | Structured logging |
-| `CharacterPersonalityServiceConfiguration` | Singleton | Evolution constants |
+| `CharacterPersonalityServiceConfiguration` | Singleton | Evolution constants and batch limits |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Scoped | Event publishing |
-| `IEventConsumer` | Scoped | Event registration (no handlers) |
+| `IEventConsumer` | Scoped | Event handler registration (personality.evolved, combat-preferences.evolved) |
+| `IPersonalityDataCache` | Singleton | Internal cache for personality and combat preferences data with TTL |
+
+**Additional DI Registrations** (via Plugin):
+| Service | Lifetime | Role |
+|---------|----------|------|
+| `PersonalityProviderFactory` | Singleton | `IVariableProviderFactory` for `${personality.*}` ABML expressions |
+| `CombatPreferencesProviderFactory` | Singleton | `IVariableProviderFactory` for `${combat.*}` ABML expressions |
 
 Service lifetime is **Scoped** (per-request).
 
@@ -263,7 +276,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Evolution concurrency exhaustion reports success falsely**~~: **FIXED** (2026-02-02) - Both `RecordExperienceAsync` and `EvolveCombatPreferencesAsync` now track whether the optimistic concurrency save succeeded. If all retries are exhausted, the response sets `PersonalityEvolved=false` / `PreferencesEvolved=false` and logs a warning. The experience is still considered "recorded" (returned OK) since the probability was rolled, but evolution is not reported as successful if the state wasn't persisted.
+None.
 
 ### Intentional Quirks
 
@@ -279,7 +292,7 @@ None. The service is feature-complete for its scope.
 
 6. **BERSERKER only exits via DEFEAT**: The only code path leaving BERSERKER style is the 40% chance on DEFEAT experience. No other experience type offers an exit.
 
-7. **Actor service cache invalidation is event-driven**: lib-actor's `PersonalityCache` subscribes to `personality.evolved` and `combat-preferences.evolved` events and invalidates the cache immediately on receipt. However, if the personality service is unavailable when an actor needs to reload data (after invalidation or cache miss), the cache returns stale data if available (graceful degradation). This is intentional - actors continue running with last-known personality rather than failing.
+7. **Cache invalidation is event-driven with stale fallback**: `PersonalityDataCache` (in this service) subscribes to `personality.evolved` and `combat-preferences.evolved` events and invalidates entries immediately. If the service is unavailable when reloading after invalidation or cache miss, the cache returns stale data if available (graceful degradation). Actors using `IVariableProviderFactory` instances continue running with last-known personality rather than failing.
 
 ### Design Considerations (Requires Planning)
 
@@ -289,10 +302,10 @@ None. The service is feature-complete for its scope.
 2. **Trait direction weights embedded in code**: The experience-type-to-trait mapping table is hardcoded in a switch statement. Adding new experience types or changing weights requires code changes, not configuration.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/265 -->
 
-3. ~~**Actor service caches personalities**~~: **CORRECTED** (2026-02-02) - The description was inaccurate. lib-actor DOES subscribe to `personality.evolved` and `combat-preferences.evolved` events and immediately invalidates the cache on receipt. Actors will use stale data ONLY if the personality service is unavailable when loading (graceful degradation). Moved to Intentional Quirks #7 with accurate description.
-
-4. **Combat style transitions are asymmetric**: Some styles (BERSERKER) have very few exit paths (only DEFEAT with 40% chance), while others (BALANCED) can transition in multiple directions. This may create style "traps" where characters get stuck in certain combat modes.
+3. **Combat style transitions are asymmetric**: Some styles (BERSERKER) have very few exit paths (only DEFEAT with 40% chance), while others (BALANCED) can transition in multiple directions. This may create style "traps" where characters get stuck in certain combat modes.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/264 -->
+
+4. **Cache TTL hardcoded**: `PersonalityDataCache` uses a hardcoded 5-minute TTL. There's a TODO comment to add a configuration property to the schema. lib-actor has `PersonalityCacheTtlMinutes` in its config, but that's not used by this cache (which lives in lib-character-personality).
 
 ---
 
@@ -300,10 +313,4 @@ None. The service is feature-complete for its scope.
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-### Completed
-
-- **2026-02-03**: Added compression support for centralized Resource service compression. Implemented `/character-personality/get-compress-data` and `/character-personality/restore-from-archive` endpoints. Compression callback registered at startup (priority 10) for inclusion in hierarchical character archival. Unit tests added (12 tests covering compression scenarios).
-- **2026-02-02**: Fixed evolution concurrency exhaustion false positive - both evolution methods now track save success and set `evolved=false` if all retries exhausted.
-- **2026-02-02**: Corrected Design Consideration #3 about actor cache - documentation was inaccurate. lib-actor DOES invalidate cache on evolution events. Moved accurate description to Intentional Quirks #7.
-
-See AUDIT markers in Potential Extensions section for items awaiting design decisions.
+See AUDIT markers in Potential Extensions and Design Considerations sections for items awaiting design decisions.

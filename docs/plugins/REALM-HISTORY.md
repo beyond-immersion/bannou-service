@@ -195,7 +195,7 @@ None identified.
 1. **GetLore returns OK with empty list**: Unlike DeleteLore (which returns NotFound for missing lore), GetLore always returns 200 OK with an empty elements list. Read operations are lenient; delete operations are strict. This differs from character-history's `GetBackstory` which returns 404 NotFound for missing backstory.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/309 -->
 
-2. **Summarize doesn't publish any event**: `SummarizeRealmHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
+2. **Summarize is a read-only operation (no event)**: `SummarizeRealmHistoryAsync` does not publish any event because it's a pure read operation that doesn't modify state. Per FOUNDATION TENETS (Event-Driven Architecture), events notify about state changes - read operations don't trigger events. This is consistent with other read operations like `GetRealmLore` and `GetRealmParticipation`.
 
 3. **Unknown lore element types display raw enum string**: The `GenerateLoreSummary` method uses `_ => element.ElementType.ToString()` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
 
@@ -217,9 +217,10 @@ None identified.
 
 5. ~~**DeleteParticipation doesn't delete empty indices**~~: **FIXED** (2026-02-06) - DualIndexHelper.RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Applies to both realm-history and character-history since they share the DualIndexHelper infrastructure.
 
-6. **DeleteAll is O(n) with N+1 queries**: Iterates through all participations for the realm individually, fetching each to find its eventId, then updating each event index separately. For realms with thousands of events, this could be slow. Uses bulk operations for participation records but not for event index updates.
+6. ~~**DeleteAll is O(n) with N+1 queries**~~: **FIXED** (2026-02-06) - Documentation was stale. DualIndexHelper.RemoveAllByPrimaryKeyAsync already uses bulk operations for all state store interactions (GetBulkAsync, SaveBulkAsync, DeleteBulkAsync). The only remaining O(n) is the resource reference unregistration loop, which publishes individual events - this is expected behavior for event publishing.
 
-7. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection. Concurrent participation recordings for the same realm could result in lost index entries.
+7. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection. Concurrent participation recordings for the same realm could result in lost index entries. (Duplicate of #3 - same root cause, different symptom description)
+<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/307 -->
 
 ---
 
@@ -238,4 +239,6 @@ None identified.
 
 ### Completed
 
+- **2026-02-06**: Documentation cleanup - "Read-modify-write without distributed locks" (#7) is a duplicate of "No concurrency control on indexes" (#3). Both track the same root cause (no locking in DualIndexHelper). Linked both to issue #307.
+- **2026-02-06**: Documentation cleanup - "DeleteAll is O(n) with N+1 queries" was stale. DualIndexHelper already uses bulk operations. Remaining O(n) for reference unregistration is expected event publishing behavior.
 - **2026-02-06**: Fixed empty index cleanup in DualIndexHelper - RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Shared fix affects both realm-history and character-history.

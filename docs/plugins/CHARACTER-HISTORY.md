@@ -244,6 +244,14 @@ None. The service is feature-complete for its scope.
 
 3. **Helper abstractions constructed inline**: `DualIndexHelper` and `BackstoryStorageHelper` are instantiated directly in the constructor rather than registered in DI. This is intentional: helpers require service-specific configuration (key prefixes, data access lambdas) that can't be generalized. Testing works via `IStateStoreFactory` mocking - no special setup required.
 
+4. **Summarize is a read-only operation (no event)**: `SummarizeHistoryAsync` does not publish any event because it's a pure read operation that doesn't modify state. Per FOUNDATION TENETS (Event-Driven Architecture), events notify about state changes - read operations don't trigger events. This is consistent with other read operations like `GetBackstory` and `GetParticipation`.
+
+5. **Summarization switch expressions have unreachable defaults**: `GenerateBackstorySummary` and `GenerateParticipationSummary` both use switch expressions with `_ =>` defaults that are unreachable at runtime. The defaults (`"{element.Key}: {element.Value}"` and `"participated in"`) exist because: (1) C# requires exhaustive switches, and (2) they provide graceful degradation if enum values are added to the schema but the switch isn't updated. This is defensive programming, not a bug.
+
+6. **FormatValue only handles snake_case**: The `FormatValue` helper (`value.Replace("_", " ").ToLowerInvariant()`) only converts snake_case to readable text. This is intentional: the schema documents snake_case as the convention for machine-readable backstory values (e.g., `knights_guild`, `northlands`). Values using camelCase or PascalCase would render incorrectly, but such values don't follow the documented convention.
+
+7. **GetBulkAsync silently drops missing records**: `DualIndexHelper.GetRecordsByIdsAsync` returns only records that exist. If an index contains stale record IDs (records deleted without index cleanup), they are silently excluded from results. This is self-healing behavior - throwing would crash callers for rare edge cases. Callers receive valid data; counts may be slightly fewer than expected if data inconsistency exists.
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory pagination for all list operations**: Fetches ALL participation records into memory, then filters and paginates. Characters with thousands of participations load entire list. Should implement store-level pagination.
@@ -260,19 +268,17 @@ None. The service is feature-complete for its scope.
 
 5. ~~**Empty indices left behind after RemoveRecordAsync**~~: **FIXED** (2026-02-06) - DualIndexHelper.RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Applies to both character-history and realm-history since they share the DualIndexHelper infrastructure.
 
-6. **Summarize doesn't publish any event**: Unlike all other operations which publish typed events (recorded, deleted, created, updated), `SummarizeHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
+6. ~~**Unknown element types fall back to generic format**~~: **RECLASSIFIED** (2026-02-06) - Moved to Intentional Quirks. The switch expression handles all 9 defined enum values. The `_ =>` default is defensive programming for compiler exhaustiveness and future-proofing, not a bug.
 
-7. **Unknown element types fall back to generic format**: `GenerateBackstorySummary` uses `_ => $"{element.Key}: {element.Value}"` for unrecognized element types. If new backstory element types are added to the schema, they'll produce raw key/value summaries until the switch-case is updated.
+7. ~~**Unknown participation roles fall back to "participated in"**~~: **RECLASSIFIED** (2026-02-06) - Moved to Intentional Quirks. Same pattern as item 6 - the switch expression handles all 8 defined `ParticipationRole` enum values. The `_ =>` default is defensive programming.
 
-8. **Unknown participation roles fall back to "participated in"**: `GenerateParticipationSummary` uses `_ => "participated in"` for unrecognized roles. Generic fallback may not reflect actual involvement.
+8. ~~**FormatValue is simplistic transformation**~~: **RECLASSIFIED** (2026-02-06) - Moved to Intentional Quirks. The schema documents snake_case as the convention for machine-readable values (e.g., `knights_guild`, `northlands`). The method correctly handles the documented convention; supporting other formats would be scope creep.
 
-9. **FormatValue is simplistic transformation**: `value.Replace("_", " ").ToLowerInvariant()` only handles snake_case, doesn't handle camelCase or PascalCase, doesn't capitalize sentences. "NORTHERN_KINGDOM" becomes "northern kingdom" but "NorthernKingdom" stays as-is.
+9. ~~**GetBulkAsync results silently drop missing records**~~: **RECLASSIFIED** (2026-02-06) - Moved to Intentional Quirks. This is self-healing behavior: if an index contains stale record IDs (records deleted without index cleanup), bulk retrieval silently excludes them rather than throwing. This is the correct design - throwing would crash callers for edge cases.
 
-10. **GetBulkAsync results silently drop missing records**: `DualIndexHelper.GetRecordsByIdsAsync` returns `.Values` from bulk get - any IDs in the index that no longer exist in the store are silently excluded from results. No logging, no error, just fewer items than expected.
+10. **Empty/null entityId returns silently without logging**: Multiple helper methods (GetAsync, DeleteAsync, ExistsAsync in BackstoryStorageHelper; GetRecordAsync, GetRecordIdsByPrimaryKeyAsync, etc. in DualIndexHelper) check `string.IsNullOrEmpty(entityId)` and return null/false/0 without any logging. Invalid calls produce no trace.
 
-11. **Empty/null entityId returns silently without logging**: Multiple helper methods (GetAsync, DeleteAsync, ExistsAsync in BackstoryStorageHelper; GetRecordAsync, GetRecordIdsByPrimaryKeyAsync, etc. in DualIndexHelper) check `string.IsNullOrEmpty(entityId)` and return null/false/0 without any logging. Invalid calls produce no trace.
-
-12. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
+11. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
 
 ---
 
@@ -288,4 +294,7 @@ None. The service is feature-complete for its scope.
 
 ### Completed
 
+- **2026-02-06**: Reclassified "FormatValue is simplistic transformation" from Design Considerations to Intentional Quirks. The method correctly handles snake_case per the documented schema convention; supporting other formats would be scope creep.
+- **2026-02-06**: Reclassified "unknown element types fallback" and "unknown participation roles fallback" from Design Considerations to Intentional Quirks. Both switch expressions handle all defined enum values; the `_ =>` defaults are defensive programming for compiler exhaustiveness and future-proofing, not bugs.
+- **2026-02-06**: Fixed empty index cleanup in DualIndexHelper - RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Shared fix affects both character-history and realm-history.
 - **2026-02-06**: Fixed hardcoded cache TTL (T21 violation) - Added `BackstoryCacheTtlSeconds` configuration property
