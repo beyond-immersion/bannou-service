@@ -9,7 +9,7 @@
 
 ## Overview
 
-Character encounter tracking service for memorable interactions between characters. Manages the lifecycle of encounters (shared interaction records) and perspectives (individual participant views), enabling dialogue triggers ("We've met before..."), grudges/alliances ("You killed my brother!"), quest hooks ("The merchant you saved has a job"), and NPC memory. Implements a multi-participant design where each encounter has one shared record with N perspectives (one per participant), scaling linearly O(N) for group events. Features time-based memory decay applied lazily on access (not via background jobs), weighted sentiment aggregation across encounter histories, configurable encounter type codes (6 built-in + custom), automatic encounter pruning per-character and per-pair limits, and ETag-based optimistic concurrency for perspective updates. All state is maintained via manual index management (character, pair, location, global, custom-type) since the state store does not support prefix queries.
+Character encounter tracking service for memorable interactions between characters. Manages the lifecycle of encounters (shared interaction records) and perspectives (individual participant views), enabling dialogue triggers ("We've met before..."), grudges/alliances ("You killed my brother!"), quest hooks ("The merchant you saved has a job"), and NPC memory. Implements a multi-participant design where each encounter has one shared record with N perspectives (one per participant), scaling linearly O(N) for group events. Features time-based memory decay (configurable lazy-on-access or scheduled background modes), weighted sentiment aggregation across encounter histories, configurable encounter type codes (6 built-in + custom), automatic encounter pruning per-character and per-pair limits, and ETag-based optimistic concurrency for perspective updates. All state is maintained via manual index management (character, pair, location, global, custom-type) since the state store does not support prefix queries.
 
 ---
 
@@ -21,6 +21,7 @@ Character encounter tracking service for memorable interactions between characte
 | lib-messaging (`IMessageBus`) | Publishing encounter lifecycle events; error event publishing |
 | lib-messaging (`IEventConsumer`) | Consuming `character.deleted` events for cleanup |
 | lib-character (`ICharacterClient`) | Validating participant character IDs exist on RecordEncounter |
+| lib-resource (`IResourceClient`) | Registering cleanup and compression callbacks on startup |
 
 ---
 
@@ -112,9 +113,12 @@ Character encounter tracking service for memorable interactions between characte
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event subscription registration |
 | `ICharacterClient` | Scoped | Cross-service character validation |
+| `IResourceClient` | Scoped | Cleanup/compression callback registration on startup |
+| `IEncounterDataCache` | Singleton | In-memory cache for encounter queries (5-minute TTL), used by Actor's EncountersProvider |
+| `EncountersProviderFactory` | Singleton | `IVariableProviderFactory` implementation for Actor's `${encounters.*}` ABML variables |
 | `MemoryDecaySchedulerService` | Hosted | Background service for scheduled memory decay (only active when MemoryDecayMode is 'scheduled') |
 
-Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). No distributed locks used.
+Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). Three singleton helpers: configuration, encounter cache, and variable provider factory. No distributed locks used.
 
 ---
 
@@ -343,23 +347,16 @@ Index Architecture
 
 ## Stubs & Unimplemented Features
 
-1. ~~**Scheduled decay mode**~~: **FIXED** (2026-02-01) - Added `MemoryDecaySchedulerService` background service that activates when `MemoryDecayMode` is set to `scheduled`. Iterates through all characters using the global character index and applies decay to perspectives based on elapsed time. Uses configurable check interval (default 60 minutes) and startup delay (default 30 seconds). Publishes `encounter.memory.faded` events when perspectives cross the fade threshold.
-
-2. ~~**Duplicate encounter detection**~~: **FIXED** (2026-02-01) - `IsDuplicateEncounterAsync` validates participants, type, and timestamp within configurable tolerance (`DuplicateTimestampToleranceMinutes`). Returns 409 Conflict on match.
-
-3. ~~**Delete type with encounters validation**~~: **FIXED** (2026-02-01) - `GetTypeEncounterCountAsync` counts encounters using a type via `type-enc-idx-{CODE}` index. `DeleteEncounterTypeAsync` returns 409 Conflict if count > 0.
-
-4. ~~**Character existence validation**~~: **FIXED** (2026-02-01) - `ValidateCharactersExistAsync` calls `ICharacterClient.GetCharacterAsync` for each participant in parallel. Returns 404 if any character not found.
+No stubs or unimplemented features remain.
 
 ---
 
 ## Potential Extensions
 
-1. **Background decay worker**: Implement a hosted service that periodically calls `DecayMemories` for all characters, enabling the "scheduled" mode path and reducing lazy decay latency on first access.
-2. **Encounter aggregation**: Pre-compute and cache sentiment values per character pair, updating on encounter record/delete/perspective-update to avoid O(N) computation on every GetSentiment call.
-3. **Location-based encounter proximity**: Integrate with location hierarchy to find encounters "near" a location (ancestor/descendant queries).
-4. **Memory decay curves**: Support non-linear decay (exponential, logarithmic) via configurable decay function, allowing traumatic encounters to persist longer than casual ones.
-5. **Encounter archival**: Instead of hard-deleting pruned encounters, move them to a compressed archive format for historical queries.
+1. **Encounter aggregation**: Pre-compute and cache sentiment values per character pair, updating on encounter record/delete/perspective-update to avoid O(N) computation on every GetSentiment call.
+2. **Location-based encounter proximity**: Integrate with location hierarchy to find encounters "near" a location (ancestor/descendant queries).
+3. **Memory decay curves**: Support non-linear decay (exponential, logarithmic) via configurable decay function, allowing traumatic encounters to persist longer than casual ones.
+4. **Encounter archival**: Instead of hard-deleting pruned encounters, move them to a compressed archive format for historical queries.
 
 ---
 
@@ -379,6 +376,8 @@ No bugs identified.
 
 4. **Lazy decay has write side effects**: When loading perspectives for queries (QueryByCharacter, QueryBetween, QueryByLocation), lazy decay is applied to each perspective. This means read-only queries have write side effects (updating MemoryStrength and LastDecayedAtUnix in the store).
 
+5. **Index updates use 3-attempt ETag retry loops**: All index update methods (character index, pair index, location index, custom type index) use `GetWithETagAsync` + `TrySaveAsync` with a 3-attempt retry pattern. Concurrent modifications are detected via ETag mismatch and retried. After 3 failures, a warning is logged but the operation continues (best-effort index consistency).
+
 ### Design Considerations (Requires Planning)
 
 1. **N+1 query pattern everywhere**: All query operations (QueryByCharacter, QueryBetween, QueryByLocation) load perspectives and encounters individually by key. A character with 1000 encounters generates thousands of state store calls per query. The pair index and character index approach mitigates this for lookups but not for loading.
@@ -397,16 +396,10 @@ No bugs identified.
 
 8. **FindPerspective scans character index**: Finding a specific perspective by (encounterId, characterId) requires loading the character's entire perspective index and then loading each perspective until finding one matching the encounter. There is no direct encounter-to-perspective index.
 
-9. ~~**Index operations are not atomic**~~: **FIXED**: All index update methods now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry loops. Concurrent modifications are detected via ETag mismatch and retried, preventing lost updates under high concurrency.
-
 ---
 
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-### Completed
-
-- **2026-02-01**: Implemented scheduled decay mode. Added `MemoryDecaySchedulerService` background service with configurable check interval and startup delay. Configuration schema updated with `ScheduledDecayCheckIntervalMinutes` and `ScheduledDecayStartupDelaySeconds` properties.
-- **2026-02-01**: Verified duplicate encounter detection, type-in-use validation, and character existence validation are all implemented. Updated stubs section to reflect FIXED status. Closed #216.
-- **2026-02-03**: Implemented compression support endpoints (`GetCompressDataAsync`, `RestoreFromArchiveAsync`) for centralized Resource-based character archival. Added compression callback registration with priority 30.
+No active work items.
