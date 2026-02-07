@@ -215,4 +215,93 @@ public partial class MeshService
             _ => EndpointStatus.Healthy
         };
     }
+
+    /// <summary>
+    /// Determines the reason for degradation based on heartbeat data.
+    /// </summary>
+    private MeshEndpointDegradedEventReason DetermineDegradationReason(
+        ServiceHeartbeatEvent evt,
+        MeshEndpoint existingEndpoint)
+    {
+        // Check for high load first (most specific)
+        if (evt.Capacity?.CpuUsage >= _configuration.LoadThresholdPercent)
+        {
+            return MeshEndpointDegradedEventReason.HighLoad;
+        }
+
+        // Check for high connection count
+        if (evt.Capacity?.CurrentConnections >= existingEndpoint.MaxConnections)
+        {
+            return MeshEndpointDegradedEventReason.HighConnectionCount;
+        }
+
+        // Default to missed heartbeat (status came from heartbeat status field)
+        return MeshEndpointDegradedEventReason.MissedHeartbeat;
+    }
+
+    /// <summary>
+    /// Publishes a degradation event if transitioning TO Degraded from non-Degraded status.
+    /// Follows lib-state deduplication pattern per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task TryPublishDegradationEventAsync(
+        MeshEndpoint endpoint,
+        EndpointStatus previousStatus,
+        EndpointStatus newStatus,
+        MeshEndpointDegradedEventReason reason,
+        float? loadPercent,
+        DateTimeOffset? lastHeartbeatAt)
+    {
+        // Only publish on transition TO Degraded from non-Degraded
+        if (newStatus != EndpointStatus.Degraded || previousStatus == EndpointStatus.Degraded)
+        {
+            return;
+        }
+
+        var dedupKey = $"{endpoint.InstanceId}:{reason}";
+        var windowSeconds = _configuration.DegradationEventDeduplicationWindowSeconds;
+        var now = DateTimeOffset.UtcNow;
+
+        // Check dedup cache - skip if we published this event recently
+        if (_degradationEventDeduplicationCache.TryGetValue(dedupKey, out var lastPublished))
+        {
+            if (now - lastPublished < TimeSpan.FromSeconds(windowSeconds))
+            {
+                _logger.LogDebug(
+                    "Skipping duplicate degradation event for endpoint {InstanceId} reason {Reason} (last published {Seconds:F1}s ago)",
+                    endpoint.InstanceId, reason, (now - lastPublished).TotalSeconds);
+                return;
+            }
+        }
+
+        // Update cache before publishing to prevent races
+        _degradationEventDeduplicationCache[dedupKey] = now;
+
+        try
+        {
+            var evt = new MeshEndpointDegradedEvent
+            {
+                EventName = "mesh.endpoint_degraded",
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                InstanceId = endpoint.InstanceId,
+                AppId = endpoint.AppId,
+                Reason = reason,
+                LoadPercent = loadPercent,
+                LastHeartbeatAt = lastHeartbeatAt
+            };
+
+            await _messageBus.TryPublishAsync(
+                "mesh.endpoint.degraded",
+                evt,
+                cancellationToken: CancellationToken.None);
+
+            _logger.LogInformation(
+                "Published degradation event for endpoint {InstanceId} reason {Reason}",
+                endpoint.InstanceId, reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish degradation event for endpoint {InstanceId}", endpoint.InstanceId);
+        }
+    }
 }

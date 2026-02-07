@@ -63,6 +63,8 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `mesh.endpoint.registered` | `MeshEndpointRegisteredEvent` | New endpoint registered (explicit or auto-discovered from heartbeat) |
 | `mesh.endpoint.deregistered` | `MeshEndpointDeregisteredEvent` | Endpoint removed (graceful shutdown or health check failure) |
 | `mesh.circuit.changed` | `MeshCircuitStateChangedEvent` | Circuit breaker state changes (Closed→Open, Open→HalfOpen, HalfOpen→Closed, etc.) |
+| `mesh.endpoint.health.failed` | `MeshEndpointHealthCheckFailedEvent` | Health check probe failed (before deregistration threshold - enables proactive monitoring) |
+| `mesh.endpoint.degraded` | `MeshEndpointDegradedEvent` | Endpoint transitioned to Degraded status (from Healthy; reason: MissedHeartbeat, HighLoad, HighConnectionCount) |
 
 ### Consumed Events
 
@@ -93,6 +95,8 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `HealthCheckTimeoutSeconds` | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | `5` | Timeout for health check requests |
 | `HealthCheckFailureThreshold` | `MESH_HEALTH_CHECK_FAILURE_THRESHOLD` | `3` | Consecutive failures before deregistering endpoint (0 disables) |
 | `HealthCheckStartupDelaySeconds` | `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | `10` | Delay before first health probe |
+| `HealthCheckEventDeduplicationWindowSeconds` | `MESH_HEALTH_CHECK_EVENT_DEDUPLICATION_WINDOW_SECONDS` | `60` | Dedup window for health check failure events per endpoint |
+| `DegradationEventDeduplicationWindowSeconds` | `MESH_DEGRADATION_EVENT_DEDUPLICATION_WINDOW_SECONDS` | `60` | Dedup window for degradation events per endpoint+reason |
 | `CircuitBreakerEnabled` | `MESH_CIRCUIT_BREAKER_ENABLED` | `true` | Enable per-appId circuit breaker |
 | `CircuitBreakerThreshold` | `MESH_CIRCUIT_BREAKER_THRESHOLD` | `5` | Consecutive failures before opening circuit |
 | `CircuitBreakerResetSeconds` | `MESH_CIRCUIT_BREAKER_RESET_SECONDS` | `30` | Seconds before half-open probe attempt |
@@ -114,7 +118,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<MeshService>` | Scoped | Structured logging |
-| `MeshServiceConfiguration` | Singleton | All 25 config properties above |
+| `MeshServiceConfiguration` | Singleton | All 27 config properties above |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IMessageSubscriber` | Scoped | Circuit state change subscription in MeshInvocationClient |
 | `IEventConsumer` | Scoped | Heartbeat and mapping event subscription (via generated code) |
