@@ -1,9 +1,11 @@
+using BeyondImmersion.Bannou.BehaviorCompiler.Templates;
 using BeyondImmersion.BannouService.CharacterPersonality.Caching;
 using BeyondImmersion.BannouService.CharacterPersonality.Providers;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.LibCharacterPersonality.Templates;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -122,6 +124,26 @@ public class CharacterPersonalityServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during CharacterPersonality service running phase");
+        }
+
+        // Register resource template for ABML compile-time path validation.
+        // This enables SemanticAnalyzer to validate expressions like ${candidate.personality.archetypeHint}.
+        try
+        {
+            var templateRegistry = serviceProvider.GetService<IResourceTemplateRegistry>();
+            if (templateRegistry != null)
+            {
+                templateRegistry.Register(new CharacterPersonalityTemplate());
+                Logger?.LogDebug("Registered character-personality resource template with namespace 'personality'");
+            }
+            else
+            {
+                Logger?.LogDebug("IResourceTemplateRegistry not available - resource template not registered");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(ex, "Failed to register character-personality resource template");
         }
 
         // Register cleanup callbacks with lib-resource for character reference tracking.

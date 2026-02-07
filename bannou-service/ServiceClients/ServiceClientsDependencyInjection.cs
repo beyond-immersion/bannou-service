@@ -1,5 +1,7 @@
+using BeyondImmersion.Bannou.BehaviorCompiler.Templates;
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.ResourceTemplates;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -39,6 +41,10 @@ public static class ServiceClientsDependencyInjection
         // Event template registry for emit_event: ABML action
         // Plugins register templates during OnRunningAsync, handler looks up by name
         services.AddSingleton<IEventTemplateRegistry, EventTemplateRegistry>();
+
+        // Resource template registry for compile-time validation of ABML resource access
+        // Plugins register templates during OnRunningAsync, SemanticAnalyzer uses for path validation
+        services.AddSingleton<IResourceTemplateRegistry, ResourceTemplateRegistry>();
 
         // ServiceNavigator aggregates all service clients with session context
         // Scoped lifetime ensures per-request client instances

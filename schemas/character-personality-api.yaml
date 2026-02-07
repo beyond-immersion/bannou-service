@@ -56,6 +56,7 @@ info:
     description: Personality traits and combat preferences
     decompressEndpoint: /character-personality/restore-from-archive
     decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'
+x-service-layer: GameFeatures
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)

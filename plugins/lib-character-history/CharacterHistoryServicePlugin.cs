@@ -1,9 +1,11 @@
+using BeyondImmersion.Bannou.BehaviorCompiler.Templates;
 using BeyondImmersion.BannouService.CharacterHistory.Caching;
 using BeyondImmersion.BannouService.CharacterHistory.Providers;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.LibCharacterHistory.Templates;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -121,6 +123,26 @@ public class CharacterHistoryServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during CharacterHistory service running phase");
+        }
+
+        // Register resource template for ABML compile-time path validation.
+        // This enables SemanticAnalyzer to validate expressions like ${candidate.history.hasBackstory}.
+        try
+        {
+            var templateRegistry = serviceProvider.GetService<IResourceTemplateRegistry>();
+            if (templateRegistry != null)
+            {
+                templateRegistry.Register(new CharacterHistoryTemplate());
+                Logger?.LogDebug("Registered character-history resource template with namespace 'history'");
+            }
+            else
+            {
+                Logger?.LogDebug("IResourceTemplateRegistry not available - resource template not registered");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(ex, "Failed to register character-history resource template");
         }
 
         // Register cleanup callbacks with lib-resource for character reference tracking.

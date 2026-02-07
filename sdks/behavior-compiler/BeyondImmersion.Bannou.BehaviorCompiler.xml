@@ -6726,5 +6726,244 @@
             FNV-1a hash for variable name lookup.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplate">
+             <summary>
+             Template defining the shape of resource snapshot data.
+             Enables compile-time path validation and typed deserialization.
+             </summary>
+             <remarks>
+             <para>
+             Resource templates are registered by plugins during startup. The SemanticAnalyzer
+             uses them to validate ABML expressions that access resource snapshot data.
+             </para>
+             <para>
+             <b>Implementation Pattern</b>:
+             Plugins create concrete implementations by extending ResourceTemplateBase
+             (in bannou-service) and populating the ValidPaths dictionary with all
+             navigable paths and their types.
+             </para>
+             <para>
+             <b>Path Format</b>:
+             Paths use dot notation relative to the template namespace. For example,
+             if the namespace is "personality", the path "traits.AGGRESSION" validates
+             expressions like ${candidate.personality.traits.AGGRESSION}.
+             </para>
+             <example>
+             <code>
+             public class CharacterPersonalityTemplate : ResourceTemplateBase
+             {
+                 public override string SourceType => "character-personality";
+                 public override string Namespace => "personality";
+            
+                 public override IReadOnlyDictionary&lt;string, Type&gt; ValidPaths { get; } =
+                     new Dictionary&lt;string, Type&gt;
+                     {
+                         [""] = typeof(CharacterPersonalityArchive),
+                         ["personality.archetypeHint"] = typeof(string),
+                         ["combatPreferences.preferences.style"] = typeof(CombatStyle),
+                     };
+             }
+             </code>
+             </example>
+             </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplate.SourceType">
+            <summary>
+            The sourceType this template handles (e.g., "character-personality").
+            </summary>
+            <remarks>
+            Must match the sourceType used in x-compression-callback registration.
+            This is the value used in ABML resource_templates metadata.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplate.Namespace">
+            <summary>
+            Short namespace for ABML paths (e.g., "personality").
+            </summary>
+            <remarks>
+            <para>
+            This is the first path segment used in expressions like
+            ${candidate.personality.archetypeHint}. May be the same as
+            SourceType or an alias for brevity.
+            </para>
+            <para>
+            The namespace must be unique across all registered templates.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplate.ValidPaths">
+            <summary>
+            Valid paths and their value types for compile-time validation.
+            </summary>
+            <remarks>
+            <para>
+            Keys are dot-separated paths relative to this template's namespace.
+            The empty string key ("") represents the root object type.
+            </para>
+            <para>
+            All leaf and intermediate paths should be included. For collections,
+            include the collection type but not individual element access
+            (those are validated differently).
+            </para>
+            </remarks>
+            <example>
+            <code>
+            [""] = typeof(CharacterPersonalityArchive),
+            ["characterId"] = typeof(Guid),
+            ["personality"] = typeof(PersonalityResponse),
+            ["personality.traits"] = typeof(ICollection&lt;TraitValue&gt;),
+            ["personality.archetypeHint"] = typeof(string),
+            ["combatPreferences.preferences.style"] = typeof(CombatStyle),
+            </code>
+            </example>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplate.ValidatePath(System.String)">
+            <summary>
+            Validates a path against this template's schema.
+            </summary>
+            <param name="path">Dot-separated path (e.g., "personality.archetypeHint").</param>
+            <returns>
+            Validation result with expected type if valid,
+            or error message with suggestions if invalid.
+            </returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplateRegistry">
+             <summary>
+             Registry of resource templates for compile-time validation.
+             Templates are registered by plugins during startup.
+             </summary>
+             <remarks>
+             <para>
+             The registry maintains two lookup indexes:
+             <list type="bullet">
+               <item>By sourceType: matches ABML resource_templates metadata values</item>
+               <item>By namespace: matches the first path segment in expressions</item>
+             </list>
+             </para>
+             <para>
+             <b>Usage in SemanticAnalyzer</b>:
+             </para>
+             <code>
+             // Validate declared templates exist
+             if (!registry.HasTemplate(templateName))
+             {
+                 warnings.Add($"Unknown resource template: {templateName}");
+             }
+            
+             // Validate expression paths
+             var template = registry.GetByNamespace(firstSegment);
+             if (template != null)
+             {
+                 var result = template.ValidatePath(remainingPath);
+                 if (!result.IsValid)
+                 {
+                     errors.Add(result.ErrorMessage);
+                 }
+             }
+             </code>
+             <para>
+             <b>Implementation</b>:
+             The concrete ResourceTemplateRegistry class lives in bannou-service
+             and is registered as a singleton in DI. Plugins inject it via
+             constructor injection and register their templates in OnRunningAsync.
+             </para>
+             </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplateRegistry.GetBySourceType(System.String)">
+            <summary>
+            Gets a template by its sourceType (e.g., "character-personality").
+            </summary>
+            <param name="sourceType">The sourceType identifier from x-compression-callback.</param>
+            <returns>The template, or null if not registered.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplateRegistry.GetByNamespace(System.String)">
+            <summary>
+            Gets a template by its namespace (e.g., "personality").
+            </summary>
+            <param name="namespace">The namespace used in ABML expressions.</param>
+            <returns>The template, or null if not registered.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplateRegistry.GetAllTemplates">
+            <summary>
+            Gets all registered templates.
+            </summary>
+            <returns>All registered templates.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplateRegistry.Register(BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplate)">
+            <summary>
+            Registers a template.
+            </summary>
+            <param name="template">The template to register.</param>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if a template with the same sourceType or namespace is already registered.
+            </exception>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown if template is null.
+            </exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplateRegistry.HasTemplate(System.String)">
+            <summary>
+            Checks if a sourceType has a registered template.
+            </summary>
+            <param name="sourceType">The sourceType to check.</param>
+            <returns>True if a template is registered for this sourceType.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Templates.PathValidationResult">
+            <summary>
+            Result of validating a path against a resource template.
+            </summary>
+            <remarks>
+            Used by the SemanticAnalyzer to validate ABML expressions that access
+            resource snapshot data (e.g., ${candidate.personality.traits.AGGRESSION}).
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Templates.PathValidationResult.IsValid">
+            <summary>
+            Whether the path is valid for the given template.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Templates.PathValidationResult.ExpectedType">
+            <summary>
+            The expected type at this path (if valid).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Templates.PathValidationResult.ErrorMessage">
+            <summary>
+            Error message describing why validation failed (if invalid).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Templates.PathValidationResult.Suggestions">
+            <summary>
+            Suggested valid paths for "did you mean?" hints.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.PathValidationResult.Valid(System.Type)">
+            <summary>
+            Creates a successful validation result with the expected type.
+            </summary>
+            <param name="expectedType">The type of the value at this path.</param>
+            <returns>A valid path result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.PathValidationResult.InvalidPath(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Creates a failed validation result for an unknown path.
+            </summary>
+            <param name="path">The path that was not found.</param>
+            <param name="validPaths">All valid paths for suggestion matching.</param>
+            <returns>An invalid path result with suggestions.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.PathValidationResult.UnknownTemplate(System.String)">
+            <summary>
+            Creates a failed validation result for an unregistered template.
+            </summary>
+            <param name="templateName">The template name that was not found.</param>
+            <returns>An invalid result indicating unknown template.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Templates.PathValidationResult.FindSimilarPaths(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Finds paths similar to the given path for suggestions.
+            Uses prefix matching on the first path segment.
+            </summary>
+        </member>
     </members>
 </doc>
