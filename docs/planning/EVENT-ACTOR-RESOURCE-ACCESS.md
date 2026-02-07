@@ -1,9 +1,9 @@
 # Event Actor Resource Access Pattern
 
-> **Status**: Design / Most Questions Resolved
+> **Status**: Largely Implemented (Phases 1-4 complete)
 > **Created**: 2026-02-05
 > **Priority**: High
-> **Last Updated**: 2026-02-05
+> **Last Updated**: 2026-02-07
 > **Related Documents**:
 > - `~/.claude/plans/variable-providers-storyline-quest.md` - Variable Providers plan
 > - `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md` - Regional Watchers (Gods) design
@@ -1105,53 +1105,55 @@ public sealed class CharacterPersonalityTemplate : IResourceTemplate
 
 ## Implementation Phases
 
-### Phase 1: Resource Plugin Enhancement
+### Phase 1: Resource Plugin Enhancement ✅ COMPLETE
 
-- [ ] Add `filterSourceTypes` parameter to `/resource/snapshot/execute`
-- [ ] Add `filterSourceTypes` parameter to `/resource/snapshot/get`
-- [ ] Implement filter-at-response-time (not filter-at-storage)
-- [ ] Update resource-api.yaml schema
-- [ ] Regenerate Resource plugin
-- [ ] Unit tests for filtered snapshot responses
+- [x] Add `filterSourceTypes` parameter to `/resource/snapshot/execute`
+- [x] Add `filterSourceTypes` parameter to `/resource/snapshot/get`
+- [x] Implement filter-at-response-time (not filter-at-storage)
+- [x] Update resource-api.yaml schema
+- [x] Regenerate Resource plugin
+- [x] Unit tests for filtered snapshot responses
 
-### Phase 2: Template Infrastructure
+### Phase 2: Template Infrastructure ✅ COMPLETE
 
-- [ ] Define `IResourceTemplate` interface in bannou-service
-- [ ] Define `IResourceTemplateRegistry` for template lookup
-- [ ] Add `x-resource-template` and `x-template-namespace` schema extensions
-- [ ] Create template generation script (from compress response schemas)
-- [ ] Generate templates for existing compression callbacks:
-  - [ ] character-base
-  - [ ] character-personality
-  - [ ] character-history
-  - [ ] character-encounter
-- [ ] Unit tests for template deserialization and path navigation
+- [x] Define `IResourceTemplate` interface in bannou-service (`bannou-service/ResourceTemplates/`)
+- [x] Define `IResourceTemplateRegistry` for template lookup
+- [x] Add `x-resource-template` and `x-template-namespace` schema extensions
+- [x] Create template generation script (`scripts/generate-resource-templates.py`)
+- [x] Generate templates for existing compression callbacks:
+  - [x] character-base
+  - [x] character-personality
+  - [x] character-history
+  - [x] character-encounter
+- [x] Unit tests for template deserialization and path navigation
 
-### Phase 3: Provider Implementation
+### Phase 3: Provider Implementation ✅ COMPLETE
 
-- [ ] Implement `ResourceArchiveProvider` using templates
-- [ ] Implement `IResourceSnapshotCache` with prefetch support
-- [ ] Implement `ResourceSnapshotCache` with TTL configuration
-- [ ] Add configuration properties to actor-configuration.yaml
-- [ ] Register cache as Singleton in Actor service
-- [ ] Unit tests for provider path resolution
+- [x] Implement `ResourceArchiveProvider` (`plugins/lib-puppetmaster/Providers/`)
+- [x] Implement `IResourceSnapshotCache` with prefetch support
+- [x] Implement `ResourceSnapshotCache` with TTL configuration
+- [x] Add configuration properties to puppetmaster-configuration.yaml
+- [x] Register cache as Singleton in Puppetmaster service
+- [x] Unit tests for provider path resolution
 
-### Phase 4: ABML Integration
+**Note**: Provider lives in lib-puppetmaster (L4), not lib-actor (L2). This is correct per SERVICE-HIERARCHY.md - lib-puppetmaster provides the missing link between behavior execution (lib-actor at L2) and asset service (lib-asset at L3).
 
-- [ ] Implement `load_snapshot` ABML command
-- [ ] Implement `prefetch_snapshots` ABML command (batch hint)
-- [ ] Add `resource_templates` metadata field to behavior schema
-- [ ] Implement compile-time path validation against declared templates
-- [ ] Integration tests with sample event actor behavior
+### Phase 4: ABML Integration ✅ COMPLETE
 
-### Phase 5: Storyline/Quest Compression Callbacks
+- [x] Implement `load_snapshot` ABML command (`plugins/lib-puppetmaster/Handlers/LoadSnapshotHandler.cs`)
+- [x] Implement `prefetch_snapshots` ABML command (`plugins/lib-puppetmaster/Handlers/PrefetchSnapshotsHandler.cs`)
+- [x] Add `resource_templates` metadata field to behavior schema (`AbmlDocument.Metadata.ResourceTemplates`)
+- [x] Implement compile-time path validation against declared templates (in SemanticAnalyzer)
+- [x] Integration tests with sample event actor behavior
+
+### Phase 5: Storyline/Quest Compression Callbacks 🔲 TODO
 
 - [ ] Register compression callback for Storyline service
 - [ ] Register compression callback for Quest service
 - [ ] Generate templates for new compression responses
 - [ ] Update sample event actor behaviors to use new data
 
-### Phase 6: Actor Communication
+### Phase 6: Actor Communication 🔲 TODO
 
 - [ ] Design `actor_command` ABML command for event→character actor communication
 - [ ] Design `actor_query` ABML command for request/response patterns
@@ -1164,6 +1166,26 @@ public sealed class CharacterPersonalityTemplate : IResourceTemplate
 - [ ] Per-sourceType TTL configuration
 - [ ] Compression callback versioning for schema evolution
 - [ ] Archive data (permanent MySQL) vs snapshot data (ephemeral Redis) access patterns
+
+---
+
+## Related Work
+
+### Issue #316 (CLOSED) - GOAP Scope Population
+
+Issue #316 implemented MVP GOAP integration in ActorRunner, enabling `trigger_goap_replan:` to work:
+
+- **Goals/Actions**: Extracted from ABML documents via `GoapMetadataConverter`
+- **WorldState**: Built from actor feelings, goal parameters, working memory
+- **Current Goal**: Looked up from actor's PrimaryGoal string
+
+This is complementary to this document's Event Actor pattern:
+- **Character Brain actors**: Use live Variable Providers (self-data) + GOAP with internal state
+- **Event Brain actors**: Use `load_snapshot:` for archive data about other characters
+
+### Issue #148 - GoapWorldStateProvider
+
+Issue #148 tracks extending GOAP WorldState with external service data (currency, inventory, relationships). With #316 complete, GOAP works with internal state; #148 is now an enhancement for richer planning.
 
 ---
 
