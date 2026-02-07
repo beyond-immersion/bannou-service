@@ -244,6 +244,53 @@ Queries active watchers with optional filtering.
 
 ---
 
+## Watch System
+
+The Puppetmaster plugin includes a watch system for subscribing to resource change events. This enables dynamic behavior triggering when characters, realms, or other resources are modified.
+
+### Components
+
+| Component | Role |
+|-----------|------|
+| `ResourceEventMapping` | Maps resource types to their lifecycle event topics |
+| `WatchRegistry` | Manages watch subscriptions and event routing |
+| `WatchPerception` | Perception events for watch-based observations |
+
+### Resource Event Mapping
+
+The `ResourceEventMapping` class maps resource types (e.g., "character", "realm") to their lifecycle events. **Mappings are auto-generated** from `x-resource-mapping` schema extensions and loaded at startup from `ResourceEventMappings.All`.
+
+**Key Methods**:
+- `GetSourcesForResource(resourceType)` - Get all source types for a resource (e.g., character → ["character", "character-personality", "character-history", "character-encounter"])
+- `GetMapping(sourceType)` - Get mapping details for a source type
+- `GetAllTopics()` - Get all unique event topics to subscribe to
+- `GetSourceTypesForTopic(topic)` - Get source types that publish to a topic
+
+**Schema-Driven Discovery**:
+Mappings are declared in event schemas using `x-resource-mapping`:
+
+```yaml
+# In lifecycle events (character-events.yaml)
+x-lifecycle:
+  Character:
+    resource_mapping:
+      resource_type: character      # Which resource this affects
+      # resource_id_field defaults to primary key (characterId)
+      # source_type defaults to topic base (character)
+
+# In non-lifecycle events (character-personality-events.yaml)
+PersonalityUpdatedEvent:
+  type: object
+  x-resource-mapping:
+    resource_type: character
+    resource_id_field: characterId
+    source_type: character-personality
+```
+
+The `generate-resource-mappings.py` script scans all event schemas and generates `bannou-service/Generated/ResourceEventMappings.cs` with the complete mapping registry.
+
+---
+
 ## Stubs & Unimplemented Features
 
 1. **Watcher-Actor Integration**: The `ActorId` field on `WatcherInfo` is always `null`. The TODO comment at line 213 indicates actor spawning is not yet implemented. Watchers don't actually execute any behavior - they're just registered in memory.
@@ -311,4 +358,5 @@ This section tracks active development work. Managed by `/audit-plugin` workflow
 
 ### Completed
 
+- **2026-02-06**: Issue #304 - Added `x-resource-mapping` schema extension for resource event discovery. Resource mappings are now auto-generated from schema annotations instead of hardcoded in `ResourceEventMapping.cs`. Added `resource_mapping` config to `x-lifecycle` for lifecycle events and `x-resource-mapping` extension for non-lifecycle events.
 - **2026-02-06**: Issue #298 - Added `spawn_watcher`, `stop_watcher`, and `list_watchers` ABML actions for Puppetmaster self-orchestration. Replaced forbidden generic `api_call` with purpose-built handlers.
