@@ -324,6 +324,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                     store = new MySqlStateStore<TValue>(
                         _mysqlOptions,
                         storeConfig.TableName ?? storeName,
+                        _configuration.InMemoryFallbackLimit,
                         mysqlLogger);
                     backend = "mysql";
                 }

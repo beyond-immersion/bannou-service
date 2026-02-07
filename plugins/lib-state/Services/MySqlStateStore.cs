@@ -24,6 +24,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
 {
     private readonly DbContextOptions<StateDbContext> _options;
     private readonly string _storeName;
+    private readonly int _inMemoryFallbackLimit;
     private readonly ILogger<MySqlStateStore<TValue>> _logger;
 
     /// <summary>
@@ -31,14 +32,17 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// </summary>
     /// <param name="options">EF Core database context options for creating per-operation contexts.</param>
     /// <param name="storeName">Name of this state store.</param>
+    /// <param name="inMemoryFallbackLimit">Maximum entries to load when falling back to in-memory filtering.</param>
     /// <param name="logger">Logger instance.</param>
     public MySqlStateStore(
         DbContextOptions<StateDbContext> options,
         string storeName,
+        int inMemoryFallbackLimit,
         ILogger<MySqlStateStore<TValue>> logger)
     {
         _options = options;
         _storeName = storeName;
+        _inMemoryFallbackLimit = inMemoryFallbackLimit;
         _logger = logger;
     }
 
@@ -444,6 +448,15 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
+        // Prevent OOM by enforcing configurable limit on in-memory fallback
+        if (allEntries.Count > _inMemoryFallbackLimit)
+        {
+            throw new InvalidOperationException(
+                $"QueryAsync in-memory fallback would load {allEntries.Count} entries from store '{_storeName}' " +
+                $"(limit: {_inMemoryFallbackLimit}). Use JsonQueryAsync with explicit conditions for large datasets, " +
+                "or simplify the predicate to enable SQL translation.");
+        }
+
         var deserializedValues = new List<TValue>();
         foreach (var entry in allEntries)
         {
@@ -578,6 +591,15 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
+
+        // Prevent OOM by enforcing configurable limit on in-memory fallback
+        if (allEntries.Count > _inMemoryFallbackLimit)
+        {
+            throw new InvalidOperationException(
+                $"QueryPagedAsync in-memory fallback would load {allEntries.Count} entries from store '{_storeName}' " +
+                $"(limit: {_inMemoryFallbackLimit}). Use JsonQueryPagedAsync with explicit conditions for large datasets, " +
+                "or simplify the predicate/orderBy to enable SQL translation.");
+        }
 
         var deserializedValues = new List<TValue>();
         foreach (var entry in allEntries)
