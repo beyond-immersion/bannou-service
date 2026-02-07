@@ -94,7 +94,8 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             MySqlConnectionString = stateConfig.MySqlConnectionString,
             ConnectionTimeoutSeconds = stateConfig.ConnectionTimeoutSeconds,
             ConnectionRetryCount = stateConfig.ConnectionRetryCount,
-            MinRetryDelayMs = stateConfig.MinRetryDelayMs
+            MinRetryDelayMs = stateConfig.MinRetryDelayMs,
+            InMemoryFallbackLimit = stateConfig.InMemoryFallbackLimit
         };
 
         // Load store configurations from generated definitions (schema-first approach)

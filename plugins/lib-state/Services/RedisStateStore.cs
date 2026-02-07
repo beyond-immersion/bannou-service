@@ -72,6 +72,12 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             _logger.LogError(ex, "Redis timeout reading key '{Key}' from store '{Store}'", key, _keyPrefix);
             throw;
         }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+            _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+            return null;
+        }
     }
 
     /// <inheritdoc/>
@@ -110,6 +116,12 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         {
             _logger.LogError(ex, "Redis timeout reading key '{Key}' from store '{Store}'", key, _keyPrefix);
             throw;
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+            _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+            return (null, null);
         }
     }
 
