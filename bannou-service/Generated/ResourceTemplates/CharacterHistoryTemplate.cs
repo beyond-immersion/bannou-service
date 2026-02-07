@@ -27,9 +27,22 @@ public sealed class CharacterHistoryTemplate : ResourceTemplateBase
     {
         [""] = typeof(CharacterHistoryArchive),
         ["archivedAt"] = typeof(DateTimeOffset),
+        ["backstory"] = typeof(BackstoryResponse),
+        ["characterId"] = typeof(Guid),
+        ["hasBackstory"] = typeof(bool),
+        ["hasParticipations"] = typeof(bool),
         ["nestedArchives"] = typeof(ICollection<ResourceArchiveBase>),
+        ["participations"] = typeof(ICollection<HistoricalParticipation>),
         ["resourceId"] = typeof(Guid),
         ["resourceType"] = typeof(string),
         ["schemaVersion"] = typeof(int),
+        ["summaries"] = typeof(HistorySummaryResponse),
+        ["backstory.characterId"] = typeof(Guid),
+        ["backstory.createdAt"] = typeof(DateTimeOffset?),
+        ["backstory.elements"] = typeof(ICollection<BackstoryElement>),
+        ["backstory.updatedAt"] = typeof(DateTimeOffset?),
+        ["summaries.characterId"] = typeof(Guid),
+        ["summaries.keyBackstoryPoints"] = typeof(ICollection<string>),
+        ["summaries.majorLifeEvents"] = typeof(ICollection<string>),
     };
 }

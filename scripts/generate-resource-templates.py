@@ -225,11 +225,11 @@ def traverse_schema(
             traverse_schema(resolved, current_path, paths, current_schema, all_schemas, visited, depth)
         return
 
-    # Handle allOf - merge all schemas
+    # Handle allOf - merge all schemas (don't return - also process sibling properties)
     if 'allOf' in schema:
         for sub_schema in schema['allOf']:
             traverse_schema(sub_schema, current_path, paths, current_schema, all_schemas, visited, depth)
-        return
+        # Continue to also process properties that are siblings to allOf
 
     # Handle properties
     properties = schema.get('properties', {})

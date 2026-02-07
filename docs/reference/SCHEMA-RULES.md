@@ -387,6 +387,63 @@ info:
 
 **Validation**: The generator validates that `compressEndpoint` and `decompressEndpoint` (if specified) exist in the schema's paths section.
 
+### x-archive-type (Resource Template Generation)
+
+Defined on **compression response schemas** (the return type of `/get-compress-data` endpoints), this extension marks a schema as an archive type. When combined with `x-compression-callback`, it triggers generation of `IResourceTemplate` implementations for compile-time ABML path validation.
+
+```yaml
+# In character-personality-api.yaml
+components:
+  schemas:
+    CharacterPersonalityArchive:
+      type: object
+      x-archive-type: true  # Triggers template generation
+      allOf:
+        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        personality:
+          $ref: '#/components/schemas/PersonalityResponse'
+        # ... other properties
+```
+
+**How template generation works**:
+1. Generator scans for schemas with `x-archive-type: true`
+2. Matches to `x-compression-callback` at API schema root to get `sourceType` and `templateNamespace`
+3. Traverses the schema to build `ValidPaths` dictionary (property names → C# types)
+4. Generates template class to `bannou-service/Generated/ResourceTemplates/{SourceType}Template.cs`
+
+**Generated output** (`bannou-service/Generated/ResourceTemplates/{Name}Template.cs`):
+- Extends `ResourceTemplateBase` from `bannou-service/ResourceTemplates/`
+- Implements `IResourceTemplate` interface from `behavior-compiler` SDK
+- Contains `SourceType`, `Namespace`, and `ValidPaths` properties
+
+**Template registration**:
+Plugins register templates during `OnRunningAsync`:
+```csharp
+using BeyondImmersion.BannouService.Generated.ResourceTemplates;
+
+// In OnRunningAsync:
+var templateRegistry = serviceProvider.GetRequiredService<IResourceTemplateRegistry>();
+templateRegistry.Register(new CharacterPersonalityTemplate());
+```
+
+**Usage in ABML**:
+Templates enable compile-time validation of snapshot access expressions:
+```yaml
+metadata:
+  resource_templates:
+    - character-personality  # Declares this behavior uses personality data
+
+# Valid - path exists in CharacterPersonalityTemplate.ValidPaths
+condition: "${candidate.personality.archetypeHint} != null"
+
+# Compile error - path not in template
+condition: "${candidate.personality.nonexistent_field}"
+```
+
 ### Service Hierarchy Compliance
 
 The x-references pattern ensures compliance with the service hierarchy:

@@ -26,8 +26,12 @@ public sealed class QuestTemplate : ResourceTemplateBase
     public override IReadOnlyDictionary<string, Type> ValidPaths { get; } = new Dictionary<string, Type>
     {
         [""] = typeof(QuestArchive),
+        ["activeQuests"] = typeof(ICollection<ActiveQuestSummary>),
         ["archivedAt"] = typeof(DateTimeOffset),
+        ["characterId"] = typeof(Guid),
+        ["completedQuests"] = typeof(int),
         ["nestedArchives"] = typeof(ICollection<ResourceArchiveBase>),
+        ["questCategories"] = typeof(IDictionary<string, int>),
         ["resourceId"] = typeof(Guid),
         ["resourceType"] = typeof(string),
         ["schemaVersion"] = typeof(int),

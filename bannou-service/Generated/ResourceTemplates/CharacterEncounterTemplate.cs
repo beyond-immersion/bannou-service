@@ -26,7 +26,12 @@ public sealed class CharacterEncounterTemplate : ResourceTemplateBase
     public override IReadOnlyDictionary<string, Type> ValidPaths { get; } = new Dictionary<string, Type>
     {
         [""] = typeof(CharacterEncounterArchive),
+        ["aggregateSentiment"] = typeof(IDictionary<string, float>),
         ["archivedAt"] = typeof(DateTimeOffset),
+        ["characterId"] = typeof(Guid),
+        ["encounterCount"] = typeof(int),
+        ["encounters"] = typeof(ICollection<EncounterResponse>),
+        ["hasEncounters"] = typeof(bool),
         ["nestedArchives"] = typeof(ICollection<ResourceArchiveBase>),
         ["resourceId"] = typeof(Guid),
         ["resourceType"] = typeof(string),

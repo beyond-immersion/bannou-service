@@ -27,9 +27,19 @@ public sealed class CharacterBaseTemplate : ResourceTemplateBase
     {
         [""] = typeof(CharacterBaseArchive),
         ["archivedAt"] = typeof(DateTimeOffset),
+        ["birthDate"] = typeof(DateTimeOffset),
+        ["characterId"] = typeof(Guid),
+        ["createdAt"] = typeof(DateTimeOffset),
+        ["deathDate"] = typeof(DateTimeOffset),
+        ["familySummary"] = typeof(string),
+        ["name"] = typeof(string),
         ["nestedArchives"] = typeof(ICollection<ResourceArchiveBase>),
+        ["realmId"] = typeof(Guid),
         ["resourceId"] = typeof(Guid),
         ["resourceType"] = typeof(string),
         ["schemaVersion"] = typeof(int),
+        ["speciesId"] = typeof(Guid),
+        ["status"] = typeof(CharacterStatus),
+        ["updatedAt"] = typeof(DateTimeOffset?),
     };
 }
