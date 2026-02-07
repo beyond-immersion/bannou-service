@@ -459,7 +459,7 @@ public class MessageRetryBufferTests : IAsyncDisposable
     }
 
     [Fact]
-    public void BufferCount_IsThreadSafe()
+    public async Task BufferCount_IsThreadSafe()
     {
         // Arrange
         var buffer = CreateBuffer(CreateConfig(maxSize: 10000, backpressureThreshold: 0.99));
@@ -478,7 +478,7 @@ public class MessageRetryBufferTests : IAsyncDisposable
             }));
         }
 
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks);
 
         // Assert - should have 1000 messages (may be less if max size hit triggers termination)
         Assert.True(buffer.BufferCount > 0);
