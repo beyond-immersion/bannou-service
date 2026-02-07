@@ -159,6 +159,26 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public string DeadLetterExchange { get; set; } = "bannou-dlx";
 
     /// <summary>
+    /// Maximum messages in dead letter queue before oldest dropped
+    /// Environment variable: MESSAGING_DEAD_LETTER_MAX_LENGTH
+    /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 10000000)]
+    public int DeadLetterMaxLength { get; set; } = 100000;
+
+    /// <summary>
+    /// Time-to-live for dead letter messages in milliseconds (default 7 days)
+    /// Environment variable: MESSAGING_DEAD_LETTER_TTL_MS
+    /// </summary>
+    [ConfigRange(Minimum = 3600000, Maximum = 2592000000)]
+    public int DeadLetterTtlMs { get; set; } = 604800000;
+
+    /// <summary>
+    /// Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
+    /// Environment variable: MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR
+    /// </summary>
+    public string DeadLetterOverflowBehavior { get; set; } = "drop-head";
+
+    /// <summary>
     /// Maximum retry attempts before discarding message to dead-letter topic
     /// Environment variable: MESSAGING_RETRY_MAX_ATTEMPTS
     /// </summary>

@@ -110,6 +110,25 @@ x-service-configuration:
       description: Dead letter exchange name for failed messages
       env: MESSAGING_DEAD_LETTER_EXCHANGE
       default: "bannou-dlx"
+    DeadLetterMaxLength:
+      type: integer
+      description: Maximum messages in dead letter queue before oldest dropped
+      env: MESSAGING_DEAD_LETTER_MAX_LENGTH
+      default: 100000
+      minimum: 1000
+      maximum: 10000000
+    DeadLetterTtlMs:
+      type: integer
+      description: Time-to-live for dead letter messages in milliseconds (default 7 days)
+      env: MESSAGING_DEAD_LETTER_TTL_MS
+      default: 604800000
+      minimum: 3600000
+      maximum: 2592000000
+    DeadLetterOverflowBehavior:
+      type: string
+      description: Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
+      env: MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR
+      default: "drop-head"
     RetryMaxAttempts:
       type: integer
       description: Maximum retry attempts before discarding message to dead-letter topic
