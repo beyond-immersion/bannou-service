@@ -284,6 +284,58 @@ public sealed record ListWatchersAction(
     string? WatcherType = null) : ActionNode;
 
 // ═══════════════════════════════════════════════════════════════════════════
+// RESOURCE WATCH ACTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Subscribe to change notifications for a resource.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Registers a watch on a resource so the actor receives perceptions when
+/// the resource is modified:
+/// <code>
+/// - watch:
+///     resource_type: character
+///     resource_id: ${target_id}
+///     sources:
+///       - character-personality
+///       - character-history
+/// </code>
+/// </para>
+/// <para>
+/// When the watched resource changes, a perception is injected into the
+/// actor's bounded channel with the updated snapshot data.
+/// </para>
+/// </remarks>
+/// <param name="ResourceType">Resource type (e.g., "character", "realm").</param>
+/// <param name="ResourceId">Expression evaluating to resource GUID.</param>
+/// <param name="Sources">Optional list of source types to watch (e.g., ["character-personality"]).</param>
+public sealed record WatchAction(
+    string ResourceType,
+    string ResourceId,
+    IReadOnlyList<string>? Sources = null) : ActionNode;
+
+/// <summary>
+/// Unsubscribe from change notifications for a resource.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Removes a previously registered watch:
+/// <code>
+/// - unwatch:
+///     resource_type: character
+///     resource_id: ${target_id}
+/// </code>
+/// </para>
+/// </remarks>
+/// <param name="ResourceType">Resource type to stop watching.</param>
+/// <param name="ResourceId">Expression evaluating to resource GUID to stop watching.</param>
+public sealed record UnwatchAction(
+    string ResourceType,
+    string ResourceId) : ActionNode;
+
+// ═══════════════════════════════════════════════════════════════════════════
 // DOMAIN ACTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 

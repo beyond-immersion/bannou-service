@@ -595,6 +595,8 @@ public sealed class DocumentParser
             "spawn_watcher" => ParseSpawnWatcherAction(actionValue, errors),
             "stop_watcher" => ParseStopWatcherAction(actionValue, errors),
             "list_watchers" => ParseListWatchersAction(actionValue, errors),
+            "watch" => ParseWatchAction(actionValue, errors),
+            "unwatch" => ParseUnwatchAction(actionValue, errors),
             _ => ParseDomainAction(actionName, actionValue, errors)
         };
     }
@@ -1295,6 +1297,84 @@ public sealed class DocumentParser
         }
 
         return new ListWatchersAction(into, realmId, watcherType);
+    }
+
+    private WatchAction? ParseWatchAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'watch' must be an object"));
+            return null;
+        }
+
+        // Required: resource_type
+        if (!dict.TryGetValue("resource_type", out var typeObj) || typeObj is not string resourceType)
+        {
+            errors.Add(new ParseError("'watch' requires 'resource_type' field"));
+            return null;
+        }
+
+        // Required: resource_id (expression string)
+        if (!dict.TryGetValue("resource_id", out var idObj) || idObj is not string resourceId)
+        {
+            errors.Add(new ParseError("'watch' requires 'resource_id' field (expression)"));
+            return null;
+        }
+
+        // Optional: sources (list of strings)
+        IReadOnlyList<string>? sources = null;
+        if (dict.TryGetValue("sources", out var sourcesObj))
+        {
+            if (sourcesObj is IList<object> sourcesList)
+            {
+                var sourceStrings = new List<string>();
+                foreach (var item in sourcesList)
+                {
+                    if (item is string str)
+                    {
+                        sourceStrings.Add(str);
+                    }
+                    else
+                    {
+                        errors.Add(new ParseError("'watch.sources' items must be strings"));
+                        return null;
+                    }
+                }
+                sources = sourceStrings;
+            }
+            else
+            {
+                errors.Add(new ParseError("'watch.sources' must be a list of strings"));
+                return null;
+            }
+        }
+
+        return new WatchAction(resourceType, resourceId, sources);
+    }
+
+    private UnwatchAction? ParseUnwatchAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'unwatch' must be an object"));
+            return null;
+        }
+
+        // Required: resource_type
+        if (!dict.TryGetValue("resource_type", out var typeObj) || typeObj is not string resourceType)
+        {
+            errors.Add(new ParseError("'unwatch' requires 'resource_type' field"));
+            return null;
+        }
+
+        // Required: resource_id (expression string)
+        if (!dict.TryGetValue("resource_id", out var idObj) || idObj is not string resourceId)
+        {
+            errors.Add(new ParseError("'unwatch' requires 'resource_id' field (expression)"));
+            return null;
+        }
+
+        return new UnwatchAction(resourceType, resourceId);
     }
 
     private DomainAction ParseDomainAction(string name, object? value, List<ParseError> errors)

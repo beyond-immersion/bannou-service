@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
 using BeyondImmersion.BannouService.Puppetmaster.Handlers;
 using BeyondImmersion.BannouService.Puppetmaster.Providers;
+using BeyondImmersion.BannouService.Puppetmaster.Watches;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,6 +69,18 @@ public class PuppetmasterServicePlugin : BaseBannouPlugin
 
         services.AddSingleton<ListWatchersHandler>();
         services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<ListWatchersHandler>());
+
+        // Register watch registry for resource change subscriptions
+        // This is an in-memory, ephemeral registry - watches are lost on restart
+        services.AddSingleton<WatchRegistry>();
+
+        // Register watch/unwatch handlers for ABML execution
+        // These enable Event Brain actors to subscribe to resource change notifications
+        services.AddSingleton<WatchHandler>();
+        services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<WatchHandler>());
+
+        services.AddSingleton<UnwatchHandler>();
+        services.AddSingleton<IActionHandler>(sp => sp.GetRequiredService<UnwatchHandler>());
 
         Logger?.LogDebug("Puppetmaster service dependencies configured");
     }

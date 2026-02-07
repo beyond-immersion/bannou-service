@@ -3103,6 +3103,107 @@
         <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ListWatchersAction.WatcherType">
             <summary>Optional watcher type filter string.</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction">
+            <summary>
+            Subscribe to change notifications for a resource.
+            </summary>
+            <remarks>
+            <para>
+            Registers a watch on a resource so the actor receives perceptions when
+            the resource is modified:
+            <code>
+            - watch:
+                resource_type: character
+                resource_id: ${target_id}
+                sources:
+                  - character-personality
+                  - character-history
+            </code>
+            </para>
+            <para>
+            When the watched resource changes, a perception is injected into the
+            actor's bounded channel with the updated snapshot data.
+            </para>
+            </remarks>
+            <param name="ResourceType">Resource type (e.g., "character", "realm").</param>
+            <param name="ResourceId">Expression evaluating to resource GUID.</param>
+            <param name="Sources">Optional list of source types to watch (e.g., ["character-personality"]).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction.#ctor(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>
+            Subscribe to change notifications for a resource.
+            </summary>
+            <remarks>
+            <para>
+            Registers a watch on a resource so the actor receives perceptions when
+            the resource is modified:
+            <code>
+            - watch:
+                resource_type: character
+                resource_id: ${target_id}
+                sources:
+                  - character-personality
+                  - character-history
+            </code>
+            </para>
+            <para>
+            When the watched resource changes, a perception is injected into the
+            actor's bounded channel with the updated snapshot data.
+            </para>
+            </remarks>
+            <param name="ResourceType">Resource type (e.g., "character", "realm").</param>
+            <param name="ResourceId">Expression evaluating to resource GUID.</param>
+            <param name="Sources">Optional list of source types to watch (e.g., ["character-personality"]).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction.ResourceType">
+            <summary>Resource type (e.g., "character", "realm").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction.ResourceId">
+            <summary>Expression evaluating to resource GUID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction.Sources">
+            <summary>Optional list of source types to watch (e.g., ["character-personality"]).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.UnwatchAction">
+            <summary>
+            Unsubscribe from change notifications for a resource.
+            </summary>
+            <remarks>
+            <para>
+            Removes a previously registered watch:
+            <code>
+            - unwatch:
+                resource_type: character
+                resource_id: ${target_id}
+            </code>
+            </para>
+            </remarks>
+            <param name="ResourceType">Resource type to stop watching.</param>
+            <param name="ResourceId">Expression evaluating to resource GUID to stop watching.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.UnwatchAction.#ctor(System.String,System.String)">
+            <summary>
+            Unsubscribe from change notifications for a resource.
+            </summary>
+            <remarks>
+            <para>
+            Removes a previously registered watch:
+            <code>
+            - unwatch:
+                resource_type: character
+                resource_id: ${target_id}
+            </code>
+            </para>
+            </remarks>
+            <param name="ResourceType">Resource type to stop watching.</param>
+            <param name="ResourceId">Expression evaluating to resource GUID to stop watching.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.UnwatchAction.ResourceType">
+            <summary>Resource type to stop watching.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.UnwatchAction.ResourceId">
+            <summary>Expression evaluating to resource GUID to stop watching.</summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.DomainAction">
             <summary>
             Generic domain action (handler-provided).

@@ -49,6 +49,12 @@ public sealed class ExecutionContext
     public required IActionHandlerRegistry Handlers { get; init; }
 
     /// <summary>
+    /// Optional actor ID when executing within an actor context.
+    /// Required for actions like watch/unwatch that track per-actor state.
+    /// </summary>
+    public Guid? ActorId { get; init; }
+
+    /// <summary>
     /// Call stack for flow execution.
     /// </summary>
     public FlowStack CallStack { get; } = new();
