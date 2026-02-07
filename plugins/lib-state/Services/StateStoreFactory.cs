@@ -50,6 +50,13 @@ public class StateStoreFactoryConfiguration
     public int MinRetryDelayMs { get; set; } = 1000;
 
     /// <summary>
+    /// Maximum entries to load when LINQ expression cannot be translated to SQL
+    /// and falls back to in-memory filtering. Queries exceeding this limit will throw.
+    /// Use JsonQueryAsync with explicit conditions for large datasets.
+    /// </summary>
+    public int InMemoryFallbackLimit { get; set; } = 10000;
+
+    /// <summary>
     /// Store configurations by name.
     /// </summary>
     public Dictionary<string, StoreConfiguration> Stores { get; set; } = new();
