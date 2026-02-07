@@ -575,7 +575,7 @@ public class MessageDeliveryHandlerTests
         // Arrange
         var json = """{"Name":"test","Value":42}""";
         var body = new ReadOnlyMemory<byte>(Encoding.UTF8.GetBytes(json));
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
         CancellationToken receivedToken = default;
 
@@ -605,7 +605,7 @@ public class MessageDeliveryHandlerTests
         // Arrange
         var data = new byte[] { 1, 2, 3 };
         var body = new ReadOnlyMemory<byte>(data);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         Task Handler(byte[] bytes, CancellationToken ct)
