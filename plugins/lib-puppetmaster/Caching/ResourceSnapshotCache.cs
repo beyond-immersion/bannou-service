@@ -156,16 +156,9 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
         Guid resourceId,
         CancellationToken ct)
     {
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
         using var scope = _scopeFactory.CreateScope();
-        var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
-
-        if (resourceClient == null)
-        {
-            _logger.LogWarning(
-                "IResourceClient not available - cannot load snapshot for {ResourceType}:{ResourceId}",
-                resourceType, resourceId);
-            return null;
-        }
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
 
         try
         {

@@ -76,6 +76,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's personality traits are updated
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp
@@ -102,6 +106,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's personality evolves due to experience
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp
@@ -165,6 +173,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's combat preferences are first created
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp
@@ -191,6 +203,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's combat preferences are updated
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp
@@ -217,6 +233,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's combat preferences evolve due to combat experience
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp

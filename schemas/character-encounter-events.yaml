@@ -148,6 +148,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's memory of an encounter is strengthened
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-encounter
       required:
         - eventId
         - timestamp
@@ -190,6 +194,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's perspective on an encounter is updated
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-encounter
       required:
         - eventId
         - timestamp

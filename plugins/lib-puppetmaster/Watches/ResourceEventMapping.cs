@@ -1,13 +1,14 @@
 // =============================================================================
 // Resource Event Mapping
 // Maps resource types to their lifecycle event topics for watch subscriptions.
+// Mappings are loaded from the generated ResourceEventMappings class.
 // =============================================================================
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 
 /// <summary>
 /// Maps resource types to their lifecycle event topics.
-/// Configured at startup, immutable during runtime.
+/// Configured at startup from schema-generated mappings, immutable during runtime.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -15,9 +16,8 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 /// for each resource type, and how to extract the resource ID from received events.
 /// </para>
 /// <para>
-/// Example mapping:
-/// - "character-personality" → "personality.updated" (resourceId field: "characterId")
-/// - "character-history" → "character-history.event-recorded" (resourceId field: "characterId")
+/// Mappings are loaded from <see cref="ResourceEventMappings"/> which is generated
+/// from x-resource-mapping extensions in event schemas.
 /// </para>
 /// </remarks>
 public sealed class ResourceEventMapping
@@ -26,25 +26,20 @@ public sealed class ResourceEventMapping
     private readonly Dictionary<string, List<string>> _resourceToSources = new();
 
     /// <summary>
-    /// Creates a new resource event mapping with the default mappings for Bannou services.
+    /// Creates a new resource event mapping populated from schema-generated mappings.
     /// </summary>
     public ResourceEventMapping()
     {
-        // Character-related source types (change events)
-        AddMapping("character-personality", "personality.updated", "characterId", "character");
-        AddMapping("character-personality", "personality.combat-preferences-updated", "characterId", "character");
-        AddMapping("character-history", "character-history.event-recorded", "characterId", "character");
-        AddMapping("character-encounter", "character-encounter.perspective-updated", "characterId", "character");
-
-        // Character-related deletion events
-        // When a character is deleted, all watchers receive a final perception
-        AddMapping("character-deleted", "character.deleted", "characterId", "character", isDeletion: true);
-
-        // Realm-related source types (change events)
-        AddMapping("realm-history", "realm-history.event-recorded", "realmId", "realm");
-
-        // Realm-related deletion events
-        AddMapping("realm-deleted", "realm.deleted", "realmId", "realm", isDeletion: true);
+        // Load mappings from the schema-generated registry
+        foreach (var entry in ResourceEventMappings.All)
+        {
+            AddMapping(
+                entry.SourceType,
+                entry.EventTopic,
+                entry.ResourceIdField,
+                entry.ResourceType,
+                entry.IsDeletion);
+        }
     }
 
     /// <summary>

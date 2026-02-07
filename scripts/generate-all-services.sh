@@ -55,6 +55,16 @@ else
 fi
 echo ""
 
+# Generate resource event mappings from x-resource-mapping extensions
+echo -e "${BLUE}📍 Generating resource event mappings from x-resource-mapping...${NC}"
+if python3 "$SCRIPT_DIR/generate-resource-mappings.py"; then
+    echo -e "${GREEN}✅ Resource event mappings generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate resource event mappings${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate common API types first (shared types like EntityType)
 echo -e "${BLUE}🌟 Generating common API types first...${NC}"
 if ./generate-common-api.sh; then

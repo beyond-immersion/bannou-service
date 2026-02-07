@@ -40,6 +40,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a realm's participation in a historical event is recorded
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: realm-history
       required:
         - eventId
         - timestamp
@@ -108,6 +112,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a realm's lore is first created
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: realm-history
       required:
         - eventId
         - timestamp
@@ -134,6 +142,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a realm's lore is updated
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: realm-history
       required:
         - eventId
         - timestamp

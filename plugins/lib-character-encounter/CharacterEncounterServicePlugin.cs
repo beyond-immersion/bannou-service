@@ -129,43 +129,28 @@ public class CharacterEncounterServicePlugin : BaseBannouPlugin
         }
 
         // Register cleanup callbacks with lib-resource for character reference tracking.
-        // This MUST happen in OnRunningAsync (not OnStartAsync) because OnRunningAsync runs
-        // AFTER all plugins have completed StartAsync, ensuring lib-resource is available.
-        // Registering during OnStartAsync would be unsafe because plugin load order isn't guaranteed.
-        try
-        {
-            using var scope = serviceProvider.CreateScope();
-            var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
-            if (resourceClient != null)
-            {
-                var success = await CharacterEncounterService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
-                if (success)
-                {
-                    Logger?.LogInformation("Registered character cleanup callbacks with lib-resource");
-                }
-                else
-                {
-                    Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
-                }
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
+        using var resourceScope = serviceProvider.CreateScope();
+        var resourceClient = resourceScope.ServiceProvider.GetRequiredService<IResourceClient>();
 
-                // Register compression callback (generated from x-compression-callback)
-                if (await CharacterEncounterCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
-                {
-                    Logger?.LogInformation("Registered character-encounter compression callback with lib-resource");
-                }
-                else
-                {
-                    Logger?.LogWarning("Failed to register character-encounter compression callback with lib-resource");
-                }
-            }
-            else
-            {
-                Logger?.LogDebug("IResourceClient not available - cleanup callbacks not registered (lib-resource may not be enabled)");
-            }
-        }
-        catch (Exception ex)
+        var success = await CharacterEncounterService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+        if (success)
         {
-            Logger?.LogWarning(ex, "Failed to register cleanup callbacks with lib-resource");
+            Logger?.LogInformation("Registered character cleanup callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
+        }
+
+        // Register compression callback (generated from x-compression-callback)
+        if (await CharacterEncounterCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
+        {
+            Logger?.LogInformation("Registered character-encounter compression callback with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register character-encounter compression callback with lib-resource");
         }
 
         // Register event templates for emit_event: ABML action

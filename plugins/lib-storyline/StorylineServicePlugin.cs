@@ -177,29 +177,17 @@ public class StorylineServicePlugin : BaseBannouPlugin
     {
         if (_serviceProvider == null) return;
 
-        try
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
+        using var scope = _serviceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+
+        if (await StorylineCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
         {
-            using var scope = _serviceProvider.CreateScope();
-            var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
-            if (resourceClient != null)
-            {
-                if (await StorylineCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
-                {
-                    Logger?.LogInformation("Registered storyline compression callback with lib-resource");
-                }
-                else
-                {
-                    Logger?.LogWarning("Failed to register storyline compression callback with lib-resource");
-                }
-            }
-            else
-            {
-                Logger?.LogDebug("IResourceClient not available - compression callback not registered (lib-resource may not be enabled)");
-            }
+            Logger?.LogInformation("Registered storyline compression callback with lib-resource");
         }
-        catch (Exception ex)
+        else
         {
-            Logger?.LogWarning(ex, "Failed to register compression callback with lib-resource");
+            Logger?.LogWarning("Failed to register storyline compression callback with lib-resource");
         }
     }
 

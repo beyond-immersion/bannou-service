@@ -115,8 +115,8 @@ def extract_mappings_from_schema(
     """
     mappings = []
 
-    components = schema.get('components', {})
-    schemas = components.get('schemas', {})
+    components = schema.get('components') or {}
+    schemas = components.get('schemas') or {}
 
     for event_name, event_schema in schemas.items():
         if not isinstance(event_schema, dict):
