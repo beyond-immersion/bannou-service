@@ -65,6 +65,20 @@ x-service-configuration:
       description: Maximum entries for in-memory LINQ fallback before throwing InvalidOperationException. Use JsonQueryAsync for large datasets.
       env: STATE_INMEMORY_FALLBACK_LIMIT
       default: 10000
+    EnableErrorEventPublishing:
+      type: boolean
+      nullable: true
+      description: "Enable publishing error events when state store operations fail. Null uses service default (true). Events are deduplicated within the configured window to prevent storms during infrastructure failures."
+      env: STATE_ENABLE_ERROR_EVENT_PUBLISHING
+      default: true
+    ErrorEventDeduplicationWindowSeconds:
+      type: integer
+      nullable: true
+      minimum: 1
+      maximum: 3600
+      description: "Time window in seconds for deduplicating identical error events. Events with the same store+operation+errorType are published at most once per window. Null uses service default (60)."
+      env: STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS
+      default: 60
     # Note: DefaultConsistency was removed as dead config (IMPLEMENTATION TENETS T21).
     # Consistency is specified per-request via StateOptions.Consistency, not as a global default.
     # The ConsistencyLevel enum remains available in state-api.yaml for per-request use.

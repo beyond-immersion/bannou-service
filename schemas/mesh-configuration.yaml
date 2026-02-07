@@ -190,6 +190,13 @@ x-service-configuration:
       description: TCP connection timeout in seconds
       env: MESH_CONNECT_TIMEOUT_SECONDS
       default: 10
+
+    RequestTimeoutSeconds:
+      type: integer
+      minimum: 1
+      description: Maximum time in seconds for a complete request/response cycle (excludes retries). Applies per-attempt.
+      env: MESH_REQUEST_TIMEOUT_SECONDS
+      default: 30
     EndpointCacheTtlSeconds:
       type: integer
       minimum: 1

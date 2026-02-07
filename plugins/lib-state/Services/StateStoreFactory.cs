@@ -57,10 +57,37 @@ public class StateStoreFactoryConfiguration
     public int InMemoryFallbackLimit { get; set; } = 10000;
 
     /// <summary>
+    /// Enable publishing error events when state store operations fail.
+    /// When true, infrastructure failures (Redis connection, MySQL errors) publish
+    /// ServiceErrorEvents for observability. Events are deduplicated within the
+    /// configured window to prevent storms during infrastructure failures.
+    /// </summary>
+    public bool EnableErrorEventPublishing { get; set; } = true;
+
+    /// <summary>
+    /// Time window in seconds for deduplicating identical error events.
+    /// Events with the same store+operation+errorType are published at most once per window.
+    /// </summary>
+    public int ErrorEventDeduplicationWindowSeconds { get; set; } = 60;
+
+    /// <summary>
     /// Store configurations by name.
     /// </summary>
     public Dictionary<string, StoreConfiguration> Stores { get; set; } = new();
 }
+
+/// <summary>
+/// Callback delegate for stores to publish infrastructure errors with deduplication.
+/// </summary>
+/// <param name="storeName">Name of the store where error occurred.</param>
+/// <param name="operation">Operation that failed (e.g., "GetAsync", "SaveAsync").</param>
+/// <param name="exception">The exception that occurred.</param>
+/// <param name="key">Optional key being accessed when error occurred.</param>
+internal delegate Task StateErrorPublisherAsync(
+    string storeName,
+    string operation,
+    Exception exception,
+    string? key = null);
 
 /// <summary>
 /// Factory for creating typed state stores.
@@ -72,6 +99,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<StateStoreFactory> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IMessageBus? _messageBus;
 
     private ConnectionMultiplexer? _redis;
     private DbContextOptions<StateDbContext>? _mysqlOptions;
@@ -86,21 +114,28 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     // Cache for created store instances
     private readonly ConcurrentDictionary<string, object> _storeCache = new();
 
+    // Cache for error event deduplication: key = "storeName:operation:errorType", value = last publish time
+    // IMPLEMENTATION TENETS: ConcurrentDictionary for multi-instance safety
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _errorDeduplicationCache = new();
+
     /// <summary>
     /// Creates a new StateStoreFactory.
     /// </summary>
     /// <param name="configuration">Factory configuration.</param>
     /// <param name="loggerFactory">Logger factory.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
+    /// <param name="messageBus">Optional message bus for error event publishing. When null, error events are not published.</param>
     public StateStoreFactory(
         StateStoreFactoryConfiguration configuration,
         ILoggerFactory loggerFactory,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IMessageBus? messageBus = null)
     {
         _configuration = configuration;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<StateStoreFactory>();
         _telemetryProvider = telemetryProvider;
+        _messageBus = messageBus;
 
         if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
@@ -108,6 +143,69 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 "StateStoreFactory created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",
                 _telemetryProvider.TracingEnabled, _telemetryProvider.MetricsEnabled);
         }
+
+        if (_messageBus != null && _configuration.EnableErrorEventPublishing)
+        {
+            _logger.LogDebug(
+                "StateStoreFactory error event publishing enabled (dedup window: {WindowSeconds}s)",
+                _configuration.ErrorEventDeduplicationWindowSeconds);
+        }
+    }
+
+    /// <summary>
+    /// Creates an error publisher callback for a specific store and backend.
+    /// The callback handles deduplication to prevent event storms during infrastructure failures.
+    /// </summary>
+    /// <param name="storeName">Name of the store.</param>
+    /// <param name="backend">Backend type name for the dependency field.</param>
+    /// <returns>Callback that stores can invoke to publish errors, or null if publishing is disabled.</returns>
+    private StateErrorPublisherAsync? CreateErrorPublisher(string storeName, string backend)
+    {
+        // Return null if publishing is disabled or no message bus available
+        if (!_configuration.EnableErrorEventPublishing || _messageBus == null)
+        {
+            return null;
+        }
+
+        return async (store, operation, exception, key) =>
+        {
+            // Build dedup key: storeName + operation + errorType
+            var dedupKey = $"{store}:{operation}:{exception.GetType().Name}";
+            var windowSeconds = _configuration.ErrorEventDeduplicationWindowSeconds;
+            var now = DateTimeOffset.UtcNow;
+
+            // Check dedup cache - skip if we published this error recently
+            if (_errorDeduplicationCache.TryGetValue(dedupKey, out var lastPublished))
+            {
+                if (now - lastPublished < TimeSpan.FromSeconds(windowSeconds))
+                {
+                    _logger.LogDebug(
+                        "Skipping duplicate state error event for {DedupKey} (last published {Seconds:F1}s ago)",
+                        dedupKey, (now - lastPublished).TotalSeconds);
+                    return;
+                }
+            }
+
+            // Update cache before publishing to prevent races from publishing twice
+            _errorDeduplicationCache[dedupKey] = now;
+
+            // Publish error event with available context
+            // Note: We don't have HTTP endpoint or correlation context at this layer
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "state",
+                operation: operation,
+                errorType: exception.GetType().Name,
+                message: exception.Message,
+                dependency: backend,
+                endpoint: null,
+                severity: ServiceErrorEventSeverity.Error,
+                details: new { StoreName = store, Key = key, Backend = backend },
+                stack: exception.StackTrace);
+
+            _logger.LogDebug(
+                "Published state error event: {Operation} failed for store {Store} ({Backend})",
+                operation, store, backend);
+        };
     }
 
     private async Task EnsureInitializedAsync()
@@ -284,9 +382,10 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             // Use in-memory store when configured (for testing/minimal infrastructure)
             if (_configuration.UseInMemory)
             {
-                var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
-                store = new InMemoryStateStore<TValue>(storeName, memoryLogger);
                 backend = "memory";
+                var errorPublisher = CreateErrorPublisher(storeName, backend);
+                var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
+                store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
             }
             else
             {
@@ -299,6 +398,8 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                         throw new InvalidOperationException("Redis connection not available");
                     }
 
+                    backend = "redis";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
                     var keyPrefix = storeConfig.KeyPrefix ?? storeName;
                     var defaultTtl = storeConfig.DefaultTtlSeconds.HasValue
                         ? TimeSpan.FromSeconds(storeConfig.DefaultTtlSeconds.Value)
@@ -312,7 +413,8 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                             _redis.GetDatabase(),
                             keyPrefix,
                             defaultTtl,
-                            searchLogger);
+                            searchLogger,
+                            errorPublisher);
                     }
                     else
                     {
@@ -321,15 +423,16 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                             _redis.GetDatabase(),
                             keyPrefix,
                             defaultTtl,
-                            redisLogger);
+                            redisLogger,
+                            errorPublisher);
                     }
-                    backend = "redis";
                 }
                 else if (storeConfig.Backend == StateBackend.Memory)
                 {
-                    var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
-                    store = new InMemoryStateStore<TValue>(storeName, memoryLogger);
                     backend = "memory";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
+                    var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
+                    store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
                 }
                 else // MySql
                 {
@@ -338,13 +441,15 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                         throw new InvalidOperationException("MySQL connection not available");
                     }
 
+                    backend = "mysql";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
                     var mysqlLogger = _loggerFactory.CreateLogger<MySqlStateStore<TValue>>();
                     store = new MySqlStateStore<TValue>(
                         _mysqlOptions,
                         storeConfig.TableName ?? storeName,
                         _configuration.InMemoryFallbackLimit,
-                        mysqlLogger);
-                    backend = "mysql";
+                        mysqlLogger,
+                        errorPublisher);
                 }
             }
 

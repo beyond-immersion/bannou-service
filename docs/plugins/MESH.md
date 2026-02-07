@@ -100,6 +100,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `RetryDelayMilliseconds` | `MESH_RETRY_DELAY_MILLISECONDS` | `100` | Initial retry delay (doubles each retry) |
 | `PooledConnectionLifetimeMinutes` | `MESH_POOLED_CONNECTION_LIFETIME_MINUTES` | `2` | HTTP connection pool lifetime |
 | `ConnectTimeoutSeconds` | `MESH_CONNECT_TIMEOUT_SECONDS` | `10` | TCP connection timeout |
+| `RequestTimeoutSeconds` | `MESH_REQUEST_TIMEOUT_SECONDS` | `30` | Per-request timeout for complete request/response cycle |
 | `EndpointCacheTtlSeconds` | `MESH_ENDPOINT_CACHE_TTL_SECONDS` | `5` | TTL for cached endpoint resolution |
 | `EndpointCacheMaxSize` | `MESH_ENDPOINT_CACHE_MAX_SIZE` | `0` | Max app-ids in endpoint cache (0 = unlimited) |
 | `LoadBalancingStateMaxAppIds` | `MESH_LOAD_BALANCING_STATE_MAX_APP_IDS` | `0` | Max app-ids in load balancing state (0 = unlimited) |
@@ -113,7 +114,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<MeshService>` | Scoped | Structured logging |
-| `MeshServiceConfiguration` | Singleton | All 24 config properties above |
+| `MeshServiceConfiguration` | Singleton | All 25 config properties above |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IMessageSubscriber` | Scoped | Circuit state change subscription in MeshInvocationClient |
 | `IEventConsumer` | Scoped | Heartbeat and mapping event subscription (via generated code) |
@@ -239,15 +240,13 @@ Event-Driven Auto-Registration
 
 2. **Graceful draining**: Endpoint status `ShuttingDown` could actively drain connections before full deregistration.
 
-3. **Request-level timeout**: Add a configurable per-request timeout separate from connection timeout to prevent slow responses from blocking the retry loop indefinitely.
-
 ---
 
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
 
-1. **No request-level timeout**: `MeshInvocationClient` only has `ConnectTimeoutSeconds` for TCP connection. Slow services can block the retry loop indefinitely. See [#324](https://github.com/beyond-immersion/bannou-service/issues/324).
+1. ~~**No request-level timeout**~~: **FIXED** (2026-02-07) - Added `RequestTimeoutSeconds` configuration (default 30s) for per-request timeout. See [#324](https://github.com/beyond-immersion/bannou-service/issues/324).
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -282,3 +281,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-07**: Created [#323](https://github.com/beyond-immersion/bannou-service/issues/323) for future degradation events (tied to Orchestrator response).
 - **2026-02-07**: Closed [#322](https://github.com/beyond-immersion/bannou-service/issues/322) - all production readiness items complete, including event topic fix (`bannou.service-heartbeat`).
 - **2026-02-07**: Created [#324](https://github.com/beyond-immersion/bannou-service/issues/324) for request-level timeout in MeshInvocationClient.
+- **2026-02-07**: Closed [#324](https://github.com/beyond-immersion/bannou-service/issues/324) - Added `RequestTimeoutSeconds` configuration (default 30s) for per-request timeout.

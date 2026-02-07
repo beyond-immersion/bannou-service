@@ -292,7 +292,11 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 
                 try
                 {
-                    lastResponse = await _httpClient.SendAsync(request, cancellationToken);
+                    // Apply per-request timeout (excludes retries)
+                    using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.RequestTimeoutSeconds));
+
+                    lastResponse = await _httpClient.SendAsync(request, timeoutCts.Token);
                     activity?.SetTag("http.response.status_code", (int)lastResponse.StatusCode);
 
                     if (!IsTransientError(lastResponse.StatusCode))
@@ -317,6 +321,18 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
                         (int)lastResponse.StatusCode, appId, maxAttempts - attempt - 1);
 
                     lastException = null;
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // Request timeout (not external cancellation) - treat as transient error for retry
+                    lastException = new TimeoutException(
+                        $"Request to {appId}/{methodName} timed out after {_configuration.RequestTimeoutSeconds}s");
+                    _endpointCache.Invalidate(appId);
+                    activity?.SetTag("bannou.mesh.timeout", true);
+
+                    _logger.LogDebug(
+                        "Request timeout to {AppId}/{Method} after {TimeoutSeconds}s, {Remaining} retries remaining",
+                        appId, methodName, _configuration.RequestTimeoutSeconds, maxAttempts - attempt - 1);
                 }
                 catch (HttpRequestException ex)
                 {
@@ -594,7 +610,11 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 
                 try
                 {
-                    lastResponse = await _httpClient.SendAsync(request, cancellationToken);
+                    // Apply per-request timeout (excludes retries)
+                    using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.RequestTimeoutSeconds));
+
+                    lastResponse = await _httpClient.SendAsync(request, timeoutCts.Token);
                     activity?.SetTag("http.response.status_code", (int)lastResponse.StatusCode);
 
                     if (!IsTransientError(lastResponse.StatusCode))
@@ -619,6 +639,18 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
                         (int)lastResponse.StatusCode, appId, maxAttempts - attempt - 1);
 
                     lastException = null;
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // Request timeout (not external cancellation) - treat as transient error for retry
+                    lastException = new TimeoutException(
+                        $"Raw API request to {appId}/{methodName} timed out after {_configuration.RequestTimeoutSeconds}s");
+                    _endpointCache.Invalidate(appId);
+                    activity?.SetTag("bannou.mesh.timeout", true);
+
+                    _logger.LogDebug(
+                        "Request timeout to raw API {AppId}/{Method} after {TimeoutSeconds}s, {Remaining} retries remaining",
+                        appId, methodName, _configuration.RequestTimeoutSeconds, maxAttempts - attempt - 1);
                 }
                 catch (HttpRequestException ex)
                 {

@@ -196,6 +196,13 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public int ConnectTimeoutSeconds { get; set; } = 10;
 
     /// <summary>
+    /// Maximum time in seconds for a complete request/response cycle (excludes retries). Applies per-attempt.
+    /// Environment variable: MESH_REQUEST_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int RequestTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
     /// TTL in seconds for cached service endpoints
     /// Environment variable: MESH_ENDPOINT_CACHE_TTL_SECONDS
     /// </summary>

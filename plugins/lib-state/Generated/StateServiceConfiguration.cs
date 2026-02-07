@@ -99,4 +99,17 @@ public class StateServiceConfiguration : IServiceConfiguration
     [ConfigRange(Minimum = 100, Maximum = 1000000)]
     public int InMemoryFallbackLimit { get; set; } = 10000;
 
+    /// <summary>
+    /// Enable publishing error events when state store operations fail. Null uses service default (true). Events are deduplicated within the configured window to prevent storms during infrastructure failures.
+    /// Environment variable: STATE_ENABLE_ERROR_EVENT_PUBLISHING
+    /// </summary>
+    public bool EnableErrorEventPublishing { get; set; } = true;
+
+    /// <summary>
+    /// Time window in seconds for deduplicating identical error events. Events with the same store+operation+errorType are published at most once per window. Null uses service default (60).
+    /// Environment variable: STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
+    public int ErrorEventDeduplicationWindowSeconds { get; set; } = 60;
+
 }

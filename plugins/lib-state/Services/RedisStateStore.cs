@@ -21,6 +21,7 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
     private readonly string _keyPrefix;
     private readonly TimeSpan? _defaultTtl;
     private readonly ILogger<RedisStateStore<TValue>> _logger;
+    private readonly StateErrorPublisherAsync? _errorPublisher;
 
     /// <summary>
     /// Creates a new Redis state store.
@@ -29,16 +30,19 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
     /// <param name="keyPrefix">Key prefix for namespacing.</param>
     /// <param name="defaultTtl">Default TTL for entries (null = no expiration).</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="errorPublisher">Optional callback for publishing infrastructure errors with deduplication.</param>
     public RedisStateStore(
         IDatabase database,
         string keyPrefix,
         TimeSpan? defaultTtl,
-        ILogger<RedisStateStore<TValue>> logger)
+        ILogger<RedisStateStore<TValue>> logger,
+        StateErrorPublisherAsync? errorPublisher = null)
     {
         _database = database;
         _keyPrefix = keyPrefix;
         _defaultTtl = defaultTtl;
         _logger = logger;
+        _errorPublisher = errorPublisher;
     }
 
     private string GetFullKey(string key) => $"{_keyPrefix}:{key}";
@@ -65,17 +69,21 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         {
             // IMPLEMENTATION TENETS: Log Redis connection failures as errors for monitoring
             _logger.LogError(ex, "Redis connection failed reading key '{Key}' from store '{Store}'", key, _keyPrefix);
+            // Fire-and-forget error publishing (deduplication handled by factory)
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout reading key '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetAsync", ex, key);
             throw;
         }
         catch (System.Text.Json.JsonException ex)
         {
             // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
             _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetAsync", ex, key);
             return null;
         }
     }
@@ -110,17 +118,20 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed reading key '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetWithETagAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout reading key '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetWithETagAsync", ex, key);
             throw;
         }
         catch (System.Text.Json.JsonException ex)
         {
             // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
             _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetWithETagAsync", ex, key);
             return (null, null);
         }
     }
@@ -186,11 +197,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed saving key '{Key}' to store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SaveAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout saving key '{Key}' to store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SaveAsync", ex, key);
             throw;
         }
     }
@@ -284,11 +297,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed during optimistic save for key '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "TrySaveAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout during optimistic save for key '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "TrySaveAsync", ex, key);
             throw;
         }
     }
@@ -313,11 +328,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed deleting key '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DeleteAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout deleting key '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DeleteAsync", ex, key);
             throw;
         }
     }
@@ -334,11 +351,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed checking existence of key '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "ExistsAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout checking existence of key '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "ExistsAsync", ex, key);
             throw;
         }
     }
@@ -377,6 +396,7 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
                     {
                         // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
                         _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", keyList[i], _keyPrefix);
+                        _ = _errorPublisher?.Invoke(_keyPrefix, "GetBulkAsync", ex, keyList[i]);
                     }
                 }
             }
@@ -389,11 +409,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed during bulk get of {Count} keys from store '{Store}'", keyList.Count, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetBulkAsync", ex, null);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout during bulk get of {Count} keys from store '{Store}'", keyList.Count, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetBulkAsync", ex, null);
             throw;
         }
     }
@@ -600,11 +622,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed adding item to set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "AddToSetAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout adding item to set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "AddToSetAsync", ex, key);
             throw;
         }
     }
@@ -644,11 +668,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed adding {Count} items to set '{Key}' in store '{Store}'", itemList.Count, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "AddToSetAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout adding {Count} items to set '{Key}' in store '{Store}'", itemList.Count, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "AddToSetAsync", ex, key);
             throw;
         }
     }
@@ -674,11 +700,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed removing item from set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "RemoveFromSetAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout removing item from set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "RemoveFromSetAsync", ex, key);
             throw;
         }
     }
@@ -729,11 +757,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting set '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetSetAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting set '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetSetAsync", ex, key);
             throw;
         }
     }
@@ -754,11 +784,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed checking set membership for '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SetContainsAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout checking set membership for '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SetContainsAsync", ex, key);
             throw;
         }
     }
@@ -777,11 +809,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting set count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SetCountAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting set count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SetCountAsync", ex, key);
             throw;
         }
     }
@@ -805,11 +839,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed deleting set '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DeleteSetAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout deleting set '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DeleteSetAsync", ex, key);
             throw;
         }
     }
@@ -835,11 +871,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed refreshing TTL on set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "RefreshSetTtlAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout refreshing TTL on set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "RefreshSetTtlAsync", ex, key);
             throw;
         }
     }
@@ -877,11 +915,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed adding member to sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetAddAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout adding member to sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetAddAsync", ex, key);
             throw;
         }
     }
@@ -923,11 +963,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed adding {Count} members to sorted set '{Key}' in store '{Store}'", entryList.Count, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetAddBatchAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout adding {Count} members to sorted set '{Key}' in store '{Store}'", entryList.Count, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetAddBatchAsync", ex, key);
             throw;
         }
     }
@@ -952,11 +994,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed removing member from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetRemoveAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout removing member from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetRemoveAsync", ex, key);
             throw;
         }
     }
@@ -976,11 +1020,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting score from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetScoreAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting score from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetScoreAsync", ex, key);
             throw;
         }
     }
@@ -1007,11 +1053,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting rank from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetRankAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting rank from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetRankAsync", ex, key);
             throw;
         }
     }
@@ -1045,11 +1093,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting range from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetRangeByRankAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting range from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetRangeByRankAsync", ex, key);
             throw;
         }
     }
@@ -1101,11 +1151,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting score range from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetRangeByScoreAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting score range from sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetRangeByScoreAsync", ex, key);
             throw;
         }
     }
@@ -1124,11 +1176,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting sorted set count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetCountAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting sorted set count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetCountAsync", ex, key);
             throw;
         }
     }
@@ -1154,11 +1208,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed incrementing member in sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetIncrementAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout incrementing member in sorted set '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetIncrementAsync", ex, key);
             throw;
         }
     }
@@ -1182,11 +1238,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed deleting sorted set '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetDeleteAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout deleting sorted set '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SortedSetDeleteAsync", ex, key);
             throw;
         }
     }
@@ -1224,11 +1282,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed incrementing counter '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "IncrementAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout incrementing counter '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "IncrementAsync", ex, key);
             throw;
         }
     }
@@ -1262,11 +1322,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed decrementing counter '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DecrementAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout decrementing counter '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DecrementAsync", ex, key);
             throw;
         }
     }
@@ -1300,11 +1362,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting counter '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetCounterAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting counter '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "GetCounterAsync", ex, key);
             throw;
         }
     }
@@ -1336,11 +1400,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed setting counter '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SetCounterAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout setting counter '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "SetCounterAsync", ex, key);
             throw;
         }
     }
@@ -1364,11 +1430,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed deleting counter '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DeleteCounterAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout deleting counter '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DeleteCounterAsync", ex, key);
             throw;
         }
     }
@@ -1401,11 +1469,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting hash field '{Field}' from hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashGetAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting hash field '{Field}' from hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashGetAsync", ex, key);
             throw;
         }
         catch (System.Text.Json.JsonException ex)
@@ -1447,11 +1517,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed setting hash field '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashSetAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout setting hash field '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashSetAsync", ex, key);
             throw;
         }
     }
@@ -1492,11 +1564,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed setting {Count} hash fields in hash '{Key}' in store '{Store}'", fieldList.Count, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashSetManyAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout setting {Count} hash fields in hash '{Key}' in store '{Store}'", fieldList.Count, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashSetManyAsync", ex, key);
             throw;
         }
     }
@@ -1521,11 +1595,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed deleting hash field '{Field}' from hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashDeleteAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout deleting hash field '{Field}' from hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashDeleteAsync", ex, key);
             throw;
         }
     }
@@ -1545,11 +1621,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed checking hash field existence for '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashExistsAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout checking hash field existence for '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashExistsAsync", ex, key);
             throw;
         }
     }
@@ -1576,11 +1654,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed incrementing hash field '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashIncrementAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout incrementing hash field '{Field}' in hash '{Key}' in store '{Store}'", field, key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashIncrementAsync", ex, key);
             throw;
         }
     }
@@ -1622,11 +1702,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting all hash fields from hash '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashGetAllAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting all hash fields from hash '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashGetAllAsync", ex, key);
             throw;
         }
     }
@@ -1645,11 +1727,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed getting hash count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashCountAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout getting hash count for '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "HashCountAsync", ex, key);
             throw;
         }
     }
@@ -1673,11 +1757,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed deleting hash '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DeleteHashAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout deleting hash '{Key}' from store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "DeleteHashAsync", ex, key);
             throw;
         }
     }
@@ -1702,11 +1788,13 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         catch (RedisConnectionException ex)
         {
             _logger.LogError(ex, "Redis connection failed refreshing TTL on hash '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "RefreshHashTtlAsync", ex, key);
             throw;
         }
         catch (RedisTimeoutException ex)
         {
             _logger.LogError(ex, "Redis timeout refreshing TTL on hash '{Key}' in store '{Store}'", key, _keyPrefix);
+            _ = _errorPublisher?.Invoke(_keyPrefix, "RefreshHashTtlAsync", ex, key);
             throw;
         }
     }
