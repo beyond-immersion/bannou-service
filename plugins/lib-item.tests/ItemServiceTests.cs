@@ -2329,6 +2329,808 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.Contains(capturedRequest.Parties, p => p.Role == "system");
     }
 
+    [Fact]
+    public async Task UseItemAsync_ItemUseBehaviorDisabled_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "non_usable_item",
+            GameId = "game1",
+            Name = "Non-Usable Item",
+            Category = ItemCategory.Weapon,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = Guid.NewGuid(),
+            ItemUseBehavior = ItemUseBehavior.Disabled  // Key: item use is disabled
+        };
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = "character"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Act
+        var (status, response) = await service.UseItemAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("disabled", response.FailureReason, StringComparison.OrdinalIgnoreCase);
+
+        // Verify no contract was created
+        _mockContractClient.Verify(
+            c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task UseItemAsync_CanUseValidationBlocks_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var canUseBehaviorTemplateId = Guid.NewGuid();
+        var canUseContractId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "guarded_item",
+            GameId = "game1",
+            Name = "Guarded Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = Guid.NewGuid(),
+            CanUseBehaviorContractTemplateId = canUseBehaviorTemplateId,
+            CanUseBehavior = CanUseBehavior.Block  // Key: block on validation failure
+        };
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = "character"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // CanUse validation contract created successfully
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(
+                It.Is<CreateContractInstanceRequest>(r => r.TemplateId == canUseBehaviorTemplateId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = canUseContractId });
+
+        // CanUse milestone FAILS (validation didn't pass)
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(
+                It.Is<CompleteMilestoneRequest>(r => r.ContractId == canUseContractId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse
+                {
+                    Code = "validate",
+                    Status = MilestoneStatus.Pending  // Not completed = validation failed
+                }
+            });
+
+        // Act
+        var (status, response) = await service.UseItemAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("validation", response.FailureReason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UseItemAsync_CanUseValidationWarnsButProceeds_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var canUseBehaviorTemplateId = Guid.NewGuid();
+        var mainBehaviorTemplateId = Guid.NewGuid();
+        var canUseContractId = Guid.NewGuid();
+        var mainContractId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = containerId,
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "flexible_item",
+            GameId = "game1",
+            Name = "Flexible Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = mainBehaviorTemplateId,
+            CanUseBehaviorContractTemplateId = canUseBehaviorTemplateId,
+            CanUseBehavior = CanUseBehavior.WarnAndProceed  // Key: warn but proceed
+        };
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = "character"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // CanUse validation contract created
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(
+                It.Is<CreateContractInstanceRequest>(r => r.TemplateId == canUseBehaviorTemplateId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = canUseContractId });
+
+        // CanUse milestone fails (but we're set to warn and proceed)
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(
+                It.Is<CompleteMilestoneRequest>(r => r.ContractId == canUseContractId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse
+                {
+                    Code = "validate",
+                    Status = MilestoneStatus.Pending  // Validation failed
+                }
+            });
+
+        // Main behavior contract created
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(
+                It.Is<CreateContractInstanceRequest>(r => r.TemplateId == mainBehaviorTemplateId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = mainContractId });
+
+        // Main use milestone succeeds
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(
+                It.Is<CompleteMilestoneRequest>(r => r.ContractId == mainContractId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse
+                {
+                    Code = "use",
+                    Status = MilestoneStatus.Completed
+                }
+            });
+
+        _mockInstanceStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.UseItemAsync(request);
+
+        // Assert - Despite validation failure, use proceeds
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+    }
+
+    [Fact]
+    public async Task UseItemAsync_DestroyAlways_ConsumesOnFailure()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var contractInstanceId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = containerId,
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "explosive_item",
+            GameId = "game1",
+            Name = "Explosive Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId,
+            ItemUseBehavior = ItemUseBehavior.DestroyAlways  // Key: consume even on failure
+        };
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = "character"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Contract succeeds
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = contractInstanceId });
+
+        // Milestone FAILS
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(It.IsAny<CompleteMilestoneRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse
+                {
+                    Code = "use",
+                    Status = MilestoneStatus.Pending  // Failed
+                }
+            });
+
+        _mockInstanceStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.UseItemAsync(request);
+
+        // Assert - Use failed but item was consumed
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.True(response.Consumed);  // Key assertion: consumed even on failure
+
+        // Verify deletion was called
+        _mockInstanceStore.Verify(
+            s => s.DeleteAsync(It.Is<string>(k => k.Contains(instanceId.ToString())), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task UseItemAsync_OnUseFailedHandler_ExecutedOnFailure()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var mainContractTemplateId = Guid.NewGuid();
+        var failedHandlerTemplateId = Guid.NewGuid();
+        var mainContractId = Guid.NewGuid();
+        var failedHandlerContractId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "handled_item",
+            GameId = "game1",
+            Name = "Handled Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = mainContractTemplateId,
+            OnUseFailedBehaviorContractTemplateId = failedHandlerTemplateId  // Key: failure handler
+        };
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = "character"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Main behavior contract created
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(
+                It.Is<CreateContractInstanceRequest>(r => r.TemplateId == mainContractTemplateId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = mainContractId });
+
+        // Main milestone fails
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(
+                It.Is<CompleteMilestoneRequest>(r => r.ContractId == mainContractId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse
+                {
+                    Code = "use",
+                    Status = MilestoneStatus.Pending  // Failed
+                }
+            });
+
+        // OnUseFailed handler contract created
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(
+                It.Is<CreateContractInstanceRequest>(r => r.TemplateId == failedHandlerTemplateId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = failedHandlerContractId });
+
+        // OnUseFailed milestone completed
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(
+                It.Is<CompleteMilestoneRequest>(r => r.ContractId == failedHandlerContractId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse
+                {
+                    Code = "handle_failure",
+                    Status = MilestoneStatus.Completed
+                }
+            });
+
+        // Act
+        var (status, response) = await service.UseItemAsync(request);
+
+        // Assert - Use failed but handler was invoked
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+
+        // Verify OnUseFailed handler was called
+        _mockContractClient.Verify(
+            c => c.CreateContractInstanceAsync(
+                It.Is<CreateContractInstanceRequest>(r => r.TemplateId == failedHandlerTemplateId),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region UseItemStep Tests
+
+    [Fact]
+    public async Task UseItemStepAsync_InstanceNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UseItemStepRequest
+        {
+            InstanceId = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            UserType = "character",
+            MilestoneCode = "step_1"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ItemInstanceModel?)null);
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ItemInstanceModel?)null);
+
+        // Act
+        var (status, response) = await service.UseItemStepAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task UseItemStepAsync_TemplateHasNoBehaviorContract_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "no_behavior",
+            GameId = "game1",
+            Name = "No Behavior",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+            // No UseBehaviorContractTemplateId
+        };
+
+        var request = new UseItemStepRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = "character",
+            MilestoneCode = "step_1"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Act
+        var (status, response) = await service.UseItemStepAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("no use behavior", response.FailureReason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UseItemStepAsync_FirstStep_CreatesContract()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var contractInstanceId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+            // No ContractInstanceId = first step
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "multi_step_item",
+            GameId = "game1",
+            Name = "Multi-Step Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId
+        };
+
+        var request = new UseItemStepRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = "character",
+            MilestoneCode = "step_1"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // For lock re-read
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-1"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Contract created for first step
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = contractInstanceId });
+
+        // Milestone completed
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(It.IsAny<CompleteMilestoneRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse
+                {
+                    Code = "step_1",
+                    Status = MilestoneStatus.Completed
+                }
+            });
+
+        // Remaining milestones query
+        _mockContractClient
+            .Setup(c => c.GetContractInstanceAsync(It.IsAny<GetContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse
+            {
+                ContractId = contractInstanceId,
+                Milestones = new List<MilestoneInstanceResponse>
+                {
+                    new() { Code = "step_1", Status = MilestoneStatus.Completed },
+                    new() { Code = "step_2", Status = MilestoneStatus.Pending }
+                }
+            });
+
+        // Act
+        var (status, response) = await service.UseItemStepAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal("step_1", response.CompletedMilestone);
+        Assert.False(response.IsComplete);  // More milestones remaining
+        Assert.False(response.Consumed);
+        Assert.NotNull(response.RemainingMilestones);
+        Assert.Contains("step_2", response.RemainingMilestones);
+
+        // Verify contract was created
+        _mockContractClient.Verify(
+            c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task UseItemStepAsync_SubsequentStep_UsesExistingContract()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var existingContractId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ContractInstanceId = existingContractId,  // Existing contract = not first step
+            ContractBindingType = ContractBindingType.Session
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "multi_step_item",
+            GameId = "game1",
+            Name = "Multi-Step Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId
+        };
+
+        var request = new UseItemStepRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = "character",
+            MilestoneCode = "step_2"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // For lock re-read
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-1"));
+
+        // Milestone completed on EXISTING contract
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(
+                It.Is<CompleteMilestoneRequest>(r => r.ContractId == existingContractId && r.MilestoneCode == "step_2"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse
+                {
+                    Code = "step_2",
+                    Status = MilestoneStatus.Completed
+                }
+            });
+
+        // No remaining milestones = complete
+        _mockContractClient
+            .Setup(c => c.GetContractInstanceAsync(It.IsAny<GetContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse
+            {
+                ContractId = existingContractId,
+                Milestones = new List<MilestoneInstanceResponse>
+                {
+                    new() { Code = "step_1", Status = MilestoneStatus.Completed },
+                    new() { Code = "step_2", Status = MilestoneStatus.Completed }
+                }
+            });
+
+        _mockInstanceStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.UseItemStepAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal("step_2", response.CompletedMilestone);
+        Assert.True(response.IsComplete);  // All milestones done
+        Assert.True(response.Consumed);
+
+        // Verify NO new contract was created (used existing)
+        _mockContractClient.Verify(
+            c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task UseItemStepAsync_LockAcquisitionFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "multi_step_item",
+            GameId = "game1",
+            Name = "Multi-Step Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = Guid.NewGuid()
+        };
+
+        var request = new UseItemStepRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = "character",
+            MilestoneCode = "step_1"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Lock fails
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(r => r.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                StateStoreDefinitions.ItemLock,
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        // Act
+        var (status, response) = await service.UseItemStepAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
     #endregion
 
     #region Helper Methods

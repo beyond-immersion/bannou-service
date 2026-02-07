@@ -13,6 +13,116 @@ Dual-model item management with templates (definitions/prototypes) and instances
 
 ---
 
+## Itemize Anything: Conceptual Model
+
+The Item service implements the **"Itemize Anything"** pattern ([#280](https://github.com/beyond-immersion/bannou-service/issues/280)), enabling arbitrary game concepts to be stored and managed as items. This creates a unified abstraction for:
+
+- Traditional items (weapons, armor, consumables)
+- Licenses and skills ([#281](https://github.com/beyond-immersion/bannou-service/issues/281))
+- Status effects and buffs ([#282](https://github.com/beyond-immersion/bannou-service/issues/282))
+- Memberships and subscriptions ([#284](https://github.com/beyond-immersion/bannou-service/issues/284))
+- Collectibles and achievements ([#286](https://github.com/beyond-immersion/bannou-service/issues/286))
+
+### Items as Contract Wrappers
+
+The key insight is that items can **delegate behavior to contracts**. An item template's `useBehaviorContractTemplateId` field points to a Contract template that defines what happens when the item is used:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Item → Contract Delegation                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│   ItemTemplate                           ContractTemplate                │
+│   ┌─────────────────────────┐           ┌─────────────────────────┐     │
+│   │ code: "quest_scroll"    │           │ code: "ITEM_USE_QUEST"  │     │
+│   │ useBehaviorContract ────┼──────────→│ milestones:             │     │
+│   │   TemplateId: "..."     │           │   - code: "use"         │     │
+│   └─────────────────────────┘           │     onComplete:         │     │
+│                                         │       - /quest/start    │     │
+│   /item/use                             │       - /item/destroy   │     │
+│       │                                 └─────────────────────────┘     │
+│       ├── Create contract instance                                      │
+│       ├── Complete "use" milestone ──→ Prebound APIs execute            │
+│       └── Consume item on success                                       │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+This means the Item service doesn't need to know anything about quests, spells, buffs, or any other domain. It simply:
+1. Creates a contract instance from the template
+2. Completes the designated milestone
+3. Lets the Contract service execute the prebound APIs
+
+### Three Contract Binding Patterns
+
+Items support three patterns for contract relationships:
+
+| Pattern | When Contract Created | When Cleared | Example |
+|---------|----------------------|--------------|---------|
+| **Ephemeral** | On `/item/use` | Immediately after use | Quest scroll, healing potion |
+| **Session** | On first `/item/use-step` | When all milestones complete | Multi-step crafting recipe |
+| **Lifecycle** | At item creation (by orchestrator) | When contract terminates | Buff/debuff, license, subscription |
+
+**Ephemeral contracts** (current `/item/use`):
+```
+User clicks "Use Potion" → Item service creates contract → Contract executes
+→ Character healed → Item consumed → Contract disposed
+```
+
+**Session contracts** (future `/item/use-step`):
+```
+User starts crafting → Item gets contractInstanceId stored → User completes
+step 1, 2, 3 → Final step → Item consumed → Contract completed
+```
+
+**Lifecycle contracts** (orchestrated by lib-status, lib-license, etc.):
+```
+Player poisoned → lib-status creates contract + item together → Contract
+has 30s timer → Timer expires → Contract terminates → Item destroyed
+```
+
+### Orchestrator Pattern
+
+Higher-layer services (L3/L4) act as **thin orchestration layers** that coordinate between Items and Contracts:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    Orchestrator Pattern (lib-status example)             │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│   lib-status (L4 Orchestrator)                                          │
+│       │                                                                  │
+│       ├── 1. Create Contract instance (poison_debuff template)          │
+│       │       ├── 30s duration milestone                                │
+│       │       └── onComplete: /character/damage, /status/remove         │
+│       │                                                                  │
+│       ├── 2. Create Item instance (poison status item)                  │
+│       │       ├── contractInstanceId = contract from step 1             │
+│       │       ├── contractBindingType = lifecycle                       │
+│       │       └── containerId = character's status inventory            │
+│       │                                                                  │
+│       └── 3. React to contract.terminated events                        │
+│               └── Destroy the bound item                                │
+│                                                                          │
+│   Item Service (L2) - Stores the item, knows nothing about poison       │
+│   Contract Service (L1) - Manages lifecycle, executes prebound APIs     │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+The Item service provides storage and the `/item/use` execution path. It doesn't interpret what items "mean" - that's the orchestrator's job.
+
+### Why This Matters
+
+This architecture enables:
+
+1. **Unified queries**: "Does character have the poison debuff?" → Query status inventory for item with code `poison_tier_1`
+2. **Unified serialization**: Save/load systems just persist items - the contract handles behavior
+3. **Extensibility**: New item behaviors = new contract templates, not new code
+4. **Clean separation**: Item service (L2) knows storage; orchestrators (L4) know domain semantics
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 | Dependency | Usage |
@@ -133,7 +243,74 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **ModifyItemInstance** (`/item/instance/modify`): Updates durability (delta), quantityDelta, customStats, customName, instanceMetadata, container/slot position. Container changes use distributed lock via `item-lock` store to prevent race conditions on index updates. Non-container changes skip locking. Invalidates instance cache. Publishes `item-instance.modified`.
 - **BindItemInstance** (`/item/instance/bind`): Binds instance to character ID. Checks `BindingAllowAdminOverride` for rebinding. Enriches event with template code (fallback: `missing:{templateId}` if template not found). Publishes `item-instance.bound`.
 - **DestroyItemInstance** (`/item/instance/destroy`): Validates template's `Destroyable` flag unless reason="admin". Removes from container and template indexes. Invalidates cache. Publishes `item-instance.destroyed`.
-- **UseItem** (`/item/use`): Executes item behavior via Contract service. Requires template to have `useBehaviorContractTemplateId` set. Creates two-party contract (user + deterministic system party), completes the "use" milestone triggering prebound APIs, then consumes the item on success (decrements quantity or destroys if last). Events are batched with deduplication by templateId+userId. Returns BadRequest if template has no behavior contract or milestone fails. Publishes batched `item.used` or `item.use-failed`.
+- **UseItem** (`/item/use`): Executes item behavior via Contract service delegation. See detailed flow below.
+
+### UseItem Execution Flow (Detailed)
+
+The `/item/use` endpoint implements the **ephemeral contract pattern**:
+
+```
+UseItemAsync(instanceId, userId, userType, targetId?, targetType?, context?)
+    │
+    ├── 1. Load instance from cache/store
+    │       └── 404 if not found
+    │
+    ├── 2. Load template from cache/store
+    │       └── 500 if template missing (data inconsistency)
+    │
+    ├── 3. Validate template.useBehaviorContractTemplateId
+    │       └── 400 if null (item not usable)
+    │
+    ├── 4. Compute system party ID
+    │       ├── If ITEM_SYSTEM_PARTY_ID configured → use it
+    │       └── Else → SHA256(game ID) → deterministic UUID v5
+    │
+    ├── 5. Create contract instance
+    │       ├── Two parties: user (from request) + system (computed)
+    │       ├── gameMetadata populated with:
+    │       │   ├── itemInstanceId, itemTemplateId
+    │       │   ├── userId, userType
+    │       │   ├── targetId, targetType (if provided)
+    │       │   └── merged context dict (for template value substitution)
+    │       └── 400 if contract creation fails
+    │
+    ├── 6. Complete "use" milestone (code from ITEM_USE_MILESTONE_CODE)
+    │       ├── Contract service executes onComplete prebound APIs
+    │       │   ├── Template values substituted: {{contract.party.user.entityId}}, etc.
+    │       │   └── APIs execute in batches (default 10 concurrent per batch)
+    │       └── 400 if milestone fails
+    │
+    ├── 7. Consume item (on success only)
+    │       ├── Quantity > 1 → Decrement by 1, publish item-instance.modified
+    │       └── Quantity ≤ 1 → Destroy instance, publish item-instance.destroyed
+    │
+    ├── 8. Record for batched event publishing
+    │       ├── Key: {templateId}:{userId}
+    │       ├── Window: ITEM_USE_EVENT_DEDUPLICATION_WINDOW_SECONDS (60s)
+    │       └── Batch size: ITEM_USE_EVENT_BATCH_MAX_SIZE (100)
+    │
+    └── 9. Return UseItemResponse
+            ├── success: true/false
+            ├── contractInstanceId: the ephemeral contract
+            ├── consumed: whether item was consumed
+            ├── remainingQuantity: null if destroyed, else new quantity
+            └── failureReason: if success=false
+```
+
+**Key Design Points**:
+
+1. **Deterministic system party**: The system party ID is derived from the game ID via SHA-256, ensuring the same game always gets the same system party across all instances. This enables contract templates to reference `{{contract.party.system.entityId}}` consistently.
+
+2. **Ephemeral contract**: The contract instance is created and completed in a single request. The `contractInstanceId` in the response is informational - the contract is already complete.
+
+3. **Batched events**: High-frequency item use (e.g., rapid potion drinking) doesn't flood the event bus. Events are deduplicated by user+template and published in batches.
+
+4. **Context passthrough**: The `context` dict in the request is merged into `gameMetadata`, allowing callers to pass arbitrary data for template value substitution (e.g., `{{contract.gameMetadata.instanceData.targetLocation}}`).
+
+**Related Configuration**:
+- `ITEM_USE_MILESTONE_CODE`: Milestone to complete (default: "use")
+- `ITEM_SYSTEM_PARTY_ID`: Override deterministic system party (default: computed)
+- `ITEM_SYSTEM_PARTY_TYPE`: Entity type for system party (default: "system")
 
 ### Query Operations (3 endpoints)
 
@@ -227,6 +404,60 @@ Soulbound Types
   on_pickup  → Binds when first acquired (instance creation)
   on_equip   → Binds when equipped (external trigger)
   on_use     → Binds when consumed/used (external trigger)
+
+
+Contract Binding Patterns
+===========================
+
+  EPHEMERAL (current /item/use):
+  ┌─────────────────────────────────────────────────────────┐
+  │  /item/use                                              │
+  │      │                                                  │
+  │      ├── Create contract instance                       │
+  │      ├── Complete milestone ──→ Prebound APIs           │
+  │      ├── Consume item                                   │
+  │      └── Contract disposed (ephemeral)                  │
+  │                                                         │
+  │  contractInstanceId: NOT stored on item                 │
+  │  Use case: Consumables, one-shot effects                │
+  └─────────────────────────────────────────────────────────┘
+
+  SESSION (future /item/use-step):
+  ┌─────────────────────────────────────────────────────────┐
+  │  /item/use-step (step 1)                                │
+  │      ├── Create contract, store on item                 │
+  │      └── Complete milestone 1                           │
+  │                                                         │
+  │  /item/use-step (step 2)                                │
+  │      └── Complete milestone 2                           │
+  │                                                         │
+  │  /item/use-step (step N - final)                        │
+  │      ├── Complete final milestone                       │
+  │      ├── Consume item                                   │
+  │      └── Clear contractInstanceId                       │
+  │                                                         │
+  │  contractInstanceId: stored during session              │
+  │  contractBindingType: "session"                         │
+  │  Use case: Multi-step crafting, ritual spells           │
+  └─────────────────────────────────────────────────────────┘
+
+  LIFECYCLE (orchestrator-managed):
+  ┌─────────────────────────────────────────────────────────┐
+  │  lib-status (orchestrator):                             │
+  │      ├── Create contract (30s poison timer)             │
+  │      └── Create item with contractInstanceId            │
+  │                                                         │
+  │  Contract executes (ticks, duration):                   │
+  │      └── Prebound APIs: damage per tick                 │
+  │                                                         │
+  │  Contract expires:                                      │
+  │      ├── Orchestrator receives contract.terminated      │
+  │      └── Orchestrator destroys item                     │
+  │                                                         │
+  │  contractInstanceId: stored at creation                 │
+  │  contractBindingType: "lifecycle"                       │
+  │  Use case: Buffs/debuffs, licenses, subscriptions       │
+  └─────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -244,6 +475,76 @@ Soulbound Types
 2. **Template migration**: When deprecating with `migrationTargetId`, automatically upgrade instances to the new template.
 3. **Affix system**: Random or crafted modifiers applied to instances (prefixes/suffixes).
 4. **Durability repair**: Endpoint to restore durability with configurable repair costs.
+
+---
+
+## Upcoming: Itemize Anything Extensions (#330)
+
+The following extensions are planned to complete the "Itemize Anything" pattern:
+
+### CanUse Validation (`canUseBehaviorContractTemplateId`)
+
+Pre-use validation via a separate contract. If validation fails, the item is not consumed:
+
+```yaml
+ItemTemplate:
+  code: "high_level_scroll"
+  canUseBehaviorContractTemplateId: "CHECK_LEVEL_10"  # Validates level ≥ 10
+  useBehaviorContractTemplateId: "TEACH_SPELL"        # Actual behavior
+```
+
+### OnUseFailed Handling (`onUseFailedBehaviorContractTemplateId`)
+
+Cleanup/consequence contract when main use fails:
+
+```yaml
+ItemTemplate:
+  code: "unstable_potion"
+  useBehaviorContractTemplateId: "BUFF_STRENGTH"
+  onUseFailedBehaviorContractTemplateId: "EXPLODE"  # Backfire on failure
+```
+
+### Multi-Step Use (`/item/use-step`)
+
+For items requiring multiple interactions (crafting recipes, ritual spells):
+
+```
+POST /item/use-step { instanceId, userId, milestoneCode: "gather" }
+    → Creates contract, stores contractInstanceId on item
+    → Returns { remainingMilestones: ["craft", "enchant"] }
+
+POST /item/use-step { instanceId, userId, milestoneCode: "craft" }
+    → Uses existing contract
+    → Returns { remainingMilestones: ["enchant"] }
+
+POST /item/use-step { instanceId, userId, milestoneCode: "enchant" }
+    → Completes contract, consumes item
+    → Returns { isComplete: true, consumed: true }
+```
+
+### Per-Template Use Behavior (`ItemUseBehavior` enum)
+
+Control consumption behavior per template:
+
+| Value | Behavior |
+|-------|----------|
+| `disabled` | Item cannot be used (400 on /item/use) |
+| `destroy_on_success` | Consume only on successful use (default) |
+| `destroy_always` | Consume regardless of success/failure |
+
+### Persistent Contract Bindings
+
+For lifecycle-managed items, the instance will store:
+
+```yaml
+ItemInstanceResponse:
+  contractInstanceId: "abc-123"        # Bound contract
+  contractBindingType: "lifecycle"     # vs "session" for multi-step
+```
+
+This enables orchestrators (lib-status, lib-license) to create items that are tied to ongoing contracts. The Item service stores the relationship; the orchestrator manages the lifecycle.
+
+**Not in this extension**: Event subscriptions for contract termination (Item reacting to `contract.terminated`). Orchestrators will handle cleanup explicitly.
 
 ---
 
