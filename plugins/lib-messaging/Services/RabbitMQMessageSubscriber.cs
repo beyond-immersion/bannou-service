@@ -590,7 +590,10 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         return new Dictionary<string, object?>
         {
             ["x-dead-letter-exchange"] = _configuration.DeadLetterExchange,
-            ["x-dead-letter-routing-key"] = "dead-letter"
+            ["x-dead-letter-routing-key"] = "dead-letter",
+            ["x-max-length"] = _configuration.DeadLetterMaxLength,
+            ["x-message-ttl"] = _configuration.DeadLetterTtlMs,
+            ["x-overflow"] = _configuration.DeadLetterOverflowBehavior
         };
     }
 

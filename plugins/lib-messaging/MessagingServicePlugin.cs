@@ -27,8 +27,9 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
 
         // Get configuration to read RabbitMQ settings
         // Cache the provider to avoid multiple builds and ensure consistent config
-        var tempProvider = services.BuildServiceProvider();
-        _cachedConfig = tempProvider.GetService<MessagingServiceConfiguration>();
+        // IMPLEMENTATION TENETS (T24): Use using statement for proper disposal
+        using var tempProvider = services.BuildServiceProvider();
+        _cachedConfig = tempProvider.GetRequiredService<MessagingServiceConfiguration>();
         var config = _cachedConfig;
 
         // Check for in-memory mode
