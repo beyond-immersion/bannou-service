@@ -164,12 +164,15 @@ All configuration properties are verified as used in `ResourceService.cs`.
 | `SeededResource` | Record type for seeded resource with identifier, content, metadata |
 | `EmbeddedResourceProvider` | Base class for loading from assembly embedded resources |
 
-**Internal Types** (defined in ResourceService.cs):
+**Internal Types** (defined in ResourceServiceModels.cs):
 | Type | Role |
 |------|------|
 | `ResourceReferenceEntry` | Set member for reference tracking; equality based on `SourceType` + `SourceId` |
 | `GracePeriodRecord` | Records when refcount became zero |
-| `CleanupCallbackDefinition` | Stores callback registration (service, endpoint, template, onDeleteAction) |
+| `CleanupCallbackDefinition` | Stores cleanup callback registration (service, endpoint, template, onDeleteAction) |
+| `CompressCallbackDefinition` | Stores compression callback registration (compress/decompress endpoints, priority) |
+| `ResourceArchiveModel` | Archive bundle stored in MySQL (version tracked, entries list) |
+| `ArchiveEntryModel` | Single entry in archive bundle (sourceType, compressed data, checksum) |
 | `ResourceSnapshotModel` | Ephemeral snapshot with TTL (stored in Redis, mirrors archive structure) |
 
 ---

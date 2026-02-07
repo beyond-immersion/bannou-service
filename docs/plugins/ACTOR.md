@@ -57,6 +57,22 @@ Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, en
 | `EncountersProviderFactory` | `encounters` | lib-character-encounter |
 | `QuestProviderFactory` | `quest` | lib-quest |
 
+**Character Brain vs Event Brain Data Access**
+
+The Variable Provider Factory pattern above applies to **Character Brain actors** - actors bound to a single character that access data about *themselves* via live providers.
+
+**Event Brain actors** (regional watchers, encounter coordinators) use a different pattern because they orchestrate *multiple* characters dynamically. Instead of live variable providers, Event Brain actors use:
+
+- **ResourceArchiveProvider** (from lib-puppetmaster) - provides ABML expression access to resource snapshots
+- **ResourceSnapshotCache** (from lib-puppetmaster) - caches loaded snapshots with TTL-based expiration
+- **`load_snapshot:` ABML action** - explicitly loads character/resource data into the execution scope
+
+This separation exists because:
+1. Character Brains have a stable binding to one character ID (providers can be created once)
+2. Event Brains shift focus constantly (load data on-demand for whichever entity they're currently evaluating)
+
+See [PUPPETMASTER.md](PUPPETMASTER.md) for Event Brain architecture details and [BEHAVIOR.md](BEHAVIOR.md) Domain Actions Reference for the `load_snapshot:` and `prefetch_snapshots:` actions.
+
 ---
 
 ## Dependents (What Relies On This Plugin)
@@ -517,6 +533,10 @@ No bugs identified.
 ---
 
 ## Work Tracking
+
+### Completed
+
+- **2026-02-06**: Issue #300 - Documented Event Brain vs Character Brain data access patterns in Variable Provider Factory section. See Dependencies section.
 
 ### Implementation Gaps
 

@@ -938,9 +938,81 @@ flows:
             - log: { message: "Stopped watcher: ${watcher.watcherId}" }
 ```
 
+### Event Publishing
+
+#### emit_event (template-based event publishing)
+
+Publishes a typed event using a registered template. Template owners (L3/L4 plugins) register `EventTemplate` instances with `IEventTemplateRegistry` on startup, and behavior authors reference templates by name with flat parameters.
+
+**Handler Location:** `bannou-service/Abml/Execution/Handlers/EmitEventHandler.cs`
+
+```yaml
+- emit_event:
+    template: encounter_resolved        # Required - registered template name
+    encounterId: ${encounter.id}        # Template-specific parameters
+    outcome: ${outcome}
+    durationSeconds: ${duration}
+```
+
+**Parameters:**
+- `template` (required): Name of a registered event template
+- All other parameters are passed to the template for substitution (uses `{{paramName}}` placeholders)
+
+**How Templates Work:**
+
+Templates are registered by the plugin that owns the event type:
+
+```csharp
+// In CharacterEncounterServicePlugin.OnRunningAsync:
+_eventTemplateRegistry.Register(new EventTemplate(
+    Name: "encounter_resolved",
+    Topic: "encounter.resolved",
+    EventType: typeof(EncounterResolvedEvent),
+    PayloadTemplate: @"{
+        ""encounterId"": ""{{encounterId}}"",
+        ""outcome"": ""{{outcome}}"",
+        ""durationSeconds"": {{durationSeconds}}
+    }",
+    Description: "Encounter completed with outcome"
+));
+```
+
+**Why Templates Instead of Generic `publish_event`:**
+
+Per issue #296, generic service call actions (`service_call`, `api_call`, `publish_event`) are forbidden in ABML because:
+1. They bypass security boundaries (behaviors could publish arbitrary events)
+2. They create implicit coupling (ABML documents know infrastructure topics)
+3. They prevent compile-time validation (no schema checking)
+
+Template-based publishing ensures:
+- Only pre-approved events can be published
+- Parameter validation happens at template registration
+- Topic ownership is enforced by the plugin system
+- Behaviors remain declarative and infrastructure-agnostic
+
+**Example - Combat encounter publishing outcome:**
+
+```yaml
+flows:
+  resolve_combat:
+    actions:
+      # ... combat resolution logic ...
+
+      - emit_event:
+          template: encounter_resolved
+          encounterId: ${encounter.id}
+          outcome: ${winner == attacker ? 'attacker_victory' : 'defender_victory'}
+          durationSeconds: ${(now - encounter.started_at) / 1000}
+```
+
 ---
 
 ## Work Tracking
+
+### Completed
+
+- **2026-02-06**: Issues #291-#293, #297, #299 - Added Event Brain domain actions: `load_snapshot`, `prefetch_snapshots`, `resource_templates` metadata, `actor_command`, `actor_query`, `emit_event`. See Domain Actions Reference section.
+- **2026-02-06**: Issue #296 - Forbidden generic `service_call`/`api_call` actions in ABML. See quirk #19.
 
 ### AUDIT Markers
 

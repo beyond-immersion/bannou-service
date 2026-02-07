@@ -42,6 +42,7 @@ The Character service manages game world characters for Arcadia. Characters are 
 | lib-character-personality | Registers `x-references` cleanup callback (`/character-personality/cleanup-by-character`); cleanup invoked via lib-resource when character deleted |
 | lib-actor | Registers `x-references` cleanup callback (`/actor/cleanup-by-character`); cleanup invoked via lib-resource when character deleted |
 | lib-species | Calls `ICharacterClient` to check character references during species deprecation |
+| lib-quest | Calls `ICharacterClient` to validate character existence when accepting quests |
 
 ---
 
@@ -307,7 +308,6 @@ No active work items.
 
 - **2026-02-03**: Added centralized compression support via Resource service (L1). Character now provides `/character/get-compress-data` callback endpoint (returns base character data + family summary) invoked by Resource service during hierarchical compression. Full character compression (including L4 data from CharacterPersonality, CharacterHistory, CharacterEncounter) is now orchestrated by `/resource/compress/execute`. The legacy `/character/compress` endpoint remains but only archives L2 data.
 - **2026-02-03**: Fixed Character's delete flow to call `ExecuteCleanupAsync` via lib-resource, properly triggering CASCADE cleanup in L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor) via their registered cleanup callbacks. This follows the x-references contract pattern (see `docs/reference/SCHEMA-RULES.md`).
-- **2026-02-03**: ~~Implemented L4 cleanup event handlers in CharacterPersonality and CharacterHistory.~~ **SUPERSEDED**: These event handlers were a workaround that bypassed the x-references cleanup contract. The correct fix is `ExecuteCleanupAsync` (above). Event handlers should be removed.
 - **2026-02-02**: Removed FIXED item from Potential Extensions (parallel family tree lookups) - verified implemented via `Task.WhenAll` and `GetBulkAsync`, no quirks remain.
 - **2026-02-02**: Moved "orphaned" and "single parent household" labels from Design Considerations to Intentional Quirks (#9, #10) - current behavior is semantically correct (orphaned = no parent relationships, single parent = one relationship exists).
 - **2026-02-02**: Moved "INCARNATION tracking is directional" from Design Considerations to Intentional Quirks - this is correct semantic behavior (past lives, not future incarnations).

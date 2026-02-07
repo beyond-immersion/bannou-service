@@ -107,6 +107,87 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 
 ---
 
+## Event Brain Architecture
+
+The Puppetmaster plugin provides the infrastructure for **Event Brain actors** - actors that orchestrate multiple characters dynamically (regional watchers, encounter coordinators) as opposed to **Character Brain actors** which are bound to a single character.
+
+### Character Brain vs Event Brain Data Access
+
+| Aspect | Character Brain | Event Brain |
+|--------|-----------------|-------------|
+| **Binding** | One actor → one character | One actor → many characters (dynamic) |
+| **Data source** | Live variable providers via DI | Resource snapshots via `load_snapshot:` |
+| **Provider registration** | Once at actor creation | On-demand during execution |
+| **Cache location** | Per-actor in ActorRunner | Shared `ResourceSnapshotCache` |
+| **TTL behavior** | Provider-specific caching | 5-minute default TTL |
+
+### How Event Brain Data Access Works
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Event Brain Execution Flow                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ABML Behavior Document                                                     │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ - load_snapshot:                                                     │   │
+│  │     name: attacker                                                   │   │
+│  │     resource_type: character                                         │   │
+│  │     resource_id: ${attacker_id}                                      │   │
+│  │     filter: [character-personality, character-history]               │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                      │                                                      │
+│                      ▼                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    LoadSnapshotHandler                               │   │
+│  │  1. Evaluate ${attacker_id} → Guid                                  │   │
+│  │  2. Check ResourceSnapshotCache for cached snapshot                 │   │
+│  │  3. If miss: call IResourceClient.GetSnapshotAsync(filter)          │   │
+│  │  4. Create ResourceArchiveProvider from snapshot entries            │   │
+│  │  5. Register provider as "attacker" in root execution scope         │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                      │                                                      │
+│                      ▼                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │           ResourceArchiveProvider (IVariableProvider)                │   │
+│  │                                                                      │   │
+│  │  Expression: ${attacker.personality.aggression}                      │   │
+│  │       ├── namespace: "attacker"                                      │   │
+│  │       ├── source: "character-personality"                            │   │
+│  │       └── path: "aggression"                                         │   │
+│  │                                                                      │   │
+│  │  Resolves to: 0.75 (from snapshot data)                              │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Performance Pattern: Prefetch Before Iteration
+
+When an Event Brain needs to evaluate multiple characters (e.g., all raid participants), use `prefetch_snapshots:` to batch-load data before iterating:
+
+```yaml
+# Without prefetch: N sequential API calls during foreach
+# With prefetch: 1 batch call + N cache hits
+- prefetch_snapshots:
+    resource_type: character
+    resource_ids: ${participants | map('character_id')}
+    filter: [character-personality]
+
+- foreach:
+    variable: p
+    collection: ${participants}
+    do:
+      - load_snapshot:              # Cache hit - instant
+          name: char
+          resource_type: character
+          resource_id: ${p.character_id}
+```
+
+See [ACTOR.md](ACTOR.md) for the Variable Provider Factory pattern used by Character Brains.
+
+---
+
 ## ABML Action Handlers
 
 The Puppetmaster plugin provides ABML action handlers that extend the behavior execution runtime. These handlers are discovered by `DocumentExecutorFactory` via `GetServices<IActionHandler>()`.

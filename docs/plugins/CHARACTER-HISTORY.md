@@ -20,7 +20,9 @@ Historical event participation and backstory management for characters. Tracks w
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and backstory |
 | lib-messaging (`IMessageBus`) | Publishing participation and backstory lifecycle events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| lib-resource (`IResourceClient`) | Hard dependency (L1): registers cleanup callbacks and compression callbacks on startup |
 | lib-resource (events) | Publishes `resource.reference.registered` and `resource.reference.unregistered` events for character reference tracking |
+| lib-character-history (`ICharacterHistoryClient`) | Used by `BackstoryCache` to load backstory data on cache miss |
 
 ---
 
@@ -92,8 +94,20 @@ The generated `CharacterHistoryServiceConfiguration` contains only the framework
 | `IDualIndexHelper<ParticipationData>` | (inline) | Dual-index CRUD for participations |
 | `IBackstoryStorageHelper<BackstoryData, BackstoryElementData>` | (inline) | Backstory CRUD with merge semantics |
 | `CharacterHistoryReferenceTracking` | (partial class) | Generated helper methods for resource reference registration/unregistration |
+| `IBackstoryCache` | Singleton | TTL-based backstory caching for actor behavior execution |
+| `BackstoryProviderFactory` (`IVariableProviderFactory`) | Singleton | Factory for ABML expression evaluation (enables `${backstory.*}` paths) |
+| `CharacterHistoryTemplate` (`IResourceTemplate`) | Registered at startup | Compile-time path validation for ABML expressions referencing history data |
 
 Service lifetime is **Scoped** (per-request).
+
+### ABML Expression Support
+
+The plugin registers `BackstoryProviderFactory` as an `IVariableProviderFactory` for the Actor service to discover via DI collection. This enables ABML expressions like:
+- `${backstory.origin}` - Returns the value of the ORIGIN element
+- `${backstory.fear.strength}` - Returns the strength of the FEAR element
+- `${backstory.elements.TRAUMA}` - Returns all TRAUMA elements as a list
+
+The `CharacterHistoryTemplate` provides compile-time validation for `${candidate.history.*}` paths during ABML semantic analysis.
 
 ---
 
@@ -220,7 +234,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-None currently identified.
+1. **Hardcoded cache TTL (T21 violation)**: `BackstoryCache` has `private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);` with a TODO comment. Per IMPLEMENTATION TENETS, all tunables must be in the configuration schema. Fix: Add `BackstoryCacheTtlSeconds` property to `character-history-configuration.yaml` and reference it in `BackstoryCache`.
 
 ### Intentional Quirks
 
@@ -238,31 +252,25 @@ None currently identified.
 2. **No backstory element count limit**: No maximum on elements per character. Unbounded growth possible if AddBackstoryElement is called repeatedly without cleanup.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/207 -->
 
-3. ~~**Helper abstractions are inline**~~: **FIXED** (2026-02-01) - Moved to Intentional Quirks. The inline construction is intentional: helpers require service-specific configuration (key prefixes, data access lambdas) that can't be generalized through DI. Testing is straightforward via `IStateStoreFactory` mocking - the original "requires constructor inspection" claim was inaccurate.
+3. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure. On deserialization from JSON, becomes `JsonElement` or similar untyped object. No schema validation.
 
-4. ~~**GUID parsing without validation in helper config**~~: **REMOVED** (2026-02-01) - The documented concern was invalid. The `SetEntityId` delegate is only called when WRITING new data (with the `entityId` parameter from the request, which is already a valid GUID string from `Guid.ToString()`). It is never called during READ operations or deserialization of stored data. Corrupted store data cannot trigger this code path.
+4. **Parallel service pattern with realm-history**: Both services use nearly identical patterns (dual-index participations, document-based lore/backstory, template summarization) but with subtle behavioral differences (NotFound vs empty list for missing data).
 
-5. ~~**DeleteAll is O(n) with secondary index cleanup**~~: **FIXED** (2026-02-02) - Rewrote `DualIndexHelper.RemoveAllByPrimaryKeyAsync` to use bulk operations (`GetBulkAsync`, `SaveBulkAsync`, `DeleteBulkAsync`). Now uses O(1) database round-trips (~7 operations) regardless of record count, instead of ~4N operations. Both lib-character-history and lib-realm-history benefit from this shared helper optimization.
+5. **Empty indices left behind after RemoveRecordAsync**: When removing a single participation, `RemoveRecordAsync` updates both primary and secondary indices but doesn't delete them when they become empty. Only `RemoveAllByPrimaryKeyAsync` (called by DeleteAll) deletes the primary index. This leaves orphaned empty index documents in the state store.
 
-6. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure. On deserialization from JSON, becomes `JsonElement` or similar untyped object. No schema validation.
+6. **Summarize doesn't publish any event**: Unlike all other operations which publish typed events (recorded, deleted, created, updated), `SummarizeHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
 
-7. **Parallel service pattern with realm-history**: Both services use nearly identical patterns (dual-index participations, document-based lore/backstory, template summarization) but with subtle behavioral differences (NotFound vs empty list for missing data).
+7. **Unknown element types fall back to generic format**: `GenerateBackstorySummary` uses `_ => $"{element.Key}: {element.Value}"` for unrecognized element types. If new backstory element types are added to the schema, they'll produce raw key/value summaries until the switch-case is updated.
 
-8. **Empty indices left behind after RemoveRecordAsync**: When removing a single participation, `RemoveRecordAsync` updates both primary and secondary indices but doesn't delete them when they become empty. Only `RemoveAllByPrimaryKeyAsync` (called by DeleteAll) deletes the primary index. This leaves orphaned empty index documents in the state store.
+8. **Unknown participation roles fall back to "participated in"**: `GenerateParticipationSummary` uses `_ => "participated in"` for unrecognized roles. Generic fallback may not reflect actual involvement.
 
-9. **Summarize doesn't publish any event**: Unlike all other operations which publish typed events (recorded, deleted, created, updated), `SummarizeHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
+9. **FormatValue is simplistic transformation**: `value.Replace("_", " ").ToLowerInvariant()` only handles snake_case, doesn't handle camelCase or PascalCase, doesn't capitalize sentences. "NORTHERN_KINGDOM" becomes "northern kingdom" but "NorthernKingdom" stays as-is.
 
-10. **Unknown element types fall back to generic format**: `GenerateBackstorySummary` uses `_ => $"{element.Key}: {element.Value}"` for unrecognized element types. If new backstory element types are added to the schema, they'll produce raw key/value summaries until the switch-case is updated.
+10. **GetBulkAsync results silently drop missing records**: `DualIndexHelper.GetRecordsByIdsAsync` returns `.Values` from bulk get - any IDs in the index that no longer exist in the store are silently excluded from results. No logging, no error, just fewer items than expected.
 
-11. **Unknown participation roles fall back to "participated in"**: `GenerateParticipationSummary` uses `_ => "participated in"` for unrecognized roles. Generic fallback may not reflect actual involvement.
+11. **Empty/null entityId returns silently without logging**: Multiple helper methods (GetAsync, DeleteAsync, ExistsAsync in BackstoryStorageHelper; GetRecordAsync, GetRecordIdsByPrimaryKeyAsync, etc. in DualIndexHelper) check `string.IsNullOrEmpty(entityId)` and return null/false/0 without any logging. Invalid calls produce no trace.
 
-12. **FormatValue is simplistic transformation**: `value.Replace("_", " ").ToLowerInvariant()` only handles snake_case, doesn't handle camelCase or PascalCase, doesn't capitalize sentences. "NORTHERN_KINGDOM" becomes "northern kingdom" but "NorthernKingdom" stays as-is.
-
-13. **GetBulkAsync results silently drop missing records**: `DualIndexHelper.GetRecordsByIdsAsync` returns `.Values` from bulk get - any IDs in the index that no longer exist in the store are silently excluded from results. No logging, no error, just fewer items than expected.
-
-14. **Empty/null entityId returns silently without logging**: Multiple helper methods (GetAsync, DeleteAsync, ExistsAsync in BackstoryStorageHelper; GetRecordAsync, GetRecordIdsByPrimaryKeyAsync, etc. in DualIndexHelper) check `string.IsNullOrEmpty(entityId)` and return null/false/0 without any logging. Invalid calls produce no trace.
-
-15. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
+12. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
 
 ---
 
@@ -275,11 +283,5 @@ None currently identified.
 - **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
 
 ### Completed
-- **2026-02-03**: Added compression support for centralized Resource service compression. Implemented `/character-history/get-compress-data` and `/character-history/restore-from-archive` endpoints. Compression callback registered at startup (priority 20) for inclusion in hierarchical character archival. Unit tests added (11 tests covering compression scenarios).
-- **2026-02-02**: [#261](https://github.com/beyond-immersion/bannou-service/issues/261) - Optimized `RemoveAllByPrimaryKeyAsync` in `DualIndexHelper` to use bulk operations, reducing database round-trips from ~4N to ~7 regardless of record count. Both lib-character-history and lib-realm-history benefit.
-- **2026-02-02**: Verified and removed "Schema promises 409 Conflict but implementation allows duplicates" bug - fix is clean with no non-obvious behavior (simple input validation before creation).
-- **2026-02-02**: Corrected lib-character dependent documentation - lib-character (L2) cannot call this service per SERVICE_HIERARCHY.
-- **2026-02-02**: Added lib-resource dependency and resource reference tracking events documentation.
-- **2026-02-01**: Removed "GUID parsing without validation in helper config" from Design Considerations - the documented concern was invalid. The `SetEntityId` delegate is only called when writing new data with validated request parameters, never during reads or deserialization.
-- **2026-02-01**: Reclassified "Helper abstractions are inline" from Design Considerations to Intentional Quirks - the inline construction is intentional design, and testing via `IStateStoreFactory` mocking is straightforward. The original "requires constructor inspection" claim was inaccurate.
-- **2026-01-31**: Fixed duplicate participation bug - `RecordParticipationAsync` now returns 409 Conflict when character+event pair already exists, matching schema contract.
+
+*(Historical entries cleared during maintenance - see git history for details)*

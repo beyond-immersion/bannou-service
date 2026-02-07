@@ -20,6 +20,7 @@ Historical event participation and lore management for realms. Tracks when realm
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and lore |
 | lib-messaging (`IMessageBus`) | Publishing participation, lore lifecycle, and resource reference events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| lib-resource (`IResourceClient`) | Registering cleanup and compression callbacks during plugin startup |
 | lib-resource (events) | Publishes `resource.reference.registered` and `resource.reference.unregistered` events for realm reference tracking |
 | `IDualIndexHelper` | Dual-index storage pattern for participation records (from `bannou-service/History/`) |
 | `IBackstoryStorageHelper` | Lore element storage with merge/replace semantics (from `bannou-service/History/`) |
@@ -44,8 +45,8 @@ Historical event participation and lore management for realms. Tracks when realm
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `realm-participation-{participationId}` | `RealmParticipationData` | Individual participation record |
-| `realm-participation-index-{realmId}` | `RealmParticipationIndexData` | List of participation IDs for a realm |
-| `realm-participation-event-{eventId}` | `RealmParticipationIndexData` | List of participation IDs for an event |
+| `realm-participation-index-{realmId}` | `HistoryIndexData` | List of participation IDs for a realm |
+| `realm-participation-event-{eventId}` | `HistoryIndexData` | List of participation IDs for an event |
 | `realm-lore-{realmId}` | `RealmLoreData` | All lore elements for a realm (single document) |
 
 ---
@@ -86,12 +87,14 @@ The generated `RealmHistoryServiceConfiguration` contains only the framework-lev
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<RealmHistoryService>` | Scoped | Structured logging |
-| `RealmHistoryServiceConfiguration` | Singleton | Framework config (minimal) |
-| `IStateStoreFactory` | Singleton | State store access |
+| `RealmHistoryServiceConfiguration` | Singleton | Framework config (minimal, only ForceServiceId) |
+| `IStateStoreFactory` | Singleton | State store access (passed to helpers) |
 | `IMessageBus` | Scoped | Event publishing |
 | `IEventConsumer` | Scoped | Event registration (no handlers currently) |
+| `DualIndexHelper<RealmParticipationData>` | Instance | Participation dual-index storage (instantiated in constructor) |
+| `BackstoryStorageHelper<RealmLoreData, RealmLoreElementData>` | Instance | Lore element storage (instantiated in constructor) |
 
-Service lifetime is **Scoped** (per-request).
+Service lifetime is **Scoped** (per-request). The helper classes are instantiated per-service instance, not injected via DI.
 
 ---
 
@@ -115,6 +118,11 @@ Service lifetime is **Scoped** (per-request).
 
 - **DeleteAll** (`/realm-history/delete-all`): Comprehensive cleanup. Unregisters all realm references first, then iterates all realm participations, removes from event indexes, deletes records. Also deletes lore. Deletes the realm index after cleanup. Returns counts of deleted items. Called via lib-resource cleanup callback during realm deletion.
 - **Summarize** (`/realm-history/summarize`): Generates human-readable text summaries from machine-readable data. Selects top N elements by strength for lore summaries. Selects top N events by impact for participation summaries. Configurable limits (maxLorePoints: 1-20, default 5; maxHistoricalEvents: 1-20, default 10).
+
+### Compression Operations (2 endpoints)
+
+- **GetCompressData** (`/realm-history/get-compress-data`): Returns complete realm history data (participations + lore) for archive storage. Called by Resource service during realm compression. Returns 404 only if BOTH participations and lore are missing. Includes generated text summaries in the archive.
+- **RestoreFromArchive** (`/realm-history/restore-from-archive`): Restores realm history data from a Base64-encoded gzipped JSON archive. Re-registers realm references for restored participations and lore. Called by Resource service during realm decompression.
 
 ---
 
@@ -186,34 +194,28 @@ None identified.
 
 1. **GetLore returns OK with empty list**: Unlike DeleteLore (which returns NotFound for missing lore), GetLore always returns 200 OK with an empty elements list. Read operations are lenient; delete operations are strict.
 
-2. **Event index `RealmId` field stores EventId**: When creating an event index, the code sets `RealmId = body.EventId` (line 124). The `RealmParticipationIndexData` class is reused for both realm and event indices - the field named `RealmId` actually stores an EventId for event indexes. This is confusing but not a bug.
+2. **Summarize doesn't publish any event**: `SummarizeRealmHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
 
-3. **Summarize doesn't publish any event**: `SummarizeRealmHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
+3. **Unknown lore element types display raw enum string**: The `GenerateLoreSummary` method uses `_ => element.ElementType.ToString()` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
 
-4. **Unknown lore element types display raw enum string**: The `GenerateLoreSummary` method uses `_ => element.ElementType.ToString()` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
-
-5. **Unknown participation roles default to "participated in"**: The `GenerateEventSummary` method uses `_ => "participated in"` for unrecognized roles.
+4. **Unknown participation roles default to "participated in"**: The `GenerateEventSummary` method uses `_ => "participated in"` for unrecognized roles.
 
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering and pagination**: All list operations load full indexes, fetch all records via bulk fetch, filter in memory, then paginate. For realms with very high participation counts (thousands of events), this loads everything into memory.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/200 -->
 
-2. ~~**No index cleanup on orphaned events**~~: **FIXED** (2026-02-02) - Added `x-references` to schema and lib-resource integration. When a realm is deleted, lib-resource's cascade cleanup calls `/realm-history/delete-all` which properly cleans up all participations, their event index entries, and lore. Event indexes no longer accumulate stale entries.
+2. **Lore stored as single document**: All lore elements for a realm are stored in one `RealmLoreData` object. Very large lore collections (hundreds of elements) would be loaded/saved atomically on every modification.
 
-3. **Lore stored as single document**: All lore elements for a realm are stored in one `RealmLoreData` object. Very large lore collections (hundreds of elements) would be loaded/saved atomically on every modification.
+3. **No concurrency control on indexes**: Dual-index updates (add to realm index AND event index) are not transactional. A crash between the two updates could leave indexes inconsistent.
 
-4. **No concurrency control on indexes**: Dual-index updates (add to realm index AND event index) are not transactional. A crash between the two updates could leave indexes inconsistent.
+4. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure with no schema validation. Enables flexibility but sacrifices type safety and queryability.
 
-5. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure with no schema validation. Enables flexibility but sacrifices type safety and queryability.
+5. **DeleteParticipation doesn't delete empty indices**: Realm and event indices are updated by removing the participation ID but don't delete the index documents when they become empty. This leaves empty index documents in the database.
 
-6. **DeleteParticipation doesn't delete empty indices**: Realm and event indices are updated by removing the participation ID but don't delete the index documents when they become empty. This leaves empty index documents in the database.
+6. **DeleteAll is O(n) with N+1 queries**: Iterates through all participations for the realm individually, fetching each to find its eventId, then updating each event index separately. For realms with thousands of events, this could be slow. Uses bulk operations for participation records but not for event index updates.
 
-7. **DeleteAll is O(n) with N+1 queries**: Iterates through all participations for the realm individually, fetching each to find its eventId, then updating each event index separately. For realms with thousands of events, this could be slow. Uses bulk operations for participation records but not for event index updates.
-
-8. ~~**Doesn't use shared helper classes**~~: **FIXED** (2026-02-01) - Refactored to use `IDualIndexHelper<RealmParticipationData>` for participation operations and `IBackstoryStorageHelper<RealmLoreData, RealmLoreElementData>` for lore operations, matching the character-history implementation pattern.
-
-9. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection. Concurrent participation recordings for the same realm could result in lost index entries.
+7. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection. Concurrent participation recordings for the same realm could result in lost index entries.
 
 ---
 
@@ -228,5 +230,4 @@ None identified.
 
 ### Completed
 
-- **2026-02-02**: [#272](https://github.com/beyond-immersion/bannou-service/issues/272) - Implemented `x-references` pattern and lib-resource integration for cascade cleanup. When realms are deleted, lib-resource calls `/realm-history/delete-all` to clean up all participations, event index entries, and lore. Matches character-history implementation pattern.
-- **2026-02-01**: Migrated to shared helper classes (`IDualIndexHelper`, `IBackstoryStorageHelper`) for consistency with character-history. Eliminates code duplication and ensures both services share the same tested implementation.
+*No items currently marked as completed.*
