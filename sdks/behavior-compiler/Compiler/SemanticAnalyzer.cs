@@ -6,6 +6,7 @@
 using System.Text.RegularExpressions;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Templates;
 
 namespace BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
 
@@ -20,6 +21,23 @@ public sealed class SemanticAnalyzer
     private readonly HashSet<string> _referencedFlows = new();
     private readonly HashSet<string> _definedVariables = new();
     private readonly HashSet<string> _usedVariables = new();
+    private readonly IResourceTemplateRegistry? _templateRegistry;
+
+    /// <summary>
+    /// Creates a semantic analyzer without resource template validation.
+    /// </summary>
+    public SemanticAnalyzer()
+    {
+    }
+
+    /// <summary>
+    /// Creates a semantic analyzer with resource template validation.
+    /// </summary>
+    /// <param name="templateRegistry">Registry for validating resource template names and paths.</param>
+    public SemanticAnalyzer(IResourceTemplateRegistry templateRegistry)
+    {
+        _templateRegistry = templateRegistry;
+    }
 
     /// <summary>
     /// Domain action names that are forbidden for security reasons.
@@ -41,6 +59,14 @@ public sealed class SemanticAnalyzer
     /// </summary>
     private static readonly Regex ResourceTemplatePattern = new(
         @"^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+        RegexOptions.Compiled);
+
+    /// <summary>
+    /// Pattern for extracting expression interpolations from strings.
+    /// Matches ${...} expressions including nested property access like ${personality.archetypeHint}.
+    /// </summary>
+    private static readonly Regex ExpressionPattern = new(
+        @"\$\{([^}]+)\}",
         RegexOptions.Compiled);
 
     /// <summary>
@@ -104,13 +130,18 @@ public sealed class SemanticAnalyzer
                 _warnings.Add(new SemanticWarning(
                     $"resource_templates: '{template}' declared multiple times",
                     SemanticWarningLevel.Warning));
+                continue;
+            }
+
+            // Validate template exists in registry (warning, not error - template may be registered at runtime)
+            if (_templateRegistry != null && !_templateRegistry.HasTemplate(template))
+            {
+                _warnings.Add(new SemanticWarning(
+                    $"resource_templates: '{template}' is not registered. " +
+                    "The template may be registered at runtime, or the plugin may not be loaded.",
+                    SemanticWarningLevel.Warning));
             }
         }
-
-        // TODO: Full path validation requires IResourceTemplateRegistry (#294)
-        // When #294 is complete:
-        // 1. Validate template names exist in registry (warning, not error)
-        // 2. Validate expression paths like ${x.personality.traits} against declared templates
     }
 
     private void CollectDeclarations(AbmlDocument document)
@@ -254,7 +285,24 @@ public sealed class SemanticAnalyzer
                 break;
 
             case ForEachAction forEach:
+                ValidateExpressionsInText(forEach.Collection, $"in foreach collection in flow '{flowName}'");
                 ValidateActionsInFlow(flowName, forEach.Do);
+                break;
+
+            case SetAction set:
+                ValidateExpressionsInText(set.Value, $"in set action for '{set.Variable}' in flow '{flowName}'");
+                break;
+
+            case LocalAction local:
+                ValidateExpressionsInText(local.Value, $"in local action for '{local.Variable}' in flow '{flowName}'");
+                break;
+
+            case GlobalAction global:
+                ValidateExpressionsInText(global.Value, $"in global action for '{global.Variable}' in flow '{flowName}'");
+                break;
+
+            case LogAction log:
+                ValidateExpressionsInText(log.Message, $"in log action in flow '{flowName}'");
                 break;
 
             case RepeatAction repeat:
@@ -400,6 +448,11 @@ public sealed class SemanticAnalyzer
                     $"Conditional branch in flow '{flowName}' has empty condition",
                     SemanticErrorKind.EmptyCondition));
             }
+            else
+            {
+                // Validate expression paths in the condition
+                ValidateExpressionsInText(branch.When, $"in condition in flow '{flowName}'");
+            }
             ValidateActionsInFlow(flowName, branch.Then);
         }
 
@@ -459,6 +512,66 @@ public sealed class SemanticAnalyzer
                     $"Flow '{flowName}' is empty",
                     SemanticWarningLevel.Info));
             }
+        }
+    }
+
+    /// <summary>
+    /// Validates an expression path like "personality.archetypeHint" against the template registry.
+    /// The first segment is treated as the namespace to look up the template.
+    /// </summary>
+    /// <param name="expression">The full expression content (without ${...} wrapper).</param>
+    /// <param name="context">Context description for error messages (e.g., "in condition 'when'").</param>
+    public void ValidateExpressionPath(string expression, string context)
+    {
+        if (_templateRegistry == null) return;
+        if (string.IsNullOrWhiteSpace(expression)) return;
+
+        // Skip expressions that don't look like property access paths
+        // (e.g., arithmetic expressions, function calls, comparisons)
+        if (!expression.Contains('.')) return;
+        if (expression.Contains(' ') || expression.Contains('(') || expression.Contains(')')) return;
+
+        var segments = expression.Split('.');
+        if (segments.Length < 2) return;
+
+        var potentialNamespace = segments[0];
+        var template = _templateRegistry.GetByNamespace(potentialNamespace);
+
+        if (template == null)
+        {
+            // Not a known namespace - could be a regular variable, skip validation
+            return;
+        }
+
+        // Build the path without the namespace prefix
+        var path = string.Join(".", segments.Skip(1));
+        var result = template.ValidatePath(path);
+
+        if (!result.IsValid)
+        {
+            var message = $"Invalid path '{expression}' {context}: {result.ErrorMessage}";
+            if (result.Suggestions.Count > 0)
+            {
+                message += $" Did you mean: {string.Join(", ", result.Suggestions)}?";
+            }
+            _warnings.Add(new SemanticWarning(message, SemanticWarningLevel.Warning));
+        }
+    }
+
+    /// <summary>
+    /// Extracts and validates all expression paths from a string containing ${...} interpolations.
+    /// </summary>
+    /// <param name="text">The text containing expressions.</param>
+    /// <param name="context">Context description for error messages.</param>
+    public void ValidateExpressionsInText(string text, string context)
+    {
+        if (_templateRegistry == null) return;
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        foreach (Match match in ExpressionPattern.Matches(text))
+        {
+            var expression = match.Groups[1].Value;
+            ValidateExpressionPath(expression, context);
         }
     }
 }

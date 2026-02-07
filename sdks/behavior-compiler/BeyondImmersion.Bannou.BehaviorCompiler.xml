@@ -2074,6 +2074,17 @@
             Analyzes ABML documents for semantic correctness before compilation.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.#ctor">
+            <summary>
+            Creates a semantic analyzer without resource template validation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Templates.IResourceTemplateRegistry)">
+            <summary>
+            Creates a semantic analyzer with resource template validation.
+            </summary>
+            <param name="templateRegistry">Registry for validating resource template names and paths.</param>
+        </member>
         <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.ForbiddenDomainActions">
             <summary>
             Domain action names that are forbidden for security reasons.
@@ -2085,6 +2096,12 @@
             <summary>
             Pattern for valid resource template names: lowercase with hyphens.
             Examples: character-personality, realm-lore, quest-state
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.ExpressionPattern">
+            <summary>
+            Pattern for extracting expression interpolations from strings.
+            Matches ${...} expressions including nested property access like ${personality.archetypeHint}.
             </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.Analyze(BeyondImmersion.Bannou.BehaviorCompiler.Documents.AbmlDocument)">
@@ -2115,6 +2132,21 @@
             </summary>
             <param name="name">The string to validate.</param>
             <returns>True if the string is a valid identifier.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.ValidateExpressionPath(System.String,System.String)">
+            <summary>
+            Validates an expression path like "personality.archetypeHint" against the template registry.
+            The first segment is treated as the namespace to look up the template.
+            </summary>
+            <param name="expression">The full expression content (without ${...} wrapper).</param>
+            <param name="context">Context description for error messages (e.g., "in condition 'when'").</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalyzer.ValidateExpressionsInText(System.String,System.String)">
+            <summary>
+            Extracts and validates all expression paths from a string containing ${...} interpolations.
+            </summary>
+            <param name="text">The text containing expressions.</param>
+            <param name="context">Context description for error messages.</param>
         </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.SemanticAnalysisResult">
             <summary>
