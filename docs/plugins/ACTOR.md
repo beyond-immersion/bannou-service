@@ -135,13 +135,13 @@ See [PUPPETMASTER.md](PUPPETMASTER.md) for Event Brain architecture details and 
 |-------|-----------|---------|
 | `session.disconnected` | `SessionDisconnectedEvent` | Stubbed handler for future session-bound actors |
 | `behavior.updated` | `BehaviorUpdatedEvent` | Invalidates behavior cache, notifies actors for hot-reload |
-| `personality.evolved` | `PersonalityEvolvedEvent` | Invalidates personality cache for character |
-| `combat-preferences.evolved` | `CombatPreferencesEvolvedEvent` | Invalidates personality cache |
 | `actor.pool-node.registered` | `PoolNodeRegisteredEvent` | Register node, track capacity (control plane only) |
 | `actor.pool-node.heartbeat` | `PoolNodeHeartbeatEvent` | Update load, mark healthy (control plane only) |
 | `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Mark draining, track remaining (control plane only) |
 | `actor.instance.status-changed` | `ActorStatusChangedEvent` | Update assignment status (control plane only) |
 | `actor.instance.completed` | `ActorCompletedEvent` | Remove assignment (control plane only) |
+
+**Note**: The schema (actor-events.yaml) lists `personality.evolved` and `combat-preferences.evolved` as subscriptions, but handlers are NOT implemented. Per service hierarchy, Actor (L2) does not own personality caches - it gets fresh data from provider factories. The services that own these caches (lib-character-personality) handle their own invalidation.
 
 ---
 
@@ -470,7 +470,9 @@ Actor State Model
 1. **Session disconnection handling**: `HandleSessionDisconnectedAsync` is stubbed. Actors are not tied to player sessions - NPC brains continue running when players disconnect. Future: session-bound actors that stop on disconnect.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/191 -->
 2. **GOAP integration partial**: GOAP configuration exists (replan threshold, max depth, timeout) but the full planning integration with the behavior loop is minimal. Planning triggers exist but action execution is delegated to ABML flows.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/316 -->
 3. **Auto-scale deployment mode**: Declared as a valid `DeploymentMode` value but no auto-scaling logic is implemented. Pool nodes must be manually managed or pre-provisioned.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/318 -->
 
 ---
 
@@ -533,10 +535,6 @@ No bugs identified.
 ---
 
 ## Work Tracking
-
-### Completed
-
-- **2026-02-06**: Issue #300 - Documented Event Brain vs Character Brain data access patterns in Variable Provider Factory section. See Dependencies section.
 
 ### Implementation Gaps
 

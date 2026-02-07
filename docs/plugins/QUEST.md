@@ -122,6 +122,7 @@ The Quest service provides objective-based gameplay progression as a thin orches
 | `DefaultDeadlineSeconds` | `QUEST_DEFAULT_DEADLINE_SECONDS` | 604800 (7 days) | Default quest deadline when definition doesn't specify one |
 | `DefinitionCacheTtlSeconds` | `QUEST_DEFINITION_CACHE_TTL_SECONDS` | 3600 | TTL for quest definition Redis cache |
 | `ProgressCacheTtlSeconds` | `QUEST_PROGRESS_CACHE_TTL_SECONDS` | 300 | TTL for objective progress Redis cache |
+| `QuestDataCacheTtlSeconds` | `QUEST_DATA_CACHE_TTL_SECONDS` | 120 | TTL for in-memory quest data cache used by actor behavior expressions |
 | `CooldownCacheTtlSeconds` | `QUEST_COOLDOWN_CACHE_TTL_SECONDS` | 86400 | TTL for quest cooldown tracking |
 | `LockExpirySeconds` | `QUEST_LOCK_EXPIRY_SECONDS` | 30 | Distributed lock expiry for quest mutations |
 | `LockRetryAttempts` | `QUEST_LOCK_RETRY_ATTEMPTS` | 3 | Retry attempts when lock acquisition fails |
@@ -246,7 +247,7 @@ Quest integrates with the Actor service (L2) via the Variable Provider Factory p
 
 **QuestDataCache** (`IQuestDataCache`):
 - Singleton with ConcurrentDictionary for thread-safety
-- 2-minute TTL (hardcoded in QuestDataCache.cs)
+- Configurable TTL via `QuestDataCacheTtlSeconds` (default: 120 seconds / 2 minutes)
 - Event-driven invalidation via self-subscription to quest lifecycle events
 
 ---
@@ -254,10 +255,11 @@ Quest integrates with the Actor service (L2) via the Variable Provider Factory p
 ## Stubs & Unimplemented Features
 
 1. **Prerequisite validation for non-QUEST_COMPLETED types**: The `CheckPrerequisitesAsync` method logs and skips CHARACTER_LEVEL, REPUTATION, ITEM_OWNED, and CURRENCY_AMOUNT prerequisite types - they always pass validation. Only QUEST_COMPLETED is actually checked. Needs integration with relevant services.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/317 -->
 
 2. **Reward distribution**: Rewards are defined in `RewardDefinitionModel` (CURRENCY, ITEM, EXPERIENCE, REPUTATION types) and stored with quest definitions, but there is no actual reward distribution logic in `CompleteQuestAsync`. The service description mentions "rewards are prebound API executions" but no prebound APIs are registered with Contract for rewards. Rewards are purely informational for now.
 
-3. **QuestDataCache TTL configuration**: The cache uses a hardcoded 2-minute TTL (`TimeSpan.FromMinutes(2)` in `QuestDataCache.cs:26`) with a TODO comment to add configuration property to schema.
+3. ~~**QuestDataCache TTL configuration**~~: **FIXED** (2026-02-07) - Added `QuestDataCacheTtlSeconds` config property (env: `QUEST_DATA_CACHE_TTL_SECONDS`, default: 120). Cache now reads from configuration.
 
 ---
 
@@ -279,8 +281,7 @@ Quest integrates with the Actor service (L2) via the Variable Provider Factory p
 
 ### Bugs (Fix Immediately)
 
-1. **Hardcoded QuestDataCache TTL**: `QuestDataCache.cs:26` uses `TimeSpan.FromMinutes(2)` with a TODO comment to add configuration. Should use `QuestServiceConfiguration` property. This is a T21 violation (hardcoded tunable).
-<!-- AUDIT:IN_PROGRESS:2026-02-07 -->
+1. ~~**Hardcoded QuestDataCache TTL**~~: **FIXED** (2026-02-07) - Added `QuestDataCacheTtlSeconds` property to configuration schema (default 120 seconds). `QuestDataCache` now injects `QuestServiceConfiguration` and uses this property instead of hardcoded value.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -301,8 +302,9 @@ Quest integrates with the Actor service (L2) via the Variable Provider Factory p
 1. **Prerequisite validation gap**: CHARACTER_LEVEL, REPUTATION, ITEM_OWNED, and CURRENCY_AMOUNT prerequisite types all skip validation with debug logs. Only QUEST_COMPLETED is implemented. Requires:
    - CHARACTER_LEVEL: A progression/stats service that tracks character levels
    - REPUTATION: A reputation service (doesn't exist yet)
-   - ITEM_OWNED: Integration with Inventory service (L4 soft dependency)
+   - ITEM_OWNED: Integration with Inventory service (L2)
    - CURRENCY_AMOUNT: Integration with Currency service (L2)
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/317 -->
 
 2. **Reward execution not implemented**: Rewards are stored in definitions but `CompleteQuestAsync` doesn't distribute them. Options:
    - Register prebound APIs with Contract to call Currency/Inventory on fulfillment
@@ -313,4 +315,5 @@ Quest integrates with the Actor service (L2) via the Variable Provider Factory p
 
 ## Work Tracking
 
-*No active work items.*
+### Completed
+- **2026-02-07**: Fixed T21 violation - `QuestDataCache` TTL is now configurable via `QuestDataCacheTtlSeconds` (env: `QUEST_DATA_CACHE_TTL_SECONDS`, default: 120)

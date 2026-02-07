@@ -32,7 +32,7 @@ public sealed class QuestDataCache : IQuestDataCache
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
-        _cacheTtl = TimeSpan.FromSeconds(configuration.QuestData_cacheTtlSeconds);
+        _cacheTtl = TimeSpan.FromSeconds(configuration.QuestDataCacheTtlSeconds);
     }
 
     /// <inheritdoc/>
