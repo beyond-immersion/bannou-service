@@ -236,6 +236,17 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// <para>
+    /// INTENTIONAL QUIRK: This synchronous method may perform sync-over-async initialization
+    /// if called before <see cref="InitializeAsync"/> completes. A warning is logged when this occurs.
+    /// </para>
+    /// <para>
+    /// This is safe in ASP.NET Core's DI context (no SynchronizationContext that could cause deadlock)
+    /// but callers should prefer <see cref="GetStoreAsync{TValue}"/> or ensure InitializeAsync() is
+    /// called during application startup to avoid the sync-over-async path entirely.
+    /// </para>
+    /// </remarks>
     public IStateStore<TValue> GetStore<TValue>(string storeName)
         where TValue : class
     {

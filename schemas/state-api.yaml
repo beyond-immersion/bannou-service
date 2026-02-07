@@ -228,9 +228,13 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         key:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Key to retrieve
 
     GetStateResponse:
@@ -262,9 +266,13 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         key:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Key to save
         value:
           type: object
@@ -294,9 +302,13 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         key:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Key to delete
 
     DeleteStateResponse:
@@ -309,17 +321,21 @@ components:
           description: Whether the key was deleted (false if not found)
 
     StateOptions:
-      description: Configuration options for state save operations including TTL, consistency level, and optimistic 
+      description: Configuration options for state save operations including TTL, consistency level, and optimistic
         concurrency
       type: object
       additionalProperties: false
       properties:
         ttl:
           type: integer
+          minimum: 1
+          maximum: 31536000
           nullable: true
-          description: TTL in seconds (Redis only)
+          description: TTL in seconds (Redis only). Maximum 1 year (31536000 seconds).
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           nullable: true
           description: Optimistic concurrency check - save fails if ETag mismatch
 
@@ -340,10 +356,11 @@ components:
           description: When the state was last updated
         version:
           type: integer
+          minimum: 0
           description: Version number for optimistic concurrency
 
     QueryStateRequest:
-      description: Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis 
+      description: Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis
         backends
       type: object
       additionalProperties: false
@@ -352,23 +369,30 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store (MySQL or Redis with search enabled)
         conditions:
           type: array
           items:
             $ref: '#/components/schemas/QueryCondition'
+          maxItems: 50
           nullable: true
           description: |
             Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.
             For Redis search, use indexName and query properties instead.
         indexName:
           type: string
+          minLength: 1
+          maxLength: 100
           nullable: true
           description: |
             Redis search index name. Defaults to "{storeName}-idx".
             Only used for Redis stores with search enabled.
         query:
           type: string
+          minLength: 1
+          maxLength: 1000
           nullable: true
           description: |
             RedisSearch query string (e.g., "@name:John", "@age:[18 +inf]", "*").
@@ -377,14 +401,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SortField'
+          maxItems: 10
           nullable: true
           description: Sort order (first field only is used) (null for default ordering)
         page:
           type: integer
+          minimum: 0
           default: 0
           description: Page number (0-indexed)
         pageSize:
           type: integer
+          minimum: 1
+          maximum: 1000
           default: 100
           description: Items per page (max 1000)
 

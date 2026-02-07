@@ -1243,6 +1243,10 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         }
         catch (Exception ex)
         {
+            // IMPLEMENTATION TENETS: Infrastructure libs intentionally catch broadly to prevent cascading failures.
+            // Expression tree visitors can fail in many ways (unsupported operations, complex lambda structures,
+            // dynamic types, etc.) - any failure should gracefully fall back to in-memory filtering rather than
+            // crashing the entire operation. The caller has a safe in-memory fallback path.
             _logger.LogDebug(ex, "Failed to convert expression to QueryConditions - will use in-memory fallback");
             return false;
         }

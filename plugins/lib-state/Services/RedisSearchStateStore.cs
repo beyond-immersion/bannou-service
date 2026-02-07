@@ -351,6 +351,12 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// IMPORTANT: This bulk operation is NOT atomic. Each item is saved individually because
+    /// Redis does not support cross-key transactions for JSON operations. Partial failures can
+    /// occur - some items may be saved while others fail. Callers should handle this by checking
+    /// returned keys against input keys or implementing their own retry/rollback logic.
+    /// </remarks>
     public async Task<IReadOnlyDictionary<string, string>> SaveBulkAsync(
         IEnumerable<KeyValuePair<string, TValue>> items,
         StateOptions? options = null,
@@ -366,7 +372,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var result = new Dictionary<string, string>();
 
-        // Save each item as JSON document (required for search indexing)
+        // NOTE: Each item saved individually - not atomic. See XML docs above.
         foreach (var (key, value) in itemList)
         {
             var fullKey = GetFullKey(key);
