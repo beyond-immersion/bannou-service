@@ -69,10 +69,12 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     private ConnectionMultiplexer? _redis;
     private DbContextOptions<StateDbContext>? _mysqlOptions;
     private readonly SemaphoreSlim _initLock = new(1, 1);
-    private bool _initialized;
+    // IMPLEMENTATION TENETS: volatile required for double-checked locking pattern visibility across CPU cores
+    private volatile bool _initialized;
 
     // Singleton RedisOperations instance (shares connection with state stores)
-    private RedisOperations? _redisOperations;
+    // IMPLEMENTATION TENETS: Lazy<T> with ExecutionAndPublication ensures thread-safe single initialization
+    private Lazy<RedisOperations>? _lazyRedisOperations;
 
     // Cache for created store instances
     private readonly ConcurrentDictionary<string, object> _storeCache = new();
@@ -126,6 +128,13 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 _logger.LogDebug("Connecting to Redis: {ConnectionString}",
                     _configuration.RedisConnectionString.Split(',')[0]); // Log only host
                 _redis = await ConnectionMultiplexer.ConnectAsync(_configuration.RedisConnectionString);
+
+                // Initialize thread-safe lazy RedisOperations (uses the established connection)
+                var redis = _redis; // Capture for closure
+                var loggerFactory = _loggerFactory;
+                _lazyRedisOperations = new Lazy<RedisOperations>(
+                    () => new RedisOperations(redis.GetDatabase(), loggerFactory.CreateLogger<RedisOperations>()),
+                    LazyThreadSafetyMode.ExecutionAndPublication);
 
                 // Auto-create search indexes for stores with EnableSearch=true
                 await CreateSearchIndexesAsync();
@@ -539,22 +548,15 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             EnsureInitializedAsync().GetAwaiter().GetResult();
         }
 
-        // Return null if Redis is not available
-        if (_redis == null)
+        // Return null if Redis is not available (Lazy not created during init)
+        if (_lazyRedisOperations == null)
         {
             _logger.LogDebug("GetRedisOperations returning null - Redis connection not available");
             return null;
         }
 
-        // Lazy initialization of RedisOperations singleton
-        if (_redisOperations == null)
-        {
-            var logger = _loggerFactory.CreateLogger<RedisOperations>();
-            _redisOperations = new RedisOperations(_redis.GetDatabase(), logger);
-            _logger.LogDebug("Created RedisOperations instance");
-        }
-
-        return _redisOperations;
+        // Thread-safe lazy initialization via Lazy<T>
+        return _lazyRedisOperations.Value;
     }
 
     /// <inheritdoc/>

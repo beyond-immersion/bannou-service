@@ -247,37 +247,27 @@ Event-Driven Auto-Registration
 
 ### Bugs (Fix Immediately)
 
-*No known bugs requiring immediate attention.*
+1. **No request-level timeout**: `MeshInvocationClient` only has `ConnectTimeoutSeconds` for TCP connection. Slow services can block the retry loop indefinitely. See [#324](https://github.com/beyond-immersion/bannou-service/issues/324).
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **HeartbeatStatus.Overloaded maps to EndpointStatus.Degraded**: The status mapping is lossy - `Overloaded` and `Degraded` heartbeat statuses both become `Degraded` endpoint status. No distinct "overloaded" endpoint state exists.
+*No quirks - the service operates as expected for a distributed service mesh.*
 
-2. **GetRoute falls back to all endpoints**: If both degradation-threshold filtering and load-threshold filtering eliminate all endpoints, the algorithm falls back to the original unfiltered list. Prevents total routing failure at the cost of routing to potentially degraded endpoints.
+### Operational Notes
 
-3. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, RoundRobinCounter>` for per-appId counters with `Interlocked.Increment`. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field (no per-appId tracking). Different approaches for the same problem - not a bug, but worth noting.
+These are standard behaviors worth understanding for operations and debugging:
 
-4. **Distributed circuit breaker uses eventual consistency**: Circuit breaker state is shared across instances via Redis + RabbitMQ events. All instances see the same circuit state within event propagation latency (~milliseconds). During the propagation window, different instances may briefly disagree about circuit state.
+1. **Resilient routing fallback**: If health/load filtering eliminates all endpoints, `GetRoute` falls back to the full unfiltered list. Prefers degraded routing over total failure.
 
-5. **No request-level timeout in MeshInvocationClient**: The only timeout is `ConnectTimeoutSeconds` on the `SocketsHttpHandler`. There's no per-request read/response timeout - slow responses block the retry loop until the configured retry attempts are exhausted or cancellation is requested.
+2. **Circuit breaker eventual consistency**: State syncs across instances via Redis + RabbitMQ events within milliseconds. Brief disagreement during propagation is expected and harmless.
 
-6. **Global index has no TTL**: The `mesh-global-index` store adds instance IDs on registration but removal only happens via explicit deregistration or lazy cleanup when `GetAllEndpointsAsync` encounters stale entries. App-id index has TTL refresh on heartbeat, but global index does not.
+3. **Global index lazy cleanup**: The `mesh-global-index` store cleans stale entries on access rather than via TTL. Endpoints themselves have TTL, so this is an optimization choice, not a bug.
 
-7. **Empty service mappings reset to default routing**: When `HandleServiceMappingsAsync` receives a `FullServiceMappingsEvent` with empty mappings, it resets all routing to the default app-id ("bannou"). This is intentional for container teardown scenarios.
-
-8. **Health check deregistration uses configurable threshold**: After `HealthCheckFailureThreshold` (default 3) consecutive probe failures, endpoints are automatically deregistered with `HealthCheckFailed` reason. Set threshold to 0 to disable deregistration and rely solely on TTL expiry.
+4. **Empty mappings = reset**: `FullServiceMappingsEvent` with empty mappings resets all routing to default ("bannou"). This is intentional for container teardown.
 
 ### Design Considerations (Requires Planning)
 
-1. **MeshInvocationClient is Singleton with mutable state**: The circuit breaker and endpoint cache are instance-level mutable state in a Singleton-lifetime service. Thread-safe by design (ConcurrentDictionary for all caches) but long-lived state accumulates.
-
-2. **Event-backed local cache pattern for circuit breaker**: The distributed circuit breaker uses a hybrid architecture: Redis stores authoritative state (via atomic Lua scripts), local `ConcurrentDictionary` provides 0ms reads on hot path, and RabbitMQ events propagate state changes across instances. This pattern avoids Redis round-trip latency on every invocation while ensuring eventual consistency across the cluster.
-
-3. **State manager lazy initialization**: `MeshStateManager.InitializeAsync()` must be called before use. Uses `Interlocked.CompareExchange` for thread-safe first initialization and resets `_initialized` flag on failure to allow retry.
-
-4. **Static load balancing state in MeshService**: Both `_roundRobinCounters` (for RoundRobin) and `_weightedRoundRobinCurrentWeights` (for WeightedRoundRobin) are static, meaning they persist across scoped service instances. Configure `LoadBalancingStateMaxAppIds` to limit growth (default 0 = unlimited). Use `ResetLoadBalancingStateForTesting()` to clear in tests.
-
-5. **Three overlapping endpoint resolution paths**: MeshService.GetRoute (for API callers), MeshInvocationClient.ResolveEndpointAsync (for generated clients), and heartbeat-based auto-registration all resolve/manage endpoints with subtly different logic. This is intentional separation of concerns but requires awareness when debugging routing issues.
+*No design issues requiring planning - architecture is stable.*
 
 ---
 
@@ -291,3 +281,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-07**: Closed [#219](https://github.com/beyond-immersion/bannou-service/issues/219) - distributed circuit breaker implementation complete.
 - **2026-02-07**: Created [#323](https://github.com/beyond-immersion/bannou-service/issues/323) for future degradation events (tied to Orchestrator response).
 - **2026-02-07**: Closed [#322](https://github.com/beyond-immersion/bannou-service/issues/322) - all production readiness items complete, including event topic fix (`bannou.service-heartbeat`).
+- **2026-02-07**: Created [#324](https://github.com/beyond-immersion/bannou-service/issues/324) for request-level timeout in MeshInvocationClient.

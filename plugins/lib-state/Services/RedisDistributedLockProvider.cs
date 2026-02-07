@@ -123,7 +123,21 @@ public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAs
             _logger.LogDebug("In-memory lock {LockKey} is held by {Owner}", lockKey, entry.Owner);
         }
 
-        return new InMemoryLockResponse(acquired, lockKey, lockOwner, _logger);
+        // Pass cleanup callback to remove lock on disposal (only if we acquired it)
+        Action<string, string>? cleanupCallback = acquired
+            ? (key, owner) =>
+            {
+                // Only remove if we still own it (concurrent-safe check)
+                _inMemoryLocks.TryRemove(key, out var currentEntry);
+                if (currentEntry != null && currentEntry.Owner != owner)
+                {
+                    // Someone else took the lock (after expiration) - restore it
+                    _inMemoryLocks.TryAdd(key, currentEntry);
+                }
+            }
+            : null;
+
+        return new InMemoryLockResponse(acquired, lockKey, lockOwner, _logger, cleanupCallback);
     }
 
     private async Task<ILockResponse> AcquireRedisLockAsync(string lockKey, string lockValue, string lockOwner, TimeSpan expiry)
@@ -238,23 +252,31 @@ internal sealed class RedisLockResponse : ILockResponse
 
 /// <summary>
 /// In-memory lock response for fallback mode.
+/// IMPLEMENTATION TENETS (T24): Properly releases lock on disposal via cleanup callback.
 /// </summary>
 internal sealed class InMemoryLockResponse : ILockResponse
 {
     private readonly string _lockKey;
     private readonly string _lockOwner;
     private readonly ILogger _logger;
+    private readonly Action<string, string>? _cleanupCallback;
     private bool _disposed;
 
-    // Static reference to the lock dictionary for cleanup
-    private static readonly ConcurrentDictionary<string, object> _locks = new();
-
-    public InMemoryLockResponse(bool success, string lockKey, string lockOwner, ILogger logger)
+    /// <summary>
+    /// Creates an in-memory lock response.
+    /// </summary>
+    /// <param name="success">Whether the lock was acquired.</param>
+    /// <param name="lockKey">The lock key.</param>
+    /// <param name="lockOwner">The lock owner.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="cleanupCallback">Callback to remove lock on disposal (key, owner).</param>
+    public InMemoryLockResponse(bool success, string lockKey, string lockOwner, ILogger logger, Action<string, string>? cleanupCallback = null)
     {
         Success = success;
         _lockKey = lockKey;
         _lockOwner = lockOwner;
         _logger = logger;
+        _cleanupCallback = cleanupCallback;
     }
 
     public bool Success { get; }
@@ -264,9 +286,8 @@ internal sealed class InMemoryLockResponse : ILockResponse
         if (_disposed || !Success) return ValueTask.CompletedTask;
         _disposed = true;
 
-        // For in-memory locks, we rely on the ConcurrentDictionary in the parent class
-        // Since we can't directly access it here, we log the intent
-        // The actual cleanup happens via expiration check on next lock attempt
+        // Invoke cleanup callback to remove lock from parent's dictionary
+        _cleanupCallback?.Invoke(_lockKey, _lockOwner);
         _logger.LogDebug("Released in-memory lock {LockKey} for owner {Owner}", _lockKey, _lockOwner);
 
         return ValueTask.CompletedTask;

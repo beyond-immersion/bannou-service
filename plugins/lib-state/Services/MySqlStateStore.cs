@@ -48,9 +48,16 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// </summary>
     private StateDbContext CreateContext() => new StateDbContext(_options);
 
-    private static string GenerateETag(string json)
+    /// <summary>
+    /// Generates an ETag from key + JSON content.
+    /// IMPLEMENTATION TENETS: Key is included to prevent cross-key ETag collisions
+    /// where different keys with identical content would otherwise match.
+    /// </summary>
+    private static string GenerateETag(string key, string json)
     {
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(json));
+        // Include key in hash to prevent cross-key collisions
+        var input = $"{key}:{json}";
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
         return Convert.ToBase64String(hash)[..12]; // Short ETag
     }
 
@@ -102,7 +109,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     {
 
         var json = BannouJson.Serialize(value);
-        var etag = GenerateETag(json);
+        var etag = GenerateETag(key, json);
         var now = DateTimeOffset.UtcNow;
 
         using var context = CreateContext();
@@ -152,7 +159,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .FirstOrDefaultAsync(cancellationToken);
 
         var json = BannouJson.Serialize(value);
-        var newEtag = GenerateETag(json);
+        var newEtag = GenerateETag(key, json);
         var now = DateTimeOffset.UtcNow;
 
         // Empty etag means "create new entry if it doesn't exist"
@@ -300,7 +307,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         foreach (var (key, value) in itemList)
         {
             var json = BannouJson.Serialize(value);
-            var etag = GenerateETag(json);
+            var etag = GenerateETag(key, json);
 
             if (existing.TryGetValue(key, out var entry))
             {

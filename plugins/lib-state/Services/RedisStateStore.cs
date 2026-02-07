@@ -127,7 +127,16 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             _ = transaction.KeyExpireAsync(metaKey, ttl);
         }
 
-        await transaction.ExecuteAsync();
+        // IMPLEMENTATION TENETS (T7): Check transaction result and handle failures
+        var executed = await transaction.ExecuteAsync();
+        if (!executed)
+        {
+            // Unconditional transactions should always succeed - log unexpected failure
+            _logger.LogError(
+                "Redis transaction unexpectedly failed for key '{Key}' in store '{Store}' - data may be inconsistent",
+                key, _keyPrefix);
+            throw new InvalidOperationException($"Redis transaction failed unexpectedly for key '{key}'");
+        }
 
         var version = await newVersion;
         _logger.LogDebug("Saved key '{Key}' in store '{Store}' (version: {Version})",
@@ -332,7 +341,16 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             versionTasks.Add((key, versionTask));
         }
 
-        await transaction.ExecuteAsync();
+        // IMPLEMENTATION TENETS (T7): Check transaction result and handle failures
+        var executed = await transaction.ExecuteAsync();
+        if (!executed)
+        {
+            // Unconditional transactions should always succeed - log unexpected failure
+            _logger.LogError(
+                "Redis bulk transaction unexpectedly failed for store '{Store}' ({Count} items) - data may be inconsistent",
+                _keyPrefix, itemList.Count);
+            throw new InvalidOperationException($"Redis bulk transaction failed unexpectedly for {itemList.Count} items");
+        }
 
         var result = new Dictionary<string, string>();
         foreach (var (key, versionTask) in versionTasks)
