@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,7 +37,9 @@ public sealed class NativeEventConsumerBackend : IHostedService
     private readonly IEventConsumer _eventConsumer;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<NativeEventConsumerBackend> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ConcurrentBag<IAsyncDisposable> _subscriptions = new();
+    private volatile bool _disposing;
 
     /// <summary>
     /// Creates a new NativeEventConsumerBackend instance.
@@ -45,12 +48,14 @@ public sealed class NativeEventConsumerBackend : IHostedService
         IMessageSubscriber subscriber,
         IEventConsumer eventConsumer,
         IServiceProvider serviceProvider,
-        ILogger<NativeEventConsumerBackend> logger)
+        ILogger<NativeEventConsumerBackend> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _subscriber = subscriber;
         _eventConsumer = eventConsumer;
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -67,6 +72,13 @@ public sealed class NativeEventConsumerBackend : IHostedService
 
         foreach (var topic in registeredTopics)
         {
+            // Check disposal flag to prevent race during shutdown
+            if (_disposing)
+            {
+                _logger.LogWarning("Shutdown in progress, skipping remaining subscriptions");
+                break;
+            }
+
             var eventType = EventSubscriptionRegistry.GetEventType(topic);
             if (eventType == null)
             {
@@ -166,9 +178,18 @@ public sealed class NativeEventConsumerBackend : IHostedService
                 {
                     _logger.LogError(
                         ex,
-                        "Error dispatching event on topic '{Topic}' to handlers",
+                        "Event dispatch failed for topic '{Topic}' - message will be nacked/requeued. " +
+                        "Handler isolation ensures other handlers on this topic executed.",
                         topic);
-                    throw; // Re-throw to trigger retry/dead-letter handling
+
+                    // Record telemetry for observability
+                    _telemetryProvider.RecordCounter(
+                        TelemetryComponents.Messaging,
+                        "messaging.handler.failures",
+                        1,
+                        new KeyValuePair<string, object?>("topic", topic));
+
+                    throw; // Intentional: triggers NACK with requeue logic
                 }
             },
             exchange: null, // Use default exchange for service events
@@ -178,9 +199,14 @@ public sealed class NativeEventConsumerBackend : IHostedService
     /// <inheritdoc/>
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Stopping NativeEventConsumerBackend - cleaning up {Count} subscriptions", _subscriptions.Count);
+        // Set flag to prevent new subscriptions during shutdown
+        _disposing = true;
 
-        foreach (var subscription in _subscriptions)
+        // Take snapshot to avoid race conditions with concurrent modifications
+        var subscriptions = _subscriptions.ToArray();
+        _logger.LogInformation("Stopping NativeEventConsumerBackend - cleaning up {Count} subscriptions", subscriptions.Length);
+
+        foreach (var subscription in subscriptions)
         {
             try
             {

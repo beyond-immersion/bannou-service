@@ -405,6 +405,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
             // Create consumer that passes raw bytes directly
             var consumer = new AsyncEventingBasicConsumer(channel);
+            var subId = subscriptionId; // Capture for closure
             consumer.ReceivedAsync += async (sender, ea) =>
             {
                 // Extract W3C trace context from message headers for distributed tracing
@@ -418,44 +419,40 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                     parentContext);
 
                 var sw = Stopwatch.StartNew();
-                var success = false;
 
                 // Set activity tags for tracing
                 activity?.SetTag("messaging.system", "rabbitmq");
                 activity?.SetTag("messaging.destination", topic);
                 activity?.SetTag("messaging.operation", "receive");
-                activity?.SetTag("messaging.subscription.id", subscriptionId.ToString());
+                activity?.SetTag("messaging.subscription.id", subId.ToString());
                 activity?.SetTag("messaging.message.body_size", ea.Body.Length);
                 if (ea.BasicProperties.MessageId != null)
                 {
                     activity?.SetTag("messaging.message_id", ea.BasicProperties.MessageId);
                 }
 
-                try
-                {
-                    // Pass raw bytes directly to handler - no deserialization
-                    await handler(ea.Body.ToArray(), cancellationToken);
+                // Delegate to extracted method for testability
+                var result = await HandleRawDeliveryAsync(
+                    ea.Body,
+                    topic,
+                    handler,
+                    activity,
+                    subId,
+                    cancellationToken);
 
-                    // Acknowledge
-                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-                    success = true;
-                    activity?.SetStatus(ActivityStatusCode.Ok);
-                }
-                catch (Exception ex)
+                // Handle ack/nack based on result
+                switch (result)
                 {
-                    _logger.LogError(
-                        ex,
-                        "Handler failed for raw dynamic subscription {SubscriptionId} on topic '{Topic}'",
-                        subscriptionId,
-                        topic);
-                    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                    case MessageDeliveryResult.Success:
+                        await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        break;
+                    case MessageDeliveryResult.HandlerError:
+                        await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                        break;
                 }
-                finally
-                {
-                    sw.Stop();
-                    RecordConsumeMetrics(topic, success, sw.Elapsed.TotalSeconds);
-                }
+
+                sw.Stop();
+                RecordConsumeMetrics(topic, result == MessageDeliveryResult.Success, sw.Elapsed.TotalSeconds);
             };
 
             // Start consuming
