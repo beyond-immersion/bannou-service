@@ -136,7 +136,6 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                     parentContext);
 
                 var sw = Stopwatch.StartNew();
-                var success = false;
 
                 // Set activity tags for tracing
                 activity?.SetTag("messaging.system", "rabbitmq");
@@ -147,59 +146,33 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                     activity?.SetTag("messaging.message_id", ea.BasicProperties.MessageId);
                 }
 
-                try
+                // Delegate to extracted method for testability
+                var result = await HandleTypedDeliveryAsync(
+                    ea.Body,
+                    topic,
+                    handler,
+                    activity,
+                    subscriptionId: null,
+                    cancellationToken);
+
+                // Handle ack/nack based on result
+                switch (result)
                 {
-                    // Deserialize the message
-                    var json = Encoding.UTF8.GetString(ea.Body.Span);
-                    var eventData = BannouJson.Deserialize<TEvent>(json);
-
-                    if (eventData == null)
-                    {
-                        // Truncate payload for logging (avoid memory issues with large payloads)
-                        var truncatedPayload = json.Length > 500 ? json[..500] + "..." : json;
-
-                        _logger.LogError(
-                            "Failed to deserialize message on topic '{Topic}' to {EventType}. Payload (truncated): {Payload}",
-                            topic,
-                            typeof(TEvent).Name,
-                            truncatedPayload);
-
-                        activity?.SetStatus(ActivityStatusCode.Error, "Deserialization failed");
-
-                        // Publish error event for observability
-                        await _messageBus.TryPublishErrorAsync(
-                            serviceName: "messaging",
-                            operation: "deserialize",
-                            errorType: "DeserializationFailed",
-                            message: $"Failed to deserialize message on topic '{topic}' to {typeof(TEvent).Name}",
-                            details: new { Topic = topic, EventType = typeof(TEvent).Name, PayloadLength = json.Length },
-                            cancellationToken: cancellationToken);
-
+                    case MessageDeliveryResult.Success:
+                        await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        break;
+                    case MessageDeliveryResult.DeserializationFailed:
                         await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
-                        return;
-                    }
+                        break;
+                    case MessageDeliveryResult.HandlerError:
+                        // Nack with requeue for retry (unless it's been redelivered too many times)
+                        var requeue = !ea.Redelivered;
+                        await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: requeue);
+                        break;
+                }
 
-                    // Call handler
-                    await handler(eventData, cancellationToken);
-
-                    // Acknowledge
-                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-                    success = true;
-                    activity?.SetStatus(ActivityStatusCode.Ok);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Handler failed for message on topic '{Topic}'", topic);
-                    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                    // Nack with requeue for retry (unless it's been redelivered too many times)
-                    var requeue = !ea.Redelivered;
-                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: requeue);
-                }
-                finally
-                {
-                    sw.Stop();
-                    RecordConsumeMetrics(topic, success, sw.Elapsed.TotalSeconds);
-                }
+                sw.Stop();
+                RecordConsumeMetrics(topic, result == MessageDeliveryResult.Success, sw.Elapsed.TotalSeconds);
             };
 
             // Start consuming - use config fallback when AutoAck not explicitly specified
@@ -279,6 +252,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
             // Create consumer
             var consumer = new AsyncEventingBasicConsumer(channel);
+            var subId = subscriptionId; // Capture for closure
             consumer.ReceivedAsync += async (sender, ea) =>
             {
                 // Extract W3C trace context from message headers for distributed tracing
@@ -292,74 +266,40 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                     parentContext);
 
                 var sw = Stopwatch.StartNew();
-                var success = false;
 
                 // Set activity tags for tracing
                 activity?.SetTag("messaging.system", "rabbitmq");
                 activity?.SetTag("messaging.destination", topic);
                 activity?.SetTag("messaging.operation", "receive");
-                activity?.SetTag("messaging.subscription.id", subscriptionId.ToString());
+                activity?.SetTag("messaging.subscription.id", subId.ToString());
                 if (ea.BasicProperties.MessageId != null)
                 {
                     activity?.SetTag("messaging.message_id", ea.BasicProperties.MessageId);
                 }
 
-                try
+                // Delegate to extracted method for testability
+                var result = await HandleTypedDeliveryAsync(
+                    ea.Body,
+                    topic,
+                    handler,
+                    activity,
+                    subId,
+                    cancellationToken);
+
+                // Handle ack/nack based on result - dynamic subscriptions don't requeue
+                switch (result)
                 {
-                    // Deserialize the message
-                    var json = Encoding.UTF8.GetString(ea.Body.Span);
-                    var eventData = BannouJson.Deserialize<TEvent>(json);
-
-                    if (eventData == null)
-                    {
-                        // Truncate payload for logging (avoid memory issues with large payloads)
-                        var truncatedPayload = json.Length > 500 ? json[..500] + "..." : json;
-
-                        _logger.LogError(
-                            "Failed to deserialize message on dynamic subscription {SubscriptionId} topic '{Topic}' to {EventType}. Payload (truncated): {Payload}",
-                            subscriptionId,
-                            topic,
-                            typeof(TEvent).Name,
-                            truncatedPayload);
-
-                        activity?.SetStatus(ActivityStatusCode.Error, "Deserialization failed");
-
-                        // Publish error event for observability
-                        await _messageBus.TryPublishErrorAsync(
-                            serviceName: "messaging",
-                            operation: "deserialize",
-                            errorType: "DeserializationFailed",
-                            message: $"Failed to deserialize message on dynamic subscription {subscriptionId} topic '{topic}' to {typeof(TEvent).Name}",
-                            details: new { SubscriptionId = subscriptionId, Topic = topic, EventType = typeof(TEvent).Name, PayloadLength = json.Length },
-                            cancellationToken: cancellationToken);
-
+                    case MessageDeliveryResult.Success:
+                        await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        break;
+                    case MessageDeliveryResult.DeserializationFailed:
+                    case MessageDeliveryResult.HandlerError:
                         await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
-                        return;
-                    }
+                        break;
+                }
 
-                    // Call handler
-                    await handler(eventData, cancellationToken);
-
-                    // Acknowledge
-                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-                    success = true;
-                    activity?.SetStatus(ActivityStatusCode.Ok);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(
-                        ex,
-                        "Handler failed for dynamic subscription {SubscriptionId} on topic '{Topic}'",
-                        subscriptionId,
-                        topic);
-                    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
-                }
-                finally
-                {
-                    sw.Stop();
-                    RecordConsumeMetrics(topic, success, sw.Elapsed.TotalSeconds);
-                }
+                sw.Stop();
+                RecordConsumeMetrics(topic, result == MessageDeliveryResult.Success, sw.Elapsed.TotalSeconds);
             };
 
             // Start consuming
@@ -726,6 +666,156 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
         _telemetryProvider.RecordCounter(TelemetryComponents.Messaging, TelemetryMetrics.MessagingConsumed, 1, tags);
         _telemetryProvider.RecordHistogram(TelemetryComponents.Messaging, TelemetryMetrics.MessagingConsumeDuration, durationSeconds, tags);
+    }
+
+    /// <summary>
+    /// Result of a message delivery attempt.
+    /// Used for testing to verify correct handling of different scenarios.
+    /// </summary>
+    internal enum MessageDeliveryResult
+    {
+        /// <summary>Message was successfully processed.</summary>
+        Success,
+        /// <summary>Message deserialized to null.</summary>
+        DeserializationFailed,
+        /// <summary>Handler threw an exception.</summary>
+        HandlerError
+    }
+
+    /// <summary>
+    /// Handles typed message delivery - extracted for testability.
+    /// </summary>
+    /// <typeparam name="TEvent">The event type to deserialize to.</typeparam>
+    /// <param name="body">Raw message body bytes.</param>
+    /// <param name="topic">The topic/routing key the message was received on.</param>
+    /// <param name="handler">The handler to invoke with the deserialized event.</param>
+    /// <param name="activity">Optional telemetry activity for tracing.</param>
+    /// <param name="subscriptionId">Optional subscription ID for dynamic subscriptions.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The delivery result indicating success or failure type.</returns>
+    /// <remarks>
+    /// This method is internal to allow unit testing of message deserialization and handler
+    /// invocation without requiring actual RabbitMQ infrastructure.
+    /// </remarks>
+    internal async Task<MessageDeliveryResult> HandleTypedDeliveryAsync<TEvent>(
+        ReadOnlyMemory<byte> body,
+        string topic,
+        Func<TEvent, CancellationToken, Task> handler,
+        Activity? activity = null,
+        Guid? subscriptionId = null,
+        CancellationToken cancellationToken = default)
+        where TEvent : class
+    {
+        try
+        {
+            // Deserialize the message
+            var json = Encoding.UTF8.GetString(body.Span);
+            var eventData = BannouJson.Deserialize<TEvent>(json);
+
+            if (eventData == null)
+            {
+                // Truncate payload for logging (avoid memory issues with large payloads)
+                var truncatedPayload = json.Length > 500 ? json[..500] + "..." : json;
+
+                if (subscriptionId.HasValue)
+                {
+                    _logger.LogError(
+                        "Failed to deserialize message on dynamic subscription {SubscriptionId} topic '{Topic}' to {EventType}. Payload (truncated): {Payload}",
+                        subscriptionId.Value,
+                        topic,
+                        typeof(TEvent).Name,
+                        truncatedPayload);
+                }
+                else
+                {
+                    _logger.LogError(
+                        "Failed to deserialize message on topic '{Topic}' to {EventType}. Payload (truncated): {Payload}",
+                        topic,
+                        typeof(TEvent).Name,
+                        truncatedPayload);
+                }
+
+                activity?.SetStatus(ActivityStatusCode.Error, "Deserialization failed");
+
+                // Publish error event for observability
+                var details = subscriptionId.HasValue
+                    ? (object)new { SubscriptionId = subscriptionId.Value, Topic = topic, EventType = typeof(TEvent).Name, PayloadLength = json.Length }
+                    : new { Topic = topic, EventType = typeof(TEvent).Name, PayloadLength = json.Length };
+
+                var message = subscriptionId.HasValue
+                    ? $"Failed to deserialize message on dynamic subscription {subscriptionId.Value} topic '{topic}' to {typeof(TEvent).Name}"
+                    : $"Failed to deserialize message on topic '{topic}' to {typeof(TEvent).Name}";
+
+                await _messageBus.TryPublishErrorAsync(
+                    serviceName: "messaging",
+                    operation: "deserialize",
+                    errorType: "DeserializationFailed",
+                    message: message,
+                    details: details,
+                    cancellationToken: cancellationToken);
+
+                return MessageDeliveryResult.DeserializationFailed;
+            }
+
+            // Call handler
+            await handler(eventData, cancellationToken);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return MessageDeliveryResult.Success;
+        }
+        catch (Exception ex)
+        {
+            if (subscriptionId.HasValue)
+            {
+                _logger.LogError(
+                    ex,
+                    "Handler failed for dynamic subscription {SubscriptionId} on topic '{Topic}'",
+                    subscriptionId.Value,
+                    topic);
+            }
+            else
+            {
+                _logger.LogError(ex, "Handler failed for message on topic '{Topic}'", topic);
+            }
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            return MessageDeliveryResult.HandlerError;
+        }
+    }
+
+    /// <summary>
+    /// Handles raw message delivery - extracted for testability.
+    /// </summary>
+    /// <param name="body">Raw message body bytes.</param>
+    /// <param name="topic">The topic/routing key the message was received on.</param>
+    /// <param name="handler">The handler to invoke with the raw bytes.</param>
+    /// <param name="activity">Optional telemetry activity for tracing.</param>
+    /// <param name="subscriptionId">Subscription ID for logging.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The delivery result indicating success or failure type.</returns>
+    internal async Task<MessageDeliveryResult> HandleRawDeliveryAsync(
+        ReadOnlyMemory<byte> body,
+        string topic,
+        Func<byte[], CancellationToken, Task> handler,
+        Activity? activity = null,
+        Guid? subscriptionId = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Pass raw bytes directly to handler - no deserialization
+            await handler(body.ToArray(), cancellationToken);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return MessageDeliveryResult.Success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Handler failed for raw dynamic subscription {SubscriptionId} on topic '{Topic}'",
+                subscriptionId,
+                topic);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            return MessageDeliveryResult.HandlerError;
+        }
     }
 
     /// <summary>
