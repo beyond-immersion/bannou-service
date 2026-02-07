@@ -234,6 +234,78 @@ public enum ItemOriginType
 #pragma warning restore CS1591
 
 /// <summary>
+/// Controls item consumption on use.
+/// <br/>- disabled: Item cannot be used (/item/use returns 400)
+/// <br/>- destroy_on_success: Item consumed only if use behavior succeeds (default)
+/// <br/>- destroy_always: Item consumed regardless of success/failure
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ItemUseBehavior
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"disabled")]
+    Disabled = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"destroy_on_success")]
+    DestroyOnSuccess = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"destroy_always")]
+    DestroyAlways = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Controls CanUse validation behavior.
+/// <br/>- disabled: Skip CanUse validation even if template is configured
+/// <br/>- block: CanUse failure prevents use (default)
+/// <br/>- warn_and_proceed: CanUse failure logs warning but proceeds with use
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CanUseBehavior
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"disabled")]
+    Disabled = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"block")]
+    Block = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"warn_and_proceed")]
+    WarnAndProceed = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Type of contract binding on an item instance.
+/// <br/>- none: No contract bound
+/// <br/>- session: Temporary binding for multi-step use (managed by Item service)
+/// <br/>- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ContractBindingType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    None = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"session")]
+    Session = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"lifecycle")]
+    Lifecycle = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to create a new item template
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -453,6 +525,38 @@ public partial class CreateItemTemplateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("useBehaviorContractTemplateId")]
     public System.Guid? UseBehaviorContractTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template for pre-use validation. When set, /item/use first executes
+    /// <br/>this contract's "validate" milestone before proceeding. If validation fails,
+    /// <br/>the item is NOT consumed and the main use behavior is NOT executed.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("canUseBehaviorContractTemplateId")]
+    public System.Guid? CanUseBehaviorContractTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template executed when the main use behavior fails. Enables cleanup,
+    /// <br/>partial rollback, or consequence application. Item is NOT consumed on failure
+    /// <br/>regardless of this template's outcome.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("onUseFailedBehaviorContractTemplateId")]
+    public System.Guid? OnUseFailedBehaviorContractTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// How the item should behave when used (defaults to destroy_on_success)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("itemUseBehavior")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemUseBehavior? ItemUseBehavior { get; set; } = default!;
+
+    /// <summary>
+    /// How CanUse validation failures should be handled (defaults to block)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("canUseBehavior")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CanUseBehavior? CanUseBehavior { get; set; } = default!;
 
 }
 
@@ -719,6 +823,32 @@ public partial class UpdateItemTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("useBehaviorContractTemplateId")]
     public System.Guid? UseBehaviorContractTemplateId { get; set; } = default!;
 
+    /// <summary>
+    /// Contract template for pre-use validation (null to clear)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("canUseBehaviorContractTemplateId")]
+    public System.Guid? CanUseBehaviorContractTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template for use failure handling (null to clear)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("onUseFailedBehaviorContractTemplateId")]
+    public System.Guid? OnUseFailedBehaviorContractTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// How the item should behave when used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("itemUseBehavior")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemUseBehavior? ItemUseBehavior { get; set; } = default!;
+
+    /// <summary>
+    /// How CanUse validation failures should be handled
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("canUseBehavior")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CanUseBehavior? CanUseBehavior { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -973,6 +1103,32 @@ public partial class ItemTemplateResponse
     public System.Guid? UseBehaviorContractTemplateId { get; set; } = default!;
 
     /// <summary>
+    /// Contract template for pre-use validation (null if not configured)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("canUseBehaviorContractTemplateId")]
+    public System.Guid? CanUseBehaviorContractTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template for use failure handling (null if not configured)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("onUseFailedBehaviorContractTemplateId")]
+    public System.Guid? OnUseFailedBehaviorContractTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// How the item behaves when used (null defaults to destroy_on_success)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("itemUseBehavior")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemUseBehavior? ItemUseBehavior { get; set; } = default!;
+
+    /// <summary>
+    /// How CanUse validation failures are handled (null defaults to block)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("canUseBehavior")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CanUseBehavior? CanUseBehavior { get; set; } = default!;
+
+    /// <summary>
     /// Whether template is active
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
@@ -1138,6 +1294,25 @@ public partial class CreateItemInstanceRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originId")]
     public System.Guid? OriginId { get; set; } = default!;
+
+    /// <summary>
+    /// Bound contract instance ID. For persistent item-contract bindings (status effects,
+    /// <br/>licenses, memberships), this references the controlling contract. NULL for items
+    /// <br/>without persistent contract relationships.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    public System.Guid? ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of contract binding. When contractInstanceId is provided, this indicates
+    /// <br/>whether it's a lifecycle binding (managed externally) or session binding
+    /// <br/>(managed by Item service). Defaults to 'lifecycle' when contractInstanceId is set.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractBindingType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ContractBindingType? ContractBindingType { get; set; } = default!;
 
 }
 
@@ -1434,6 +1609,23 @@ public partial class ItemInstanceResponse
     public System.Guid? OriginId { get; set; } = default!;
 
     /// <summary>
+    /// Bound contract instance ID. For persistent item-contract bindings or active
+    /// <br/>multi-step use sessions, this references the controlling contract.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    public System.Guid? ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of contract binding. 'session' for multi-step use in progress,
+    /// <br/>'lifecycle' for external orchestrator-managed bindings, null/none otherwise.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractBindingType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ContractBindingType? ContractBindingType { get; set; } = default!;
+
+    /// <summary>
     /// Instance creation timestamp
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
@@ -1698,6 +1890,124 @@ public partial class UseItemResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("remainingQuantity")]
     public double? RemainingQuantity { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable reason for failure when success is false
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failureReason")]
+    public string? FailureReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to complete a step of a multi-step item use
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UseItemStepRequest
+{
+
+    /// <summary>
+    /// Item instance being used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// User performing the step
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid UserId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of user entity (e.g., character, account, actor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string UserType { get; set; } = default!;
+
+    /// <summary>
+    /// Milestone code to complete in the use behavior contract
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string MilestoneCode { get; set; } = default!;
+
+    /// <summary>
+    /// Evidence data for this milestone completion (passed to contract)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("evidence")]
+    public object? Evidence { get; set; } = default!;
+
+    /// <summary>
+    /// Additional context data passed to contract template value substitution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("context")]
+    public object? Context { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from completing a multi-step item use milestone
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UseItemStepResponse
+{
+
+    /// <summary>
+    /// Whether the step completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Item instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Contract instance tracking this use session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// The milestone that was completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedMilestone")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CompletedMilestone { get; set; } = default!;
+
+    /// <summary>
+    /// Milestones still to be completed (null if complete or failed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("remainingMilestones")]
+    public System.Collections.Generic.ICollection<string>? RemainingMilestones { get; set; } = default!;
+
+    /// <summary>
+    /// Whether all required milestones are complete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isComplete")]
+    public bool IsComplete { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item was consumed (only true when all steps complete per itemUseBehavior)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consumed")]
+    public bool Consumed { get; set; } = default!;
 
     /// <summary>
     /// Human-readable reason for failure when success is false

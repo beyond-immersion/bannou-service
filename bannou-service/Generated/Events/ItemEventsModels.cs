@@ -730,6 +730,194 @@ public partial class ItemUseFailureRecord
 
 }
 
+/// <summary>
+/// Published when a multi-step item use milestone is completed
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemUseStepCompletedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Item instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Item template ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Item template code for debugging
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// User who completed the step
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid UserId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of user entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string UserType { get; set; } = default!;
+
+    /// <summary>
+    /// Contract instance tracking this use session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// The milestone that was completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MilestoneCode { get; set; } = default!;
+
+    /// <summary>
+    /// Milestones still to be completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("remainingMilestones")]
+    public System.Collections.Generic.ICollection<string>? RemainingMilestones { get; set; } = default!;
+
+    /// <summary>
+    /// Whether all required milestones are complete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isComplete")]
+    public bool IsComplete { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item was consumed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consumed")]
+    public bool Consumed { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a multi-step item use milestone fails
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemUseStepFailedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Item instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Item template ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Item template code for debugging
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// User who attempted the step
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid UserId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of user entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string UserType { get; set; } = default!;
+
+    /// <summary>
+    /// Contract instance tracking this use session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// The milestone that failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MilestoneCode { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable reason for failure
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

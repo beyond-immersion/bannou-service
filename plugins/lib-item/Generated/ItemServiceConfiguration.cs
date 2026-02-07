@@ -147,4 +147,25 @@ public class ItemServiceConfiguration : IServiceConfiguration
     [ConfigStringLength(MinLength = 1, MaxLength = 64)]
     public string SystemPartyType { get; set; } = "system";
 
+    /// <summary>
+    /// Milestone code to complete for CanUse validation contracts
+    /// Environment variable: ITEM_CAN_USE_MILESTONE_CODE
+    /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 64)]
+    public string CanUseMilestoneCode { get; set; } = "validate";
+
+    /// <summary>
+    /// Milestone code to complete for OnUseFailed handler contracts
+    /// Environment variable: ITEM_ON_USE_FAILED_MILESTONE_CODE
+    /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 64)]
+    public string OnUseFailedMilestoneCode { get; set; } = "handle_failure";
+
+    /// <summary>
+    /// Distributed lock timeout in seconds for UseItemStep operations (prevents race conditions)
+    /// Environment variable: ITEM_USE_STEP_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int UseStepLockTimeoutSeconds { get; set; } = 30;
+
 }

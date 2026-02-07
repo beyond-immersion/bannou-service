@@ -411,6 +411,43 @@ paths:
       - role: user
         states: {}
 
+  /item/use-step:
+    post:
+      operationId: useItemStep
+      tags:
+      - Item Instance
+      summary: Complete a specific step of a multi-step item use
+      description: |
+        For items with multi-milestone use behaviors, completes a specific milestone.
+        The first call (without an existing contractInstanceId on the item) creates
+        the contract instance and stores it on the item; subsequent calls progress
+        the existing contract. Item is consumed only when all required milestones
+        are complete (per itemUseBehavior).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseItemStepRequest'
+      responses:
+        '200':
+          description: Step completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UseItemStepResponse'
+        '400':
+          description: Invalid request or item template has no behavior contract
+        '404':
+          description: Item instance not found
+        '409':
+          description: Another operation is in progress on this item (distributed lock held)
+        '422':
+          description: Step execution failed (CanUse validation or milestone completion)
+      x-permissions:
+      - role: user
+        states: {}
+
   # ===========================================================================
   # Item Queries (3 endpoints)
   # ===========================================================================
@@ -567,6 +604,42 @@ components:
       - spawn
       - other
 
+    ItemUseBehavior:
+      type: string
+      description: |
+        Controls item consumption on use.
+        - disabled: Item cannot be used (/item/use returns 400)
+        - destroy_on_success: Item consumed only if use behavior succeeds (default)
+        - destroy_always: Item consumed regardless of success/failure
+      enum:
+      - disabled
+      - destroy_on_success
+      - destroy_always
+
+    CanUseBehavior:
+      type: string
+      description: |
+        Controls CanUse validation behavior.
+        - disabled: Skip CanUse validation even if template is configured
+        - block: CanUse failure prevents use (default)
+        - warn_and_proceed: CanUse failure logs warning but proceeds with use
+      enum:
+      - disabled
+      - block
+      - warn_and_proceed
+
+    ContractBindingType:
+      type: string
+      description: |
+        Type of contract binding on an item instance.
+        - none: No contract bound
+        - session: Temporary binding for multi-step use (managed by Item service)
+        - lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)
+      enum:
+      - none
+      - session
+      - lifecycle
+
     # =========================================================================
     # Item Template Models
     # =========================================================================
@@ -721,6 +794,30 @@ components:
           format: uuid
           nullable: true
           description: Contract template ID for executable item behavior. When set, the item can be "used" via /item/use, which creates a transient contract instance, completes its "use" milestone (triggering prebound APIs), and optionally consumes the item.
+        canUseBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Contract template for pre-use validation. When set, /item/use first executes
+            this contract's "validate" milestone before proceeding. If validation fails,
+            the item is NOT consumed and the main use behavior is NOT executed.
+        onUseFailedBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Contract template executed when the main use behavior fails. Enables cleanup,
+            partial rollback, or consequence application. Item is NOT consumed on failure
+            regardless of this template's outcome.
+        itemUseBehavior:
+          $ref: '#/components/schemas/ItemUseBehavior'
+          nullable: true
+          description: How the item should behave when used (defaults to destroy_on_success)
+        canUseBehavior:
+          $ref: '#/components/schemas/CanUseBehavior'
+          nullable: true
+          description: How CanUse validation failures should be handled (defaults to block)
 
     GetItemTemplateRequest:
       type: object
@@ -905,6 +1002,24 @@ components:
           format: uuid
           nullable: true
           description: Contract template ID for executable item behavior (null to clear)
+        canUseBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for pre-use validation (null to clear)
+        onUseFailedBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for use failure handling (null to clear)
+        itemUseBehavior:
+          $ref: '#/components/schemas/ItemUseBehavior'
+          nullable: true
+          description: How the item should behave when used
+        canUseBehavior:
+          $ref: '#/components/schemas/CanUseBehavior'
+          nullable: true
+          description: How CanUse validation failures should be handled
 
     DeprecateItemTemplateRequest:
       type: object
@@ -1073,6 +1188,24 @@ components:
           format: uuid
           nullable: true
           description: Contract template ID for executable item behavior (null if not usable)
+        canUseBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for pre-use validation (null if not configured)
+        onUseFailedBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for use failure handling (null if not configured)
+        itemUseBehavior:
+          $ref: '#/components/schemas/ItemUseBehavior'
+          nullable: true
+          description: How the item behaves when used (null defaults to destroy_on_success)
+        canUseBehavior:
+          $ref: '#/components/schemas/CanUseBehavior'
+          nullable: true
+          description: How CanUse validation failures are handled (null defaults to block)
         isActive:
           type: boolean
           description: Whether template is active
@@ -1189,6 +1322,21 @@ components:
           format: uuid
           nullable: true
           description: Source entity ID (quest ID, creature ID, etc.)
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Bound contract instance ID. For persistent item-contract bindings (status effects,
+            licenses, memberships), this references the controlling contract. NULL for items
+            without persistent contract relationships.
+        contractBindingType:
+          $ref: '#/components/schemas/ContractBindingType'
+          nullable: true
+          description: |
+            Type of contract binding. When contractInstanceId is provided, this indicates
+            whether it's a lifecycle binding (managed externally) or session binding
+            (managed by Item service). Defaults to 'lifecycle' when contractInstanceId is set.
 
     GetItemInstanceRequest:
       type: object
@@ -1389,6 +1537,19 @@ components:
           format: uuid
           nullable: true
           description: Source entity ID
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Bound contract instance ID. For persistent item-contract bindings or active
+            multi-step use sessions, this references the controlling contract.
+        contractBindingType:
+          $ref: '#/components/schemas/ContractBindingType'
+          nullable: true
+          description: |
+            Type of contract binding. 'session' for multi-step use in progress,
+            'lifecycle' for external orchestrator-managed bindings, null/none otherwise.
         createdAt:
           type: string
           format: date-time
@@ -1589,6 +1750,90 @@ components:
           format: double
           nullable: true
           description: Remaining quantity after use (null if item was fully consumed or destroyed)
+        failureReason:
+          type: string
+          nullable: true
+          description: Human-readable reason for failure when success is false
+
+    # =========================================================================
+    # Multi-Step Item Use Models
+    # =========================================================================
+
+    UseItemStepRequest:
+      type: object
+      description: Request to complete a step of a multi-step item use
+      additionalProperties: false
+      required:
+      - instanceId
+      - userId
+      - userType
+      - milestoneCode
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance being used
+        userId:
+          type: string
+          format: uuid
+          description: User performing the step
+        userType:
+          type: string
+          maxLength: 64
+          description: Type of user entity (e.g., character, account, actor)
+        milestoneCode:
+          type: string
+          maxLength: 64
+          description: Milestone code to complete in the use behavior contract
+        evidence:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Evidence data for this milestone completion (passed to contract)
+        context:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional context data passed to contract template value substitution
+
+    UseItemStepResponse:
+      type: object
+      description: Response from completing a multi-step item use milestone
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - contractInstanceId
+      - completedMilestone
+      - isComplete
+      - consumed
+      properties:
+        success:
+          type: boolean
+          description: Whether the step completed successfully
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance tracking this use session
+        completedMilestone:
+          type: string
+          description: The milestone that was completed
+        remainingMilestones:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Milestones still to be completed (null if complete or failed)
+        isComplete:
+          type: boolean
+          description: Whether all required milestones are complete
+        consumed:
+          type: boolean
+          description: Whether item was consumed (only true when all steps complete per itemUseBehavior)
         failureReason:
           type: string
           nullable: true

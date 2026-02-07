@@ -247,6 +247,21 @@ public static class ItemPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/item/use-step",
+            Method = ServiceEndpointMethod.POST,
+            Description = "useItemStep",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/item/instance/list-by-container",
             Method = ServiceEndpointMethod.POST,
             Description = "listItemsByContainer",

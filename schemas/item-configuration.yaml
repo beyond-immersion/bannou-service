@@ -108,3 +108,30 @@ x-service-configuration:
       env: ITEM_SYSTEM_PARTY_TYPE
       default: "system"
       description: Entity type string for the system party in item use contracts
+
+    # CanUse Validation Configuration
+    canUseMilestoneCode:
+      type: string
+      minLength: 1
+      maxLength: 64
+      env: ITEM_CAN_USE_MILESTONE_CODE
+      default: "validate"
+      description: Milestone code to complete for CanUse validation contracts
+
+    # OnUseFailed Handler Configuration
+    onUseFailedMilestoneCode:
+      type: string
+      minLength: 1
+      maxLength: 64
+      env: ITEM_ON_USE_FAILED_MILESTONE_CODE
+      default: "handle_failure"
+      description: Milestone code to complete for OnUseFailed handler contracts
+
+    # Multi-Step Use Configuration
+    useStepLockTimeoutSeconds:
+      type: integer
+      minimum: 5
+      maximum: 300
+      env: ITEM_USE_STEP_LOCK_TIMEOUT_SECONDS
+      default: 30
+      description: Distributed lock timeout in seconds for UseItemStep operations (prevents race conditions)

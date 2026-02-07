@@ -146,6 +146,10 @@ public partial class ItemService : IItemService
                 Display = body.Display is not null ? BannouJson.Serialize(body.Display) : null,
                 Metadata = body.Metadata is not null ? BannouJson.Serialize(body.Metadata) : null,
                 UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId,
+                CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId,
+                OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId,
+                ItemUseBehavior = body.ItemUseBehavior ?? ItemUseBehavior.DestroyOnSuccess,
+                CanUseBehavior = body.CanUseBehavior ?? CanUseBehavior.Block,
                 IsActive = true,
                 IsDeprecated = false,
                 CreatedAt = now,
@@ -337,9 +341,13 @@ public partial class ItemService : IItemService
             if (body.Requirements is not null) model.Requirements = BannouJson.Serialize(body.Requirements);
             if (body.Display is not null) model.Display = BannouJson.Serialize(body.Display);
             if (body.Metadata is not null) model.Metadata = BannouJson.Serialize(body.Metadata);
-            // UseBehaviorContractTemplateId: null in request means "don't change", explicit value updates it
+            // Contract template IDs: null in request means "don't change", explicit value updates it
             // To clear, caller must pass the null GUID explicitly via a separate endpoint or admin action
             if (body.UseBehaviorContractTemplateId.HasValue) model.UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId;
+            if (body.CanUseBehaviorContractTemplateId.HasValue) model.CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId;
+            if (body.OnUseFailedBehaviorContractTemplateId.HasValue) model.OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId;
+            if (body.ItemUseBehavior.HasValue) model.ItemUseBehavior = body.ItemUseBehavior.Value;
+            if (body.CanUseBehavior.HasValue) model.CanUseBehavior = body.CanUseBehavior.Value;
             if (body.IsActive.HasValue) model.IsActive = body.IsActive.Value;
             model.UpdatedAt = now;
 
@@ -512,6 +520,10 @@ public partial class ItemService : IItemService
                 InstanceMetadata = body.InstanceMetadata is not null ? BannouJson.Serialize(body.InstanceMetadata) : null,
                 OriginType = body.OriginType,
                 OriginId = body.OriginId,
+                ContractInstanceId = body.ContractInstanceId,
+                // Default to lifecycle if contractInstanceId is provided but bindingType is not
+                ContractBindingType = body.ContractBindingType
+                    ?? (body.ContractInstanceId.HasValue ? ContractBindingType.Lifecycle : ContractBindingType.None),
                 CreatedAt = now
             };
 
@@ -974,7 +986,23 @@ public partial class ItemService : IItemService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // 3. Validate template has behavior contract
+            // 3. Check if item use is disabled
+            if (template.ItemUseBehavior == ItemUseBehavior.Disabled)
+            {
+                _logger.LogDebug(
+                    "Item template {TemplateId} ({Code}) has use behavior disabled",
+                    template.TemplateId, template.Code);
+                return (StatusCodes.BadRequest, new UseItemResponse
+                {
+                    Success = false,
+                    InstanceId = body.InstanceId,
+                    TemplateId = template.TemplateId,
+                    Consumed = false,
+                    FailureReason = "Item use is disabled for this template"
+                });
+            }
+
+            // 4. Validate template has behavior contract
             if (!template.UseBehaviorContractTemplateId.HasValue)
             {
                 _logger.LogDebug(
@@ -990,7 +1018,45 @@ public partial class ItemService : IItemService
                 });
             }
 
-            // 4. Create contract instance with user + system parties
+            // 5. Execute CanUse validation if configured
+            if (template.CanUseBehaviorContractTemplateId.HasValue &&
+                template.CanUseBehavior != CanUseBehavior.Disabled)
+            {
+                var (validationPassed, validationFailureReason) = await ExecuteCanUseValidationAsync(
+                    template.CanUseBehaviorContractTemplateId.Value,
+                    body.UserId,
+                    body.UserType,
+                    body.InstanceId,
+                    template.TemplateId,
+                    body.Context,
+                    cancellationToken);
+
+                if (!validationPassed)
+                {
+                    if (template.CanUseBehavior == CanUseBehavior.Block)
+                    {
+                        _logger.LogDebug(
+                            "CanUse validation blocked for item {InstanceId}: {Reason}",
+                            body.InstanceId, validationFailureReason);
+                        return (StatusCodes.BadRequest, new UseItemResponse
+                        {
+                            Success = false,
+                            InstanceId = body.InstanceId,
+                            TemplateId = template.TemplateId,
+                            Consumed = false,
+                            FailureReason = validationFailureReason ?? "CanUse validation failed"
+                        });
+                    }
+                    else // warn_and_proceed
+                    {
+                        _logger.LogWarning(
+                            "CanUse validation failed but proceeding for item {InstanceId}: {Reason}",
+                            body.InstanceId, validationFailureReason);
+                    }
+                }
+            }
+
+            // 6. Create contract instance with user + system parties
             var systemPartyId = GetOrComputeSystemPartyId(template.GameId);
             var contractInstanceId = await CreateItemUseContractInstanceAsync(
                 template.UseBehaviorContractTemplateId.Value,
@@ -1027,7 +1093,7 @@ public partial class ItemService : IItemService
                 });
             }
 
-            // 5. Complete the "use" milestone (triggers prebound APIs)
+            // 7. Complete the "use" milestone (triggers prebound APIs)
             var milestoneSuccess = await CompleteUseMilestoneAsync(
                 contractInstanceId.Value,
                 cancellationToken);
@@ -1038,6 +1104,20 @@ public partial class ItemService : IItemService
                     "Use milestone failed for item {InstanceId}, contract {ContractId}",
                     body.InstanceId, contractInstanceId.Value);
 
+                // Execute OnUseFailed handler if configured
+                if (template.OnUseFailedBehaviorContractTemplateId.HasValue)
+                {
+                    await ExecuteOnUseFailedHandlerAsync(
+                        template.OnUseFailedBehaviorContractTemplateId.Value,
+                        body.UserId,
+                        body.UserType,
+                        body.InstanceId,
+                        template.TemplateId,
+                        "Contract use milestone failed",
+                        body.Context,
+                        cancellationToken);
+                }
+
                 await RecordUseFailureAsync(
                     body.InstanceId,
                     template.TemplateId,
@@ -1047,25 +1127,40 @@ public partial class ItemService : IItemService
                     "Contract use milestone failed",
                     cancellationToken);
 
+                // Check if item should be consumed on failure (DESTROY_ALWAYS)
+                var consumeOnFailure = template.ItemUseBehavior == ItemUseBehavior.DestroyAlways;
+                var failureConsumed = false;
+                double? failureRemainingQuantity = null;
+
+                if (consumeOnFailure)
+                {
+                    (failureConsumed, failureRemainingQuantity) = await ConsumeItemAsync(
+                        body.InstanceId,
+                        instance,
+                        template,
+                        cancellationToken);
+                }
+
                 return (StatusCodes.BadRequest, new UseItemResponse
                 {
                     Success = false,
                     InstanceId = body.InstanceId,
                     TemplateId = template.TemplateId,
                     ContractInstanceId = contractInstanceId.Value,
-                    Consumed = false,
+                    Consumed = failureConsumed,
+                    RemainingQuantity = failureRemainingQuantity,
                     FailureReason = "Item use behavior execution failed"
                 });
             }
 
-            // 6. Consume item on success (decrement quantity or destroy)
+            // 8. Consume item on success (per itemUseBehavior: DESTROY_ON_SUCCESS or DESTROY_ALWAYS)
             var (consumed, remainingQuantity) = await ConsumeItemAsync(
                 body.InstanceId,
                 instance,
                 template,
                 cancellationToken);
 
-            // 7. Record success for batched event publishing
+            // 9. Record success for batched event publishing
             await RecordUseSuccessAsync(
                 body.InstanceId,
                 template.TemplateId,
@@ -1108,6 +1203,437 @@ public partial class ItemService : IItemService
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, UseItemStepResponse?)> UseItemStepAsync(
+        UseItemStepRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug(
+                "UseItemStep: instance={InstanceId}, user={UserId}, milestone={MilestoneCode}",
+                body.InstanceId, body.UserId, body.MilestoneCode);
+
+            // 1. Load instance (read is safe without lock)
+            var instance = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
+            if (instance is null)
+            {
+                _logger.LogDebug("Item instance {InstanceId} not found", body.InstanceId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // 2. Load template
+            var template = await GetTemplateWithCacheAsync(instance.TemplateId.ToString(), cancellationToken);
+            if (template is null)
+            {
+                _logger.LogWarning(
+                    "Template {TemplateId} not found for instance {InstanceId}",
+                    instance.TemplateId, body.InstanceId);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // 3. Check if item use is disabled
+            if (template.ItemUseBehavior == ItemUseBehavior.Disabled)
+            {
+                return (StatusCodes.BadRequest, new UseItemStepResponse
+                {
+                    Success = false,
+                    InstanceId = body.InstanceId,
+                    ContractInstanceId = Guid.Empty, // No contract created
+                    CompletedMilestone = body.MilestoneCode,
+                    IsComplete = false,
+                    Consumed = false,
+                    FailureReason = "Item use is disabled for this template"
+                });
+            }
+
+            // 4. Validate template has behavior contract
+            if (!template.UseBehaviorContractTemplateId.HasValue)
+            {
+                return (StatusCodes.BadRequest, new UseItemStepResponse
+                {
+                    Success = false,
+                    InstanceId = body.InstanceId,
+                    ContractInstanceId = Guid.Empty,
+                    CompletedMilestone = body.MilestoneCode,
+                    IsComplete = false,
+                    Consumed = false,
+                    FailureReason = "Item template has no use behavior defined"
+                });
+            }
+
+            // 5. Acquire distributed lock for this instance
+            var lockKey = $"item-use-step:{body.InstanceId}";
+            var lockOwner = $"use-step-{Guid.NewGuid():N}";
+
+            await using var lockHandle = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ItemLock,
+                lockKey,
+                lockOwner,
+                _configuration.UseStepLockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning(
+                    "Failed to acquire lock for UseItemStep on {InstanceId}",
+                    body.InstanceId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // 6. Re-read instance inside lock to get current state
+            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+            var (currentInstance, etag) = await instanceStore.GetWithETagAsync(
+                $"{INST_PREFIX}{body.InstanceId}",
+                cancellationToken);
+
+            if (currentInstance is null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            Guid contractInstanceId;
+            var isFirstStep = !currentInstance.ContractInstanceId.HasValue;
+
+            if (isFirstStep)
+            {
+                // 7a. First step: Execute CanUse validation and create contract
+
+                // Execute CanUse validation if configured
+                if (template.CanUseBehaviorContractTemplateId.HasValue &&
+                    template.CanUseBehavior != CanUseBehavior.Disabled)
+                {
+                    var (validationPassed, validationFailureReason) = await ExecuteCanUseValidationAsync(
+                        template.CanUseBehaviorContractTemplateId.Value,
+                        body.UserId,
+                        body.UserType,
+                        body.InstanceId,
+                        template.TemplateId,
+                        body.Context,
+                        cancellationToken);
+
+                    if (!validationPassed)
+                    {
+                        if (template.CanUseBehavior == CanUseBehavior.Block)
+                        {
+                            return (StatusCodes.BadRequest, new UseItemStepResponse
+                            {
+                                Success = false,
+                                InstanceId = body.InstanceId,
+                                ContractInstanceId = Guid.Empty,
+                                CompletedMilestone = body.MilestoneCode,
+                                IsComplete = false,
+                                Consumed = false,
+                                FailureReason = validationFailureReason ?? "CanUse validation failed"
+                            });
+                        }
+                        else // warn_and_proceed
+                        {
+                            _logger.LogWarning(
+                                "CanUse validation failed but proceeding for item {InstanceId}: {Reason}",
+                                body.InstanceId, validationFailureReason);
+                        }
+                    }
+                }
+
+                // Create contract instance
+                var systemPartyId = GetOrComputeSystemPartyId(template.GameId);
+                var newContractId = await CreateItemUseContractInstanceAsync(
+                    template.UseBehaviorContractTemplateId.Value,
+                    body.UserId,
+                    body.UserType,
+                    systemPartyId,
+                    body.InstanceId,
+                    template.TemplateId,
+                    body.Context,
+                    cancellationToken);
+
+                if (!newContractId.HasValue)
+                {
+                    return (StatusCodes.BadRequest, new UseItemStepResponse
+                    {
+                        Success = false,
+                        InstanceId = body.InstanceId,
+                        ContractInstanceId = Guid.Empty,
+                        CompletedMilestone = body.MilestoneCode,
+                        IsComplete = false,
+                        Consumed = false,
+                        FailureReason = "Failed to create contract instance"
+                    });
+                }
+
+                contractInstanceId = newContractId.Value;
+
+                // Store contract on instance with session binding
+                currentInstance.ContractInstanceId = contractInstanceId;
+                currentInstance.ContractBindingType = ContractBindingType.Session;
+                currentInstance.ModifiedAt = DateTimeOffset.UtcNow;
+
+                // Save updated instance
+                var saveResult = await instanceStore.TrySaveAsync(
+                    $"{INST_PREFIX}{body.InstanceId}",
+                    currentInstance,
+                    etag ?? string.Empty,
+                    cancellationToken);
+
+                if (saveResult is null)
+                {
+                    _logger.LogWarning(
+                        "Optimistic concurrency failure saving contract to instance {InstanceId}",
+                        body.InstanceId);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                // Invalidate cache
+                await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+            }
+            else
+            {
+                // 7b. Subsequent step: Use existing contract
+                // Note: isFirstStep is false means ContractInstanceId.HasValue is true
+                contractInstanceId = currentInstance.ContractInstanceId
+                    ?? throw new InvalidOperationException("ContractInstanceId is null when isFirstStep is false");
+            }
+
+            // 8. Complete the specified milestone
+            var milestoneResponse = await _contractClient.CompleteMilestoneAsync(
+                new CompleteMilestoneRequest
+                {
+                    ContractId = contractInstanceId,
+                    MilestoneCode = body.MilestoneCode,
+                    Evidence = body.Evidence
+                },
+                cancellationToken);
+
+            if (milestoneResponse.Milestone.Status != MilestoneStatus.Completed)
+            {
+                _logger.LogWarning(
+                    "Milestone {MilestoneCode} failed for item {InstanceId}, contract {ContractId}",
+                    body.MilestoneCode, body.InstanceId, contractInstanceId);
+
+                // Execute OnUseFailed handler if configured
+                if (template.OnUseFailedBehaviorContractTemplateId.HasValue)
+                {
+                    await ExecuteOnUseFailedHandlerAsync(
+                        template.OnUseFailedBehaviorContractTemplateId.Value,
+                        body.UserId,
+                        body.UserType,
+                        body.InstanceId,
+                        template.TemplateId,
+                        $"Milestone {body.MilestoneCode} failed",
+                        body.Context,
+                        cancellationToken);
+                }
+
+                // Publish step failed event
+                await PublishStepFailedEventAsync(
+                    body.InstanceId,
+                    template.TemplateId,
+                    template.Code,
+                    body.UserId,
+                    body.UserType,
+                    contractInstanceId,
+                    body.MilestoneCode,
+                    $"Milestone completion failed",
+                    cancellationToken);
+
+                return (StatusCodes.BadRequest, new UseItemStepResponse
+                {
+                    Success = false,
+                    InstanceId = body.InstanceId,
+                    ContractInstanceId = contractInstanceId,
+                    CompletedMilestone = body.MilestoneCode,
+                    IsComplete = false,
+                    Consumed = false,
+                    FailureReason = $"Milestone {body.MilestoneCode} failed"
+                });
+            }
+
+            // 9. Query remaining milestones from contract
+            var remainingMilestones = await GetRemainingMilestonesAsync(contractInstanceId, cancellationToken);
+            var isComplete = remainingMilestones.Count == 0;
+            var consumed = false;
+
+            // 10. If all required milestones complete, handle consumption and cleanup
+            if (isComplete)
+            {
+                // Consume item per itemUseBehavior
+                if (template.ItemUseBehavior != ItemUseBehavior.Disabled)
+                {
+                    // Re-fetch the instance for consumption (it may have been modified)
+                    var freshInstance = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
+                    if (freshInstance is not null)
+                    {
+                        (consumed, _) = await ConsumeItemAsync(
+                            body.InstanceId,
+                            freshInstance,
+                            template,
+                            cancellationToken);
+                    }
+                }
+
+                // Clear session binding (only if session type)
+                if (currentInstance.ContractBindingType == ContractBindingType.Session)
+                {
+                    currentInstance.ContractInstanceId = null;
+                    currentInstance.ContractBindingType = ContractBindingType.None;
+                    currentInstance.ModifiedAt = DateTimeOffset.UtcNow;
+
+                    // Re-fetch etag for optimistic concurrency
+                    var (latestInstance, latestEtag) = await instanceStore.GetWithETagAsync(
+                        $"{INST_PREFIX}{body.InstanceId}",
+                        cancellationToken);
+
+                    if (latestInstance is not null)
+                    {
+                        latestInstance.ContractInstanceId = null;
+                        latestInstance.ContractBindingType = ContractBindingType.None;
+                        latestInstance.ModifiedAt = DateTimeOffset.UtcNow;
+
+                        await instanceStore.TrySaveAsync(
+                            $"{INST_PREFIX}{body.InstanceId}",
+                            latestInstance,
+                            latestEtag ?? string.Empty,
+                            cancellationToken);
+
+                        await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+                    }
+                }
+            }
+
+            // 11. Publish step completed event
+            await PublishStepCompletedEventAsync(
+                body.InstanceId,
+                template.TemplateId,
+                template.Code,
+                body.UserId,
+                body.UserType,
+                contractInstanceId,
+                body.MilestoneCode,
+                isComplete ? null : remainingMilestones,
+                isComplete,
+                consumed,
+                cancellationToken);
+
+            _logger.LogDebug(
+                "UseItemStep completed: instance={InstanceId}, milestone={MilestoneCode}, isComplete={IsComplete}, consumed={Consumed}",
+                body.InstanceId, body.MilestoneCode, isComplete, consumed);
+
+            return (StatusCodes.OK, new UseItemStepResponse
+            {
+                Success = true,
+                InstanceId = body.InstanceId,
+                ContractInstanceId = contractInstanceId,
+                CompletedMilestone = body.MilestoneCode,
+                RemainingMilestones = isComplete ? null : remainingMilestones,
+                IsComplete = isComplete,
+                Consumed = consumed
+            });
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "API error in UseItemStep for instance {InstanceId}", body.InstanceId);
+            return (StatusCodes.InternalServerError, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in UseItemStep for instance {InstanceId}", body.InstanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "item", "UseItemStep", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/item/use-step",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets the remaining uncompleted milestone codes from a contract instance.
+    /// </summary>
+    private async Task<List<string>> GetRemainingMilestonesAsync(
+        Guid contractInstanceId,
+        CancellationToken ct)
+    {
+        try
+        {
+            var response = await _contractClient.GetContractInstanceAsync(
+                new GetContractInstanceRequest { ContractId = contractInstanceId },
+                ct);
+
+            // Filter milestones that are not yet completed
+            return response.Milestones?
+                .Where(m => m.Status != MilestoneStatus.Completed && m.Status != MilestoneStatus.Skipped)
+                .Select(m => m.Code)
+                .ToList() ?? new List<string>();
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get remaining milestones for contract {ContractId}", contractInstanceId);
+            return new List<string>();
+        }
+    }
+
+    /// <summary>
+    /// Publishes an ItemUseStepCompletedEvent.
+    /// </summary>
+    private async Task PublishStepCompletedEventAsync(
+        Guid instanceId,
+        Guid templateId,
+        string templateCode,
+        Guid userId,
+        string userType,
+        Guid contractInstanceId,
+        string milestoneCode,
+        List<string>? remainingMilestones,
+        bool isComplete,
+        bool consumed,
+        CancellationToken ct)
+    {
+        await _messageBus.TryPublishAsync("item.use-step-completed", new ItemUseStepCompletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            TemplateCode = templateCode,
+            UserId = userId,
+            UserType = userType,
+            ContractInstanceId = contractInstanceId,
+            MilestoneCode = milestoneCode,
+            RemainingMilestones = remainingMilestones,
+            IsComplete = isComplete,
+            Consumed = consumed
+        }, ct);
+    }
+
+    /// <summary>
+    /// Publishes an ItemUseStepFailedEvent.
+    /// </summary>
+    private async Task PublishStepFailedEventAsync(
+        Guid instanceId,
+        Guid templateId,
+        string templateCode,
+        Guid userId,
+        string userType,
+        Guid contractInstanceId,
+        string milestoneCode,
+        string reason,
+        CancellationToken ct)
+    {
+        await _messageBus.TryPublishAsync("item.use-step-failed", new ItemUseStepFailedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            TemplateCode = templateCode,
+            UserId = userId,
+            UserType = userType,
+            ContractInstanceId = contractInstanceId,
+            MilestoneCode = milestoneCode,
+            Reason = reason
+        }, ct);
+    }
+
     /// <summary>
     /// Computes or retrieves the deterministic system party ID for item use contracts.
     /// Uses SHA-256 hash of game ID to generate a deterministic UUID v5.
@@ -1136,6 +1662,180 @@ public partial class ItemService : IItemService
         guidBytes[8] = (byte)((guidBytes[8] & 0x3F) | 0x80); // Variant 1
 
         return new Guid(guidBytes);
+    }
+
+    /// <summary>
+    /// Executes the CanUse validation contract if configured.
+    /// Returns (passed, failureReason).
+    /// </summary>
+    /// <remarks>
+    /// Uses milestone code from configuration (ITEM_CAN_USE_MILESTONE_CODE, default "validate").
+    /// Per IMPLEMENTATION TENETS: No hardcoded tunables.
+    /// </remarks>
+    private async Task<(bool Passed, string? FailureReason)> ExecuteCanUseValidationAsync(
+        Guid canUseTemplateId,
+        Guid userId,
+        string userType,
+        Guid instanceId,
+        Guid templateId,
+        object? context,
+        CancellationToken ct)
+    {
+        try
+        {
+            // Parse user entity type from string
+            if (!TryParseEntityType(userType, out var userEntityType))
+            {
+                return (false, $"Invalid user entity type: {userType}");
+            }
+
+            // Get system party for the validation contract
+            var template = await GetTemplateWithCacheAsync(templateId.ToString(), ct);
+            if (template is null)
+            {
+                return (false, "Template not found during validation");
+            }
+
+            var systemPartyId = GetOrComputeSystemPartyId(template.GameId);
+
+            // Create validation contract instance
+            var contractInstanceId = await CreateItemUseContractInstanceAsync(
+                canUseTemplateId,
+                userId,
+                userType,
+                systemPartyId,
+                instanceId,
+                templateId,
+                context,
+                ct);
+
+            if (!contractInstanceId.HasValue)
+            {
+                return (false, "Failed to create validation contract");
+            }
+
+            // Complete configured milestone (default: "validate")
+            var milestoneCode = _configuration.CanUseMilestoneCode;
+            var response = await _contractClient.CompleteMilestoneAsync(
+                new CompleteMilestoneRequest
+                {
+                    ContractId = contractInstanceId.Value,
+                    MilestoneCode = milestoneCode
+                }, ct);
+
+            if (response.Milestone.Status != MilestoneStatus.Completed)
+            {
+                return (false, $"Validation milestone failed: {milestoneCode}");
+            }
+
+            return (true, null);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "CanUse validation failed for {InstanceId}", instanceId);
+            return (false, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in CanUse validation for {InstanceId}", instanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "item", "ExecuteCanUseValidation", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/item/use",
+                details: null, stack: ex.StackTrace);
+            return (false, "Internal validation error");
+        }
+    }
+
+    /// <summary>
+    /// Executes the OnUseFailed handler contract if configured.
+    /// </summary>
+    /// <remarks>
+    /// Uses milestone code from configuration (ITEM_ON_USE_FAILED_MILESTONE_CODE, default "handle_failure").
+    /// Per IMPLEMENTATION TENETS: Log but don't propagate handler failures.
+    /// </remarks>
+    private async Task ExecuteOnUseFailedHandlerAsync(
+        Guid onUseFailedTemplateId,
+        Guid userId,
+        string userType,
+        Guid instanceId,
+        Guid templateId,
+        string failureReason,
+        object? context,
+        CancellationToken ct)
+    {
+        try
+        {
+            // Parse user entity type from string
+            if (!TryParseEntityType(userType, out _))
+            {
+                _logger.LogWarning(
+                    "Invalid user entity type {UserType} for OnUseFailed handler",
+                    userType);
+                return;
+            }
+
+            // Get system party for the handler contract
+            var template = await GetTemplateWithCacheAsync(templateId.ToString(), ct);
+            if (template is null)
+            {
+                _logger.LogWarning(
+                    "Template {TemplateId} not found for OnUseFailed handler",
+                    templateId);
+                return;
+            }
+
+            var systemPartyId = GetOrComputeSystemPartyId(template.GameId);
+
+            // Merge failure reason into context
+            var enrichedContext = new Dictionary<string, object?>
+            {
+                ["failureReason"] = failureReason
+            };
+            if (context is IDictionary<string, object?> contextDict)
+            {
+                foreach (var kvp in contextDict)
+                {
+                    enrichedContext[kvp.Key] = kvp.Value;
+                }
+            }
+
+            // Create failure handler contract instance
+            var contractInstanceId = await CreateItemUseContractInstanceAsync(
+                onUseFailedTemplateId,
+                userId,
+                userType,
+                systemPartyId,
+                instanceId,
+                templateId,
+                enrichedContext,
+                ct);
+
+            if (!contractInstanceId.HasValue)
+            {
+                _logger.LogWarning(
+                    "Failed to create OnUseFailed contract for {InstanceId}",
+                    instanceId);
+                return;
+            }
+
+            // Complete configured milestone (default: "handle_failure")
+            var milestoneCode = _configuration.OnUseFailedMilestoneCode;
+            await _contractClient.CompleteMilestoneAsync(
+                new CompleteMilestoneRequest
+                {
+                    ContractId = contractInstanceId.Value,
+                    MilestoneCode = milestoneCode
+                }, ct);
+        }
+        catch (Exception ex)
+        {
+            // Log but don't propagate - handler failures shouldn't break the main flow
+            _logger.LogError(ex, "OnUseFailed handler error for {InstanceId}", instanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "item", "ExecuteOnUseFailedHandler", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/item/use",
+                details: null, stack: ex.StackTrace);
+        }
     }
 
     /// <summary>
@@ -1972,6 +2672,10 @@ public partial class ItemService : IItemService
             Display = model.Display is not null ? BannouJson.Deserialize<object>(model.Display) : null,
             Metadata = model.Metadata is not null ? BannouJson.Deserialize<object>(model.Metadata) : null,
             UseBehaviorContractTemplateId = model.UseBehaviorContractTemplateId,
+            CanUseBehaviorContractTemplateId = model.CanUseBehaviorContractTemplateId,
+            OnUseFailedBehaviorContractTemplateId = model.OnUseFailedBehaviorContractTemplateId,
+            ItemUseBehavior = model.ItemUseBehavior,
+            CanUseBehavior = model.CanUseBehavior,
             IsActive = model.IsActive,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
@@ -2002,6 +2706,8 @@ public partial class ItemService : IItemService
             InstanceMetadata = model.InstanceMetadata is not null ? BannouJson.Deserialize<object>(model.InstanceMetadata) : null,
             OriginType = model.OriginType,
             OriginId = model.OriginId,
+            ContractInstanceId = model.ContractInstanceId,
+            ContractBindingType = model.ContractBindingType,
             CreatedAt = model.CreatedAt,
             ModifiedAt = model.ModifiedAt
         };
@@ -2060,6 +2766,28 @@ internal class ItemTemplateModel
     /// When set, the item can be "used" via /item/use endpoint.
     /// </summary>
     public Guid? UseBehaviorContractTemplateId { get; set; }
+
+    /// <summary>
+    /// Contract template for pre-use validation.
+    /// When set, /item/use first executes this contract's "validate" milestone.
+    /// </summary>
+    public Guid? CanUseBehaviorContractTemplateId { get; set; }
+
+    /// <summary>
+    /// Contract template executed when the main use behavior fails.
+    /// Enables cleanup, partial rollback, or consequence application.
+    /// </summary>
+    public Guid? OnUseFailedBehaviorContractTemplateId { get; set; }
+
+    /// <summary>
+    /// Controls item consumption on use. Defaults to destroy_on_success.
+    /// </summary>
+    public ItemUseBehavior ItemUseBehavior { get; set; } = ItemUseBehavior.DestroyOnSuccess;
+
+    /// <summary>
+    /// Controls CanUse validation behavior. Defaults to block.
+    /// </summary>
+    public CanUseBehavior CanUseBehavior { get; set; } = CanUseBehavior.Block;
 }
 
 /// <summary>
@@ -2084,6 +2812,20 @@ internal class ItemInstanceModel
     public string? InstanceMetadata { get; set; }
     public ItemOriginType OriginType { get; set; }
     public Guid? OriginId { get; set; }
+
+    /// <summary>
+    /// Bound contract instance ID for persistent item-contract bindings
+    /// or active multi-step use sessions.
+    /// </summary>
+    public Guid? ContractInstanceId { get; set; }
+
+    /// <summary>
+    /// Type of contract binding. 'Session' bindings are managed by Item service
+    /// for multi-step use. 'Lifecycle' bindings are managed by external orchestrators
+    /// (lib-status, lib-license) and should NOT be modified by Item service.
+    /// </summary>
+    public ContractBindingType ContractBindingType { get; set; } = ContractBindingType.None;
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? ModifiedAt { get; set; }
 }

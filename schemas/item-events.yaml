@@ -58,6 +58,14 @@ info:
       event: ItemUseFailedEvent
       description: Published when item use attempts fail (batched with deduplication by templateId+userId)
 
+    # Multi-step use events
+    - topic: item.use-step-completed
+      event: ItemUseStepCompletedEvent
+      description: Published when a multi-step item use milestone is completed
+    - topic: item.use-step-failed
+      event: ItemUseStepFailedEvent
+      description: Published when a multi-step item use milestone fails
+
 # Lifecycle events auto-generated from this definition
 x-lifecycle:
   ItemTemplate:
@@ -553,3 +561,123 @@ components:
         reason:
           type: string
           description: Human-readable reason why the item use failed
+
+    # =========================================================================
+    # Multi-Step Item Use Events
+    # =========================================================================
+
+    ItemUseStepCompletedEvent:
+      type: object
+      description: Published when a multi-step item use milestone is completed
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - templateCode
+      - userId
+      - userType
+      - contractInstanceId
+      - milestoneCode
+      - isComplete
+      - consumed
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        templateCode:
+          type: string
+          description: Item template code for debugging
+        userId:
+          type: string
+          format: uuid
+          description: User who completed the step
+        userType:
+          type: string
+          description: Type of user entity
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance tracking this use session
+        milestoneCode:
+          type: string
+          description: The milestone that was completed
+        remainingMilestones:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Milestones still to be completed
+        isComplete:
+          type: boolean
+          description: Whether all required milestones are complete
+        consumed:
+          type: boolean
+          description: Whether item was consumed
+
+    ItemUseStepFailedEvent:
+      type: object
+      description: Published when a multi-step item use milestone fails
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - templateCode
+      - userId
+      - userType
+      - contractInstanceId
+      - milestoneCode
+      - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        templateCode:
+          type: string
+          description: Item template code for debugging
+        userId:
+          type: string
+          format: uuid
+          description: User who attempted the step
+        userType:
+          type: string
+          description: Type of user entity
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance tracking this use session
+        milestoneCode:
+          type: string
+          description: The milestone that failed
+        reason:
+          type: string
+          description: Human-readable reason for failure

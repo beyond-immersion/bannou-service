@@ -207,6 +207,22 @@ public interface IItemController : BeyondImmersion.BannouService.Controllers.IBa
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UseItemResponse>> UseItemAsync(UseItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Complete a specific step of a multi-step item use
+    /// </summary>
+
+    /// <remarks>
+    /// For items with multi-milestone use behaviors, completes a specific milestone.
+    /// <br/>The first call (without an existing contractInstanceId on the item) creates
+    /// <br/>the contract instance and stores it on the item; subsequent calls progress
+    /// <br/>the existing contract. Item is consumed only when all required milestones
+    /// <br/>are complete (per itemUseBehavior).
+    /// </remarks>
+
+    /// <returns>Step completed successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UseItemStepResponse>> UseItemStepAsync(UseItemStepRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// List items in a container
     /// </summary>
 
@@ -497,6 +513,26 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.UseItemAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Complete a specific step of a multi-step item use
+    /// </summary>
+    /// <remarks>
+    /// For items with multi-milestone use behaviors, completes a specific milestone.
+    /// <br/>The first call (without an existing contractInstanceId on the item) creates
+    /// <br/>the contract instance and stores it on the item; subsequent calls progress
+    /// <br/>the existing contract. Item is consumed only when all required milestones
+    /// <br/>are complete (per itemUseBehavior).
+    /// </remarks>
+    /// <returns>Step completed successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("item/use-step")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UseItemStepResponse>> UseItemStep([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UseItemStepRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UseItemStepAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
