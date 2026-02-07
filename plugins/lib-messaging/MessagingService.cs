@@ -129,7 +129,8 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             // Wrap payload in GenericMessageEnvelope - MassTransit requires concrete types
             var envelope = new Services.GenericMessageEnvelope(body.Topic, body.Payload);
 
-            // Normalize options - treat Guid.Empty as null for CorrelationId
+            // IMPLEMENTATION TENETS (T26 compliance): Normalize Guid.Empty sentinel to null
+            // Callers should pass null for "no correlation", but we normalize defensively
             var options = body.Options;
             if (options?.CorrelationId == Guid.Empty)
             {

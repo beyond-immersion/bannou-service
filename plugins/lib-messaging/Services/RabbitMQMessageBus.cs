@@ -39,7 +39,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// </remarks>
 public sealed class RabbitMQMessageBus : IMessageBus
 {
-    private readonly RabbitMQConnectionManager _connectionManager;
+    private readonly IChannelManager _channelManager;
     private readonly MessageRetryBuffer _retryBuffer;
     private readonly AppConfiguration _appConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
@@ -56,19 +56,19 @@ public sealed class RabbitMQMessageBus : IMessageBus
     /// <summary>
     /// Creates a new RabbitMQMessageBus instance.
     /// </summary>
-    /// <param name="connectionManager">RabbitMQ connection manager.</param>
+    /// <param name="channelManager">Channel manager for RabbitMQ operations.</param>
     /// <param name="retryBuffer">Buffer for retry on failed publishes.</param>
     /// <param name="appConfiguration">Application configuration.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public RabbitMQMessageBus(
-        RabbitMQConnectionManager connectionManager,
+        IChannelManager channelManager,
         MessageRetryBuffer retryBuffer,
         AppConfiguration appConfiguration,
         ILogger<RabbitMQMessageBus> logger,
         ITelemetryProvider telemetryProvider)
     {
-        _connectionManager = connectionManager;
+        _channelManager = channelManager;
         _retryBuffer = retryBuffer;
         _appConfiguration = appConfiguration;
         _logger = logger;
@@ -105,7 +105,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
 
         try
         {
-            var exchange = options?.Exchange ?? _connectionManager.DefaultExchange;
+            var exchange = options?.Exchange ?? _channelManager.DefaultExchange;
             var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
             var routingKey = options?.RoutingKey ?? topic;
 
@@ -133,7 +133,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
                 return false;
             }
 
-            var channel = await _connectionManager.GetChannelAsync(cancellationToken);
+            var channel = await _channelManager.GetChannelAsync(cancellationToken);
             try
             {
                 // Ensure exchange exists
@@ -239,7 +239,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
             }
             finally
             {
-                _connectionManager.ReturnChannel(channel);
+                await _channelManager.ReturnChannelAsync(channel);
             }
         }
         catch (Exception ex)
@@ -270,7 +270,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
         var tags = new[]
         {
             new KeyValuePair<string, object?>("topic", topic),
-            new KeyValuePair<string, object?>("exchange", _connectionManager.DefaultExchange),
+            new KeyValuePair<string, object?>("exchange", _channelManager.DefaultExchange),
             new KeyValuePair<string, object?>("success", success)
         };
 
@@ -293,11 +293,11 @@ public sealed class RabbitMQMessageBus : IMessageBus
         try
         {
 
-            var exchange = options?.Exchange ?? _connectionManager.DefaultExchange;
+            var exchange = options?.Exchange ?? _channelManager.DefaultExchange;
             var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
             var routingKey = options?.RoutingKey ?? topic;
 
-            var channel = await _connectionManager.GetChannelAsync(cancellationToken);
+            var channel = await _channelManager.GetChannelAsync(cancellationToken);
             try
             {
                 // Ensure exchange exists
@@ -366,7 +366,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
             }
             finally
             {
-                _connectionManager.ReturnChannel(channel);
+                await _channelManager.ReturnChannelAsync(channel);
             }
         }
         catch (Exception ex)

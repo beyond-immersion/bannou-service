@@ -20,8 +20,12 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// Follows the pattern established in lib-connect/ClientEvents/ClientEventRabbitMQSubscriber.cs
 /// for consistent RabbitMQ usage across the codebase.
 /// </para>
+/// <para>
+/// Implements <see cref="IChannelManager"/> to allow consumers (MessageRetryBuffer,
+/// RabbitMQMessageBus, RabbitMQMessageSubscriber) to be tested without real RabbitMQ.
+/// </para>
 /// </remarks>
-public sealed class RabbitMQConnectionManager : IAsyncDisposable
+public sealed class RabbitMQConnectionManager : IChannelManager
 {
     private readonly ILogger<RabbitMQConnectionManager> _logger;
     private readonly MessagingServiceConfiguration _configuration;

@@ -29,9 +29,10 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
     /// <summary>
     /// Unique identifier for this tap instance.
     /// Multiple taps from different sources will have different TapIds.
+    /// Null when not yet assigned (e.g., during deserialization before validation).
     /// </summary>
     [JsonPropertyName("tapId")]
-    public Guid TapId { get; set; } = Guid.Empty;
+    public Guid? TapId { get; set; }
 
     /// <summary>
     /// The source topic/routing key that was tapped.

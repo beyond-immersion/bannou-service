@@ -53,8 +53,10 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         // Configure direct RabbitMQ (no MassTransit)
         Logger?.LogInformation("Configuring direct RabbitMQ messaging (no MassTransit)");
 
-        // Register shared connection manager
+        // Register shared connection manager as both concrete type and interface
+        // The interface (IChannelManager) allows mocking in tests
         services.AddSingleton<RabbitMQConnectionManager>();
+        services.AddSingleton<IChannelManager>(sp => sp.GetRequiredService<RabbitMQConnectionManager>());
 
         // Register retry buffer for handling transient publish failures
         services.AddSingleton<MessageRetryBuffer>();
@@ -63,27 +65,27 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         // Use factory registration to pass optional telemetry provider
         services.AddSingleton<IMessageBus>(sp =>
         {
-            var connectionManager = sp.GetRequiredService<RabbitMQConnectionManager>();
+            var channelManager = sp.GetRequiredService<IChannelManager>();
             var retryBuffer = sp.GetRequiredService<MessageRetryBuffer>();
             var appConfig = sp.GetRequiredService<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
             var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
             // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
             var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
 
-            return new RabbitMQMessageBus(connectionManager, retryBuffer, appConfig, logger, telemetryProvider);
+            return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, logger, telemetryProvider);
         });
 
         // Use factory registration to pass telemetry provider and message bus
         // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
         services.AddSingleton<IMessageSubscriber>(sp =>
         {
-            var connectionManager = sp.GetRequiredService<RabbitMQConnectionManager>();
+            var channelManager = sp.GetRequiredService<IChannelManager>();
             var logger = sp.GetRequiredService<ILogger<RabbitMQMessageSubscriber>>();
             var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
             var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
             var messageBus = sp.GetRequiredService<IMessageBus>();
 
-            return new RabbitMQMessageSubscriber(connectionManager, logger, msgConfig, telemetryProvider, messageBus);
+            return new RabbitMQMessageSubscriber(channelManager, logger, msgConfig, telemetryProvider, messageBus);
         });
 
         // Register message tap for forwarding events between exchanges

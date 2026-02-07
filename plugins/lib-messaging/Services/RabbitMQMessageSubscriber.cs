@@ -28,7 +28,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// </remarks>
 public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDisposable
 {
-    private readonly RabbitMQConnectionManager _connectionManager;
+    private readonly IChannelManager _channelManager;
     private readonly ILogger<RabbitMQMessageSubscriber> _logger;
     private readonly MessagingServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -43,19 +43,19 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// <summary>
     /// Creates a new RabbitMQMessageSubscriber instance.
     /// </summary>
-    /// <param name="connectionManager">RabbitMQ connection manager.</param>
+    /// <param name="channelManager">Channel manager for RabbitMQ operations.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Messaging service configuration.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     /// <param name="messageBus">Message bus for publishing error events.</param>
     public RabbitMQMessageSubscriber(
-        RabbitMQConnectionManager connectionManager,
+        IChannelManager channelManager,
         ILogger<RabbitMQMessageSubscriber> logger,
         MessagingServiceConfiguration configuration,
         ITelemetryProvider telemetryProvider,
         IMessageBus messageBus)
     {
-        _connectionManager = connectionManager;
+        _channelManager = channelManager;
         _logger = logger;
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
@@ -88,12 +88,12 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
         var effectiveOptions = options ?? new SubscriptionOptions();
         var queueName = BuildQueueName(topic, effectiveOptions);
-        var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
+        var effectiveExchange = exchange ?? _channelManager.DefaultExchange;
 
         try
         {
             // Create a dedicated channel for this subscription
-            var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
+            var channel = await _channelManager.CreateConsumerChannelAsync(cancellationToken);
 
             // Declare the exchange (topic for service events - routes by routing key pattern)
             await channel.ExchangeDeclareAsync(
@@ -236,7 +236,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
         var subscriptionId = Guid.NewGuid();
         var queueName = $"{topic}.dynamic.{subscriptionId:N}";
-        var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
+        var effectiveExchange = exchange ?? _channelManager.DefaultExchange;
 
         // Map enum to RabbitMQ exchange type
         var rabbitExchangeType = exchangeType switch
@@ -249,7 +249,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         try
         {
             // Create a dedicated channel for this subscription
-            var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
+            var channel = await _channelManager.CreateConsumerChannelAsync(cancellationToken);
 
             // Declare the exchange with the specified type
             await channel.ExchangeDeclareAsync(
@@ -403,7 +403,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         var subscriptionId = Guid.NewGuid();
         // Use provided queue name for deterministic naming (reconnection support), or generate one
         var effectiveQueueName = queueName ?? $"{topic}.dynamic.{subscriptionId:N}";
-        var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
+        var effectiveExchange = exchange ?? _channelManager.DefaultExchange;
 
         // Map enum to RabbitMQ exchange type
         var rabbitExchangeType = exchangeType switch
@@ -435,7 +435,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         try
         {
             // Create a dedicated channel for this subscription
-            var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
+            var channel = await _channelManager.CreateConsumerChannelAsync(cancellationToken);
 
             // Declare the exchange with the specified type
             await channel.ExchangeDeclareAsync(

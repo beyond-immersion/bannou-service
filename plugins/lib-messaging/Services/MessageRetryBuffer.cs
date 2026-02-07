@@ -29,7 +29,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// </remarks>
 public sealed class MessageRetryBuffer : IAsyncDisposable
 {
-    private readonly RabbitMQConnectionManager _connectionManager;
+    private readonly IChannelManager _channelManager;
     private readonly MessagingServiceConfiguration _configuration;
     private readonly ILogger<MessageRetryBuffer> _logger;
     private readonly IProcessTerminator _processTerminator;
@@ -46,17 +46,17 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
     /// <summary>
     /// Creates a new MessageRetryBuffer.
     /// </summary>
-    /// <param name="connectionManager">RabbitMQ connection manager.</param>
+    /// <param name="channelManager">Channel manager for RabbitMQ operations.</param>
     /// <param name="configuration">Messaging service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="processTerminator">Process terminator for crash-fast behavior (optional, defaults to Environment.FailFast).</param>
     public MessageRetryBuffer(
-        RabbitMQConnectionManager connectionManager,
+        IChannelManager channelManager,
         MessagingServiceConfiguration configuration,
         ILogger<MessageRetryBuffer> logger,
         IProcessTerminator? processTerminator = null)
     {
-        _connectionManager = connectionManager;
+        _channelManager = channelManager;
         _configuration = configuration;
         _logger = logger;
         _processTerminator = processTerminator ?? new DefaultProcessTerminator();
@@ -302,7 +302,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
         IChannel? channel = null;
         try
         {
-            channel = await _connectionManager.GetChannelAsync();
+            channel = await _channelManager.GetChannelAsync();
         }
         catch (Exception ex)
         {
@@ -355,7 +355,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
 
                 try
                 {
-                    var exchange = message.Options?.Exchange ?? _connectionManager.DefaultExchange;
+                    var exchange = message.Options?.Exchange ?? _channelManager.DefaultExchange;
                     var exchangeType = message.Options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
                     var routingKey = message.Options?.RoutingKey ?? message.Topic;
 
@@ -425,7 +425,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
         }
         finally
         {
-            _connectionManager.ReturnChannel(channel);
+            await _channelManager.ReturnChannelAsync(channel);
         }
     }
 
@@ -460,7 +460,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
                 Headers = new Dictionary<string, object?>
                 {
                     ["x-original-topic"] = message.Topic,
-                    ["x-original-exchange"] = message.Options?.Exchange ?? _connectionManager.DefaultExchange,
+                    ["x-original-exchange"] = message.Options?.Exchange ?? _channelManager.DefaultExchange,
                     ["x-retry-count"] = message.RetryCount,
                     ["x-queued-at"] = message.QueuedAt.ToUnixTimeMilliseconds(),
                     ["x-discarded-at"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
