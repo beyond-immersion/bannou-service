@@ -18,7 +18,7 @@ public partial class MeshService
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         eventConsumer.RegisterHandler<IMeshService, ServiceHeartbeatEvent>(
-            "bannou.service-heartbeats",
+            "bannou.service-heartbeat",
             async (svc, evt) => await ((MeshService)svc).HandleServiceHeartbeatAsync(evt));
 
         if (_configuration.EnableServiceMappingSync)
@@ -96,7 +96,7 @@ public partial class MeshService
             _logger.LogError(ex, "Error processing service heartbeat from {AppId}", evt.AppId);
             await _messageBus.TryPublishErrorAsync(
                 "mesh", "HandleServiceHeartbeat", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "event:bannou.service-heartbeats",
+                dependency: "state", endpoint: "event:bannou.service-heartbeat",
                 details: new { AppId = evt.AppId }, stack: ex.StackTrace, cancellationToken: CancellationToken.None);
         }
     }

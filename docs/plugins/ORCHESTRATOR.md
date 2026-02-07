@@ -88,7 +88,7 @@ Central intelligence for Bannou environment management and service orchestration
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `bannou.service-heartbeats` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeat`: Writes heartbeat to state store, updates index |
+| `bannou.service-heartbeat` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeat`: Writes heartbeat to state store, updates index |
 
 ---
 
@@ -359,7 +359,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
              | ServiceHeartbeatEvent                               |
              v                     v                               |
     +--------+---------------------+--------+                      |
-    |      bannou.service-heartbeats        |                      |
+    |      bannou.service-heartbeat         |                      |
     +--------+------------------------------+                      |
              |                                                     |
     +--------v---------+                                           |

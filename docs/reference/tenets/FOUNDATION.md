@@ -319,9 +319,9 @@ EventName:
 | `game-session.player-joined` | Game session event |
 | `character.realm.joined` | Hierarchical action |
 
-**Infrastructure Events**: Use `bannou-` prefix for system-level events:
+**Infrastructure Events**: Use `bannou.` prefix for system-level events:
 - `bannou.full-service-mappings` - Service routing updates
-- `bannou.service-heartbeats` - Health monitoring
+- `bannou.service-heartbeat` - Health monitoring
 
 ### Lifecycle Events (x-lifecycle) - NEVER MANUALLY CREATE
 

@@ -21,7 +21,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | lib-state (`IRedisOperations`) | Lua script execution for atomic circuit breaker state transitions |
 | lib-messaging (`IMessageBus`) | Publishing endpoint lifecycle events, circuit state change events, and error events |
 | lib-messaging (`IMessageSubscriber`) | Subscribing to `mesh.circuit.changed` for cross-instance circuit breaker sync |
-| lib-messaging (`IEventConsumer`) | Subscribing to `bannou.service-heartbeats` and `bannou.full-service-mappings` |
+| lib-messaging (`IEventConsumer`) | Subscribing to `bannou.service-heartbeat` and `bannou.full-service-mappings` |
 
 ---
 
@@ -68,7 +68,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `bannou.service-heartbeats` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeatAsync` - Updates existing endpoint metrics or auto-registers new endpoints |
+| `bannou.service-heartbeat` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeatAsync` - Updates existing endpoint metrics or auto-registers new endpoints |
 | `bannou.full-service-mappings` | `FullServiceMappingsEvent` | `HandleServiceMappingsAsync` - Atomically updates `IServiceAppMappingResolver` for all generated clients (configurable via `EnableServiceMappingSync`) |
 | `mesh.circuit.changed` | `MeshCircuitStateChangedEvent` | `HandleCircuitStateChanged` - Updates local circuit breaker cache from other instances |
 
@@ -137,7 +137,7 @@ Service lifetime is **Scoped** (per-request) for MeshService itself. Infrastruct
 
 ### Registration (3 endpoints)
 
-- **Register** (`/mesh/register`): Announces instance availability. Generates instance ID if not provided. Stores with configurable TTL. Publishes `mesh.endpoint.registered`. **Note**: `metadata` parameter is defined in schema but not stored.
+- **Register** (`/mesh/register`): Announces instance availability. Generates instance ID if not provided. Stores with configurable TTL. Publishes `mesh.endpoint.registered`.
 - **Deregister** (`/mesh/deregister`): Graceful shutdown removal. Looks up endpoint first (for app-id), removes from store, publishes `mesh.endpoint.deregistered` with reason=Graceful.
 - **Heartbeat** (`/mesh/heartbeat`): Refreshes TTL and updates metrics (status, load%, connections, issues). Issues are stored on the endpoint and visible in endpoint queries. Returns `NextHeartbeatSeconds` and `TtlSeconds` for client scheduling.
 
@@ -287,20 +287,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-- **2026-01-30**: Fixed `ListEndpointsRequest.StatusFilter` not being applied. Added LINQ filter in `ListEndpointsAsync` after fetching endpoints from state manager.
-- **2026-01-30**: Created [#161](https://github.com/beyond-immersion/bannou-service/issues/161) for `RegisterEndpointRequest.Metadata` design - needs decision on whether to implement dynamic endpoint introspection (parity with schema-first meta endpoints) or remove the unused field.
-- **2026-01-30**: Fixed `HeartbeatRequest.Issues` not being stored. Added `issues` field to `MeshEndpoint` schema, updated `IMeshStateManager.UpdateHeartbeatAsync` signature, and wired `body.Issues` through `HeartbeatAsync`. Health checks and event-based heartbeats preserve existing issues.
-- **2026-01-30**: Created [#162](https://github.com/beyond-immersion/bannou-service/issues/162) for `LocalMeshStateManager` enhancement - needs design decisions on scope (in-memory state tracking vs. configurable failure simulation) and priority of failure scenarios.
-- **2026-01-30**: Implemented health check deregistration. `MeshHealthCheckService` now tracks consecutive failures per endpoint via `ConcurrentDictionary`, deregisters after `HealthCheckFailureThreshold` (default 3) failures, and publishes `MeshEndpointDeregisteredEvent` with `HealthCheckFailed` reason. Added new config property `MESH_HEALTH_CHECK_FAILURE_THRESHOLD`.
-- **2026-01-30**: Implemented weighted round-robin load balancing. Added `WeightedRoundRobin` to `LoadBalancerAlgorithm` enum in `mesh-api.yaml`, updated configuration to reference the API enum via `$ref`, and implemented `SelectWeightedRoundRobin` method using nginx-style smooth weighted round-robin algorithm. Static `_weightedRoundRobinCurrentWeights` dictionary tracks current weights per endpoint.
-- **2026-02-01**: Created [#219](https://github.com/beyond-immersion/bannou-service/issues/219) for distributed circuit breaker design - needs decisions on performance tradeoffs (Redis latency per invocation), atomicity mechanism (Lua scripts vs distributed locks vs optimistic concurrency), configuration model (opt-in vs automatic), and whether endpoint cache also needs distribution.
-- **2026-02-01**: Implemented [#219](https://github.com/beyond-immersion/bannou-service/issues/219) distributed circuit breaker. Uses event-backed local cache pattern: Redis stores authoritative state via atomic Lua scripts, local `ConcurrentDictionary` cache for 0ms hot path reads, `mesh.circuit.changed` events for cross-instance sync. No new configuration - always-on when `CircuitBreakerEnabled=true`. Gracefully degrades to local-only when Redis unavailable. Also fixed `EndpointCache` to use `ConcurrentDictionary`.
-- **2026-02-07**: Closed [#219](https://github.com/beyond-immersion/bannou-service/issues/219) - distributed circuit breaker implementation verified complete.
-- **2026-02-07**: Closed [#161](https://github.com/beyond-immersion/bannou-service/issues/161) - removed `metadata` field from `RegisterEndpointRequest` schema. Schema-first meta endpoints via Connect service cover dynamic introspection needs.
-- **2026-02-07**: Added validation constraints (minimum/maximum) to all numeric fields in mesh-api.yaml and mesh-configuration.yaml.
-- **2026-02-07**: Fixed event topic naming inconsistency: renamed `bannou.service-heartbeats` to `bannou.service-heartbeat` (singular) for consistency with event name.
-- **2026-02-07**: Added `EndpointCacheMaxSize` and `LoadBalancingStateMaxAppIds` configuration properties with LRU eviction to prevent unbounded memory growth.
-- **2026-02-07**: Fixed round-robin race condition in MeshService by using `RoundRobinCounter` wrapper class with `Interlocked.Increment`.
-- **2026-02-07**: Added clarifying XML documentation to `DistributedCircuitBreaker` explaining the state store usage pattern (key prefix only, Lua scripts via IRedisOperations for atomicity).
-- **2026-02-07**: Created [#322](https://github.com/beyond-immersion/bannou-service/issues/322) as master issue for lib-mesh production readiness fixes.
+- **2026-02-07**: Closed [#161](https://github.com/beyond-immersion/bannou-service/issues/161) - removed `metadata` field from `RegisterEndpointRequest` schema.
+- **2026-02-07**: Closed [#219](https://github.com/beyond-immersion/bannou-service/issues/219) - distributed circuit breaker implementation complete.
 - **2026-02-07**: Created [#323](https://github.com/beyond-immersion/bannou-service/issues/323) for future degradation events (tied to Orchestrator response).
+- **2026-02-07**: Closed [#322](https://github.com/beyond-immersion/bannou-service/issues/322) - all production readiness items complete, including event topic fix (`bannou.service-heartbeat`).
