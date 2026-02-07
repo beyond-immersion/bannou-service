@@ -450,7 +450,8 @@ public class TappedMessageEnvelopeTests
         var envelope = new TappedMessageEnvelope();
 
         // Assert
-        Assert.Equal(Guid.Empty, envelope.TapId);
+        // TapId is nullable (T26 - no sentinel values), so default is null, not Guid.Empty
+        Assert.Null(envelope.TapId);
         Assert.Equal(string.Empty, envelope.SourceTopic);
         Assert.Equal(string.Empty, envelope.SourceExchange);
         Assert.Equal(string.Empty, envelope.DestinationExchange);

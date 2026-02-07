@@ -2,6 +2,7 @@
 
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using System.Reflection;
 
@@ -291,11 +292,17 @@ public class TenetComplianceTests
     [Fact]
     public void IMessageBus_PublishAsync_ReturnsTask()
     {
-        // Verify the interface method returns Task for async patterns
-        var method = typeof(IMessageBus).GetMethod("PublishAsync");
-        Assert.NotNull(method);
-        Assert.True(typeof(Task).IsAssignableFrom(method.ReturnType),
-            "IMessageBus.PublishAsync must return Task for async/await support.");
+        // Verify the interface methods return Task for async patterns
+        var methods = typeof(IMessageBus).GetMethods()
+            .Where(m => m.Name == "PublishAsync");
+
+        Assert.True(methods.Any(), "IMessageBus should have PublishAsync method(s).");
+
+        foreach (var method in methods)
+        {
+            Assert.True(typeof(Task).IsAssignableFrom(method.ReturnType),
+                "IMessageBus.PublishAsync must return Task for async/await support.");
+        }
     }
 
     [Fact]
@@ -388,28 +395,28 @@ public class TenetComplianceTests
     #region Null Reference Type Compliance Tests
 
     [Fact]
-    public void PublishOptions_HasNullableAnnotations()
+    public void PublishOptions_HasCorrectNullableAnnotations()
     {
         // Verify nullable reference types are properly annotated
         var type = typeof(PublishOptions);
         var properties = type.GetProperties();
 
-        // Exchange and RoutingKey should be nullable (optional overrides)
+        // Exchange has a default value (non-nullable)
         var exchangeProp = properties.FirstOrDefault(p => p.Name == "Exchange");
+        // RoutingKey is nullable (optional)
         var routingKeyProp = properties.FirstOrDefault(p => p.Name == "RoutingKey");
 
         Assert.NotNull(exchangeProp);
         Assert.NotNull(routingKeyProp);
 
-        // Check that nullable types compile correctly
-        // (the fact that this code compiles with #nullable enable is the real test)
+        // Check that types are as expected
         var testOptions = new PublishOptions
         {
-            Exchange = null,
-            RoutingKey = null
+            RoutingKey = null  // RoutingKey is nullable
         };
 
-        Assert.Null(testOptions.Exchange);
+        // Exchange has a default value, not null
+        Assert.NotNull(testOptions.Exchange);
         Assert.Null(testOptions.RoutingKey);
     }
 
