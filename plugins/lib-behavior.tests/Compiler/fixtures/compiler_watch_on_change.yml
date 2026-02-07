@@ -1,5 +1,8 @@
 # Test fixture for watch action with on_change callback
-model_id: test_watch_callback
+version: "2.0"
+metadata:
+  id: test_watch_callback
+
 flows:
   main:
     actions:
@@ -14,4 +17,4 @@ flows:
 
   handle_target_changed:
     actions:
-      - log: "Target changed!"
+      - log: { message: "Target changed!" }

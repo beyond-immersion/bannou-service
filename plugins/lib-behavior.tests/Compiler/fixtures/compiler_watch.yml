@@ -1,5 +1,8 @@
 # Test fixture for watch action parsing
-model_id: test_watch
+version: "2.0"
+metadata:
+  id: test_watch
+
 flows:
   main:
     actions:

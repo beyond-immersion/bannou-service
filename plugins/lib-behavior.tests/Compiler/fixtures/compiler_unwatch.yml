@@ -1,5 +1,8 @@
 # Test fixture for unwatch action parsing
-model_id: test_unwatch
+version: "2.0"
+metadata:
+  id: test_unwatch
+
 flows:
   main:
     actions:

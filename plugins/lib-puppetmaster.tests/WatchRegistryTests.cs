@@ -17,33 +17,31 @@ public class WatchRegistryTests
     #region AddWatch Tests
 
     [Fact]
-    public void AddWatch_SingleWatch_ReturnsTrue()
+    public void AddWatch_SingleWatch_IncrementsCount()
     {
         // Arrange
         var actorId = Guid.NewGuid();
         var resourceId = Guid.NewGuid();
 
         // Act
-        var result = _registry.AddWatch(actorId, "character", resourceId, null, null);
+        _registry.AddWatch(actorId, "character", resourceId, null, null);
 
         // Assert
-        Assert.True(result);
         Assert.Equal(1, _registry.TotalWatchCount);
     }
 
     [Fact]
-    public void AddWatch_DuplicateWatch_ReturnsFalse()
+    public void AddWatch_DuplicateWatch_OverwritesEntry()
     {
         // Arrange
         var actorId = Guid.NewGuid();
         var resourceId = Guid.NewGuid();
         _registry.AddWatch(actorId, "character", resourceId, null, null);
 
-        // Act
-        var result = _registry.AddWatch(actorId, "character", resourceId, null, null);
+        // Act - add same watch again (should overwrite, not add)
+        _registry.AddWatch(actorId, "character", resourceId, null, null);
 
-        // Assert
-        Assert.False(result);
+        // Assert - still only 1 watch
         Assert.Equal(1, _registry.TotalWatchCount);
     }
 
