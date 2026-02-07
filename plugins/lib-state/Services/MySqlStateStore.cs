@@ -481,25 +481,16 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         if (pageSize <= 0) throw new ArgumentOutOfRangeException(nameof(pageSize));
 
         // IMPLEMENTATION TENETS: Try SQL-level filtering when possible
-        // Note: orderBy expression translation is not yet supported - use JsonQueryPagedAsync for full SQL
-        if (predicate == null || TryConvertExpressionToConditions(predicate, out var conditions))
+        // Check if we can translate both predicate and orderBy to SQL
+        IReadOnlyList<QueryCondition> conditions = Array.Empty<QueryCondition>();
+        var canTranslatePredicate = predicate == null || TryConvertExpressionToConditions(predicate, out conditions);
+
+        string? sortPath = null;
+        var canTranslateOrderBy = orderBy == null ||
+            TryGetMemberPath(orderBy.Body, orderBy.Parameters[0], out sortPath);
+
+        if (canTranslatePredicate && canTranslateOrderBy)
         {
-            conditions ??= Array.Empty<QueryCondition>();
-
-            // Try to extract sort path from orderBy expression
-            string? sortPath = null;
-            if (orderBy != null && TryGetMemberPath(orderBy.Body, orderBy.Parameters[0], out var path))
-            {
-                sortPath = path;
-            }
-            else if (orderBy != null)
-            {
-                // Can't translate orderBy - fall back to in-memory
-                _logger.LogDebug(
-                    "QueryPagedAsync orderBy expression could not be translated - using in-memory fallback");
-                goto InMemoryFallback;
-            }
-
             _logger.LogDebug(
                 "QueryPagedAsync using SQL-level filtering with {ConditionCount} conditions for store '{Store}'",
                 conditions.Count, _storeName);
@@ -576,7 +567,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             return new PagedResult<TValue>(items, (int)totalCount, page, pageSize);
         }
 
-        InMemoryFallback:
         // Fallback to in-memory filtering
         _logger.LogWarning(
             "QueryPagedAsync falling back to in-memory filtering for store '{Store}' - " +

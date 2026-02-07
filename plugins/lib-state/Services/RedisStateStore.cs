@@ -47,17 +47,31 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
     /// <inheritdoc/>
     public async Task<TValue?> GetAsync(string key, CancellationToken cancellationToken = default)
     {
-
         var fullKey = GetFullKey(key);
-        var value = await _database.StringGetAsync(fullKey);
 
-        if (value.IsNullOrEmpty)
+        try
         {
-            _logger.LogDebug("Key '{Key}' not found in store '{Store}'", key, _keyPrefix);
-            return null;
-        }
+            var value = await _database.StringGetAsync(fullKey);
 
-        return BannouJson.Deserialize<TValue>(value!);
+            if (value.IsNullOrEmpty)
+            {
+                _logger.LogDebug("Key '{Key}' not found in store '{Store}'", key, _keyPrefix);
+                return null;
+            }
+
+            return BannouJson.Deserialize<TValue>(value!);
+        }
+        catch (RedisConnectionException ex)
+        {
+            // IMPLEMENTATION TENETS: Log Redis connection failures as errors for monitoring
+            _logger.LogError(ex, "Redis connection failed reading key '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout reading key '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -65,26 +79,38 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
 
-        // Pipeline both gets for efficiency
-        var valueTask = _database.StringGetAsync(fullKey);
-        var versionTask = _database.HashGetAsync(metaKey, "version");
-
-        await Task.WhenAll(valueTask, versionTask);
-
-        var value = await valueTask;
-        var version = await versionTask;
-
-        if (value.IsNullOrEmpty)
+        try
         {
-            return (null, null);
-        }
+            // Pipeline both gets for efficiency
+            var valueTask = _database.StringGetAsync(fullKey);
+            var versionTask = _database.HashGetAsync(metaKey, "version");
 
-        var etag = version.HasValue ? version.ToString() : "0";
-        return (BannouJson.Deserialize<TValue>(value!), etag);
+            await Task.WhenAll(valueTask, versionTask);
+
+            var value = await valueTask;
+            var version = await versionTask;
+
+            if (value.IsNullOrEmpty)
+            {
+                return (null, null);
+            }
+
+            var etag = version.HasValue ? version.ToString() : "0";
+            return (BannouJson.Deserialize<TValue>(value!), etag);
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed reading key '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout reading key '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -233,26 +259,51 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
     /// <inheritdoc/>
     public async Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
     {
-
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
 
-        // Delete both value and metadata
-        var valueDeleted = await _database.KeyDeleteAsync(fullKey);
-        await _database.KeyDeleteAsync(metaKey);
+        try
+        {
+            // Delete both value and metadata
+            var valueDeleted = await _database.KeyDeleteAsync(fullKey);
+            await _database.KeyDeleteAsync(metaKey);
 
-        _logger.LogDebug("Deleted key '{Key}' from store '{Store}' (existed: {Existed})",
-            key, _keyPrefix, valueDeleted);
+            _logger.LogDebug("Deleted key '{Key}' from store '{Store}' (existed: {Existed})",
+                key, _keyPrefix, valueDeleted);
 
-        return valueDeleted;
+            return valueDeleted;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed deleting key '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout deleting key '{Key}' from store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
-
         var fullKey = GetFullKey(key);
-        return await _database.KeyExistsAsync(fullKey);
+
+        try
+        {
+            return await _database.KeyExistsAsync(fullKey);
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed checking existence of key '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
+        catch (RedisTimeoutException ex)
+        {
+            _logger.LogError(ex, "Redis timeout checking existence of key '{Key}' in store '{Store}'", key, _keyPrefix);
+            throw;
+        }
     }
 
     /// <inheritdoc/>
