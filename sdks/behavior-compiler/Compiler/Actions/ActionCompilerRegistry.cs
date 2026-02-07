@@ -54,6 +54,10 @@ public sealed class ActionCompilerRegistry
         // Continuation points
         Register(new ContinuationPointCompiler(_expressionCompiler));
 
+        // Watch/unwatch (runtime-handled by Puppetmaster)
+        Register(new WatchCompiler(_expressionCompiler));
+        Register(new UnwatchCompiler());
+
         // Domain actions (catch-all)
         Register(new DomainActionCompiler(_expressionCompiler));
     }

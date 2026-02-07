@@ -6,11 +6,9 @@ metadata:
 flows:
   main:
     actions:
-      - set:
-          target_id: 123e4567-e89b-12d3-a456-426614174000
       - watch:
           resource_type: character
-          resource_id: ${target_id}
+          resource_id: ${self.character_id}
           sources:
             - character-personality
             - character-history

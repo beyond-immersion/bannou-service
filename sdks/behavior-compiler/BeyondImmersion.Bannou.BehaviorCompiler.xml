@@ -839,6 +839,32 @@
         <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.ClearCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.ClearAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
             <inheritdoc/>
         </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.WatchCompiler">
+            <summary>
+            Compiles watch actions.
+            Watch actions subscribe to resource change notifications via Puppetmaster.
+            In bytecode, these emit a trace marker; actual subscription is handled at runtime.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.WatchCompiler.#ctor(BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions.StackExpressionCompiler)">
+            <summary>Creates a new watch compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.WatchCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.WatchAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.UnwatchCompiler">
+            <summary>
+            Compiles unwatch actions.
+            Unwatch actions unsubscribe from resource change notifications via Puppetmaster.
+            In bytecode, these emit a trace marker; actual unsubscription is handled at runtime.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.UnwatchCompiler.#ctor">
+            <summary>Creates a new unwatch compiler.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Actions.UnwatchCompiler.CompileTyped(BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions.UnwatchAction,BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationContext)">
+            <inheritdoc/>
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Compiler.BehaviorCompiler">
             <summary>
             Compiles ABML documents to behavior model bytecode.
