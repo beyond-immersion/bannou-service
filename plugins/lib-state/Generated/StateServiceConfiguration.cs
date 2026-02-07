@@ -93,10 +93,7 @@ public class StateServiceConfiguration : IServiceConfiguration
     public int MinRetryDelayMs { get; set; } = 1000;
 
     /// <summary>
-    /// Maximum entries to load when LINQ expression cannot be translated to SQL and falls back
-    /// to in-memory filtering. Queries exceeding this limit will throw InvalidOperationException.
-    /// Use JsonQueryAsync with explicit conditions for large datasets.
-    /// This prevents OOM errors when queries unexpectedly fall back to loading all data.
+    /// Maximum entries for in-memory LINQ fallback before throwing InvalidOperationException. Use JsonQueryAsync for large datasets.
     /// Environment variable: STATE_INMEMORY_FALLBACK_LIMIT
     /// </summary>
     [ConfigRange(Minimum = 100, Maximum = 1000000)]

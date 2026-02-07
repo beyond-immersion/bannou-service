@@ -67,7 +67,7 @@ public partial class GetStateRequest
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
 }
@@ -121,7 +121,7 @@ public partial class SaveStateRequest
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -178,7 +178,7 @@ public partial class DeleteStateRequest
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
 }
@@ -509,7 +509,7 @@ public partial class BulkStateItem
     /// The key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -580,7 +580,7 @@ public partial class BulkSaveItem
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -623,7 +623,7 @@ public partial class BulkSaveResult
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>

@@ -62,11 +62,7 @@ x-service-configuration:
       type: integer
       minimum: 100
       maximum: 1000000
-      description: |
-        Maximum entries to load when LINQ expression cannot be translated to SQL and falls back
-        to in-memory filtering. Queries exceeding this limit will throw InvalidOperationException.
-        Use JsonQueryAsync with explicit conditions for large datasets.
-        This prevents OOM errors when queries unexpectedly fall back to loading all data.
+      description: Maximum entries for in-memory LINQ fallback before throwing InvalidOperationException. Use JsonQueryAsync for large datasets.
       env: STATE_INMEMORY_FALLBACK_LIMIT
       default: 10000
     # Note: DefaultConsistency was removed as dead config (IMPLEMENTATION TENETS T21).

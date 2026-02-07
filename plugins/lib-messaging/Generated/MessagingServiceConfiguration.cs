@@ -213,6 +213,26 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public double RetryBufferBackpressureThreshold { get; set; } = 0.8;
 
     /// <summary>
+    /// Enable batched publishing for high-throughput scenarios. When enabled, messages are queued and sent in batches to reduce broker overhead.
+    /// Environment variable: MESSAGING_ENABLE_PUBLISH_BATCHING
+    /// </summary>
+    public bool EnablePublishBatching { get; set; } = false;
+
+    /// <summary>
+    /// Maximum number of messages to batch before sending. Batch is flushed when this size is reached.
+    /// Environment variable: MESSAGING_PUBLISH_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 1000)]
+    public int PublishBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum delay in milliseconds before flushing a partial batch. Ensures low-throughput periods don't accumulate stale messages.
+    /// Environment variable: MESSAGING_PUBLISH_BATCH_TIMEOUT_MS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
+    public int PublishBatchTimeoutMs { get; set; } = 10;
+
+    /// <summary>
     /// Maximum retry attempts for HTTP callback delivery (network failures only)
     /// Environment variable: MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS
     /// </summary>

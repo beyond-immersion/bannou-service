@@ -11,6 +11,7 @@ using RabbitMQ.Client;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Channels;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -36,12 +37,17 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// When ITelemetryProvider is available, publish operations are instrumented with
 /// distributed tracing spans and metrics.
 /// </para>
+/// <para>
+/// Optional batching mode (EnablePublishBatching) queues messages and sends them in
+/// batches to reduce broker overhead for high-throughput scenarios.
+/// </para>
 /// </remarks>
-public sealed class RabbitMQMessageBus : IMessageBus
+public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
 {
     private readonly IChannelManager _channelManager;
     private readonly MessageRetryBuffer _retryBuffer;
     private readonly AppConfiguration _appConfiguration;
+    private readonly MessagingServiceConfiguration _messagingConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
 
@@ -53,24 +59,33 @@ public sealed class RabbitMQMessageBus : IMessageBus
     /// </summary>
     private const string SERVICE_ERROR_TOPIC = "service.error";
 
+    // Batching support
+    private readonly Channel<PendingPublish>? _batchChannel;
+    private readonly Task? _batchProcessorTask;
+    private readonly CancellationTokenSource? _batchProcessorCts;
+    private bool _disposed;
+
     /// <summary>
     /// Creates a new RabbitMQMessageBus instance.
     /// </summary>
     /// <param name="channelManager">Channel manager for RabbitMQ operations.</param>
     /// <param name="retryBuffer">Buffer for retry on failed publishes.</param>
     /// <param name="appConfiguration">Application configuration.</param>
+    /// <param name="messagingConfiguration">Messaging service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public RabbitMQMessageBus(
         IChannelManager channelManager,
         MessageRetryBuffer retryBuffer,
         AppConfiguration appConfiguration,
+        MessagingServiceConfiguration messagingConfiguration,
         ILogger<RabbitMQMessageBus> logger,
         ITelemetryProvider telemetryProvider)
     {
         _channelManager = channelManager;
         _retryBuffer = retryBuffer;
         _appConfiguration = appConfiguration;
+        _messagingConfiguration = messagingConfiguration;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
 
@@ -79,6 +94,23 @@ public sealed class RabbitMQMessageBus : IMessageBus
             _logger.LogDebug(
                 "RabbitMQMessageBus created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",
                 _telemetryProvider.TracingEnabled, _telemetryProvider.MetricsEnabled);
+        }
+
+        // Initialize batching if enabled
+        if (_messagingConfiguration.EnablePublishBatching)
+        {
+            _batchChannel = Channel.CreateUnbounded<PendingPublish>(new UnboundedChannelOptions
+            {
+                SingleReader = true,
+                SingleWriter = false
+            });
+            _batchProcessorCts = new CancellationTokenSource();
+            _batchProcessorTask = ProcessBatchesAsync(_batchProcessorCts.Token);
+
+            _logger.LogInformation(
+                "RabbitMQMessageBus batching enabled (batchSize: {BatchSize}, timeoutMs: {TimeoutMs})",
+                _messagingConfiguration.PublishBatchSize,
+                _messagingConfiguration.PublishBatchTimeoutMs);
         }
     }
 
