@@ -1843,9 +1843,8 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Equal("Item template has no use behavior defined", response.FailureReason);
+        // Per T8: Error responses return null, status code is sufficient
+        Assert.Null(response);
     }
 
     [Fact]
@@ -1895,6 +1894,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(template);
 
         // Simulate contract creation failure with ApiException
+        // Note: The helper method catches ApiException and returns null, so UseItem returns BadRequest
         _mockContractClient
             .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("Contract template not found", 404, "", null, null));
@@ -1902,11 +1902,10 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
-        // Assert
+        // Assert - Helper catches exception and returns null, causing BadRequest;
+        // per T8, error response is null
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Contains("Failed to create contract instance", response.FailureReason);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -1976,12 +1975,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
-        // Assert
+        // Assert - Per T8, error response is null, status code is sufficient
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Equal(contractInstanceId, response.ContractInstanceId);
-        Assert.Contains("behavior execution failed", response.FailureReason);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -2378,11 +2374,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
-        // Assert
+        // Assert - Per T8, error response is null, status code is sufficient
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Contains("disabled", response.FailureReason, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(response);
 
         // Verify no contract was created
         _mockContractClient.Verify(
@@ -2465,9 +2459,8 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Contains("validation", response.FailureReason, StringComparison.OrdinalIgnoreCase);
+        // Per T8: Error responses return null, status code is sufficient
+        Assert.Null(response);
     }
 
     [Fact]
@@ -2650,13 +2643,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
-        // Assert - Use failed but item was consumed
+        // Assert - Use failed but item was consumed (per T8, error response is null)
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.True(response.Consumed);  // Key assertion: consumed even on failure
+        Assert.Null(response);
 
-        // Verify deletion was called
+        // Verify deletion was called (key assertion: consumed even on failure with DestroyAlways)
         _mockInstanceStore.Verify(
             s => s.DeleteAsync(It.Is<string>(k => k.Contains(instanceId.ToString())), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -2757,12 +2748,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
-        // Assert - Use failed but handler was invoked
+        // Assert - Use failed but handler was invoked (per T8, error response is null)
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
 
-        // Verify OnUseFailed handler was called
+        // Verify OnUseFailed handler was called (key assertion)
         _mockContractClient.Verify(
             c => c.CreateContractInstanceAsync(
                 It.Is<CreateContractInstanceRequest>(r => r.TemplateId == failedHandlerTemplateId),
@@ -2850,11 +2840,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemStepAsync(request);
 
-        // Assert
+        // Assert - Per T8, error response is null, status code is sufficient
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Contains("no use behavior", response.FailureReason, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(response);
     }
 
     [Fact]

@@ -208,6 +208,9 @@ This plugin does not consume external events.
 | `UseMilestoneCode` | `ITEM_USE_MILESTONE_CODE` | `use` | Contract milestone code to complete on item use |
 | `SystemPartyId` | `ITEM_SYSTEM_PARTY_ID` | *(computed)* | System party ID for use contracts (null = derive from gameId) |
 | `SystemPartyType` | `ITEM_SYSTEM_PARTY_TYPE` | `system` | Entity type for system party in use contracts |
+| `CanUseMilestoneCode` | `ITEM_CAN_USE_MILESTONE_CODE` | `validate` | Milestone code for CanUse validation contracts |
+| `OnUseFailedMilestoneCode` | `ITEM_ON_USE_FAILED_MILESTONE_CODE` | `handle_failure` | Milestone code for OnUseFailed handler contracts |
+| `UseStepLockTimeoutSeconds` | `ITEM_USE_STEP_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout for UseItemStep operations |
 
 ---
 
@@ -216,7 +219,7 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<ItemService>` | Scoped | Structured logging |
-| `ItemServiceConfiguration` | Singleton | All 15 config properties |
+| `ItemServiceConfiguration` | Singleton | All 18 config properties |
 | `IStateStoreFactory` | Singleton | Access to 5 state stores (4 data + 1 lock) |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IDistributedLockProvider` | Scoped | Distributed locks for container change operations |
@@ -478,76 +481,6 @@ Contract Binding Patterns
 
 ---
 
-## Upcoming: Itemize Anything Extensions (#330)
-
-The following extensions are planned to complete the "Itemize Anything" pattern:
-
-### CanUse Validation (`canUseBehaviorContractTemplateId`)
-
-Pre-use validation via a separate contract. If validation fails, the item is not consumed:
-
-```yaml
-ItemTemplate:
-  code: "high_level_scroll"
-  canUseBehaviorContractTemplateId: "CHECK_LEVEL_10"  # Validates level ≥ 10
-  useBehaviorContractTemplateId: "TEACH_SPELL"        # Actual behavior
-```
-
-### OnUseFailed Handling (`onUseFailedBehaviorContractTemplateId`)
-
-Cleanup/consequence contract when main use fails:
-
-```yaml
-ItemTemplate:
-  code: "unstable_potion"
-  useBehaviorContractTemplateId: "BUFF_STRENGTH"
-  onUseFailedBehaviorContractTemplateId: "EXPLODE"  # Backfire on failure
-```
-
-### Multi-Step Use (`/item/use-step`)
-
-For items requiring multiple interactions (crafting recipes, ritual spells):
-
-```
-POST /item/use-step { instanceId, userId, milestoneCode: "gather" }
-    → Creates contract, stores contractInstanceId on item
-    → Returns { remainingMilestones: ["craft", "enchant"] }
-
-POST /item/use-step { instanceId, userId, milestoneCode: "craft" }
-    → Uses existing contract
-    → Returns { remainingMilestones: ["enchant"] }
-
-POST /item/use-step { instanceId, userId, milestoneCode: "enchant" }
-    → Completes contract, consumes item
-    → Returns { isComplete: true, consumed: true }
-```
-
-### Per-Template Use Behavior (`ItemUseBehavior` enum)
-
-Control consumption behavior per template:
-
-| Value | Behavior |
-|-------|----------|
-| `disabled` | Item cannot be used (400 on /item/use) |
-| `destroy_on_success` | Consume only on successful use (default) |
-| `destroy_always` | Consume regardless of success/failure |
-
-### Persistent Contract Bindings
-
-For lifecycle-managed items, the instance will store:
-
-```yaml
-ItemInstanceResponse:
-  contractInstanceId: "abc-123"        # Bound contract
-  contractBindingType: "lifecycle"     # vs "session" for multi-step
-```
-
-This enables orchestrators (lib-status, lib-license) to create items that are tied to ongoing contracts. The Item service stores the relationship; the orchestrator manages the lifecycle.
-
-**Not in this extension**: Event subscriptions for contract termination (Item reacting to `contract.terminated`). Orchestrators will handle cleanup explicitly.
-
----
-
 ## Known Quirks & Caveats
 
 ### Bugs
@@ -601,6 +534,8 @@ No bugs identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-02-07**: Itemize Anything Extensions ([#330](https://github.com/beyond-immersion/bannou-service/issues/330)). Added CanUse validation (`canUseBehaviorContractTemplateId`, `canUseBehavior`), OnUseFailed handler (`onUseFailedBehaviorContractTemplateId`), multi-step workflows (`/item/use-step` endpoint with session contract bindings), and per-template use behavior configuration (`ItemUseBehavior` enum: disabled, destroy_on_success, destroy_always). New events: `item.use-step-completed`, `item.use-step-failed`. Three new config properties: `CanUseMilestoneCode`, `OnUseFailedMilestoneCode`, `UseStepLockTimeoutSeconds`.
 
 - **2026-02-07**: Itemize Anything - Items as Executable Contracts ([#280](https://github.com/beyond-immersion/bannou-service/issues/280)). Added `useBehaviorContractTemplateId` to ItemTemplate for contract-delegated item behavior. New `/item/use` endpoint creates two-party contracts (user + deterministic system party), completes the "use" milestone triggering prebound APIs, and consumes items on success. Events are batched with deduplication window (configurable, default 60s) by templateId+userId key. Added IContractClient as L1 hard dependency per SERVICE-HIERARCHY. Five new config properties for use behavior tuning.
 

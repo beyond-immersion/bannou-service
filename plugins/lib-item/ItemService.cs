@@ -37,12 +37,24 @@ public partial class ItemService : IItemService
     /// Thread-safe dictionary for batching item use events by templateId+userId key.
     /// Key format: "{templateId}:{userId}". Values track uses within deduplication window.
     /// </summary>
+    /// <remarks>
+    /// Per IMPLEMENTATION TENETS (T9): This local cache is acceptable because it's purely for
+    /// event batching optimization, not authoritative state. Cross-instance inconsistency results
+    /// in multiple smaller batches being published (not data loss). Authoritative item state
+    /// lives in persistent stores via lib-state.
+    /// </remarks>
     private static readonly ConcurrentDictionary<string, ItemUseBatchState> _useBatches = new();
 
     /// <summary>
     /// Thread-safe dictionary for batching item use failure events by templateId+userId key.
     /// Key format: "{templateId}:{userId}". Values track failures within deduplication window.
     /// </summary>
+    /// <remarks>
+    /// Per IMPLEMENTATION TENETS (T9): This local cache is acceptable because it's purely for
+    /// event batching optimization, not authoritative state. Cross-instance inconsistency results
+    /// in multiple smaller batches being published (not data loss). Authoritative item state
+    /// lives in persistent stores via lib-state.
+    /// </remarks>
     private static readonly ConcurrentDictionary<string, ItemUseFailureBatchState> _failureBatches = new();
 
     // Template store key prefixes
@@ -992,14 +1004,7 @@ public partial class ItemService : IItemService
                 _logger.LogDebug(
                     "Item template {TemplateId} ({Code}) has use behavior disabled",
                     template.TemplateId, template.Code);
-                return (StatusCodes.BadRequest, new UseItemResponse
-                {
-                    Success = false,
-                    InstanceId = body.InstanceId,
-                    TemplateId = template.TemplateId,
-                    Consumed = false,
-                    FailureReason = "Item use is disabled for this template"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // 4. Validate template has behavior contract
@@ -1008,14 +1013,7 @@ public partial class ItemService : IItemService
                 _logger.LogDebug(
                     "Item template {TemplateId} ({Code}) has no behavior contract",
                     template.TemplateId, template.Code);
-                return (StatusCodes.BadRequest, new UseItemResponse
-                {
-                    Success = false,
-                    InstanceId = body.InstanceId,
-                    TemplateId = template.TemplateId,
-                    Consumed = false,
-                    FailureReason = "Item template has no use behavior defined"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // 5. Execute CanUse validation if configured
@@ -1038,14 +1036,7 @@ public partial class ItemService : IItemService
                         _logger.LogDebug(
                             "CanUse validation blocked for item {InstanceId}: {Reason}",
                             body.InstanceId, validationFailureReason);
-                        return (StatusCodes.BadRequest, new UseItemResponse
-                        {
-                            Success = false,
-                            InstanceId = body.InstanceId,
-                            TemplateId = template.TemplateId,
-                            Consumed = false,
-                            FailureReason = validationFailureReason ?? "CanUse validation failed"
-                        });
+                        return (StatusCodes.BadRequest, null);
                     }
                     else // warn_and_proceed
                     {
@@ -1083,14 +1074,7 @@ public partial class ItemService : IItemService
                     "Failed to create contract instance",
                     cancellationToken);
 
-                return (StatusCodes.BadRequest, new UseItemResponse
-                {
-                    Success = false,
-                    InstanceId = body.InstanceId,
-                    TemplateId = template.TemplateId,
-                    Consumed = false,
-                    FailureReason = "Failed to create contract instance"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // 7. Complete the "use" milestone (triggers prebound APIs)
@@ -1128,29 +1112,16 @@ public partial class ItemService : IItemService
                     cancellationToken);
 
                 // Check if item should be consumed on failure (DESTROY_ALWAYS)
-                var consumeOnFailure = template.ItemUseBehavior == ItemUseBehavior.DestroyAlways;
-                var failureConsumed = false;
-                double? failureRemainingQuantity = null;
-
-                if (consumeOnFailure)
+                if (template.ItemUseBehavior == ItemUseBehavior.DestroyAlways)
                 {
-                    (failureConsumed, failureRemainingQuantity) = await ConsumeItemAsync(
+                    await ConsumeItemAsync(
                         body.InstanceId,
                         instance,
                         template,
                         cancellationToken);
                 }
 
-                return (StatusCodes.BadRequest, new UseItemResponse
-                {
-                    Success = false,
-                    InstanceId = body.InstanceId,
-                    TemplateId = template.TemplateId,
-                    ContractInstanceId = contractInstanceId.Value,
-                    Consumed = failureConsumed,
-                    RemainingQuantity = failureRemainingQuantity,
-                    FailureReason = "Item use behavior execution failed"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // 8. Consume item on success (per itemUseBehavior: DESTROY_ON_SUCCESS or DESTROY_ALWAYS)
@@ -1189,8 +1160,8 @@ public partial class ItemService : IItemService
         }
         catch (ApiException ex)
         {
-            _logger.LogWarning(ex, "API error using item instance {InstanceId}", body.InstanceId);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning(ex, "API error using item instance {InstanceId}, status {StatusCode}", body.InstanceId, ex.StatusCode);
+            return ((StatusCodes)ex.StatusCode, null);
         }
         catch (Exception ex)
         {
@@ -1235,31 +1206,13 @@ public partial class ItemService : IItemService
             // 3. Check if item use is disabled
             if (template.ItemUseBehavior == ItemUseBehavior.Disabled)
             {
-                return (StatusCodes.BadRequest, new UseItemStepResponse
-                {
-                    Success = false,
-                    InstanceId = body.InstanceId,
-                    ContractInstanceId = Guid.Empty, // No contract created
-                    CompletedMilestone = body.MilestoneCode,
-                    IsComplete = false,
-                    Consumed = false,
-                    FailureReason = "Item use is disabled for this template"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // 4. Validate template has behavior contract
             if (!template.UseBehaviorContractTemplateId.HasValue)
             {
-                return (StatusCodes.BadRequest, new UseItemStepResponse
-                {
-                    Success = false,
-                    InstanceId = body.InstanceId,
-                    ContractInstanceId = Guid.Empty,
-                    CompletedMilestone = body.MilestoneCode,
-                    IsComplete = false,
-                    Consumed = false,
-                    FailureReason = "Item template has no use behavior defined"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // 5. Acquire distributed lock for this instance
@@ -1316,16 +1269,7 @@ public partial class ItemService : IItemService
                     {
                         if (template.CanUseBehavior == CanUseBehavior.Block)
                         {
-                            return (StatusCodes.BadRequest, new UseItemStepResponse
-                            {
-                                Success = false,
-                                InstanceId = body.InstanceId,
-                                ContractInstanceId = Guid.Empty,
-                                CompletedMilestone = body.MilestoneCode,
-                                IsComplete = false,
-                                Consumed = false,
-                                FailureReason = validationFailureReason ?? "CanUse validation failed"
-                            });
+                            return (StatusCodes.BadRequest, null);
                         }
                         else // warn_and_proceed
                         {
@@ -1350,16 +1294,7 @@ public partial class ItemService : IItemService
 
                 if (!newContractId.HasValue)
                 {
-                    return (StatusCodes.BadRequest, new UseItemStepResponse
-                    {
-                        Success = false,
-                        InstanceId = body.InstanceId,
-                        ContractInstanceId = Guid.Empty,
-                        CompletedMilestone = body.MilestoneCode,
-                        IsComplete = false,
-                        Consumed = false,
-                        FailureReason = "Failed to create contract instance"
-                    });
+                    return (StatusCodes.BadRequest, null);
                 }
 
                 contractInstanceId = newContractId.Value;
@@ -1437,16 +1372,7 @@ public partial class ItemService : IItemService
                     $"Milestone completion failed",
                     cancellationToken);
 
-                return (StatusCodes.BadRequest, new UseItemStepResponse
-                {
-                    Success = false,
-                    InstanceId = body.InstanceId,
-                    ContractInstanceId = contractInstanceId,
-                    CompletedMilestone = body.MilestoneCode,
-                    IsComplete = false,
-                    Consumed = false,
-                    FailureReason = $"Milestone {body.MilestoneCode} failed"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // 9. Query remaining milestones from contract
@@ -1532,8 +1458,8 @@ public partial class ItemService : IItemService
         }
         catch (ApiException ex)
         {
-            _logger.LogWarning(ex, "API error in UseItemStep for instance {InstanceId}", body.InstanceId);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning(ex, "API error in UseItemStep for instance {InstanceId}, status {StatusCode}", body.InstanceId, ex.StatusCode);
+            return ((StatusCodes)ex.StatusCode, null);
         }
         catch (Exception ex)
         {
