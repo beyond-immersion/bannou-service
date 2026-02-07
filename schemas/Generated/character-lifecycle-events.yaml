@@ -66,6 +66,11 @@ components:
           format: date-time
           nullable: true
           description: Timestamp when the character was last updated
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character
+        is_deletion: false
     CharacterUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -101,6 +106,11 @@ components:
           items:
             type: string
           description: List of field names that were modified
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character
+        is_deletion: false
     CharacterDeletedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -134,3 +144,8 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character
+        is_deletion: true

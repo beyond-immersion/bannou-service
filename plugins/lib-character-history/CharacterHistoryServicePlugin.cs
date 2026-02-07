@@ -127,62 +127,34 @@ public class CharacterHistoryServicePlugin : BaseBannouPlugin
 
         // Register resource template for ABML compile-time path validation.
         // This enables SemanticAnalyzer to validate expressions like ${candidate.history.hasBackstory}.
-        try
-        {
-            var templateRegistry = serviceProvider.GetService<IResourceTemplateRegistry>();
-            if (templateRegistry != null)
-            {
-                templateRegistry.Register(new CharacterHistoryTemplate());
-                Logger?.LogDebug("Registered character-history resource template with namespace 'history'");
-            }
-            else
-            {
-                Logger?.LogDebug("IResourceTemplateRegistry not available - resource template not registered");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogWarning(ex, "Failed to register character-history resource template");
-        }
+        // IResourceTemplateRegistry is L0 infrastructure - must be available (fail-fast per TENETS).
+        var templateRegistry = serviceProvider.GetRequiredService<IResourceTemplateRegistry>();
+        templateRegistry.Register(new CharacterHistoryTemplate());
+        Logger?.LogDebug("Registered character-history resource template with namespace 'history'");
 
         // Register cleanup callbacks with lib-resource for character reference tracking.
-        // This MUST happen in OnRunningAsync (not OnStartAsync) because OnRunningAsync runs
-        // AFTER all plugins have completed StartAsync, ensuring lib-resource is available.
-        // Registering during OnStartAsync would be unsafe because plugin load order isn't guaranteed.
-        try
-        {
-            using var scope = serviceProvider.CreateScope();
-            var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
-            if (resourceClient != null)
-            {
-                var success = await CharacterHistoryService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
-                if (success)
-                {
-                    Logger?.LogInformation("Registered character cleanup callbacks with lib-resource");
-                }
-                else
-                {
-                    Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
-                }
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
+        using var scope = serviceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
 
-                // Register compression callback (generated from x-compression-callback)
-                if (await CharacterHistoryCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
-                {
-                    Logger?.LogInformation("Registered character-history compression callback with lib-resource");
-                }
-                else
-                {
-                    Logger?.LogWarning("Failed to register character-history compression callback with lib-resource");
-                }
-            }
-            else
-            {
-                Logger?.LogDebug("IResourceClient not available - cleanup callbacks not registered (lib-resource may not be enabled)");
-            }
-        }
-        catch (Exception ex)
+        var success = await CharacterHistoryService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+        if (success)
         {
-            Logger?.LogWarning(ex, "Failed to register cleanup callbacks with lib-resource");
+            Logger?.LogInformation("Registered character cleanup callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
+        }
+
+        // Register compression callback (generated from x-compression-callback)
+        if (await CharacterHistoryCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
+        {
+            Logger?.LogInformation("Registered character-history compression callback with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register character-history compression callback with lib-resource");
         }
     }
 

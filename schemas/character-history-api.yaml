@@ -55,6 +55,7 @@ info:
     compressEndpoint: /character-history/get-compress-data
     compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
     priority: 20
+    templateNamespace: history
     description: Historical event participations and backstory elements
     decompressEndpoint: /character-history/restore-from-archive
     decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'

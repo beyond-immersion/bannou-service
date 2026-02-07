@@ -42,6 +42,10 @@ x-lifecycle:
       metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional custom key-value data associated with the realm" }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the realm was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the realm was last updated" }
+    resource_mapping:
+      resource_type: realm
+      # resource_id_field defaults to realmId (primary key)
+      # source_type defaults to realm
 
 paths: {}  # Events don't have HTTP paths
 

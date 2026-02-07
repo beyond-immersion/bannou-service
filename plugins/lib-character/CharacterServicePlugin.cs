@@ -26,48 +26,22 @@ public class CharacterServicePlugin : StandardServicePlugin<ICharacterService>
 
         // Register resource template for ABML compile-time path validation.
         // This enables SemanticAnalyzer to validate expressions like ${candidate.character.name}.
-        try
-        {
-            var templateRegistry = ServiceProvider.GetService<IResourceTemplateRegistry>();
-            if (templateRegistry != null)
-            {
-                templateRegistry.Register(new CharacterBaseTemplate());
-                Logger?.LogDebug("Registered character resource template with namespace 'character'");
-            }
-            else
-            {
-                Logger?.LogDebug("IResourceTemplateRegistry not available - resource template not registered");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogWarning(ex, "Failed to register character resource template");
-        }
+        // IResourceTemplateRegistry is L0 infrastructure - must be available (fail-fast per TENETS).
+        var templateRegistry = ServiceProvider.GetRequiredService<IResourceTemplateRegistry>();
+        templateRegistry.Register(new CharacterBaseTemplate());
+        Logger?.LogDebug("Registered character resource template with namespace 'character'");
 
-        // Register compression callback with lib-resource (generated from x-compression-callback)
-        try
+        // Register compression callback with lib-resource (generated from x-compression-callback).
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
+        using var scope = ServiceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+        if (await CharacterCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
         {
-            using var scope = ServiceProvider.CreateScope();
-            var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
-            if (resourceClient != null)
-            {
-                if (await CharacterCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
-                {
-                    Logger?.LogInformation("Registered character compression callback with lib-resource");
-                }
-                else
-                {
-                    Logger?.LogWarning("Failed to register character compression callback with lib-resource");
-                }
-            }
-            else
-            {
-                Logger?.LogDebug("IResourceClient not available - compression callback not registered");
-            }
+            Logger?.LogInformation("Registered character compression callback with lib-resource");
         }
-        catch (Exception ex)
+        else
         {
-            Logger?.LogWarning(ex, "Failed to register compression callback with lib-resource");
+            Logger?.LogWarning("Failed to register character compression callback with lib-resource");
         }
     }
 }

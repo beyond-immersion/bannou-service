@@ -123,6 +123,10 @@ x-lifecycle:
       name: { type: string, required: true }
       createdAt: { type: string, format: date-time, required: true }
     sensitive: [passwordHash, secretKey]  # Fields excluded from events
+    resource_mapping:                      # Optional: enables Puppetmaster watch subscriptions
+      resource_type: entity                # Defaults to entity name in kebab-case
+      resource_id_field: entityId          # Defaults to primary key field
+      source_type: entity                  # Defaults to entity name in kebab-case
 ```
 
 **Generated output** (`schemas/Generated/{service}-lifecycle-events.yaml`):
@@ -130,7 +134,59 @@ x-lifecycle:
 - `EntityNameUpdatedEvent` - Full entity data + `changedFields` array
 - `EntityNameDeletedEvent` - Entity ID + `deletedReason`
 
+If `resource_mapping` is specified, each generated event includes `x-resource-mapping` extension for Puppetmaster watch subscriptions (see below).
+
 **NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** - use `x-lifecycle` instead.
+
+### x-resource-mapping (Resource Event Mapping)
+
+Defined on **event schema definitions** in `{service}-events.yaml`, declares how the event relates to a watchable resource. This enables Puppetmaster's watch system to auto-discover event-to-resource mappings.
+
+**For lifecycle events**: Use `resource_mapping` in `x-lifecycle` (above) - the generator adds `x-resource-mapping` automatically.
+
+**For manually-defined events** (non-lifecycle):
+
+```yaml
+# In character-personality-events.yaml
+components:
+  schemas:
+    PersonalityUpdatedEvent:
+      type: object
+      x-resource-mapping:
+        resource_type: character             # Required: Type of resource this event affects
+        resource_id_field: characterId       # Required: JSON field containing resource ID
+        source_type: character-personality   # Required: Source type identifier for filtering
+        is_deletion: false                   # Optional: True if deletion event (inferred if omitted)
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        # ...
+```
+
+**Field definitions**:
+- `resource_type`: The type of resource this event affects (e.g., "character", "realm")
+- `resource_id_field`: JSON field name in the event payload containing the resource ID
+- `source_type`: Identifier for the data source (used for watch filtering)
+- `is_deletion`: Whether this event indicates resource deletion (optional, inferred from event name ending in "Deleted" if omitted)
+
+**Generated output** (`bannou-service/Generated/ResourceEventMappings.cs`):
+- Static class with `IReadOnlyList<ResourceEventMappingEntry>` containing all discovered mappings
+- Used by Puppetmaster's watch system to subscribe to appropriate event topics
+
+**Example generated code**:
+```csharp
+public static class ResourceEventMappings
+{
+    public static readonly IReadOnlyList<ResourceEventMappingEntry> All =
+    [
+        new("character", "character", "character.created", "characterId", false),
+        new("character", "character", "character.deleted", "characterId", true),
+        new("character", "character-personality", "personality.updated", "characterId", false),
+        // ...
+    ];
+}
+```
 
 ### x-event-subscriptions (Event Handler Generation)
 
@@ -300,6 +356,7 @@ info:
     compressEndpoint: /character-personality/get-compress-data       # Required: Endpoint to gather data for archival
     compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'     # Required: JSON template with {{resourceId}}
     priority: 10                                                     # Required: Execution order (lower = earlier)
+    templateNamespace: personality                                   # Optional: Short namespace for ABML expressions
     description: Personality traits and combat preferences           # Optional: Human-readable description
     decompressEndpoint: /character-personality/restore-from-archive  # Optional: Endpoint to restore from archive
     decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}' # Optional: Decompress template
@@ -311,6 +368,7 @@ info:
 - `compressEndpoint`: Service endpoint called during compression (must exist in schema paths)
 - `compressPayloadTemplate`: JSON template with `{{resourceId}}` placeholder
 - `priority`: Execution order during compression (lower numbers execute earlier)
+- `templateNamespace`: Short namespace for ABML expression paths (e.g., "personality" for `${candidate.personality.archetypeHint}`). If omitted, defaults to `sourceType`. Used by `IResourceTemplateRegistry` to resolve templates from expression prefixes. (optional)
 - `description`: Human-readable description for documentation (optional)
 - `decompressEndpoint`: Endpoint for restoration from archive (optional)
 - `decompressPayloadTemplate`: JSON template with `{{resourceId}}` and `{{data}}` placeholders (optional)

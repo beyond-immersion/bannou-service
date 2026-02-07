@@ -77,6 +77,10 @@ x-lifecycle:
         format: date-time
         nullable: true  # NRT: Optional property MUST be nullable
         description: Timestamp when the character was last updated
+    resource_mapping:
+      resource_type: character
+      # resource_id_field defaults to characterId (primary key)
+      # source_type defaults to character
 
 
 paths: {}  # Events don't have HTTP paths

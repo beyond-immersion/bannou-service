@@ -80,6 +80,11 @@ components:
           type: string
           format: date-time
           description: "Timestamp when the realm was last updated"
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: realm
+        is_deletion: false
     RealmUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -122,6 +127,11 @@ components:
           items:
             type: string
           description: List of field names that were modified
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: realm
+        is_deletion: false
     RealmDeletedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -162,3 +172,8 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: realm
+        is_deletion: true

@@ -46,6 +46,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's personality is first created
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp

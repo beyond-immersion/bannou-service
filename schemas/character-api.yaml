@@ -33,6 +33,7 @@ info:
     compressEndpoint: /character/get-compress-data
     compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
     priority: 0
+    templateNamespace: character
     description: Base character data (name, species, realm, status, timestamps)
 x-service-layer: GameFoundation
 servers:

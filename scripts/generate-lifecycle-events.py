@@ -21,6 +21,10 @@ Topic Pattern:
 - {entity}.updated (e.g., account.updated)
 - {entity}.deleted (e.g., account.deleted)
 
+Resource Mapping (optional):
+- If resource_mapping is defined, x-resource-mapping is emitted on generated events
+- Used by Puppetmaster watch system for resource change subscriptions
+
 Usage:
     python3 scripts/generate-lifecycle-events.py
 
@@ -123,15 +127,18 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
     - eventId: UUID string (inherited from BaseServiceEvent)
     - timestamp: ISO 8601 datetime (inherited from BaseServiceEvent)
 
+    If resource_mapping is provided, x-resource-mapping extension is added to each event.
+
     Args:
         entity: Entity name in PascalCase (e.g., "Account")
-        config: Configuration dict with 'model' and optional 'sensitive' keys
+        config: Configuration dict with 'model', optional 'sensitive', and optional 'resource_mapping' keys
 
     Returns:
         Dict with three event schema definitions
     """
     model = config.get('model', {})
     sensitive = set(config.get('sensitive', []))
+    resource_mapping = config.get('resource_mapping', None)
 
     # Find primary key (field marked with primary: true)
     primary_key = None
@@ -170,7 +177,7 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
     if primary_key not in model_required_fields:
         model_required_fields.append(primary_key)
 
-    def build_event(event_type: str, extra_props: dict = None, extra_required: list = None) -> dict:
+    def build_event(event_type: str, extra_props: dict = None, extra_required: list = None, is_deletion: bool = False) -> dict:
         """Build an event schema that inherits from BaseServiceEvent."""
         topic = f'{topic_base}.{event_type}'
 
@@ -192,7 +199,7 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
         if extra_required:
             required.extend(extra_required)
 
-        return {
+        event_schema = {
             'allOf': [
                 {'$ref': '../common-events.yaml#/components/schemas/BaseServiceEvent'}
             ],
@@ -202,6 +209,22 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
             'required': required,
             'properties': props
         }
+
+        # Add x-resource-mapping if resource_mapping is configured
+        if resource_mapping is not None:
+            # Determine values with defaults
+            resource_type = resource_mapping.get('resource_type', topic_base)
+            resource_id_field = resource_mapping.get('resource_id_field', primary_key)
+            source_type = resource_mapping.get('source_type', topic_base)
+
+            event_schema['x-resource-mapping'] = {
+                'resource_type': resource_type,
+                'resource_id_field': resource_id_field,
+                'source_type': source_type,
+                'is_deletion': is_deletion
+            }
+
+        return event_schema
 
     # CreatedEvent
     created = build_event('created')
@@ -226,7 +249,8 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
                 'nullable': True,
                 'description': 'Optional reason for deletion (e.g., "Merged into {targetId}")'
             }
-        }
+        },
+        is_deletion=True
     )
 
     return {
