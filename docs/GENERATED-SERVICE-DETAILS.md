@@ -41,7 +41,7 @@ Des... |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Puppetmaster](#puppetmaster) | 1.0.0 | 6 | Orchestration service for dynamic behaviors, regional watche... |
-| [Quest](#quest) | 1.0.0 | 16 | Quest system providing objective-based gameplay progression ... |
+| [Quest](#quest) | 1.0.0 | 17 | Quest system providing objective-based gameplay progression ... |
 | [Realm](#realm) | 1.0.0 | 11 | Realm management service for game worlds. |
 | [Realm History](#realm-history) | 1.0.0 | 12 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
@@ -52,7 +52,7 @@ Support... |
 | [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
 | [Species](#species) | 2.0.0 | 13 | Species management service for game worlds. |
 | [State](#state) | 1.0.0 | 9 | Repository pattern state management with Redis and MySQL bac... |
-| [Storyline](#storyline) | 1.0.0 | 14 | Seeded narrative generation from compressed archives using t... |
+| [Storyline](#storyline) | 1.0.0 | 15 | Seeded narrative generation from compressed archives using t... |
 | [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
 Tracks which ac... |
 | [Telemetry](#telemetry) | 1.0.0 | 2 | Unified observability plugin providing distributed tracing, ... |
@@ -129,7 +129,7 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
 
-Character encounter tracking service for memorable interactions between characters. Manages the lifecycle of encounters (shared interaction records) and perspectives (individual participant views), enabling dialogue triggers ("We've met before..."), grudges/alliances ("You killed my brother!"), quest hooks ("The merchant you saved has a job"), and NPC memory. Implements a multi-participant design where each encounter has one shared record with N perspectives (one per participant), scaling linearly O(N) for group events. Features time-based memory decay applied lazily on access (not via background jobs), weighted sentiment aggregation across encounter histories, configurable encounter type codes (6 built-in + custom), automatic encounter pruning per-character and per-pair limits, and ETag-based optimistic concurrency for perspective updates. All state is maintained via manual index management (character, pair, location, global, custom-type) since the state store does not support prefix queries.
+Character encounter tracking service for memorable interactions between characters. Manages the lifecycle of encounters (shared interaction records) and perspectives (individual participant views), enabling dialogue triggers ("We've met before..."), grudges/alliances ("You killed my brother!"), quest hooks ("The merchant you saved has a job"), and NPC memory. Implements a multi-participant design where each encounter has one shared record with N perspectives (one per participant), scaling linearly O(N) for group events. Features time-based memory decay (configurable lazy-on-access or scheduled background modes), weighted sentiment aggregation across encounter histories, configurable encounter type codes (6 built-in + custom), automatic encounter pruning per-character and per-pair limits, and ETag-based optimistic concurrency for perspective updates. All state is maintained via manual index management (character, pair, location, global, custom-type) since the state store does not support prefix queries.
 
 ---
 
@@ -195,7 +195,7 @@ Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function cal
 
 **Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Deep Dive**: [docs/plugins/ESCROW.md](plugins/ESCROW.md)
 
-Full-custody orchestration layer for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes (full-consent requiring cryptographic tokens, initiator-trusted, single-party-trusted). Features a 13-state finite state machine, SHA-256-based token generation for deposit and release authorization, idempotent deposit handling, contract-bound conditional releases, per-party pending count tracking, custom asset type handler registration for extensibility, periodic validation with reaffirmation flow, and arbiter-mediated dispute resolution with split allocation support. Handles currency, items, item stacks, contracts, and custom asset types. Does NOT perform actual asset transfers itself - publishes events that downstream services (lib-currency, lib-inventory, lib-contract) consume to execute the physical movements.
+Full-custody orchestration layer for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes (full-consent requiring cryptographic tokens, initiator-trusted, single-party-trusted). Features a 13-state finite state machine, SHA-256-based token generation for deposit and release authorization, idempotent deposit handling, contract-bound conditional releases, per-party pending count tracking, custom asset type handler registration for extensibility, periodic validation with reaffirmation flow, and arbiter-mediated dispute resolution with split allocation support. Handles currency, items, item stacks, contracts, and custom asset types. Escrow calls lib-currency and lib-inventory APIs directly for asset movements; events are published for observability only.
 
 **Release/Refund Modes**: Configurable confirmation flows via `ReleaseMode` and `RefundMode` enums. For unbound escrows, `ReleaseMode` controls whether releases complete immediately or require downstream service and/or party confirmations. Contract-bound escrows skip release mode logic entirely - they rely on contract fulfillment verification.
 
@@ -309,8 +309,13 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 
 **Version**: 1.0.0 | **Schema**: `schemas/puppetmaster-api.yaml` | **Deep Dive**: [docs/plugins/PUPPETMASTER.md](plugins/PUPPETMASTER.md)
 
-Orchestration service for dynamic behaviors, regional watchers, and encounter coordination.
-Pulls the strings while actors perform on stage.
+The Puppetmaster service orchestrates dynamic behaviors, regional watchers, and encounter coordination for the Arcadia game system. It "pulls the strings" while actors perform on stage. As an L4 (Game Features) service, it provides the missing link between the behavior execution runtime (lib-actor at L2) and the asset service (lib-asset at L3) - enabling dynamic ABML behavior loading that would otherwise violate the service hierarchy. The service implements `IBehaviorDocumentProvider` (priority 100) to supply runtime-loaded behaviors to actors via the provider chain pattern.
+
+**Key Responsibilities**:
+- Dynamic behavior document caching and loading from Asset service
+- Regional watcher lifecycle management (create/stop/list)
+- Resource snapshot caching for Event Brain actors
+- Automatic watcher startup on realm creation events
 
 ---
 
@@ -318,9 +323,7 @@ Pulls the strings while actors perform on stage.
 
 **Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md)
 
-Quest system providing objective-based gameplay progression as a thin orchestration
-layer over lib-contract. Quests are contracts with game-flavored terminology:
-objectives are milestones, rewards ...
+The Quest service provides objective-based gameplay progression as a thin orchestration layer over lib-contract. It translates game-flavored quest semantics (objectives, rewards, quest givers) into the Contract service's infrastructure (milestones, prebound APIs, parties). This design leverages Contract's robust state machine, consent flows, and cleanup orchestration while presenting a player-friendly quest API. The service is Layer 4 (GameFeatures), internal-only, and integrates with the Actor service via the Variable Provider Factory pattern to expose quest data for ABML behavior expressions.
 
 ---
 
@@ -479,7 +482,7 @@ Public-facing website service for browser-based access to news, account profile 
 ## Summary
 
 - **Total services**: 46
-- **Total endpoints**: 613
+- **Total endpoints**: 615
 
 ---
 

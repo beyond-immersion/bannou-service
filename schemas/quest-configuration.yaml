@@ -79,3 +79,13 @@ x-service-configuration:
       default: 86400
       env: QUEST_IDEMPOTENCY_TTL_SECONDS
       description: TTL for idempotency keys (24 hours)
+
+    # === Prerequisite Validation Settings ===
+    PrerequisiteValidationMode:
+      type: string
+      default: CHECK_ALL
+      env: QUEST_PREREQUISITE_VALIDATION_MODE
+      description: |
+        Controls prerequisite validation behavior.
+        CHECK_ALL (default): Evaluate all prerequisites, return all failures for richer error info.
+        FAIL_FAST: Stop on first failure for faster rejection.

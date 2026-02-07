@@ -1,8 +1,9 @@
 # Quest Plugin Architecture
 
-> **Version**: 1.0
-> **Last Updated**: 2026-02-05
+> **Version**: 1.1
+> **Last Updated**: 2026-02-07
 > **Status**: Planning
+> **Layer**: **L2 (Game Foundation)** - Quest is a core game primitive
 > **Dependencies**: lib-contract (L1), lib-currency (L2), lib-inventory (L2), lib-item (L2), lib-character (L2)
 
 ## Executive Summary
@@ -15,44 +16,64 @@ The Quest plugin is a **thin orchestration layer** over lib-contract that adds g
 
 ## Architectural Position
 
+### Why Quest is L2 (Game Foundation)
+
+Quest is a **core game primitive** alongside Character, Currency, and Items - not a feature layer service:
+
+| L2 Game Foundation | Why Foundational |
+|-------------------|------------------|
+| Character | Core entity - everything references it |
+| Currency | Core economic primitive |
+| Item/Inventory | Core possession primitive |
+| **Quest** | Core progression primitive |
+| Realm/Location | Core world structure |
+
+Quest is **agnostic to what validates prerequisites**. Higher-layer services (L4) provide prerequisite implementations via the IPrerequisiteProviderFactory pattern.
+
 ### Service Hierarchy
 
 ```
 Layer 4: Game Features
-├── lib-quest (this plugin)
-│   └── Wraps: lib-contract (L1)
-│   └── Coordinates: lib-currency, lib-inventory, lib-item (L2)
-│   └── Publishes to: lib-analytics, lib-leaderboard (L4)
-│
-├── lib-storyline (sibling)
+├── lib-storyline
 │   └── Composes: lib-quest (creates quest chains)
 │   └── Consumes: lib-resource (compressed archives)
+├── lib-skills, lib-magic, lib-achievement (example L4 services)
+│   └── Implement: IPrerequisiteProviderFactory for Quest
+
+Layer 2: Game Foundation
+├── lib-quest (this plugin)
+│   └── Wraps: lib-contract (L1)
+│   └── Calls directly: lib-currency, lib-inventory, lib-item, lib-character (L2)
+│   └── Discovers: IPrerequisiteProviderFactory implementations (L4)
+│   └── Publishes events to: lib-analytics, lib-leaderboard (L4)
 ```
 
 ### Dependency Flow
 
 ```
-Storyline (narrative arc)
+Storyline (L4, narrative arc)
     ↓ creates
-Quest Chain (contract with milestones)
+Quest Chain (L2, contract with milestones)
     ↓ wraps
-Contract (FSM + consent + prebound APIs)
+Contract (L1, FSM + consent + prebound APIs)
     ↓ triggers
-Currency/Inventory (reward execution)
+Currency/Inventory (L2, reward execution)
 ```
 
 **Key Insight**: Storyline doesn't need to know about Contract internals. It creates quests; quests handle the contract mechanics. Clean separation of concerns.
 
 ---
 
-## The "Contract is Brain, Escrow is Vault" Pattern Extended
+## The "Contract is Brain" Pattern Extended
 
-| Domain | Orchestration Layer | What It Adds |
-|--------|---------------------|--------------|
-| Agreements | Contract (L1) | FSM, consent, milestones, prebound APIs |
-| Asset Exchanges | Escrow (L4) | Deposit tracking, release modes, custody |
-| Objective Gameplay | **Quest (L4)** | Objectives, progress UI, rewards, quest log |
-| Narrative Arcs | Storyline (L4) | Archive mining, GOAP composition, lazy phases |
+| Domain | Orchestration Layer | Layer | What It Adds |
+|--------|---------------------|-------|--------------|
+| Agreements | Contract | L1 | FSM, consent, milestones, prebound APIs |
+| Objective Gameplay | **Quest** | **L2** | Objectives, progress UI, rewards, quest log |
+| Asset Exchanges | Escrow | L4 | Deposit tracking, release modes, custody |
+| Narrative Arcs | Storyline | L4 | Archive mining, GOAP composition, lazy phases |
+
+**Note**: Quest is L2 because it's a foundational game primitive. Escrow remains L4 because it orchestrates complex multi-party exchanges that build on foundations.
 
 Quest adds **game-facing semantics** without reinventing state machines:
 
@@ -625,6 +646,130 @@ QuestServiceConfiguration:
 
 ---
 
+## Prerequisite Architecture (IPrerequisiteProviderFactory)
+
+Quest is L2 and cannot depend on L4 services for prerequisite validation. The solution is the **IPrerequisiteProviderFactory pattern** - the same pattern Actor uses for `IVariableProviderFactory`.
+
+### Interface Definition
+
+```csharp
+// bannou-service/Providers/IPrerequisiteProviderFactory.cs
+public interface IPrerequisiteProviderFactory
+{
+    /// <summary>The prerequisite namespace (e.g., "skill", "magic", "achievement")</summary>
+    string ProviderName { get; }
+
+    /// <summary>Check if character meets prerequisite</summary>
+    Task<PrerequisiteResult> CheckAsync(
+        Guid characterId,
+        string prerequisiteCode,
+        IReadOnlyDictionary<string, object?> parameters,
+        CancellationToken ct);
+}
+
+public record PrerequisiteResult(
+    bool Satisfied,
+    string? FailureReason,
+    object? CurrentValue,
+    object? RequiredValue
+);
+```
+
+### Built-in Prerequisites (Quest checks directly)
+
+Quest calls L2 services with hard dependencies:
+
+| Type | Service | Implementation |
+|------|---------|----------------|
+| `quest_completed` | Quest itself | Check own state |
+| `currency` | Currency (L2) | `ICurrencyClient.GetBalanceAsync` |
+| `item` | Inventory (L2) | `IInventoryClient.QueryAsync` |
+| `character_level` | Character (L2) | `ICharacterClient.GetAsync` |
+| `relationship` | Relationship (L2) | `IRelationshipClient.QueryAsync` |
+
+### Dynamic Prerequisites (L4 providers)
+
+Quest discovers L4 providers via DI collection injection:
+
+| Type | Service | Provider |
+|------|---------|----------|
+| `skill` | Skills (L4) | `SkillPrerequisiteProviderFactory` |
+| `magic` | Magic (L4) | `MagicPrerequisiteProviderFactory` |
+| `achievement` | Achievement (L4) | `AchievementPrerequisiteProviderFactory` |
+| `status_effect` | Effects (L4) | `StatusEffectPrerequisiteProviderFactory` |
+
+### Provider Implementation Example
+
+```csharp
+// In lib-skills (L4)
+public class SkillPrerequisiteProviderFactory : IPrerequisiteProviderFactory
+{
+    public string ProviderName => "skill";
+
+    public async Task<PrerequisiteResult> CheckAsync(
+        Guid characterId, string code,
+        IReadOnlyDictionary<string, object?> parameters, CancellationToken ct)
+    {
+        var currentLevel = await _skillStore.GetLevelAsync(characterId, code, ct);
+        var requiredLevel = (int)(parameters.GetValueOrDefault("level") ?? 1);
+
+        return new PrerequisiteResult(
+            Satisfied: currentLevel >= requiredLevel,
+            FailureReason: currentLevel < requiredLevel
+                ? $"Requires {code} level {requiredLevel}, you have {currentLevel}"
+                : null,
+            CurrentValue: currentLevel,
+            RequiredValue: requiredLevel
+        );
+    }
+}
+
+// DI registration in SkillsServicePlugin
+services.AddSingleton<IPrerequisiteProviderFactory, SkillPrerequisiteProviderFactory>();
+```
+
+### Quest Validation Flow
+
+```csharp
+private async Task<List<FailedPrerequisite>> CheckPrerequisitesAsync(...)
+{
+    var failures = new List<FailedPrerequisite>();
+
+    foreach (var prereq in definition.Prerequisites)
+    {
+        // Built-in L2 checks
+        if (prereq.Type == "currency")
+        {
+            var balance = await _currencyClient.GetBalanceAsync(...);
+            if (balance < prereq.Amount)
+                failures.Add(new FailedPrerequisite(...));
+            continue;
+        }
+
+        // Dynamic provider lookup for L4 prereqs
+        var provider = _prerequisiteProviders
+            .FirstOrDefault(p => p.ProviderName == prereq.Type);
+
+        if (provider == null)
+        {
+            // Graceful degradation: L4 service not enabled
+            _logger.LogWarning("No provider for prerequisite type {Type}", prereq.Type);
+            failures.Add(new FailedPrerequisite(prereq.Type, prereq.Code,
+                "Prerequisite system not available"));
+            continue;
+        }
+
+        var result = await provider.CheckAsync(characterId, prereq.Code, prereq.Parameters, ct);
+        if (!result.Satisfied)
+            failures.Add(new FailedPrerequisite(...));
+    }
+
+    return failures;
+}
+```
+
+---
+
 ## Open Questions
 
 1. **Quest Templates vs Dynamic Generation**: Should Storyline always create new quest definitions, or should it instantiate from a library of templates with variable substitution?
@@ -633,7 +778,7 @@ QuestServiceConfiguration:
 
 3. **Quest Giver Actors**: Should quest givers be Actor instances with behavior documents that "offer" quests, or should Quest service handle availability directly?
 
-4. **Prerequisite Chains**: Should quest prerequisites be Contract constraints, Quest-level checks, or Storyline orchestration?
+4. ~~**Prerequisite Chains**~~: **RESOLVED** - Quest validates prerequisites via `IPrerequisiteProviderFactory` pattern. Built-in types call L2 services directly; L4 services implement providers for their domains.
 
 5. **Hidden Objectives**: Some quests have secret objectives. Track in Quest (invisible in log) or separate system?
 

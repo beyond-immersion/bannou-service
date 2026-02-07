@@ -223,6 +223,26 @@ public enum PrerequisiteType
 #pragma warning restore CS1591
 
 /// <summary>
+/// Controls how prerequisite validation handles multiple prerequisites.
+/// <br/>FAIL_FAST: Stop on first failure, return that failure.
+/// <br/>CHECK_ALL: Check all prerequisites, return all failures for richer error info.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PrerequisiteValidationMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"FAIL_FAST")]
+    FAIL_FAST = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"CHECK_ALL")]
+    CHECK_ALL = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to create a new quest definition with objectives and rewards
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -523,6 +543,111 @@ public partial class RewardDefinition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("factionCode")]
     public string? FactionCode { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Details about a failed prerequisite check during quest acceptance
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class FailedPrerequisite
+{
+
+    /// <summary>
+    /// Type of prerequisite that failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PrerequisiteType Type { get; set; } = default!;
+
+    /// <summary>
+    /// Specific code (quest code, currency code, item code, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    public string? Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable failure reason
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Current value (e.g., "50 gold", "3 wolf pelts")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentValue")]
+    public string? CurrentValue { get; set; } = default!;
+
+    /// <summary>
+    /// Required value (e.g., "100 gold", "5 wolf pelts")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requiredValue")]
+    public string? RequiredValue { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Specific error codes for quest acceptance failures
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AcceptQuestErrorCode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PREREQUISITES_NOT_MET")]
+    PREREQUISITES_NOT_MET = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ALREADY_ACTIVE")]
+    ALREADY_ACTIVE = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ON_COOLDOWN")]
+    ON_COOLDOWN = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MAX_QUESTS_REACHED")]
+    MAX_QUESTS_REACHED = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"DEFINITION_NOT_FOUND")]
+    DEFINITION_NOT_FOUND = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"DEFINITION_DEPRECATED")]
+    DEFINITION_DEPRECATED = 5,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Error response when quest acceptance fails
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AcceptQuestErrorResponse
+{
+
+    /// <summary>
+    /// Specific error code indicating failure type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AcceptQuestErrorCode ErrorCode { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable error message
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Message { get; set; } = default!;
+
+    /// <summary>
+    /// List of prerequisites that were not met (only for PREREQUISITES_NOT_MET)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedPrerequisites")]
+    public System.Collections.Generic.ICollection<FailedPrerequisite>? FailedPrerequisites { get; set; } = default!;
 
 }
 

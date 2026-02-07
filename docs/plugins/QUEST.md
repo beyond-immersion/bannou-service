@@ -9,7 +9,9 @@
 
 ## Overview
 
-The Quest service provides objective-based gameplay progression as a thin orchestration layer over lib-contract. It translates game-flavored quest semantics (objectives, rewards, quest givers) into the Contract service's infrastructure (milestones, prebound APIs, parties). This design leverages Contract's robust state machine, consent flows, and cleanup orchestration while presenting a player-friendly quest API. The service is Layer 4 (GameFeatures), internal-only, and integrates with the Actor service via the Variable Provider Factory pattern to expose quest data for ABML behavior expressions.
+The Quest service provides objective-based gameplay progression as a thin orchestration layer over lib-contract. It translates game-flavored quest semantics (objectives, rewards, quest givers) into the Contract service's infrastructure (milestones, prebound APIs, parties). This design leverages Contract's robust state machine, consent flows, and cleanup orchestration while presenting a player-friendly quest API.
+
+**Layer**: **L2 (GameFoundation)** - Quest is a core game primitive alongside Character, Currency, and Items. It is agnostic to prerequisite sources; L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` to provide prerequisite validation without Quest depending on them. Quest calls L2 services directly for built-in prerequisites (currency, items, character level). The service is internal-only and integrates with the Actor service via the Variable Provider Factory pattern to expose quest data for ABML behavior expressions.
 
 ---
 
@@ -19,11 +21,15 @@ The Quest service provides objective-based gameplay progression as a thin orches
 |------------|-------|
 | lib-state (IStateStoreFactory) | Quest definitions (MySQL), instances (MySQL), progress (Redis), cooldowns (Redis), indexes (Redis), idempotency (Redis) |
 | lib-messaging (IMessageBus) | Publishing quest lifecycle events (accepted, progressed, completed, failed, abandoned) |
-| lib-contract (IContractClient) | Creating contract templates/instances, managing milestones, terminating contracts |
+| lib-contract (IContractClient) | Creating contract templates/instances, managing milestones, setting template values, terminating contracts |
 | lib-character (ICharacterClient) | Validating character existence for quest acceptance |
+| lib-currency (ICurrencyClient) | CURRENCY_AMOUNT prerequisite validation, resolving wallet IDs for reward template values |
+| lib-inventory (IInventoryClient) | ITEM_OWNED prerequisite validation, resolving container IDs for reward template values |
+| lib-item (IItemClient) | Resolving item template IDs from codes for prerequisite validation |
 | lib-resource (IResourceClient) | Registering compression callback for character archival |
 | IEventConsumer | Subscribing to contract lifecycle events for state synchronization |
 | IEventTemplateRegistry | Registering event templates for ABML `emit_event:` action |
+| IEnumerable\<IPrerequisiteProviderFactory\> | DI collection injection for dynamic prerequisite providers (L4 services register implementations) |
 
 ---
 
@@ -229,7 +235,7 @@ Key: objectives ←→ milestones (1:1 mapping)
 
 ## Variable Provider Integration (Actor Service)
 
-Quest integrates with the Actor service (L2) via the Variable Provider Factory pattern per SERVICE-HIERARCHY.md:
+Quest (L2) integrates with the Actor service (L2) via the Variable Provider Factory pattern. Since both services are L2, Actor could call `IQuestClient` directly, but the provider pattern is still used for consistency with L4 data sources (personality, encounters) and to support efficient batch loading with caching:
 
 **QuestProviderFactory** (`IVariableProviderFactory`):
 - Registered in DI by `QuestServicePlugin.ConfigureServices`
@@ -254,10 +260,17 @@ Quest integrates with the Actor service (L2) via the Variable Provider Factory p
 
 ## Stubs & Unimplemented Features
 
-1. **Prerequisite validation for non-QUEST_COMPLETED types**: The `CheckPrerequisitesAsync` method logs and skips CHARACTER_LEVEL, REPUTATION, ITEM_OWNED, and CURRENCY_AMOUNT prerequisite types - they always pass validation. Only QUEST_COMPLETED is actually checked. Needs integration with relevant services.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/317 -->
+1. ~~**Prerequisite validation for non-QUEST_COMPLETED types**~~: **IMPLEMENTED** (2026-02-07) in #320 - Full prerequisite validation now implemented:
+   - **Built-in (L2)**: QUEST_COMPLETED (direct check), CURRENCY_AMOUNT (via ICurrencyClient), ITEM_OWNED (via IInventoryClient/IItemClient)
+   - **Dynamic (L4)**: REPUTATION and unknown types (via IPrerequisiteProviderFactory DI collection)
+   - **Stub**: CHARACTER_LEVEL logs and skips until Character service tracks levels
+   - Configurable validation mode: `CHECK_ALL` (rich error info) or `FAIL_FAST` (early exit)
 
-2. **Reward distribution**: Rewards are defined in `RewardDefinitionModel` (CURRENCY, ITEM, EXPERIENCE, REPUTATION types) and stored with quest definitions, but there is no actual reward distribution logic in `CompleteQuestAsync`. The service description mentions "rewards are prebound API executions" but no prebound APIs are registered with Contract for rewards. Rewards are purely informational for now.
+2. ~~**Reward distribution via prebound APIs**~~: **IMPLEMENTED** (2026-02-07) in #320 - Rewards now execute via Contract prebound APIs:
+   - `BuildRewardPreboundApis` generates API definitions from CURRENCY and ITEM rewards
+   - APIs attached to final required milestone's `onComplete` array
+   - `ResolveTemplateValuesAsync` resolves wallet/container IDs at quest acceptance
+   - EXPERIENCE and REPUTATION rewards log warnings (L4 services not yet implemented)
 
 3. ~~**QuestDataCache TTL configuration**~~: **FIXED** (2026-02-07) - Added `QuestDataCacheTtlSeconds` config property (env: `QUEST_DATA_CACHE_TTL_SECONDS`, default: 120). Cache now reads from configuration.
 
@@ -297,23 +310,31 @@ Quest integrates with the Actor service (L2) via the Variable Provider Factory p
 
 6. **Definition cache separate from MySQL store**: Definition cache (`quest-definition-cache`) is a Redis read-through cache of the MySQL `quest-definition-statestore`. Writes go to MySQL only; reads check cache first with fallback to MySQL.
 
-### Design Considerations (Requires Planning)
+### Design Considerations (Resolved)
 
-1. **Prerequisite validation gap**: CHARACTER_LEVEL, REPUTATION, ITEM_OWNED, and CURRENCY_AMOUNT prerequisite types all skip validation with debug logs. Only QUEST_COMPLETED is implemented. Requires:
-   - CHARACTER_LEVEL: A progression/stats service that tracks character levels
-   - REPUTATION: A reputation service (doesn't exist yet)
-   - ITEM_OWNED: Integration with Inventory service (L2)
-   - CURRENCY_AMOUNT: Integration with Currency service (L2)
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/317 -->
+1. **Prerequisite architecture (RESOLVED in #320)**: Quest uses a two-tier prerequisite system:
+   - **Built-in (L2)**: `quest_completed`, `currency`, `item`, `character_level`, `relationship` - Quest calls L2 service clients directly with hard dependencies
+   - **Dynamic (L4)**: `skill`, `magic`, `achievement`, `status_effect`, etc. - L4 services implement `IPrerequisiteProviderFactory`, Quest discovers via `IEnumerable<IPrerequisiteProviderFactory>` DI collection injection, graceful degradation if provider missing
+   - See `docs/planning/QUEST-PLUGIN-ARCHITECTURE.md` and `docs/reference/SERVICE-HIERARCHY.md` for full pattern
 
-2. **Reward execution not implemented**: Rewards are stored in definitions but `CompleteQuestAsync` doesn't distribute them. Options:
-   - Register prebound APIs with Contract to call Currency/Inventory on fulfillment
-   - Handle reward distribution directly in Quest service (simpler but less flexible)
-   - Emit events for downstream services to handle (most decoupled)
+2. **Reward execution (RESOLVED in #320)**: Rewards execute via Contract prebound APIs:
+   - Quest builds prebound API definitions from `RewardDefinitionModel` at definition creation
+   - APIs attached to final milestone's `onComplete` array
+   - Quest sets `TemplateValues` with resolved wallet/container IDs at quest acceptance (Quest is L2, can call Currency/Inventory directly)
+   - Contract executes prebound APIs on milestone completion - Quest never calls Currency/Inventory for reward distribution
 
 ---
 
 ## Work Tracking
 
 ### Completed
+- **2026-02-07**: Moved Quest to L2 (GameFoundation), implemented prerequisite validation and reward prebound APIs (#320):
+  - Changed service layer from GameFeatures to GameFoundation in schema
+  - Added ICurrencyClient, IInventoryClient, IItemClient dependencies for built-in prerequisites
+  - Created IPrerequisiteProviderFactory interface for dynamic L4 prerequisites
+  - Implemented CheckCurrencyPrerequisiteAsync and CheckItemPrerequisiteAsync
+  - Added BuildRewardPreboundApis for CURRENCY and ITEM rewards via Contract
+  - Added ResolveTemplateValuesAsync for wallet/container ID resolution
+  - Added PrerequisiteValidationMode configuration (CHECK_ALL vs FAIL_FAST)
+  - Added FailedPrerequisite model and AcceptQuestErrorResponse for detailed failure info
 - **2026-02-07**: Fixed T21 violation - `QuestDataCache` TTL is now configurable via `QuestDataCacheTtlSeconds` (env: `QUEST_DATA_CACHE_TTL_SECONDS`, default: 120)

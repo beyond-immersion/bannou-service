@@ -146,6 +146,7 @@ These services provide the core game infrastructure - worlds, characters, specie
 | **inventory** | Container and slot management |
 | **game-session** | Active game session management |
 | **actor** | NPC brains, behavior execution runtime |
+| **quest** | Objective-based progression system |
 
 **Rules**:
 - May depend on Layer 0, Layer 1, and other L2 services
@@ -158,6 +159,9 @@ These services provide the core game infrastructure - worlds, characters, specie
 
 **The Character Service Rule**:
 > Character is a foundational entity. It knows about realms and species (what a character IS), but knows nothing about encounters, history, personality, or actors (what references a character). Those are L4 concerns.
+
+**The Quest Service Rule**:
+> Quest is a foundational entity. It knows about objectives, rewards, and milestones (what a quest IS), but is agnostic to prerequisite sources. L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` to provide prerequisite validation without Quest depending on them.
 
 ---
 
@@ -469,7 +473,7 @@ When a foundational service (L2) needs data from higher-layer services (L4) at r
 
 ### The Actor Runtime Example
 
-The Actor service (L2) executes behavior models that need character data - personality traits, combat preferences, quest state, encounter history. These are owned by L4 services (character-personality, character-encounter, quest). How does Actor get this data without depending on L4?
+The Actor service (L2) executes behavior models that need character data - personality traits, combat preferences, encounter history. These are owned by L4 services (character-personality, character-encounter). How does Actor get this data without depending on L4?
 
 ### The Wrong Way (Layer Violation)
 
@@ -478,7 +482,7 @@ The Actor service (L2) executes behavior models that need character data - perso
 public class ActorRunner
 {
     private readonly ICharacterPersonalityClient _personalityClient;  // NO! L4
-    private readonly IQuestClient _questClient;                       // NO! L4
+    private readonly ICharacterEncounterClient _encounterClient;      // NO! L4
 
     public async Task<float> GetPersonalityTrait(Guid characterId, string trait)
     {
@@ -603,12 +607,88 @@ When using this pattern, the cache for each data type should live with its ownin
 |----------|-------|----------|
 | PersonalityProvider | IPersonalityDataCache | lib-character-personality (L4) |
 | CombatPreferencesProvider | IPersonalityDataCache | lib-character-personality (L4) |
-| QuestProvider | IQuestDataCache | lib-quest (L4) |
 | EncountersProvider | IEncounterDataCache | lib-character-encounter (L4) |
 | BackstoryProvider | - (no cache) | lib-character-history (L4) |
 | BehaviorDocumentCache | IBehaviorDocumentCache | lib-actor (L2) |
 
 Cache invalidation events are handled by each owning service, not by Actor.
+
+---
+
+## Prerequisite Provider Factory Pattern
+
+Quest (L2) validates prerequisites before accepting quests. Some prerequisites require data from L4 services (skills, magic, achievements). Like the Variable Provider Factory pattern above, Quest defines an interface that L4 services implement.
+
+### The Interface
+
+```csharp
+// bannou-service/Providers/IPrerequisiteProviderFactory.cs
+public interface IPrerequisiteProviderFactory
+{
+    /// <summary>The prerequisite namespace (e.g., "skill", "magic", "achievement")</summary>
+    string ProviderName { get; }
+
+    /// <summary>Check if character meets prerequisite</summary>
+    Task<PrerequisiteResult> CheckAsync(
+        Guid characterId,
+        string prerequisiteCode,
+        IReadOnlyDictionary<string, object?> parameters,
+        CancellationToken ct);
+}
+
+public record PrerequisiteResult(
+    bool Satisfied,
+    string? FailureReason,
+    object? CurrentValue,
+    object? RequiredValue
+);
+```
+
+### Built-in vs Dynamic Prerequisites
+
+| Category | Type | Service | How Quest Handles |
+|----------|------|---------|-------------------|
+| **Built-in** | `quest_completed` | Quest (L2) | Direct check of own state |
+| **Built-in** | `currency` | Currency (L2) | Call `ICurrencyClient` |
+| **Built-in** | `item` | Inventory (L2) | Call `IInventoryClient` |
+| **Built-in** | `character_level` | Character (L2) | Call `ICharacterClient` |
+| **Dynamic** | `skill` | Skills (L4) | Provider factory |
+| **Dynamic** | `magic` | Magic (L4) | Provider factory |
+| **Dynamic** | `achievement` | Achievement (L4) | Provider factory |
+
+### L4 Implementation Example
+
+```csharp
+// In lib-skills (L4)
+public class SkillPrerequisiteProviderFactory : IPrerequisiteProviderFactory
+{
+    public string ProviderName => "skill";
+
+    public async Task<PrerequisiteResult> CheckAsync(
+        Guid characterId, string code,
+        IReadOnlyDictionary<string, object?> parameters, CancellationToken ct)
+    {
+        var current = await _skillStore.GetLevelAsync(characterId, code, ct);
+        var required = (int)(parameters.GetValueOrDefault("level") ?? 1);
+
+        return new PrerequisiteResult(
+            current >= required,
+            current < required ? $"Requires {code} level {required}" : null,
+            current, required);
+    }
+}
+
+// DI registration
+services.AddSingleton<IPrerequisiteProviderFactory, SkillPrerequisiteProviderFactory>();
+```
+
+### Key Insight
+
+Both patterns (Variable Provider and Prerequisite Provider) follow the same principle:
+- L2 service defines interface in shared code
+- L4 services implement and register via DI
+- L2 service discovers implementations via `IEnumerable<TFactory>` injection
+- Graceful degradation when providers are missing
 
 ---
 
@@ -785,7 +865,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 |-------|----------|
 | **L0** | state, messaging, mesh (required); telemetry (optional)† |
 | **L1** | account, auth, connect, permission, contract, resource |
-| **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory, game-session, actor |
+| **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory, game-session, actor, quest |
 | **L3** | asset, orchestrator, documentation, website |
 | **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
 | **L5** | (reserved for third-party plugins and internal meta-services) |

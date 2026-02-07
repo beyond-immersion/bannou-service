@@ -119,4 +119,12 @@ public class QuestServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int IdempotencyTtlSeconds { get; set; } = 86400;
 
+    /// <summary>
+    /// Controls prerequisite validation behavior.
+    /// CHECK_ALL (default): Evaluate all prerequisites, return all failures for richer error info.
+    /// FAIL_FAST: Stop on first failure for faster rejection.
+    /// Environment variable: QUEST_PREREQUISITE_VALIDATION_MODE
+    /// </summary>
+    public string PrerequisiteValidationMode { get; set; } = "CHECK_ALL";
+
 }

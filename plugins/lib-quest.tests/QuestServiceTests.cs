@@ -2,8 +2,12 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Quest;
 using BeyondImmersion.BannouService.Quest.Caching;
 using BeyondImmersion.BannouService.Services;
@@ -33,11 +37,15 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IContractClient> _mockContractClient;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
+    private readonly Mock<ICurrencyClient> _mockCurrencyClient;
+    private readonly Mock<IInventoryClient> _mockInventoryClient;
+    private readonly Mock<IItemClient> _mockItemClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<QuestService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<IQuestDataCache> _mockQuestDataCache;
+    private readonly List<IPrerequisiteProviderFactory> _prerequisiteProviders;
 
     public QuestServiceTests()
     {
@@ -52,11 +60,15 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockMessageBus = new Mock<IMessageBus>();
         _mockContractClient = new Mock<IContractClient>();
         _mockCharacterClient = new Mock<ICharacterClient>();
+        _mockCurrencyClient = new Mock<ICurrencyClient>();
+        _mockInventoryClient = new Mock<IInventoryClient>();
+        _mockItemClient = new Mock<IItemClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<QuestService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockServiceProvider = new Mock<IServiceProvider>();
         _mockQuestDataCache = new Mock<IQuestDataCache>();
+        _prerequisiteProviders = new List<IPrerequisiteProviderFactory>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -108,10 +120,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             Configuration,
             _mockContractClient.Object,
             _mockCharacterClient.Object,
+            _mockCurrencyClient.Object,
+            _mockInventoryClient.Object,
+            _mockItemClient.Object,
             _mockLockProvider.Object,
             _mockEventConsumer.Object,
             _mockServiceProvider.Object,
-            _mockQuestDataCache.Object);
+            _mockQuestDataCache.Object,
+            _prerequisiteProviders);
     }
 
     #region Constructor Validation

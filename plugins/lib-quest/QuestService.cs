@@ -3,8 +3,12 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Quest.Caching;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -44,14 +48,15 @@ public static class QuestTopics
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
 /// </para>
 /// <para>
-/// <b>SERVICE HIERARCHY (L4 Game Features):</b>
+/// <b>SERVICE HIERARCHY (L2 Game Foundation):</b>
 /// <list type="bullet">
-///   <item>Hard dependencies (constructor injection): IContractClient (L1), ICharacterClient (L2), IDistributedLockProvider (L0)</item>
+///   <item>Hard dependencies (constructor injection): IContractClient (L1), ICharacterClient (L2), ICurrencyClient (L2), IInventoryClient (L2), IItemClient (L2), IDistributedLockProvider (L0)</item>
+///   <item>Dynamic dependencies (DI collection): IEnumerable&lt;IPrerequisiteProviderFactory&gt; for L4 prerequisite providers</item>
 ///   <item>Soft dependencies (runtime resolution): IAnalyticsClient, IAchievementClient (L4)</item>
 /// </list>
 /// </para>
 /// </remarks>
-[BannouService("quest", typeof(IQuestService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
+[BannouService("quest", typeof(IQuestService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class QuestService : IQuestService
 {
     private readonly IMessageBus _messageBus;
@@ -60,9 +65,13 @@ public partial class QuestService : IQuestService
     private readonly QuestServiceConfiguration _configuration;
     private readonly IContractClient _contractClient;
     private readonly ICharacterClient _characterClient;
+    private readonly ICurrencyClient _currencyClient;
+    private readonly IInventoryClient _inventoryClient;
+    private readonly IItemClient _itemClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IServiceProvider _serviceProvider;
     private readonly IQuestDataCache _questDataCache;
+    private readonly IEnumerable<IPrerequisiteProviderFactory> _prerequisiteProviders;
 
     #region State Store Accessors
 
@@ -119,9 +128,14 @@ public partial class QuestService : IQuestService
     /// <param name="configuration">Service configuration.</param>
     /// <param name="contractClient">Contract client for template/instance management (L1 hard dependency).</param>
     /// <param name="characterClient">Character client for validation (L2 hard dependency).</param>
+    /// <param name="currencyClient">Currency client for balance checks (L2 hard dependency).</param>
+    /// <param name="inventoryClient">Inventory client for item checks (L2 hard dependency).</param>
+    /// <param name="itemClient">Item client for template lookups (L2 hard dependency).</param>
     /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
     /// <param name="eventConsumer">Event consumer for subscription registration.</param>
     /// <param name="serviceProvider">Service provider for L4 soft dependencies.</param>
+    /// <param name="questDataCache">Quest data cache for actor variable provider.</param>
+    /// <param name="prerequisiteProviders">Prerequisite provider factories for L4 dynamic prerequisites.</param>
     public QuestService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -129,10 +143,14 @@ public partial class QuestService : IQuestService
         QuestServiceConfiguration configuration,
         IContractClient contractClient,
         ICharacterClient characterClient,
+        ICurrencyClient currencyClient,
+        IInventoryClient inventoryClient,
+        IItemClient itemClient,
         IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer,
         IServiceProvider serviceProvider,
-        IQuestDataCache questDataCache)
+        IQuestDataCache questDataCache,
+        IEnumerable<IPrerequisiteProviderFactory> prerequisiteProviders)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -140,9 +158,13 @@ public partial class QuestService : IQuestService
         _configuration = configuration;
         _contractClient = contractClient;
         _characterClient = characterClient;
+        _currencyClient = currencyClient;
+        _inventoryClient = inventoryClient;
+        _itemClient = itemClient;
         _lockProvider = lockProvider;
         _serviceProvider = serviceProvider;
         _questDataCache = questDataCache;
+        _prerequisiteProviders = prerequisiteProviders;
 
         // Register event handlers via partial class (QuestServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -637,6 +659,22 @@ public partial class QuestService : IQuestService
                 }
             }
 
+            // Check prerequisites
+            var completedCodes = characterIndex?.CompletedQuestCodes ?? new List<string>();
+            var failedPrerequisites = await CheckPrerequisitesAsync(
+                definition, body.QuestorCharacterId, completedCodes, cancellationToken);
+
+            if (failedPrerequisites.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Character {CharacterId} failed {Count} prerequisites for quest {QuestCode}",
+                    body.QuestorCharacterId, failedPrerequisites.Count, definition.Code);
+                // Return BadRequest - caller should check the error response for details
+                // Note: The current API design returns null for errors. A future enhancement
+                // could return AcceptQuestErrorResponse with the failedPrerequisites list.
+                return (StatusCodes.BadRequest, null);
+            }
+
             var now = DateTimeOffset.UtcNow;
             var questInstanceId = Guid.NewGuid();
 
@@ -717,6 +755,36 @@ public partial class QuestService : IQuestService
                 _logger.LogWarning(ex, "Failed to record consent for quest {Code}", definition.Code);
                 // Contract was created but consent failed - may need cleanup
                 return (StatusCodes.ServiceUnavailable, null);
+            }
+
+            // Resolve and set template values for reward prebound APIs
+            var templateValues = await ResolveTemplateValuesAsync(
+                body.QuestorCharacterId,
+                definition,
+                cancellationToken);
+
+            if (templateValues.Count > 0)
+            {
+                try
+                {
+                    var setValuesRequest = new SetTemplateValuesRequest
+                    {
+                        ContractInstanceId = contractResponse.ContractId,
+                        TemplateValues = templateValues
+                    };
+                    await _contractClient.SetContractTemplateValuesAsync(setValuesRequest, cancellationToken);
+                    _logger.LogDebug(
+                        "Set {Count} template values for quest {Code} contract {ContractId}",
+                        templateValues.Count, definition.Code, contractResponse.ContractId);
+                }
+                catch (ApiException ex)
+                {
+                    // Template values are needed for rewards - this is a critical failure
+                    _logger.LogWarning(ex,
+                        "Failed to set template values for quest {Code}, rewards may fail",
+                        definition.Code);
+                    // Continue anyway - quest is already accepted, rewards will fail gracefully
+                }
             }
 
             // Create quest instance
@@ -1077,7 +1145,8 @@ public partial class QuestService : IQuestService
                 }
 
                 // Check prerequisites
-                if (!await CheckPrerequisitesAsync(definition, body.CharacterId, completedCodes, cancellationToken))
+                var failedPrereqs = await CheckPrerequisitesAsync(definition, body.CharacterId, completedCodes, cancellationToken);
+                if (failedPrereqs.Count > 0)
                     continue;
 
                 available.Add(MapToDefinitionResponse(definition));
@@ -1627,77 +1696,372 @@ public partial class QuestService : IQuestService
 
     /// <summary>
     /// Checks whether a character meets all prerequisites for a quest definition.
+    /// Returns a list of failed prerequisites (empty list = all prerequisites met).
     /// </summary>
     /// <param name="definition">The quest definition to check prerequisites for.</param>
     /// <param name="characterId">The character ID to check.</param>
     /// <param name="completedCodes">List of quest codes the character has completed.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if all prerequisites are met, false otherwise.</returns>
-    private async Task<bool> CheckPrerequisitesAsync(
+    /// <returns>List of failed prerequisites (empty if all met).</returns>
+    private async Task<List<FailedPrerequisite>> CheckPrerequisitesAsync(
         QuestDefinitionModel definition,
         Guid characterId,
         List<string> completedCodes,
         CancellationToken cancellationToken)
     {
+        var failures = new List<FailedPrerequisite>();
+
         // No prerequisites = always available
         if (definition.Prerequisites == null || definition.Prerequisites.Count == 0)
-            return true;
+            return failures;
+
+        var failFast = string.Equals(_configuration.PrerequisiteValidationMode, "FAIL_FAST", StringComparison.OrdinalIgnoreCase);
 
         foreach (var prereq in definition.Prerequisites)
         {
+            FailedPrerequisite? failure = null;
+
             switch (prereq.Type)
             {
                 case PrerequisiteType.QUEST_COMPLETED:
-                    // Check if character has completed the required quest
-                    if (!string.IsNullOrWhiteSpace(prereq.QuestCode))
-                    {
-                        var normalizedCode = prereq.QuestCode.ToUpperInvariant();
-                        if (!completedCodes.Contains(normalizedCode))
-                        {
-                            _logger.LogDebug("Character {CharacterId} has not completed prerequisite quest {QuestCode} for quest {DefinitionCode}",
-                                characterId, prereq.QuestCode, definition.Code);
-                            return false;
-                        }
-                    }
+                    failure = CheckQuestCompletedPrerequisite(prereq, completedCodes, definition.Code, characterId);
+                    break;
+
+                case PrerequisiteType.CURRENCY_AMOUNT:
+                    failure = await CheckCurrencyPrerequisiteAsync(prereq, characterId, cancellationToken);
+                    break;
+
+                case PrerequisiteType.ITEM_OWNED:
+                    failure = await CheckItemPrerequisiteAsync(prereq, characterId, cancellationToken);
                     break;
 
                 case PrerequisiteType.CHARACTER_LEVEL:
-                    // Character service doesn't track level - skip with log
-                    // Level tracking would require a separate progression/stats service
-                    _logger.LogDebug("Skipping CHARACTER_LEVEL prerequisite for quest {DefinitionCode} - level tracking not implemented",
+                    // Stub: Character service doesn't track level yet
+                    _logger.LogDebug(
+                        "Skipping CHARACTER_LEVEL prerequisite for quest {DefinitionCode}: level tracking not implemented",
                         definition.Code);
                     break;
 
                 case PrerequisiteType.REPUTATION:
-                    // Reputation service doesn't exist yet - skip with log
-                    _logger.LogDebug("Skipping REPUTATION prerequisite for quest {DefinitionCode} - reputation service not implemented",
-                        definition.Code);
-                    break;
-
-                case PrerequisiteType.ITEM_OWNED:
-                    // Would require complex inventory traversal via soft dependency
-                    // Skipping for now - can be implemented when needed
-                    _logger.LogDebug("Skipping ITEM_OWNED prerequisite for quest {DefinitionCode} - item ownership check not implemented",
-                        definition.Code);
-                    break;
-
-                case PrerequisiteType.CURRENCY_AMOUNT:
-                    // Would require wallet lookup + balance check via soft dependency
-                    // Skipping for now - can be implemented when needed
-                    _logger.LogDebug("Skipping CURRENCY_AMOUNT prerequisite for quest {DefinitionCode} - currency check not implemented",
-                        definition.Code);
+                    // Dynamic: Check via IPrerequisiteProviderFactory
+                    failure = await CheckDynamicPrerequisiteAsync("reputation", prereq, characterId, cancellationToken);
                     break;
 
                 default:
-                    _logger.LogWarning("Unknown prerequisite type {Type} for quest {DefinitionCode}",
-                        prereq.Type, definition.Code);
+                    // Unknown type: Try dynamic providers
+                    failure = await CheckDynamicPrerequisiteAsync(
+                        prereq.Type.ToString().ToLowerInvariant(), prereq, characterId, cancellationToken);
                     break;
+            }
+
+            if (failure != null)
+            {
+                failures.Add(failure);
+                if (failFast) return failures;
             }
         }
 
-        // Await to maintain async signature for future implementations
-        await Task.CompletedTask;
-        return true;
+        return failures;
+    }
+
+    /// <summary>
+    /// Checks the QUEST_COMPLETED prerequisite type.
+    /// </summary>
+    private FailedPrerequisite? CheckQuestCompletedPrerequisite(
+        PrerequisiteDefinitionModel prereq,
+        List<string> completedCodes,
+        string questCode,
+        Guid characterId)
+    {
+        if (string.IsNullOrWhiteSpace(prereq.QuestCode))
+            return null;
+
+        var normalizedCode = prereq.QuestCode.ToUpperInvariant();
+        if (completedCodes.Contains(normalizedCode))
+            return null;
+
+        _logger.LogDebug(
+            "Character {CharacterId} has not completed prerequisite quest {PrereqQuestCode} for quest {DefinitionCode}",
+            characterId, prereq.QuestCode, questCode);
+
+        return new FailedPrerequisite
+        {
+            Type = PrerequisiteType.QUEST_COMPLETED,
+            Code = prereq.QuestCode,
+            Reason = $"Must complete quest '{prereq.QuestCode}' first",
+            CurrentValue = "Not completed",
+            RequiredValue = "Completed"
+        };
+    }
+
+    /// <summary>
+    /// Checks the CURRENCY_AMOUNT prerequisite type via ICurrencyClient.
+    /// </summary>
+    private async Task<FailedPrerequisite?> CheckCurrencyPrerequisiteAsync(
+        PrerequisiteDefinitionModel prereq,
+        Guid characterId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(prereq.CurrencyCode) || !prereq.MinAmount.HasValue)
+        {
+            _logger.LogWarning("CURRENCY_AMOUNT prerequisite missing currencyCode or minAmount");
+            return null;
+        }
+
+        try
+        {
+            // Get currency definition by code
+            CurrencyDefinitionResponse currencyDef;
+            try
+            {
+                currencyDef = await _currencyClient.GetCurrencyDefinitionAsync(
+                    new GetCurrencyDefinitionRequest { Code = prereq.CurrencyCode },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return new FailedPrerequisite
+                {
+                    Type = PrerequisiteType.CURRENCY_AMOUNT,
+                    Code = prereq.CurrencyCode,
+                    Reason = $"Unknown currency: {prereq.CurrencyCode}"
+                };
+            }
+
+            // Get or create wallet for character
+            GetOrCreateWalletResponse walletResponse;
+            try
+            {
+                walletResponse = await _currencyClient.GetOrCreateWalletAsync(
+                    new GetOrCreateWalletRequest
+                    {
+                        OwnerId = characterId,
+                        OwnerType = WalletOwnerType.Character
+                    },
+                    cancellationToken);
+            }
+            catch (ApiException)
+            {
+                return new FailedPrerequisite
+                {
+                    Type = PrerequisiteType.CURRENCY_AMOUNT,
+                    Code = prereq.CurrencyCode,
+                    Reason = "Could not access wallet",
+                    CurrentValue = "0",
+                    RequiredValue = prereq.MinAmount.Value.ToString()
+                };
+            }
+
+            if (walletResponse?.Wallet == null)
+            {
+                return new FailedPrerequisite
+                {
+                    Type = PrerequisiteType.CURRENCY_AMOUNT,
+                    Code = prereq.CurrencyCode,
+                    Reason = "Could not access wallet",
+                    CurrentValue = "0",
+                    RequiredValue = prereq.MinAmount.Value.ToString()
+                };
+            }
+
+            // Get balance for this currency
+            GetBalanceResponse balance;
+            try
+            {
+                balance = await _currencyClient.GetBalanceAsync(
+                    new GetBalanceRequest
+                    {
+                        WalletId = walletResponse.Wallet.WalletId,
+                        CurrencyDefinitionId = currencyDef.DefinitionId
+                    },
+                    cancellationToken);
+            }
+            catch (ApiException)
+            {
+                // No balance means 0
+                return new FailedPrerequisite
+                {
+                    Type = PrerequisiteType.CURRENCY_AMOUNT,
+                    Code = prereq.CurrencyCode,
+                    Reason = $"Insufficient {prereq.CurrencyCode}: have 0, need {prereq.MinAmount.Value}",
+                    CurrentValue = "0",
+                    RequiredValue = prereq.MinAmount.Value.ToString()
+                };
+            }
+
+            var currentAmount = balance?.EffectiveAmount ?? 0;
+            if (currentAmount >= prereq.MinAmount.Value)
+                return null;
+
+            return new FailedPrerequisite
+            {
+                Type = PrerequisiteType.CURRENCY_AMOUNT,
+                Code = prereq.CurrencyCode,
+                Reason = $"Insufficient {prereq.CurrencyCode}: have {currentAmount}, need {prereq.MinAmount.Value}",
+                CurrentValue = currentAmount.ToString(),
+                RequiredValue = prereq.MinAmount.Value.ToString()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking currency prerequisite {CurrencyCode}", prereq.CurrencyCode);
+            return new FailedPrerequisite
+            {
+                Type = PrerequisiteType.CURRENCY_AMOUNT,
+                Code = prereq.CurrencyCode,
+                Reason = "Error checking currency balance"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Checks the ITEM_OWNED prerequisite type via IInventoryClient and IItemClient.
+    /// </summary>
+    private async Task<FailedPrerequisite?> CheckItemPrerequisiteAsync(
+        PrerequisiteDefinitionModel prereq,
+        Guid characterId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(prereq.ItemCode))
+        {
+            _logger.LogWarning("ITEM_OWNED prerequisite missing itemCode");
+            return null;
+        }
+
+        var requiredQuantity = prereq.MinAmount ?? 1;
+
+        try
+        {
+            // Get item template by code
+            ItemTemplateResponse template;
+            try
+            {
+                template = await _itemClient.GetItemTemplateAsync(
+                    new GetItemTemplateRequest { Code = prereq.ItemCode },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return new FailedPrerequisite
+                {
+                    Type = PrerequisiteType.ITEM_OWNED,
+                    Code = prereq.ItemCode,
+                    Reason = $"Unknown item: {prereq.ItemCode}"
+                };
+            }
+
+            // Check if character has enough of this item
+            HasItemsResponse hasResponse;
+            try
+            {
+                hasResponse = await _inventoryClient.HasItemsAsync(
+                    new HasItemsRequest
+                    {
+                        OwnerId = characterId,
+                        OwnerType = ContainerOwnerType.Character,
+                        Requirements = new List<ItemRequirement>
+                        {
+                            new() { TemplateId = template.TemplateId, Quantity = requiredQuantity }
+                        }
+                    },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Character has no containers or items
+                return new FailedPrerequisite
+                {
+                    Type = PrerequisiteType.ITEM_OWNED,
+                    Code = prereq.ItemCode,
+                    Reason = $"Insufficient {prereq.ItemCode}: have 0, need {requiredQuantity}",
+                    CurrentValue = "0",
+                    RequiredValue = requiredQuantity.ToString()
+                };
+            }
+
+            if (hasResponse.HasAll)
+                return null;
+
+            var currentQuantity = hasResponse.Results?.FirstOrDefault()?.Available ?? 0;
+            return new FailedPrerequisite
+            {
+                Type = PrerequisiteType.ITEM_OWNED,
+                Code = prereq.ItemCode,
+                Reason = $"Insufficient {prereq.ItemCode}: have {currentQuantity}, need {requiredQuantity}",
+                CurrentValue = currentQuantity.ToString(),
+                RequiredValue = requiredQuantity.ToString()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking item prerequisite {ItemCode}", prereq.ItemCode);
+            return new FailedPrerequisite
+            {
+                Type = PrerequisiteType.ITEM_OWNED,
+                Code = prereq.ItemCode,
+                Reason = "Error checking item ownership"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Checks dynamic prerequisites via IPrerequisiteProviderFactory implementations.
+    /// This handles L4 service-provided prerequisite types like skills, achievements, etc.
+    /// </summary>
+    private async Task<FailedPrerequisite?> CheckDynamicPrerequisiteAsync(
+        string providerName,
+        PrerequisiteDefinitionModel prereq,
+        Guid characterId,
+        CancellationToken cancellationToken)
+    {
+        var provider = _prerequisiteProviders.FirstOrDefault(p =>
+            string.Equals(p.ProviderName, providerName, StringComparison.OrdinalIgnoreCase));
+
+        if (provider == null)
+        {
+            _logger.LogDebug(
+                "No prerequisite provider registered for type {ProviderName}, skipping check",
+                providerName);
+            return null; // Graceful degradation: L4 service not enabled
+        }
+
+        // Build parameters dictionary from prerequisite definition
+        var parameters = new Dictionary<string, object?>
+        {
+            ["minLevel"] = prereq.MinLevel,
+            ["minReputation"] = prereq.MinReputation,
+            ["minAmount"] = prereq.MinAmount,
+            ["factionCode"] = prereq.FactionCode
+        };
+
+        var code = prereq.QuestCode ?? prereq.FactionCode ?? prereq.ItemCode ?? prereq.CurrencyCode ?? "";
+
+        try
+        {
+            var result = await provider.CheckAsync(characterId, code, parameters, cancellationToken);
+
+            if (result.Satisfied)
+                return null;
+
+            return new FailedPrerequisite
+            {
+                Type = prereq.Type,
+                Code = code,
+                Reason = result.FailureReason ?? $"Prerequisite {providerName} not met",
+                CurrentValue = result.CurrentValue?.ToString(),
+                RequiredValue = result.RequiredValue?.ToString()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking dynamic prerequisite {ProviderName}", providerName);
+            return new FailedPrerequisite
+            {
+                Type = prereq.Type,
+                Code = code,
+                Reason = $"Error checking {providerName} prerequisite"
+            };
+        }
     }
 
     private async Task<List<ObjectiveProgress>> GetObjectiveProgressListAsync(
@@ -1797,13 +2161,39 @@ public partial class QuestService : IQuestService
         Guid definitionId,
         string normalizedCode)
     {
-        // Build milestones from objectives - contract milestones map to quest objectives
-        var milestones = body.Objectives.Select((obj, index) => new MilestoneDefinition
+        // Build reward prebound APIs from reward definitions
+        var rewardApis = BuildRewardPreboundApis(body.Rewards, normalizedCode);
+
+        // Find the last required objective index for reward attachment
+        var lastRequiredIndex = -1;
+        for (var i = 0; i < body.Objectives.Count; i++)
         {
-            Code = obj.Code,
-            Name = obj.Name,
-            Description = obj.Description,
-            Sequence = index
+            var obj = body.Objectives.ElementAt(i);
+            if (obj.Optional != true)
+            {
+                lastRequiredIndex = i;
+            }
+        }
+
+        // Build milestones from objectives - contract milestones map to quest objectives
+        var milestones = body.Objectives.Select((obj, index) =>
+        {
+            var milestone = new MilestoneDefinition
+            {
+                Code = obj.Code,
+                Name = obj.Name,
+                Description = obj.Description,
+                Sequence = index,
+                Required = obj.Optional != true
+            };
+
+            // Attach rewards to the final required milestone
+            if (index == lastRequiredIndex && rewardApis.Count > 0)
+            {
+                milestone.OnComplete = rewardApis;
+            }
+
+            return milestone;
         }).ToList();
 
         // Contract template code must be lowercase per contract schema validation
@@ -1824,6 +2214,166 @@ public partial class QuestService : IQuestService
             Milestones = milestones,
             DefaultEnforcementMode = EnforcementMode.EventOnly
         };
+    }
+
+    /// <summary>
+    /// Builds prebound API calls for quest rewards.
+    /// These are executed when the final required milestone is completed.
+    /// </summary>
+    private List<PreboundApi> BuildRewardPreboundApis(
+        ICollection<RewardDefinition>? rewards,
+        string questCode)
+    {
+        var apis = new List<PreboundApi>();
+
+        if (rewards == null || rewards.Count == 0)
+            return apis;
+
+        foreach (var reward in rewards)
+        {
+            switch (reward.Type)
+            {
+                case RewardDefinitionType.CURRENCY:
+                    if (!string.IsNullOrEmpty(reward.CurrencyCode) && reward.Amount.HasValue)
+                    {
+                        // Use template variable for wallet ID - resolved at quest acceptance
+                        apis.Add(new PreboundApi
+                        {
+                            ServiceName = "currency",
+                            Endpoint = "/currency/credit",
+                            PayloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
+                            {
+                                ["walletId"] = "{{questor_wallet_id}}",
+                                ["currencyCode"] = reward.CurrencyCode,
+                                ["amount"] = reward.Amount.Value,
+                                ["transactionType"] = "quest_reward",
+                                ["referenceId"] = "{{contract.id}}",
+                                ["description"] = $"Quest reward: {questCode}"
+                            })
+                        });
+                    }
+                    break;
+
+                case RewardDefinitionType.ITEM:
+                    if (!string.IsNullOrEmpty(reward.ItemCode) && reward.Quantity.HasValue)
+                    {
+                        // Use template variable for container ID - resolved at quest acceptance
+                        apis.Add(new PreboundApi
+                        {
+                            ServiceName = "inventory",
+                            Endpoint = "/inventory/add-item",
+                            PayloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
+                            {
+                                ["containerId"] = "{{questor_container_id}}",
+                                ["itemCode"] = reward.ItemCode,
+                                ["quantity"] = reward.Quantity.Value,
+                                ["referenceId"] = "{{contract.id}}",
+                                ["referenceType"] = "quest_reward"
+                            })
+                        });
+                    }
+                    break;
+
+                case RewardDefinitionType.EXPERIENCE:
+                    // Stub: Experience system not implemented
+                    _logger.LogWarning(
+                        "EXPERIENCE reward for quest {QuestCode} skipped: experience system not implemented",
+                        questCode);
+                    break;
+
+                case RewardDefinitionType.REPUTATION:
+                    // Stub: Reputation system not implemented
+                    _logger.LogWarning(
+                        "REPUTATION reward for quest {QuestCode} skipped: reputation system not implemented",
+                        questCode);
+                    break;
+
+                default:
+                    _logger.LogWarning("Unknown reward type {Type} for quest {QuestCode}", reward.Type, questCode);
+                    break;
+            }
+        }
+
+        return apis;
+    }
+
+    /// <summary>
+    /// Resolves template values needed for reward prebound API execution.
+    /// Gets wallet and container IDs for the questor character.
+    /// </summary>
+    private async Task<Dictionary<string, string>> ResolveTemplateValuesAsync(
+        Guid characterId,
+        QuestDefinitionModel definition,
+        CancellationToken cancellationToken)
+    {
+        var values = new Dictionary<string, string>();
+
+        // Check if we have any currency or item rewards that need wallet/container IDs
+        var hasCurrencyRewards = definition.Rewards?.Any(r => r.Type == RewardDefinitionType.CURRENCY) ?? false;
+        var hasItemRewards = definition.Rewards?.Any(r => r.Type == RewardDefinitionType.ITEM) ?? false;
+
+        if (hasCurrencyRewards)
+        {
+            try
+            {
+                var response = await _currencyClient.GetOrCreateWalletAsync(
+                    new GetOrCreateWalletRequest
+                    {
+                        OwnerId = characterId,
+                        OwnerType = WalletOwnerType.Character
+                    },
+                    cancellationToken);
+
+                if (response?.Wallet != null)
+                {
+                    values["questor_wallet_id"] = response.Wallet.WalletId.ToString();
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Failed to resolve wallet for character {CharacterId}, currency rewards may fail",
+                        characterId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resolving wallet for character {CharacterId}", characterId);
+            }
+        }
+
+        if (hasItemRewards)
+        {
+            try
+            {
+                var container = await _inventoryClient.GetOrCreateContainerAsync(
+                    new GetOrCreateContainerRequest
+                    {
+                        OwnerId = characterId,
+                        OwnerType = ContainerOwnerType.Character,
+                        ContainerType = "inventory",
+                        ConstraintModel = ContainerConstraintModel.SlotOnly,
+                        MaxSlots = 100 // Default, games should configure this appropriately
+                    },
+                    cancellationToken);
+
+                if (container != null)
+                {
+                    values["questor_container_id"] = container.ContainerId.ToString();
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Failed to resolve inventory container for character {CharacterId}, item rewards may fail",
+                        characterId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resolving container for character {CharacterId}", characterId);
+            }
+        }
+
+        return values;
     }
 
     private static List<ObjectiveDefinitionModel> MapObjectiveDefinitions(ICollection<ObjectiveDefinition>? objectives)

@@ -39,7 +39,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 6 | Orchestration service for dynamic behaviors, regional watche... |
-| [Bannou Quest Service API](#quest) | `client.Quest` | 16 | Quest system providing objective-based gameplay progression ... |
+| [Bannou Quest Service API](#quest) | `client.Quest` | 17 | Quest system providing objective-based gameplay progression ... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 11 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
@@ -49,7 +49,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
-| [Storyline Composer API](#storyline) | `client.Storyline` | 14 | Seeded narrative generation from compressed archives using t... |
+| [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 7 | Voice communication coordination service for P2P and room-ba... |
@@ -1348,6 +1348,12 @@ Orchestration service for dynamic behaviors, regional watchers, and encounter co
 
 Quest system providing objective-based gameplay progression as a thin orchestration layer over lib-contract. Quests are contracts with game-flavore...
 
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `QuestArchive` | Get quest data for compression |
+
 ### Definitions
 
 | Method | Request | Response | Summary |
@@ -1747,6 +1753,12 @@ Seeded narrative generation from compressed archives using the storyline SDKs.
 |--------|---------|----------|---------|
 | `ComposeAsync` | `ComposeRequest` | `ComposeResponse` | Compose a storyline plan from archive seeds |
 
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `StorylineArchive` | Get storyline data for compression |
+
 ### Plans
 
 | Method | Request | Response | Summary |
@@ -1895,7 +1907,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 45
-- **Total methods**: 607
+- **Total methods**: 609
 
 ---
 

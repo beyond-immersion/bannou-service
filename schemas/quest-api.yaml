@@ -20,7 +20,7 @@ info:
     compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
     priority: 50
     description: Quest state (active quests, completed counts, category breakdown)
-x-service-layer: GameFeatures
+x-service-layer: GameFoundation
 
 servers:
   - url: http://localhost:5012
@@ -464,6 +464,14 @@ components:
       enum: [QUEST_COMPLETED, CHARACTER_LEVEL, REPUTATION, ITEM_OWNED, CURRENCY_AMOUNT]
       description: Type of prerequisite check
 
+    PrerequisiteValidationMode:
+      type: string
+      enum: [FAIL_FAST, CHECK_ALL]
+      description: |
+        Controls how prerequisite validation handles multiple prerequisites.
+        FAIL_FAST: Stop on first failure, return that failure.
+        CHECK_ALL: Check all prerequisites, return all failures for richer error info.
+
     # === REQUEST/RESPONSE MODELS ===
     CreateQuestDefinitionRequest:
       type: object
@@ -655,6 +663,55 @@ components:
           type: string
           nullable: true
           description: Faction code for REPUTATION rewards
+
+    FailedPrerequisite:
+      type: object
+      description: Details about a failed prerequisite check during quest acceptance
+      additionalProperties: false
+      required: [type, reason]
+      properties:
+        type:
+          $ref: '#/components/schemas/PrerequisiteType'
+          description: Type of prerequisite that failed
+        code:
+          type: string
+          nullable: true
+          description: Specific code (quest code, currency code, item code, etc.)
+        reason:
+          type: string
+          description: Human-readable failure reason
+        currentValue:
+          type: string
+          nullable: true
+          description: Current value (e.g., "50 gold", "3 wolf pelts")
+        requiredValue:
+          type: string
+          nullable: true
+          description: Required value (e.g., "100 gold", "5 wolf pelts")
+
+    AcceptQuestErrorCode:
+      type: string
+      enum: [PREREQUISITES_NOT_MET, ALREADY_ACTIVE, ON_COOLDOWN, MAX_QUESTS_REACHED, DEFINITION_NOT_FOUND, DEFINITION_DEPRECATED]
+      description: Specific error codes for quest acceptance failures
+
+    AcceptQuestErrorResponse:
+      type: object
+      description: Error response when quest acceptance fails
+      additionalProperties: false
+      required: [errorCode, message]
+      properties:
+        errorCode:
+          $ref: '#/components/schemas/AcceptQuestErrorCode'
+          description: Specific error code indicating failure type
+        message:
+          type: string
+          description: Human-readable error message
+        failedPrerequisites:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/FailedPrerequisite'
+          description: List of prerequisites that were not met (only for PREREQUISITES_NOT_MET)
 
     QuestDefinitionResponse:
       type: object

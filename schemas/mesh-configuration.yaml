@@ -57,18 +57,21 @@ x-service-configuration:
     # =========================================================================
     HeartbeatIntervalSeconds:
       type: integer
+      minimum: 1
       description: Recommended interval between heartbeats
       env: MESH_HEARTBEAT_INTERVAL_SECONDS
       default: 30
 
     EndpointTtlSeconds:
       type: integer
+      minimum: 1
       description: TTL for endpoint registration (should be > 2x heartbeat interval)
       env: MESH_ENDPOINT_TTL_SECONDS
       default: 90
 
     DegradationThresholdSeconds:
       type: integer
+      minimum: 1
       description: Time without heartbeat before marking endpoint as degraded
       env: MESH_DEGRADATION_THRESHOLD_SECONDS
       default: 60
@@ -84,9 +87,18 @@ x-service-configuration:
 
     LoadThresholdPercent:
       type: integer
+      minimum: 0
+      maximum: 100
       description: Load percentage above which an endpoint is considered high-load
       env: MESH_LOAD_THRESHOLD_PERCENT
       default: 80
+
+    LoadBalancingStateMaxAppIds:
+      type: integer
+      minimum: 0
+      description: Maximum number of app-ids to track in load balancing state (round-robin counters, weighted state). Use 0 for unlimited.
+      env: MESH_LOAD_BALANCING_STATE_MAX_APP_IDS
+      default: 0
 
     # =========================================================================
     # Routing Configuration
@@ -108,12 +120,14 @@ x-service-configuration:
 
     HealthCheckIntervalSeconds:
       type: integer
+      minimum: 1
       description: Interval between active health checks
       env: MESH_HEALTH_CHECK_INTERVAL_SECONDS
       default: 60
 
     HealthCheckTimeoutSeconds:
       type: integer
+      minimum: 1
       description: Timeout for health check requests
       env: MESH_HEALTH_CHECK_TIMEOUT_SECONDS
       default: 5
@@ -141,6 +155,7 @@ x-service-configuration:
 
     CircuitBreakerResetSeconds:
       type: integer
+      minimum: 1
       description: Seconds before attempting to close circuit
       env: MESH_CIRCUIT_BREAKER_RESET_SECONDS
       default: 30
@@ -165,26 +180,37 @@ x-service-configuration:
     # =========================================================================
     PooledConnectionLifetimeMinutes:
       type: integer
+      minimum: 1
       description: How long to keep pooled HTTP connections alive in minutes
       env: MESH_POOLED_CONNECTION_LIFETIME_MINUTES
       default: 2
     ConnectTimeoutSeconds:
       type: integer
+      minimum: 1
       description: TCP connection timeout in seconds
       env: MESH_CONNECT_TIMEOUT_SECONDS
       default: 10
     EndpointCacheTtlSeconds:
       type: integer
+      minimum: 1
       description: TTL in seconds for cached service endpoints
       env: MESH_ENDPOINT_CACHE_TTL_SECONDS
       default: 5
+
+    EndpointCacheMaxSize:
+      type: integer
+      minimum: 0
+      description: Maximum number of app-ids to cache endpoint resolutions for. Use 0 for unlimited.
+      env: MESH_ENDPOINT_CACHE_MAX_SIZE
+      default: 0
 
     # =========================================================================
     # Startup Configuration
     # =========================================================================
     HealthCheckStartupDelaySeconds:
       type: integer
-      description: Delay in seconds before health check service starts probing endpoints
+      minimum: 0
+      description: Delay in seconds before health check service starts probing endpoints (0 means start immediately)
       env: MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS
       default: 10
 
