@@ -290,6 +290,8 @@ components:
       properties:
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           description: New ETag after save
 
     DeleteStateRequest:
@@ -423,6 +425,8 @@ components:
       properties:
         field:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Field name to sort by (JSON path for MySQL, field name for Redis)
         order:
           type: string
@@ -441,6 +445,8 @@ components:
       properties:
         path:
           type: string
+          minLength: 1
+          maxLength: 200
           description: JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]")
         operator:
           $ref: '#/components/schemas/QueryOperator'
@@ -480,12 +486,16 @@ components:
           description: Query results
         totalCount:
           type: integer
+          minimum: 0
           description: Total matching items (for pagination)
         page:
           type: integer
+          minimum: 0
           description: Current page number
         pageSize:
           type: integer
+          minimum: 1
+          maximum: 1000
           description: Items per page
 
     BulkGetStateRequest:
@@ -498,11 +508,17 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         keys:
           type: array
           items:
             type: string
+            minLength: 1
+            maxLength: 500
+          minItems: 1
+          maxItems: 1000
           description: Keys to retrieve
 
     BulkGetStateResponse:
@@ -523,6 +539,8 @@ components:
       properties:
         key:
           type: string
+          minLength: 1
+          maxLength: 500
           description: The key
         value:
           type: object
@@ -531,6 +549,8 @@ components:
           description: The value (null if not found)
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           nullable: true
           description: ETag for this item
         found:
@@ -547,11 +567,15 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         items:
           type: array
           items:
             $ref: '#/components/schemas/BulkSaveItem'
+          minItems: 1
+          maxItems: 1000
           description: Items to save
         options:
           nullable: true
@@ -569,6 +593,8 @@ components:
       properties:
         key:
           type: string
+          minLength: 1
+          maxLength: 500
           description: The key to save
         value:
           type: object
@@ -598,9 +624,13 @@ components:
       properties:
         key:
           type: string
+          minLength: 1
+          maxLength: 500
           description: The key that was saved
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           description: New ETag after save
 
     BulkExistsStateRequest:
@@ -613,11 +643,17 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         keys:
           type: array
           items:
             type: string
+            minLength: 1
+            maxLength: 500
+          minItems: 1
+          maxItems: 1000
           description: Keys to check for existence
 
     BulkExistsStateResponse:
@@ -643,11 +679,17 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         keys:
           type: array
           items:
             type: string
+            minLength: 1
+            maxLength: 500
+          minItems: 1
+          maxItems: 1000
           description: Keys to delete
 
     BulkDeleteStateResponse:
@@ -659,6 +701,7 @@ components:
       properties:
         deletedCount:
           type: integer
+          minimum: 0
           description: Number of keys actually deleted
 
     ListStoresRequest:
@@ -696,6 +739,8 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Store name
         backend:
           type: string
@@ -705,5 +750,6 @@ components:
           description: Backend type
         keyCount:
           type: integer
+          minimum: 0
           nullable: true
           description: Number of keys (only if includeStats=true)

@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.State;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.State;
 
@@ -41,16 +56,18 @@ public partial class GetStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
     /// Key to retrieve
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
 }
@@ -93,16 +110,18 @@ public partial class SaveStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
     /// Key to save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -132,6 +151,7 @@ public partial class SaveStateResponse
     /// New ETag after save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Etag { get; set; } = default!;
 
 }
@@ -147,16 +167,18 @@ public partial class DeleteStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
     /// Key to delete
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
 }
@@ -184,15 +206,17 @@ public partial class StateOptions
 {
 
     /// <summary>
-    /// TTL in seconds (Redis only)
+    /// TTL in seconds (Redis only). Maximum 1 year (31536000 seconds).
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ttl")]
+    [System.ComponentModel.DataAnnotations.Range(1, 31536000)]
     public int? Ttl { get; set; } = default!;
 
     /// <summary>
     /// Optimistic concurrency check - save fails if ETag mismatch
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string? Etag { get; set; } = default!;
 
 }
@@ -220,6 +244,7 @@ public partial class StateMetadata
     /// Version number for optimistic concurrency
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Version { get; set; } = default!;
 
 }
@@ -235,8 +260,9 @@ public partial class QueryStateRequest
     /// Name of the state store (MySQL or Redis with search enabled)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -245,6 +271,7 @@ public partial class QueryStateRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("conditions")]
+    [System.ComponentModel.DataAnnotations.MaxLength(50)]
     public System.Collections.Generic.ICollection<QueryCondition>? Conditions { get; set; } = default!;
 
     /// <summary>
@@ -253,6 +280,7 @@ public partial class QueryStateRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("indexName")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string? IndexName { get; set; } = default!;
 
     /// <summary>
@@ -261,24 +289,28 @@ public partial class QueryStateRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("query")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000, MinimumLength = 1)]
     public string? Query { get; set; } = default!;
 
     /// <summary>
     /// Sort order (first field only is used) (null for default ordering)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sort")]
+    [System.ComponentModel.DataAnnotations.MaxLength(10)]
     public System.Collections.Generic.ICollection<SortField>? Sort { get; set; } = default!;
 
     /// <summary>
     /// Page number (0-indexed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Page { get; set; } = 0;
 
     /// <summary>
     /// Items per page (max 1000)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
     public int PageSize { get; set; } = 100;
 
 }
@@ -294,6 +326,7 @@ public partial class SortField
     /// Field name to sort by (JSON path for MySQL, field name for Redis)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("field")]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string Field { get; set; } = default!;
 
     /// <summary>
@@ -316,8 +349,9 @@ public partial class QueryCondition
     /// JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("path")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string Path { get; set; } = default!;
 
     /// <summary>
@@ -402,18 +436,21 @@ public partial class QueryStateResponse
     /// Total matching items (for pagination)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int TotalCount { get; set; } = default!;
 
     /// <summary>
     /// Current page number
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Page { get; set; } = default!;
 
     /// <summary>
     /// Items per page
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
     public int PageSize { get; set; } = default!;
 
 }
@@ -429,8 +466,9 @@ public partial class BulkGetStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -439,6 +477,8 @@ public partial class BulkGetStateRequest
     [System.Text.Json.Serialization.JsonPropertyName("keys")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
     public System.Collections.Generic.ICollection<string> Keys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
@@ -469,6 +509,7 @@ public partial class BulkStateItem
     /// The key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -481,6 +522,7 @@ public partial class BulkStateItem
     /// ETag for this item
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string? Etag { get; set; } = default!;
 
     /// <summary>
@@ -502,8 +544,9 @@ public partial class BulkSaveStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -512,6 +555,8 @@ public partial class BulkSaveStateRequest
     [System.Text.Json.Serialization.JsonPropertyName("items")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
     public System.Collections.Generic.ICollection<BulkSaveItem> Items { get; set; } = new System.Collections.ObjectModel.Collection<BulkSaveItem>();
 
     /// <summary>
@@ -533,8 +578,9 @@ public partial class BulkSaveItem
     /// The key to save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -575,16 +621,18 @@ public partial class BulkSaveResult
     /// The key that was saved
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>
     /// New ETag after save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Etag { get; set; } = default!;
 
 }
@@ -600,8 +648,9 @@ public partial class BulkExistsStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -610,6 +659,8 @@ public partial class BulkExistsStateRequest
     [System.Text.Json.Serialization.JsonPropertyName("keys")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
     public System.Collections.Generic.ICollection<string> Keys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
@@ -642,8 +693,9 @@ public partial class BulkDeleteStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -652,6 +704,8 @@ public partial class BulkDeleteStateRequest
     [System.Text.Json.Serialization.JsonPropertyName("keys")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
     public System.Collections.Generic.ICollection<string> Keys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
@@ -667,6 +721,7 @@ public partial class BulkDeleteStateResponse
     /// Number of keys actually deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int DeletedCount { get; set; } = default!;
 
 }
@@ -719,6 +774,7 @@ public partial class StoreInfo
     /// Store name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -732,6 +788,7 @@ public partial class StoreInfo
     /// Number of keys (only if includeStats=true)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("keyCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? KeyCount { get; set; } = default!;
 
 }

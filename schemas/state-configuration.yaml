@@ -39,16 +39,22 @@ x-service-configuration:
       default: "server=bannou-mysql;database=bannou;user=guest;password=guest"
     ConnectionTimeoutSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       description: Total timeout in seconds for establishing Redis/MySQL connections
       env: STATE_CONNECTION_TIMEOUT_SECONDS
       default: 60
     ConnectionRetryCount:
       type: integer
+      minimum: 0
+      maximum: 100
       description: Maximum number of connection retry attempts for MySQL initialization
       env: STATE_CONNECTION_RETRY_COUNT
       default: 10
     MinRetryDelayMs:
       type: integer
+      minimum: 100
+      maximum: 60000
       description: Minimum delay in milliseconds between MySQL connection retry attempts
       env: STATE_MIN_RETRY_DELAY_MS
       default: 1000
