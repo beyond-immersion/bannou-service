@@ -102,6 +102,13 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public bool EnablePublisherConfirms { get; set; } = true;
 
     /// <summary>
+    /// Timeout in seconds for publisher confirmation when confirms enabled
+    /// Environment variable: MESSAGING_PUBLISHER_CONFIRM_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 30)]
+    public int PublisherConfirmTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
     /// Number of connection retry attempts
     /// Environment variable: MESSAGING_CONNECTION_RETRY_COUNT
     /// </summary>

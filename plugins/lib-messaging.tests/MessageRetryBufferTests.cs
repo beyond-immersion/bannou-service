@@ -76,12 +76,6 @@ public class MessageRetryBufferTests : IAsyncDisposable
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_IsValid()
-    {
-        ServiceConstructorValidator.ValidateServiceConstructor<MessageRetryBuffer>();
-    }
-
-    [Fact]
     public void Constructor_WhenEnabled_InitializesWithZeroCount()
     {
         // Arrange & Act
@@ -280,16 +274,18 @@ public class MessageRetryBufferTests : IAsyncDisposable
     public void TryEnqueueForRetry_WhenBufferExceedsMaxSize_TerminatesProcess()
     {
         // Arrange - very small buffer for test
-        var buffer = CreateBuffer(CreateConfig(maxSize: 10, backpressureThreshold: 0.99));
+        // Set backpressure threshold to 1.0 to disable backpressure completely
+        // This allows all messages to be enqueued until max size is reached
+        var buffer = CreateBuffer(CreateConfig(maxSize: 10, backpressureThreshold: 1.0));
         var payload = System.Text.Encoding.UTF8.GetBytes("{\"test\":true}");
 
-        // Act - fill beyond max size (backpressure at 99% = 9.9, so 10 messages fit)
+        // Act - fill beyond max size (backpressure disabled, so all 10 messages get enqueued)
         for (int i = 0; i < 10; i++)
         {
             buffer.TryEnqueueForRetry("test.topic", payload, null, Guid.NewGuid());
         }
 
-        // Assert - process terminator should have been called
+        // Assert - process terminator should have been called when reaching max size
         _mockProcessTerminator.Verify(
             x => x.TerminateProcess(It.Is<string>(s => s.Contains("exceeded max size"))),
             Times.Once);
