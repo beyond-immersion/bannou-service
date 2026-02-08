@@ -91,6 +91,13 @@ public class AccountServiceConfiguration : IServiceConfiguration
     public int CreateLockExpirySeconds { get; set; } = 10;
 
     /// <summary>
+    /// Lock expiry in seconds for email uniqueness check during email change
+    /// Environment variable: ACCOUNT_EMAIL_CHANGE_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int EmailChangeLockExpirySeconds { get; set; } = 10;
+
+    /// <summary>
     /// Maximum number of accounts to scan when filtering by provider (admin-only endpoint)
     /// Environment variable: ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE
     /// </summary>

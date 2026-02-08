@@ -56,6 +56,15 @@ x-service-configuration:
       maximum: 60
       description: Lock expiry in seconds for account creation email uniqueness check
 
+    # Email Change Lock Configuration
+    EmailChangeLockExpirySeconds:
+      type: integer
+      env: ACCOUNT_EMAIL_CHANGE_LOCK_EXPIRY_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 60
+      description: Lock expiry in seconds for email uniqueness check during email change
+
     # Provider Filter Configuration
     ProviderFilterMaxScanSize:
       type: integer

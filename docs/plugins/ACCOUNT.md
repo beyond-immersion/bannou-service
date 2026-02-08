@@ -71,6 +71,7 @@ This plugin does not consume external events. The events schema explicitly decla
 | `MaxPageSize` | `ACCOUNT_MAX_PAGE_SIZE` | 100 | Maximum allowed page size for list operations (requests capped to this value) |
 | `ListBatchSize` | `ACCOUNT_LIST_BATCH_SIZE` | 100 | Number of accounts loaded per batch when applying provider filter in the list endpoint |
 | `CreateLockExpirySeconds` | `ACCOUNT_CREATE_LOCK_EXPIRY_SECONDS` | 10 | Lock expiry in seconds for distributed email uniqueness lock during account creation (min: 1, max: 60) |
+| `EmailChangeLockExpirySeconds` | `ACCOUNT_EMAIL_CHANGE_LOCK_EXPIRY_SECONDS` | 10 | Lock expiry in seconds for email uniqueness check during email change (min: 1, max: 60) |
 | `ProviderFilterMaxScanSize` | `ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE` | 10000 | Maximum number of accounts to scan when filtering by provider in the admin-only list endpoint (min: 100, max: 100000) |
 | `AutoManageAnonymousRole` | `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | true | When true, automatically manages "anonymous" role: adds it if roles would be empty, removes it when adding non-anonymous roles |
 
@@ -117,6 +118,10 @@ Add/remove OAuth provider links. Adding a method validates: (1) non-empty Extern
 - `password/update`: Stores a pre-hashed password received from the Auth service. Account service never handles raw passwords.
 - `verification/update`: Sets the `IsVerified` flag.
 
+### Email Change
+
+- `email/update`: Admin-only endpoint for changing an account's email address. Uses a distributed lock on the new email (`account-email:{normalizedNewEmail}` key in `account-lock` Redis store) to coordinate with `CreateAccountAsync` and prevent TOCTOU race conditions. The operation atomically: (1) validates the new email is not already taken, (2) creates the new email index, (3) updates the account record with ETag concurrency (setting the new email, resetting `IsVerified` to false), and (4) deletes the old email index. If the ETag save fails, the new email index is rolled back. Also handles the case where the account had no previous email (OAuth/Steam accounts) — in that case, only the new index is created. Publishes `account.updated` with `["email", "isVerified"]` in `changedFields`.
+
 ## State Store Key Relationships
 
 ```
@@ -153,8 +158,7 @@ On Delete: email-index removed (if exists),             │
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/137 -->
 - **Audit trail**: Account mutations publish events but don't maintain a per-account change history. An extension could store a changelog for compliance/debugging.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/138 -->
-- **Email change**: There is no endpoint for changing an account's email address. The email index would need to be atomically swapped (delete old index, create new index, update account record) with proper concurrency handling.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/139 -->
+- ~~**Email change**: There is no endpoint for changing an account's email address.~~: **FIXED** (2026-02-08) - Added `/account/email/update` endpoint with distributed lock, atomic index swap, and IsVerified reset. See Issue #139.
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
@@ -189,6 +193,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- **#139 Email Change Endpoint** (2026-02-08): Added `/account/email/update` with distributed lock on new email, atomic index swap, IsVerified reset, and event publication.
 - **#332 Production Hardening** (2026-02-08): Applied all 7 fixes for 100K+ scale:
   - BUG-1: Added distributed lock (`account-lock` Redis store) for email uniqueness in `CreateAccountAsync`
   - BUG-2: Added ETag concurrency to `AddAuthMethodAsync` (matching `RemoveAuthMethodAsync`)

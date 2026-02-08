@@ -109,4 +109,9 @@ public partial interface IAccountService : IBannouService
         /// </summary>
         Task<StatusCodes> UpdateVerificationStatusAsync(UpdateVerificationRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// UpdateEmail operation
+        /// </summary>
+        Task<(StatusCodes, AccountResponse?)> UpdateEmailAsync(UpdateEmailRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

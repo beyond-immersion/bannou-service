@@ -406,6 +406,33 @@ paths:
         '404':
           description: Account not found
 
+  /account/email/update:
+    post:
+      summary: Update account email address
+      operationId: updateEmail
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmailRequest'
+      responses:
+        '200':
+          description: Email updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+        '409':
+          description: Email already in use or concurrent modification
+
 components:
   schemas:
     # Shared Enum Definitions (consolidated to avoid duplication)
@@ -651,6 +678,23 @@ components:
         emailVerified:
           type: boolean
           description: New email verification status
+
+    UpdateEmailRequest:
+      type: object
+      description: Request to update an account's email address
+      additionalProperties: false
+      required:
+      - accountId
+      - newEmail
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
+        newEmail:
+          type: string
+          format: email
+          description: New email address for the account
 
     AddAuthMethodRequest:
       type: object

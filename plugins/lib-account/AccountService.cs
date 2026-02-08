@@ -1346,6 +1346,165 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, AccountResponse?)> UpdateEmailAsync(
+        UpdateEmailRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        ILockResponse? emailLock = null;
+        try
+        {
+            var accountId = body.AccountId;
+            var newEmail = body.NewEmail;
+            var normalizedNewEmail = newEmail.ToLowerInvariant();
+
+            _logger.LogInformation("Updating email for account {AccountId}", accountId);
+
+            // Distributed lock on new email prevents TOCTOU with concurrent
+            // CreateAccountAsync or UpdateEmailAsync targeting the same email
+            var lockOwner = $"email-change-{Guid.NewGuid():N}";
+            emailLock = await _lockProvider.LockAsync(
+                StateStoreDefinitions.AccountLock,
+                $"account-email:{normalizedNewEmail}",
+                lockOwner,
+                _configuration.EmailChangeLockExpirySeconds,
+                cancellationToken);
+
+            if (!emailLock.Success)
+            {
+                _logger.LogWarning("Failed to acquire email lock for {Email}", newEmail);
+                await emailLock.DisposeAsync();
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check new email not already taken
+            var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+            var existingAccountId = await emailIndexStore.GetAsync(
+                $"{EMAIL_INDEX_KEY_PREFIX}{normalizedNewEmail}", cancellationToken);
+
+            if (!string.IsNullOrEmpty(existingAccountId))
+            {
+                _logger.LogWarning("Email {Email} already in use by account {ExistingAccountId}",
+                    newEmail, existingAccountId);
+                await emailLock.DisposeAsync();
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Get account with ETag for optimistic concurrency
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+            if (account == null || account.DeletedAt.HasValue)
+            {
+                _logger.LogWarning("Account not found for email update: {AccountId}", accountId);
+                await emailLock.DisposeAsync();
+                return (StatusCodes.NotFound, null);
+            }
+
+            var oldEmail = account.Email;
+            var oldNormalizedEmail = oldEmail?.ToLowerInvariant();
+
+            // Check if new email is actually different
+            if (normalizedNewEmail == oldNormalizedEmail)
+            {
+                _logger.LogDebug("Email unchanged for account {AccountId}", accountId);
+                await emailLock.DisposeAsync();
+                var authMethodsNoChange = await GetAuthMethodsForAccountAsync(
+                    accountId.ToString(), cancellationToken);
+                return (StatusCodes.OK, new AccountResponse
+                {
+                    AccountId = account.AccountId,
+                    Email = account.Email,
+                    DisplayName = account.DisplayName,
+                    EmailVerified = account.IsVerified,
+                    CreatedAt = account.CreatedAt,
+                    UpdatedAt = account.UpdatedAt,
+                    Roles = account.Roles,
+                    AuthMethods = authMethodsNoChange
+                });
+            }
+
+            // Create new email index first (rollback if ETag save fails)
+            await emailIndexStore.SaveAsync(
+                $"{EMAIL_INDEX_KEY_PREFIX}{normalizedNewEmail}",
+                accountId.ToString());
+
+            // Update account: set new email, reset verification, bump timestamp
+            account.Email = newEmail;
+            account.IsVerified = false;
+            account.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // Save with ETag — if concurrent modification, rollback new index
+            var newEtag = await accountStore.TrySaveAsync(
+                accountKey, account, etag ?? string.Empty, cancellationToken);
+
+            if (newEtag == null)
+            {
+                _logger.LogWarning(
+                    "Concurrent modification for email update on account {AccountId}, rolling back email index",
+                    accountId);
+                // Rollback: delete the new email index we just created
+                await emailIndexStore.DeleteAsync(
+                    $"{EMAIL_INDEX_KEY_PREFIX}{normalizedNewEmail}", cancellationToken);
+                await emailLock.DisposeAsync();
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Delete old email index (if account previously had an email)
+            if (!string.IsNullOrEmpty(oldNormalizedEmail))
+            {
+                await emailIndexStore.DeleteAsync(
+                    $"{EMAIL_INDEX_KEY_PREFIX}{oldNormalizedEmail}", cancellationToken);
+            }
+
+            // Release lock now that all state is consistent
+            await emailLock.DisposeAsync();
+            emailLock = null;
+
+            _logger.LogInformation("Email updated for account {AccountId}: {OldEmail} -> {NewEmail}",
+                accountId, oldEmail ?? "(none)", newEmail);
+
+            // Publish event with changed fields
+            var changedFields = new List<string> { "email", "isVerified" };
+            await PublishAccountUpdatedEventAsync(account, changedFields, cancellationToken);
+
+            var authMethods = await GetAuthMethodsForAccountAsync(
+                accountId.ToString(), cancellationToken);
+
+            var response = new AccountResponse
+            {
+                AccountId = account.AccountId,
+                Email = account.Email,
+                DisplayName = account.DisplayName,
+                EmailVerified = account.IsVerified,
+                CreatedAt = account.CreatedAt,
+                UpdatedAt = account.UpdatedAt,
+                Roles = account.Roles,
+                AuthMethods = authMethods
+            };
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            // Release email lock on failure to prevent lock leaks
+            if (emailLock != null)
+            {
+                await emailLock.DisposeAsync();
+            }
+
+            _logger.LogError(ex, "Error updating email for account {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdateEmail",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId, body.NewEmail });
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
     /// <summary>
     /// Publish AccountCreatedEvent to RabbitMQ via IMessageBus.
     /// TryPublishAsync handles buffering, retry, and error logging internally.
