@@ -87,16 +87,17 @@ The generated `CharacterHistoryServiceConfiguration` is injected into `Backstory
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CharacterHistoryService>` | Scoped | Structured logging |
-| `CharacterHistoryServiceConfiguration` | Singleton | Framework config (empty) |
+| `CharacterHistoryServiceConfiguration` | Singleton | Typed configuration (BackstoryCacheTtlSeconds); injected into constructor but only consumed by `BackstoryCache` |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Scoped | Event publishing (including resource reference events) |
 | `IEventConsumer` | Scoped | Event registration (no handlers) |
 | `IDualIndexHelper<ParticipationData>` | (inline) | Dual-index CRUD for participations |
 | `IBackstoryStorageHelper<BackstoryData, BackstoryElementData>` | (inline) | Backstory CRUD with merge semantics |
-| `CharacterHistoryReferenceTracking` | (partial class) | Generated helper methods for resource reference registration/unregistration |
+| `CharacterHistoryReferenceTracking` | (generated partial class) | `RegisterCharacterReferenceAsync`/`UnregisterCharacterReferenceAsync` helpers and cleanup callback registration |
+| `CharacterHistoryCompressionCallbacks` | (generated static class) | Compression callback registration with lib-resource |
 | `IBackstoryCache` | Singleton | TTL-based backstory caching for actor behavior execution |
 | `BackstoryProviderFactory` (`IVariableProviderFactory`) | Singleton | Factory for ABML expression evaluation (enables `${backstory.*}` paths) |
-| `CharacterHistoryTemplate` (`IResourceTemplate`) | Registered at startup | Compile-time path validation for ABML expressions referencing history data |
+| `CharacterHistoryTemplate` (`ResourceTemplateBase`) | Registered at startup (in plugin `OnRunningAsync`) | Compile-time path validation for ABML expressions referencing history data (namespace: `history`) |
 
 Service lifetime is **Scoped** (per-request).
 
@@ -145,20 +146,7 @@ The `CharacterHistoryTemplate` provides compile-time validation for `${candidate
 
 - **RestoreFromArchive** (`/character-history/restore-from-archive`): Called by Resource service during decompression. Accepts Base64-encoded GZip JSON of `HistoryCompressData`. Restores participations and backstory to state store if they don't already exist (idempotent). Returns counts of restored items.
 
-**Compression Callback Registration** (in OnRunningAsync):
-```csharp
-await resourceClient.DefineCompressCallbackAsync(
-    new DefineCompressCallbackRequest
-    {
-        ResourceType = "character",
-        SourceType = "character-history",
-        CompressEndpoint = "/character-history/get-compress-data",
-        CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
-        DecompressEndpoint = "/character-history/restore-from-archive",
-        DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
-        Priority = 20  // After personality (priority 10)
-    }, ct);
-```
+**Compression Callback Registration**: Handled by the generated `CharacterHistoryCompressionCallbacks` class, called during `OnRunningAsync` in the plugin. Registers with lib-resource using priority 20 (after personality at priority 10).
 
 ---
 
@@ -234,7 +222,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Hardcoded cache TTL (T21 violation)**~~: **FIXED** (2026-02-06) - Added `BackstoryCacheTtlSeconds` to configuration schema (default 600 seconds). `BackstoryCache` now injects `CharacterHistoryServiceConfiguration` and uses configurable TTL.
+None.
 
 ### Intentional Quirks
 
@@ -252,6 +240,12 @@ None. The service is feature-complete for its scope.
 
 7. **GetBulkAsync silently drops missing records**: `DualIndexHelper.GetRecordsByIdsAsync` returns only records that exist. If an index contains stale record IDs (records deleted without index cleanup), they are silently excluded from results. This is self-healing behavior - throwing would crash callers for rare edge cases. Callers receive valid data; counts may be slightly fewer than expected if data inconsistency exists.
 
+8. **BackstoryCache returns stale data on load failure**: If loading fresh data from the service fails (any exception except 404), the cache returns previously cached data even if expired. This is deliberate graceful degradation - stale backstory data is better than no data for NPC behavior execution.
+
+9. **Case-insensitive ABML variable path resolution**: `BackstoryProvider` stores elements keyed by both original and lowercase type names. This means `${backstory.ORIGIN}`, `${backstory.Origin}`, and `${backstory.origin}` all resolve identically, using `StringComparer.OrdinalIgnoreCase` for dictionary lookups.
+
+10. **BackstoryCache uses self-mesh call**: `BackstoryCache` loads data by obtaining `ICharacterHistoryClient` from DI and calling `GetBackstoryAsync` - the service calling itself via lib-mesh. This adds mesh overhead but maintains clean separation between cache and service implementation layers.
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory pagination for all list operations**: Fetches ALL participation records into memory, then filters and paginates. Characters with thousands of participations load entire list. Should implement store-level pagination.
@@ -266,20 +260,10 @@ None. The service is feature-complete for its scope.
 4. **Parallel service pattern with realm-history**: Both services use nearly identical patterns (dual-index participations, document-based lore/backstory, template summarization) but with subtle behavioral differences (NotFound vs empty list for missing data).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/309 -->
 
-5. ~~**Empty indices left behind after RemoveRecordAsync**~~: **FIXED** (2026-02-06) - DualIndexHelper.RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Applies to both character-history and realm-history since they share the DualIndexHelper infrastructure.
-
-6. ~~**Unknown element types fall back to generic format**~~: **RECLASSIFIED** (2026-02-06) - Moved to Intentional Quirks. The switch expression handles all 9 defined enum values. The `_ =>` default is defensive programming for compiler exhaustiveness and future-proofing, not a bug.
-
-7. ~~**Unknown participation roles fall back to "participated in"**~~: **RECLASSIFIED** (2026-02-06) - Moved to Intentional Quirks. Same pattern as item 6 - the switch expression handles all 8 defined `ParticipationRole` enum values. The `_ =>` default is defensive programming.
-
-8. ~~**FormatValue is simplistic transformation**~~: **RECLASSIFIED** (2026-02-06) - Moved to Intentional Quirks. The schema documents snake_case as the convention for machine-readable values (e.g., `knights_guild`, `northlands`). The method correctly handles the documented convention; supporting other formats would be scope creep.
-
-9. ~~**GetBulkAsync results silently drop missing records**~~: **RECLASSIFIED** (2026-02-06) - Moved to Intentional Quirks. This is self-healing behavior: if an index contains stale record IDs (records deleted without index cleanup), bulk retrieval silently excludes them rather than throwing. This is the correct design - throwing would crash callers for edge cases.
-
-10. **Empty string entityId returns silently instead of throwing**: Helper methods (DualIndexHelper, BackstoryStorageHelper) check `string.IsNullOrEmpty(entityId)` and return null/empty/false. With NRTs, null is a compile-time warning (redundant check). But empty string `""` is a runtime bug that should throw `ArgumentException`, not silently return null. This hides programmer errors.
+5. **Empty string entityId returns silently instead of throwing**: Helper methods (DualIndexHelper, BackstoryStorageHelper) check `string.IsNullOrEmpty(entityId)` and return null/empty/false. With NRTs, null is a compile-time warning (redundant check). But empty string `""` is a runtime bug that should throw `ArgumentException`, not silently return null. This hides programmer errors.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/310 -->
 
-11. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
+6. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/311 -->
 
 ---
@@ -298,8 +282,4 @@ None. The service is feature-complete for its scope.
 
 ### Completed
 
-- **2026-02-06**: Reclassified "GetBulkAsync silently drops missing records" from Design Considerations to Intentional Quirks. This is correct self-healing behavior - silently excluding stale index entries is better than crashing callers.
-- **2026-02-06**: Reclassified "FormatValue is simplistic transformation" from Design Considerations to Intentional Quirks. The method correctly handles snake_case per the documented schema convention; supporting other formats would be scope creep.
-- **2026-02-06**: Reclassified "unknown element types fallback" and "unknown participation roles fallback" from Design Considerations to Intentional Quirks. Both switch expressions handle all defined enum values; the `_ =>` defaults are defensive programming for compiler exhaustiveness and future-proofing, not bugs.
-- **2026-02-06**: Fixed empty index cleanup in DualIndexHelper - RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Shared fix affects both character-history and realm-history.
-- **2026-02-06**: Fixed hardcoded cache TTL (T21 violation) - Added `BackstoryCacheTtlSeconds` configuration property
+(No pending completed items.)

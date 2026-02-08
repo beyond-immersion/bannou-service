@@ -460,9 +460,10 @@ No bugs identified.
 
 6. ~~**ServerSalt shared requirement**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. The constructor already enforces this with a fail-fast check (`InvalidOperationException` if null/empty), and all three GUID generation methods validate the salt parameter. No design planning needed.
 
-7. **Instance ID non-deterministic**: `_instanceId` is generated as `Guid.NewGuid()`. This means the same physical machine generates different instance IDs on restart, which could affect heartbeat tracking in distributed scenarios.
+7. ~~**Instance ID non-deterministic**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. The non-deterministic ID correctly tracks runtime processes (not physical machines), which is essential for container orchestration, restart detection, and multi-process scaling. Old heartbeats expire via TTL (5 min), enabling correct liveness detection.
 
 8. **Session subsumed skips cleanup but disconnect event still published**: When a session is "subsumed" by a new connection (same session ID), the subsumed connection's finally block still publishes `session.disconnected` and removes from the account index (lines 857-876) before checking the subsume condition (line 888). Only RabbitMQ unsubscription and reconnection window logic are skipped for subsumed connections.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/349 -->
 
 9. **Disconnect event published before account index removal**: The `session.disconnected` event is published (line 868) before `RemoveSessionFromAccountAsync` (line 875) in the finally block. Race condition: consumers receiving the event might still see the session in GetAccountSessions.
 
@@ -473,6 +474,8 @@ No bugs identified.
 12. **Connection state allocated before connection limit check**: A new `ConnectionState` is allocated (line 618) before the defense-in-depth connection limit check (line 624). Auth validation happens earlier in the controller. On high load, connections that pass the controller check but fail the service-level race check still allocate and GC these objects.
 
 13. **ServerSalt shared requirement (enforced)**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value for distributed deployments. The constructor enforces this with a fail-fast check — startup aborts with `InvalidOperationException` if ServerSalt is null/empty. Different salts across instances would cause GUID validation failures and broken session shortcuts. All three GUID generation methods (`GenerateServiceGuid`, `GenerateClientGuid`, `GenerateSessionShortcutGuid`) also validate the salt parameter. Documented in schema and enforced at runtime per multi-instance safety requirements.
+
+14. **Non-deterministic instance ID**: `_instanceId` is generated as `Guid.NewGuid()` on each service start. This is intentional: it tracks the runtime process, not the physical machine. When a Connect instance restarts, the new process gets a new ID, correctly distinguishing it from the crashed instance. Old heartbeats expire via TTL (5 minutes), and Redis-persisted session state enables seamless takeover by the new instance. This design is essential for container orchestration, blue-green deployments, and multi-process scaling on the same host.
 
 ---
 
@@ -489,8 +492,10 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact (2026-02-08)
 - **Session mappings dead code** - [Issue #347](https://github.com/beyond-immersion/bannou-service/issues/347) - `_sessionServiceMappings` is dead code (never written to), `SetSessionServiceMappingsAsync` never called, internal proxy authorization may be broken (2026-02-08)
 - **Message queue backpressure** - [Issue #348](https://github.com/beyond-immersion/bannou-service/issues/348) - `MessageQueueSize` is dead config (T21 violation); decide whether to remove or implement application-level queueing (2026-02-08)
+- **Session subsumed spurious disconnect** - [Issue #349](https://github.com/beyond-immersion/bannou-service/issues/349) - Subsumed connection publishes `session.disconnected` before checking subsume condition, causing state churn in Permission, GameSession, Actor, Matchmaking (2026-02-08)
 
 ### Completed
 - **RabbitMQ subscription lifecycle** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). RabbitMQ's native `x-expires` mechanism handles orphaned queue cleanup automatically. No code change needed.
 - **Account session index staleness** - Fixed T9 race condition and staleness (2026-02-08). Replaced read-modify-write `IStateStore<HashSet<string>>` with atomic `ICacheableStateStore<string>.AddToSetAsync/RemoveFromSetAsync`. Added heartbeat liveness filtering in `GetSessionsForAccountAsync`.
 - **ServerSalt shared requirement** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). Constructor fail-fast check and GUID generator validation already enforce this requirement. No code change needed.
+- **Instance ID non-deterministic** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). Non-deterministic ID correctly tracks runtime processes for liveness detection, container orchestration, and restart recovery. No code change needed.
