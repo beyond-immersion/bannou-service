@@ -199,6 +199,34 @@ public partial class ItemController
                     "type": "object",
                     "nullable": true,
                     "description": "Any other game-specific data"
+                },
+                "useBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template ID for executable item behavior. When set, the item can be \"used\" via /item/use, which creates a transient contract instance, completes its \"use\" milestone (triggering prebound APIs), and optionally consumes the item."
+                },
+                "canUseBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for pre-use validation. When set, /item/use first executes\nthis contract's \"validate\" milestone before proceeding. If validation fails,\nthe item is NOT consumed and the main use behavior is NOT executed.\n"
+                },
+                "onUseFailedBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template executed when the main use behavior fails. Enables cleanup,\npartial rollback, or consequence application. Item is NOT consumed on failure\nregardless of this template's outcome.\n"
+                },
+                "itemUseBehavior": {
+                    "$ref": "#/$defs/ItemUseBehavior",
+                    "nullable": true,
+                    "description": "How the item should behave when used (defaults to destroy_on_success)"
+                },
+                "canUseBehavior": {
+                    "$ref": "#/$defs/CanUseBehavior",
+                    "nullable": true,
+                    "description": "How CanUse validation failures should be handled (defaults to block)"
                 }
             }
         },
@@ -266,6 +294,24 @@ public partial class ItemController
                 "global",
                 "realm_specific",
                 "multi_realm"
+            ]
+        },
+        "ItemUseBehavior": {
+            "type": "string",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
+            "enum": [
+                "disabled",
+                "destroy_on_success",
+                "destroy_always"
+            ]
+        },
+        "CanUseBehavior": {
+            "type": "string",
+            "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
+            "enum": [
+                "disabled",
+                "block",
+                "warn_and_proceed"
             ]
         }
     }
@@ -451,6 +497,34 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Other game-specific data"
                 },
+                "useBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template ID for executable item behavior (null if not usable)"
+                },
+                "canUseBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for pre-use validation (null if not configured)"
+                },
+                "onUseFailedBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for use failure handling (null if not configured)"
+                },
+                "itemUseBehavior": {
+                    "$ref": "#/$defs/ItemUseBehavior",
+                    "nullable": true,
+                    "description": "How the item behaves when used (null defaults to destroy_on_success)"
+                },
+                "canUseBehavior": {
+                    "$ref": "#/$defs/CanUseBehavior",
+                    "nullable": true,
+                    "description": "How CanUse validation failures are handled (null defaults to block)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether template is active"
@@ -547,6 +621,24 @@ public partial class ItemController
                 "global",
                 "realm_specific",
                 "multi_realm"
+            ]
+        },
+        "ItemUseBehavior": {
+            "type": "string",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "enum": [
+                "disabled",
+                "destroy_on_success",
+                "destroy_always"
+            ]
+        },
+        "CanUseBehavior": {
+            "type": "string",
+            "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
+            "enum": [
+                "disabled",
+                "block",
+                "warn_and_proceed"
             ]
         }
     }
@@ -820,6 +912,34 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Other game-specific data"
                 },
+                "useBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template ID for executable item behavior (null if not usable)"
+                },
+                "canUseBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for pre-use validation (null if not configured)"
+                },
+                "onUseFailedBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for use failure handling (null if not configured)"
+                },
+                "itemUseBehavior": {
+                    "$ref": "#/$defs/ItemUseBehavior",
+                    "nullable": true,
+                    "description": "How the item behaves when used (null defaults to destroy_on_success)"
+                },
+                "canUseBehavior": {
+                    "$ref": "#/$defs/CanUseBehavior",
+                    "nullable": true,
+                    "description": "How CanUse validation failures are handled (null defaults to block)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether template is active"
@@ -916,6 +1036,24 @@ public partial class ItemController
                 "global",
                 "realm_specific",
                 "multi_realm"
+            ]
+        },
+        "ItemUseBehavior": {
+            "type": "string",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "enum": [
+                "disabled",
+                "destroy_on_success",
+                "destroy_always"
+            ]
+        },
+        "CanUseBehavior": {
+            "type": "string",
+            "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
+            "enum": [
+                "disabled",
+                "block",
+                "warn_and_proceed"
             ]
         }
     }
@@ -1293,6 +1431,34 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Other game-specific data"
                 },
+                "useBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template ID for executable item behavior (null if not usable)"
+                },
+                "canUseBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for pre-use validation (null if not configured)"
+                },
+                "onUseFailedBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for use failure handling (null if not configured)"
+                },
+                "itemUseBehavior": {
+                    "$ref": "#/$defs/ItemUseBehavior",
+                    "nullable": true,
+                    "description": "How the item behaves when used (null defaults to destroy_on_success)"
+                },
+                "canUseBehavior": {
+                    "$ref": "#/$defs/CanUseBehavior",
+                    "nullable": true,
+                    "description": "How CanUse validation failures are handled (null defaults to block)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether template is active"
@@ -1389,6 +1555,24 @@ public partial class ItemController
                 "global",
                 "realm_specific",
                 "multi_realm"
+            ]
+        },
+        "ItemUseBehavior": {
+            "type": "string",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "enum": [
+                "disabled",
+                "destroy_on_success",
+                "destroy_always"
+            ]
+        },
+        "CanUseBehavior": {
+            "type": "string",
+            "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
+            "enum": [
+                "disabled",
+                "block",
+                "warn_and_proceed"
             ]
         }
     }
@@ -1585,6 +1769,34 @@ public partial class ItemController
                     "type": "boolean",
                     "nullable": true,
                     "description": "Active status"
+                },
+                "useBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template ID for executable item behavior (null to clear)"
+                },
+                "canUseBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for pre-use validation (null to clear)"
+                },
+                "onUseFailedBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for use failure handling (null to clear)"
+                },
+                "itemUseBehavior": {
+                    "$ref": "#/$defs/ItemUseBehavior",
+                    "nullable": true,
+                    "description": "How the item should behave when used"
+                },
+                "canUseBehavior": {
+                    "$ref": "#/$defs/CanUseBehavior",
+                    "nullable": true,
+                    "description": "How CanUse validation failures should be handled"
                 }
             }
         },
@@ -1598,6 +1810,24 @@ public partial class ItemController
                 "epic",
                 "legendary",
                 "custom"
+            ]
+        },
+        "ItemUseBehavior": {
+            "type": "string",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
+            "enum": [
+                "disabled",
+                "destroy_on_success",
+                "destroy_always"
+            ]
+        },
+        "CanUseBehavior": {
+            "type": "string",
+            "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
+            "enum": [
+                "disabled",
+                "block",
+                "warn_and_proceed"
             ]
         }
     }
@@ -1783,6 +2013,34 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Other game-specific data"
                 },
+                "useBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template ID for executable item behavior (null if not usable)"
+                },
+                "canUseBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for pre-use validation (null if not configured)"
+                },
+                "onUseFailedBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for use failure handling (null if not configured)"
+                },
+                "itemUseBehavior": {
+                    "$ref": "#/$defs/ItemUseBehavior",
+                    "nullable": true,
+                    "description": "How the item behaves when used (null defaults to destroy_on_success)"
+                },
+                "canUseBehavior": {
+                    "$ref": "#/$defs/CanUseBehavior",
+                    "nullable": true,
+                    "description": "How CanUse validation failures are handled (null defaults to block)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether template is active"
@@ -1879,6 +2137,24 @@ public partial class ItemController
                 "global",
                 "realm_specific",
                 "multi_realm"
+            ]
+        },
+        "ItemUseBehavior": {
+            "type": "string",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "enum": [
+                "disabled",
+                "destroy_on_success",
+                "destroy_always"
+            ]
+        },
+        "CanUseBehavior": {
+            "type": "string",
+            "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
+            "enum": [
+                "disabled",
+                "block",
+                "warn_and_proceed"
             ]
         }
     }
@@ -2156,6 +2432,34 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Other game-specific data"
                 },
+                "useBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template ID for executable item behavior (null if not usable)"
+                },
+                "canUseBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for pre-use validation (null if not configured)"
+                },
+                "onUseFailedBehaviorContractTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract template for use failure handling (null if not configured)"
+                },
+                "itemUseBehavior": {
+                    "$ref": "#/$defs/ItemUseBehavior",
+                    "nullable": true,
+                    "description": "How the item behaves when used (null defaults to destroy_on_success)"
+                },
+                "canUseBehavior": {
+                    "$ref": "#/$defs/CanUseBehavior",
+                    "nullable": true,
+                    "description": "How CanUse validation failures are handled (null defaults to block)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether template is active"
@@ -2252,6 +2556,24 @@ public partial class ItemController
                 "global",
                 "realm_specific",
                 "multi_realm"
+            ]
+        },
+        "ItemUseBehavior": {
+            "type": "string",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "enum": [
+                "disabled",
+                "destroy_on_success",
+                "destroy_always"
+            ]
+        },
+        "CanUseBehavior": {
+            "type": "string",
+            "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
+            "enum": [
+                "disabled",
+                "block",
+                "warn_and_proceed"
             ]
         }
     }
@@ -2403,6 +2725,17 @@ public partial class ItemController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Source entity ID (quest ID, creature ID, etc.)"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Bound contract instance ID. For persistent item-contract bindings (status effects,\nlicenses, memberships), this references the controlling contract. NULL for items\nwithout persistent contract relationships.\n"
+                },
+                "contractBindingType": {
+                    "$ref": "#/$defs/ContractBindingType",
+                    "nullable": true,
+                    "description": "Type of contract binding. When contractInstanceId is provided, this indicates\nwhether it's a lifecycle binding (managed externally) or session binding\n(managed by Item service). Defaults to 'lifecycle' when contractInstanceId is set.\n"
                 }
             }
         },
@@ -2417,6 +2750,15 @@ public partial class ItemController
                 "purchase",
                 "spawn",
                 "other"
+            ]
+        },
+        "ContractBindingType": {
+            "type": "string",
+            "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
+            "enum": [
+                "none",
+                "session",
+                "lifecycle"
             ]
         }
     }
@@ -2529,6 +2871,17 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Source entity ID"
                 },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Bound contract instance ID. For persistent item-contract bindings or active\nmulti-step use sessions, this references the controlling contract.\n"
+                },
+                "contractBindingType": {
+                    "$ref": "#/$defs/ContractBindingType",
+                    "nullable": true,
+                    "description": "Type of contract binding. 'session' for multi-step use in progress,\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -2553,6 +2906,15 @@ public partial class ItemController
                 "purchase",
                 "spawn",
                 "other"
+            ]
+        },
+        "ContractBindingType": {
+            "type": "string",
+            "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
+            "enum": [
+                "none",
+                "session",
+                "lifecycle"
             ]
         }
     }
@@ -2745,6 +3107,17 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Source entity ID"
                 },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Bound contract instance ID. For persistent item-contract bindings or active\nmulti-step use sessions, this references the controlling contract.\n"
+                },
+                "contractBindingType": {
+                    "$ref": "#/$defs/ContractBindingType",
+                    "nullable": true,
+                    "description": "Type of contract binding. 'session' for multi-step use in progress,\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -2769,6 +3142,15 @@ public partial class ItemController
                 "purchase",
                 "spawn",
                 "other"
+            ]
+        },
+        "ContractBindingType": {
+            "type": "string",
+            "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
+            "enum": [
+                "none",
+                "session",
+                "lifecycle"
             ]
         }
     }
@@ -3009,6 +3391,17 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Source entity ID"
                 },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Bound contract instance ID. For persistent item-contract bindings or active\nmulti-step use sessions, this references the controlling contract.\n"
+                },
+                "contractBindingType": {
+                    "$ref": "#/$defs/ContractBindingType",
+                    "nullable": true,
+                    "description": "Type of contract binding. 'session' for multi-step use in progress,\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -3033,6 +3426,15 @@ public partial class ItemController
                 "purchase",
                 "spawn",
                 "other"
+            ]
+        },
+        "ContractBindingType": {
+            "type": "string",
+            "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
+            "enum": [
+                "none",
+                "session",
+                "lifecycle"
             ]
         }
     }
@@ -3245,6 +3647,17 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Source entity ID"
                 },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Bound contract instance ID. For persistent item-contract bindings or active\nmulti-step use sessions, this references the controlling contract.\n"
+                },
+                "contractBindingType": {
+                    "$ref": "#/$defs/ContractBindingType",
+                    "nullable": true,
+                    "description": "Type of contract binding. 'session' for multi-step use in progress,\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -3269,6 +3682,15 @@ public partial class ItemController
                 "purchase",
                 "spawn",
                 "other"
+            ]
+        },
+        "ContractBindingType": {
+            "type": "string",
+            "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
+            "enum": [
+                "none",
+                "session",
+                "lifecycle"
             ]
         }
     }
@@ -3467,6 +3889,17 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Source entity ID"
                 },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Bound contract instance ID. For persistent item-contract bindings or active\nmulti-step use sessions, this references the controlling contract.\n"
+                },
+                "contractBindingType": {
+                    "$ref": "#/$defs/ContractBindingType",
+                    "nullable": true,
+                    "description": "Type of contract binding. 'session' for multi-step use in progress,\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -3491,6 +3924,15 @@ public partial class ItemController
                 "purchase",
                 "spawn",
                 "other"
+            ]
+        },
+        "ContractBindingType": {
+            "type": "string",
+            "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
+            "enum": [
+                "none",
+                "session",
+                "lifecycle"
             ]
         }
     }
@@ -3671,6 +4113,346 @@ public partial class ItemController
 
     #endregion
 
+    #region Meta Endpoints for UseItem
+
+    private static readonly string _UseItem_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UseItemRequest",
+    "$defs": {
+        "UseItemRequest": {
+            "type": "object",
+            "description": "Request to use an item instance by executing its behavior contract",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "userId",
+                "userType"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the item instance to use"
+                },
+                "userId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the entity using the item (character, account, or actor)"
+                },
+                "userType": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Type of user entity performing the use action (e.g., character, account, actor)"
+                },
+                "targetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Optional unique identifier of the target entity for directional item effects"
+                },
+                "targetType": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "nullable": true,
+                    "description": "Type of target entity when targetId is provided"
+                },
+                "context": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional context data passed to contract template value substitution"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UseItem_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UseItemResponse",
+    "$defs": {
+        "UseItemResponse": {
+            "type": "object",
+            "description": "Response containing the result of an item use attempt",
+            "additionalProperties": false,
+            "required": [
+                "success",
+                "instanceId",
+                "templateId",
+                "consumed"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the item use behavior executed successfully"
+                },
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the item instance that was used"
+                },
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the item template defining the used item"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Unique identifier of the contract instance created for this use (null if creation failed)"
+                },
+                "consumed": {
+                    "type": "boolean",
+                    "description": "Whether the item was consumed (quantity decremented or destroyed)"
+                },
+                "remainingQuantity": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Remaining quantity after use (null if item was fully consumed or destroyed)"
+                },
+                "failureReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable reason for failure when success is false"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UseItem_Info = """
+{
+    "summary": "Use an item (execute its behavior contract)",
+    "description": "Uses an item by executing its behavior contract. The item's template must have\na useBehaviorContractTemplateId defined. Creates a transient contract instance,\ncompletes the \"use\" milestone (triggering prebound APIs), and consumes the item\non success if the template defines it as consumable. Returns failure if the\ncontract's prebound APIs fail.\n",
+    "tags": [
+        "Item Instance"
+    ],
+    "deprecated": false,
+    "operationId": "useItem"
+}
+""";
+
+    /// <summary>Returns endpoint information for UseItem</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/use/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UseItem_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Item",
+            "POST",
+            "/item/use",
+            _UseItem_Info));
+
+    /// <summary>Returns request schema for UseItem</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/use/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UseItem_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Item",
+            "POST",
+            "/item/use",
+            "request-schema",
+            _UseItem_RequestSchema));
+
+    /// <summary>Returns response schema for UseItem</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/use/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UseItem_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Item",
+            "POST",
+            "/item/use",
+            "response-schema",
+            _UseItem_ResponseSchema));
+
+    /// <summary>Returns full schema for UseItem</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/use/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UseItem_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Item",
+            "POST",
+            "/item/use",
+            _UseItem_Info,
+            _UseItem_RequestSchema,
+            _UseItem_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UseItemStep
+
+    private static readonly string _UseItemStep_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UseItemStepRequest",
+    "$defs": {
+        "UseItemStepRequest": {
+            "type": "object",
+            "description": "Request to complete a step of a multi-step item use",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "userId",
+                "userType",
+                "milestoneCode"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Item instance being used"
+                },
+                "userId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "User performing the step"
+                },
+                "userType": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Type of user entity (e.g., character, account, actor)"
+                },
+                "milestoneCode": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Milestone code to complete in the use behavior contract"
+                },
+                "evidence": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Evidence data for this milestone completion (passed to contract)"
+                },
+                "context": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional context data passed to contract template value substitution"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UseItemStep_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UseItemStepResponse",
+    "$defs": {
+        "UseItemStepResponse": {
+            "type": "object",
+            "description": "Response from completing a multi-step item use milestone",
+            "additionalProperties": false,
+            "required": [
+                "success",
+                "instanceId",
+                "contractInstanceId",
+                "completedMilestone",
+                "isComplete",
+                "consumed"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the step completed successfully"
+                },
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Item instance ID"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance tracking this use session"
+                },
+                "completedMilestone": {
+                    "type": "string",
+                    "description": "The milestone that was completed"
+                },
+                "remainingMilestones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Milestones still to be completed (null if complete or failed)"
+                },
+                "isComplete": {
+                    "type": "boolean",
+                    "description": "Whether all required milestones are complete"
+                },
+                "consumed": {
+                    "type": "boolean",
+                    "description": "Whether item was consumed (only true when all steps complete per itemUseBehavior)"
+                },
+                "failureReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable reason for failure when success is false"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UseItemStep_Info = """
+{
+    "summary": "Complete a specific step of a multi-step item use",
+    "description": "For items with multi-milestone use behaviors, completes a specific milestone.\nThe first call (without an existing contractInstanceId on the item) creates\nthe contract instance and stores it on the item; subsequent calls progress\ nthe existing contract. Item is consumed only when all required milestones\nare complete (per itemUseBehavior).\n",
+    "tags": [
+        "Item Instance"
+    ],
+    "deprecated": false,
+    "operationId": "useItemStep"
+}
+""";
+
+    /// <summary>Returns endpoint information for UseItemStep</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/use-step/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UseItemStep_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Item",
+            "POST",
+            "/item/use-step",
+            _UseItemStep_Info));
+
+    /// <summary>Returns request schema for UseItemStep</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/use-step/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UseItemStep_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Item",
+            "POST",
+            "/item/use-step",
+            "request-schema",
+            _UseItemStep_RequestSchema));
+
+    /// <summary>Returns response schema for UseItemStep</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/use-step/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UseItemStep_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Item",
+            "POST",
+            "/item/use-step",
+            "response-schema",
+            _UseItemStep_ResponseSchema));
+
+    /// <summary>Returns full schema for UseItemStep</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/use-step/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UseItemStep_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Item",
+            "POST",
+            "/item/use-step",
+            _UseItemStep_Info,
+            _UseItemStep_RequestSchema,
+            _UseItemStep_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for ListItemsByContainer
 
     private static readonly string _ListItemsByContainer_RequestSchema = """
@@ -3825,6 +4607,17 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Source entity ID"
                 },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Bound contract instance ID. For persistent item-contract bindings or active\nmulti-step use sessions, this references the controlling contract.\n"
+                },
+                "contractBindingType": {
+                    "$ref": "#/$defs/ContractBindingType",
+                    "nullable": true,
+                    "description": "Type of contract binding. 'session' for multi-step use in progress,\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -3849,6 +4642,15 @@ public partial class ItemController
                 "purchase",
                 "spawn",
                 "other"
+            ]
+        },
+        "ContractBindingType": {
+            "type": "string",
+            "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
+            "enum": [
+                "none",
+                "session",
+                "lifecycle"
             ]
         }
     }
@@ -4080,6 +4882,17 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Source entity ID"
                 },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Bound contract instance ID. For persistent item-contract bindings or active\nmulti-step use sessions, this references the controlling contract.\n"
+                },
+                "contractBindingType": {
+                    "$ref": "#/$defs/ContractBindingType",
+                    "nullable": true,
+                    "description": "Type of contract binding. 'session' for multi-step use in progress,\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -4104,6 +4917,15 @@ public partial class ItemController
                 "purchase",
                 "spawn",
                 "other"
+            ]
+        },
+        "ContractBindingType": {
+            "type": "string",
+            "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
+            "enum": [
+                "none",
+                "session",
+                "lifecycle"
             ]
         }
     }
@@ -4326,6 +5148,17 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Source entity ID"
                 },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Bound contract instance ID. For persistent item-contract bindings or active\nmulti-step use sessions, this references the controlling contract.\n"
+                },
+                "contractBindingType": {
+                    "$ref": "#/$defs/ContractBindingType",
+                    "nullable": true,
+                    "description": "Type of contract binding. 'session' for multi-step use in progress,\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -4350,6 +5183,15 @@ public partial class ItemController
                 "purchase",
                 "spawn",
                 "other"
+            ]
+        },
+        "ContractBindingType": {
+            "type": "string",
+            "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
+            "enum": [
+                "none",
+                "session",
+                "lifecycle"
             ]
         }
     }

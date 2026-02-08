@@ -11,7 +11,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Relationship;
-using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -62,7 +61,6 @@ public partial class StorylineService : IStorylineService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IResourceClient _resourceClient;
     private readonly IRelationshipClient _relationshipClient;
-    private readonly IRelationshipTypeClient _relationshipTypeClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<StorylineService> _logger;
@@ -91,7 +89,6 @@ public partial class StorylineService : IStorylineService
         IStateStoreFactory stateStoreFactory,
         IResourceClient resourceClient,
         IRelationshipClient relationshipClient,
-        IRelationshipTypeClient relationshipTypeClient,
         IServiceProvider serviceProvider,
         IDistributedLockProvider lockProvider,
         ILogger<StorylineService> logger,
@@ -102,7 +99,6 @@ public partial class StorylineService : IStorylineService
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
         ArgumentNullException.ThrowIfNull(resourceClient);
         ArgumentNullException.ThrowIfNull(relationshipClient);
-        ArgumentNullException.ThrowIfNull(relationshipTypeClient);
         ArgumentNullException.ThrowIfNull(serviceProvider);
         ArgumentNullException.ThrowIfNull(lockProvider);
         ArgumentNullException.ThrowIfNull(logger);
@@ -112,7 +108,6 @@ public partial class StorylineService : IStorylineService
         _stateStoreFactory = stateStoreFactory;
         _resourceClient = resourceClient;
         _relationshipClient = relationshipClient;
-        _relationshipTypeClient = relationshipTypeClient;
         _serviceProvider = serviceProvider;
         _lockProvider = lockProvider;
         _logger = logger;
@@ -2433,7 +2428,7 @@ public partial class StorylineService : IStorylineService
                         try
                         {
                             // Resolve relationship type code to ID
-                            var relationshipType = await _relationshipTypeClient.GetRelationshipTypeByCodeAsync(
+                            var relationshipType = await _relationshipClient.GetRelationshipTypeByCodeAsync(
                                 new GetRelationshipTypeByCodeRequest { Code = mutation.RelationshipTypeCode },
                                 cancellationToken);
 
@@ -2481,7 +2476,7 @@ public partial class StorylineService : IStorylineService
                         try
                         {
                             // Resolve relationship type code to ID
-                            var relationshipType = await _relationshipTypeClient.GetRelationshipTypeByCodeAsync(
+                            var relationshipType = await _relationshipClient.GetRelationshipTypeByCodeAsync(
                                 new GetRelationshipTypeByCodeRequest { Code = mutation.RelationshipTypeCode },
                                 cancellationToken);
 

@@ -53,4 +53,22 @@ public class RelationshipServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public Guid? ForceServiceId { get; set; }
 
+    /// <summary>
+    /// Number of records to process per page during seed operations
+    /// Environment variable: RELATIONSHIP_TYPE_SEED_PAGE_SIZE
+    /// </summary>
+    public int SeedPageSize { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum depth for hierarchy traversal to prevent infinite loops on corrupted data
+    /// Environment variable: RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH
+    /// </summary>
+    public int MaxHierarchyDepth { get; set; } = 20;
+
+    /// <summary>
+    /// Maximum number of individual migration error details to track during merge operations
+    /// Environment variable: RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK
+    /// </summary>
+    public int MaxMigrationErrorsToTrack { get; set; } = 100;
+
 }

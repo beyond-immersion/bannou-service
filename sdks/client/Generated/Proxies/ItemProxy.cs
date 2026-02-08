@@ -225,6 +225,42 @@ public sealed class ItemProxy
     }
 
     /// <summary>
+    /// Use an item (execute its behavior contract)
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing UseItemResponse on success.</returns>
+    public Task<ApiResponse<UseItemResponse>> UseItemAsync(
+        UseItemRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UseItemRequest, UseItemResponse>(
+            "/item/use", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Complete a specific step of a multi-step item use
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing UseItemStepResponse on success.</returns>
+    public Task<ApiResponse<UseItemStepResponse>> UseItemStepAsync(
+        UseItemStepRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UseItemStepRequest, UseItemStepResponse>(
+            "/item/use-step", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// List items in a container
     /// </summary>
     /// <param name="request">The request payload.</param>

@@ -248,8 +248,6 @@ public static class StateStoreDefinitions
     // Relationship Service
     /// <summary>Entity relationships</summary>
     public const string Relationship = "relationship-statestore";
-
-    // RelationshipType Service
     /// <summary>Relationship type definitions</summary>
     public const string RelationshipType = "relationship-type-statestore";
 
@@ -527,7 +525,7 @@ public static class StateStoreDefinitions
             [RealmHistory] = new StoreMetadata("RealmHistory", "Realm historical events and lore", "mysql"),
             [Realm] = new StoreMetadata("Realm", "Realm definitions and configuration", "mysql"),
             [Relationship] = new StoreMetadata("Relationship", "Entity relationships", "mysql"),
-            [RelationshipType] = new StoreMetadata("RelationshipType", "Relationship type definitions", "mysql"),
+            [RelationshipType] = new StoreMetadata("Relationship", "Relationship type definitions", "mysql"),
             [ResourceArchives] = new StoreMetadata("Resource", "Compressed archive bundles (durable storage for long-term archival)", "mysql"),
             [ResourceCleanup] = new StoreMetadata("Resource", "Cleanup callback definitions per resource type", "redis"),
             [ResourceCompress] = new StoreMetadata("Resource", "Compression callback definitions and callback index sets", "redis"),

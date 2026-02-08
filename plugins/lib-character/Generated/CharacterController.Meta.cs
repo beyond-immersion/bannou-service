@@ -1123,10 +1123,12 @@ public partial class CharacterController
                     },
                     "description": "Sibling relationships (including half-siblings)"
                 },
-                "spouse": {
-                    "$ref": "#/$defs/FamilyMember",
-                    "nullable": true,
-                    "description": "Current spouse (if any)"
+                "spouses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/FamilyMember"
+                    },
+                    "description": "Spousal relationships (spouse, husband, wife)"
                 },
                 "pastLives": {
                     "type": "array",

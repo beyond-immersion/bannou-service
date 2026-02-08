@@ -121,6 +121,176 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndRelationshipAsync(EndRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Get relationship type by ID
+    /// </summary>
+
+
+    /// <returns>Relationship type retrieved successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipTypeAsync(GetRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get relationship type by code
+    /// </summary>
+
+    /// <remarks>
+    /// Retrieve a relationship type using its unique code (e.g., "SON", "MOTHER", "FRIEND")
+    /// </remarks>
+
+    /// <returns>Relationship type retrieved successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipTypeByCodeAsync(GetRelationshipTypeByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// List all relationship types
+    /// </summary>
+
+    /// <remarks>
+    /// Retrieve all relationship types with optional hierarchy filtering
+    /// </remarks>
+
+    /// <returns>Relationship types retrieved successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> ListRelationshipTypesAsync(ListRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get child types for a parent type
+    /// </summary>
+
+    /// <remarks>
+    /// Retrieve all relationship types that have the specified type as their parent
+    /// </remarks>
+
+    /// <returns>Child relationship types retrieved successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetChildRelationshipTypesAsync(GetChildRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Check if type matches ancestor in hierarchy
+    /// </summary>
+
+    /// <remarks>
+    /// Checks if a relationship type matches or descends from an ancestor type.
+    /// <br/>For example, "SON" matches "CHILD" because CHILD is an ancestor of SON.
+    /// <br/>This enables queries like "find all CHILD relationships" to match SON, DAUGHTER, etc.
+    /// </remarks>
+
+    /// <returns>Hierarchy match result</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchesHierarchyResponse>> MatchesHierarchyAsync(MatchesHierarchyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get all ancestors of a relationship type
+    /// </summary>
+
+    /// <remarks>
+    /// Returns the full ancestry chain from the specified type up to the root.
+    /// <br/>For example, for "SON" might return ["CHILD", "FAMILY"].
+    /// </remarks>
+
+    /// <returns>Ancestors retrieved successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetAncestorsAsync(GetAncestorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Create new relationship type
+    /// </summary>
+
+
+    /// <returns>Relationship type created successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> CreateRelationshipTypeAsync(CreateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update relationship type
+    /// </summary>
+
+
+    /// <returns>Relationship type updated successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UpdateRelationshipTypeAsync(UpdateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Delete relationship type
+    /// </summary>
+
+    /// <remarks>
+    /// Hard delete a relationship type. This will fail if the type is still in use.
+    /// <br/>For safe removal, first deprecate the type, then merge it into another type
+    /// <br/>(or VOID), then delete. Only deprecated types with zero references can be deleted.
+    /// </remarks>
+
+    /// <returns>Relationship type deleted successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRelationshipTypeAsync(DeleteRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Deprecate a relationship type
+    /// </summary>
+
+    /// <remarks>
+    /// Soft-delete a relationship type by marking it as deprecated.
+    /// <br/>Deprecated types:
+    /// <br/>- Remain queryable for historical data
+    /// <br/>- Cannot be used for creating new relationships
+    /// <br/>- Can be merged into other types using the merge endpoint
+    /// <br/>- Can be hard-deleted after all references are removed
+    /// </remarks>
+
+    /// <returns>Relationship type deprecated successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> DeprecateRelationshipTypeAsync(DeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Restore a deprecated relationship type
+    /// </summary>
+
+    /// <remarks>
+    /// Remove the deprecated status from a relationship type, making it
+    /// <br/>available for new relationships again.
+    /// </remarks>
+
+    /// <returns>Relationship type restored successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UndeprecateRelationshipTypeAsync(UndeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Merge a deprecated type into another type
+    /// </summary>
+
+    /// <remarks>
+    /// Migrate all relationships using a deprecated type to a target type.
+    /// <br/>This is the recommended way to handle type removal:
+    /// <br/>1. Deprecate the source type
+    /// <br/>2. Merge into the target type (or VOID for effective deletion)
+    /// <br/>3. Optionally hard-delete the now-empty deprecated type
+    /// <br/>
+    /// <br/>The merge operation:
+    /// <br/>- Updates all relationships using sourceTypeId to use targetTypeId
+    /// <br/>- Publishes events for each affected relationship
+    /// <br/>- Returns count of migrated relationships
+    /// <br/>- Fails if source is not deprecated (safety check)
+    /// </remarks>
+
+    /// <returns>Merge completed successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeRelationshipTypeResponse>> MergeRelationshipTypeAsync(MergeRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Seed relationship types from configuration
+    /// </summary>
+
+    /// <remarks>
+    /// Idempotent operation to seed relationship types from provided data.
+    /// <br/>Creates types that don't exist, optionally updates existing types.
+    /// <br/>Typically called at service startup with YAML-defined types.
+    /// </remarks>
+
+    /// <returns>Seed operation completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedRelationshipTypesResponse>> SeedRelationshipTypesAsync(SeedRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -286,6 +456,228 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         var statusCode = await _implementation.EndRelationshipAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Get relationship type by ID
+    /// </summary>
+    /// <returns>Relationship type retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/get")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetRelationshipTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get relationship type by code
+    /// </summary>
+    /// <remarks>
+    /// Retrieve a relationship type using its unique code (e.g., "SON", "MOTHER", "FRIEND")
+    /// </remarks>
+    /// <returns>Relationship type retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/get-by-code")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipTypeByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRelationshipTypeByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetRelationshipTypeByCodeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List all relationship types
+    /// </summary>
+    /// <remarks>
+    /// Retrieve all relationship types with optional hierarchy filtering
+    /// </remarks>
+    /// <returns>Relationship types retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> ListRelationshipTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ListRelationshipTypesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get child types for a parent type
+    /// </summary>
+    /// <remarks>
+    /// Retrieve all relationship types that have the specified type as their parent
+    /// </remarks>
+    /// <returns>Child relationship types retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/get-children")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetChildRelationshipTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetChildRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetChildRelationshipTypesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Check if type matches ancestor in hierarchy
+    /// </summary>
+    /// <remarks>
+    /// Checks if a relationship type matches or descends from an ancestor type.
+    /// <br/>For example, "SON" matches "CHILD" because CHILD is an ancestor of SON.
+    /// <br/>This enables queries like "find all CHILD relationships" to match SON, DAUGHTER, etc.
+    /// </remarks>
+    /// <returns>Hierarchy match result</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/matches-hierarchy")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchesHierarchyResponse>> MatchesHierarchy([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MatchesHierarchyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.MatchesHierarchyAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get all ancestors of a relationship type
+    /// </summary>
+    /// <remarks>
+    /// Returns the full ancestry chain from the specified type up to the root.
+    /// <br/>For example, for "SON" might return ["CHILD", "FAMILY"].
+    /// </remarks>
+    /// <returns>Ancestors retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/get-ancestors")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetAncestors([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAncestorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetAncestorsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Create new relationship type
+    /// </summary>
+    /// <returns>Relationship type created successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/create")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> CreateRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CreateRelationshipTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Update relationship type
+    /// </summary>
+    /// <returns>Relationship type updated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/update")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UpdateRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UpdateRelationshipTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Delete relationship type
+    /// </summary>
+    /// <remarks>
+    /// Hard delete a relationship type. This will fail if the type is still in use.
+    /// <br/>For safe removal, first deprecate the type, then merge it into another type
+    /// <br/>(or VOID), then delete. Only deprecated types with zero references can be deleted.
+    /// </remarks>
+    /// <returns>Relationship type deleted successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var statusCode = await _implementation.DeleteRelationshipTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Deprecate a relationship type
+    /// </summary>
+    /// <remarks>
+    /// Soft-delete a relationship type by marking it as deprecated.
+    /// <br/>Deprecated types:
+    /// <br/>- Remain queryable for historical data
+    /// <br/>- Cannot be used for creating new relationships
+    /// <br/>- Can be merged into other types using the merge endpoint
+    /// <br/>- Can be hard-deleted after all references are removed
+    /// </remarks>
+    /// <returns>Relationship type deprecated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/deprecate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> DeprecateRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.DeprecateRelationshipTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Restore a deprecated relationship type
+    /// </summary>
+    /// <remarks>
+    /// Remove the deprecated status from a relationship type, making it
+    /// <br/>available for new relationships again.
+    /// </remarks>
+    /// <returns>Relationship type restored successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/undeprecate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UndeprecateRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UndeprecateRelationshipTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Merge a deprecated type into another type
+    /// </summary>
+    /// <remarks>
+    /// Migrate all relationships using a deprecated type to a target type.
+    /// <br/>This is the recommended way to handle type removal:
+    /// <br/>1. Deprecate the source type
+    /// <br/>2. Merge into the target type (or VOID for effective deletion)
+    /// <br/>3. Optionally hard-delete the now-empty deprecated type
+    /// <br/>
+    /// <br/>The merge operation:
+    /// <br/>- Updates all relationships using sourceTypeId to use targetTypeId
+    /// <br/>- Publishes events for each affected relationship
+    /// <br/>- Returns count of migrated relationships
+    /// <br/>- Fails if source is not deprecated (safety check)
+    /// </remarks>
+    /// <returns>Merge completed successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/merge")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeRelationshipTypeResponse>> MergeRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MergeRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.MergeRelationshipTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Seed relationship types from configuration
+    /// </summary>
+    /// <remarks>
+    /// Idempotent operation to seed relationship types from provided data.
+    /// <br/>Creates types that don't exist, optionally updates existing types.
+    /// <br/>Typically called at service startup with YAML-defined types.
+    /// </remarks>
+    /// <returns>Seed operation completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship-type/seed")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedRelationshipTypesResponse>> SeedRelationshipTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.SeedRelationshipTypesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
     }
 
 }

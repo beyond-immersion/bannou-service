@@ -134,25 +134,50 @@ paths:
         \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Display properties (e.g., iconId, modelId)\"\n                },\n                \"metadata\": {\n          \
         \          \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Any other game-specific data\"\n                }\n            }\n        },\n        \"ItemCategory\": {\n      \
-        \      \"type\": \"string\",\n            \"description\": \"Item classification category\",\n            \"enum\"\
-        : [\n                \"weapon\",\n                \"armor\",\n                \"accessory\",\n                \"consumable\"\
-        ,\n                \"material\",\n                \"container\",\n                \"quest\",\n                \"currency_like\"\
-        ,\n                \"misc\",\n                \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n \
-        \           \"type\": \"string\",\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n \
-        \               \"common\",\n                \"uncommon\",\n                \"rare\",\n                \"epic\",\n\
-        \                \"legendary\",\n                \"custom\"\n            ]\n        },\n        \"QuantityModel\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How quantities are tracked for this item type\"\
-        ,\n            \"enum\": [\n                \"discrete\",\n                \"continuous\",\n                \"unique\"\
-        \n            ]\n        },\n        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Precision for weight values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"\
-        integer\",\n                \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n      \
-        \      ]\n        },\n        \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"When item becomes bound to a character\",\n            \"enum\": [\n                \"none\",\n              \
-        \  \"on_pickup\",\n                \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"\
-        ItemScope\": {\n            \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent
-        with CurrencyScope)\",\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n\
-        \                \"multi_realm\"\n            ]\n        }\n    }\n}"
+        Any other game-specific data\"\n                },\n                \"useBehaviorContractTemplateId\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Contract template ID for executable item behavior. When set, the item
+        can be \\\"used\\\" via /item/use, which creates a transient contract instance, completes its \\\"use\\\" milestone
+        (triggering prebound APIs), and optionally consumes the item.\"\n                },\n                \"canUseBehaviorContractTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Contract template for pre-use validation. When set, /item/use
+        first executes\\nthis contract's \\\"validate\\\" milestone before proceeding. If validation fails,\\nthe item is
+        NOT consumed and the main use behavior is NOT executed.\\n\"\n                },\n                \"onUseFailedBehaviorContractTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Contract template executed when the main use behavior fails.
+        Enables cleanup,\\npartial rollback, or consequence application. Item is NOT consumed on failure\\nregardless of this
+        template's outcome.\\n\"\n                },\n                \"itemUseBehavior\": {\n                    \"$ref\"\
+        : \"#/$defs/ItemUseBehavior\",\n                    \"nullable\": true,\n                    \"description\": \"How
+        the item should behave when used (defaults to destroy_on_success)\"\n                },\n                \"canUseBehavior\"\
+        : {\n                    \"$ref\": \"#/$defs/CanUseBehavior\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"How CanUse validation failures should be handled (defaults to block)\"\n         \
+        \       }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n           \
+        \ \"description\": \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n     \
+        \           \"armor\",\n                \"accessory\",\n                \"consumable\",\n                \"material\"\
+        ,\n                \"container\",\n                \"quest\",\n                \"currency_like\",\n              \
+        \  \"misc\",\n                \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\"\
+        ,\n                \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\"\
+        ,\n                \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
+        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
+        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
+        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
+        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
+        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
+        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
+        Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
+        n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
+        \      \"destroy_always\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation even if
+        template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure logs
+        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"disabled\",\n                \"block\"\
+        ,\n                \"warn_and_proceed\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ItemTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -215,37 +240,58 @@ paths:
         \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
         \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
         \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
-        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"useBehaviorContractTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Contract template ID for executable item behavior (null
+        if not usable)\"\n                },\n                \"canUseBehaviorContractTemplateId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Contract template for pre-use validation (null if not configured)\"\n       \
+        \         },\n                \"onUseFailedBehaviorContractTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract template for use failure handling (null if not configured)\"\n                },\n                \"\
+        itemUseBehavior\": {\n                    \"$ref\": \"#/$defs/ItemUseBehavior\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"How the item behaves when used (null defaults to destroy_on_success)\"\
+        \n                },\n                \"canUseBehavior\": {\n                    \"$ref\": \"#/$defs/CanUseBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How CanUse validation failures
+        are handled (null defaults to block)\"\n                },\n                \"isActive\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n  \
+        \              \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When template was deprecated\"\n                },\n                \"migrationTargetId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Migration target template\"\n                },\n      \
+        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n        \"ItemCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Item classification category\",\n         \
+        \   \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"accessory\",\n       \
+        \         \"consumable\",\n                \"material\",\n                \"container\",\n                \"quest\"\
+        ,\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\n            ]\n    \
+        \    },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\": \"Item rarity
+        tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n                \"rare\"\
+        ,\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n            ]\n        },\n\
+        \        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\": \"How quantities are
+        tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n                \"continuous\"\
+        ,\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision for weight values (consistent with CurrencyPrecision)\",\n   \
+        \         \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n                \"decimal_2\"\
+        ,\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"When item becomes bound to a character\",\n            \"enum\": [\n   \
+        \             \"none\",\n                \"on_pickup\",\n                \"on_equip\",\n                \"on_use\"\
+        \n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\": [\n                \"global\"\
+        ,\n                \"realm_specific\",\n                \"multi_realm\"\n            ]\n        },\n        \"ItemUseBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Controls item consumption on use.\\n- disabled:
+        Item cannot be used (/item/use returns 400)\\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\\
+        n- destroy_always: Item consumed regardless of success/failure\\n\",\n            \"enum\": [\n                \"\
+        disabled\",\n                \"destroy_on_success\",\n                \"destroy_always\"\n            ]\n        },\n\
+        \        \"CanUseBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"Controls CanUse
+        validation behavior.\\n- disabled: Skip CanUse validation even if template is configured\\n- block: CanUse failure
+        prevents use (default)\\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\\n\",\n           \
+        \ \"enum\": [\n                \"disabled\",\n                \"block\",\n                \"warn_and_proceed\"\n \
+        \           ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new item template\",\n    \"description\": \"Creates a new item
         definition for a game. Code, gameId, quantityModel, and scope\\nare immutable after creation.\\n\",\n    \"tags\"\
         : [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createItemTemplate\"\n}"
@@ -350,37 +396,58 @@ paths:
         \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
         \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
         \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
-        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"useBehaviorContractTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Contract template ID for executable item behavior (null
+        if not usable)\"\n                },\n                \"canUseBehaviorContractTemplateId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Contract template for pre-use validation (null if not configured)\"\n       \
+        \         },\n                \"onUseFailedBehaviorContractTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract template for use failure handling (null if not configured)\"\n                },\n                \"\
+        itemUseBehavior\": {\n                    \"$ref\": \"#/$defs/ItemUseBehavior\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"How the item behaves when used (null defaults to destroy_on_success)\"\
+        \n                },\n                \"canUseBehavior\": {\n                    \"$ref\": \"#/$defs/CanUseBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How CanUse validation failures
+        are handled (null defaults to block)\"\n                },\n                \"isActive\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n  \
+        \              \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When template was deprecated\"\n                },\n                \"migrationTargetId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Migration target template\"\n                },\n      \
+        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n        \"ItemCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Item classification category\",\n         \
+        \   \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"accessory\",\n       \
+        \         \"consumable\",\n                \"material\",\n                \"container\",\n                \"quest\"\
+        ,\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\n            ]\n    \
+        \    },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\": \"Item rarity
+        tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n                \"rare\"\
+        ,\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n            ]\n        },\n\
+        \        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\": \"How quantities are
+        tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n                \"continuous\"\
+        ,\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision for weight values (consistent with CurrencyPrecision)\",\n   \
+        \         \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n                \"decimal_2\"\
+        ,\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"When item becomes bound to a character\",\n            \"enum\": [\n   \
+        \             \"none\",\n                \"on_pickup\",\n                \"on_equip\",\n                \"on_use\"\
+        \n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\": [\n                \"global\"\
+        ,\n                \"realm_specific\",\n                \"multi_realm\"\n            ]\n        },\n        \"ItemUseBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Controls item consumption on use.\\n- disabled:
+        Item cannot be used (/item/use returns 400)\\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\\
+        n- destroy_always: Item consumed regardless of success/failure\\n\",\n            \"enum\": [\n                \"\
+        disabled\",\n                \"destroy_on_success\",\n                \"destroy_always\"\n            ]\n        },\n\
+        \        \"CanUseBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"Controls CanUse
+        validation behavior.\\n- disabled: Skip CanUse validation even if template is configured\\n- block: CanUse failure
+        prevents use (default)\\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\\n\",\n           \
+        \ \"enum\": [\n                \"disabled\",\n                \"block\",\n                \"warn_and_proceed\"\n \
+        \           ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get item template by ID or code\",\n    \"description\": \"Retrieves an
         item template by its unique ID or by code+gameId combination.\\nAt least one of templateId or (code + gameId) must
         be provided.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -514,37 +581,58 @@ paths:
         \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
         \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
         \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
-        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"useBehaviorContractTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Contract template ID for executable item behavior (null
+        if not usable)\"\n                },\n                \"canUseBehaviorContractTemplateId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Contract template for pre-use validation (null if not configured)\"\n       \
+        \         },\n                \"onUseFailedBehaviorContractTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract template for use failure handling (null if not configured)\"\n                },\n                \"\
+        itemUseBehavior\": {\n                    \"$ref\": \"#/$defs/ItemUseBehavior\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"How the item behaves when used (null defaults to destroy_on_success)\"\
+        \n                },\n                \"canUseBehavior\": {\n                    \"$ref\": \"#/$defs/CanUseBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How CanUse validation failures
+        are handled (null defaults to block)\"\n                },\n                \"isActive\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n  \
+        \              \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When template was deprecated\"\n                },\n                \"migrationTargetId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Migration target template\"\n                },\n      \
+        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n        \"ItemCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Item classification category\",\n         \
+        \   \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"accessory\",\n       \
+        \         \"consumable\",\n                \"material\",\n                \"container\",\n                \"quest\"\
+        ,\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\n            ]\n    \
+        \    },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\": \"Item rarity
+        tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n                \"rare\"\
+        ,\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n            ]\n        },\n\
+        \        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\": \"How quantities are
+        tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n                \"continuous\"\
+        ,\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision for weight values (consistent with CurrencyPrecision)\",\n   \
+        \         \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n                \"decimal_2\"\
+        ,\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"When item becomes bound to a character\",\n            \"enum\": [\n   \
+        \             \"none\",\n                \"on_pickup\",\n                \"on_equip\",\n                \"on_use\"\
+        \n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\": [\n                \"global\"\
+        ,\n                \"realm_specific\",\n                \"multi_realm\"\n            ]\n        },\n        \"ItemUseBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Controls item consumption on use.\\n- disabled:
+        Item cannot be used (/item/use returns 400)\\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\\
+        n- destroy_always: Item consumed regardless of success/failure\\n\",\n            \"enum\": [\n                \"\
+        disabled\",\n                \"destroy_on_success\",\n                \"destroy_always\"\n            ]\n        },\n\
+        \        \"CanUseBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"Controls CanUse
+        validation behavior.\\n- disabled: Skip CanUse validation even if template is configured\\n- block: CanUse failure
+        prevents use (default)\\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\\n\",\n           \
+        \ \"enum\": [\n                \"disabled\",\n                \"block\",\n                \"warn_and_proceed\"\n \
+        \           ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List item templates with filters\",\n    \"description\": \"Lists item
         templates with optional filtering by gameId, category, tags,\\nrarity, scope, and active status.\\n\",\n    \"tags\"\
         : [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listItemTemplates\"\n}"
@@ -622,11 +710,31 @@ paths:
         : \"New display properties\"\n                },\n                \"metadata\": {\n                    \"type\": \"\
         object\",\n                    \"nullable\": true,\n                    \"description\": \"New metadata\"\n      \
         \          },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Active status\"\n                }\n            }\n    \
-        \    },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\": \"Item rarity
-        tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n                \"rare\"\
-        ,\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n            ]\n        }\n\
-        \    }\n}"
+        nullable\": true,\n                    \"description\": \"Active status\"\n                },\n                \"\
+        useBehaviorContractTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Contract template ID for
+        executable item behavior (null to clear)\"\n                },\n                \"canUseBehaviorContractTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Contract template for pre-use validation (null to clear)\"\
+        \n                },\n                \"onUseFailedBehaviorContractTemplateId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Contract template for use failure handling (null to clear)\"\n                },\n       \
+        \         \"itemUseBehavior\": {\n                    \"$ref\": \"#/$defs/ItemUseBehavior\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"How the item should behave when used\"\n           \
+        \     },\n                \"canUseBehavior\": {\n                    \"$ref\": \"#/$defs/CanUseBehavior\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"How CanUse validation failures should
+        be handled\"\n                }\n            }\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n    \
+        \            \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n\
+        \                \"custom\"\n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns
+        400)\\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed
+        regardless of success/failure\\n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\"\
+        ,\n                \"destroy_always\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation
+        even if template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure
+        logs warning but proceeds with use\\n\",\n            \"enum\": [\n                \"disabled\",\n               \
+        \ \"block\",\n                \"warn_and_proceed\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ItemTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -689,37 +797,58 @@ paths:
         \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
         \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
         \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
-        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"useBehaviorContractTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Contract template ID for executable item behavior (null
+        if not usable)\"\n                },\n                \"canUseBehaviorContractTemplateId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Contract template for pre-use validation (null if not configured)\"\n       \
+        \         },\n                \"onUseFailedBehaviorContractTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract template for use failure handling (null if not configured)\"\n                },\n                \"\
+        itemUseBehavior\": {\n                    \"$ref\": \"#/$defs/ItemUseBehavior\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"How the item behaves when used (null defaults to destroy_on_success)\"\
+        \n                },\n                \"canUseBehavior\": {\n                    \"$ref\": \"#/$defs/CanUseBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How CanUse validation failures
+        are handled (null defaults to block)\"\n                },\n                \"isActive\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n  \
+        \              \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When template was deprecated\"\n                },\n                \"migrationTargetId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Migration target template\"\n                },\n      \
+        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n        \"ItemCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Item classification category\",\n         \
+        \   \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"accessory\",\n       \
+        \         \"consumable\",\n                \"material\",\n                \"container\",\n                \"quest\"\
+        ,\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\n            ]\n    \
+        \    },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\": \"Item rarity
+        tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n                \"rare\"\
+        ,\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n            ]\n        },\n\
+        \        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\": \"How quantities are
+        tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n                \"continuous\"\
+        ,\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision for weight values (consistent with CurrencyPrecision)\",\n   \
+        \         \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n                \"decimal_2\"\
+        ,\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"When item becomes bound to a character\",\n            \"enum\": [\n   \
+        \             \"none\",\n                \"on_pickup\",\n                \"on_equip\",\n                \"on_use\"\
+        \n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\": [\n                \"global\"\
+        ,\n                \"realm_specific\",\n                \"multi_realm\"\n            ]\n        },\n        \"ItemUseBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Controls item consumption on use.\\n- disabled:
+        Item cannot be used (/item/use returns 400)\\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\\
+        n- destroy_always: Item consumed regardless of success/failure\\n\",\n            \"enum\": [\n                \"\
+        disabled\",\n                \"destroy_on_success\",\n                \"destroy_always\"\n            ]\n        },\n\
+        \        \"CanUseBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"Controls CanUse
+        validation behavior.\\n- disabled: Skip CanUse validation even if template is configured\\n- block: CanUse failure
+        prevents use (default)\\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\\n\",\n           \
+        \ \"enum\": [\n                \"disabled\",\n                \"block\",\n                \"warn_and_proceed\"\n \
+        \           ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update mutable fields of an item template\",\n    \"description\": \"Updates
         mutable fields of an item template. Code, gameId, quantityModel, and scope\\nare immutable after creation and cannot
         be changed.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -827,37 +956,58 @@ paths:
         \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
         \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
         \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
-        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"useBehaviorContractTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Contract template ID for executable item behavior (null
+        if not usable)\"\n                },\n                \"canUseBehaviorContractTemplateId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Contract template for pre-use validation (null if not configured)\"\n       \
+        \         },\n                \"onUseFailedBehaviorContractTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract template for use failure handling (null if not configured)\"\n                },\n                \"\
+        itemUseBehavior\": {\n                    \"$ref\": \"#/$defs/ItemUseBehavior\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"How the item behaves when used (null defaults to destroy_on_success)\"\
+        \n                },\n                \"canUseBehavior\": {\n                    \"$ref\": \"#/$defs/CanUseBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How CanUse validation failures
+        are handled (null defaults to block)\"\n                },\n                \"isActive\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\n                },\n  \
+        \              \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When template was deprecated\"\n                },\n                \"migrationTargetId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Migration target template\"\n                },\n      \
+        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n        \"ItemCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Item classification category\",\n         \
+        \   \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"accessory\",\n       \
+        \         \"consumable\",\n                \"material\",\n                \"container\",\n                \"quest\"\
+        ,\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\n            ]\n    \
+        \    },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\": \"Item rarity
+        tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n                \"rare\"\
+        ,\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n            ]\n        },\n\
+        \        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\": \"How quantities are
+        tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n                \"continuous\"\
+        ,\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision for weight values (consistent with CurrencyPrecision)\",\n   \
+        \         \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n                \"decimal_2\"\
+        ,\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"When item becomes bound to a character\",\n            \"enum\": [\n   \
+        \             \"none\",\n                \"on_pickup\",\n                \"on_equip\",\n                \"on_use\"\
+        \n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\": [\n                \"global\"\
+        ,\n                \"realm_specific\",\n                \"multi_realm\"\n            ]\n        },\n        \"ItemUseBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Controls item consumption on use.\\n- disabled:
+        Item cannot be used (/item/use returns 400)\\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\\
+        n- destroy_always: Item consumed regardless of success/failure\\n\",\n            \"enum\": [\n                \"\
+        disabled\",\n                \"destroy_on_success\",\n                \"destroy_always\"\n            ]\n        },\n\
+        \        \"CanUseBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"Controls CanUse
+        validation behavior.\\n- disabled: Skip CanUse validation even if template is configured\\n- block: CanUse failure
+        prevents use (default)\\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\\n\",\n           \
+        \ \"enum\": [\n                \"disabled\",\n                \"block\",\n                \"warn_and_proceed\"\n \
+        \           ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate an item template\",\n    \"description\": \"Marks an item template
         as deprecated. Deprecated templates cannot be used\\nto create new instances but existing instances remain valid.
         Optionally\\nspecify a migration target template.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"\
@@ -926,11 +1076,23 @@ paths:
         \  \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item instance was created\"\
         \n                },\n                \"originId\": {\n                    \"type\": \"string\",\n               \
         \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Source
-        entity ID (quest ID, creature ID, etc.)\"\n                }\n            }\n        },\n        \"ItemOriginType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n     \
-        \       \"enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n         \
-        \       \"trade\",\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n       \
-        \     ]\n        }\n    }\n}"
+        entity ID (quest ID, creature ID, etc.)\"\n                },\n                \"contractInstanceId\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Bound contract instance ID. For persistent item-contract bindings (status
+        effects,\\nlicenses, memberships), this references the controlling contract. NULL for items\\nwithout persistent contract
+        relationships.\\n\"\n                },\n                \"contractBindingType\": {\n                    \"$ref\"\
+        : \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Type of contract binding. When contractInstanceId is provided, this indicates\\nwhether it's a lifecycle binding
+        (managed externally) or session binding\\n(managed by Item service). Defaults to 'lifecycle' when contractInstanceId
+        is set.\\n\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
+        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
+        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
+        on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
+        service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
+        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -968,15 +1130,25 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
         instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
-        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
-        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
-        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
-        \    }\n}"
+        : \"Source entity ID\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Bound contract instance ID. For persistent item-contract bindings or active\\nmulti-step
+        use sessions, this references the controlling contract.\\n\"\n                },\n                \"contractBindingType\"\
+        : {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Type of contract binding. 'session' for multi-step use in progress,\\n'lifecycle'
+        for external orchestrator-managed bindings, null/none otherwise.\\n\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
+        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContractBindingType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of contract binding on an item instance.\\n- none: No contract
+        bound\\n- session: Temporary binding for multi-step use (managed by Item service)\\n- lifecycle: Persistent binding
+        for status effects, licenses, etc. (managed by external orchestrators)\\n\",\n            \"enum\": [\n          \
+        \      \"none\",\n                \"session\",\n                \"lifecycle\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new item instance\",\n    \"description\": \"Creates a new item
         instance from a template. The instance must be placed\\nin a container (containerId required). Use lib-inventory's
         /inventory/add\\nfor most use cases - this endpoint is for low-level instance creation.\\n\",\n    \"tags\": [\n \
@@ -1049,15 +1221,25 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
         instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
-        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
-        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
-        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
-        \    }\n}"
+        : \"Source entity ID\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Bound contract instance ID. For persistent item-contract bindings or active\\nmulti-step
+        use sessions, this references the controlling contract.\\n\"\n                },\n                \"contractBindingType\"\
+        : {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Type of contract binding. 'session' for multi-step use in progress,\\n'lifecycle'
+        for external orchestrator-managed bindings, null/none otherwise.\\n\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
+        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContractBindingType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of contract binding on an item instance.\\n- none: No contract
+        bound\\n- session: Temporary binding for multi-step use (managed by Item service)\\n- lifecycle: Persistent binding
+        for status effects, licenses, etc. (managed by external orchestrators)\\n\",\n            \"enum\": [\n          \
+        \      \"none\",\n                \"session\",\n                \"lifecycle\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get item instance by ID\",\n    \"description\": \"Retrieves an item instance
         by its unique ID.\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"getItemInstance\"\n}"
@@ -1155,15 +1337,25 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
         instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
-        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
-        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
-        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
-        \    }\n}"
+        : \"Source entity ID\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Bound contract instance ID. For persistent item-contract bindings or active\\nmulti-step
+        use sessions, this references the controlling contract.\\n\"\n                },\n                \"contractBindingType\"\
+        : {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Type of contract binding. 'session' for multi-step use in progress,\\n'lifecycle'
+        for external orchestrator-managed bindings, null/none otherwise.\\n\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
+        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContractBindingType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of contract binding on an item instance.\\n- none: No contract
+        bound\\n- session: Temporary binding for multi-step use (managed by Item service)\\n- lifecycle: Persistent binding
+        for status effects, licenses, etc. (managed by external orchestrators)\\n\",\n            \"enum\": [\n          \
+        \      \"none\",\n                \"session\",\n                \"lifecycle\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Modify item instance state\",\n    \"description\": \"Modifies an item
         instance's mutable state: durability, custom stats,\\ncustom name, and metadata. Cannot modify bound items unless
         admin.\\n\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1249,15 +1441,25 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
         instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
-        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
-        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
-        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
-        \    }\n}"
+        : \"Source entity ID\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Bound contract instance ID. For persistent item-contract bindings or active\\nmulti-step
+        use sessions, this references the controlling contract.\\n\"\n                },\n                \"contractBindingType\"\
+        : {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Type of contract binding. 'session' for multi-step use in progress,\\n'lifecycle'
+        for external orchestrator-managed bindings, null/none otherwise.\\n\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
+        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContractBindingType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of contract binding on an item instance.\\n- none: No contract
+        bound\\n- session: Temporary binding for multi-step use (managed by Item service)\\n- lifecycle: Persistent binding
+        for status effects, licenses, etc. (managed by external orchestrators)\\n\",\n            \"enum\": [\n          \
+        \      \"none\",\n                \"session\",\n                \"lifecycle\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bind item to character\",\n    \"description\": \"Binds an item instance
         to a character. The bind type must be allowed by\\nthe template's soulboundType. Once bound, the item cannot be traded.\\\
         n\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bindItemInstance\"\
@@ -1337,15 +1539,25 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
         instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
-        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
-        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
-        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
-        \    }\n}"
+        : \"Source entity ID\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Bound contract instance ID. For persistent item-contract bindings or active\\nmulti-step
+        use sessions, this references the controlling contract.\\n\"\n                },\n                \"contractBindingType\"\
+        : {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Type of contract binding. 'session' for multi-step use in progress,\\n'lifecycle'
+        for external orchestrator-managed bindings, null/none otherwise.\\n\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
+        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContractBindingType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of contract binding on an item instance.\\n- none: No contract
+        bound\\n- session: Temporary binding for multi-step use (managed by Item service)\\n- lifecycle: Persistent binding
+        for status effects, licenses, etc. (managed by external orchestrators)\\n\",\n            \"enum\": [\n          \
+        \      \"none\",\n                \"session\",\n                \"lifecycle\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Unbind item from character\",\n    \"description\": \"Removes the binding
         from a soulbound item. This is an admin-only operation\\nfor returning bound items to tradeable state. Requires a
         reason for audit trail.\\n\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n  \
@@ -1400,6 +1612,168 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Destroy item instance\",\n    \"description\": \"Permanently destroys an
         item instance. The reason is recorded for audit.\\nCannot destroy bound items unless admin or reason is 'admin'.\\\
         n\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"destroyItemInstance\"\
+        \n}"
+  /item/use:
+    post:
+      operationId: useItem
+      tags:
+      - Item Instance
+      summary: Use an item (execute its behavior contract)
+      description: |
+        Uses an item by executing its behavior contract. The item's template must have
+        a useBehaviorContractTemplateId defined. Creates a transient contract instance,
+        completes the "use" milestone (triggering prebound APIs), and consumes the item
+        on success if the template defines it as consumable. Returns failure if the
+        contract's prebound APIs fail.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseItemRequest'
+      responses:
+        '200':
+          description: Item used successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UseItemResponse'
+        '400':
+          description: Item template has no behavior contract or invalid request
+        '404':
+          description: Item instance not found
+        '422':
+          description: Item use failed (contract prebound APIs failed)
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UseItemRequest\"\
+        ,\n    \"$defs\": {\n        \"UseItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to use an item instance by executing its behavior contract\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"instanceId\",\n                \"userId\",\n                \"userType\"\
+        \n            ],\n            \"properties\": {\n                \"instanceId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
+        the item instance to use\"\n                },\n                \"userId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of the entity
+        using the item (character, account, or actor)\"\n                },\n                \"userType\": {\n           \
+        \         \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"description\": \"Type
+        of user entity performing the use action (e.g., character, account, actor)\"\n                },\n               \
+        \ \"targetId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Optional unique identifier of the target
+        entity for directional item effects\"\n                },\n                \"targetType\": {\n                   \
+        \ \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Type of target entity when targetId is provided\"\n                },\n         \
+        \       \"context\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Additional context data passed to
+        contract template value substitution\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UseItemResponse\"\
+        ,\n    \"$defs\": {\n        \"UseItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing the result of an item use attempt\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"success\",\n                \"instanceId\",\n                \"templateId\"\
+        ,\n                \"consumed\"\n            ],\n            \"properties\": {\n                \"success\": {\n \
+        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether the item use behavior executed
+        successfully\"\n                },\n                \"instanceId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of the item instance
+        that was used\"\n                },\n                \"templateId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of the item template
+        defining the used item\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Unique identifier of the contract instance created for this use (null if creation failed)\"\
+        \n                },\n                \"consumed\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether the item was consumed (quantity decremented or destroyed)\"\n                },\n\
+        \                \"remainingQuantity\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Remaining quantity
+        after use (null if item was fully consumed or destroyed)\"\n                },\n                \"failureReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable reason for failure when success is false\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Use an item (execute its behavior contract)\",\n    \"description\": \"\
+        Uses an item by executing its behavior contract. The item's template must have\\na useBehaviorContractTemplateId defined.
+        Creates a transient contract instance,\\ncompletes the \\\"use\\\" milestone (triggering prebound APIs), and consumes
+        the item\\non success if the template defines it as consumable. Returns failure if the\\ncontract's prebound APIs
+        fail.\\n\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\":
+        \"useItem\"\n}"
+  /item/use-step:
+    post:
+      operationId: useItemStep
+      tags:
+      - Item Instance
+      summary: Complete a specific step of a multi-step item use
+      description: |
+        For items with multi-milestone use behaviors, completes a specific milestone.
+        The first call (without an existing contractInstanceId on the item) creates
+        the contract instance and stores it on the item; subsequent calls progress
+        the existing contract. Item is consumed only when all required milestones
+        are complete (per itemUseBehavior).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseItemStepRequest'
+      responses:
+        '200':
+          description: Step completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UseItemStepResponse'
+        '400':
+          description: Invalid request or item template has no behavior contract
+        '404':
+          description: Item instance not found
+        '409':
+          description: Another operation is in progress on this item (distributed lock held)
+        '422':
+          description: Step execution failed (CanUse validation or milestone completion)
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UseItemStepRequest\"\
+        ,\n    \"$defs\": {\n        \"UseItemStepRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to complete a step of a multi-step item use\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"instanceId\",\n                \"userId\",\n                \"userType\"\
+        ,\n                \"milestoneCode\"\n            ],\n            \"properties\": {\n                \"instanceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Item instance being used\"\n                },\n                \"userId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"User
+        performing the step\"\n                },\n                \"userType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"maxLength\": 64,\n                    \"description\": \"Type of user entity (e.g., character,
+        account, actor)\"\n                },\n                \"milestoneCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"maxLength\": 64,\n                    \"description\": \"Milestone code to complete in the
+        use behavior contract\"\n                },\n                \"evidence\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Evidence data for this milestone completion (passed to contract)\"\n                },\n \
+        \               \"context\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional context data passed
+        to contract template value substitution\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UseItemStepResponse\"\
+        ,\n    \"$defs\": {\n        \"UseItemStepResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response from completing a multi-step item use milestone\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"success\",\n                \"instanceId\",\n                \"contractInstanceId\"\
+        ,\n                \"completedMilestone\",\n                \"isComplete\",\n                \"consumed\"\n      \
+        \      ],\n            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the step completed successfully\"\n                },\n        \
+        \        \"instanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Item instance ID\"\n                },\n                \"contractInstanceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Contract instance tracking this use session\"\n                },\n                \"completedMilestone\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"The milestone that was completed\"\
+        \n                },\n                \"remainingMilestones\": {\n                    \"type\": \"array\",\n     \
+        \               \"items\": {\n                        \"type\": \"string\"\n                    },\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Milestones still to be completed (null if complete
+        or failed)\"\n                },\n                \"isComplete\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"description\": \"Whether all required milestones are complete\"\n                },\n     \
+        \           \"consumed\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        item was consumed (only true when all steps complete per itemUseBehavior)\"\n                },\n                \"\
+        failureReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Human-readable reason for failure when success is false\"\n                }\n    \
+        \        }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Complete a specific step of a multi-step item use\",\n    \"description\"\
+        : \"For items with multi-milestone use behaviors, completes a specific milestone.\\nThe first call (without an existing
+        contractInstanceId on the item) creates\\nthe contract instance and stores it on the item; subsequent calls progress\\
+        nthe existing contract. Item is consumed only when all required milestones\\nare complete (per itemUseBehavior).\\\
+        n\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"useItemStep\"\
         \n}"
   /item/instance/list-by-container:
     post:
@@ -1475,15 +1849,25 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
         instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
-        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
-        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
-        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
-        \    }\n}"
+        : \"Source entity ID\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Bound contract instance ID. For persistent item-contract bindings or active\\nmulti-step
+        use sessions, this references the controlling contract.\\n\"\n                },\n                \"contractBindingType\"\
+        : {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Type of contract binding. 'session' for multi-step use in progress,\\n'lifecycle'
+        for external orchestrator-managed bindings, null/none otherwise.\\n\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
+        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContractBindingType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of contract binding on an item instance.\\n- none: No contract
+        bound\\n- session: Temporary binding for multi-step use (managed by Item service)\\n- lifecycle: Persistent binding
+        for status effects, licenses, etc. (managed by external orchestrators)\\n\",\n            \"enum\": [\n          \
+        \      \"none\",\n                \"session\",\n                \"lifecycle\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List items in a container\",\n    \"description\": \"Returns all item instances
         in the specified container.\",\n    \"tags\": [\n        \"Item Query\"\n    ],\n    \"deprecated\": false,\n    \"\
         operationId\": \"listItemsByContainer\"\n}"
@@ -1568,15 +1952,25 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
         instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
-        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
-        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
-        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
-        \    }\n}"
+        : \"Source entity ID\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Bound contract instance ID. For persistent item-contract bindings or active\\nmulti-step
+        use sessions, this references the controlling contract.\\n\"\n                },\n                \"contractBindingType\"\
+        : {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Type of contract binding. 'session' for multi-step use in progress,\\n'lifecycle'
+        for external orchestrator-managed bindings, null/none otherwise.\\n\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
+        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContractBindingType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of contract binding on an item instance.\\n- none: No contract
+        bound\\n- session: Temporary binding for multi-step use (managed by Item service)\\n- lifecycle: Persistent binding
+        for status effects, licenses, etc. (managed by external orchestrators)\\n\",\n            \"enum\": [\n          \
+        \      \"none\",\n                \"session\",\n                \"lifecycle\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List instances of a template\",\n    \"description\": \"Returns item instances
         of the specified template, optionally filtered by realm.\\nUseful for admin queries and analytics.\\n\",\n    \"tags\"\
         : [\n        \"Item Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listItemsByTemplate\"\n}"
@@ -1656,15 +2050,26 @@ paths:
         \             \"originType\": {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"\
         description\": \"How this item instance was created\"\n                },\n                \"originId\": {\n     \
         \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
-        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
-        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"contractInstanceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Bound contract instance ID. For persistent item-contract
+        bindings or active\\nmulti-step use sessions, this references the controlling contract.\\n\"\n                },\n\
+        \                \"contractBindingType\": {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Type of contract binding. 'session' for
+        multi-step use in progress,\\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\\n\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\n         \
+        \       },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
+        timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
+        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
+        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
+        on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
+        service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
+        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get multiple item instances by ID\",\n    \"description\": \"Retrieves
         multiple item instances in a single request.\",\n    \"tags\": [\n        \"Item Query\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"batchGetItemInstances\"\n}"
@@ -1735,6 +2140,39 @@ components:
       - purchase
       - spawn
       - other
+    ItemUseBehavior:
+      type: string
+      description: |
+        Controls item consumption on use.
+        - disabled: Item cannot be used (/item/use returns 400)
+        - destroy_on_success: Item consumed only if use behavior succeeds (default)
+        - destroy_always: Item consumed regardless of success/failure
+      enum:
+      - disabled
+      - destroy_on_success
+      - destroy_always
+    CanUseBehavior:
+      type: string
+      description: |
+        Controls CanUse validation behavior.
+        - disabled: Skip CanUse validation even if template is configured
+        - block: CanUse failure prevents use (default)
+        - warn_and_proceed: CanUse failure logs warning but proceeds with use
+      enum:
+      - disabled
+      - block
+      - warn_and_proceed
+    ContractBindingType:
+      type: string
+      description: |
+        Type of contract binding on an item instance.
+        - none: No contract bound
+        - session: Temporary binding for multi-step use (managed by Item service)
+        - lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)
+      enum:
+      - none
+      - session
+      - lifecycle
     CreateItemTemplateRequest:
       type: object
       description: Request to create a new item template
@@ -1880,6 +2318,37 @@ components:
           type: object
           nullable: true
           description: Any other game-specific data
+        useBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template ID for executable item behavior. When set, the item can be "used" via 
+            /item/use, which creates a transient contract instance, completes its "use" milestone (triggering prebound 
+            APIs), and optionally consumes the item.
+        canUseBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Contract template for pre-use validation. When set, /item/use first executes
+            this contract's "validate" milestone before proceeding. If validation fails,
+            the item is NOT consumed and the main use behavior is NOT executed.
+        onUseFailedBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Contract template executed when the main use behavior fails. Enables cleanup,
+            partial rollback, or consequence application. Item is NOT consumed on failure
+            regardless of this template's outcome.
+        itemUseBehavior:
+          $ref: '#/components/schemas/ItemUseBehavior'
+          nullable: true
+          description: How the item should behave when used (defaults to destroy_on_success)
+        canUseBehavior:
+          $ref: '#/components/schemas/CanUseBehavior'
+          nullable: true
+          description: How CanUse validation failures should be handled (defaults to block)
     GetItemTemplateRequest:
       type: object
       description: Request to get an item template
@@ -2056,6 +2525,29 @@ components:
           type: boolean
           nullable: true
           description: Active status
+        useBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template ID for executable item behavior (null to clear)
+        canUseBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for pre-use validation (null to clear)
+        onUseFailedBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for use failure handling (null to clear)
+        itemUseBehavior:
+          $ref: '#/components/schemas/ItemUseBehavior'
+          nullable: true
+          description: How the item should behave when used
+        canUseBehavior:
+          $ref: '#/components/schemas/CanUseBehavior'
+          nullable: true
+          description: How CanUse validation failures should be handled
     DeprecateItemTemplateRequest:
       type: object
       description: Request to deprecate an item template
@@ -2217,6 +2709,29 @@ components:
           type: object
           nullable: true
           description: Other game-specific data
+        useBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template ID for executable item behavior (null if not usable)
+        canUseBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for pre-use validation (null if not configured)
+        onUseFailedBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for use failure handling (null if not configured)
+        itemUseBehavior:
+          $ref: '#/components/schemas/ItemUseBehavior'
+          nullable: true
+          description: How the item behaves when used (null defaults to destroy_on_success)
+        canUseBehavior:
+          $ref: '#/components/schemas/CanUseBehavior'
+          nullable: true
+          description: How CanUse validation failures are handled (null defaults to block)
         isActive:
           type: boolean
           description: Whether template is active
@@ -2327,6 +2842,21 @@ components:
           format: uuid
           nullable: true
           description: Source entity ID (quest ID, creature ID, etc.)
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Bound contract instance ID. For persistent item-contract bindings (status effects,
+            licenses, memberships), this references the controlling contract. NULL for items
+            without persistent contract relationships.
+        contractBindingType:
+          $ref: '#/components/schemas/ContractBindingType'
+          nullable: true
+          description: |
+            Type of contract binding. When contractInstanceId is provided, this indicates
+            whether it's a lifecycle binding (managed externally) or session binding
+            (managed by Item service). Defaults to 'lifecycle' when contractInstanceId is set.
     GetItemInstanceRequest:
       type: object
       description: Request to get an item instance
@@ -2521,6 +3051,19 @@ components:
           format: uuid
           nullable: true
           description: Source entity ID
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Bound contract instance ID. For persistent item-contract bindings or active
+            multi-step use sessions, this references the controlling contract.
+        contractBindingType:
+          $ref: '#/components/schemas/ContractBindingType'
+          nullable: true
+          description: |
+            Type of contract binding. 'session' for multi-step use in progress,
+            'lifecycle' for external orchestrator-managed bindings, null/none otherwise.
         createdAt:
           type: string
           format: date-time
@@ -2635,3 +3178,155 @@ components:
             type: string
             format: uuid
           description: Instance IDs that were not found
+    UseItemRequest:
+      type: object
+      description: Request to use an item instance by executing its behavior contract
+      additionalProperties: false
+      required:
+      - instanceId
+      - userId
+      - userType
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item instance to use
+        userId:
+          type: string
+          format: uuid
+          description: Unique identifier of the entity using the item (character, account, or actor)
+        userType:
+          type: string
+          maxLength: 64
+          description: Type of user entity performing the use action (e.g., character, account, actor)
+        targetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional unique identifier of the target entity for directional item effects
+        targetType:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Type of target entity when targetId is provided
+        context:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional context data passed to contract template value substitution
+    UseItemResponse:
+      type: object
+      description: Response containing the result of an item use attempt
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - templateId
+      - consumed
+      properties:
+        success:
+          type: boolean
+          description: Whether the item use behavior executed successfully
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item instance that was used
+        templateId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item template defining the used item
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique identifier of the contract instance created for this use (null if creation failed)
+        consumed:
+          type: boolean
+          description: Whether the item was consumed (quantity decremented or destroyed)
+        remainingQuantity:
+          type: number
+          format: double
+          nullable: true
+          description: Remaining quantity after use (null if item was fully consumed or destroyed)
+        failureReason:
+          type: string
+          nullable: true
+          description: Human-readable reason for failure when success is false
+    UseItemStepRequest:
+      type: object
+      description: Request to complete a step of a multi-step item use
+      additionalProperties: false
+      required:
+      - instanceId
+      - userId
+      - userType
+      - milestoneCode
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance being used
+        userId:
+          type: string
+          format: uuid
+          description: User performing the step
+        userType:
+          type: string
+          maxLength: 64
+          description: Type of user entity (e.g., character, account, actor)
+        milestoneCode:
+          type: string
+          maxLength: 64
+          description: Milestone code to complete in the use behavior contract
+        evidence:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Evidence data for this milestone completion (passed to contract)
+        context:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional context data passed to contract template value substitution
+    UseItemStepResponse:
+      type: object
+      description: Response from completing a multi-step item use milestone
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - contractInstanceId
+      - completedMilestone
+      - isComplete
+      - consumed
+      properties:
+        success:
+          type: boolean
+          description: Whether the step completed successfully
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance tracking this use session
+        completedMilestone:
+          type: string
+          description: The milestone that was completed
+        remainingMilestones:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Milestones still to be completed (null if complete or failed)
+        isComplete:
+          type: boolean
+          description: Whether all required milestones are complete
+        consumed:
+          type: boolean
+          description: Whether item was consumed (only true when all steps complete per itemUseBehavior)
+        failureReason:
+          type: string
+          nullable: true
+          description: Human-readable reason for failure when success is false

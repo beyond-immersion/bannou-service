@@ -6,7 +6,6 @@ using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Relationship;
-using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
@@ -33,7 +32,6 @@ public partial class CharacterService : ICharacterService
     private readonly IRealmClient _realmClient;
     private readonly ISpeciesClient _speciesClient;
     private readonly IRelationshipClient _relationshipClient;
-    private readonly IRelationshipTypeClient _relationshipTypeClient;
     private readonly IContractClient _contractClient;
     private readonly IResourceClient _resourceClient;
 
@@ -67,7 +65,6 @@ public partial class CharacterService : ICharacterService
         IRealmClient realmClient,
         ISpeciesClient speciesClient,
         IRelationshipClient relationshipClient,
-        IRelationshipTypeClient relationshipTypeClient,
         IContractClient contractClient,
         IEventConsumer eventConsumer,
         IResourceClient resourceClient)
@@ -80,7 +77,6 @@ public partial class CharacterService : ICharacterService
         _realmClient = realmClient;
         _speciesClient = speciesClient;
         _relationshipClient = relationshipClient;
-        _relationshipTypeClient = relationshipTypeClient;
         _contractClient = contractClient;
         _resourceClient = resourceClient ?? throw new ArgumentNullException(nameof(resourceClient));
 
@@ -1387,7 +1383,7 @@ public partial class CharacterService : ICharacterService
         {
             try
             {
-                var typeResponse = await _relationshipTypeClient.GetRelationshipTypeAsync(
+                var typeResponse = await _relationshipClient.GetRelationshipTypeAsync(
                     new GetRelationshipTypeRequest { RelationshipTypeId = typeId },
                     cancellationToken);
                 return (typeId, code: typeResponse?.Code);

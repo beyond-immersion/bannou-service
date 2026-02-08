@@ -7,7 +7,6 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Relationship;
-using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
@@ -44,7 +43,6 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<ISpeciesClient> _mockSpeciesClient;
     private readonly Mock<IRelationshipClient> _mockRelationshipClient;
-    private readonly Mock<IRelationshipTypeClient> _mockRelationshipTypeClient;
     private readonly Mock<IContractClient> _mockContractClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IResourceClient> _mockResourceClient;
@@ -69,7 +67,6 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockRealmClient = new Mock<IRealmClient>();
         _mockSpeciesClient = new Mock<ISpeciesClient>();
         _mockRelationshipClient = new Mock<IRelationshipClient>();
-        _mockRelationshipTypeClient = new Mock<IRelationshipTypeClient>();
         _mockContractClient = new Mock<IContractClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockResourceClient = new Mock<IResourceClient>();
@@ -135,7 +132,6 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             _mockRealmClient.Object,
             _mockSpeciesClient.Object,
             _mockRelationshipClient.Object,
-            _mockRelationshipTypeClient.Object,
             _mockContractClient.Object,
             _mockEventConsumer.Object,
             resourceClient ?? _mockResourceClient.Object);
@@ -1338,10 +1334,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             });
 
         // Setup relationship type client to return type codes
-        _mockRelationshipTypeClient
+        _mockRelationshipClient
             .Setup(c => c.GetRelationshipTypeAsync(It.Is<GetRelationshipTypeRequest>(r => r.RelationshipTypeId == spouseTypeId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RelationshipTypeResponse { RelationshipTypeId = spouseTypeId, Code = "SPOUSE" });
-        _mockRelationshipTypeClient
+        _mockRelationshipClient
             .Setup(c => c.GetRelationshipTypeAsync(It.Is<GetRelationshipTypeRequest>(r => r.RelationshipTypeId == childTypeId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RelationshipTypeResponse { RelationshipTypeId = childTypeId, Code = "CHILD" });
 

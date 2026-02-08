@@ -56,7 +56,7 @@ public partial class RelationshipController
                 "relationshipTypeId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Relationship type ID (from RelationshipType service)"
+                    "description": "Relationship type ID defining the kind of relationship"
                 },
                 "startedAt": {
                     "type": "string",
@@ -121,7 +121,7 @@ public partial class RelationshipController
                 "relationshipTypeId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Relationship type ID (from RelationshipType service)"
+                    "description": "Relationship type ID defining the kind of relationship"
                 },
                 "startedAt": {
                     "type": "string",
@@ -283,7 +283,7 @@ public partial class RelationshipController
                 "relationshipTypeId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Relationship type ID (from RelationshipType service)"
+                    "description": "Relationship type ID defining the kind of relationship"
                 },
                 "startedAt": {
                     "type": "string",
@@ -519,7 +519,7 @@ public partial class RelationshipController
                 "relationshipTypeId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Relationship type ID (from RelationshipType service)"
+                    "description": "Relationship type ID defining the kind of relationship"
                 },
                 "startedAt": {
                     "type": "string",
@@ -748,7 +748,7 @@ public partial class RelationshipController
                 "relationshipTypeId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Relationship type ID (from RelationshipType service)"
+                    "description": "Relationship type ID defining the kind of relationship"
                 },
                 "startedAt": {
                     "type": "string",
@@ -978,7 +978,7 @@ public partial class RelationshipController
                 "relationshipTypeId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Relationship type ID (from RelationshipType service)"
+                    "description": "Relationship type ID defining the kind of relationship"
                 },
                 "startedAt": {
                     "type": "string",
@@ -1152,7 +1152,7 @@ public partial class RelationshipController
                 "relationshipTypeId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Relationship type ID (from RelationshipType service)"
+                    "description": "Relationship type ID defining the kind of relationship"
                 },
                 "startedAt": {
                     "type": "string",
@@ -1334,6 +1334,2431 @@ public partial class RelationshipController
             _EndRelationship_Info,
             _EndRelationship_RequestSchema,
             _EndRelationship_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetRelationshipType
+
+    private static readonly string _GetRelationshipType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetRelationshipTypeRequest",
+    "$defs": {
+        "GetRelationshipTypeRequest": {
+            "description": "Request to retrieve a relationship type by its unique identifier",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetRelationshipType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RelationshipTypeResponse",
+    "$defs": {
+        "RelationshipTypeResponse": {
+            "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId",
+                "code",
+                "name",
+                "isBidirectional",
+                "isDeprecated",
+                "depth",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the parent type in the hierarchy (null for root types)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (for convenience)"
+                },
+                "inverseTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship type (for convenience)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type is deprecated and cannot be used for new relationships"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the hierarchy (0 for root types)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetRelationshipType_Info = """
+{
+    "summary": "Get relationship type by ID",
+    "description": "",
+    "tags": [
+        "Relationship Type Management"
+    ],
+    "deprecated": false,
+    "operationId": "getRelationshipType"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRelationshipType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get",
+            _GetRelationshipType_Info));
+
+    /// <summary>Returns request schema for GetRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRelationshipType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get",
+            "request-schema",
+            _GetRelationshipType_RequestSchema));
+
+    /// <summary>Returns response schema for GetRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRelationshipType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get",
+            "response-schema",
+            _GetRelationshipType_ResponseSchema));
+
+    /// <summary>Returns full schema for GetRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRelationshipType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get",
+            _GetRelationshipType_Info,
+            _GetRelationshipType_RequestSchema,
+            _GetRelationshipType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetRelationshipTypeByCode
+
+    private static readonly string _GetRelationshipTypeByCode_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetRelationshipTypeByCodeRequest",
+    "$defs": {
+        "GetRelationshipTypeByCodeRequest": {
+            "description": "Request to retrieve a relationship type by its unique code string",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\", \"FRIEND\")"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetRelationshipTypeByCode_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RelationshipTypeResponse",
+    "$defs": {
+        "RelationshipTypeResponse": {
+            "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId",
+                "code",
+                "name",
+                "isBidirectional",
+                "isDeprecated",
+                "depth",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the parent type in the hierarchy (null for root types)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (for convenience)"
+                },
+                "inverseTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship type (for convenience)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type is deprecated and cannot be used for new relationships"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the hierarchy (0 for root types)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetRelationshipTypeByCode_Info = """
+{
+    "summary": "Get relationship type by code",
+    "description": "Retrieve a relationship type using its unique code (e.g., \"SON\", \"MOTHER\", \"FRIEND\")",
+    "tags": [
+        "Relationship Type Management"
+    ],
+    "deprecated": false,
+    "operationId": "getRelationshipTypeByCode"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetRelationshipTypeByCode</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-by-code/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRelationshipTypeByCode_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-by-code",
+            _GetRelationshipTypeByCode_Info));
+
+    /// <summary>Returns request schema for GetRelationshipTypeByCode</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-by-code/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRelationshipTypeByCode_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-by-code",
+            "request-schema",
+            _GetRelationshipTypeByCode_RequestSchema));
+
+    /// <summary>Returns response schema for GetRelationshipTypeByCode</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-by-code/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRelationshipTypeByCode_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-by-code",
+            "response-schema",
+            _GetRelationshipTypeByCode_ResponseSchema));
+
+    /// <summary>Returns full schema for GetRelationshipTypeByCode</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-by-code/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRelationshipTypeByCode_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-by-code",
+            _GetRelationshipTypeByCode_Info,
+            _GetRelationshipTypeByCode_RequestSchema,
+            _GetRelationshipTypeByCode_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListRelationshipTypes
+
+    private static readonly string _ListRelationshipTypes_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListRelationshipTypesRequest",
+    "$defs": {
+        "ListRelationshipTypesRequest": {
+            "description": "Request to list relationship types with optional filtering by category, hierarchy, and deprecation status",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by category (e.g., \"FAMILY\", \"SOCIAL\", \"ECONOMIC\") (null to include all)"
+                },
+                "includeChildren": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to include child types in the response"
+                },
+                "rootsOnly": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Only return types with no parent (root types)"
+                },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include deprecated types in the response"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListRelationshipTypes_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RelationshipTypeListResponse",
+    "$defs": {
+        "RelationshipTypeListResponse": {
+            "description": "Response containing a list of relationship types with total count",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "types",
+                "totalCount"
+            ],
+            "properties": {
+                "types": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RelationshipTypeResponse"
+                    },
+                    "description": "List of relationship types matching the query"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of relationship types returned"
+                }
+            }
+        },
+        "RelationshipTypeResponse": {
+            "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId",
+                "code",
+                "name",
+                "isBidirectional",
+                "isDeprecated",
+                "depth",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the parent type in the hierarchy (null for root types)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (for convenience)"
+                },
+                "inverseTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship type (for convenience)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type is deprecated and cannot be used for new relationships"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the hierarchy (0 for root types)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListRelationshipTypes_Info = """
+{
+    "summary": "List all relationship types",
+    "description": "Retrieve all relationship types with optional hierarchy filtering",
+    "tags": [
+        "Relationship Type Management"
+    ],
+    "deprecated": false,
+    "operationId": "listRelationshipTypes"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListRelationshipTypes_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/list",
+            _ListRelationshipTypes_Info));
+
+    /// <summary>Returns request schema for ListRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListRelationshipTypes_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/list",
+            "request-schema",
+            _ListRelationshipTypes_RequestSchema));
+
+    /// <summary>Returns response schema for ListRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListRelationshipTypes_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/list",
+            "response-schema",
+            _ListRelationshipTypes_ResponseSchema));
+
+    /// <summary>Returns full schema for ListRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListRelationshipTypes_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/list",
+            _ListRelationshipTypes_Info,
+            _ListRelationshipTypes_RequestSchema,
+            _ListRelationshipTypes_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetChildRelationshipTypes
+
+    private static readonly string _GetChildRelationshipTypes_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetChildRelationshipTypesRequest",
+    "$defs": {
+        "GetChildRelationshipTypesRequest": {
+            "description": "Request to retrieve all child relationship types for a given parent type",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "parentTypeId"
+            ],
+            "properties": {
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the parent relationship type"
+                },
+                "recursive": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include all descendants, not just direct children"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetChildRelationshipTypes_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RelationshipTypeListResponse",
+    "$defs": {
+        "RelationshipTypeListResponse": {
+            "description": "Response containing a list of relationship types with total count",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "types",
+                "totalCount"
+            ],
+            "properties": {
+                "types": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RelationshipTypeResponse"
+                    },
+                    "description": "List of relationship types matching the query"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of relationship types returned"
+                }
+            }
+        },
+        "RelationshipTypeResponse": {
+            "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId",
+                "code",
+                "name",
+                "isBidirectional",
+                "isDeprecated",
+                "depth",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the parent type in the hierarchy (null for root types)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (for convenience)"
+                },
+                "inverseTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship type (for convenience)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type is deprecated and cannot be used for new relationships"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the hierarchy (0 for root types)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetChildRelationshipTypes_Info = """
+{
+    "summary": "Get child types for a parent type",
+    "description": "Retrieve all relationship types that have the specified type as their parent",
+    "tags": [
+        "Relationship Type Management"
+    ],
+    "deprecated": false,
+    "operationId": "getChildRelationshipTypes"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetChildRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-children/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetChildRelationshipTypes_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-children",
+            _GetChildRelationshipTypes_Info));
+
+    /// <summary>Returns request schema for GetChildRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-children/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetChildRelationshipTypes_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-children",
+            "request-schema",
+            _GetChildRelationshipTypes_RequestSchema));
+
+    /// <summary>Returns response schema for GetChildRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-children/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetChildRelationshipTypes_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-children",
+            "response-schema",
+            _GetChildRelationshipTypes_ResponseSchema));
+
+    /// <summary>Returns full schema for GetChildRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-children/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetChildRelationshipTypes_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-children",
+            _GetChildRelationshipTypes_Info,
+            _GetChildRelationshipTypes_RequestSchema,
+            _GetChildRelationshipTypes_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for MatchesHierarchy
+
+    private static readonly string _MatchesHierarchy_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MatchesHierarchyRequest",
+    "$defs": {
+        "MatchesHierarchyRequest": {
+            "description": "Request to check if a relationship type matches or descends from an ancestor type in the hierarchy",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "typeId",
+                "ancestorTypeId"
+            ],
+            "properties": {
+                "typeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The relationship type to check"
+                },
+                "ancestorTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The potential ancestor type"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MatchesHierarchy_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MatchesHierarchyResponse",
+    "$defs": {
+        "MatchesHierarchyResponse": {
+            "description": "Response indicating whether a type matches an ancestor in the hierarchy and the depth between them",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "matches"
+            ],
+            "properties": {
+                "matches": {
+                    "type": "boolean",
+                    "description": "True if typeId equals or descends from ancestorTypeId"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Number of levels between the types (0 if same, -1 if no match)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MatchesHierarchy_Info = """
+{
+    "summary": "Check if type matches ancestor in hierarchy",
+    "description": "Checks if a relationship type matches or descends from an ancestor type.\nFor example, \"SON\" matches \"CHILD\" because CHILD is an ancestor of SON.\nThis enables queries like \"find all CHILD relationships\" to match SON, DAUGHTER, etc.\n",
+    "tags": [
+        "Relationship Type Management"
+    ],
+    "deprecated": false,
+    "operationId": "matchesHierarchy"
+}
+""";
+
+    /// <summary>Returns endpoint information for MatchesHierarchy</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/matches-hierarchy/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MatchesHierarchy_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/matches-hierarchy",
+            _MatchesHierarchy_Info));
+
+    /// <summary>Returns request schema for MatchesHierarchy</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/matches-hierarchy/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MatchesHierarchy_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/matches-hierarchy",
+            "request-schema",
+            _MatchesHierarchy_RequestSchema));
+
+    /// <summary>Returns response schema for MatchesHierarchy</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/matches-hierarchy/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MatchesHierarchy_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/matches-hierarchy",
+            "response-schema",
+            _MatchesHierarchy_ResponseSchema));
+
+    /// <summary>Returns full schema for MatchesHierarchy</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/matches-hierarchy/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MatchesHierarchy_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/matches-hierarchy",
+            _MatchesHierarchy_Info,
+            _MatchesHierarchy_RequestSchema,
+            _MatchesHierarchy_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetAncestors
+
+    private static readonly string _GetAncestors_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetAncestorsRequest",
+    "$defs": {
+        "GetAncestorsRequest": {
+            "description": "Request to retrieve all ancestor types in the hierarchy chain from a relationship type up to the root",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "typeId"
+            ],
+            "properties": {
+                "typeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The relationship type to get ancestors for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetAncestors_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RelationshipTypeListResponse",
+    "$defs": {
+        "RelationshipTypeListResponse": {
+            "description": "Response containing a list of relationship types with total count",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "types",
+                "totalCount"
+            ],
+            "properties": {
+                "types": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RelationshipTypeResponse"
+                    },
+                    "description": "List of relationship types matching the query"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of relationship types returned"
+                }
+            }
+        },
+        "RelationshipTypeResponse": {
+            "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId",
+                "code",
+                "name",
+                "isBidirectional",
+                "isDeprecated",
+                "depth",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the parent type in the hierarchy (null for root types)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (for convenience)"
+                },
+                "inverseTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship type (for convenience)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type is deprecated and cannot be used for new relationships"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the hierarchy (0 for root types)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetAncestors_Info = """
+{
+    "summary": "Get all ancestors of a relationship type",
+    "description": "Returns the full ancestry chain from the specified type up to the root.\nFor example, for \"SON\" might return [\"CHILD\", \"FAMILY\"].\n",
+    "tags": [
+        "Relationship Type Management"
+    ],
+    "deprecated": false,
+    "operationId": "getAncestors"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetAncestors</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-ancestors/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAncestors_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-ancestors",
+            _GetAncestors_Info));
+
+    /// <summary>Returns request schema for GetAncestors</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-ancestors/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAncestors_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-ancestors",
+            "request-schema",
+            _GetAncestors_RequestSchema));
+
+    /// <summary>Returns response schema for GetAncestors</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-ancestors/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAncestors_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-ancestors",
+            "response-schema",
+            _GetAncestors_ResponseSchema));
+
+    /// <summary>Returns full schema for GetAncestors</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/get-ancestors/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAncestors_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/get-ancestors",
+            _GetAncestors_Info,
+            _GetAncestors_RequestSchema,
+            _GetAncestors_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CreateRelationshipType
+
+    private static readonly string _CreateRelationshipType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateRelationshipTypeRequest",
+    "$defs": {
+        "CreateRelationshipTypeRequest": {
+            "description": "Request to create a new relationship type with code, name, and optional hierarchy and inverse settings",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "code",
+                "name"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Description of the relationship type (null if not provided)"
+                },
+                "category": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "nullable": true,
+                    "description": "Category for grouping (e.g., \"FAMILY\", \"SOCIAL\", \"ECONOMIC\") (null if not categorized)"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Parent type ID for hierarchy (null for root types)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "nullable": true,
+                    "description": "Code of the inverse relationship (e.g., \"PARENT\" for \"CHILD\")"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the relationship is the same in both directions (e.g., \"SIBLING\")"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional metadata for the relationship type"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CreateRelationshipType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RelationshipTypeResponse",
+    "$defs": {
+        "RelationshipTypeResponse": {
+            "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId",
+                "code",
+                "name",
+                "isBidirectional",
+                "isDeprecated",
+                "depth",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the parent type in the hierarchy (null for root types)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (for convenience)"
+                },
+                "inverseTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship type (for convenience)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type is deprecated and cannot be used for new relationships"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the hierarchy (0 for root types)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CreateRelationshipType_Info = """
+{
+    "summary": "Create new relationship type",
+    "description": "",
+    "tags": [
+        "Relationship Type Admin"
+    ],
+    "deprecated": false,
+    "operationId": "createRelationshipType"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateRelationshipType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/create",
+            _CreateRelationshipType_Info));
+
+    /// <summary>Returns request schema for CreateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateRelationshipType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/create",
+            "request-schema",
+            _CreateRelationshipType_RequestSchema));
+
+    /// <summary>Returns response schema for CreateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateRelationshipType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/create",
+            "response-schema",
+            _CreateRelationshipType_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateRelationshipType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/create",
+            _CreateRelationshipType_Info,
+            _CreateRelationshipType_RequestSchema,
+            _CreateRelationshipType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateRelationshipType
+
+    private static readonly string _UpdateRelationshipType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateRelationshipTypeRequest",
+    "$defs": {
+        "UpdateRelationshipTypeRequest": {
+            "description": "Request to update an existing relationship type's properties such as name, description, category, or hierarchy",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the relationship type to update"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "nullable": true,
+                    "description": "Category for grouping"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Parent type ID for hierarchy"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "nullable": true,
+                    "description": "Code of the inverse relationship"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether the relationship is bidirectional"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional metadata"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateRelationshipType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RelationshipTypeResponse",
+    "$defs": {
+        "RelationshipTypeResponse": {
+            "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId",
+                "code",
+                "name",
+                "isBidirectional",
+                "isDeprecated",
+                "depth",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the parent type in the hierarchy (null for root types)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (for convenience)"
+                },
+                "inverseTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship type (for convenience)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type is deprecated and cannot be used for new relationships"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the hierarchy (0 for root types)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateRelationshipType_Info = """
+{
+    "summary": "Update relationship type",
+    "description": "",
+    "tags": [
+        "Relationship Type Admin"
+    ],
+    "deprecated": false,
+    "operationId": "updateRelationshipType"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateRelationshipType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/update",
+            _UpdateRelationshipType_Info));
+
+    /// <summary>Returns request schema for UpdateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateRelationshipType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/update",
+            "request-schema",
+            _UpdateRelationshipType_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateRelationshipType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/update",
+            "response-schema",
+            _UpdateRelationshipType_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateRelationshipType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/update",
+            _UpdateRelationshipType_Info,
+            _UpdateRelationshipType_RequestSchema,
+            _UpdateRelationshipType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteRelationshipType
+
+    private static readonly string _DeleteRelationshipType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteRelationshipTypeRequest",
+    "$defs": {
+        "DeleteRelationshipTypeRequest": {
+            "description": "Request to permanently delete a relationship type (typically after deprecation and merge)",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the relationship type to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteRelationshipType_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeleteRelationshipType_Info = """
+{
+    "summary": "Delete relationship type",
+    "description": "Hard delete a relationship type. This will fail if the type is still in use.\nFor safe removal, first deprecate the type, then merge it into another type\n(or VOID), then delete. Only deprecated types with zero references can be deleted.\n",
+    "tags": [
+        "Relationship Type Admin"
+    ],
+    "deprecated": false,
+    "operationId": "deleteRelationshipType"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteRelationshipType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/delete",
+            _DeleteRelationshipType_Info));
+
+    /// <summary>Returns request schema for DeleteRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteRelationshipType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/delete",
+            "request-schema",
+            _DeleteRelationshipType_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteRelationshipType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/delete",
+            "response-schema",
+            _DeleteRelationshipType_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteRelationshipType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/delete",
+            _DeleteRelationshipType_Info,
+            _DeleteRelationshipType_RequestSchema,
+            _DeleteRelationshipType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeprecateRelationshipType
+
+    private static readonly string _DeprecateRelationshipType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeprecateRelationshipTypeRequest",
+    "$defs": {
+        "DeprecateRelationshipTypeRequest": {
+            "description": "Request to deprecate a relationship type, preventing its use for new relationships while preserving existing ones",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the relationship type to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Optional reason for deprecation (for audit purposes)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateRelationshipType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RelationshipTypeResponse",
+    "$defs": {
+        "RelationshipTypeResponse": {
+            "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId",
+                "code",
+                "name",
+                "isBidirectional",
+                "isDeprecated",
+                "depth",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the parent type in the hierarchy (null for root types)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (for convenience)"
+                },
+                "inverseTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship type (for convenience)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type is deprecated and cannot be used for new relationships"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the hierarchy (0 for root types)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateRelationshipType_Info = """
+{
+    "summary": "Deprecate a relationship type",
+    "description": "Soft-delete a relationship type by marking it as deprecated.\nDeprecated types:\n- Remain queryable for historical data\n- Cannot be used for creating new relationships\n- Can be merged into other types using the merge endpoint\n- Can be hard-deleted after all references are removed\n",
+    "tags": [
+        "Relationship Type Admin"
+    ],
+    "deprecated": false,
+    "operationId": "deprecateRelationshipType"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeprecateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateRelationshipType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/deprecate",
+            _DeprecateRelationshipType_Info));
+
+    /// <summary>Returns request schema for DeprecateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateRelationshipType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/deprecate",
+            "request-schema",
+            _DeprecateRelationshipType_RequestSchema));
+
+    /// <summary>Returns response schema for DeprecateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateRelationshipType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/deprecate",
+            "response-schema",
+            _DeprecateRelationshipType_ResponseSchema));
+
+    /// <summary>Returns full schema for DeprecateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateRelationshipType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/deprecate",
+            _DeprecateRelationshipType_Info,
+            _DeprecateRelationshipType_RequestSchema,
+            _DeprecateRelationshipType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UndeprecateRelationshipType
+
+    private static readonly string _UndeprecateRelationshipType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UndeprecateRelationshipTypeRequest",
+    "$defs": {
+        "UndeprecateRelationshipTypeRequest": {
+            "description": "Request to restore a deprecated relationship type back to active status",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the relationship type to restore"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UndeprecateRelationshipType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RelationshipTypeResponse",
+    "$defs": {
+        "RelationshipTypeResponse": {
+            "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipTypeId",
+                "code",
+                "name",
+                "isBidirectional",
+                "isDeprecated",
+                "depth",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "relationshipTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the relationship type"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the relationship type"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
+                },
+                "parentTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the parent type in the hierarchy (null for root types)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (for convenience)"
+                },
+                "inverseTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship type (for convenience)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this type is deprecated and cannot be used for new relationships"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this type was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the hierarchy (0 for root types)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the relationship type was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UndeprecateRelationshipType_Info = """
+{
+    "summary": "Restore a deprecated relationship type",
+    "description": "Remove the deprecated status from a relationship type, making it\navailable for new relationships again.\n",
+    "tags": [
+        "Relationship Type Admin"
+    ],
+    "deprecated": false,
+    "operationId": "undeprecateRelationshipType"
+}
+""";
+
+    /// <summary>Returns endpoint information for UndeprecateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/undeprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateRelationshipType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/undeprecate",
+            _UndeprecateRelationshipType_Info));
+
+    /// <summary>Returns request schema for UndeprecateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/undeprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateRelationshipType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/undeprecate",
+            "request-schema",
+            _UndeprecateRelationshipType_RequestSchema));
+
+    /// <summary>Returns response schema for UndeprecateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/undeprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateRelationshipType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/undeprecate",
+            "response-schema",
+            _UndeprecateRelationshipType_ResponseSchema));
+
+    /// <summary>Returns full schema for UndeprecateRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/undeprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateRelationshipType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/undeprecate",
+            _UndeprecateRelationshipType_Info,
+            _UndeprecateRelationshipType_RequestSchema,
+            _UndeprecateRelationshipType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for MergeRelationshipType
+
+    private static readonly string _MergeRelationshipType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MergeRelationshipTypeRequest",
+    "$defs": {
+        "MergeRelationshipTypeRequest": {
+            "description": "Request to migrate all relationships from a deprecated source type to a target type",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sourceTypeId",
+                "targetTypeId"
+            ],
+            "properties": {
+                "sourceTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the deprecated type to merge from (must be deprecated)"
+                },
+                "targetTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the type to merge into (can be VOID for effective deletion)"
+                },
+                "deleteAfterMerge": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, hard-delete the source type after successful merge"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MergeRelationshipType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MergeRelationshipTypeResponse",
+    "$defs": {
+        "MergeRelationshipTypeResponse": {
+            "description": "Response summarizing the results of a merge operation including the number of relationships migrated and any failures",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sourceTypeId",
+                "targetTypeId",
+                "relationshipsMigrated",
+                "relationshipsFailed",
+                "sourceDeleted"
+            ],
+            "properties": {
+                "sourceTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the deprecated type that was merged from"
+                },
+                "targetTypeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the type that relationships were merged into"
+                },
+                "relationshipsMigrated": {
+                    "type": "integer",
+                    "description": "Number of relationships successfully updated to use the target type"
+                },
+                "relationshipsFailed": {
+                    "type": "integer",
+                    "description": "Number of relationships that failed to migrate"
+                },
+                "sourceDeleted": {
+                    "type": "boolean",
+                    "description": "Whether the source type was hard-deleted after merge"
+                },
+                "migrationErrors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/MigrationError"
+                    },
+                    "description": "Details of individual migration failures (limited to first 100)"
+                }
+            }
+        },
+        "MigrationError": {
+            "description": "Details of a single relationship that failed to migrate",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipId",
+                "error"
+            ],
+            "properties": {
+                "relationshipId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the relationship that failed to migrate"
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Error message explaining why the migration failed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MergeRelationshipType_Info = """
+{
+    "summary": "Merge a deprecated type into another type",
+    "description": "Migrate all relationships using a deprecated type to a target type.\nThis is the recommended way to handle type removal:\ n1. Deprecate the source type\n2. Merge into the target type (or VOID for effective deletion)\n3. Optionally hard-delete the now-empty deprecated type\n\nThe merge operation:\n- Updates all relationships using sourceTypeId to use targetTypeId\ n- Publishes events for each affected relationship\n- Returns count of migrated relationships\n- Fails if source is not deprecated (safety check)\n",
+    "tags": [
+        "Relationship Type Admin"
+    ],
+    "deprecated": false,
+    "operationId": "mergeRelationshipType"
+}
+""";
+
+    /// <summary>Returns endpoint information for MergeRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/merge/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRelationshipType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/merge",
+            _MergeRelationshipType_Info));
+
+    /// <summary>Returns request schema for MergeRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/merge/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRelationshipType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/merge",
+            "request-schema",
+            _MergeRelationshipType_RequestSchema));
+
+    /// <summary>Returns response schema for MergeRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/merge/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRelationshipType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/merge",
+            "response-schema",
+            _MergeRelationshipType_ResponseSchema));
+
+    /// <summary>Returns full schema for MergeRelationshipType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/merge/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRelationshipType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/merge",
+            _MergeRelationshipType_Info,
+            _MergeRelationshipType_RequestSchema,
+            _MergeRelationshipType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for SeedRelationshipTypes
+
+    private static readonly string _SeedRelationshipTypes_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SeedRelationshipTypesRequest",
+    "$defs": {
+        "SeedRelationshipTypesRequest": {
+            "description": "Request to bulk seed relationship types from configuration, typically used at startup",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "types"
+            ],
+            "properties": {
+                "types": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/SeedRelationshipType"
+                    },
+                    "description": "List of relationship types to seed"
+                },
+                "updateExisting": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to update types that already exist"
+                }
+            }
+        },
+        "SeedRelationshipType": {
+            "description": "A relationship type definition used for seeding, with code-based parent and inverse references",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "code",
+                "name"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the relationship type"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name for the relationship type"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of the relationship type (null if not provided)"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Category for grouping relationship types (null if not categorized)"
+                },
+                "parentTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the parent type (resolved during seeding) (null for root types)"
+                },
+                "inverseTypeCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Code of the inverse relationship (null if not applicable)"
+                },
+                "isBidirectional": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the relationship is the same in both directions"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional custom metadata for the relationship type (null if none)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _SeedRelationshipTypes_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SeedRelationshipTypesResponse",
+    "$defs": {
+        "SeedRelationshipTypesResponse": {
+            "description": "Response summarizing the results of a bulk seed operation with counts of created, updated, and skipped types",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "created",
+                "updated",
+                "skipped",
+                "errors"
+            ],
+            "properties": {
+                "created": {
+                    "type": "integer",
+                    "description": "Number of new types created"
+                },
+                "updated": {
+                    "type": "integer",
+                    "description": "Number of existing types updated"
+                },
+                "skipped": {
+                    "type": "integer",
+                    "description": "Number of types skipped (already exist, updateExisting=false)"
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of error messages for types that failed to seed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _SeedRelationshipTypes_Info = """
+{
+    "summary": "Seed relationship types from configuration",
+    "description": "Idempotent operation to seed relationship types from provided data.\nCreates types that don't exist, optionally updates existing types.\nTypically called at service startup with YAML-defined types.\n",
+    "tags": [
+        "Relationship Type Admin"
+    ],
+    "deprecated": false,
+    "operationId": "seedRelationshipTypes"
+}
+""";
+
+    /// <summary>Returns endpoint information for SeedRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/seed/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SeedRelationshipTypes_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/seed",
+            _SeedRelationshipTypes_Info));
+
+    /// <summary>Returns request schema for SeedRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/seed/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SeedRelationshipTypes_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/seed",
+            "request-schema",
+            _SeedRelationshipTypes_RequestSchema));
+
+    /// <summary>Returns response schema for SeedRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/seed/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SeedRelationshipTypes_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/seed",
+            "response-schema",
+            _SeedRelationshipTypes_ResponseSchema));
+
+    /// <summary>Returns full schema for SeedRelationshipTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship-type/seed/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SeedRelationshipTypes_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship-type/seed",
+            _SeedRelationshipTypes_Info,
+            _SeedRelationshipTypes_RequestSchema,
+            _SeedRelationshipTypes_ResponseSchema));
 
     #endregion
 }

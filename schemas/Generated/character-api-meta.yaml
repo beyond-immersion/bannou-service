@@ -26,6 +26,10 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  x-resource-lifecycle:
+    resourceType: character
+    gracePeriodSeconds: 2592000
+    cleanupPolicy: ALL_REQUIRED
   x-compression-callback:
     resourceType: character
     sourceType: character-base
@@ -471,46 +475,46 @@ paths:
         : \"Child relationships\"\n                },\n                \"siblings\": {\n                    \"type\": \"array\"\
         ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/FamilyMember\"\n                \
         \    },\n                    \"description\": \"Sibling relationships (including half-siblings)\"\n              \
-        \  },\n                \"spouse\": {\n                    \"$ref\": \"#/$defs/FamilyMember\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Current spouse (if any)\"\n                },\n   \
-        \             \"pastLives\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
-        \                   \"$ref\": \"#/$defs/PastLifeReference\"\n                    },\n                    \"description\"\
-        : \"Previous incarnations (if reincarnation tracked)\"\n                }\n            }\n        },\n        \"FamilyMember\"\
-        : {\n            \"description\": \"Reference to a family member\",\n            \"type\": \"object\",\n         \
-        \   \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n            \
-        \    \"relationshipType\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n   \
-        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the related character\"\n                },\n                \"name\": {\n                    \"type\":
-        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name (if available)\"\
-        \n                },\n                \"relationshipType\": {\n                    \"type\": \"string\",\n       \
-        \             \"description\": \"Specific relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.)\"\n            \
-        \    },\n                \"isAlive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the related character is alive\"\n                }\n            }\n        },\n        \"PastLifeReference\"\
-        : {\n            \"description\": \"Reference to a past incarnation\",\n            \"type\": \"object\",\n      \
-        \      \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\"\n          \
-        \  ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the previous incarnation\"\
-        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Display name of the past life\"\n                },\n\
-        \                \"deathDate\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When the past life ended\"\n  \
-        \              }\n            }\n        },\n        \"CombatPreferencesSnapshot\": {\n            \"description\"\
-        : \"Snapshot of combat preferences for enriched response\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"style\",\n                \"preferredRange\",\n         \
-        \       \"groupRole\",\n                \"riskTolerance\",\n                \"retreatThreshold\",\n              \
-        \  \"protectAllies\"\n            ],\n            \"properties\": {\n                \"style\": {\n              \
-        \      \"type\": \"string\",\n                    \"description\": \"Combat style (DEFENSIVE, BALANCED, AGGRESSIVE,
-        BERSERKER, TACTICAL)\"\n                },\n                \"preferredRange\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)\"\n\
-        \                },\n                \"groupRole\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)\"\n                },\n\
-        \                \"riskTolerance\": {\n                    \"type\": \"number\",\n                    \"format\":
-        \"float\",\n                    \"description\": \"Willingness to take risky actions (0.0 to 1.0)\"\n            \
-        \    },\n                \"retreatThreshold\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Health percentage at which retreat is considered (0.0
-        to 1.0)\"\n                },\n                \"protectAllies\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether to prioritize ally protection\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        \  },\n                \"spouses\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/FamilyMember\"\n                    },\n                    \"description\"\
+        : \"Spousal relationships (spouse, husband, wife)\"\n                },\n                \"pastLives\": {\n      \
+        \              \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PastLifeReference\"\
+        \n                    },\n                    \"description\": \"Previous incarnations (if reincarnation tracked)\"\
+        \n                }\n            }\n        },\n        \"FamilyMember\": {\n            \"description\": \"Reference
+        to a family member\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"characterId\",\n                \"relationshipType\"\n            ],\n    \
+        \        \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"ID of the related character\"\n     \
+        \           },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Display name (if available)\"\n                },\n              \
+        \  \"relationshipType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Specific
+        relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.)\"\n                },\n                \"isAlive\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the related character is
+        alive\"\n                }\n            }\n        },\n        \"PastLifeReference\": {\n            \"description\"\
+        : \"Reference to a past incarnation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
+        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the previous incarnation\"\n                },\n                \"\
+        name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Display name of the past life\"\n                },\n                \"deathDate\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When the past life ended\"\n                }\n            }\n   \
+        \     },\n        \"CombatPreferencesSnapshot\": {\n            \"description\": \"Snapshot of combat preferences
+        for enriched response\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n      \
+        \      \"required\": [\n                \"style\",\n                \"preferredRange\",\n                \"groupRole\"\
+        ,\n                \"riskTolerance\",\n                \"retreatThreshold\",\n                \"protectAllies\"\n\
+        \            ],\n            \"properties\": {\n                \"style\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL)\"\n\
+        \                },\n                \"preferredRange\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)\"\n                },\n\
+        \                \"groupRole\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)\"\n                },\n                \"riskTolerance\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        description\": \"Willingness to take risky actions (0.0 to 1.0)\"\n                },\n                \"retreatThreshold\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        description\": \"Health percentage at which retreat is considered (0.0 to 1.0)\"\n                },\n           \
+        \     \"protectAllies\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        to prioritize ally protection\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character with optional related data (personality, backstory, family)\"\
         ,\n    \"description\": \"Retrieves a character with optional include flags for related data.\\nUse this endpoint
         when you need aggregated character data from multiple services.\\nEach included dataset is fetched from its respective
@@ -1457,10 +1461,11 @@ components:
           items:
             $ref: '#/components/schemas/FamilyMember'
           description: Sibling relationships (including half-siblings)
-        spouse:
-          $ref: '#/components/schemas/FamilyMember'
-          nullable: true
-          description: Current spouse (if any)
+        spouses:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyMember'
+          description: Spousal relationships (spouse, husband, wife)
         pastLives:
           type: array
           items:

@@ -102,7 +102,7 @@ The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cl
 
 ### Authentication Methods
 
-Add/remove OAuth provider links. Adding a method validates: (1) non-empty ExternalId required, (2) provider not already linked on this account (same provider+externalId), (3) provider:externalId not claimed by another account. Creates both the auth method entry in the `auth-methods-{accountId}` list and a `provider-index-` entry for reverse lookup. Removing a method includes orphan prevention (see Intentional Quirks #7) and cleans up both the auth method list and provider index. Both operations use ETag-based optimistic concurrency on the auth methods list.
+Add/remove OAuth provider links. Adding a method validates: (1) non-empty ExternalId required, (2) provider not already linked on this account (same provider+externalId), (3) provider:externalId not claimed by another account. Creates both the auth method entry in the `auth-methods-{accountId}` list and a `provider-index-` entry for reverse lookup. Removing a method includes orphan prevention (see Intentional Quirks #7) and cleans up both the auth method list and provider index. Only `RemoveAuthMethodAsync` uses ETag-based optimistic concurrency on the auth methods list; `AddAuthMethodAsync` uses plain `SaveAsync` without ETag (see Bugs #1).
 
 ### Bulk Operations
 
@@ -149,6 +149,10 @@ On Delete: email-index removed (if exists),             │
 
 The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but the events schema declares no subscriptions. This is infrastructure wiring that exists for future use if Account needs to react to external events.
 
+### HasNextPage / HasPreviousPage not populated
+
+The `AccountListResponse` schema defines `hasNextPage` and `hasPreviousPage` boolean fields, but neither `ListAccountsAsync` nor `ListAccountsWithProviderFilterAsync` populates them. They always default to `false`. The data to compute them is available (TotalCount, Page, PageSize).
+
 ## Potential Extensions
 
 - **Account merge**: No mechanism exists to merge two accounts (e.g., when a user registers with email then later tries to register with the same OAuth provider under a different email). The data model supports multiple auth methods per account, but there's no merge workflow.
@@ -164,7 +168,7 @@ The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **AddAuthMethodAsync lacks optimistic concurrency on auth methods list**: `AddAuthMethodAsync` (AccountService.cs:716-762) uses `GetAsync` + `SaveAsync` on the `auth-methods-{accountId}` key, while `RemoveAuthMethodAsync` correctly uses `GetWithETagAsync` + `TrySaveAsync`. If two concurrent `AddAuthMethod` calls race for the same account, one write can silently overwrite the other, losing an auth method link. Fix: use `GetWithETagAsync` + `TrySaveAsync` consistent with the remove path.
 
 ### Intentional Quirks
 
@@ -172,7 +176,7 @@ No bugs identified.
 
 2. **Unix epoch timestamp storage**: `AccountModel` stores timestamps as `long` Unix epoch values with `[JsonIgnore]` computed `DateTimeOffset` properties. Deliberate workaround for System.Text.Json's inconsistent `DateTimeOffset` serialization.
 
-3. **Auto-managed anonymous role**: When `AutoManageAnonymousRole` is true (default), removing roles that would leave zero roles automatically adds "anonymous". Adding a non-anonymous role automatically removes "anonymous" if present. This ensures accounts always have at least one role for permission resolution.
+3. **Auto-managed anonymous role (bulk update only)**: When `AutoManageAnonymousRole` is true (default), the `BulkUpdateRolesAsync` endpoint automatically manages the "anonymous" role: removing roles that would leave zero roles adds "anonymous", and adding a non-anonymous role removes "anonymous" if present. This logic is **not** applied during `CreateAccountAsync` (which defaults to "user") or `UpdateAccountAsync` (which directly sets the roles list). This ensures accounts always have at least one role for permission resolution in bulk operations.
 
 4. **Default "user" role on creation**: When an account is created with no roles specified, the "user" role is automatically assigned (AccountService.cs:302-305). This ensures newly registered accounts have basic authenticated API access.
 

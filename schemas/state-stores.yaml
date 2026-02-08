@@ -354,7 +354,7 @@ x-state-stores:
 
   relationship-type-statestore:
     backend: mysql
-    service: RelationshipType
+    service: Relationship
     purpose: Relationship type definitions
 
   game-service-statestore:

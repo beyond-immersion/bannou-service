@@ -90,7 +90,7 @@ This document lists all state store components used in Bannou.
 | `realm-history-statestore` | MySQL | RealmHistory | Realm historical events and lore |
 | `realm-statestore` | MySQL | Realm | Realm definitions and configuration |
 | `relationship-statestore` | MySQL | Relationship | Entity relationships |
-| `relationship-type-statestore` | MySQL | RelationshipType | Relationship type definitions |
+| `relationship-type-statestore` | MySQL | Relationship | Relationship type definitions |
 | `resource-archives` | MySQL | Resource | Compressed archive bundles (durable storage for long-term archival) |
 | `resource-cleanup` | Redis | Resource | Cleanup callback definitions per resource type |
 | `resource-compress` | Redis | Resource | Compression callback definitions and callback index sets |

@@ -5,12 +5,32 @@ info:
     Configuration schema for Relationship service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
+    Covers both relationship instance management and relationship type
+    hierarchy management (taxonomy definitions, merge, seed operations).
+
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
-  version: 1.0.0
+  version: 2.0.0
 paths: {}
 x-service-configuration:
-  properties: {}
+  properties:
+    # Relationship Type - Seed Operation Configuration
+    SeedPageSize:
+      type: integer
+      description: Number of records to process per page during seed operations
+      env: RELATIONSHIP_TYPE_SEED_PAGE_SIZE
+      default: 100
+    # Relationship Type - Safety Limits
+    MaxHierarchyDepth:
+      type: integer
+      description: Maximum depth for hierarchy traversal to prevent infinite loops on corrupted data
+      env: RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH
+      default: 20
+    MaxMigrationErrorsToTrack:
+      type: integer
+      description: Maximum number of individual migration error details to track during merge operations
+      env: RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK
+      default: 100
