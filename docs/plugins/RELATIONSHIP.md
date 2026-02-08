@@ -11,7 +11,7 @@
 
 A unified relationship management service combining entity-to-entity relationships (character friendships, alliances, rivalries, etc.) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, soft-deletion with the ability to recreate ended relationships, hierarchical type definitions with parent-child hierarchy, inverse type tracking, bidirectional flags, deprecation with merge capability, and bulk seeding with dependency-ordered creation. Used by the Character service for managing inter-character bonds and family tree categorization, and by the Storyline service for narrative generation.
 
-This plugin was consolidated from the former `lib-relationship` and `lib-relationship-type` plugins into a single service. Type merge operations now call internal methods directly rather than going through HTTP round-trips.
+This plugin was consolidated from the former `lib-relationship` and `lib-relationship-type` plugins into a single service. The merge operation is fully internalized: it reads type indexes directly, bulk-loads relationship models, handles composite key updates with collision detection, performs batch type index updates, and publishes a single `RelationshipTypeMergedEvent` summary event.
 
 ---
 
@@ -76,8 +76,9 @@ No services subscribe to relationship events.
 | `relationship-type.created` | `RelationshipTypeCreatedEvent` | New type created |
 | `relationship-type.updated` | `RelationshipTypeUpdatedEvent` | Type fields changed (includes `ChangedFields`) |
 | `relationship-type.deleted` | `RelationshipTypeDeletedEvent` | Type hard-deleted |
+| `relationship-type.merged` | `RelationshipTypeMergedEvent` | Merge operation completed (summary event replacing N individual updates) |
 
-Events are auto-generated from `x-lifecycle` in `relationship-events.yaml`.
+Lifecycle events are auto-generated from `x-lifecycle` in `relationship-events.yaml`. The `RelationshipTypeMergedEvent` is manually defined in the same schema's `components/schemas` section.
 
 ### Consumed Events
 
@@ -218,22 +219,40 @@ MatchesHierarchy Query
   SON, DAUGHTER, FATHER, MOTHER, BROTHER, SISTER, etc.
 
 
-Merge Operation (Internal)
-============================
+Merge Operation (Internalized Bulk)
+=====================================
 
   MergeRelationshipType(source=ACQUAINTANCE, target=FRIEND)
        │
        ├── Validate: source deprecated, target exists, target not deprecated
        │
-       ├── Paginated internal migration (IncludeEnded=true):
-       │    ├── this.ListRelationshipsByTypeAsync(ACQUAINTANCE, page, pageSize)
-       │    ├── For each relationship:
-       │    │    └── MigrateRelationshipTypeInternalAsync(relId, FRIEND)
-       │    │         (bypasses ended-relationship check, publishes update event)
-       │    └── Next page
+       ├── Acquire locks: source type index, target type index
+       │    (deterministic ordering: source before target to prevent deadlocks)
+       │
+       ├── Read indexes directly from state store:
+       │    ├── type-idx:{ACQUAINTANCE} → [relId1, relId2, ...]
+       │    └── type-idx:{FRIEND} → [relId3, relId4, ...]
+       │
+       ├── Bulk-load all source relationships (GetBulkAsync)
+       │
+       ├── Per-relationship migration (with individual lock):
+       │    ├── Re-read model under lock (may have changed since bulk load)
+       │    ├── Delete composite:{e1}:{e2}:{ACQUAINTANCE}
+       │    ├── If active (not ended): try-create composite:{e1}:{e2}:{FRIEND}
+       │    │    ├── Success → update model, track for index batch
+       │    │    └── Collision → end relationship as duplicate, track error
+       │    └── Save model
+       │
+       ├── Batch index update (both locks held):
+       │    ├── type-idx:{FRIEND} += migrated IDs
+       │    └── type-idx:{ACQUAINTANCE} -= migrated + collision IDs
+       │
+       ├── Release type index locks
+       │
+       ├── Publish single RelationshipTypeMergedEvent
        │
        ├── If deleteAfterMerge && failedCount == 0:
-       │    └── this.DeleteRelationshipTypeAsync(ACQUAINTANCE)
+       │    └── DeleteRelationshipTypeAsync(ACQUAINTANCE)
        │
        └── Response: { MigratedCount, FailedCount, Errors[], SourceDeleted }
 
@@ -325,16 +344,15 @@ State Store Layout
 
 7. **Type depth auto-calculated but not updated**: Depth is `parent.Depth + 1` at creation time. If a parent's depth later changes (e.g., its own parent is reassigned), children are NOT automatically updated. Depth recalculation would require traversing all descendants.
 
-8. **Partial merge failure leaves inconsistent state**: If merge fails midway, some relationships are migrated and others are not. No rollback mechanism exists. The response reports counts (`RelationshipsMigrated`, `RelationshipsFailed`, `MigrationErrors`) for manual resolution.
+8. **Partial merge failure leaves inconsistent state**: If a per-relationship error occurs during merge, that relationship remains in its original state (type indexes and composite keys are updated atomically per-relationship under lock). The response reports counts (`RelationshipsMigrated`, `RelationshipsFailed`, `MigrationErrors`) for manual resolution. Both type index locks are held throughout the entire merge operation.
 
-9. **Merge page fetch error stops pagination**: If fetching a page of relationships fails during merge, the migration loop terminates with `hasMorePages = false`. Relationships on subsequent pages are silently un-migrated.
+9. **Merge composite key collision ends duplicate**: When migrating an active relationship and the target type already has an active relationship for the same entity pair, the source relationship is ended as a duplicate (soft-deleted) rather than silently skipped. This preserves data integrity by surfacing genuine conflicts.
 
 10. **Code normalization is case-insensitive**: All type codes are converted to uppercase on creation (`body.Code.ToUpperInvariant()`) and lookup. "friend" and "FRIEND" resolve to the same type.
 
 11. **Inverse type resolved by code, not ID**: When creating/updating a type with `InverseTypeCode`, the ID is resolved via index lookup at that moment. If the inverse type is later deleted, `InverseTypeId` becomes stale (points to non-existent type).
 
-12. **Merge uses hybrid internal/public methods**: `MergeRelationshipTypeAsync` calls `this.ListRelationshipsByTypeAsync()` for pagination (public endpoint) but uses the private `MigrateRelationshipTypeInternalAsync()` helper for individual type migrations. The helper bypasses the ended-relationship check and avoids response model construction, but still publishes `relationship.updated` events per migration for observability. A deeper internalization would read the `type-idx` directly and bulk-update state store records, avoiding per-relationship event publishing overhead.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/333 -->
+12. **Merge holds type index locks for full duration**: The internalized merge acquires distributed locks on both source and target type indexes at the start and holds them throughout the entire bulk migration. This prevents concurrent modifications but means long-running merges (thousands of relationships) block other operations on those type indexes. The per-relationship lock is acquired and released individually within the loop.
 
 13. **Recursive child query breadth-unbounded**: `GetChildRelationshipTypesAsync` with `recursive=true` traverses the full subtree. `MaxHierarchyDepth` (default 20) bounds depth but not breadth. This is acceptable because relationship types are admin-curated taxonomies with realistic totals of ~50-100 types, making breadth explosion a theoretical rather than practical concern.
 
@@ -359,6 +377,7 @@ State Store Layout
 
 ### Completed
 
+- **2026-02-08**: Issue [#333](https://github.com/beyond-immersion/bannou-service/issues/333) - Internalized merge operation: replaced paginated public endpoint calls with direct type index reads, bulk model loading, per-relationship composite key updates with collision detection, batch index updates, and single `RelationshipTypeMergedEvent` summary event
 - **2026-02-08**: Issue [#337](https://github.com/beyond-immersion/bannou-service/issues/337) - Cascade cleanup on entity deletion via `x-references` pattern with `/relationship/cleanup-by-entity` endpoint for character and realm targets
 - **2026-02-08**: Issue [#233](https://github.com/beyond-immersion/bannou-service/issues/233) - Removed dead `includeChildren` parameter from ListRelationshipTypesRequest schema (T21 violation, redundant with `rootsOnly`)
 

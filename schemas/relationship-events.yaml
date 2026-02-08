@@ -36,6 +36,10 @@ info:
     - topic: relationship-type.deleted
       event: RelationshipTypeDeletedEvent
       description: Published when a relationship type is deleted
+    # Manually-defined merge summary event (not a lifecycle event)
+    - topic: relationship-type.merged
+      event: RelationshipTypeMergedEvent
+      description: Published when a relationship type merge operation completes
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/relationship-lifecycle-events.yaml
@@ -75,4 +79,45 @@ x-lifecycle:
 
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas - lifecycle events are auto-generated to schemas/Generated/
+# Lifecycle events are auto-generated to schemas/Generated/
+# Manually-defined events below are for operations that don't follow CRUD lifecycle patterns
+components:
+  schemas:
+    RelationshipTypeMergedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a relationship type merge operation completes, replacing N individual relationship.updated events with a single summary event
+      required:
+        - eventId
+        - timestamp
+        - sourceTypeId
+        - targetTypeId
+        - migratedCount
+        - failedCount
+        - sourceDeleted
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the merge operation completed
+        sourceTypeId:
+          type: string
+          format: uuid
+          description: ID of the deprecated source type that was merged
+        targetTypeId:
+          type: string
+          format: uuid
+          description: ID of the target type that received the relationships
+        migratedCount:
+          type: integer
+          description: Number of relationships successfully migrated to the target type
+        failedCount:
+          type: integer
+          description: Number of relationships that failed to migrate including duplicates detected via composite key collision
+        sourceDeleted:
+          type: boolean
+          description: Whether the source type was deleted after merge

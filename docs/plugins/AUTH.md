@@ -175,7 +175,7 @@ Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOA
 
 ### Password (reset, confirm)
 
-`RequestPasswordReset` always returns 200 regardless of whether the account exists (prevents email enumeration). If the account exists, it generates a cryptographically secure token via `GenerateSecureToken()`, stores it in Redis with TTL, and "sends" an email (currently a mock that logs to console). `ConfirmPasswordReset` validates the token, hashes the new password, and updates it via Account service.
+`RequestPasswordReset` always returns 200 regardless of whether the account exists (prevents email enumeration). If the account exists, it generates a cryptographically secure token via `GenerateSecureToken()`, stores it in Redis with TTL, and sends an email via `IEmailService` (fire-and-forget: failures are logged and error events published but never affect the response). `ConfirmPasswordReset` validates the token, hashes the new password, and updates it via Account service.
 
 ### Sessions (list, terminate)
 
@@ -237,11 +237,6 @@ account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAs
 
 ## Stubs & Unimplemented Features
 
-### ~~Email Delivery Provider~~
-<!-- AUDIT:RESOLVED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/141 -->
-
-~~Password reset email delivery was a console-only mock.~~ **FIXED** (2026-02-08) - Implemented three production email providers (`SendGridEmailService`, `SmtpEmailService`, and `SesEmailService`) behind the `IEmailService` abstraction. Provider selection is configuration-driven via `AUTH_EMAIL_PROVIDER` enum (none/sendgrid/smtp/ses). Email delivery is fire-and-forget: failures are logged and error events published, but `RequestPasswordReset` always returns 200 for enumeration protection. Default remains `none` (console logging) for development.
-
 ### Audit Event Consumers
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/142 -->
 
@@ -249,7 +244,6 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ## Potential Extensions
 
-- ~~**Email delivery integration**~~: Resolved by [#141](https://github.com/beyond-immersion/bannou-service/issues/141) - SendGrid, SMTP, and AWS SES providers implemented.
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/149 -->
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.
@@ -259,7 +253,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Stale OAuth link not removed from reverse index on 404**~~: **FIXED** (2026-02-08) - When `FindOrCreateOAuthAccountAsync` encounters a 404 for a linked account, it now calls `CleanupOAuthLinksForAccountAsync(existingAccountId)` instead of only deleting the single `oauth-link` key. This cleans up ALL stale OAuth link keys for the deleted account AND removes the `account-oauth-links:{accountId}` reverse index itself, preventing orphaned Redis entries.
+No bugs identified.
 
 ### Intentional Quirks
 
@@ -283,13 +277,9 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ### Design Considerations (Requires Planning)
 
-No design considerations pending.
+1. **Logout and TerminateSession do not push edge revocations**: `InvalidateAllSessionsForAccountAsync` (called on `account.deleted`) collects JTIs from sessions and pushes them to edge providers (CloudFlare, OpenResty). However, `LogoutAsync` and `TerminateSessionAsync` delete sessions from Redis and publish `session.invalidated` events but never call `IEdgeRevocationService`. This means a logged-out JWT remains valid at the edge layer until it naturally expires. Whether this matters depends on whether edge revocation is meant only for account-level security events (deletion, compromise) or also for user-initiated logout.
 
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-### Completed
-
-- **Orphaned reverse index on 404** (2026-02-08): Fixed `FindOrCreateOAuthAccountAsync` to call `CleanupOAuthLinksForAccountAsync` instead of single key deletion when detecting a stale link (account returns 404). Added test `FindOrCreateOAuthAccountAsync_WithStaleLink404_ShouldCleanupAllLinksAndCreateNewAccount`.
-- **Email delivery provider** (2026-02-08): Issue #141 - Implemented `SendGridEmailService` and `SmtpEmailService` behind `IEmailService` abstraction. Added `EmailProvider` enum and 9 configuration properties to auth schema. Hardened `RequestPasswordReset` to always return 200 regardless of email delivery outcome.

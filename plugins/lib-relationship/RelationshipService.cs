@@ -1790,8 +1790,8 @@ public partial class RelationshipService : IRelationshipService
 
             // Verify source exists and is deprecated
             var sourceKey = BuildRtTypeKey(body.SourceTypeId);
-            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
-            var sourceModel = await store.GetAsync(sourceKey, cancellationToken);
+            var typeStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+            var sourceModel = await typeStore.GetAsync(sourceKey, cancellationToken);
 
             if (sourceModel == null)
             {
@@ -1805,9 +1805,9 @@ public partial class RelationshipService : IRelationshipService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Verify target exists
+            // Verify target exists and is not deprecated
             var targetKey = BuildRtTypeKey(body.TargetTypeId);
-            var targetModel = await store.GetAsync(targetKey, cancellationToken);
+            var targetModel = await typeStore.GetAsync(targetKey, cancellationToken);
 
             if (targetModel == null)
             {
@@ -1821,102 +1821,249 @@ public partial class RelationshipService : IRelationshipService
                 return (StatusCodes.Conflict, null);
             }
 
-            // Migrate all relationships from source type to target type using internal methods
+            // Acquire distributed locks on both type indexes.
+            // Lock ordering: deterministic (source before target) to prevent deadlocks.
+            var sourceIndexKey = BuildTypeIndexKey(body.SourceTypeId);
+            var targetIndexKey = BuildTypeIndexKey(body.TargetTypeId);
+
+            await using var sourceIndexLock = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                sourceIndexKey,
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!sourceIndexLock.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for source type index during merge: {TypeId}", body.SourceTypeId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            await using var targetIndexLock = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                targetIndexKey,
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!targetIndexLock.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for target type index during merge: {TypeId}", body.TargetTypeId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Read both type indexes directly from state store (bypasses ListRelationshipsByTypeAsync)
+            var indexStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
+            var sourceRelationshipIds = await indexStore.GetAsync(sourceIndexKey, cancellationToken) ?? new List<Guid>();
+            var targetRelationshipIds = await indexStore.GetAsync(targetIndexKey, cancellationToken) ?? new List<Guid>();
+
+            if (sourceRelationshipIds.Count == 0)
+            {
+                _logger.LogInformation("No relationships to migrate for source type {SourceId}", body.SourceTypeId);
+
+                // Publish summary event even when there's nothing to migrate
+                await PublishMergedEventAsync(body.SourceTypeId, body.TargetTypeId, 0, 0, false, cancellationToken);
+
+                // Handle delete-after-merge with no relationships
+                var emptySourceDeleted = false;
+                if (body.DeleteAfterMerge)
+                {
+                    var deleteResult = await DeleteRelationshipTypeAsync(
+                        new DeleteRelationshipTypeRequest { RelationshipTypeId = body.SourceTypeId },
+                        cancellationToken);
+                    emptySourceDeleted = deleteResult == StatusCodes.OK;
+                }
+
+                return (StatusCodes.OK, new MergeRelationshipTypeResponse
+                {
+                    SourceTypeId = body.SourceTypeId,
+                    TargetTypeId = body.TargetTypeId,
+                    RelationshipsMigrated = 0,
+                    RelationshipsFailed = 0,
+                    MigrationErrors = new List<MigrationError>(),
+                    SourceDeleted = emptySourceDeleted
+                });
+            }
+
+            // Bulk-load all source relationship models
+            var relationshipStore = _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
+            var compositeStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship);
+            var keys = sourceRelationshipIds.Select(BuildRelationshipKey).ToList();
+            var bulkResults = await relationshipStore.GetBulkAsync(keys, cancellationToken);
+
             var migratedCount = 0;
             var failedCount = 0;
             var migrationErrors = new List<MigrationError>();
             var maxErrorsToTrack = _configuration.MaxMigrationErrorsToTrack;
-            var page = 1;
-            var pageSize = _configuration.SeedPageSize;
-            var hasMorePages = true;
+            var migratedIds = new List<Guid>();
+            var removedFromSourceIds = new List<Guid>();
 
-            while (hasMorePages)
+            // Process each relationship individually (with per-relationship lock for composite key safety)
+            foreach (var (bulkKey, bulkModel) in bulkResults)
             {
+                if (bulkModel == null)
+                {
+                    _logger.LogError("Relationship {Key} in source type index but failed to load during merge", bulkKey);
+                    continue;
+                }
+
                 try
                 {
-                    // Call internal ListRelationshipsByType directly (no HTTP round-trip)
-                    // Include ended relationships to ensure complete migration;
-                    // without this, ended relationships remain with the source type
-                    // and block delete-after-merge
-                    var (listStatus, relationshipsResponse) = await this.ListRelationshipsByTypeAsync(
-                        new ListRelationshipsByTypeRequest
-                        {
-                            RelationshipTypeId = body.SourceTypeId,
-                            IncludeEnded = true,
-                            Page = page,
-                            PageSize = pageSize
-                        },
+                    // Acquire per-relationship lock for composite key operations
+                    await using var relationshipLock = await _lockProvider.LockAsync(
+                        StateStoreDefinitions.RelationshipLock,
+                        bulkModel.RelationshipId.ToString(),
+                        Guid.NewGuid().ToString(),
+                        _configuration.LockTimeoutSeconds,
                         cancellationToken);
 
-                    if (listStatus != StatusCodes.OK ||
-                        relationshipsResponse?.Relationships == null ||
-                        relationshipsResponse.Relationships.Count == 0)
+                    if (!relationshipLock.Success)
                     {
-                        hasMorePages = false;
+                        _logger.LogWarning("Could not acquire lock for relationship {RelationshipId} during merge", bulkModel.RelationshipId);
+                        failedCount++;
+                        if (migrationErrors.Count < maxErrorsToTrack)
+                        {
+                            migrationErrors.Add(new MigrationError
+                            {
+                                RelationshipId = bulkModel.RelationshipId,
+                                Error = "Could not acquire relationship lock"
+                            });
+                        }
                         continue;
                     }
 
-                    // Migrate each relationship to the target type using internal helper
-                    // that bypasses the ended-relationship check in UpdateRelationshipAsync
-                    foreach (var relationship in relationshipsResponse.Relationships)
+                    // Re-read model under lock (may have changed since bulk load)
+                    var relationshipKey = BuildRelationshipKey(bulkModel.RelationshipId);
+                    var model = await relationshipStore.GetAsync(relationshipKey, cancellationToken);
+
+                    if (model == null)
                     {
-                        try
-                        {
-                            var migrated = await MigrateRelationshipTypeInternalAsync(
-                                relationship.RelationshipId,
-                                body.TargetTypeId,
-                                cancellationToken);
+                        _logger.LogWarning("Relationship {RelationshipId} disappeared during merge", bulkModel.RelationshipId);
+                        removedFromSourceIds.Add(bulkModel.RelationshipId);
+                        continue;
+                    }
 
-                            if (migrated)
-                            {
-                                migratedCount++;
-                            }
-                            else
-                            {
-                                failedCount++;
-                                if (migrationErrors.Count < maxErrorsToTrack)
-                                {
-                                    migrationErrors.Add(new MigrationError
-                                    {
-                                        RelationshipId = relationship.RelationshipId,
-                                        Error = "Relationship not found during migration"
-                                    });
-                                }
-                            }
-                        }
-                        catch (Exception relEx)
+                    // Idempotent: already migrated (e.g., retry scenario)
+                    if (model.RelationshipTypeId == body.TargetTypeId)
+                    {
+                        migratedCount++;
+                        removedFromSourceIds.Add(model.RelationshipId);
+                        migratedIds.Add(model.RelationshipId);
+                        continue;
+                    }
+
+                    // Delete old composite key (may not exist for ended relationships)
+                    var oldCompositeKey = BuildCompositeKey(
+                        model.Entity1Id, model.Entity1Type,
+                        model.Entity2Id, model.Entity2Type,
+                        model.RelationshipTypeId);
+                    await compositeStore.DeleteAsync(oldCompositeKey, cancellationToken);
+
+                    // Try-create new composite key for the target type.
+                    // For ended relationships, skip composite key creation (the End flow already
+                    // deleted their composite key, and they shouldn't occupy the target's key space).
+                    var collisionDetected = false;
+                    if (!model.EndedAt.HasValue)
+                    {
+                        var newCompositeKey = BuildCompositeKey(
+                            model.Entity1Id, model.Entity1Type,
+                            model.Entity2Id, model.Entity2Type,
+                            body.TargetTypeId);
+                        var existingComposite = await compositeStore.GetAsync(newCompositeKey, cancellationToken);
+
+                        if (existingComposite != null)
                         {
-                            _logger.LogError(relEx, "Failed to migrate relationship {RelationshipId} from type {SourceId} to {TargetId}",
-                                relationship.RelationshipId, body.SourceTypeId, body.TargetTypeId);
+                            // Collision: an active relationship already exists for this entity pair + target type.
+                            // End this relationship as a duplicate.
+                            collisionDetected = true;
+
+                            model.EndedAt = DateTimeOffset.UtcNow;
+                            model.UpdatedAt = DateTimeOffset.UtcNow;
+                            model.RelationshipTypeId = body.TargetTypeId;
+                            await relationshipStore.SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+                            await PublishRelationshipDeletedEventAsync(model, $"Duplicate detected during merge into type {body.TargetTypeId}", cancellationToken);
+
+                            _logger.LogInformation(
+                                "Composite key collision during merge: relationship {RelationshipId} ended as duplicate (entity pair already exists for target type {TargetTypeId})",
+                                model.RelationshipId, body.TargetTypeId);
+
                             failedCount++;
-
-                            // Track error details (limited to avoid unbounded memory usage)
+                            removedFromSourceIds.Add(model.RelationshipId);
+                            migratedIds.Add(model.RelationshipId);
                             if (migrationErrors.Count < maxErrorsToTrack)
                             {
                                 migrationErrors.Add(new MigrationError
                                 {
-                                    RelationshipId = relationship.RelationshipId,
-                                    Error = relEx.Message
+                                    RelationshipId = model.RelationshipId,
+                                    Error = $"Composite key collision: entity pair already has active relationship for target type {body.TargetTypeId}"
                                 });
                             }
                         }
+                        else
+                        {
+                            // No collision: create the new composite key
+                            await compositeStore.SaveAsync(newCompositeKey, model.RelationshipId.ToString(), cancellationToken: cancellationToken);
+                        }
                     }
 
-                    hasMorePages = relationshipsResponse.HasNextPage;
-                    page++;
+                    if (!collisionDetected)
+                    {
+                        // Update the model to target type
+                        model.RelationshipTypeId = body.TargetTypeId;
+                        model.UpdatedAt = DateTimeOffset.UtcNow;
+                        await relationshipStore.SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+                        migratedCount++;
+                        removedFromSourceIds.Add(model.RelationshipId);
+                        migratedIds.Add(model.RelationshipId);
+                    }
                 }
-                catch (Exception ex)
+                catch (Exception relEx)
                 {
-                    _logger.LogError(ex, "Error fetching relationships for type migration at page {Page}", page);
-                    hasMorePages = false;
+                    _logger.LogError(relEx, "Failed to migrate relationship {RelationshipId} during merge from {SourceId} to {TargetId}",
+                        bulkModel.RelationshipId, body.SourceTypeId, body.TargetTypeId);
+                    failedCount++;
+
+                    if (migrationErrors.Count < maxErrorsToTrack)
+                    {
+                        migrationErrors.Add(new MigrationError
+                        {
+                            RelationshipId = bulkModel.RelationshipId,
+                            Error = relEx.Message
+                        });
+                    }
                 }
             }
 
+            // Batch-update type indexes (both locks are held)
+            if (migratedIds.Count > 0)
+            {
+                foreach (var id in migratedIds)
+                {
+                    if (!targetRelationshipIds.Contains(id))
+                    {
+                        targetRelationshipIds.Add(id);
+                    }
+                }
+                await indexStore.SaveAsync(targetIndexKey, targetRelationshipIds, cancellationToken: cancellationToken);
+            }
+
+            if (removedFromSourceIds.Count > 0)
+            {
+                foreach (var id in removedFromSourceIds)
+                {
+                    sourceRelationshipIds.Remove(id);
+                }
+                await indexStore.SaveAsync(sourceIndexKey, sourceRelationshipIds, cancellationToken: cancellationToken);
+            }
+
+            // Type index locks are released by await using when scope exits
+
             if (failedCount > 0)
             {
-                _logger.LogError("Relationship type merge completed with {FailedCount} failed relationship migrations", failedCount);
+                _logger.LogError("Relationship type merge completed with {FailedCount} failed migrations", failedCount);
 
-                // Publish error event for monitoring/alerting
                 await _messageBus.TryPublishErrorAsync(
                     "relationship",
                     "MergeRelationshipType",
@@ -1959,6 +2106,9 @@ public partial class RelationshipService : IRelationshipService
                 }
             }
 
+            // Publish single summary event (replaces N individual relationship.updated events)
+            await PublishMergedEventAsync(body.SourceTypeId, body.TargetTypeId, migratedCount, failedCount, sourceDeleted, cancellationToken);
+
             return (StatusCodes.OK, new MergeRelationshipTypeResponse
             {
                 SourceTypeId = body.SourceTypeId,
@@ -1975,6 +2125,36 @@ public partial class RelationshipService : IRelationshipService
                 body.SourceTypeId, body.TargetTypeId);
             await EmitErrorAsync("MergeRelationshipType", "post:/relationship-type/merge", ex);
             return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a single summary event for a completed merge operation.
+    /// </summary>
+    private async Task PublishMergedEventAsync(
+        Guid sourceTypeId, Guid targetTypeId,
+        int migratedCount, int failedCount, bool sourceDeleted,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new RelationshipTypeMergedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SourceTypeId = sourceTypeId,
+                TargetTypeId = targetTypeId,
+                MigratedCount = migratedCount,
+                FailedCount = failedCount,
+                SourceDeleted = sourceDeleted
+            };
+
+            await _messageBus.TryPublishAsync("relationship-type.merged", eventModel);
+            _logger.LogDebug("Published relationship-type.merged event for source {SourceId} into target {TargetId}", sourceTypeId, targetTypeId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish relationship-type.merged event for source {SourceId}", sourceTypeId);
         }
     }
 
@@ -2045,67 +2225,6 @@ public partial class RelationshipService : IRelationshipService
             relationshipIds.Add(relationshipId);
             await store.SaveAsync(indexKey, relationshipIds, cancellationToken: cancellationToken);
         }
-    }
-
-    /// <summary>
-    /// Migrates a relationship's type directly, bypassing the ended-relationship check.
-    /// Used by merge operations where both active and ended relationships must be migrated
-    /// to preserve historical accuracy.
-    /// </summary>
-    /// <param name="relationshipId">The relationship to migrate.</param>
-    /// <param name="targetTypeId">The target relationship type ID.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if successfully migrated, false if relationship not found or no change needed.</returns>
-    private async Task<bool> MigrateRelationshipTypeInternalAsync(
-        Guid relationshipId, Guid targetTypeId,
-        CancellationToken cancellationToken)
-    {
-        // Acquire distributed lock on relationship ID for safe type migration
-        await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.RelationshipLock,
-            relationshipId.ToString(),
-            Guid.NewGuid().ToString(),
-            _configuration.LockTimeoutSeconds,
-            cancellationToken);
-
-        if (!lockResponse.Success)
-        {
-            _logger.LogWarning("Could not acquire lock for type migration of relationship {RelationshipId}", relationshipId);
-            return false;
-        }
-
-        var relationshipKey = BuildRelationshipKey(relationshipId);
-        var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
-            .GetAsync(relationshipKey, cancellationToken);
-
-        if (model == null)
-        {
-            _logger.LogWarning("Relationship not found during type migration: {RelationshipId}", relationshipId);
-            return false;
-        }
-
-        if (model.RelationshipTypeId == targetTypeId)
-        {
-            return true;
-        }
-
-        var oldTypeId = model.RelationshipTypeId;
-
-        // Update type indexes: add to new first, then remove from old
-        // (add-then-remove makes crash window benign - temporarily in both indexes rather than orphaned)
-        await AddToTypeIndexAsync(targetTypeId, relationshipId, cancellationToken);
-        await RemoveFromTypeIndexAsync(oldTypeId, relationshipId, cancellationToken);
-
-        // Update the model
-        model.RelationshipTypeId = targetTypeId;
-        model.UpdatedAt = DateTimeOffset.UtcNow;
-        await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
-            .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
-
-        // Publish update event for observability
-        await PublishRelationshipUpdatedEventAsync(model, new[] { "relationshipTypeId" }, cancellationToken);
-
-        return true;
     }
 
     private async Task AddToTypeIndexAsync(
