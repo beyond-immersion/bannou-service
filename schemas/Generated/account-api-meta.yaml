@@ -66,59 +66,59 @@ paths:
         ,\n    \"$defs\": {\n        \"AccountListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated list of accounts\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
         \             \"accounts\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
-        \n            ],\n            \"properties\": {\n                \"accounts\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AccountResponse\"\n      \
-        \              },\n                    \"description\": \"List of accounts for the current page\"\n              \
-        \  },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Total number of accounts matching the filter\"\n                },\n                \"page\": {\n            \
-        \        \"type\": \"integer\",\n                    \"description\": \"Current page number\"\n                },\n\
-        \                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of accounts per page\"\n                },\n                \"hasNextPage\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether there are more pages after this one\"\n     \
-        \           },\n                \"hasPreviousPage\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether there are pages before this one\"\n                }\n            }\n        },\n\
-        \        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Account information
-        response\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\"\
-        ,\n                \"createdAt\",\n                \"emailVerified\",\n                \"roles\"\n            ],\n\
-        \            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the account\"\
-        \n                },\n                \"email\": {\n                    \"type\": \"string\",\n                  \
-        \  \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\": \"Email address
-        associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n                \"\
-        displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Display name for the account\"\n                },\n                \"passwordHash\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"BCrypt hashed password for authentication\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the account was created\"\n                },\n                \"updatedAt\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Timestamp when the account was last updated\"\n                },\n      \
-        \          \"emailVerified\": {\n                    \"type\": \"boolean\",\n                    \"description\":
-        \"Whether the email address has been verified\"\n                },\n                \"roles\": {\n              \
-        \      \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n    \
-        \                },\n                    \"description\": \"List of roles assigned to the account\"\n            \
-        \    },\n                \"authMethods\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n                    },\n                    \"\
-        description\": \"List of authentication methods linked to the account\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Custom metadata associated with the account\"\
-        \n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n            \"type\": \"object\",\n\
-        \            \"description\": \"Information about a linked authentication method\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"provider\",\n                \"linkedAt\"\n            ],\n\
-        \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
-        \               \"$ref\": \"#/$defs/AuthProvider\",\n                    \"description\": \"Authentication provider
-        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
-        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
-        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
-        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
-        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        ,\n                \"hasNextPage\",\n                \"hasPreviousPage\"\n            ],\n            \"properties\"\
+        : {\n                \"accounts\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/AccountResponse\"\n                    },\n                    \"description\"\
+        : \"List of accounts for the current page\"\n                },\n                \"totalCount\": {\n             \
+        \       \"type\": \"integer\",\n                    \"description\": \"Total number of accounts matching the filter\"\
+        \n                },\n                \"page\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"description\": \"Current page number\"\n                },\n                \"pageSize\": {\n               \
+        \     \"type\": \"integer\",\n                    \"description\": \"Number of accounts per page\"\n             \
+        \   },\n                \"hasNextPage\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether there are more pages after this one\"\n                },\n                \"hasPreviousPage\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether there are pages before this
+        one\"\n                }\n            }\n        },\n        \"AccountResponse\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Account information response\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"accountId\",\n                \"createdAt\",\n                \"emailVerified\"\
+        ,\n                \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the account\"\n                },\n                \"email\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"email\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Email address associated with the account. Null for OAuth/Steam accounts without
+        email.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n    \
+        \            },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n   \
+        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n \
+        \               },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Custom metadata associated with the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List accounts with filtering\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listAccounts\"\n}"
   /account/create:
@@ -1440,6 +1440,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         accounts:
           type: array

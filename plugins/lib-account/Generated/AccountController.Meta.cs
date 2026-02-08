@@ -95,7 +95,9 @@ public partial class AccountController
                 "accounts",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "accounts": {

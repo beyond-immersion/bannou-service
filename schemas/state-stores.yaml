@@ -289,6 +289,12 @@ x-state-stores:
     service: Account
     purpose: Persistent account data
 
+  account-lock:
+    backend: redis
+    prefix: "account:lock"
+    service: Account
+    purpose: Distributed locks for account email uniqueness during creation
+
   character-statestore:
     backend: mysql
     service: Character

@@ -9,6 +9,7 @@ This document lists all state store components used in Bannou.
 
 | Component Name | Backend | Service | Purpose |
 |----------------|---------|---------|---------|
+| `account-lock` | Redis | Account | Distributed locks for account email uniqueness during creation |
 | `account-statestore` | MySQL | Account | Persistent account data |
 | `achievement-definition` | Redis | Achievement | Achievement definitions |
 | `achievement-progress` | Redis | Achievement | Player achievement progress |
@@ -116,7 +117,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 106 stores (69 Redis, 37 MySQL)
+**Total**: 107 stores (70 Redis, 37 MySQL)
 
 ## Naming Conventions
 

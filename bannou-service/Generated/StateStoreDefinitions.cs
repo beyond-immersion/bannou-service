@@ -22,6 +22,8 @@ public static class StateStoreDefinitions
     #region Store Name Constants
 
     // Account Service
+    /// <summary>Distributed locks for account email uniqueness during creation</summary>
+    public const string AccountLock = "account-lock";
     /// <summary>Persistent account data</summary>
     public const string Account = "account-statestore";
 
@@ -326,6 +328,7 @@ public static class StateStoreDefinitions
     public static readonly IReadOnlyDictionary<string, StoreConfiguration> Configurations =
         new Dictionary<string, StoreConfiguration>
         {
+            [AccountLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "account:lock" },
             [Account] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "account_statestore" },
             [AchievementDefinition] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:def" },
             [AchievementProgress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:prog" },
@@ -444,6 +447,7 @@ public static class StateStoreDefinitions
     public static readonly IReadOnlyDictionary<string, StoreMetadata> Metadata =
         new Dictionary<string, StoreMetadata>
         {
+            [AccountLock] = new StoreMetadata("Account", "Distributed locks for account email uniqueness during creation", "redis"),
             [Account] = new StoreMetadata("Account", "Persistent account data", "mysql"),
             [AchievementDefinition] = new StoreMetadata("Achievement", "Achievement definitions", "redis"),
             [AchievementProgress] = new StoreMetadata("Achievement", "Player achievement progress", "redis"),

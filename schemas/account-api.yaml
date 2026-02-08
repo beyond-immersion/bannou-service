@@ -813,6 +813,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         accounts:
           type: array

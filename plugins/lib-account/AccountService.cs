@@ -1,6 +1,5 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +21,7 @@ public partial class AccountService : IAccountService
     private readonly AccountServiceConfiguration _configuration;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
+    private readonly IDistributedLockProvider _lockProvider;
 
     private const string ACCOUNT_KEY_PREFIX = "account-";
     private const string EMAIL_INDEX_KEY_PREFIX = "email-index-";
@@ -36,15 +36,13 @@ public partial class AccountService : IAccountService
         AccountServiceConfiguration configuration,
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
-        IEventConsumer eventConsumer)
+        IDistributedLockProvider lockProvider)
     {
         _logger = logger;
         _configuration = configuration;
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
-
-        // Register event handlers via partial class (AccountServiceEvents.cs)
-        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
+        _lockProvider = lockProvider;
     }
 
     /// <inheritdoc/>
@@ -124,7 +122,9 @@ public partial class AccountService : IAccountService
                 Accounts = accounts,
                 TotalCount = (int)result.TotalCount,
                 Page = page,
-                PageSize = pageSize
+                PageSize = pageSize,
+                HasNextPage = (page * pageSize) < result.TotalCount,
+                HasPreviousPage = page > 1
             };
 
             _logger.LogInformation("Returning {Count} accounts (Total: {Total})", accounts.Count, result.TotalCount);
@@ -208,11 +208,23 @@ public partial class AccountService : IAccountService
     {
         var jsonStore = _stateStoreFactory.GetJsonQueryableStore<AccountModel>(StateStoreDefinitions.Account);
 
-        // Load all matching accounts (without provider filter) for in-memory filtering
-        var allResults = await jsonStore.JsonQueryAsync(conditions, cancellationToken);
+        // Use paged query with configurable scan limit (admin-only endpoint)
+        var scanLimit = _configuration.ProviderFilterMaxScanSize;
+        var scanResult = await jsonStore.JsonQueryPagedAsync(
+            conditions,
+            page: 1,
+            pageSize: scanLimit,
+            cancellationToken: cancellationToken);
+
+        if (scanResult.TotalCount > scanLimit)
+        {
+            _logger.LogWarning("Provider filter scan capped at {ScanLimit}, total matching accounts: {TotalCount}",
+                scanLimit, scanResult.TotalCount);
+        }
 
         var filteredAccounts = new List<AccountResponse>();
         var batchSize = _configuration.ListBatchSize;
+        var allResults = scanResult.Items.ToList();
 
         for (var i = 0; i < allResults.Count; i += batchSize)
         {
@@ -259,7 +271,9 @@ public partial class AccountService : IAccountService
             Accounts = pagedAccounts,
             TotalCount = filteredAccounts.Count,
             Page = page,
-            PageSize = pageSize
+            PageSize = pageSize,
+            HasNextPage = (page * pageSize) < filteredAccounts.Count,
+            HasPreviousPage = page > 1
         };
 
         _logger.LogInformation("Returning {Count} accounts (Total: {Total}, provider-filtered)",
@@ -277,16 +291,35 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Creating account for email: {Email}", body.Email ?? "(no email - OAuth/Steam)");
 
             // Check if email already exists (only if email provided)
+            // Uses distributed lock to prevent TOCTOU race on concurrent registrations
             var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+            ILockResponse? emailLock = null;
             if (!string.IsNullOrEmpty(body.Email))
             {
+                var normalizedEmail = body.Email.ToLowerInvariant();
+                var lockOwner = $"create-account-{Guid.NewGuid():N}";
+                emailLock = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.AccountLock,
+                    $"account-email:{normalizedEmail}",
+                    lockOwner,
+                    _configuration.CreateLockExpirySeconds,
+                    cancellationToken);
+
+                if (!emailLock.Success)
+                {
+                    _logger.LogWarning("Failed to acquire email lock for {Email}", body.Email);
+                    await emailLock.DisposeAsync();
+                    return (StatusCodes.Conflict, null);
+                }
+
                 var existingAccountId = await emailIndexStore.GetAsync(
-                    $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
+                    $"{EMAIL_INDEX_KEY_PREFIX}{normalizedEmail}",
                     cancellationToken);
 
                 if (!string.IsNullOrEmpty(existingAccountId))
                 {
                     _logger.LogWarning("Account with email {Email} already exists (AccountId: {AccountId})", body.Email, existingAccountId);
+                    await emailLock.DisposeAsync();
                     return (StatusCodes.Conflict, null);
                 }
             }
@@ -339,6 +372,12 @@ public partial class AccountService : IAccountService
                     accountId.ToString());
             }
 
+            // Release email uniqueness lock now that the index is written
+            if (emailLock != null)
+            {
+                await emailLock.DisposeAsync();
+            }
+
             _logger.LogInformation("Account created: {AccountId} for email: {Email} with roles: {Roles}",
                 accountId, body.Email ?? "(no email - OAuth/Steam)", string.Join(", ", roles));
 
@@ -362,6 +401,12 @@ public partial class AccountService : IAccountService
         }
         catch (Exception ex)
         {
+            // Release email lock on failure to prevent lock leaks
+            if (emailLock != null)
+            {
+                await emailLock.DisposeAsync();
+            }
+
             _logger.LogError(ex, "Error creating account");
             await PublishErrorEventAsync(
                 "CreateAccount",
@@ -508,6 +553,22 @@ public partial class AccountService : IAccountService
             if (body.Roles != null)
             {
                 var newRoles = body.Roles.ToList();
+
+                // Apply anonymous role auto-management if configured (per IMPLEMENTATION TENETS)
+                if (_configuration.AutoManageAnonymousRole)
+                {
+                    if (newRoles.Any(r => r != "anonymous"))
+                    {
+                        newRoles.Remove("anonymous");
+                    }
+
+                    if (newRoles.Count == 0)
+                    {
+                        newRoles.Add("anonymous");
+                        _logger.LogDebug("Auto-added 'anonymous' role to account {AccountId} to prevent zero roles", body.AccountId);
+                    }
+                }
+
                 if (!new HashSet<string>(account.Roles).SetEquals(newRoles))
                 {
                     changedFields.Add("roles");
@@ -711,10 +772,11 @@ public partial class AccountService : IAccountService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Get existing auth methods
+            // Get existing auth methods with ETag for optimistic concurrency
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
             var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
-            var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken) ?? new List<AuthMethodInfo>();
+            var (authMethods, authMethodsEtag) = await authMethodsStore.GetWithETagAsync(authMethodsKey, cancellationToken);
+            authMethods ??= new List<AuthMethodInfo>();
 
             // Validate ExternalId - required for OAuth linking and provider index
             if (string.IsNullOrEmpty(body.ExternalId))
@@ -740,9 +802,18 @@ public partial class AccountService : IAccountService
             var existingOwner = await providerIndexStore.GetAsync(providerIndexKey, cancellationToken);
             if (!string.IsNullOrEmpty(existingOwner) && existingOwner != accountId.ToString())
             {
-                _logger.LogWarning("Provider {Provider}:{ExternalId} already linked to different account {ExistingOwner}",
+                // Check if the owning account is still active (not soft-deleted)
+                var ownerAccount = await accountStore.GetAsync(
+                    $"{ACCOUNT_KEY_PREFIX}{existingOwner}", cancellationToken);
+                if (ownerAccount != null && !ownerAccount.DeletedAt.HasValue)
+                {
+                    _logger.LogWarning("Provider {Provider}:{ExternalId} already linked to active account {ExistingOwner}",
+                        body.Provider, body.ExternalId, existingOwner);
+                    return (StatusCodes.Conflict, null);
+                }
+                // Owner deleted — orphaned index, safe to overwrite
+                _logger.LogInformation("Overwriting orphaned provider index {Provider}:{ExternalId} (former owner {ExistingOwner} is deleted)",
                     body.Provider, body.ExternalId, existingOwner);
-                return (StatusCodes.Conflict, null);
             }
 
             // Create new auth method
@@ -758,8 +829,13 @@ public partial class AccountService : IAccountService
 
             authMethods.Add(newMethod);
 
-            // Save updated auth methods
-            await authMethodsStore.SaveAsync(authMethodsKey, authMethods);
+            // Save updated auth methods with optimistic concurrency
+            var savedEtag = await authMethodsStore.TrySaveAsync(authMethodsKey, authMethods, authMethodsEtag ?? string.Empty, cancellationToken);
+            if (savedEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification of auth methods for account {AccountId}", accountId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Create/update provider index for lookup
             await providerIndexStore.SaveAsync(providerIndexKey, accountId.ToString());

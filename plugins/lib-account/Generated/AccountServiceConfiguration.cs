@@ -84,6 +84,20 @@ public class AccountServiceConfiguration : IServiceConfiguration
     public int ListBatchSize { get; set; } = 100;
 
     /// <summary>
+    /// Lock expiry in seconds for account creation email uniqueness check
+    /// Environment variable: ACCOUNT_CREATE_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int CreateLockExpirySeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum number of accounts to scan when filtering by provider (admin-only endpoint)
+    /// Environment variable: ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 100000)]
+    public int ProviderFilterMaxScanSize { get; set; } = 10000;
+
+    /// <summary>
     /// When true, automatically manages the anonymous role. If removing roles would leave zero roles, anonymous is added automatically. If adding a non-anonymous role, anonymous is removed if present. This ensures accounts always have at least one role for permission resolution.
     /// Environment variable: ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE
     /// </summary>
