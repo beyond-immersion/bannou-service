@@ -19,6 +19,12 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// </remarks>
 public class EdgeRevocationService : IEdgeRevocationService
 {
+    /// <summary>
+    /// Buffer seconds added to JWT expiration for account revocation TTL.
+    /// Ensures revocation entry outlives all access tokens issued before the revocation.
+    /// </summary>
+    private const int RevocationTtlBufferSeconds = 300;
+
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IEnumerable<IEdgeRevocationProvider> _providers;
     private readonly IMessageBus _messageBus;
@@ -107,8 +113,10 @@ public class EdgeRevocationService : IEdgeRevocationService
         };
 
         var accountStore = _stateStoreFactory.GetStore<AccountRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
-        // Account revocations don't expire - they stay until explicitly removed
-        await accountStore.SaveAsync($"account:{accountId}", entry, null, ct);
+        // Account revocations expire after all access tokens issued before issuedBefore have naturally expired.
+        // TTL = JWT lifetime + buffer. After this, no valid access token can predate the revocation.
+        var accountRevocationTtlSeconds = (_configuration.JwtExpirationMinutes * 60) + RevocationTtlBufferSeconds;
+        await accountStore.SaveAsync($"account:{accountId}", entry, new StateOptions { Ttl = accountRevocationTtlSeconds }, ct);
 
         // Add to index for listing
         var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.EdgeRevocation);
@@ -145,11 +153,11 @@ public class EdgeRevocationService : IEdgeRevocationService
                 {
                     tokens.Add(new RevokedTokenEntry
                     {
-                        Jti = entry.Jti,
+                        Jti = entry.Jti ?? throw new InvalidOperationException($"TokenRevocationEntry missing Jti for key token:{jti}"),
                         AccountId = entry.AccountId,
                         RevokedAt = entry.RevokedAt,
                         ExpiresAt = entry.ExpiresAt,
-                        Reason = entry.Reason
+                        Reason = entry.Reason ?? throw new InvalidOperationException($"TokenRevocationEntry missing Reason for key token:{jti}")
                     });
                     count++;
                     if (count >= limit)
@@ -177,7 +185,7 @@ public class EdgeRevocationService : IEdgeRevocationService
                             AccountId = entry.AccountId,
                             IssuedBefore = entry.IssuedBefore,
                             RevokedAt = entry.RevokedAt,
-                            Reason = entry.Reason
+                            Reason = entry.Reason ?? throw new InvalidOperationException($"AccountRevocationEntry missing Reason for account:{accountId}")
                         });
                         count++;
                         if (count >= limit)
@@ -320,6 +328,13 @@ public class EdgeRevocationService : IEdgeRevocationService
             {
                 _logger.LogError("Edge push to {ProviderId} exceeded max retry attempts for {Type} revocation, giving up",
                     entry.ProviderId, entry.Type);
+                giveUpKeys.Add(key);
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(entry.ProviderId))
+            {
+                _logger.LogWarning("FailedEdgePushEntry missing ProviderId for key {Key}, skipping", key);
                 giveUpKeys.Add(key);
                 continue;
             }

@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -30,6 +31,11 @@ public class AuthServicePlugin : StandardServicePlugin<IAuthService>
         // Register edge revocation service (must be before SessionService which depends on it)
         services.AddScoped<IEdgeRevocationService, EdgeRevocationService>();
         Logger?.LogDebug("Registered EdgeRevocationService");
+
+        // Register email service (default: console logging for development)
+        // Replace ConsoleEmailService with a concrete provider (SendGrid, SES, etc.) for production
+        services.AddSingleton<IEmailService, ConsoleEmailService>();
+        Logger?.LogDebug("Registered ConsoleEmailService (replace with production provider for deployment)");
 
         // Register helper services for better testability and separation of concerns
         services.AddScoped<ISessionService, SessionService>();

@@ -143,7 +143,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **DeleteRelationshipType** (`/relationship-type/delete`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship-type.deleted`.
 - **DeprecateRelationshipType** (`/relationship-type/deprecate`): Sets `IsDeprecated=true` with timestamp and optional reason. Returns Conflict if already deprecated.
 - **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Returns BadRequest if not deprecated.
-- **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated (BadRequest otherwise). Paginates through relationships via internal `ListRelationshipsByTypeAsync` call using `SeedPageSize`. Updates each to target type via internal `UpdateRelationshipAsync`. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Optional `deleteAfterMerge` deletes source if all migrations succeed.
+- **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated (BadRequest otherwise). Target must not be deprecated (Conflict otherwise). Paginates through all relationships (including ended) via internal `ListRelationshipsByTypeAsync` call using `SeedPageSize`. Migrates each via `MigrateRelationshipTypeInternalAsync` which bypasses the ended-relationship check. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Optional `deleteAfterMerge` deletes source if all migrations succeed.
 - **SeedRelationshipTypes** (`/relationship-type/seed`): Dependency-ordered bulk creation. Multi-pass algorithm: in each pass, processes types whose parents are already created or have no parent. Max iterations = `pending.Count * 2`. Resolves parent/inverse types by code. Supports `updateExisting` flag. Returns created/updated/skipped/error counts.
 
 ---
@@ -217,15 +217,19 @@ Merge Operation (Internal)
 
   MergeRelationshipType(source=ACQUAINTANCE, target=FRIEND)
        │
-       ├── Validate: source deprecated, target exists
+       ├── Validate: source deprecated, target exists, target not deprecated
        │
-       ├── Paginated internal migration:
+       ├── Paginated internal migration (IncludeEnded=true):
        │    ├── this.ListRelationshipsByTypeAsync(ACQUAINTANCE, page, pageSize)
        │    ├── For each relationship:
-       │    │    └── this.UpdateRelationshipAsync(typeId=FRIEND)
+       │    │    └── MigrateRelationshipTypeInternalAsync(relId, FRIEND)
+       │    │         (bypasses ended-relationship check, publishes update event)
        │    └── Next page
        │
-       └── Response: { MigratedCount, FailedCount, Errors[] }
+       ├── If deleteAfterMerge && failedCount == 0:
+       │    └── this.DeleteRelationshipTypeAsync(ACQUAINTANCE)
+       │
+       └── Response: { MigratedCount, FailedCount, Errors[], SourceDeleted }
 
 
 Seed Dependency Resolution
@@ -286,12 +290,11 @@ State Store Layout
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/336 -->
 3. **Cascade cleanup on entity deletion**: Automatically end all relationships when an entity is permanently deleted.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/337 -->
-4. ~~**Pagination for GetBetween**~~: **FIXED** (2026-02-08) - Added `page` and `pageSize` fields to `GetRelationshipsBetweenRequest` schema (defaults: page=1, pageSize=20, max 100). Service now applies Skip/Take pagination matching the `ListRelationshipsByEntity` pattern.
-5. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
+4. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/338 -->
-6. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
+5. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/339 -->
-7. **Category-based permissions**: Allow different roles to create relationships of different categories.
+6. **Category-based permissions**: Allow different roles to create relationships of different categories.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/340 -->
 
 ---
@@ -300,11 +303,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-1. ~~**`EndRelationshipAsync` ignores `reason` field**~~: **FIXED** (2026-02-08) - `EndRelationshipAsync` now passes `body.Reason ?? "Relationship ended"` to the event publisher, using the caller's reason when provided and falling back to the default message when null.
-
-2. ~~**`MergeRelationshipTypeAsync` does not validate target is non-deprecated**~~: **FIXED** (2026-02-08) - Added `targetModel.IsDeprecated` check after target existence validation, returning `StatusCodes.Conflict` as documented in the API schema.
-
-3. ~~**`UndeprecateRelationshipTypeAsync` returns wrong status code**~~: **FIXED** (2026-02-08) - Changed from `StatusCodes.Conflict` (409) to `StatusCodes.BadRequest` (400) to match the API schema's documented `400: Relationship type is not deprecated` response.
+*No bugs identified.*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -330,7 +329,7 @@ State Store Layout
 
 11. **Inverse type resolved by code, not ID**: When creating/updating a type with `InverseTypeCode`, the ID is resolved via index lookup at that moment. If the inverse type is later deleted, `InverseTypeId` becomes stale (points to non-existent type).
 
-12. **Merge calls public endpoint methods, not direct state store operations**: `MergeRelationshipTypeAsync` calls `this.ListRelationshipsByTypeAsync()` and `this.UpdateRelationshipAsync()` internally. While this avoids HTTP round-trips (both methods are in the same service), it still goes through the full public endpoint logic: constructing request/response models, publishing update events for each migrated relationship, and returning status code tuples. A deeper internalization would read the `type-idx` directly and bulk-update state store records, avoiding per-relationship event publishing and response model overhead.
+12. **Merge uses hybrid internal/public methods**: `MergeRelationshipTypeAsync` calls `this.ListRelationshipsByTypeAsync()` for pagination (public endpoint) but uses the private `MigrateRelationshipTypeInternalAsync()` helper for individual type migrations. The helper bypasses the ended-relationship check and avoids response model construction, but still publishes `relationship.updated` events per migration for observability. A deeper internalization would read the `type-idx` directly and bulk-update state store records, avoiding per-relationship event publishing overhead.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/333 -->
 
 13. **Recursive child query breadth-unbounded**: `GetChildRelationshipTypesAsync` with `recursive=true` traverses the full subtree. `MaxHierarchyDepth` (default 20) bounds depth but not breadth. This is acceptable because relationship types are admin-curated taxonomies with realistic totals of ~50-100 types, making breadth explosion a theoretical rather than practical concern.
@@ -354,19 +353,18 @@ State Store Layout
 5. **Read-modify-write without distributed locks**: Index updates (add/remove from list) and composite key checks have no concurrency protection. Two concurrent creates with the same composite key could both pass the uniqueness check if timed precisely. Requires IDistributedLockProvider integration.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/223 -->
 
-6. ~~**Recursive child query unbounded**~~: **FIXED** (2026-02-08) - Moved to Intentional Quirks. Depth is bounded by `MaxHierarchyDepth` (default 20). Breadth is unbounded but relationship types are admin-curated taxonomies (realistic max ~50-100 types total), making breadth explosion a theoretical rather than practical concern.
-
-7. ~~**Seed multi-pass has fixed iteration limit**~~: **FIXED** (2026-02-08) - Moved to Intentional Quirks. The `2*N` limit is provably sufficient: each iteration processes at least one type (or the loop breaks early on unresolvable parents), so N types need at most N iterations. The limit cannot be reached in normal operation.
-
-8. **Read-modify-write on type indexes without distributed locks**: Index updates (`AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`) perform read-modify-write without distributed locks. Concurrent operations on the same indexes can cause lost updates.
+6. **Read-modify-write on type indexes without distributed locks**: Index updates (`AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`) perform read-modify-write without distributed locks. Concurrent operations on the same indexes can cause lost updates.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/223 -->
 
-9. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This prevents data loss but leaves the deprecated type with remaining relationships that need manual cleanup.
-
-10. **Merge only migrates active relationships**: `MergeRelationshipTypeAsync` calls `ListRelationshipsByTypeAsync` without setting `IncludeEnded = true`, so ended relationships are NOT migrated. However, `DeleteRelationshipTypeAsync` checks for ALL relationships including ended ones (`IncludeEnded = true`). This means `deleteAfterMerge` will always fail if the source type has any ended relationships, since the merge skips them but the delete finds them.
+7. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This prevents data loss but leaves the deprecated type with remaining relationships that need manual cleanup.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/345 -->
 
 ---
 
 ## Work Tracking
 
 *This section tracks active development work. Markers are managed by `/audit-plugin`.*
+
+### Pending Issues
+
+- [#345](https://github.com/beyond-immersion/bannou-service/issues/345): Design question on merge behavior during partial migration failure (Design Consideration #7)

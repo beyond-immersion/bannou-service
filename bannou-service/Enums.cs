@@ -71,11 +71,19 @@ public enum HttpMethodTypes
 /// </para>
 /// <para>
 /// <b>WARNING - DO NOT ADD NEW STATUS CODES WITHOUT EXPLICIT APPROVAL.</b>
-/// These codes are hand-chosen per TENET T8 to minimize client complexity.
-/// Adding new codes requires updating: Controller.liquid template, ErrorResponses.cs,
-/// client SDK ResponseCodes, and all consuming code. If you think you need a new
-/// status code, the answer is almost always "use an existing code with appropriate
-/// payload content to indicate the specific condition."
+/// This enum is intentionally minimal. Adding new codes requires updating: Controller.liquid
+/// template, ErrorResponses.cs, client SDK ResponseCodes, and all consuming code. If you think
+/// you need a new status code, choose the most contextually appropriate existing code instead.
+/// </para>
+/// <para>
+/// <b>Common mappings for HTTP codes not in this enum:</b>
+/// <list type="bullet">
+/// <item>429 (TooManyRequests): Use <c>BadRequest</c> if it's a client-specific rate limit
+/// (e.g., too many login attempts from one email), or <c>ServiceUnavailable</c> if it's
+/// server-wide overload affecting all clients.</item>
+/// <item>422 (UnprocessableEntity): Use <c>BadRequest</c>.</item>
+/// <item>204 (NoContent): Use <c>OK</c> with null payload.</item>
+/// </list>
 /// </para>
 /// </remarks>
 public enum StatusCodes

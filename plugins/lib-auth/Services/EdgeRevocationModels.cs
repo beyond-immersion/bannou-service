@@ -8,7 +8,7 @@ public class TokenRevocationEntry
     /// <summary>
     /// JWT unique identifier.
     /// </summary>
-    public string Jti { get; set; } = string.Empty;
+    public string? Jti { get; set; }
 
     /// <summary>
     /// Account that owned the token.
@@ -28,7 +28,7 @@ public class TokenRevocationEntry
     /// <summary>
     /// Revocation reason for audit trail.
     /// </summary>
-    public string Reason { get; set; } = string.Empty;
+    public string? Reason { get; set; }
 
     /// <summary>
     /// When the token was revoked.
@@ -74,7 +74,7 @@ public class AccountRevocationEntry
     /// <summary>
     /// Revocation reason for audit trail.
     /// </summary>
-    public string Reason { get; set; } = string.Empty;
+    public string? Reason { get; set; }
 
     /// <summary>
     /// Reject tokens issued before this timestamp.
@@ -105,7 +105,7 @@ public class FailedEdgePushEntry
     /// <summary>
     /// Type of revocation ("token" or "account").
     /// </summary>
-    public string Type { get; set; } = string.Empty;
+    public string? Type { get; set; }
 
     /// <summary>
     /// JWT unique identifier (for token revocations).
@@ -130,7 +130,7 @@ public class FailedEdgePushEntry
     /// <summary>
     /// Provider ID that failed.
     /// </summary>
-    public string ProviderId { get; set; } = string.Empty;
+    public string? ProviderId { get; set; }
 
     /// <summary>
     /// Number of retry attempts.
@@ -151,7 +151,7 @@ public class EdgeRevocationMessage
     /// <summary>
     /// Type of revocation ("token" or "account").
     /// </summary>
-    public string Type { get; set; } = string.Empty;
+    public string? Type { get; set; }
 
     /// <summary>
     /// JWT unique identifier (for token revocations).

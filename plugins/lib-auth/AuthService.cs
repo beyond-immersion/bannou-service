@@ -33,6 +33,7 @@ public partial class AuthService : IAuthService
     private readonly ISessionService _sessionService;
     private readonly IOAuthProviderService _oauthService;
     private readonly IEdgeRevocationService _edgeRevocationService;
+    private readonly IEmailService _emailService;
 
     public AuthService(
         IAccountClient accountClient,
@@ -45,6 +46,7 @@ public partial class AuthService : IAuthService
         ISessionService sessionService,
         IOAuthProviderService oauthService,
         IEdgeRevocationService edgeRevocationService,
+        IEmailService emailService,
         IEventConsumer eventConsumer)
     {
         _accountClient = accountClient;
@@ -57,6 +59,7 @@ public partial class AuthService : IAuthService
         _sessionService = sessionService;
         _oauthService = oauthService;
         _edgeRevocationService = edgeRevocationService;
+        _emailService = emailService;
 
         // Register event handlers via partial class (AuthServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -99,6 +102,21 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Rate limiting: check failed login attempts before any expensive operations
+            var normalizedEmail = body.Email.Trim().ToLowerInvariant();
+            var rateLimitKey = $"login-attempts:{normalizedEmail}";
+            var authCacheStore = await _stateStoreFactory.GetCacheableStoreAsync<SessionDataModel>(StateStoreDefinitions.Auth, cancellationToken);
+            var currentAttempts = await authCacheStore.GetCounterAsync(rateLimitKey, cancellationToken);
+
+            if (currentAttempts.HasValue && currentAttempts.Value >= _configuration.MaxLoginAttempts)
+            {
+                _logger.LogWarning("Rate limit exceeded for email: {Email} ({Attempts} attempts)", body.Email, currentAttempts.Value);
+                await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.RateLimited);
+                // Return Unauthorized (not a dedicated 429) to avoid leaking rate-limit state to attackers.
+                // The audit event carries the RateLimited reason for internal monitoring.
+                return (StatusCodes.Unauthorized, null);
+            }
+
             // Lookup account by email via AccountClient
             _logger.LogDebug("Looking up account by email via AccountClient: {Email}", body.Email);
 
@@ -119,6 +137,8 @@ public partial class AuthService : IAuthService
                 // Account not found - return Unauthorized (don't reveal whether account exists)
                 _logger.LogWarning("Account not found for email: {Email}", body.Email);
                 await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.AccountNotFound);
+                // Increment rate limit counter even for non-existent accounts to prevent enumeration
+                await IncrementLoginAttemptCounterAsync(authCacheStore, rateLimitKey, cancellationToken);
                 return (StatusCodes.Unauthorized, null);
             }
             catch (Exception ex)
@@ -141,9 +161,12 @@ public partial class AuthService : IAuthService
             {
                 _logger.LogWarning("Password verification failed for email: {Email}", body.Email);
                 await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.InvalidCredentials, account.AccountId);
+                await IncrementLoginAttemptCounterAsync(authCacheStore, rateLimitKey, cancellationToken);
                 return (StatusCodes.Unauthorized, null);
             }
 
+            // Login successful - clear rate limit counter
+            await authCacheStore.DeleteCounterAsync(rateLimitKey, cancellationToken);
             _logger.LogDebug("Password verification successful for email: {Email}", body.Email);
 
             // Generate tokens (returns both accessToken and sessionId for event publishing)
@@ -322,7 +345,8 @@ public partial class AuthService : IAuthService
                 account.AccountId, provider);
 
             // Publish audit event for successful OAuth login
-            await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider.ToString().ToLower(), userInfo.ProviderId, sessionId, isNewAccount);
+            var providerId = userInfo.ProviderId ?? throw new InvalidOperationException($"OAuth user info missing ProviderId after successful exchange for provider {provider}");
+            await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider.ToString().ToLower(), providerId, sessionId, isNewAccount);
 
             return (StatusCodes.OK, new AuthResponse
             {
@@ -775,33 +799,25 @@ public partial class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Send password reset email. Currently implements a mock that logs to console.
-    /// Can be replaced with actual SMTP integration later.
+    /// Send password reset email via IEmailService abstraction.
+    /// The concrete implementation (console, SendGrid, SES, etc.) is determined by DI registration.
     /// </summary>
     private async Task SendPasswordResetEmailAsync(string email, string resetToken, int expiresInMinutes, CancellationToken cancellationToken)
     {
-        await Task.CompletedTask; // Satisfy async requirement for sync method
-        // Mock email implementation - logs to console
-        // In production, this would integrate with SendGrid, AWS SES, or similar
         if (string.IsNullOrWhiteSpace(_configuration.PasswordResetBaseUrl))
         {
             throw new InvalidOperationException("PasswordResetBaseUrl configuration is not set. Cannot generate password reset link.");
         }
         var resetUrl = $"{_configuration.PasswordResetBaseUrl}?token={resetToken}";
 
-        // LogDebug for mock email output to prevent token leakage in production log aggregation
-        _logger.LogDebug(
-            "=== PASSWORD RESET EMAIL (MOCK) ===\n" +
-            "To: {Email}\n" +
-            "Subject: Password Reset Request\n" +
-            "Body:\n" +
-            "You requested a password reset for your account.\n" +
-            "Click the link below to reset your password:\n" +
-            "{ResetUrl}\n" +
-            "This link will expire in {ExpiresInMinutes} minutes.\n" +
-            "If you did not request this reset, please ignore this email.\n" +
-            "=== END EMAIL ===",
-            email, resetUrl, expiresInMinutes);
+        var subject = "Password Reset Request";
+        var body = $"You requested a password reset for your account.\n" +
+                   $"Click the link below to reset your password:\n" +
+                   $"{resetUrl}\n" +
+                   $"This link will expire in {expiresInMinutes} minutes.\n" +
+                   $"If you did not request this reset, please ignore this email.";
+
+        await _emailService.SendAsync(email, subject, body, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -1038,6 +1054,19 @@ public partial class AuthService : IAuthService
 
     // Token generation and session management methods use ITokenService and ISessionService.
     // SessionDataModel is defined in ISessionService.cs (BeyondImmersion.BannouService.Auth.Services namespace).
+
+    /// <summary>
+    /// Increments the failed login attempt counter for rate limiting.
+    /// Counter TTL is set to LoginLockoutMinutes so it auto-expires after the lockout window.
+    /// </summary>
+    private async Task IncrementLoginAttemptCounterAsync(
+        ICacheableStateStore<SessionDataModel> cacheStore,
+        string rateLimitKey,
+        CancellationToken cancellationToken)
+    {
+        var lockoutTtlSeconds = _configuration.LoginLockoutMinutes * 60;
+        await cacheStore.IncrementAsync(rateLimitKey, 1, new StateOptions { Ttl = lockoutTtlSeconds }, cancellationToken);
+    }
 
     #endregion
 

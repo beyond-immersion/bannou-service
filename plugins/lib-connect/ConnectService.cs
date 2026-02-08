@@ -490,24 +490,25 @@ public partial class ConnectService : IConnectService, IDisposable
                     return (null, null, null, null, false);
                 }
 
-                _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
+                _logger.LogDebug("Token validation result - Valid: {Valid}, SessionKey: {SessionKey}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
                     validationResponse.Valid,
-                    validationResponse.SessionId,
+                    validationResponse.SessionKey,
                     validationResponse.AccountId,
                     validationResponse.Roles?.Count ?? 0,
                     validationResponse.Authorizations?.Count ?? 0);
 
-                if (validationResponse.Valid && validationResponse.SessionId != Guid.Empty)
+                // Defensive: guard against corrupt Redis data (SessionKey should always be populated on valid sessions)
+                if (validationResponse.Valid && validationResponse.SessionKey != Guid.Empty)
                 {
-                    _logger.LogDebug("JWT validated successfully, SessionId: {SessionId}", validationResponse.SessionId);
-                    // Return session ID, account ID, roles, and authorizations for capability initialization
+                    _logger.LogDebug("JWT validated successfully, SessionKey: {SessionKey}", validationResponse.SessionKey);
+                    // Return session key, account ID, roles, and authorizations for capability initialization
                     // This is a new connection (Bearer token), not a reconnection
-                    return (validationResponse.SessionId.ToString(), validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations, false);
+                    return (validationResponse.SessionKey.ToString(), validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations, false);
                 }
                 else
                 {
-                    _logger.LogWarning("JWT validation failed, Valid: {Valid}, SessionId: {SessionId}",
-                        validationResponse.Valid, validationResponse.SessionId);
+                    _logger.LogWarning("JWT validation failed, Valid: {Valid}, SessionKey: {SessionKey}",
+                        validationResponse.Valid, validationResponse.SessionKey);
                 }
             }
             // Handle "Reconnect <token>" format for session reconnection

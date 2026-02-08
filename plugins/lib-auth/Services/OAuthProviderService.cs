@@ -393,6 +393,12 @@ public class OAuthProviderService : IOAuthProviderService
             return (null, false);
         }
 
+        if (string.IsNullOrEmpty(userInfo.ProviderId))
+        {
+            _logger.LogError("OAuth user info missing ProviderId for provider {Provider}", provider);
+            return (null, false);
+        }
+
         var providerName = provider.ToString().ToLower();
         var oauthLinkKey = $"oauth-link:{providerName}:{userInfo.ProviderId}";
 
@@ -403,6 +409,7 @@ public class OAuthProviderService : IOAuthProviderService
             // Check existing link (stored as string since Guid is a value type)
             var existingAccountIdStr = await linkStore.GetAsync(oauthLinkKey, cancellationToken);
 
+            // Defensive: guard against corrupt Redis data (stored accountId should always be a valid non-empty GUID)
             if (!string.IsNullOrEmpty(existingAccountIdStr) && Guid.TryParse(existingAccountIdStr, out var existingAccountId) && existingAccountId != Guid.Empty)
             {
                 try
@@ -757,6 +764,9 @@ public class OAuthProviderService : IOAuthProviderService
     }
 
     #region OAuth Response Models
+
+    // External OAuth provider response DTOs below use string.Empty defaults as defensive coding.
+    // These are third-party API responses where we have no control over the response format.
 
     private class DiscordTokenResponse
     {

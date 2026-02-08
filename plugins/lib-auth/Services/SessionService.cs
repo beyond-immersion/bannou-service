@@ -24,6 +24,12 @@ public class SessionService : ISessionService
     private const string UNKNOWN_BROWSER = "Unknown";
 
     /// <summary>
+    /// Buffer in seconds added to session index TTL so the index outlives its sessions
+    /// for cleanup purposes. This is an engineering constant, not a tunable parameter.
+    /// </summary>
+    private const int SessionIndexTtlBufferSeconds = 300;
+
+    /// <summary>
     /// Initializes a new instance of SessionService.
     /// </summary>
     public SessionService(
@@ -147,7 +153,7 @@ public class SessionService : ISessionService
             {
                 existingSessions.Add(sessionKey);
 
-                var ttlSeconds = (_configuration.JwtExpirationMinutes * 60) + 300; // +5 minutes buffer
+                var ttlSeconds = (_configuration.JwtExpirationMinutes * 60) + SessionIndexTtlBufferSeconds;
                 await listStore.SaveAsync(
                     indexKey,
                     existingSessions,
@@ -186,7 +192,7 @@ public class SessionService : ISessionService
 
                 if (existingSessions.Count > 0)
                 {
-                    var ttlSeconds = (_configuration.JwtExpirationMinutes * 60) + 300;
+                    var ttlSeconds = (_configuration.JwtExpirationMinutes * 60) + SessionIndexTtlBufferSeconds;
                     await listStore.SaveAsync(
                         indexKey,
                         existingSessions,
@@ -433,7 +439,7 @@ public class SessionService : ISessionService
             var sessionIdGuids = sessionIds
                 .Select(s => Guid.TryParse(s, out var g) ? g : (Guid?)null)
                 .Where(g => g.HasValue)
-                .Select(g => g.Value)
+                .Select(g => g.GetValueOrDefault())
                 .ToList();
 
             var eventModel = new SessionInvalidatedEvent
