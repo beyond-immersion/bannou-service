@@ -106,6 +106,8 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `TwitchRedirectUri` | `AUTH_TWITCH_REDIRECT_URI` | null | Twitch OAuth callback URL (derived from ServiceDomain if not set) |
 | `SteamApiKey` | `AUTH_STEAM_API_KEY` | null | Steam Web API key for ticket validation |
 | `SteamAppId` | `AUTH_STEAM_APP_ID` | null | Steam App ID for ticket validation |
+| `MaxLoginAttempts` | `AUTH_MAX_LOGIN_ATTEMPTS` | 5 | Maximum failed login attempts before lockout (per email, uses Redis counter) |
+| `LoginLockoutMinutes` | `AUTH_LOGIN_LOCKOUT_MINUTES` | 15 | Duration in minutes to lock out an email after exceeding MaxLoginAttempts |
 | `BcryptWorkFactor` | `AUTH_BCRYPT_WORK_FACTOR` | 12 | BCrypt work factor for password hashing (existing hashes at other factors still validate) |
 | `EdgeRevocationEnabled` | `AUTH_EDGE_REVOCATION_ENABLED` | false | Master switch for edge-layer token revocation (CloudFlare, OpenResty) |
 | `EdgeRevocationTimeoutSeconds` | `AUTH_EDGE_REVOCATION_TIMEOUT_SECONDS` | 5 | Timeout for edge provider push operations (1-30 seconds) |
@@ -245,23 +247,21 @@ No bugs currently identified.
 
 ### Intentional Quirks
 
-1. **ValidateTokenResponse.SessionId contains the session key, not the session ID**: Returns the internal Redis lookup key rather than the human-facing session identifier. This aligns with how Connect service tracks WebSocket connections, but the field name is misleading.
+1. **Account-sessions index lazy cleanup**: Expired sessions are only removed from the account index when someone calls `GetAccountSessionsAsync`. Active accounts accumulate stale entries until explicitly listed.
 
-2. **Account-sessions index lazy cleanup**: Expired sessions are only removed from the account index when someone calls `GetAccountSessionsAsync`. Active accounts accumulate stale entries until explicitly listed.
+2. **Password reset always returns 200**: By design for email enumeration prevention. No way for legitimate users to know if the reset email was sent.
 
-3. **Password reset always returns 200**: By design for email enumeration prevention. No way for legitimate users to know if the reset email was sent.
+3. **RefreshTokenAsync ignores the JWT parameter**: The refresh token alone is the credential for obtaining a new access token. Validating the (possibly expired) JWT would defeat the purpose of the refresh flow.
 
-4. **RefreshTokenAsync ignores the JWT parameter**: The refresh token alone is the credential for obtaining a new access token. Validating the (possibly expired) JWT would defeat the purpose of the refresh flow.
+4. **DeviceInfo always returns "Unknown" placeholders**: `SessionService.GetAccountSessionsAsync` returns hardcoded device information (`Platform: "Unknown"`, `Browser: "Unknown"`, `DeviceType: Desktop`) because device capture is unimplemented. The constants `UNKNOWN_PLATFORM` and `UNKNOWN_BROWSER` are defined at the top of `SessionService.cs`.
 
-5. **DeviceInfo always returns "Unknown" placeholders**: `SessionService.GetAccountSessionsAsync` returns hardcoded device information (`Platform: "Unknown"`, `Browser: "Unknown"`, `DeviceType: Desktop`) because device capture is unimplemented. The constants `UNKNOWN_PLATFORM` and `UNKNOWN_BROWSER` are defined at the top of `SessionService.cs`.
+5. **Edge revocation is best-effort**: When `EdgeRevocationEnabled=true`, token revocations are pushed to configured edge providers (CloudFlare, OpenResty) but failures don't block session invalidation. Failed pushes are stored in a retry set and retried on subsequent revocation operations. If max retries are exceeded, the failure is logged but the session is still invalidated. This design prioritizes session invalidation reliability over edge propagation completeness.
 
-6. **Edge revocation is best-effort**: When `EdgeRevocationEnabled=true`, token revocations are pushed to configured edge providers (CloudFlare, OpenResty) but failures don't block session invalidation. Failed pushes are stored in a retry set and retried on subsequent revocation operations. If max retries are exceeded, the failure is logged but the session is still invalidated. This design prioritizes session invalidation reliability over edge propagation completeness.
+6. **Edge revocation entries auto-expire**: Token-level revocations expire when the original JWT would have expired. Account-level revocations expire after `JwtExpirationMinutes * 60 + 300` seconds (JWT lifetime + 5-minute buffer). After this period, all access tokens issued before the revocation timestamp have naturally expired, making the revocation entry unnecessary.
 
-7. **Account revocations never expire**: Token-level revocations in the edge-revocation store expire when the original JWT would have expired. Account-level revocations (all tokens before timestamp) have no TTL and persist indefinitely until explicitly cleaned up.
+7. **SessionDataModel and EdgeRevocationModels use Unix timestamp storage**: `SessionDataModel`, `TokenRevocationEntry`, and `AccountRevocationEntry` store all timestamps as `long` Unix epoch properties (e.g., `CreatedAtUnix`, `ExpiresAtUnix`) with `[JsonIgnore]` computed `DateTimeOffset` accessors. This avoids `System.Text.Json` `DateTimeOffset` serialization quirks in Redis. The `LastActiveAtUnix` field defaults to `0` for sessions created before the field was introduced; `GetAccountSessionsAsync` falls back to `CreatedAt` when `LastActiveAtUnix == 0`.
 
-8. **SessionDataModel and EdgeRevocationModels use Unix timestamp storage**: `SessionDataModel`, `TokenRevocationEntry`, and `AccountRevocationEntry` store all timestamps as `long` Unix epoch properties (e.g., `CreatedAtUnix`, `ExpiresAtUnix`) with `[JsonIgnore]` computed `DateTimeOffset` accessors. This avoids `System.Text.Json` `DateTimeOffset` serialization quirks in Redis. The `LastActiveAtUnix` field defaults to `0` for sessions created before the field was introduced; `GetAccountSessionsAsync` falls back to `CreatedAt` when `LastActiveAtUnix == 0`.
-
-9. **InitOAuth is a manual GET controller endpoint**: Unlike all other Auth endpoints which are generated POST endpoints routed via WebSocket, `InitOAuth` is manually implemented in `AuthController.cs` as `[HttpGet("auth/oauth/{provider}/init")]` returning a 302 redirect. This is because OAuth authorization flows require browser redirects, not JSON responses.
+8. **InitOAuth is a manual GET controller endpoint**: Unlike all other Auth endpoints which are generated POST endpoints routed via WebSocket, `InitOAuth` is manually implemented in `AuthController.cs` as `[HttpGet("auth/oauth/{provider}/init")]` returning a 302 redirect. This is because OAuth authorization flows require browser redirects, not JSON responses.
 
 ### Design Considerations (Requires Planning)
 

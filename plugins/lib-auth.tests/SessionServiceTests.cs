@@ -533,7 +533,7 @@ public class SessionServiceTests
         // Session keys are stored as Guid.ToString("N") format
         var sessionIds = new List<string> { sessionId1.ToString("N"), sessionId2.ToString("N") };
         var expectedSessionGuids = new List<Guid> { sessionId1, sessionId2 };
-        var reason = SessionInvalidatedEventReason.Account_deleted;
+        var reason = SessionInvalidatedEventReason.AccountDeleted;
 
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.invalidated",
@@ -571,7 +571,7 @@ public class SessionServiceTests
         var sessionId = Guid.NewGuid();
         var roles = new List<string> { "user", "admin" };
         var authorizations = new List<string> { "auth1" };
-        var reason = SessionUpdatedEventReason.Role_changed;
+        var reason = SessionUpdatedEventReason.RoleChanged;
 
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.updated",

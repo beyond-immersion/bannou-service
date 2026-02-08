@@ -34,6 +34,8 @@ public class AuthServiceTests
     private readonly Mock<ISessionService> _mockSessionService;
     private readonly Mock<IOAuthProviderService> _mockOAuthService;
     private readonly Mock<IEdgeRevocationService> _mockEdgeRevocationService;
+    private readonly Mock<IEmailService> _mockEmailService;
+    private readonly Mock<ICacheableStateStore<SessionDataModel>> _mockCacheableStore;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public AuthServiceTests()
@@ -77,6 +79,8 @@ public class AuthServiceTests
         _mockSessionService = new Mock<ISessionService>();
         _mockOAuthService = new Mock<IOAuthProviderService>();
         _mockEdgeRevocationService = new Mock<IEdgeRevocationService>();
+        _mockEmailService = new Mock<IEmailService>();
+        _mockCacheableStore = new Mock<ICacheableStateStore<SessionDataModel>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup default behavior for edge revocation service (disabled by default)
@@ -89,6 +93,8 @@ public class AuthServiceTests
             .Returns(_mockSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(It.IsAny<string>()))
             .Returns(_mockListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStoreAsync<SessionDataModel>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_mockCacheableStore.Object);
 
         // Setup default behavior for state stores
         _mockPasswordResetStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AuthService.PasswordResetData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -119,6 +125,7 @@ public class AuthServiceTests
             _mockSessionService.Object,
             _mockOAuthService.Object,
             _mockEdgeRevocationService.Object,
+            _mockEmailService.Object,
             _mockEventConsumer.Object);
     }
 
@@ -554,6 +561,7 @@ public class AuthServiceTests
             _mockSessionService.Object,
             _mockOAuthService.Object,
             _mockEdgeRevocationService.Object,
+            _mockEmailService.Object,
             _mockEventConsumer.Object);
 
         // Act
@@ -816,6 +824,7 @@ public class AuthServiceTests
             _mockSessionService.Object,
             _mockOAuthService.Object,
             _mockEdgeRevocationService.Object,
+            _mockEmailService.Object,
             _mockEventConsumer.Object);
 
         var request = new SteamVerifyRequest { Ticket = "valid-steam-ticket-hex" };
@@ -901,6 +910,7 @@ public class AuthServiceTests
             _mockSessionService.Object,
             _mockOAuthService.Object,
             _mockEdgeRevocationService.Object,
+            _mockEmailService.Object,
             _mockEventConsumer.Object);
 
         var request = new SteamVerifyRequest { Ticket = "valid-ticket" };
@@ -941,6 +951,7 @@ public class AuthServiceTests
             _mockSessionService.Object,
             _mockOAuthService.Object,
             _mockEdgeRevocationService.Object,
+            _mockEmailService.Object,
             _mockEventConsumer.Object);
 
         var request = new SteamVerifyRequest { Ticket = "invalid-ticket" };
@@ -990,6 +1001,7 @@ public class AuthServiceTests
             _mockSessionService.Object,
             _mockOAuthService.Object,
             _mockEdgeRevocationService.Object,
+            _mockEmailService.Object,
             _mockEventConsumer.Object);
 
         var request = new SteamVerifyRequest { Ticket = "valid-ticket" };
