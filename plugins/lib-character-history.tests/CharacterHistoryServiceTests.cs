@@ -24,6 +24,7 @@ public class CharacterHistoryServiceTests
     private readonly Mock<IStateStore<ParticipationData>> _mockParticipationStore;
     private readonly Mock<IStateStore<HistoryIndexData>> _mockIndexStore;
     private readonly Mock<IStateStore<BackstoryData>> _mockBackstoryStore;
+    private readonly Mock<IJsonQueryableStateStore<ParticipationData>> _mockJsonQueryableStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -36,6 +37,7 @@ public class CharacterHistoryServiceTests
         _mockParticipationStore = new Mock<IStateStore<ParticipationData>>();
         _mockIndexStore = new Mock<IStateStore<HistoryIndexData>>();
         _mockBackstoryStore = new Mock<IStateStore<BackstoryData>>();
+        _mockJsonQueryableStore = new Mock<IJsonQueryableStateStore<ParticipationData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -49,6 +51,9 @@ public class CharacterHistoryServiceTests
         _mockStateStoreFactory
             .Setup(f => f.GetStore<BackstoryData>(STATE_STORE))
             .Returns(_mockBackstoryStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetJsonQueryableStore<ParticipationData>(STATE_STORE))
+            .Returns(_mockJsonQueryableStore.Object);
     }
 
     private CharacterHistoryService CreateService()
@@ -219,8 +224,7 @@ public class CharacterHistoryServiceTests
             PageSize = 20
         };
 
-        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((HistoryIndexData?)null);
+        SetupJsonQueryPagedAsync(new List<ParticipationData>(), 0);
 
         // Act
         var (status, result) = await service.GetParticipationAsync(request, CancellationToken.None);
@@ -236,19 +240,12 @@ public class CharacterHistoryServiceTests
     }
 
     [Fact]
-    public async Task GetParticipationAsync_WithFilter_FiltersResults()
+    public async Task GetParticipationAsync_WithFilter_ReturnsFilteredResults()
     {
         // Arrange
         var service = CreateService();
         var characterId = Guid.NewGuid();
         var warParticipationId = Guid.NewGuid();
-        var culturalParticipationId = Guid.NewGuid();
-
-        var index = new HistoryIndexData
-        {
-            EntityId = characterId.ToString(),
-            RecordIds = new List<string> { warParticipationId.ToString(), culturalParticipationId.ToString() }
-        };
 
         var warParticipation = new ParticipationData
         {
@@ -263,45 +260,13 @@ public class CharacterHistoryServiceTests
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         };
 
-        var culturalParticipation = new ParticipationData
-        {
-            ParticipationId = culturalParticipationId,
-            CharacterId = characterId,
-            EventId = Guid.NewGuid(),
-            EventName = "Cultural Event",
-            EventCategory = EventCategory.CULTURAL,
-            Role = ParticipationRole.WITNESS,
-            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Significance = 0.5f,
-            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-        };
-
-        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(index);
-        _mockParticipationStore.Setup(s => s.GetAsync($"participation-{warParticipationId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(warParticipation);
-        _mockParticipationStore.Setup(s => s.GetAsync($"participation-{culturalParticipationId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(culturalParticipation);
-
-        // DualIndexHelper uses GetBulkAsync, so we need to mock that too
-        _mockParticipationStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<string> keys, CancellationToken ct) =>
-            {
-                var results = new Dictionary<string, ParticipationData>();
-                foreach (var key in keys)
-                {
-                    if (key == $"participation-{warParticipationId}")
-                        results[key] = warParticipation;
-                    else if (key == $"participation-{culturalParticipationId}")
-                        results[key] = culturalParticipation;
-                }
-                return results;
-            });
+        // Server-side query returns only matching results (filtered at database level)
+        SetupJsonQueryPagedAsync(new List<ParticipationData> { warParticipation }, 1);
 
         var request = new GetParticipationRequest
         {
             CharacterId = characterId,
-            EventCategory = EventCategory.WAR, // Only WAR events
+            EventCategory = EventCategory.WAR,
             Page = 1,
             PageSize = 20
         };
@@ -314,6 +279,146 @@ public class CharacterHistoryServiceTests
         Assert.NotNull(result);
         Assert.Single(result.Participations);
         Assert.Equal("War Event", result.Participations.First().EventName);
+
+        // Verify query conditions were passed (filters pushed to database)
+        _mockJsonQueryableStore.Verify(s => s.JsonQueryPagedAsync(
+            It.Is<IReadOnlyList<QueryCondition>?>(c =>
+                c != null && c.Any(q => q.Path == "$.CharacterId") &&
+                c.Any(q => q.Path == "$.EventCategory")),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetParticipationAsync_PaginatesCorrectly()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var participation = new ParticipationData
+        {
+            ParticipationId = Guid.NewGuid(),
+            CharacterId = characterId,
+            EventId = Guid.NewGuid(),
+            EventName = "Page 2 Event",
+            EventCategory = EventCategory.WAR,
+            Role = ParticipationRole.COMBATANT,
+            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Significance = 0.8f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        // Page 2 of 3 total items, pageSize=1
+        SetupJsonQueryPagedAsync(new List<ParticipationData> { participation }, totalCount: 3, offset: 1, limit: 1);
+
+        var request = new GetParticipationRequest
+        {
+            CharacterId = characterId,
+            Page = 2,
+            PageSize = 1
+        };
+
+        // Act
+        var (status, result) = await service.GetParticipationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Participations);
+        Assert.Equal(3, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.True(result.HasNextPage);
+        Assert.True(result.HasPreviousPage);
+    }
+
+    #endregion
+
+    #region GetEventParticipants Tests
+
+    [Fact]
+    public async Task GetEventParticipantsAsync_NoParticipants_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var eventId = Guid.NewGuid();
+
+        var request = new GetEventParticipantsRequest
+        {
+            EventId = eventId,
+            Page = 1,
+            PageSize = 20
+        };
+
+        SetupJsonQueryPagedAsync(new List<ParticipationData>(), 0);
+
+        // Act
+        var (status, result) = await service.GetEventParticipantsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Empty(result.Participations);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(1, result.Page);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task GetEventParticipantsAsync_WithRoleFilter_ReturnsFilteredResults()
+    {
+        // Arrange
+        var service = CreateService();
+        var eventId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+
+        var leaderParticipation = new ParticipationData
+        {
+            ParticipationId = Guid.NewGuid(),
+            CharacterId = characterId,
+            EventId = eventId,
+            EventName = "Battle",
+            EventCategory = EventCategory.WAR,
+            Role = ParticipationRole.LEADER,
+            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Significance = 0.9f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        // Server-side query returns only LEADER role results
+        SetupJsonQueryPagedAsync(new List<ParticipationData> { leaderParticipation }, 1);
+
+        var request = new GetEventParticipantsRequest
+        {
+            EventId = eventId,
+            Role = ParticipationRole.LEADER,
+            Page = 1,
+            PageSize = 20
+        };
+
+        // Act
+        var (status, result) = await service.GetEventParticipantsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Participations);
+        Assert.Equal(ParticipationRole.LEADER, result.Participations.First().Role);
+
+        // Verify query conditions include EventId and Role filters
+        _mockJsonQueryableStore.Verify(s => s.JsonQueryPagedAsync(
+            It.Is<IReadOnlyList<QueryCondition>?>(c =>
+                c != null && c.Any(q => q.Path == "$.EventId") &&
+                c.Any(q => q.Path == "$.Role")),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     #endregion
@@ -708,6 +813,32 @@ public class CharacterHistoryServiceTests
     #endregion
 
     #region Helper Methods
+
+    private void SetupJsonQueryPagedAsync(
+        List<ParticipationData> items,
+        long totalCount,
+        int offset = 0,
+        int limit = 20)
+    {
+        var queryResults = items.Select(m =>
+            new JsonQueryResult<ParticipationData>(
+                $"participation-{m.ParticipationId}",
+                m))
+            .ToList();
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<ParticipationData>(
+                queryResults,
+                totalCount,
+                offset,
+                limit));
+    }
 
     private void SetupDefaultMessageBus()
     {

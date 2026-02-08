@@ -24,6 +24,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<RealmHistoryService> _logger;
+    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IDualIndexHelper<RealmParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<RealmLoreData, RealmLoreElementData> _loreHelper;
 
@@ -52,8 +53,9 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _messageBus = messageBus;
         _logger = logger;
+        _stateStoreFactory = stateStoreFactory;
 
-        // Note: stateStoreFactory is passed to helpers; configuration is currently unused but kept for future use
+        // Note: stateStoreFactory is also passed to helpers; configuration is currently unused but kept for future use
         _ = configuration; // Suppress unused parameter warning
 
         // Initialize participation helper using shared dual-index infrastructure
@@ -191,35 +193,27 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            // Use helper to get all records for this realm
-            var allRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
-                body.RealmId.ToString(),
-                cancellationToken);
+            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
+                StateStoreDefinitions.RealmHistory);
 
-            if (allRecords.Count == 0)
-            {
-                return (StatusCodes.OK, new RealmParticipationListResponse
-                {
-                    Participations = new List<RealmHistoricalParticipation>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize,
-                    HasNextPage = false,
-                    HasPreviousPage = false
-                });
-            }
+            var conditions = BuildRealmParticipationQueryConditions(
+                "$.RealmId", body.RealmId,
+                eventCategory: body.EventCategory,
+                minimumImpact: body.MinimumImpact,
+                role: null);
 
-            // Map, filter, and collect results
-            var allParticipations = allRecords
-                .Select(MapToRealmHistoricalParticipation)
-                .Where(p =>
-                    (!body.EventCategory.HasValue || p.EventCategory == body.EventCategory.Value) &&
-                    (!body.MinimumImpact.HasValue || p.Impact >= body.MinimumImpact.Value))
-                .OrderByDescending(p => p.EventDate)
+            var sortSpec = new JsonSortSpec { Path = "$.EventDateUnix", Descending = true };
+            var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
+
+            var result = await jsonStore.JsonQueryPagedAsync(
+                conditions, skip, take, sortSpec, cancellationToken);
+
+            var participations = result.Items
+                .Select(item => MapToRealmHistoricalParticipation(item.Value))
                 .ToList();
 
-            // Use pagination helper
-            var paginatedResult = PaginationHelper.Paginate(allParticipations, body.Page, body.PageSize);
+            var paginatedResult = PaginationHelper.CreateResult(
+                participations, (int)result.TotalCount, body.Page, body.PageSize);
 
             return (StatusCodes.OK, new RealmParticipationListResponse
             {
@@ -250,6 +244,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
     /// <summary>
     /// Gets all realms that participated in a historical event.
+    /// Uses server-side MySQL JSON queries for efficient pagination per IMPLEMENTATION TENETS.
     /// </summary>
     public async Task<(StatusCodes, RealmParticipationListResponse?)> GetRealmEventParticipantsAsync(
         GetRealmEventParticipantsRequest body,
@@ -259,33 +254,27 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            // Use helper to get all records for this event (via secondary index)
-            var allRecords = await _participationHelper.GetRecordsBySecondaryKeyAsync(
-                body.EventId.ToString(),
-                cancellationToken);
+            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
+                StateStoreDefinitions.RealmHistory);
 
-            if (allRecords.Count == 0)
-            {
-                return (StatusCodes.OK, new RealmParticipationListResponse
-                {
-                    Participations = new List<RealmHistoricalParticipation>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize,
-                    HasNextPage = false,
-                    HasPreviousPage = false
-                });
-            }
+            var conditions = BuildRealmParticipationQueryConditions(
+                "$.EventId", body.EventId,
+                eventCategory: null,
+                minimumImpact: null,
+                role: body.Role);
 
-            // Map, filter, and sort results
-            var allParticipations = allRecords
-                .Select(MapToRealmHistoricalParticipation)
-                .Where(p => !body.Role.HasValue || p.Role == body.Role.Value)
-                .OrderByDescending(p => p.Impact)
+            var sortSpec = new JsonSortSpec { Path = "$.Impact", Descending = true };
+            var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
+
+            var result = await jsonStore.JsonQueryPagedAsync(
+                conditions, skip, take, sortSpec, cancellationToken);
+
+            var participations = result.Items
+                .Select(item => MapToRealmHistoricalParticipation(item.Value))
                 .ToList();
 
-            // Use pagination helper
-            var paginatedResult = PaginationHelper.Paginate(allParticipations, body.Page, body.PageSize);
+            var paginatedResult = PaginationHelper.CreateResult(
+                participations, (int)result.TotalCount, body.Page, body.PageSize);
 
             return (StatusCodes.OK, new RealmParticipationListResponse
             {
@@ -1089,6 +1078,73 @@ public partial class RealmHistoryService : IRealmHistoryService
         using var gzip = new System.IO.Compression.GZipStream(input, System.IO.Compression.CompressionMode.Decompress);
         using var reader = new System.IO.StreamReader(gzip, System.Text.Encoding.UTF8);
         return reader.ReadToEnd();
+    }
+
+    // ============================================================================
+    // Query Helpers
+    // ============================================================================
+
+    /// <summary>
+    /// Builds MySQL JSON query conditions for realm participation listing.
+    /// Uses server-side filtering to avoid loading all records into memory.
+    /// </summary>
+    private static List<QueryCondition> BuildRealmParticipationQueryConditions(
+        string entityIdPath,
+        Guid entityId,
+        RealmEventCategory? eventCategory,
+        float? minimumImpact,
+        RealmEventRole? role)
+    {
+        var conditions = new List<QueryCondition>
+        {
+            // Type discriminator: only RealmParticipationData records have ParticipationId
+            // Prevents confusion with other data types stored in the same state store
+            new QueryCondition
+            {
+                Path = "$.ParticipationId",
+                Operator = QueryOperator.Exists,
+                Value = true
+            },
+            // Primary entity filter (realm or event)
+            new QueryCondition
+            {
+                Path = entityIdPath,
+                Operator = QueryOperator.Equals,
+                Value = entityId.ToString()
+            }
+        };
+
+        if (eventCategory.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.EventCategory",
+                Operator = QueryOperator.Equals,
+                Value = eventCategory.Value.ToString()
+            });
+        }
+
+        if (minimumImpact.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.Impact",
+                Operator = QueryOperator.GreaterThanOrEqual,
+                Value = minimumImpact.Value
+            });
+        }
+
+        if (role.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.Role",
+                Operator = QueryOperator.Equals,
+                Value = role.Value.ToString()
+            });
+        }
+
+        return conditions;
     }
 
     // ============================================================================

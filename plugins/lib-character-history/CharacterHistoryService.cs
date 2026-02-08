@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -21,6 +22,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<CharacterHistoryService> _logger;
+    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IDualIndexHelper<ParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
 
@@ -48,6 +50,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _messageBus = messageBus;
         _logger = logger;
+        _stateStoreFactory = stateStoreFactory;
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<ParticipationData>(
@@ -187,6 +190,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
     /// <summary>
     /// Gets a character's historical event participation records.
+    /// Uses server-side MySQL JSON queries for efficient pagination per IMPLEMENTATION TENETS.
     /// </summary>
     public async Task<(StatusCodes, ParticipationListResponse?)> GetParticipationAsync(GetParticipationRequest body, CancellationToken cancellationToken)
     {
@@ -194,35 +198,27 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            // Use helper to get all records for this character
-            var allRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
-                body.CharacterId.ToString(),
-                cancellationToken);
+            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
+                StateStoreDefinitions.CharacterHistory);
 
-            if (allRecords.Count == 0)
-            {
-                return (StatusCodes.OK, new ParticipationListResponse
-                {
-                    Participations = new List<HistoricalParticipation>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize,
-                    HasNextPage = false,
-                    HasPreviousPage = false
-                });
-            }
+            var conditions = BuildParticipationQueryConditions(
+                "$.CharacterId", body.CharacterId,
+                eventCategory: body.EventCategory,
+                minimumSignificance: body.MinimumSignificance,
+                role: null);
 
-            // Map and filter
-            var allParticipations = allRecords
-                .Select(MapToHistoricalParticipation)
-                .Where(p =>
-                    (!body.EventCategory.HasValue || p.EventCategory == body.EventCategory.Value) &&
-                    (!body.MinimumSignificance.HasValue || p.Significance >= body.MinimumSignificance.Value))
-                .OrderByDescending(p => p.EventDate)
+            var sortSpec = new JsonSortSpec { Path = "$.EventDateUnix", Descending = true };
+            var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
+
+            var result = await jsonStore.JsonQueryPagedAsync(
+                conditions, skip, take, sortSpec, cancellationToken);
+
+            var participations = result.Items
+                .Select(item => MapToHistoricalParticipation(item.Value))
                 .ToList();
 
-            // Use pagination helper
-            var paginatedResult = PaginationHelper.Paginate(allParticipations, body.Page, body.PageSize);
+            var paginatedResult = PaginationHelper.CreateResult(
+                participations, (int)result.TotalCount, body.Page, body.PageSize);
 
             return (StatusCodes.OK, new ParticipationListResponse
             {
@@ -253,6 +249,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
     /// <summary>
     /// Gets all participants of a historical event.
+    /// Uses server-side MySQL JSON queries for efficient pagination per IMPLEMENTATION TENETS.
     /// </summary>
     public async Task<(StatusCodes, ParticipationListResponse?)> GetEventParticipantsAsync(GetEventParticipantsRequest body, CancellationToken cancellationToken)
     {
@@ -260,33 +257,27 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            // Use helper to get all records for this event (via secondary index)
-            var allRecords = await _participationHelper.GetRecordsBySecondaryKeyAsync(
-                body.EventId.ToString(),
-                cancellationToken);
+            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
+                StateStoreDefinitions.CharacterHistory);
 
-            if (allRecords.Count == 0)
-            {
-                return (StatusCodes.OK, new ParticipationListResponse
-                {
-                    Participations = new List<HistoricalParticipation>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize,
-                    HasNextPage = false,
-                    HasPreviousPage = false
-                });
-            }
+            var conditions = BuildParticipationQueryConditions(
+                "$.EventId", body.EventId,
+                eventCategory: null,
+                minimumSignificance: null,
+                role: body.Role);
 
-            // Map and filter by role if specified
-            var allParticipations = allRecords
-                .Select(MapToHistoricalParticipation)
-                .Where(p => !body.Role.HasValue || p.Role == body.Role.Value)
-                .OrderByDescending(p => p.Significance)
+            var sortSpec = new JsonSortSpec { Path = "$.Significance", Descending = true };
+            var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
+
+            var result = await jsonStore.JsonQueryPagedAsync(
+                conditions, skip, take, sortSpec, cancellationToken);
+
+            var participations = result.Items
+                .Select(item => MapToHistoricalParticipation(item.Value))
                 .ToList();
 
-            // Use pagination helper
-            var paginatedResult = PaginationHelper.Paginate(allParticipations, body.Page, body.PageSize);
+            var paginatedResult = PaginationHelper.CreateResult(
+                participations, (int)result.TotalCount, body.Page, body.PageSize);
 
             return (StatusCodes.OK, new ParticipationListResponse
             {
@@ -789,6 +780,73 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    // ============================================================================
+    // Query Helpers
+    // ============================================================================
+
+    /// <summary>
+    /// Builds MySQL JSON query conditions for participation listing.
+    /// Uses server-side filtering to avoid loading all records into memory.
+    /// </summary>
+    private static List<QueryCondition> BuildParticipationQueryConditions(
+        string entityIdPath,
+        Guid entityId,
+        EventCategory? eventCategory,
+        float? minimumSignificance,
+        ParticipationRole? role)
+    {
+        var conditions = new List<QueryCondition>
+        {
+            // Type discriminator: only ParticipationData records have ParticipationId
+            // Prevents confusion with other data types stored in the same state store
+            new QueryCondition
+            {
+                Path = "$.ParticipationId",
+                Operator = QueryOperator.Exists,
+                Value = true
+            },
+            // Primary entity filter (character or event)
+            new QueryCondition
+            {
+                Path = entityIdPath,
+                Operator = QueryOperator.Equals,
+                Value = entityId.ToString()
+            }
+        };
+
+        if (eventCategory.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.EventCategory",
+                Operator = QueryOperator.Equals,
+                Value = eventCategory.Value.ToString()
+            });
+        }
+
+        if (minimumSignificance.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.Significance",
+                Operator = QueryOperator.GreaterThanOrEqual,
+                Value = minimumSignificance.Value
+            });
+        }
+
+        if (role.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.Role",
+                Operator = QueryOperator.Equals,
+                Value = role.Value.ToString()
+            });
+        }
+
+        return conditions;
     }
 
     // ============================================================================

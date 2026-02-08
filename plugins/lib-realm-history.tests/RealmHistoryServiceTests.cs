@@ -22,6 +22,7 @@ public class RealmHistoryServiceTests
     private readonly Mock<IStateStore<RealmParticipationData>> _mockParticipationStore;
     private readonly Mock<IStateStore<HistoryIndexData>> _mockIndexStore;
     private readonly Mock<IStateStore<RealmLoreData>> _mockLoreStore;
+    private readonly Mock<IJsonQueryableStateStore<RealmParticipationData>> _mockJsonQueryableStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -35,6 +36,7 @@ public class RealmHistoryServiceTests
         _mockParticipationStore = new Mock<IStateStore<RealmParticipationData>>();
         _mockIndexStore = new Mock<IStateStore<HistoryIndexData>>();
         _mockLoreStore = new Mock<IStateStore<RealmLoreData>>();
+        _mockJsonQueryableStore = new Mock<IJsonQueryableStateStore<RealmParticipationData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -48,6 +50,9 @@ public class RealmHistoryServiceTests
         _mockStateStoreFactory
             .Setup(f => f.GetStore<RealmLoreData>(STATE_STORE))
             .Returns(_mockLoreStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetJsonQueryableStore<RealmParticipationData>(STATE_STORE))
+            .Returns(_mockJsonQueryableStore.Object);
     }
 
     private RealmHistoryService CreateService()
@@ -194,8 +199,7 @@ public class RealmHistoryServiceTests
             PageSize = 20
         };
 
-        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((HistoryIndexData?)null);
+        SetupJsonQueryPagedAsync(new List<RealmParticipationData>(), 0);
 
         // Act
         var (status, result) = await service.GetRealmParticipationAsync(request, CancellationToken.None);
@@ -211,19 +215,12 @@ public class RealmHistoryServiceTests
     }
 
     [Fact]
-    public async Task GetRealmParticipationAsync_WithFilter_FiltersResults()
+    public async Task GetRealmParticipationAsync_WithFilter_ReturnsFilteredResults()
     {
         // Arrange
         var service = CreateService();
         var realmId = Guid.NewGuid();
         var warParticipationId = Guid.NewGuid();
-        var treatyParticipationId = Guid.NewGuid();
-
-        var index = new HistoryIndexData
-        {
-            EntityId = realmId.ToString(),
-            RecordIds = new List<string> { warParticipationId.ToString(), treatyParticipationId.ToString() }
-        };
 
         var warParticipation = new RealmParticipationData
         {
@@ -238,35 +235,13 @@ public class RealmHistoryServiceTests
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         };
 
-        var treatyParticipation = new RealmParticipationData
-        {
-            ParticipationId = treatyParticipationId,
-            RealmId = realmId,
-            EventId = Guid.NewGuid(),
-            EventName = "Treaty Event",
-            EventCategory = RealmEventCategory.TREATY,
-            Role = RealmEventRole.MEDIATOR,
-            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Impact = 0.5f,
-            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-        };
-
-        _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(index);
-
-        // Service uses GetBulkAsync for fetching participations
-        var bulkResult = new Dictionary<string, RealmParticipationData>
-        {
-            { $"realm-participation-{warParticipationId}", warParticipation },
-            { $"realm-participation-{treatyParticipationId}", treatyParticipation }
-        };
-        _mockParticipationStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(bulkResult);
+        // Server-side query returns only matching results (filtered at database level)
+        SetupJsonQueryPagedAsync(new List<RealmParticipationData> { warParticipation }, 1);
 
         var request = new GetRealmParticipationRequest
         {
             RealmId = realmId,
-            EventCategory = RealmEventCategory.WAR, // Only WAR events
+            EventCategory = RealmEventCategory.WAR,
             Page = 1,
             PageSize = 20
         };
@@ -279,6 +254,146 @@ public class RealmHistoryServiceTests
         Assert.NotNull(result);
         Assert.Single(result.Participations);
         Assert.Equal("War Event", result.Participations.First().EventName);
+
+        // Verify query conditions were passed (filters pushed to database)
+        _mockJsonQueryableStore.Verify(s => s.JsonQueryPagedAsync(
+            It.Is<IReadOnlyList<QueryCondition>?>(c =>
+                c != null && c.Any(q => q.Path == "$.RealmId") &&
+                c.Any(q => q.Path == "$.EventCategory")),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetRealmParticipationAsync_PaginatesCorrectly()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var participation = new RealmParticipationData
+        {
+            ParticipationId = Guid.NewGuid(),
+            RealmId = realmId,
+            EventId = Guid.NewGuid(),
+            EventName = "Page 2 Event",
+            EventCategory = RealmEventCategory.WAR,
+            Role = RealmEventRole.DEFENDER,
+            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Impact = 0.8f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        // Page 2 of 3 total items, pageSize=1
+        SetupJsonQueryPagedAsync(new List<RealmParticipationData> { participation }, totalCount: 3, offset: 1, limit: 1);
+
+        var request = new GetRealmParticipationRequest
+        {
+            RealmId = realmId,
+            Page = 2,
+            PageSize = 1
+        };
+
+        // Act
+        var (status, result) = await service.GetRealmParticipationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Participations);
+        Assert.Equal(3, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.True(result.HasNextPage);
+        Assert.True(result.HasPreviousPage);
+    }
+
+    #endregion
+
+    #region GetRealmEventParticipants Tests
+
+    [Fact]
+    public async Task GetRealmEventParticipantsAsync_NoParticipants_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var eventId = Guid.NewGuid();
+
+        var request = new GetRealmEventParticipantsRequest
+        {
+            EventId = eventId,
+            Page = 1,
+            PageSize = 20
+        };
+
+        SetupJsonQueryPagedAsync(new List<RealmParticipationData>(), 0);
+
+        // Act
+        var (status, result) = await service.GetRealmEventParticipantsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Empty(result.Participations);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(1, result.Page);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task GetRealmEventParticipantsAsync_WithRoleFilter_ReturnsFilteredResults()
+    {
+        // Arrange
+        var service = CreateService();
+        var eventId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        var defenderParticipation = new RealmParticipationData
+        {
+            ParticipationId = Guid.NewGuid(),
+            RealmId = realmId,
+            EventId = eventId,
+            EventName = "Great War",
+            EventCategory = RealmEventCategory.WAR,
+            Role = RealmEventRole.DEFENDER,
+            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Impact = 0.9f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        // Server-side query returns only DEFENDER role results
+        SetupJsonQueryPagedAsync(new List<RealmParticipationData> { defenderParticipation }, 1);
+
+        var request = new GetRealmEventParticipantsRequest
+        {
+            EventId = eventId,
+            Role = RealmEventRole.DEFENDER,
+            Page = 1,
+            PageSize = 20
+        };
+
+        // Act
+        var (status, result) = await service.GetRealmEventParticipantsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Participations);
+        Assert.Equal(RealmEventRole.DEFENDER, result.Participations.First().Role);
+
+        // Verify query conditions include EventId and Role filters
+        _mockJsonQueryableStore.Verify(s => s.JsonQueryPagedAsync(
+            It.Is<IReadOnlyList<QueryCondition>?>(c =>
+                c != null && c.Any(q => q.Path == "$.EventId") &&
+                c.Any(q => q.Path == "$.Role")),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     #endregion
