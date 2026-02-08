@@ -461,6 +461,7 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           description: Email address for authentication
         password:
           type: string
@@ -564,11 +565,6 @@ components:
             type: string
           nullable: true
           description: List of roles assigned to the authenticated user
-        requiresTwoFactor:
-          type: boolean
-          default: false
-          description: Whether the user needs to complete two-factor authentication
-
     OAuthCallbackRequest:
       description: Request containing OAuth provider callback data to complete authentication
       type: object
@@ -600,6 +596,8 @@ components:
       properties:
         ticket:
           type: string
+          pattern: '^[0-9A-Fa-f]+$'
+          minLength: 16
           description: |
             Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
             Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
@@ -627,7 +625,7 @@ components:
       required:
       - valid
       - accountId
-      - sessionId
+      - sessionKey
       properties:
         valid:
           type: boolean
@@ -636,10 +634,10 @@ components:
           type: string
           format: uuid
           description: Unique identifier for the account associated with the token
-        sessionId:
+        sessionKey:
           type: string
           format: uuid
-          description: Session identifier for WebSocket connections and service routing
+          description: Internal session key used by Connect service for WebSocket connection tracking and service routing
         roles:
           type: array
           items:
@@ -748,6 +746,7 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           description: Email address associated with the account to reset
 
     PasswordResetConfirmRequest:

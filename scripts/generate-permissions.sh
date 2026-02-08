@@ -47,7 +47,12 @@ if [ -f "$OLD_FILE" ]; then
 fi
 
 # Extract service version from schema info.version
-SERVICE_VERSION=$(grep -A1 '^info:' "$SCHEMA_FILE" | grep 'version:' | head -1 | sed "s/.*version:[[:space:]]*['\"]*//" | sed "s/['\"].*//")
+# Use awk to find the version field within the info block (handles multiline descriptions)
+SERVICE_VERSION=$(awk '
+/^info:/ { in_info=1; next }
+in_info && /^[^ ]/ { in_info=0 }
+in_info && /^  version:/ { gsub(/.*version:[[:space:]]*/, ""); gsub(/["\047]/, ""); print; exit }
+' "$SCHEMA_FILE")
 if [ -z "$SERVICE_VERSION" ]; then
     SERVICE_VERSION="1.0.0"
 fi

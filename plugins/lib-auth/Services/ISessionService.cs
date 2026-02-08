@@ -102,7 +102,7 @@ public interface ISessionService
     /// <param name="accountId">The account ID.</param>
     /// <param name="reason">The reason for invalidation.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.Account_deleted, CancellationToken cancellationToken = default);
+    Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.AccountDeleted, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publishes a session invalidated event.

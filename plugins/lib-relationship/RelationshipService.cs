@@ -1593,10 +1593,14 @@ public partial class RelationshipService : IRelationshipService
                 try
                 {
                     // Call internal ListRelationshipsByType directly (no HTTP round-trip)
+                    // Include ended relationships to ensure complete migration;
+                    // without this, ended relationships remain with the source type
+                    // and block delete-after-merge
                     var (listStatus, relationshipsResponse) = await this.ListRelationshipsByTypeAsync(
                         new ListRelationshipsByTypeRequest
                         {
                             RelationshipTypeId = body.SourceTypeId,
+                            IncludeEnded = true,
                             Page = page,
                             PageSize = pageSize
                         },
@@ -1610,20 +1614,33 @@ public partial class RelationshipService : IRelationshipService
                         continue;
                     }
 
-                    // Migrate each relationship to the target type
+                    // Migrate each relationship to the target type using internal helper
+                    // that bypasses the ended-relationship check in UpdateRelationshipAsync
                     foreach (var relationship in relationshipsResponse.Relationships)
                     {
                         try
                         {
-                            // Call internal UpdateRelationship directly (no HTTP round-trip)
-                            await this.UpdateRelationshipAsync(
-                                new UpdateRelationshipRequest
-                                {
-                                    RelationshipId = relationship.RelationshipId,
-                                    RelationshipTypeId = body.TargetTypeId
-                                },
+                            var migrated = await MigrateRelationshipTypeInternalAsync(
+                                relationship.RelationshipId,
+                                body.TargetTypeId,
                                 cancellationToken);
-                            migratedCount++;
+
+                            if (migrated)
+                            {
+                                migratedCount++;
+                            }
+                            else
+                            {
+                                failedCount++;
+                                if (migrationErrors.Count < maxErrorsToTrack)
+                                {
+                                    migrationErrors.Add(new MigrationError
+                                    {
+                                        RelationshipId = relationship.RelationshipId,
+                                        Error = "Relationship not found during migration"
+                                    });
+                                }
+                            }
                         }
                         catch (Exception relEx)
                         {
@@ -1771,6 +1788,52 @@ public partial class RelationshipService : IRelationshipService
             relationshipIds.Add(relationshipId);
             await store.SaveAsync(indexKey, relationshipIds, cancellationToken: cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Migrates a relationship's type directly, bypassing the ended-relationship check.
+    /// Used by merge operations where both active and ended relationships must be migrated
+    /// to preserve historical accuracy.
+    /// </summary>
+    /// <param name="relationshipId">The relationship to migrate.</param>
+    /// <param name="targetTypeId">The target relationship type ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if successfully migrated, false if relationship not found or no change needed.</returns>
+    private async Task<bool> MigrateRelationshipTypeInternalAsync(
+        Guid relationshipId, Guid targetTypeId,
+        CancellationToken cancellationToken)
+    {
+        var relationshipKey = BuildRelationshipKey(relationshipId);
+        var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+            .GetAsync(relationshipKey, cancellationToken);
+
+        if (model == null)
+        {
+            _logger.LogWarning("Relationship not found during type migration: {RelationshipId}", relationshipId);
+            return false;
+        }
+
+        if (model.RelationshipTypeId == targetTypeId)
+        {
+            return true;
+        }
+
+        var oldTypeId = model.RelationshipTypeId;
+
+        // Update type indexes: remove from old, add to new
+        await RemoveFromTypeIndexAsync(oldTypeId, relationshipId, cancellationToken);
+        await AddToTypeIndexAsync(targetTypeId, relationshipId, cancellationToken);
+
+        // Update the model
+        model.RelationshipTypeId = targetTypeId;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+        await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+            .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+        // Publish update event for observability
+        await PublishRelationshipUpdatedEventAsync(model, new[] { "relationshipTypeId" }, cancellationToken);
+
+        return true;
     }
 
     private async Task AddToTypeIndexAsync(

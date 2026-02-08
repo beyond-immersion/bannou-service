@@ -267,7 +267,7 @@ public class TokenService : ITokenService
                 {
                     Valid = true,
                     AccountId = sessionData.AccountId,
-                    SessionId = Guid.Parse(sessionKey),
+                    SessionKey = Guid.Parse(sessionKey),
                     Roles = sessionData.Roles,
                     Authorizations = sessionData.Authorizations,
                     RemainingTime = remainingSeconds

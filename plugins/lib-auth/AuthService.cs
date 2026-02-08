@@ -118,7 +118,7 @@ public partial class AuthService : IAuthService
             {
                 // Account not found - return Unauthorized (don't reveal whether account exists)
                 _logger.LogWarning("Account not found for email: {Email}", body.Email);
-                await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.Account_not_found);
+                await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.AccountNotFound);
                 return (StatusCodes.Unauthorized, null);
             }
             catch (Exception ex)
@@ -140,7 +140,7 @@ public partial class AuthService : IAuthService
             if (!passwordValid)
             {
                 _logger.LogWarning("Password verification failed for email: {Email}", body.Email);
-                await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.Invalid_credentials, account.AccountId);
+                await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.InvalidCredentials, account.AccountId);
                 return (StatusCodes.Unauthorized, null);
             }
 
@@ -561,8 +561,7 @@ public partial class AuthService : IAuthService
                 return StatusCodes.Unauthorized;
             }
 
-            // SessionId in ValidateTokenResponse is the internal session key (Guid.Parse(sessionKey))
-            var sessionKey = validateResponse.SessionId.ToString("N");
+            var sessionKey = validateResponse.SessionKey.ToString("N");
 
             var invalidatedSessions = new List<string>();
 
@@ -584,6 +583,7 @@ public partial class AuthService : IAuthService
                         await sessionStore.DeleteAsync($"session:{key}", cancellationToken);
 
                         // Clean up reverse index if session data was still available
+                        // Defensive: guard against corrupt Redis data (SessionId should always be populated)
                         if (sessionData != null && sessionData.SessionId != Guid.Empty)
                         {
                             await _sessionService.RemoveSessionIdReverseIndexAsync(sessionData.SessionId, cancellationToken);
@@ -680,7 +680,7 @@ public partial class AuthService : IAuthService
                 await _sessionService.PublishSessionInvalidatedEventAsync(
                     sessionData.AccountId,
                     new List<string> { sessionKey },
-                    SessionInvalidatedEventReason.Admin_action,
+                    SessionInvalidatedEventReason.AdminAction,
                     cancellationToken);
             }
 
@@ -872,7 +872,7 @@ public partial class AuthService : IAuthService
     internal class PasswordResetData
     {
         public Guid AccountId { get; set; }
-        public string Email { get; set; } = "";
+        public string? Email { get; set; }
         public DateTimeOffset ExpiresAt { get; set; }
     }
 
@@ -1116,7 +1116,7 @@ public partial class AuthService : IAuthService
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task InvalidateAccountSessionsAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
-        await _sessionService.InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.Account_deleted, cancellationToken);
+        await _sessionService.InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.AccountDeleted, cancellationToken);
     }
 
 
@@ -1169,7 +1169,7 @@ public partial class AuthService : IAuthService
                             session.SessionId,
                             newRoles,
                             session.Authorizations,
-                            SessionUpdatedEventReason.Role_changed,
+                            SessionUpdatedEventReason.RoleChanged,
                             cancellationToken);
 
                         _logger.LogDebug("Updated roles for session {SessionKey}", sessionKey);

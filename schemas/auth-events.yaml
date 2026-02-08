@@ -85,7 +85,7 @@ components:
 
     SessionInvalidatedEventReason:
       type: string
-      enum: [logout, account_deleted, security_revocation, admin_action, session_expired]
+      enum: [Logout, AccountDeleted, SecurityRevocation, AdminAction, SessionExpired]
       description: Reason for session invalidation
 
     SessionUpdatedEvent:
@@ -127,7 +127,7 @@ components:
 
     SessionUpdatedEventReason:
       type: string
-      enum: [role_changed, authorization_changed, subscription_changed]
+      enum: [RoleChanged, AuthorizationChanged, SubscriptionChanged]
       description: Reason for session update
 
     # ==========================================================================
@@ -197,7 +197,7 @@ components:
 
     AuthLoginFailedReason:
       type: string
-      enum: [invalid_credentials, account_disabled, account_locked, account_not_found]
+      enum: [InvalidCredentials, AccountDisabled, AccountLocked, AccountNotFound, RateLimited]
       description: Reason why the login attempt failed
 
     AuthRegistrationSuccessfulEvent:

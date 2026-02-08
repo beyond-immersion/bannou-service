@@ -137,6 +137,22 @@ x-service-configuration:
       env: AUTH_PASSWORD_RESET_BASE_URL
       example: "https://your-domain.com/reset-password"
 
+    # Rate Limiting
+    MaxLoginAttempts:
+      type: integer
+      description: Maximum failed login attempts before lockout. After this many consecutive failures for an email, further attempts return 429 until the lockout expires.
+      env: AUTH_MAX_LOGIN_ATTEMPTS
+      default: 5
+      minimum: 1
+      maximum: 100
+    LoginLockoutMinutes:
+      type: integer
+      description: Duration in minutes to lock out an email after exceeding MaxLoginAttempts. The lockout counter resets on successful login.
+      env: AUTH_LOGIN_LOCKOUT_MINUTES
+      default: 15
+      minimum: 1
+      maximum: 1440
+
     # Security
     BcryptWorkFactor:
       type: integer

@@ -174,6 +174,20 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? PasswordResetBaseUrl { get; set; }
 
     /// <summary>
+    /// Maximum failed login attempts before lockout. After this many consecutive failures for an email, further attempts return 429 until the lockout expires.
+    /// Environment variable: AUTH_MAX_LOGIN_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
+    public int MaxLoginAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Duration in minutes to lock out an email after exceeding MaxLoginAttempts. The lockout counter resets on successful login.
+    /// Environment variable: AUTH_LOGIN_LOCKOUT_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
+    public int LoginLockoutMinutes { get; set; } = 15;
+
+    /// <summary>
     /// BCrypt work factor for password hashing. Higher values are more secure but slower. Existing hashes at lower factors continue to validate.
     /// Environment variable: AUTH_BCRYPT_WORK_FACTOR
     /// </summary>

@@ -342,7 +342,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.Account_deleted, CancellationToken cancellationToken = default)
+    public async Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.AccountDeleted, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -433,7 +433,7 @@ public class SessionService : ISessionService
             var sessionIdGuids = sessionIds
                 .Select(s => Guid.TryParse(s, out var g) ? g : (Guid?)null)
                 .Where(g => g.HasValue)
-                .Select(g => g!.Value)
+                .Select(g => g.Value)
                 .ToList();
 
             var eventModel = new SessionInvalidatedEvent
