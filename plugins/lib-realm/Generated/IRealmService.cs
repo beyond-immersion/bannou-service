@@ -70,6 +70,11 @@ public partial interface IRealmService : IBannouService
         Task<(StatusCodes, RealmResponse?)> UndeprecateRealmAsync(UndeprecateRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// MergeRealms operation
+        /// </summary>
+        Task<(StatusCodes, MergeRealmsResponse?)> MergeRealmsAsync(MergeRealmsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// RealmExists operation
         /// </summary>
         Task<(StatusCodes, RealmExistsResponse?)> RealmExistsAsync(RealmExistsRequest body, CancellationToken cancellationToken = default(CancellationToken));

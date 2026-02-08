@@ -100,6 +100,11 @@ public partial interface ILocationService : IBannouService
         Task<StatusCodes> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// TransferLocationToRealm operation
+        /// </summary>
+        Task<(StatusCodes, LocationResponse?)> TransferLocationToRealmAsync(TransferLocationToRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// DeprecateLocation operation
         /// </summary>
         Task<(StatusCodes, LocationResponse?)> DeprecateLocationAsync(DeprecateLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));

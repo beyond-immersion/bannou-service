@@ -31,9 +31,8 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 
 | Dependent | Relationship |
 |-----------|-------------|
+| lib-realm | Calls `ListRootLocationsAsync`, `GetLocationDescendantsAsync`, `TransferLocationToRealmAsync`, `SetLocationParentAsync` via `ILocationClient` during realm merge |
 | lib-character-encounter | Stores `LocationId` as optional encounter context (stores reference but does not call `ILocationClient`) |
-
-**Note**: No services currently call `ILocationClient` directly. Location references in other services (character-encounter, mapping) are stored as Guid foreign keys without runtime validation. This is intentional - locations are reference data seeded at startup, not runtime-validated entities.
 
 **Contract Integration**: Location registers a `territory_constraint` clause type with Contract during plugin startup. Contract service will call `/location/validate-territory` via `IServiceNavigator` when evaluating territory constraint clauses. This enables Contract to validate territorial boundaries without a direct dependency on Location (SERVICE_HIERARCHY compliant: L2 Location registers with L1 Contract).
 
@@ -117,7 +116,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **ValidateTerritory** (`/location/validate-territory`): Territory constraint checking designed for Contract service's clause handler system. Builds location + ancestor hierarchy set, checks for overlap with territory location IDs. Supports two modes: `exclusive` (location must NOT overlap territory) and `inclusive` (location MUST be within territory). Defaults to `Exclusive` mode when `TerritoryMode` is not specified. The `territory_constraint` clause type is registered with Contract during plugin startup via `LocationServicePlugin.OnRunningAsync()`.
 - **LocationExists** (`/location/exists`): Quick existence check. Returns `Exists` boolean and `IsActive` (not deprecated) flag.
 
-### Write Operations (8 endpoints)
+### Write Operations (9 endpoints)
 
 - **CreateLocation** (`/location/create`): Validates realm exists via `IRealmClient`. Normalizes code to uppercase. Checks code uniqueness within realm. If parent specified: validates parent exists, checks same realm, sets depth=parent.depth+1. Updates all indexes (code, realm, parent/root). Publishes `location.created`.
 - **UpdateLocation** (`/location/update`): Partial update for name, description, locationType, metadata. Tracks `changedFields`. Does not allow parent or code changes (use separate endpoints). Publishes `location.updated`.
@@ -126,6 +125,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **DeleteLocation** (`/location/delete`): Requires no child locations (Conflict if children exist). Checks external references via `IResourceClient` - if references exist, executes cleanup callbacks before proceeding (returns Conflict if cleanup fails). Removes from all indexes. Publishes `location.deleted`. Does NOT require deprecation first (unlike species/relationship types).
 - **DeprecateLocation** (`/location/deprecate`): Sets `IsDeprecated=true` with timestamp and reason. Location remains queryable. Publishes update event.
 - **UndeprecateLocation** (`/location/undeprecate`): Restores deprecated location. Returns BadRequest if not deprecated.
+- **TransferLocationToRealm** (`/location/transfer-realm`): Moves a location to a different realm. Validates target realm exists and is active via `IRealmClient`. Checks code uniqueness in target realm (returns 409 Conflict on collision). Removes from all source realm indexes (code, realm, parent, root), clears parent (becomes root, depth 0), saves with new realm ID, adds to target realm indexes. Idempotent (no-op if already in target realm). Publishes `location.updated` with changed fields: `realmId`, `parentLocationId`, `depth`. Invalidates cache. Used by Realm merge for tree migration — caller is responsible for re-parenting descendants after transfer.
 - **SeedLocations** (`/location/seed`): Two-pass algorithm. Pass 1: Creates all locations without parent relationships, resolves realm codes via `IRealmClient`. Pass 2: Sets parent relationships by resolving parent codes from pass 1 results. Supports `updateExisting`. Returns created/updated/skipped/errors.
 
 ---
@@ -200,7 +200,7 @@ State Store Layout
   ┌─ location store ─────────────────────────────────────────┐
   │                                                           │
   │  location:{locationId} → LocationModel                    │
-  │    ├── RealmId (required, immutable)                      │
+  │    ├── RealmId (required, mutable via transfer-realm)      │
   │    ├── Code (uppercase, unique per realm)                 │
   │    ├── Name, Description                                  │
   │    ├── LocationType (CITY, REGION, BUILDING, ROOM, etc.)  │
@@ -240,7 +240,7 @@ None. All features are fully implemented.
 
 1. **Delete doesn't require deprecation**: Unlike species and relationship types, locations can be hard-deleted without first being deprecated. However, they cannot be deleted if they have child locations.
 
-2. **Realm validation only at creation**: `CreateLocation` validates realm existence via `IRealmClient`. Subsequent operations (update, set-parent) do not re-validate the realm. A deleted realm's locations remain accessible.
+2. **Realm validation only at creation and transfer**: `CreateLocation` and `TransferLocationToRealm` validate realm existence via `IRealmClient`. Subsequent operations (update, set-parent) do not re-validate the realm.
 
 3. **Seed update doesn't publish events**: When updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
 
@@ -252,7 +252,11 @@ None. All features are fully implemented.
 
 7. **Delete executes cleanup callbacks**: When external references exist, `DeleteLocation` calls `IResourceClient.ExecuteCleanupAsync` with `CleanupPolicy.ALL_REQUIRED`. This executes CASCADE/DETACH callbacks registered by higher-layer services (L3/L4) before allowing deletion.
 
-8. **Contract clause registration is in OnRunningAsync**: During plugin startup, Location registers the `territory_constraint` clause type with Contract via `OnRunningAsync()` rather than in the constructor. Registration is in `OnRunningAsync` because it requires making an API call (not just storing a reference), and `OnRunningAsync` is the appropriate lifecycle phase for startup API calls. Layer-based plugin loading ensures L1 Contract is already registered when L2 Location's `OnRunningAsync` fires. Uses `GetRequiredService` and fail-fast per FOUNDATION TENETS.
+8. **TransferLocationToRealm clears parent**: When a location is transferred to a different realm, its parent is cleared and it becomes a root location (depth 0). This avoids cross-realm parent references. Callers (e.g., Realm merge) are responsible for re-parenting descendants after transfer using `SetLocationParent`.
+
+9. **TransferLocationToRealm checks code uniqueness**: Returns 409 Conflict if the target realm already has a location with the same code. The caller must handle this (e.g., rename, skip, or abort the merge for that entity).
+
+10. **Contract clause registration is in OnRunningAsync**: During plugin startup, Location registers the `territory_constraint` clause type with Contract via `OnRunningAsync()` rather than in the constructor. Registration is in `OnRunningAsync` because it requires making an API call (not just storing a reference), and `OnRunningAsync` is the appropriate lifecycle phase for startup API calls. Layer-based plugin loading ensures L1 Contract is already registered when L2 Location's `OnRunningAsync` fires. Uses `GetRequiredService` and fail-fast per FOUNDATION TENETS.
 
 ### Design Considerations
 

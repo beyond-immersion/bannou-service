@@ -435,6 +435,39 @@ paths:
         '409':
           description: Cannot delete - location has children or is in use
 
+  /location/transfer-realm:
+    post:
+      summary: Transfer a location to a different realm
+      description: |
+        Moves a location from its current realm to a target realm.
+        Updates all realm-scoped indexes (code-index, realm-index, parent/root indexes).
+        The transferred location becomes a root location in the target realm (parent cleared).
+        Returns Conflict if the target realm already has a location with the same code.
+        Does NOT move children — caller is responsible for tree ordering.
+      operationId: transferLocationToRealm
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferLocationToRealmRequest'
+      responses:
+        '200':
+          description: Location transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location or target realm not found
+        '409':
+          description: Target realm already has a location with the same code
+
   /location/deprecate:
     post:
       summary: Deprecate a location
@@ -948,6 +981,23 @@ components:
           type: string
           format: uuid
           description: ID of the location to delete
+
+    TransferLocationToRealmRequest:
+      description: Request to transfer a location from its current realm to a different realm
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      - targetRealmId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to transfer
+        targetRealmId:
+          type: string
+          format: uuid
+          description: ID of the target realm to transfer the location to
 
     DeprecateLocationRequest:
       description: Request to soft-delete a location by marking it as deprecated

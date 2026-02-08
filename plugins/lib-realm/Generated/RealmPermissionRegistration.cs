@@ -187,6 +187,21 @@ public static class RealmPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/realm/merge",
+            Method = ServiceEndpointMethod.POST,
+            Description = "mergeRealms",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/realm/exists",
             Method = ServiceEndpointMethod.POST,
             Description = "realmExists",

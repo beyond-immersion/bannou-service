@@ -21,6 +21,9 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-resource (`IResourceClient`) | Reference checking before deletion to verify no external dependencies |
+| lib-species (`ISpeciesClient`) | Species migration during realm merge (add to target, remove from source) |
+| lib-location (`ILocationClient`) | Location tree migration during realm merge (transfer + re-parent) |
+| lib-character (`ICharacterClient`) | Character migration during realm merge (transfer to target realm) |
 
 ---
 
@@ -57,6 +60,7 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 | `realm.created` | `RealmCreatedEvent` | New realm created |
 | `realm.updated` | `RealmUpdatedEvent` | Realm metadata modified, deprecated, or undeprecated (includes `changedFields`) |
 | `realm.deleted` | `RealmDeletedEvent` | Realm permanently deleted |
+| `realm.merged` | `RealmMergedEvent` | Deprecated realm merged into target realm (includes migration counts) |
 
 Events are auto-generated from `x-lifecycle` in `realm-events.yaml`.
 
@@ -70,9 +74,7 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| — | — | — | No service-specific configuration properties |
-
-The generated `RealmServiceConfiguration` contains only the framework-level `ForceServiceId` property.
+| `MergePageSize` | `REALM_MERGE_PAGE_SIZE` | `50` | Page size for paginated entity migration during realm merge (1-100) |
 
 ---
 
@@ -81,11 +83,14 @@ The generated `RealmServiceConfiguration` contains only the framework-level `For
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<RealmService>` | Scoped | Structured logging |
-| `RealmServiceConfiguration` | Singleton | Framework config (empty) |
+| `RealmServiceConfiguration` | Singleton | Service config (MergePageSize) |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Scoped | Event publishing |
 | `IEventConsumer` | Scoped | Event registration (no handlers) |
 | `IResourceClient` | Scoped | Reference checking before deletion |
+| `ISpeciesClient` | Scoped | Species realm association for merge |
+| `ILocationClient` | Scoped | Location transfer for merge |
+| `ICharacterClient` | Scoped | Character transfer for merge |
 
 Service lifetime is **Scoped** (per-request).
 
@@ -107,6 +112,19 @@ Standard read operations with two lookup strategies. **GetByCode** uses a two-st
 
 - **Deprecate**: Sets `isDeprecated = true`, records timestamp and optional reason. Publishes `realm.updated` with deprecation fields in `changedFields`.
 - **Undeprecate**: Clears deprecation state. Returns 400 Bad Request if realm is not currently deprecated.
+
+### Merge Operation (1 endpoint)
+
+- **MergeRealms** (`/realm/merge`): Consolidates a deprecated source realm into a target realm by migrating all associated entities. Three-phase migration in strict order:
+  1. **Species**: Paginated via `ListSpeciesByRealm`. For each species: `AddSpeciesToRealm` (target, idempotent) then `RemoveSpeciesFromRealm` (source).
+  2. **Locations**: Root-first tree moves. Collects descendants before transferring root (preserves parent index). Transfers root via `TransferLocationToRealm`, then descendants sorted by depth (shallowest first) with `SetLocationParent` to restore hierarchy.
+  3. **Characters**: Paginated via `GetCharactersByRealm`. Each character transferred via `TransferCharacterToRealm`.
+
+  **Validation**: Source must be deprecated, source != target, source must not be a system realm (`metadata.isSystemType`). Target must exist.
+  **Failure policy**: Continue on individual failures. Failed entity IDs are tracked to prevent infinite retry loops. Returns per-entity-type migrated/failed counts.
+  **Optional deletion**: If `deleteAfterMerge=true` and zero total failures, calls `DeleteRealmAsync` on source realm. Skipped if any failures occurred.
+  **Pagination**: All paginated queries use `MergePageSize` from configuration (default 50). Always re-queries page 1 since successful migrations remove entities from source.
+  **Events**: Publishes `realm.merged` with migration statistics after all phases complete.
 
 ### Seed Operation (1 endpoint)
 
@@ -143,6 +161,31 @@ Realm Deletion Safety Chain
 
   [Active Realm] ─── POST /realm/delete ──► 409 Conflict
                      (cannot skip deprecation step)
+
+
+Realm Merge Flow
+==================
+
+  [Deprecated Source Realm] ──► POST /realm/merge ──► [Target Realm]
+       │                                                    │
+       │  Phase A: Species Migration                        │
+       │    paginate ListSpeciesByRealm(source)             │
+       │    for each: AddSpeciesToRealm(target)             │
+       │              RemoveSpeciesFromRealm(source)        │
+       │                                                    │
+       │  Phase B: Location Migration (root-first)          │
+       │    1. ListRootLocations(source)                    │
+       │    2. For each root:                               │
+       │       a. GetDescendants (while tree intact)        │
+       │       b. TransferLocationToRealm(root → target)    │
+       │       c. Transfer descendants by depth order       │
+       │       d. SetLocationParent (restore hierarchy)     │
+       │                                                    │
+       │  Phase C: Character Migration                      │
+       │    paginate GetCharactersByRealm(source)           │
+       │    for each: TransferCharacterToRealm(target)      │
+       │                                                    │
+       └── if deleteAfterMerge && 0 failures ──► DeleteRealm(source)
 ```
 
 **Deletion also updates the visual aid above** — the resource check step sits between "Deprecated Realm" and "Permanently Deleted", returning 409 Conflict if active L4 references (e.g., realm-history) exist with RESTRICT policy.
@@ -157,8 +200,7 @@ None identified.
 
 ## Potential Extensions
 
-1. **Realm merge**: Consolidate deprecated realms into active ones, migrating all associated entities (characters, locations, species). Design questions resolved — see [#167](https://github.com/beyond-immersion/bannou-service/issues/167) for implementation plan.
-<!-- AUDIT:READY:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/167 -->
+None identified. Realm merge has been implemented (see [#167](https://github.com/beyond-immersion/bannou-service/issues/167)).
 
 ---
 
@@ -217,7 +259,8 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **2026-02-08**: Reference counting for safe deletion implemented via lib-resource integration. See [#170](https://github.com/beyond-immersion/bannou-service/issues/170) (closed). DeleteRealm now checks references and executes cleanup callbacks before proceeding.
 - **2026-02-08**: Realm statistics evaluated and closed — entity count tracking belongs in Analytics (L4), not Realm (L2). See [#169](https://github.com/beyond-immersion/bannou-service/issues/169) (closed).
+- **2026-02-08**: Realm merge feature implemented. Three-phase migration (species → locations root-first → characters) with continue-on-individual-failure policy, configurable page size, and optional post-merge deletion. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) (closed). Also added `/location/transfer-realm` endpoint as prerequisite.
 
 ### Ready for Implementation
 
-- **2026-02-08**: Realm merge feature — all design questions resolved from existing architecture and Species merge precedent. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) for resolved design answers. Ready to implement when prioritized.
+None.

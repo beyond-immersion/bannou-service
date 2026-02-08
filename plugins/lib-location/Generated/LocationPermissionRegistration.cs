@@ -277,6 +277,21 @@ public static class LocationPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/location/transfer-realm",
+            Method = ServiceEndpointMethod.POST,
+            Description = "transferLocationToRealm",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/location/deprecate",
             Method = ServiceEndpointMethod.POST,
             Description = "deprecateLocation",

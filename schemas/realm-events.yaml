@@ -23,6 +23,9 @@ info:
     - topic: realm.deleted
       event: RealmDeletedEvent
       description: Published when a realm is soft-deleted
+    - topic: realm.merged
+      event: RealmMergedEvent
+      description: Published when a realm is merged into another realm
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/realm-lifecycle-events.yaml
@@ -49,4 +52,44 @@ x-lifecycle:
 
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas - lifecycle events are auto-generated to schemas/Generated/
+components:
+  schemas:
+    # Realm merge event (not auto-generated from lifecycle)
+    RealmMergedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a deprecated realm is merged into another realm
+      required:
+        - sourceRealmId
+        - targetRealmId
+        - speciesMigrated
+        - locationsMigrated
+        - charactersMigrated
+      properties:
+        sourceRealmId:
+          type: string
+          format: uuid
+          description: ID of the source realm that was merged
+        sourceRealmCode:
+          type: string
+          nullable: true
+          description: Code of the source realm
+        targetRealmId:
+          type: string
+          format: uuid
+          description: ID of the target realm that received entities
+        targetRealmCode:
+          type: string
+          nullable: true
+          description: Code of the target realm
+        speciesMigrated:
+          type: integer
+          description: Number of species migrated to the target realm
+        locationsMigrated:
+          type: integer
+          description: Number of locations transferred to the target realm
+        charactersMigrated:
+          type: integer
+          description: Number of characters transferred to the target realm

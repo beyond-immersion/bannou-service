@@ -1,9 +1,12 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -31,6 +34,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     private readonly Mock<ILogger<RealmService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ISpeciesClient> _mockSpeciesClient;
+    private readonly Mock<ILocationClient> _mockLocationClient;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
 
     private const string STATE_STORE = "realm-statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
@@ -48,6 +54,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockLogger = new Mock<ILogger<RealmService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockResourceClient = new Mock<IResourceClient>();
+        _mockSpeciesClient = new Mock<ISpeciesClient>();
+        _mockLocationClient = new Mock<ILocationClient>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -75,7 +84,10 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockLogger.Object,
             Configuration,
             _mockEventConsumer.Object,
-            _mockResourceClient.Object);
+            _mockResourceClient.Object,
+            _mockSpeciesClient.Object,
+            _mockLocationClient.Object,
+            _mockCharacterClient.Object);
     }
 
     /// <summary>

@@ -1419,6 +1419,129 @@ public partial class LocationService : ILocationService
         }
     }
 
+    /// <summary>
+    /// Transfer a location from its current realm to a different realm.
+    /// Updates all realm-scoped indexes. The location becomes a root in the target realm
+    /// (parent cleared). Caller is responsible for tree ordering and re-parenting.
+    /// </summary>
+    public async Task<(StatusCodes, LocationResponse?)> TransferLocationToRealmAsync(
+        TransferLocationToRealmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Transferring location {LocationId} to realm {TargetRealmId}",
+                body.LocationId, body.TargetRealmId);
+
+            var locationKey = BuildLocationKey(body.LocationId);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location)
+                .GetAsync(locationKey, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogDebug("Location not found for transfer: {LocationId}", body.LocationId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // No-op if already in target realm (idempotent)
+            if (model.RealmId == body.TargetRealmId)
+            {
+                return (StatusCodes.OK, MapToResponse(model));
+            }
+
+            // Validate target realm exists and is active
+            var realmExistsResponse = await _realmClient.RealmExistsAsync(
+                new RealmExistsRequest { RealmId = body.TargetRealmId }, cancellationToken);
+
+            if (realmExistsResponse == null || !realmExistsResponse.Exists || !realmExistsResponse.IsActive)
+            {
+                _logger.LogWarning("Cannot transfer location - target realm {TargetRealmId} does not exist or is not active",
+                    body.TargetRealmId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check code uniqueness in target realm
+            var targetCodeIndexKey = BuildCodeIndexKey(body.TargetRealmId, model.Code);
+            var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location)
+                .GetAsync(targetCodeIndexKey, cancellationToken);
+
+            if (!string.IsNullOrEmpty(existingId))
+            {
+                _logger.LogWarning(
+                    "Cannot transfer location {LocationId} - target realm {TargetRealmId} already has location with code {Code}",
+                    body.LocationId, body.TargetRealmId, model.Code);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var oldRealmId = model.RealmId;
+            var oldParentId = model.ParentLocationId;
+
+            // Remove from source realm indexes
+            var sourceCodeIndexKey = BuildCodeIndexKey(oldRealmId, model.Code);
+            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location)
+                .DeleteAsync(sourceCodeIndexKey, cancellationToken);
+            await RemoveFromRealmIndexAsync(oldRealmId, body.LocationId, cancellationToken);
+
+            if (oldParentId.HasValue)
+            {
+                await RemoveFromParentIndexAsync(oldRealmId, oldParentId.Value, body.LocationId, cancellationToken);
+            }
+            else
+            {
+                await RemoveFromRootLocationsAsync(oldRealmId, body.LocationId, cancellationToken);
+            }
+
+            // Update model: new realm, become root, depth 0
+            model.RealmId = body.TargetRealmId;
+            model.ParentLocationId = null;
+            model.Depth = 0;
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // Save updated model
+            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location)
+                .SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+            // Add to target realm indexes
+            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location)
+                .SaveAsync(targetCodeIndexKey, body.LocationId.ToString(), cancellationToken: cancellationToken);
+            await AddToRealmIndexAsync(body.TargetRealmId, body.LocationId, cancellationToken);
+            await AddToRootLocationsAsync(body.TargetRealmId, body.LocationId, cancellationToken);
+
+            // Invalidate cache
+            await InvalidateLocationCacheAsync(locationKey, cancellationToken);
+
+            // Publish update event
+            var changedFields = new List<string> { "realmId", "parentLocationId", "depth" };
+            await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
+
+            _logger.LogInformation(
+                "Transferred location {LocationId} ({Code}) from realm {OldRealmId} to realm {NewRealmId}",
+                body.LocationId, model.Code, oldRealmId, body.TargetRealmId);
+
+            return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Realm service error transferring location {LocationId}: {StatusCode}",
+                body.LocationId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "location", "TransferLocationToRealm", "realm_service_error", ex.Message,
+                dependency: "realm", endpoint: "post:/location/transfer-realm",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return ((StatusCodes)ex.StatusCode, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error transferring location {LocationId} to realm {TargetRealmId}",
+                body.LocationId, body.TargetRealmId);
+            await _messageBus.TryPublishErrorAsync(
+                "location", "TransferLocationToRealm", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/location/transfer-realm",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
     #endregion
 
     #region Private Helpers
