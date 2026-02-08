@@ -3,7 +3,7 @@
 > **Plugin**: lib-account
 > **Schema**: schemas/account-api.yaml
 > **Version**: 2.0.0
-> **State Store**: account-statestore (MySQL)
+> **State Store**: account-statestore (MySQL), account-lock (Redis)
 
 ## Overview
 
@@ -14,6 +14,7 @@ The Account plugin is an internal-only CRUD service for managing user accounts. 
 | Dependency | Usage |
 |------------|-------|
 | lib-state (IStateStoreFactory) | All persistence - account records, email indices, provider indices, auth methods. Uses IJsonQueryableStateStore for paginated listing via MySQL JSON queries |
+| lib-state (IDistributedLockProvider) | Distributed locks for email uniqueness during account creation (prevents TOCTOU race conditions) |
 | lib-messaging (IMessageBus) | Publishing lifecycle events (created/updated/deleted) and error events |
 | Permission service (via AccountPermissionRegistration) | Registers its endpoint permission matrix on startup via a messaging event |
 
@@ -60,8 +61,6 @@ All events are published via `_messageBus.TryPublishAsync()` which handles buffe
 
 This plugin does not consume external events. The events schema explicitly declares `x-event-subscriptions: []`.
 
-Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the constructor, but no handlers are registered. This is scaffolding for future use.
-
 ## Configuration
 
 | Property | Env Var | Default | Purpose |
@@ -71,6 +70,8 @@ Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the
 | `DefaultPageSize` | `ACCOUNT_DEFAULT_PAGE_SIZE` | 20 | Default page size for list operations when not specified in request |
 | `MaxPageSize` | `ACCOUNT_MAX_PAGE_SIZE` | 100 | Maximum allowed page size for list operations (requests capped to this value) |
 | `ListBatchSize` | `ACCOUNT_LIST_BATCH_SIZE` | 100 | Number of accounts loaded per batch when applying provider filter in the list endpoint |
+| `CreateLockExpirySeconds` | `ACCOUNT_CREATE_LOCK_EXPIRY_SECONDS` | 10 | Lock expiry in seconds for distributed email uniqueness lock during account creation (min: 1, max: 60) |
+| `ProviderFilterMaxScanSize` | `ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE` | 10000 | Maximum number of accounts to scan when filtering by provider in the admin-only list endpoint (min: 100, max: 100000) |
 | `AutoManageAnonymousRole` | `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | true | When true, automatically manages "anonymous" role: adds it if roles would be empty, removes it when adding non-anonymous roles |
 
 ## DI Services & Helpers
@@ -81,7 +82,7 @@ Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the
 | `AccountServiceConfiguration` | Typed access to configuration properties above |
 | `IStateStoreFactory` | Creates typed state store instances for reading/writing account data |
 | `IMessageBus` | Publishes lifecycle and error events to RabbitMQ |
-| `IEventConsumer` | Event handler registration (currently unused - no subscriptions) |
+| `IDistributedLockProvider` | Distributed locks for email uniqueness during account creation |
 | `AccountPermissionRegistration` | Generated class that registers the service's permission matrix via messaging event on startup |
 
 ## API Endpoints (Implementation Notes)
@@ -91,7 +92,7 @@ Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the
 Standard CRUD operations (`create`, `get`, `update`, `delete`, `list`) on account records with optimistic concurrency via ETags on all mutation operations. Account creation accepts nullable email - when null (for OAuth/Steam accounts), no email index is created and the account is identifiable only via provider lookup or direct ID. The `list` endpoint has two execution paths:
 
 - **Standard path** (no provider filter): Uses `IJsonQueryableStateStore.JsonQueryPagedAsync()` to query account records directly from MySQL with server-side pagination, filtering (email, displayName, verified), and sorting (newest-first via `$.CreatedAtUnix` descending). The `$.AccountId exists` condition acts as a type discriminator to match only account records in the shared store.
-- **Provider-filtered path** (rare admin operation): Queries all matching accounts from MySQL, then loads auth methods for each and filters by provider in-memory. Auth methods are stored in separate keys so provider filtering cannot be a single JSON query.
+- **Provider-filtered path** (rare admin operation): Queries matching accounts from MySQL using `JsonQueryPagedAsync` with a configurable scan cap (`ProviderFilterMaxScanSize`, default 10000), then loads auth methods for each and filters by provider in-memory. Auth methods are stored in separate keys so provider filtering cannot be a single JSON query. Logs a warning if the scan cap truncates results.
 
 The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cleans up the email index (if email exists) and provider index entries.
 
@@ -102,7 +103,7 @@ The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cl
 
 ### Authentication Methods
 
-Add/remove OAuth provider links. Adding a method validates: (1) non-empty ExternalId required, (2) provider not already linked on this account (same provider+externalId), (3) provider:externalId not claimed by another account. Creates both the auth method entry in the `auth-methods-{accountId}` list and a `provider-index-` entry for reverse lookup. Removing a method includes orphan prevention (see Intentional Quirks #7) and cleans up both the auth method list and provider index. Only `RemoveAuthMethodAsync` uses ETag-based optimistic concurrency on the auth methods list; `AddAuthMethodAsync` uses plain `SaveAsync` without ETag (see Bugs #1).
+Add/remove OAuth provider links. Adding a method validates: (1) non-empty ExternalId required, (2) provider not already linked on this account (same provider+externalId), (3) provider:externalId not claimed by another active account (stale indexes from soft-deleted accounts are detected and overwritten). Both `AddAuthMethodAsync` and `RemoveAuthMethodAsync` use ETag-based optimistic concurrency (`GetWithETagAsync` + `TrySaveAsync`) on the auth methods list, returning `Conflict` on concurrent modification. Creates both the auth method entry in the `auth-methods-{accountId}` list and a `provider-index-` entry for reverse lookup. Removing a method includes orphan prevention (see Intentional Quirks #7) and cleans up both the auth method list and provider index.
 
 ### Bulk Operations
 
@@ -144,14 +145,7 @@ On Delete: email-index removed (if exists),             │
 
 ## Stubs & Unimplemented Features
 
-### IEventConsumer Registration (no handlers)
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/136 -->
-
-The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but the events schema declares no subscriptions. This is infrastructure wiring that exists for future use if Account needs to react to external events.
-
-### HasNextPage / HasPreviousPage not populated
-
-The `AccountListResponse` schema defines `hasNextPage` and `hasPreviousPage` boolean fields, but neither `ListAccountsAsync` nor `ListAccountsWithProviderFilterAsync` populates them. They always default to `false`. The data to compute them is available (TotalCount, Page, PageSize).
+*No stubs remaining.*
 
 ## Potential Extensions
 
@@ -161,14 +155,11 @@ The `AccountListResponse` schema defines `hasNextPage` and `hasPreviousPage` boo
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/138 -->
 - **Email change**: There is no endpoint for changing an account's email address. The email index would need to be atomically swapped (delete old index, create new index, update account record) with proper concurrency handling.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/139 -->
-- **Bulk batch-create/delete**: Batch-get and bulk role update are implemented, but there are no batch create or batch delete endpoints.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/140 -->
-
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
 
-1. **AddAuthMethodAsync lacks optimistic concurrency on auth methods list**: `AddAuthMethodAsync` (AccountService.cs:716-762) uses `GetAsync` + `SaveAsync` on the `auth-methods-{accountId}` key, while `RemoveAuthMethodAsync` correctly uses `GetWithETagAsync` + `TrySaveAsync`. If two concurrent `AddAuthMethod` calls race for the same account, one write can silently overwrite the other, losing an auth method link. Fix: use `GetWithETagAsync` + `TrySaveAsync` consistent with the remove path.
+*No known bugs.*
 
 ### Intentional Quirks
 
@@ -176,7 +167,7 @@ The `AccountListResponse` schema defines `hasNextPage` and `hasPreviousPage` boo
 
 2. **Unix epoch timestamp storage**: `AccountModel` stores timestamps as `long` Unix epoch values with `[JsonIgnore]` computed `DateTimeOffset` properties. Deliberate workaround for System.Text.Json's inconsistent `DateTimeOffset` serialization.
 
-3. **Auto-managed anonymous role (bulk update only)**: When `AutoManageAnonymousRole` is true (default), the `BulkUpdateRolesAsync` endpoint automatically manages the "anonymous" role: removing roles that would leave zero roles adds "anonymous", and adding a non-anonymous role removes "anonymous" if present. This logic is **not** applied during `CreateAccountAsync` (which defaults to "user") or `UpdateAccountAsync` (which directly sets the roles list). This ensures accounts always have at least one role for permission resolution in bulk operations.
+3. **Auto-managed anonymous role**: When `AutoManageAnonymousRole` is true (default), both `UpdateAccountAsync` and `BulkUpdateRolesAsync` automatically manage the "anonymous" role: removing roles that would leave zero roles adds "anonymous", and adding a non-anonymous role removes "anonymous" if present. This logic is **not** applied during `CreateAccountAsync` (which defaults to "user"). This ensures accounts always have at least one role for permission resolution.
 
 4. **Default "user" role on creation**: When an account is created with no roles specified, the "user" role is automatically assigned (AccountService.cs:302-305). This ensures newly registered accounts have basic authenticated API access.
 
@@ -186,7 +177,7 @@ The `AccountListResponse` schema defines `hasNextPage` and `hasPreviousPage` boo
 
 7. **Auth method removal prevents account orphaning**: The `RemoveAuthMethodAsync` endpoint includes a safety check (AccountService.cs:1118-1129) that rejects removal of the last auth method if the account has no password. This prevents accounts from becoming completely inaccessible. Returns `BadRequest` if removal would leave no authentication mechanism.
 
-8. **Provider index ownership validation**: When adding an auth method, `AddAuthMethodAsync` checks if another account already owns the provider:externalId combination (AccountService.cs:737-746). This prevents the same OAuth identity from being linked to multiple accounts, returning `Conflict` if already claimed by a different account.
+8. **Provider index ownership validation with stale detection**: When adding an auth method, `AddAuthMethodAsync` checks if another account already owns the provider:externalId combination. If the owning account is soft-deleted (stale index from incomplete cleanup), the orphaned index is overwritten with a log message. Only returns `Conflict` if the owning account is still active.
 
 ### Design Considerations (Requires Planning)
 
@@ -196,4 +187,14 @@ None identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-*No active work items.*
+### Completed
+
+- **#332 Production Hardening** (2026-02-08): Applied all 7 fixes for 100K+ scale:
+  - BUG-1: Added distributed lock (`account-lock` Redis store) for email uniqueness in `CreateAccountAsync`
+  - BUG-2: Added ETag concurrency to `AddAuthMethodAsync` (matching `RemoveAuthMethodAsync`)
+  - BUG-3: Computed `HasNextPage`/`HasPreviousPage` in both list endpoints (made required in schema)
+  - BUG-4: Capped provider-filtered list with `JsonQueryPagedAsync` and `ProviderFilterMaxScanSize` config
+  - INCON-1: Applied `AutoManageAnonymousRole` in `UpdateAccountAsync` (consistent with `BulkUpdateRolesAsync`)
+  - INCON-2: Added stale index detection in `AddAuthMethodAsync` (overwrites orphaned provider indexes from soft-deleted accounts)
+  - HARD-3: Removed dead `IEventConsumer` wiring (closes #136)
+  - Closed #140 (bulk create/delete) as won't-implement

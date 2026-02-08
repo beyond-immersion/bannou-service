@@ -377,6 +377,7 @@ public partial class AccountService : IAccountService
             if (emailLock != null)
             {
                 await emailLock.DisposeAsync();
+                emailLock = null; // Prevent double-dispose in catch
             }
 
             _logger.LogInformation("Account created: {AccountId} for email: {Email} with roles: {Roles}",
