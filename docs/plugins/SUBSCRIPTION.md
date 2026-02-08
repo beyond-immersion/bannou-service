@@ -11,8 +11,6 @@
 
 The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that GameSession service consumes for real-time shortcut publishing. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
 
-> **Note**: Auth service previously consumed subscription events incorrectly. This was an architectural error - Auth should only manage JWTs and roles.
-
 ---
 
 ## Dependencies (What This Plugin Relies On)
@@ -30,14 +28,9 @@ The Subscription service manages user subscriptions to game services, controllin
 
 | Dependent | Relationship |
 |-----------|-------------|
-| ~~lib-auth (`AuthService`)~~ | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions |
-| ~~lib-auth (`TokenService`)~~ | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions |
-| ~~lib-auth (`AuthServiceEvents`)~~ | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions |
 | lib-game-session (`GameSessionService`) | Calls `ISubscriptionClient` to validate subscriptions during session join |
 | lib-game-session (`GameSessionStartupService`) | Calls `ISubscriptionClient` for subscription discovery at startup |
 | lib-game-session (`GameSessionServiceEvents`) | Subscribes to `subscription.updated` event to update subscription cache and publish/revoke shortcuts |
-
-> **Note**: The Auth dependencies listed above are architectural errors that need to be deleted. Auth should only manage JWTs and roles.
 
 ---
 
@@ -75,7 +68,7 @@ The Subscription service manages user subscriptions to game services, controllin
 
 ### Consumed Events
 
-This plugin does not consume external events. The `IEventConsumer` is injected but only the default no-op handler is registered (the comment in the constructor referencing "SubscriptionServiceEvents.cs" is outdated - no such file exists).
+This plugin does not consume external events. The `IEventConsumer` is injected but only the default no-op handler is registered. No `SubscriptionServiceEvents.cs` file exists.
 
 ---
 
@@ -98,10 +91,10 @@ This plugin does not consume external events. The `IEventConsumer` is injected b
 | `IStateStoreFactory` | Singleton | State store access for subscription persistence |
 | `IMessageBus` | Singleton | Event publishing for `subscription.updated` |
 | `IGameServiceClient` | Scoped | Resolves service metadata during creation/query |
-| `IEventConsumer` | Singleton | Event registration infrastructure (no handlers) |
+| `IEventConsumer` | Singleton | Event registration infrastructure (no handlers registered) |
 | `SubscriptionExpirationService` | HostedService | Background worker for periodic expiration checks |
 
-**Service Lifetime**: `SubscriptionService` is registered as **Singleton**.
+**Service Lifetime**: `SubscriptionService` is registered as **Singleton** (unusual for Bannou - see Quirk #7).
 
 ---
 
@@ -177,9 +170,7 @@ State Key Relationships & Index Cleanup
 
 ## Stubs & Unimplemented Features
 
-1. ~~**`AuthorizationSuffix` config property**~~: **FIXED** (2026-01-31) - Removed the dead configuration property from schema, regenerated configuration class, and removed unused property accessor from service.
-
-2. ~~**Misleading code comment**~~: **FIXED** (2026-02-01) - Updated the comment on line 49 in `SubscriptionService.cs` to accurately reflect that the service only publishes events, it doesn't consume them.
+None identified.
 
 ---
 
@@ -217,7 +208,13 @@ None identified.
 
 5. **Grace period for expiration**: Subscriptions are only marked expired if `ExpirationDateUnix <= now - gracePeriodSeconds`. This 30-second default grace period prevents race conditions where a subscription expires while a renewal request is in flight.
 
-6. **Data integrity validation in expiration worker**: The expiration worker explicitly checks for corrupted subscriptions with null/empty `StubName` and publishes error events for them rather than crashing. These subscriptions are skipped but not removed from the index.
+6. **Data integrity validation in expiration worker**: The expiration worker explicitly checks for corrupted subscriptions with null/empty `StubName` and publishes error events for them rather than crashing. These subscriptions are skipped but not removed from the index, generating error events on every expiration cycle until manually resolved.
+
+7. **Singleton service lifetime**: `SubscriptionService` is registered as `ServiceLifetime.Singleton` instead of the standard Bannou `Scoped` lifetime. This is safe because the service holds no in-memory state - all state goes through `IStateStoreFactory`. The singleton avoids unnecessary re-instantiation per request.
+
+8. **Renewal always reactivates**: `RenewSubscriptionAsync` unconditionally sets `IsActive = true` and clears cancellation fields (`CancelledAtUnix`, `CancellationReason`). There is no way to extend a subscription's duration without also reactivating it - "extend but keep cancelled" is impossible.
+
+9. **`ExpireSubscriptionAsync` is public but not in the generated interface**: This method is exposed as `public` for use by `SubscriptionExpirationService` (background worker in the same assembly) but is not defined in `ISubscriptionService`. It cannot be called via HTTP endpoints or service clients - it's an internal-only API.
 
 ### Design Considerations (Requires Planning)
 
@@ -232,17 +229,8 @@ None identified.
 
 5. **No subscription deletion endpoint**: There is no endpoint to permanently delete subscription records. The indexes grow indefinitely with cancelled/expired entries. This may be intentional (audit trail) but should be documented as a design decision.
 
-6. ~~**Dead configuration property**~~: **FIXED** (2026-01-31) - Removed `AuthorizationSuffix` from schema, regenerated configuration, removed accessor from service.
-
 ---
 
 ## Work Tracking
 
 *This section tracks active development work managed by the `/audit-plugin` workflow.*
-
-### Completed
-
-| Date | Gap | Action |
-|------|-----|--------|
-| 2026-02-01 | Misleading code comment referencing non-existent file | Fixed comment on line 49 to accurately reflect the service only publishes events |
-| 2026-01-31 | Dead `AuthorizationSuffix` config property | Removed from schema, regenerated config, removed service accessor, removed test |

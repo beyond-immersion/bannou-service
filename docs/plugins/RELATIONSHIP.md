@@ -29,6 +29,7 @@ A generic relationship management service for entity-to-entity relationships (ch
 |-----------|-------------|
 | lib-character | Calls `IRelationshipClient.ListRelationshipsByEntityAsync` for family tree building and reference counting during compression eligibility checks |
 | lib-relationship-type | Calls `IRelationshipClient.ListRelationshipsByTypeAsync` and `UpdateRelationshipAsync` for type merge migrations (updates relationship types during deprecation merges) |
+| lib-storyline | Injects `IRelationshipClient` for relationship data access during narrative generation |
 
 No services subscribe to relationship events.
 
@@ -51,11 +52,11 @@ No services subscribe to relationship events.
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `relationship.created` | New relationship established |
-| `relationship.updated` | Metadata or relationship type changed (includes `changedFields`) |
-| `relationship.deleted` | Relationship ended (soft-delete) |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `relationship.created` | `RelationshipCreatedEvent` | New relationship established |
+| `relationship.updated` | `RelationshipUpdatedEvent` | Metadata or relationship type changed (includes `changedFields`) |
+| `relationship.deleted` | `RelationshipDeletedEvent` | Relationship ended (soft-delete) |
 
 Events are auto-generated from `x-lifecycle` in `relationship-events.yaml`.
 
@@ -113,21 +114,21 @@ Service lifetime is **Scoped** (per-request).
 Composite Key Normalization (Bidirectional Uniqueness)
 =======================================================
 
-Create: Entity A (character) -> Entity B (character), Type: FRIEND
+Create: Entity A (Character) -> Entity B (Character), TypeId: {guid}
 
   Step 1: Build composite components
-    key1 = "Character:A"
-    key2 = "Character:B"
+    key1 = "Character:{guidA}"
+    key2 = "Character:{guidB}"
 
   Step 2: Normalize via string sort (Ordinal comparison)
-    "Character:A" < "Character:B" -> no swap needed
-    composite = "composite:Character:A:Character:B:FRIEND"
+    "Character:{guidA}" < "Character:{guidB}" -> no swap needed
+    composite = "composite:Character:{guidA}:Character:{guidB}:{typeGuid}"
 
   Step 3: Check uniqueness
     IF composite key exists -> 409 Conflict
     ELSE -> create relationship
 
-Create: Entity B (character) -> Entity A (character), Type: FRIEND
+Create: Entity B (Character) -> Entity A (Character), TypeId: {guid}
   -> Same composite key (sorted) -> 409 Conflict (already exists)
 
 End relationship:
@@ -139,7 +140,7 @@ End relationship:
 
 ## Stubs & Unimplemented Features
 
-1. ~~**`all-relationships` master list key**~~: **FIXED** (2026-01-31) - Removed dead code: the constant, helper method, and create-time call were all removed. The list was never queried by any endpoint.
+No stubs or unimplemented features.
 
 ---
 
@@ -156,7 +157,7 @@ End relationship:
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **`EndRelationshipAsync` ignores `reason` field**: The `EndRelationshipRequest` schema defines a `reason` field (string, nullable, maxLength 500), but the implementation never reads `body.Reason`. Instead, it passes the hardcoded string `"Relationship ended"` as `deletedReason` to `PublishRelationshipDeletedEventAsync`. The request's reason is silently discarded.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -183,15 +184,8 @@ No bugs identified.
 5. **Read-modify-write without distributed locks**: Index updates (add/remove from list) and composite key checks have no concurrency protection. Two concurrent creates with the same composite key could both pass the uniqueness check if timed precisely. Requires IDistributedLockProvider integration.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/223 -->
 
-6. ~~**Data inconsistency logging without error events**~~: **FIXED** (2026-02-01) - Added `EmitDataInconsistencyErrorAsync` helper methods that call `TryPublishErrorAsync` with error type `data_inconsistency` at all three bulk-fetch locations (ListRelationshipsByEntity, GetRelationshipsBetween, ListRelationshipsByType). Error events include the orphaned key, index source (entity or type), and relevant context for monitoring and alerting.
-
 ---
 
 ## Work Tracking
 
 *This section tracks active development work. Markers are managed by `/audit-plugin`.*
-
-### Completed
-
-- **2026-02-01**: Added `TryPublishErrorAsync` calls for data inconsistency detection in bulk-fetch operations (ListRelationshipsByEntity, GetRelationshipsBetween, ListRelationshipsByType).
-- **2026-01-31**: Removed dead `all-relationships` master list key (constant, helper method, and create-time call).
