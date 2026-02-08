@@ -81,22 +81,40 @@ public partial class RealmMergedEvent : BaseServiceEvent
     public string? TargetRealmCode { get; set; } = default!;
 
     /// <summary>
-    /// Number of species migrated to the target realm
+    /// Number of species successfully migrated to the target realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesMigrated")]
     public int SpeciesMigrated { get; set; } = default!;
 
     /// <summary>
-    /// Number of locations transferred to the target realm
+    /// Number of species that failed to migrate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesFailed")]
+    public int SpeciesFailed { get; set; } = default!;
+
+    /// <summary>
+    /// Number of locations successfully transferred to the target realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationsMigrated")]
     public int LocationsMigrated { get; set; } = default!;
 
     /// <summary>
-    /// Number of characters transferred to the target realm
+    /// Number of locations that failed to transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationsFailed")]
+    public int LocationsFailed { get; set; } = default!;
+
+    /// <summary>
+    /// Number of characters successfully transferred to the target realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("charactersMigrated")]
     public int CharactersMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Number of characters that failed to transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("charactersFailed")]
+    public int CharactersFailed { get; set; } = default!;
 
 }
 

@@ -776,6 +776,17 @@ public partial class RealmService : IRealmService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Warn when merging into a system realm (e.g., VOID) — entities will be orphaned from gameplay
+            if (targetRealm.Metadata is System.Text.Json.JsonElement targetMetadata
+                && targetMetadata.ValueKind == System.Text.Json.JsonValueKind.Object
+                && targetMetadata.TryGetProperty("isSystemType", out var isTargetSystem)
+                && isTargetSystem.ValueKind == System.Text.Json.JsonValueKind.True)
+            {
+                _logger.LogWarning(
+                    "Merging into system realm {TargetRealmId} ({Code}) - all migrated entities will be orphaned from gameplay",
+                    body.TargetRealmId, targetRealm.Code);
+            }
+
             var pageSize = _configuration.MergePageSize;
 
             // Phase A: Migrate species (add to target realm, remove from source)
@@ -794,7 +805,11 @@ public partial class RealmService : IRealmService
 
             // Publish realm.merged event
             await PublishRealmMergedEventAsync(
-                sourceRealm, targetRealm, speciesMigrated, locationsMigrated, charactersMigrated, cancellationToken);
+                sourceRealm, targetRealm,
+                speciesMigrated, speciesFailed,
+                locationsMigrated, locationsFailed,
+                charactersMigrated, charactersFailed,
+                cancellationToken);
 
             // Optional: delete source realm if requested and zero failures
             var sourceDeleted = false;
@@ -1050,6 +1065,26 @@ public partial class RealmService : IRealmService
                         _logger.LogWarning(ex,
                             "Failed to migrate descendant location {LocationId} ({Code}) from realm {Source} to {Target}",
                             descendant.LocationId, descendant.Code, sourceRealmId, targetRealmId);
+
+                        // If this descendant's parent was already transferred to target realm,
+                        // detach the parent reference to avoid cross-realm parent pointers
+                        if (descendant.ParentLocationId.HasValue)
+                        {
+                            try
+                            {
+                                await _locationClient.RemoveLocationParentAsync(
+                                    new RemoveLocationParentRequest
+                                    {
+                                        LocationId = descendant.LocationId
+                                    }, cancellationToken);
+                            }
+                            catch (Exception detachEx)
+                            {
+                                _logger.LogWarning(detachEx,
+                                    "Failed to detach parent for orphaned location {LocationId} after migration failure",
+                                    descendant.LocationId);
+                            }
+                        }
                     }
                 }
             }
@@ -1438,8 +1473,11 @@ public partial class RealmService : IRealmService
         RealmModel sourceRealm,
         RealmModel targetRealm,
         int speciesMigrated,
+        int speciesFailed,
         int locationsMigrated,
+        int locationsFailed,
         int charactersMigrated,
+        int charactersFailed,
         CancellationToken cancellationToken)
     {
         try
@@ -1453,8 +1491,11 @@ public partial class RealmService : IRealmService
                 TargetRealmId = targetRealm.RealmId,
                 TargetRealmCode = targetRealm.Code,
                 SpeciesMigrated = speciesMigrated,
+                SpeciesFailed = speciesFailed,
                 LocationsMigrated = locationsMigrated,
-                CharactersMigrated = charactersMigrated
+                LocationsFailed = locationsFailed,
+                CharactersMigrated = charactersMigrated,
+                CharactersFailed = charactersFailed
             };
 
             await _messageBus.TryPublishAsync("realm.merged", eventModel, cancellationToken: cancellationToken);

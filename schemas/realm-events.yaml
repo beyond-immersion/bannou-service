@@ -65,8 +65,11 @@ components:
         - sourceRealmId
         - targetRealmId
         - speciesMigrated
+        - speciesFailed
         - locationsMigrated
+        - locationsFailed
         - charactersMigrated
+        - charactersFailed
       properties:
         sourceRealmId:
           type: string
@@ -86,10 +89,19 @@ components:
           description: Code of the target realm
         speciesMigrated:
           type: integer
-          description: Number of species migrated to the target realm
+          description: Number of species successfully migrated to the target realm
+        speciesFailed:
+          type: integer
+          description: Number of species that failed to migrate
         locationsMigrated:
           type: integer
-          description: Number of locations transferred to the target realm
+          description: Number of locations successfully transferred to the target realm
+        locationsFailed:
+          type: integer
+          description: Number of locations that failed to transfer
         charactersMigrated:
           type: integer
-          description: Number of characters transferred to the target realm
+          description: Number of characters successfully transferred to the target realm
+        charactersFailed:
+          type: integer
+          description: Number of characters that failed to transfer

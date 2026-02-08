@@ -614,9 +614,6 @@ public partial class ConnectService : IConnectService, IDisposable
         bool isReconnection,
         CancellationToken cancellationToken)
     {
-        // Create connection state with service mappings from discovery
-        var connectionState = new ConnectionState(sessionId);
-
         // Note: Connection limit check is performed in ConnectController.HandleWebSocketConnectionAsync
         // BEFORE accepting the WebSocket upgrade, allowing proper 503 response instead of accepting
         // then immediately closing. A secondary check is retained here as defense-in-depth for
@@ -629,6 +626,9 @@ public partial class ConnectService : IConnectService, IDisposable
                 "Maximum connections exceeded", cancellationToken);
             return;
         }
+
+        // Create connection state with service mappings from discovery
+        var connectionState = new ConnectionState(sessionId);
 
         // INTERNAL MODE: Skip all capability initialization - just peer routing
         if (_connectionMode == ConnectionMode.Internal)
