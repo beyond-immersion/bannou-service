@@ -139,6 +139,8 @@ public partial class CharacterService : ICharacterService
                 SpeciesId = body.SpeciesId,
                 BirthDate = body.BirthDate,
                 Status = body.Status,
+                // Auto-set DeathDate when created with Dead status (ensures compression eligibility)
+                DeathDate = body.Status == CharacterStatus.Dead ? now : null,
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -272,6 +274,14 @@ public partial class CharacterService : ICharacterService
             {
                 changedFields.Add("status");
                 character.Status = body.Status.Value;
+
+                // Auto-set DeathDate when status transitions to Dead (mirrors DeathDate→Dead auto-set)
+                // Skip if DeathDate is also provided in this request (handled below)
+                if (body.Status.Value == CharacterStatus.Dead && !character.DeathDate.HasValue && !body.DeathDate.HasValue)
+                {
+                    changedFields.Add("deathDate");
+                    character.DeathDate = DateTimeOffset.UtcNow;
+                }
             }
 
             if (body.DeathDate.HasValue)

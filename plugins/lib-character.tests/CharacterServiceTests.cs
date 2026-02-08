@@ -330,12 +330,15 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.NotNull(savedModel);
         Assert.Equal("Updated Name", savedModel.Name);
         Assert.Equal(CharacterStatus.Dead, savedModel.Status);
+        // Setting Status=Dead should auto-set DeathDate (ensures compression eligibility)
+        Assert.NotNull(savedModel.DeathDate);
 
         // Assert - Event was published with correct content
         Assert.NotNull(capturedEvent);
         Assert.Equal(characterId, capturedEvent.CharacterId);
         Assert.Contains("name", capturedEvent.ChangedFields);
         Assert.Contains("status", capturedEvent.ChangedFields);
+        Assert.Contains("deathDate", capturedEvent.ChangedFields);
         // Verify full event population (all required schema fields)
         Assert.Equal("Updated Name", capturedEvent.Name);
         Assert.Equal(realmId, capturedEvent.RealmId);

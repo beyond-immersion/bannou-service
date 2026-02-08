@@ -137,7 +137,7 @@ Service lifetime is **Scoped** (per-request).
 
 - **Create**: Validates realm (must exist AND be active) and species (must exist AND be in specified realm). Fails CLOSED on service unavailability (throws `InvalidOperationException`). Generates new GUID. Stores with realm-partitioned key. Maintains both realm index and global index with optimistic concurrency retries.
 - **Get**: Two-step lookup via global index (characterId -> realmId) then data fetch.
-- **Update**: Smart field tracking with `ChangedFields` list. Setting `DeathDate` automatically sets `Status` to `Dead`. `SpeciesId` is mutable (supports species merge migrations).
+- **Update**: Smart field tracking with `ChangedFields` list. `DeathDate` and `Status=Dead` are bidirectionally linked: setting `DeathDate` auto-sets `Status` to `Dead`, and setting `Status` to `Dead` auto-sets `DeathDate` to now (if not already set). `SpeciesId` is mutable (supports species merge migrations).
 - **Delete**: Checks for L4 references via lib-resource, executes cleanup callbacks (CASCADE) to delete dependent data in CharacterPersonality/CharacterHistory/etc., then removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates. Returns Conflict if cleanup is blocked by RESTRICT policy.
 - **List/ByRealm**: Server-side filtering and pagination via `IJsonQueryableStateStore` MySQL JSON queries. Builds query conditions for realm, status, and species filters, delegates to `JsonQueryPagedAsync` for O(log N + P) performance. Results are sorted by `$.Name` ascending. Clamps page size to `MaxPageSize`.
 - **TransferRealm**: Moves a character to a different realm. Validates target realm is active, acquires distributed lock, deletes from old realm-partitioned key, saves to new realm-partitioned key, updates indexes, and publishes `character.realm.left` (reason: "transfer"), `character.realm.joined` (with previousRealmId), and `character.updated` events.
@@ -274,7 +274,7 @@ None currently tracked.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **DeathDate auto-sets Status**: Setting `DeathDate` in an update automatically changes `Status` to `Dead`. The inverse is not true (setting Status=Dead doesn't set DeathDate).
+1. **DeathDate and Status are bidirectionally linked**: Setting `DeathDate` in an update automatically changes `Status` to `Dead`. Setting `Status` to `Dead` automatically sets `DeathDate` to the current timestamp if not already set (and not provided in the same request). Characters created with `Status=Dead` also get `DeathDate` auto-set. This ensures dead characters are always eligible for compression.
 
 2. **Compression delegated to Resource service**: Full character compression (including L4 data) is now handled by the centralized Resource service (L1). Character provides a `/character/get-compress-data` callback endpoint that Resource invokes during compression orchestration. The legacy `/character/compress` endpoint still exists but only archives L2 data. For hierarchical compression that includes CharacterPersonality, CharacterHistory, and CharacterEncounter data, use `/resource/compress/execute` with `resourceType="character"`.
 
