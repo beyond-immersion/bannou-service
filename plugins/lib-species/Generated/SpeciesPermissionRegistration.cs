@@ -37,7 +37,7 @@ public static class SpeciesPermissionRegistration
     /// <summary>
     /// Service version from OpenAPI schema.
     /// </summary>
-    public const string ServiceVersion = "1.0.0";
+    public const string ServiceVersion = "2.0.0";
 
     /// <summary>
     /// Generates the ServiceRegistrationEvent containing all endpoint permissions.

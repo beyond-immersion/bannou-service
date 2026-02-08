@@ -363,6 +363,12 @@ x-state-stores:
     service: Relationship
     purpose: Relationship type definitions
 
+  relationship-lock:
+    backend: redis
+    prefix: "relationship:lock"
+    service: Relationship
+    purpose: Distributed locks for composite uniqueness and index modifications
+
   game-service-statestore:
     backend: mysql
     service: GameService

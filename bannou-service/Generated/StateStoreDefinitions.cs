@@ -248,6 +248,8 @@ public static class StateStoreDefinitions
     public const string RealmHistory = "realm-history-statestore";
 
     // Relationship Service
+    /// <summary>Distributed locks for composite uniqueness and index modifications</summary>
+    public const string RelationshipLock = "relationship-lock";
     /// <summary>Entity relationships</summary>
     public const string Relationship = "relationship-statestore";
     /// <summary>Relationship type definitions</summary>
@@ -409,6 +411,7 @@ public static class StateStoreDefinitions
             [QuestObjectiveProgress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:prog" },
             [RealmHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_history_statestore" },
             [Realm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_statestore" },
+            [RelationshipLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "relationship:lock" },
             [Relationship] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_statestore" },
             [RelationshipType] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_type_statestore" },
             [ResourceArchives] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "resource_archives" },
@@ -528,6 +531,7 @@ public static class StateStoreDefinitions
             [QuestObjectiveProgress] = new StoreMetadata("Quest", "Real-time objective progress tracking", "redis"),
             [RealmHistory] = new StoreMetadata("RealmHistory", "Realm historical events and lore", "mysql"),
             [Realm] = new StoreMetadata("Realm", "Realm definitions and configuration", "mysql"),
+            [RelationshipLock] = new StoreMetadata("Relationship", "Distributed locks for composite uniqueness and index modifications", "redis"),
             [Relationship] = new StoreMetadata("Relationship", "Entity relationships", "mysql"),
             [RelationshipType] = new StoreMetadata("Relationship", "Relationship type definitions", "mysql"),
             [ResourceArchives] = new StoreMetadata("Resource", "Compressed archive bundles (durable storage for long-term archival)", "mysql"),

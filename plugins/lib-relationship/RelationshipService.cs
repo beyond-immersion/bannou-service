@@ -22,6 +22,7 @@ public partial class RelationshipService : IRelationshipService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<RelationshipService> _logger;
     private readonly RelationshipServiceConfiguration _configuration;
+    private readonly IDistributedLockProvider _lockProvider;
 
     // Relationship instance key prefixes (relationship-statestore)
     private const string RELATIONSHIP_KEY_PREFIX = "rel:";
@@ -42,18 +43,21 @@ public partial class RelationshipService : IRelationshipService
     /// <param name="messageBus">Message bus for event publishing.</param>
     /// <param name="logger">Logger for diagnostic output.</param>
     /// <param name="configuration">Service configuration.</param>
+    /// <param name="lockProvider">Distributed lock provider for index and uniqueness protection.</param>
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     public RelationshipService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         ILogger<RelationshipService> logger,
         RelationshipServiceConfiguration configuration,
+        IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
+        _lockProvider = lockProvider;
 
         // Register event handlers via partial class (RelationshipServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -414,12 +418,27 @@ public partial class RelationshipService : IRelationshipService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Check composite uniqueness - normalize entity order for consistent key
+            // Build composite key for uniqueness check - normalize entity order for consistent key
             var compositeKey = BuildCompositeKey(
                 body.Entity1Id, body.Entity1Type,
                 body.Entity2Id, body.Entity2Type,
                 body.RelationshipTypeId);
 
+            // Acquire distributed lock on composite key to prevent concurrent duplicate creation
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                compositeKey,
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for composite key during relationship creation");
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check composite uniqueness under lock
             var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
                 .GetAsync(compositeKey, cancellationToken);
 
@@ -490,6 +509,20 @@ public partial class RelationshipService : IRelationshipService
         {
             _logger.LogDebug("Updating relationship: {RelationshipId}", body.RelationshipId);
 
+            // Acquire distributed lock on relationship ID to prevent concurrent updates
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                body.RelationshipId.ToString(),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for relationship update {RelationshipId}", body.RelationshipId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var relationshipKey = BuildRelationshipKey(body.RelationshipId);
             var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .GetAsync(relationshipKey, cancellationToken);
@@ -514,9 +547,10 @@ public partial class RelationshipService : IRelationshipService
             // Handle relationship type migration (used for type merge operations)
             if (body.RelationshipTypeId.HasValue && body.RelationshipTypeId.Value != model.RelationshipTypeId)
             {
-                // Update type indexes: remove from old, add to new
-                await RemoveFromTypeIndexAsync(model.RelationshipTypeId, model.RelationshipId, cancellationToken);
+                // Update type indexes: add to new first, then remove from old
+                // (add-then-remove makes crash window benign - temporarily in both indexes rather than orphaned)
                 await AddToTypeIndexAsync(body.RelationshipTypeId.Value, model.RelationshipId, cancellationToken);
+                await RemoveFromTypeIndexAsync(model.RelationshipTypeId, model.RelationshipId, cancellationToken);
 
                 changedFields.Add("relationshipTypeId");
                 model.RelationshipTypeId = body.RelationshipTypeId.Value;
@@ -573,6 +607,20 @@ public partial class RelationshipService : IRelationshipService
         try
         {
             _logger.LogDebug("Ending relationship: {RelationshipId}", body.RelationshipId);
+
+            // Acquire distributed lock on relationship ID to prevent concurrent end/update races
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                body.RelationshipId.ToString(),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for ending relationship {RelationshipId}", body.RelationshipId);
+                return StatusCodes.Conflict;
+            }
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId);
             var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
@@ -975,9 +1023,23 @@ public partial class RelationshipService : IRelationshipService
             _logger.LogDebug("Creating relationship type: {Code}", body.Code);
 
             var code = body.Code.ToUpperInvariant();
-
-            // Check if code already exists
             var codeIndexKey = BuildRtCodeIndexKey(code);
+
+            // Acquire distributed lock on code to prevent concurrent duplicate creation
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                codeIndexKey,
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for relationship type creation with code {Code}", code);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check if code already exists under lock
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType);
             var existingIdStr = await stringStore.GetAsync(codeIndexKey, cancellationToken);
 
@@ -1077,6 +1139,20 @@ public partial class RelationshipService : IRelationshipService
         try
         {
             _logger.LogDebug("Updating relationship type: {TypeId}", body.RelationshipTypeId);
+
+            // Acquire distributed lock on type ID to prevent concurrent updates
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                body.RelationshipTypeId.ToString(),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for relationship type update {TypeId}", body.RelationshipTypeId);
+                return (StatusCodes.Conflict, null);
+            }
 
             var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
             var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
@@ -1205,6 +1281,20 @@ public partial class RelationshipService : IRelationshipService
         try
         {
             _logger.LogDebug("Deleting relationship type: {TypeId}", body.RelationshipTypeId);
+
+            // Acquire distributed lock on type ID for safe delete validation + cleanup
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                body.RelationshipTypeId.ToString(),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for relationship type deletion {TypeId}", body.RelationshipTypeId);
+                return StatusCodes.Conflict;
+            }
 
             var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
             var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
@@ -1448,6 +1538,20 @@ public partial class RelationshipService : IRelationshipService
         {
             _logger.LogDebug("Deprecating relationship type: {TypeId}", body.RelationshipTypeId);
 
+            // Acquire distributed lock on type ID to prevent concurrent state changes
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                body.RelationshipTypeId.ToString(),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for relationship type deprecation {TypeId}", body.RelationshipTypeId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
             var model = await store.GetAsync(typeKey, cancellationToken);
@@ -1495,6 +1599,20 @@ public partial class RelationshipService : IRelationshipService
         try
         {
             _logger.LogDebug("Undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
+
+            // Acquire distributed lock on type ID to prevent concurrent state changes
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                body.RelationshipTypeId.ToString(),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for relationship type undeprecation {TypeId}", body.RelationshipTypeId);
+                return (StatusCodes.Conflict, null);
+            }
 
             var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
@@ -1780,6 +1898,21 @@ public partial class RelationshipService : IRelationshipService
         CancellationToken cancellationToken)
     {
         var indexKey = BuildEntityIndexKey(entityType, entityId);
+
+        // Acquire distributed lock for entity index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            indexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for entity index {IndexKey}", indexKey);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
         var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
@@ -1803,6 +1936,20 @@ public partial class RelationshipService : IRelationshipService
         Guid relationshipId, Guid targetTypeId,
         CancellationToken cancellationToken)
     {
+        // Acquire distributed lock on relationship ID for safe type migration
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            relationshipId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for type migration of relationship {RelationshipId}", relationshipId);
+            return false;
+        }
+
         var relationshipKey = BuildRelationshipKey(relationshipId);
         var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
             .GetAsync(relationshipKey, cancellationToken);
@@ -1820,9 +1967,10 @@ public partial class RelationshipService : IRelationshipService
 
         var oldTypeId = model.RelationshipTypeId;
 
-        // Update type indexes: remove from old, add to new
-        await RemoveFromTypeIndexAsync(oldTypeId, relationshipId, cancellationToken);
+        // Update type indexes: add to new first, then remove from old
+        // (add-then-remove makes crash window benign - temporarily in both indexes rather than orphaned)
         await AddToTypeIndexAsync(targetTypeId, relationshipId, cancellationToken);
+        await RemoveFromTypeIndexAsync(oldTypeId, relationshipId, cancellationToken);
 
         // Update the model
         model.RelationshipTypeId = targetTypeId;
@@ -1841,6 +1989,21 @@ public partial class RelationshipService : IRelationshipService
         CancellationToken cancellationToken)
     {
         var indexKey = BuildTypeIndexKey(relationshipTypeId);
+
+        // Acquire distributed lock for type index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            indexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for type index {IndexKey}", indexKey);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
         var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
@@ -1856,6 +2019,21 @@ public partial class RelationshipService : IRelationshipService
         CancellationToken cancellationToken)
     {
         var indexKey = BuildTypeIndexKey(relationshipTypeId);
+
+        // Acquire distributed lock for type index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            indexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for type index {IndexKey}", indexKey);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
         var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
@@ -1928,6 +2106,21 @@ public partial class RelationshipService : IRelationshipService
     private async Task AddToRtParentIndexAsync(Guid parentId, Guid childId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildRtParentIndexKey(parentId);
+
+        // Acquire distributed lock for parent index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            parentIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for parent index {ParentIndexKey}", parentIndexKey);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
         var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
 
@@ -1941,6 +2134,21 @@ public partial class RelationshipService : IRelationshipService
     private async Task RemoveFromRtParentIndexAsync(Guid parentId, Guid childId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildRtParentIndexKey(parentId);
+
+        // Acquire distributed lock for parent index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            parentIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for parent index {ParentIndexKey}", parentIndexKey);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
         var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
 
@@ -1952,6 +2160,20 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task AddToRtAllTypesListAsync(Guid typeId, CancellationToken cancellationToken)
     {
+        // Acquire distributed lock for all-types list modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            RT_ALL_TYPES_KEY,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for all-types list");
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
         var allTypes = await store.GetAsync(RT_ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
 
@@ -1964,6 +2186,20 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task RemoveFromRtAllTypesListAsync(Guid typeId, CancellationToken cancellationToken)
     {
+        // Acquire distributed lock for all-types list modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            RT_ALL_TYPES_KEY,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for all-types list");
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
         var allTypes = await store.GetAsync(RT_ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
 

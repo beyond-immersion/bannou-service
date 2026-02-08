@@ -45,6 +45,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `refresh_token:{token}` | `string` (accountId) | SessionTokenTtlDays in seconds | Maps refresh token to account ID |
 | `oauth-link:{provider}:{providerId}` | `string` (accountId) | **None** | Maps OAuth provider identity to account (cleaned up on account deletion) |
 | `account-oauth-links:{accountId}` | `List<string>` | **None** | Reverse index of OAuth link keys for account (for cleanup on deletion) |
+| `login-attempts:{normalizedEmail}` | counter (Redis `INCR`) | LoginLockoutMinutes * 60 | Failed login attempt counter for rate limiting (via `ICacheableStateStore.IncrementAsync`) |
 | `password-reset:{token}` | `PasswordResetData` | PasswordResetTokenTtlMinutes * 60 | Pending password reset (accountId, email, expiry) |
 
 **Store**: `edge-revocation` (Backend: Redis) - Used when EdgeRevocationEnabled=true
@@ -89,7 +90,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `SessionTokenTtlDays` | `AUTH_SESSION_TOKEN_TTL_DAYS` | 7 | How long refresh tokens remain valid |
 | `PasswordResetTokenTtlMinutes` | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | 30 | How long password reset tokens remain valid |
 | `PasswordResetBaseUrl` | `AUTH_PASSWORD_RESET_BASE_URL` | null | Base URL for password reset links in emails (throws `InvalidOperationException` at runtime if null when password reset is attempted) |
-| `ConnectUrl` | `AUTH_CONNECT_URL` | `ws://localhost:5014/connect` | WebSocket URL returned to clients after authentication |
+| `ConnectUrl` | `AUTH_CONNECT_URL` | `ws://localhost:5014/connect` | WebSocket URL returned to clients after authentication (only used when `BANNOU_SERVICE_DOMAIN` is unset; see Quirk #9) |
 | `MockProviders` | `AUTH_MOCK_PROVIDERS` | false | Enable mock OAuth for testing (bypasses real provider calls) |
 | `MockDiscordId` | `AUTH_MOCK_DISCORD_ID` | `mock-discord-123456` | Mock Discord user ID for testing |
 | `MockGoogleId` | `AUTH_MOCK_GOOGLE_ID` | `mock-google-123456` | Mock Google user ID for testing |
@@ -243,7 +244,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ### Bugs (Fix Immediately)
 
-No bugs currently identified.
+1. **Stale OAuth link not removed from reverse index on 404**: In `OAuthProviderService.FindOrCreateOAuthAccountAsync`, when a linked account returns 404, the `oauth-link:{provider}:{providerId}` key is deleted from the link store (line 431), but the corresponding entry is not removed from the `account-oauth-links:{accountId}` reverse index list. This leaves an orphaned entry in the reverse index. Impact is minor: on account deletion, `CleanupOAuthLinksForAccountAsync` will attempt to delete a non-existent link key (silent no-op), but the reverse index list slowly accumulates stale entries for accounts with repeatedly orphaned OAuth links.
 
 ### Intentional Quirks
 
@@ -262,6 +263,8 @@ No bugs currently identified.
 7. **SessionDataModel and EdgeRevocationModels use Unix timestamp storage**: `SessionDataModel`, `TokenRevocationEntry`, and `AccountRevocationEntry` store all timestamps as `long` Unix epoch properties (e.g., `CreatedAtUnix`, `ExpiresAtUnix`) with `[JsonIgnore]` computed `DateTimeOffset` accessors. This avoids `System.Text.Json` `DateTimeOffset` serialization quirks in Redis. The `LastActiveAtUnix` field defaults to `0` for sessions created before the field was introduced; `GetAccountSessionsAsync` falls back to `CreatedAt` when `LastActiveAtUnix == 0`.
 
 8. **InitOAuth is a manual GET controller endpoint**: Unlike all other Auth endpoints which are generated POST endpoints routed via WebSocket, `InitOAuth` is manually implemented in `AuthController.cs` as `[HttpGet("auth/oauth/{provider}/init")]` returning a 302 redirect. This is because OAuth authorization flows require browser redirects, not JSON responses.
+
+9. **ConnectUrl is overridden by ServiceDomain when set**: The `EffectiveConnectUrl` property in `AuthService` ignores the configured `ConnectUrl` value when `AppConfiguration.ServiceDomain` is non-empty, deriving `wss://{ServiceDomain}/connect` instead. The `AUTH_CONNECT_URL` config value only takes effect when `BANNOU_SERVICE_DOMAIN` is unset. This means in production (where ServiceDomain is always set), the `ConnectUrl` configuration property is effectively dead.
 
 ### Design Considerations (Requires Planning)
 

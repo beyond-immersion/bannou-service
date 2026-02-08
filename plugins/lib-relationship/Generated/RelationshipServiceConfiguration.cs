@@ -71,4 +71,10 @@ public class RelationshipServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MaxMigrationErrorsToTrack { get; set; } = 100;
 
+    /// <summary>
+    /// Timeout in seconds for distributed lock acquisition on index and uniqueness operations
+    /// Environment variable: RELATIONSHIP_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int LockTimeoutSeconds { get; set; } = 30;
+
 }

@@ -34,6 +34,7 @@ public partial class AuthController
                 "email": {
                     "type": "string",
                     "format": "email",
+                    "maxLength": 254,
                     "description": "Email address for authentication"
                 },
                 "password": {
@@ -136,11 +137,6 @@ public partial class AuthController
                     },
                     "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
-                },
-                "requiresTwoFactor": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Whether the user needs to complete two-factor authentication"
                 }
             }
         }
@@ -520,11 +516,6 @@ public partial class AuthController
                     },
                     "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
-                },
-                "requiresTwoFactor": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Whether the user needs to complete two-factor authentication"
                 }
             }
         }
@@ -603,7 +594,9 @@ public partial class AuthController
             "properties": {
                 "ticket": {
                     "type": "string",
-                    "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\ nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
+                    "pattern": "^[0-9A-Fa-f]+$",
+                    "minLength": 16,
+                    "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
                     "example": "140000006A7B3C8E..."
                 },
                 "deviceInfo": {
@@ -696,11 +689,6 @@ public partial class AuthController
                     },
                     "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
-                },
-                "requiresTwoFactor": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Whether the user needs to complete two-factor authentication"
                 }
             }
         }
@@ -833,11 +821,6 @@ public partial class AuthController
                     },
                     "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
-                },
-                "requiresTwoFactor": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Whether the user needs to complete two-factor authentication"
                 }
             }
         }
@@ -917,7 +900,7 @@ public partial class AuthController
             "required": [
                 "valid",
                 "accountId",
-                "sessionId"
+                "sessionKey"
             ],
             "properties": {
                 "valid": {
@@ -929,10 +912,10 @@ public partial class AuthController
                     "format": "uuid",
                     "description": "Unique identifier for the account associated with the token"
                 },
-                "sessionId": {
+                "sessionKey": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Session identifier for WebSocket connections and service routing"
+                    "description": "Internal session key used by Connect service for WebSocket connection tracking and service routing"
                 },
                 "roles": {
                     "type": "array",
@@ -948,7 +931,7 @@ public partial class AuthController
                         "type": "string"
                     },
                     "nullable": true,
-                    "description": "Authorization strings from active subscriptions.\ nFormat: \"{stubName}:{state}\" (e.g., \"my-game:authorized\")\n"
+                    "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"my-game:authorized\")\n"
                 },
                 "remainingTime": {
                     "type": "integer",
@@ -1560,6 +1543,7 @@ public partial class AuthController
                 "email": {
                     "type": "string",
                     "format": "email",
+                    "maxLength": 254,
                     "description": "Email address associated with the account to reset"
                 }
             }

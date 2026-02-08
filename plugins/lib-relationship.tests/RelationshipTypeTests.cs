@@ -37,6 +37,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
     private readonly Mock<IStateStore<List<Guid>>> _mockRelGuidListStore;
 
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<RelationshipService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -50,6 +51,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         _mockRelStringStore = new Mock<IStateStore<string>>();
         _mockRelGuidListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<RelationshipService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -62,6 +64,18 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipModel>(REL_STATE_STORE)).Returns(_mockRelModelStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(REL_STATE_STORE)).Returns(_mockRelStringStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(REL_STATE_STORE)).Returns(_mockRelGuidListStore.Object);
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private RelationshipService CreateService()
@@ -71,6 +85,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
+            _mockLockProvider.Object,
             _mockEventConsumer.Object);
     }
 

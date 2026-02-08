@@ -34,3 +34,8 @@ x-service-configuration:
       description: Maximum number of individual migration error details to track during merge operations
       env: RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK
       default: 100
+    LockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed lock acquisition on index and uniqueness operations
+      env: RELATIONSHIP_LOCK_TIMEOUT_SECONDS
+      default: 30

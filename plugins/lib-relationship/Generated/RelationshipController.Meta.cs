@@ -655,6 +655,19 @@ public partial class RelationshipController
                     "type": "boolean",
                     "default": false,
                     "description": "Include relationships that have ended"
+                },
+                "page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Page number for paginated results (1-based)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 20,
+                    "description": "Number of results per page (max 100)"
                 }
             }
         }

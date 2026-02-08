@@ -25,6 +25,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<RelationshipService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -37,6 +38,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<RelationshipService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -44,6 +46,18 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipModel>(STATE_STORE)).Returns(_mockRelationshipStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE)).Returns(_mockListStore.Object);
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private RelationshipService CreateService()
@@ -53,6 +67,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
+            _mockLockProvider.Object,
             _mockEventConsumer.Object);
     }
 

@@ -427,8 +427,8 @@ public class OAuthProviderService : IOAuthProviderService
                 }
                 catch (ApiException ex) when (ex.StatusCode == 404)
                 {
-                    _logger.LogWarning("Linked account {AccountId} not found, removing stale OAuth link", existingAccountId);
-                    await linkStore.DeleteAsync(oauthLinkKey, cancellationToken);
+                    _logger.LogWarning("Linked account {AccountId} not found, cleaning up all stale OAuth links for account", existingAccountId);
+                    await CleanupOAuthLinksForAccountAsync(existingAccountId, cancellationToken);
                 }
             }
 
