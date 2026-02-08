@@ -240,14 +240,14 @@ account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAs
 ### Audit Event Consumers
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/142 -->
 
-Auth publishes 6 audit event types (login successful/failed, registration, OAuth, Steam, password reset) but no service subscribes to them. They exist for future security monitoring (brute force detection, anomaly alerts) but currently publish to topics nobody listens on.
+Auth publishes 6 audit event types (login successful/failed, registration, OAuth, Steam, password reset) but no service subscribes to them. Note: per-email rate limiting is already implemented directly in Auth via Redis counters (`MaxLoginAttempts`/`LoginLockoutMinutes`), so this is NOT about basic brute force protection (that exists). The remaining gap is Analytics (L4) consuming these events for IP-level cross-account correlation, anomaly detection, and admin alerting.
 
 ## Potential Extensions
 
-- **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/149 -->
-- **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/150 -->
+- **Multi-factor authentication (post-launch)**: TOTP-based second factor after password verification. All design questions are pre-answered by industry standards: TOTP only (RFC 6238), 10 hashed recovery codes generated at setup, opt-in per account, OAuth providers handle their own MFA (Auth doesn't layer on top). Implementation requires new `mfa-setup` / `mfa-verify` endpoints, a Redis key for TOTP secrets, and a new `account.mfa-enabled` event. Low priority - no day-one requirement.
+<!-- AUDIT:PRE_ANSWERED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/149 -->
+- **Additional edge revocation providers (when needed)**: Fastly and AWS Lambda@Edge providers were proposed (#160) but closed as premature - no deployment target selected yet. The `IEdgeRevocationProvider` interface is already extensible; adding a provider is a single class implementing `PushTokenRevocationAsync`/`PushAccountRevocationAsync`/`RemoveExpiredEntriesAsync`. Revisit when production CDN/edge infrastructure is chosen.
+<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/160 -->
 
 ## Known Quirks & Caveats
 
@@ -279,6 +279,15 @@ No bugs identified.
 
 1. ~~**Logout and TerminateSession do not push edge revocations**~~: **FIXED** (2026-02-08) - Both `LogoutAsync` and `TerminateSessionAsync` now collect JTIs from session data before deletion and push token revocations to edge providers (CloudFlare, OpenResty) when `EdgeRevocationEnabled=true`. Follows the same best-effort pattern as `InvalidateAllSessionsForAccountAsync`: edge revocation failures are logged as warnings but never block session invalidation or event publishing.
 
+2. **Email change propagation** (Auth-side impact of Account #139): When Account adds an email change endpoint, Auth must propagate the new email to active sessions. The existing `HandleAccountUpdatedAsync` handler already watches `changedFields` - it currently only handles `"roles"` but should also handle `"email"` to update `SessionDataModel.Email` across active sessions. Additional Auth-side requirements: distributed lock per account (T9) during propagation, security notification email to the old address via `IEmailService`, and `session.updated` event publishing so Connect/Permission refresh their caches.
+<!-- AUDIT:READY:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/139 -->
+
+3. **Account merge session handling** (Auth-side impact of Account #137): Account merge is a complex cross-service operation (40+ services reference accounts). Auth's specific responsibility: handle a new `account.merged` event by invalidating all sessions for the source account (same as `account.deleted` path) and optionally refreshing target account sessions with merged roles/authorizations. The merge itself is an Account-layer orchestration problem; Auth's handler is straightforward. Low priority - post-launch compliance feature.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/137 -->
+
+4. **Per-account audit trail** (Auth-side impact of Account #138): Auth already publishes 6 typed audit events covering all authentication activities. A future audit trail store (likely MySQL-backed, following Currency's `TransactionRecord` pattern) would consume these events. Zero Auth-side code changes needed - the events are well-typed and contain all necessary fields (accountId, IP, provider, timestamp). This is purely a consumer-side feature, likely owned by Analytics (L4) or a dedicated audit service.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/138 -->
+
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
@@ -286,4 +295,10 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **Edge revocation on logout/terminate** (2026-02-08): `LogoutAsync` and `TerminateSessionAsync` now push token revocations to edge providers, matching the existing behavior in `InvalidateAllSessionsForAccountAsync`.
+
+### Evaluated & Closed
+
+- **Token revocation list evaluation** (#143, closed 2026-02-08): The edge revocation system (`IEdgeRevocationProvider` with CloudFlare KV and OpenResty providers) was fully implemented since this ticket was filed. All design questions answered by the implementation. Ticket closed as superseded.
+- **OAuth token persistence** (#150, closed 2026-02-08): Evaluated across all 45 services - no service requires ongoing OAuth provider API access. Discord Rich Presence is client-side. Storing OAuth refresh tokens adds attack surface for zero benefit. Closed as YAGNI.
+- **Fastly/Lambda@Edge providers** (#160, closed 2026-02-08): Premature optimization with no deployment target. `IEdgeRevocationProvider` is already extensible. Closed - revisit when production edge infrastructure is chosen.
 
