@@ -36,10 +36,10 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-auth | Publishes `session.invalidated` events consumed by Connect to disconnect clients |
-| lib-permission | Pushes `SessionCapabilitiesEvent` via per-session RabbitMQ queue to update client capabilities |
-| lib-game-session | Publishes session shortcuts and subscribes to `session.connected`/`session.disconnected` |
-| lib-actor | Subscribes to `session.connected`/`session.disconnected` events for actor lifecycle |
-| lib-matchmaking | Subscribes to `session.connected`/`session.disconnected` events for queue management |
+| lib-permission | Subscribes to `session.connected`/`session.disconnected`; pushes `SessionCapabilitiesEvent` via per-session RabbitMQ queue to update client capabilities |
+| lib-game-session | Publishes session shortcuts and subscribes to `session.connected`/`session.disconnected`/`session.reconnected` |
+| lib-actor | Subscribes to `session.disconnected` events for actor lifecycle |
+| lib-matchmaking | Subscribes to `session.connected`/`session.disconnected`/`session.reconnected` events for queue management |
 | All services (via IClientEventPublisher) | Send server-to-client events through per-session RabbitMQ queues consumed by Connect |
 
 ---
@@ -142,7 +142,7 @@ Service lifetime is **Singleton** (unique among Bannou services). This is requir
 
 ### WebSocket Connection (2 endpoints)
 
-- **ConnectWebSocket** (`GET /connect`): Accepts WebSocket upgrade. Validates token via `IAuthClient`. Generates session ID. Creates `ConnectionState` with peer GUID. Stores `ConnectionStateData` in Redis. Adds session to account index. Creates per-session RabbitMQ subscription (`CONNECT_SESSION_{sessionId}` on `bannou-client-events` exchange). Publishes `session.connected` event with roles/authorizations. Sends initial capability manifest (empty for new sessions - capabilities arrive via event from Permission). Enters message receive loop. On disconnect: initiates reconnection window (generates token, stores in Redis), unsubscribes RabbitMQ queue, publishes `session.disconnected`, removes from connection manager.
+- **ConnectWebSocket** (`GET /connect`): Accepts WebSocket upgrade. Validates token via `IAuthClient` (in controller). Generates session ID. Creates `ConnectionState` with peer GUID. Stores `ConnectionStateData` in Redis. Creates per-session RabbitMQ subscription (`CONNECT_SESSION_{sessionId}` on `bannou-client-events` exchange) with deterministic queue name (`session.events.{sessionId}`) and TTL matching reconnection window. Publishes `session.connected` event with roles/authorizations AFTER RabbitMQ subscription (prevents race condition). Adds session to account index. Does NOT send initial capability manifest - capabilities arrive asynchronously via `SessionCapabilitiesEvent` from Permission. Enters message receive loop. On disconnect: publishes `session.disconnected`, removes from account index, cancels RabbitMQ consumer (queue persists to buffer messages), then either initiates reconnection window (non-forced) or removes session from Redis (forced).
 - **ConnectWebSocketPost** (`POST /connect`): POST variant of the WebSocket endpoint for clients that cannot use GET for WebSocket upgrade. Identical implementation to GET variant.
 
 ### Client Capabilities (1 endpoint)
@@ -234,12 +234,12 @@ WebSocket Connection Lifecycle
     │                            ├──Subscribe RabbitMQ (CONNECT_SESSION_X) │
     │                            ├──Publish session.connected─────────────►│
     │                            │                            │            │
-    │◄──Capability Manifest──────┤ (empty initially)          │            │
+    │                            │  (no manifest sent yet)    │            │
     │                            │                            │            │
     │                            │◄──SessionCapabilitiesEvent──────────────┤
     │                            │   (permissions dict)       │            │
     │                            ├──Generate client-salted GUIDs           │
-    │◄──Updated Manifest─────────┤ (with all available APIs)  │            │
+    │◄──Capability Manifest──────┤ (with all available APIs)  │            │
     │                            │                            │            │
     │──Binary Message (GUID)────►│                            │            │
     │                            ├──Lookup GUID in mappings                │
@@ -247,9 +247,12 @@ WebSocket Connection Lifecycle
     │◄──Binary Response──────────┤                            │            │
     │                            │                            │            │
     │──Disconnect────────────────│                            │            │
+    │                            ├──Publish session.disconnected           │
+    │                            ├──Remove from account index              │
+    │                            ├──Cancel RabbitMQ consumer               │
     │                            ├──Generate reconnection token            │
     │                            ├──Store token in Redis (5 min TTL)       │
-    │                            ├──Publish session.disconnected           │
+    │◄──disconnect_notification──┤ (with reconnection token)  │            │
     │                            │                            │            │
 
 
@@ -301,14 +304,16 @@ Reconnection Window Flow
 
   Client disconnects (unexpected):
        │
+       ├── Publish session.disconnected (Reconnectable=true)
+       ├── Remove session from account index
+       ├── Remove connection from manager (subsume-safe check)
+       ├── Cancel RabbitMQ consumer (queue persists, buffers messages)
        ├── Generate reconnection token (GUID)
        ├── Store in Redis: reconnect:{token} -> sessionId (TTL=300s)
-       ├── Update ConnectionStateData with:
-       │      DisconnectedAt, ReconnectionExpiresAt, ReconnectionToken, UserRoles
-       ├── Keep service mappings alive in Redis (extended TTL)
-       ├── Publish session.disconnected (with reconnectionToken)
+       ├── InitiateReconnectionWindowAsync (preserve ConnectionStateData)
+       ├── Send disconnect_notification to client (with reconnectionToken)
        │
-       └── RabbitMQ messages queue up (session subscription still active)
+       └── Close WebSocket gracefully
 
   Client reconnects within window:
        │
@@ -403,7 +408,7 @@ Connection Mode Behavior Matrix
 2. **Compressed flag (0x04)**: The `MessageFlags.Compressed` bit is defined but no gzip decompression is performed. Compressed payloads are forwarded raw to backend services.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/172 -->
 
-3. **Heartbeat sending**: `HeartbeatIntervalSeconds` is configured but no server-to-client heartbeat sending loop is implemented. The `UpdateSessionHeartbeatAsync` method exists for recording liveness but no periodic invocation mechanism is present.
+3. **Heartbeat sending**: No server-to-client WebSocket ping/pong heartbeat is implemented. `HeartbeatIntervalSeconds` controls how often the server records liveness to Redis (via `UpdateSessionHeartbeatAsync` in the message receive loop), but no periodic ping frames are sent to detect dead client connections.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/175 -->
 
 4. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
@@ -434,7 +439,7 @@ No bugs identified.
 
 4. **Meta requests always routed as GET**: When the Meta flag is set, the request is transformed to `GET {path}/meta/{suffix}` regardless of the original endpoint's HTTP method.
 
-5. **Text WebSocket frames rejected after AUTH**: After the initial `AUTH <jwt_token>` text message, all subsequent text WebSocket frames return a `TextProtocolNotSupported` (14) error response. The binary protocol is required for all API messages because zero-copy routing depends on the 16-byte service GUID in the binary header. See `docs/WEBSOCKET-PROTOCOL.md` for protocol details.
+5. **All text WebSocket frames rejected**: Authentication happens via the HTTP `Authorization` header during WebSocket upgrade, not via text messages. Once the WebSocket is established, ALL text frames return a `TextProtocolNotSupported` (14) binary error response. The binary protocol is required for all API messages because zero-copy routing depends on the 16-byte service GUID in the binary header. See `docs/WEBSOCKET-PROTOCOL.md` for protocol details.
 
 ### Design Considerations (Requires Planning)
 
@@ -450,17 +455,17 @@ No bugs identified.
 
 6. **ServerSalt shared requirement**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value. If different instances use different salts, session shortcuts and GUID validation will fail across instances. This is enforced by a fail-fast check in the constructor.
 
-7. **Instance ID non-deterministic**: `_instanceId` is generated as `MachineName-{random8chars}`. This means the same physical machine generates different instance IDs on restart, which could affect heartbeat tracking in distributed scenarios.
+7. **Instance ID non-deterministic**: `_instanceId` is generated as `Guid.NewGuid()`. This means the same physical machine generates different instance IDs on restart, which could affect heartbeat tracking in distributed scenarios.
 
-8. **Session subsumed skips account index removal**: Lines 866-870 - when a session is "subsumed" by a new connection (same session ID), the old connection's cleanup skips RemoveSessionFromAccountAsync. This is intentional (session is still active) but means account index removal only happens once per unique session lifecycle.
+8. **Session subsumed skips cleanup but disconnect event still published**: When a session is "subsumed" by a new connection (same session ID), the subsumed connection's finally block still publishes `session.disconnected` and removes from the account index (lines 857-876) before checking the subsume condition (line 888). Only RabbitMQ unsubscription and reconnection window logic are skipped for subsumed connections.
 
-9. **Disconnect event published before account index removal**: Lines 816-846 - the `session.disconnected` event is published before the session is removed from the account index. Race condition: consumers receiving the event might still see the session in GetAccountSessions.
+9. **Disconnect event published before account index removal**: The `session.disconnected` event is published (line 868) before `RemoveSessionFromAccountAsync` (line 875) in the finally block. Race condition: consumers receiving the event might still see the session in GetAccountSessions.
 
-10. **RabbitMQ subscription retained during reconnection window**: Lines 871-889 - for non-forced disconnects, the RabbitMQ subscription is NOT immediately unsubscribed. Messages queue up during the reconnection window. Only forced disconnects unsubscribe immediately.
+10. **RabbitMQ consumer cancelled during reconnection, queue buffers messages**: For both forced and non-forced disconnects, the RabbitMQ consumer subscription is disposed (lines 906-910 and 922-927). However, the RabbitMQ queue itself persists during the reconnection window, buffering messages. On reconnect, a new consumer is attached to the existing queue, delivering accumulated messages. Forced disconnects additionally call `RemoveSessionAsync` to clean up Redis state.
 
-11. **Internal mode skips capability initialization entirely**: Lines 603-652 - internal mode connections skip all service mapping, capability manifest, and RabbitMQ subscription setup. They only get peer routing capability.
+11. **Internal mode skips capability initialization entirely**: Internal mode connections (lines 633-660) skip all service mapping, capability manifest, and RabbitMQ subscription setup. They only get peer routing capability via a simplified message loop.
 
-12. **Connection state created before auth validation**: Lines 590-591 - a new ConnectionState is allocated before checking connection limits. On high load, rejected connections still allocate and GC these objects.
+12. **Connection state allocated before connection limit check**: A new `ConnectionState` is allocated (line 618) before the defense-in-depth connection limit check (line 624). Auth validation happens earlier in the controller. On high load, connections that pass the controller check but fail the service-level race check still allocate and GC these objects.
 
 ---
 
