@@ -1388,4 +1388,153 @@ public class PermissionServiceTests
     }
 
     #endregion
+
+    #region Permission Cache TTL Tests
+
+    /// <summary>
+    /// Verifies that when PermissionCacheTtlSeconds is configured and the cached entry is older
+    /// than the TTL, GetCapabilitiesAsync evicts the cache and refreshes from Redis.
+    /// </summary>
+    [Fact]
+    public async Task GetCapabilitiesAsync_WithExpiredCacheTtl_RefreshesFromRedis()
+    {
+        // Arrange - set TTL to 1 second so cached data is immediately expired
+        _mockConfiguration.Object.PermissionCacheTtlSeconds = 1;
+
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+
+        // First call: populate the cache from Redis
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+        var compiledPermissions = new Dictionary<string, object>
+        {
+            ["version"] = 1,
+            ["generated_at"] = DateTimeOffset.UtcNow.AddSeconds(-5).ToString(), // 5 seconds ago (expired)
+            ["account"] = BannouJson.SerializeToElement(new List<string> { "/account/get" })
+        };
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(compiledPermissions);
+
+        var request = new CapabilityRequest { SessionId = sessionId };
+
+        // Act - first call populates cache
+        var (status1, response1) = await service.GetCapabilitiesAsync(request);
+        Assert.Equal(StatusCodes.OK, status1);
+        Assert.NotNull(response1);
+
+        // The cached entry has GeneratedAt 5 seconds ago, TTL is 1 second → expired
+        // Act - second call should hit Redis again (not return stale cache)
+        var (status2, response2) = await service.GetCapabilitiesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status2);
+        Assert.NotNull(response2);
+
+        // Verify Redis was read twice (once for initial, once after TTL expiry)
+        _mockDictObjectStore.Verify(s => s.GetAsync(
+            permissionsKey,
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    /// <summary>
+    /// Verifies that when PermissionCacheTtlSeconds is 0 (disabled),
+    /// GetCapabilitiesAsync returns cached entries regardless of age.
+    /// </summary>
+    [Fact]
+    public async Task GetCapabilitiesAsync_WithDisabledTtl_ReturnsCachedIndefinitely()
+    {
+        // Arrange - TTL = 0 means disabled (default)
+        _mockConfiguration.Object.PermissionCacheTtlSeconds = 0;
+
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+
+        // Pre-populate Redis with old permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+        var compiledPermissions = new Dictionary<string, object>
+        {
+            ["version"] = 1,
+            ["generated_at"] = DateTimeOffset.UtcNow.AddHours(-24).ToString(), // 24 hours old
+            ["account"] = BannouJson.SerializeToElement(new List<string> { "/account/get" })
+        };
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(compiledPermissions);
+
+        var request = new CapabilityRequest { SessionId = sessionId };
+
+        // Act - first call populates cache from Redis
+        var (status1, response1) = await service.GetCapabilitiesAsync(request);
+        Assert.Equal(StatusCodes.OK, status1);
+        Assert.NotNull(response1);
+
+        // Act - second call should return from cache (no Redis hit)
+        var (status2, response2) = await service.GetCapabilitiesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status2);
+        Assert.NotNull(response2);
+
+        // Verify Redis was only read once (first call), second call served from cache
+        _mockDictObjectStore.Verify(s => s.GetAsync(
+            permissionsKey,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that when SessionDataTtlSeconds is configured, session data SaveAsync calls
+    /// include StateOptions with the correct TTL value.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSessionStateAsync_WithSessionDataTtl_PassesStateOptionsWithTtl()
+    {
+        // Arrange - set session data TTL to 1 hour
+        _mockConfiguration.Object.SessionDataTtlSeconds = 3600;
+
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var stateUpdate = new SessionStateUpdate
+        {
+            SessionId = sessionId,
+            ServiceId = "game-session",
+            NewState = "in_game",
+            PreviousState = null
+        };
+
+        // Act
+        var (status, response) = await service.UpdateSessionStateAsync(stateUpdate);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify session states SaveAsync was called with StateOptions containing TTL=3600
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            statesKey,
+            It.IsAny<Dictionary<string, string>>(),
+            It.Is<StateOptions?>(opts => opts != null && opts.Ttl == 3600),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
 }

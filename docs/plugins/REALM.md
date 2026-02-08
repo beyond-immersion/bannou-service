@@ -101,7 +101,7 @@ Standard read operations with two lookup strategies. **GetByCode** uses a two-st
 
 - **Create**: Codes normalized to uppercase (`ToUpperInvariant()`). Validates code uniqueness via index. Stores realm data, code index, and appends to master list. Publishes `realm.created`.
 - **Update**: Smart field tracking — only modifies fields where the new value differs from current. Tracks changed field names. Does not publish event if nothing changed. `GameServiceId` is mutable (can be updated).
-- **Delete**: Two-step safety — realm MUST be deprecated first (returns 409 Conflict otherwise). Removes all three keys (data, code index, list entry). Publishes `realm.deleted`.
+- **Delete**: Three-step safety — realm MUST be deprecated first (returns 409 Conflict otherwise), then checks external references via `IResourceClient` (returns 409 Conflict if active references with RESTRICT policy exist), executes cleanup callbacks for CASCADE/DETACH sources, and only then removes all three keys (data, code index, list entry). Publishes `realm.deleted`. Fails closed if lib-resource is unavailable (returns 503 ServiceUnavailable).
 
 ### Deprecation Operations (2 endpoints)
 
@@ -145,6 +145,8 @@ Realm Deletion Safety Chain
                      (cannot skip deprecation step)
 ```
 
+**Deletion also updates the visual aid above** — the resource check step sits between "Deprecated Realm" and "Permanently Deleted", returning 409 Conflict if active L4 references (e.g., realm-history) exist with RESTRICT policy.
+
 ---
 
 ## Stubs & Unimplemented Features
@@ -155,12 +157,8 @@ None identified.
 
 ## Potential Extensions
 
-1. **Realm merge**: Consolidate deprecated realms into active ones, migrating all associated entities (characters, locations, species).
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/167 -->
-2. **Realm statistics**: Track entity counts per realm (characters, locations, species) for capacity planning.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/169 -->
-3. **Event consumption for cascade**: Listen to character/location deletion events to track reference counts for safe deletion.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/170 -->
+1. **Realm merge**: Consolidate deprecated realms into active ones, migrating all associated entities (characters, locations, species). Design questions resolved — see [#167](https://github.com/beyond-immersion/bannou-service/issues/167) for implementation plan.
+<!-- AUDIT:READY:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/167 -->
 
 ---
 
@@ -207,8 +205,7 @@ None identified.
 
 ### Design Considerations
 
-1. **No reference counting for delete**: The delete endpoint does not verify that no entities (characters, locations, species) reference the realm. Dependent services call `RealmExistsAsync` on creation but nothing prevents deleting a realm that still has active entities.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/170 -->
+None outstanding. Reference counting for safe deletion was resolved via lib-resource integration (see [#170](https://github.com/beyond-immersion/bannou-service/issues/170), closed). Realm statistics was evaluated and closed as wrong-layer — entity statistics belong in Analytics (L4), not Realm (L2) (see [#169](https://github.com/beyond-immersion/bannou-service/issues/169), closed).
 
 ---
 
@@ -216,8 +213,11 @@ None identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-### In Progress
+### Completed
 
-- **2026-01-31**: Realm merge feature requires design decisions. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) for open questions about entity migration ordering, species realm association handling, location hierarchy treatment, and partial failure policies.
-- **2026-01-31**: Realm statistics feature requires design decisions. See [#169](https://github.com/beyond-immersion/bannou-service/issues/169) for open questions about synchronous vs event-driven counting, species multi-realm membership handling, historical tracking, and potential overlap with Analytics service.
-- **2026-01-31**: Reference counting for safe deletion requires design decisions. See [#170](https://github.com/beyond-immersion/bannou-service/issues/170) for open questions about counter granularity, species multi-realm handling, startup synchronization, and enforcement mode. Note: Overlaps significantly with #169 - may be combined.
+- **2026-02-08**: Reference counting for safe deletion implemented via lib-resource integration. See [#170](https://github.com/beyond-immersion/bannou-service/issues/170) (closed). DeleteRealm now checks references and executes cleanup callbacks before proceeding.
+- **2026-02-08**: Realm statistics evaluated and closed — entity count tracking belongs in Analytics (L4), not Realm (L2). See [#169](https://github.com/beyond-immersion/bannou-service/issues/169) (closed).
+
+### Ready for Implementation
+
+- **2026-02-08**: Realm merge feature — all design questions resolved from existing architecture and Species merge precedent. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) for resolved design answers. Ready to implement when prioritized.

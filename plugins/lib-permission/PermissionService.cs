@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -120,8 +121,29 @@ public partial class PermissionService : IPermissionService
             var sessionIdStr = body.SessionId.ToString();
             if (_sessionCapabilityCache.TryGetValue(sessionIdStr, out var cachedResponse))
             {
-                _logger.LogDebug("Returning cached capabilities for session {SessionId}", body.SessionId);
-                return (StatusCodes.OK, cachedResponse);
+                // Check in-memory cache TTL (0 = disabled, cache never expires)
+                if (_configuration.PermissionCacheTtlSeconds > 0)
+                {
+                    var age = DateTimeOffset.UtcNow - cachedResponse.GeneratedAt;
+                    if (age.TotalSeconds > _configuration.PermissionCacheTtlSeconds)
+                    {
+                        _logger.LogDebug(
+                            "Cached capabilities for session {SessionId} expired (age: {AgeSeconds}s, TTL: {TtlSeconds}s), refreshing from Redis",
+                            body.SessionId, (int)age.TotalSeconds, _configuration.PermissionCacheTtlSeconds);
+                        _sessionCapabilityCache.TryRemove(sessionIdStr, out _);
+                        // Fall through to Redis read below
+                    }
+                    else
+                    {
+                        _logger.LogDebug("Returning cached capabilities for session {SessionId}", body.SessionId);
+                        return (StatusCodes.OK, cachedResponse);
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("Returning cached capabilities for session {SessionId}", body.SessionId);
+                    return (StatusCodes.OK, cachedResponse);
+                }
             }
 
             // Get compiled permissions from state store
@@ -462,9 +484,9 @@ public partial class PermissionService : IPermissionService
             var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
             await cacheStore.AddToSetAsync<string>(ACTIVE_SESSIONS_KEY, body.SessionId.ToString(), cancellationToken: cancellationToken);
 
-            // Save session state
+            // Save session state (with Redis TTL for orphaned session cleanup)
             await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
-                .SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
+                .SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
             // Recompile session permissions using the states we already have
             // (avoids read-after-write consistency issues by not re-reading from state store)
@@ -514,9 +536,9 @@ public partial class PermissionService : IPermissionService
             var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
             await cacheStore.AddToSetAsync<string>(ACTIVE_SESSIONS_KEY, body.SessionId.ToString(), cancellationToken: cancellationToken);
 
-            // Save session states
+            // Save session states (with Redis TTL for orphaned session cleanup)
             await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
-                .SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
+                .SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
             // Recompile all permissions for this session using the states we already have
             // (avoids read-after-write consistency issues by not re-reading from state store)
@@ -579,7 +601,7 @@ public partial class PermissionService : IPermissionService
                     stateCount, body.SessionId);
 
                 sessionStates.Clear();
-                await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
+                await statesStore.SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
                 await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_cleared_all");
 
                 return (StatusCodes.OK, new SessionUpdateResponse
@@ -630,8 +652,8 @@ public partial class PermissionService : IPermissionService
             // Remove the state
             sessionStates.Remove(body.ServiceId);
 
-            // Save updated session states
-            await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
+            // Save updated session states (with Redis TTL for orphaned session cleanup)
+            await statesStore.SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
             // Recompile session permissions
             await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_cleared");
@@ -875,7 +897,7 @@ public partial class PermissionService : IPermissionService
             newPermissionData["version"] = newVersion;
             newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString();
 
-            await permissionsStore.SaveAsync(permissionsKey, newPermissionData);
+            await permissionsStore.SaveAsync(permissionsKey, newPermissionData, options: GetSessionDataStateOptions());
 
             // Clear in-memory cache after write
             _sessionCapabilityCache.TryRemove(sessionId, out _);
@@ -1145,8 +1167,8 @@ public partial class PermissionService : IPermissionService
                 }
             }
 
-            // Store session states
-            await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
+            // Store session states (with Redis TTL for orphaned session cleanup)
+            await statesStore.SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
             // Atomic add to activeConnections and activeSessions - SADD is inherently safe for concurrent access
             var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
@@ -1241,6 +1263,18 @@ public partial class PermissionService : IPermissionService
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Creates StateOptions with Redis TTL for session data if configured.
+    /// Returns null when SessionDataTtlSeconds is 0 (disabled).
+    /// </summary>
+    private StateOptions? GetSessionDataStateOptions()
+    {
+        if (_configuration.SessionDataTtlSeconds <= 0)
+            return null;
+
+        return new StateOptions { Ttl = _configuration.SessionDataTtlSeconds };
+    }
 
     /// <summary>
     /// Determines the highest priority role from a collection of roles.

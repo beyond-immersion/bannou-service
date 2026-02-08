@@ -81,6 +81,8 @@ No traditional topic-based event publications. Capability updates go directly to
 | Property | Type | Default | Range | Env Var | Description |
 |----------|------|---------|-------|---------|-------------|
 | `MaxConcurrentRecompilations` | int | 50 | 1-500 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | Bounds parallel session recompilations during service registration |
+| `PermissionCacheTtlSeconds` | int | 0 | 0-86400 | `PERMISSION_CACHE_TTL_SECONDS` | In-memory cache TTL in seconds. 0 disables (cache never expires). Recommended non-zero: 300 (5 min). Safety net against lost RabbitMQ events |
+| `SessionDataTtlSeconds` | int | 86400 | 0-604800 | `PERMISSION_SESSION_DATA_TTL_SECONDS` | Redis TTL for session data keys. Handles orphaned session cleanup. 0 disables. Default 86400 (24h) |
 
 ---
 
@@ -205,8 +207,8 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-1. **Permission TTL**: Auto-expire in-memory cached permissions after configurable period, forcing Redis refresh on next access. Safety net for lost RabbitMQ events. Default disabled (0). See [#198](https://github.com/beyond-immersion/bannou-service/issues/198) for implementation plan — all design questions resolved.
-<!-- AUDIT:READY:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/198 -->
+1. ~~**Permission TTL**~~: **FIXED** (2026-02-08) - Added `PermissionCacheTtlSeconds` (in-memory cache TTL, default 0 = disabled) and `SessionDataTtlSeconds` (Redis key TTL for orphaned session cleanup, default 86400 = 24h). On cache TTL expiry, refreshes from Redis (not full recompilation). See [#198](https://github.com/beyond-immersion/bannou-service/issues/198).
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/198 -->
 2. ~~**Fine-grained caching**~~: **CLOSED** — Per-service caching provides no invalidation benefit (all triggers operate at session level) and would increase memory ~40x. Per-session is the correct granularity. Additionally, Connect's local event-driven cache is the actual hot path, making Permission's in-memory cache secondary. See [#209](https://github.com/beyond-immersion/bannou-service/issues/209).
 <!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/209 -->
 3. ~~**Permission delegation**~~: **CLOSED** — The existing state-based permission system (`UpdateSessionState` with arbitrary states registered via x-permissions) already handles all proposed delegation use cases. Adding a parallel delegation mechanism would create unnecessary complexity. See [#234](https://github.com/beyond-immersion/bannou-service/issues/234).
@@ -248,4 +250,5 @@ None identified.
 ## Work Tracking
 
 ### Completed
+- **2026-02-08**: Issue #198 - Permission TTL: in-memory cache TTL (`PermissionCacheTtlSeconds`) and Redis session data TTL (`SessionDataTtlSeconds`)
 - **2026-02-08**: Issue #236 - Parallel session recompilation with configurable concurrency (`MaxConcurrentRecompilations`)

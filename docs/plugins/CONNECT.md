@@ -444,10 +444,13 @@ No bugs identified.
 ### Design Considerations (Requires Planning)
 
 1. **Single-instance limitation for P2P**: Peer-to-peer routing (`RouteToClientAsync`) only works when both clients are connected to the same Connect instance. The `_connectionManager.TryGetSessionIdByPeerGuid()` lookup is in-memory only. Distributed P2P requires cross-instance peer registry.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/346 -->
 
 2. **Session mappings dual storage**: Service mappings are stored both in-memory (`_sessionServiceMappings` ConcurrentDictionary) and in Redis (via `ISessionManager`). These can drift if Redis writes fail silently or if multiple instances serve the same session.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/347 -->
 
 3. **No backpressure on message queue**: The `MessageQueueSize` config exists but there is no explicit backpressure mechanism. If a client is slow to consume messages, the WebSocket send buffer grows unbounded.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/348 -->
 
 4. **RabbitMQ subscription lifecycle**: Per-session RabbitMQ subscriptions are created on connect and should be cleaned up on disconnect. If the Connect instance crashes, orphaned queues remain in RabbitMQ until they TTL-expire.
 
@@ -479,3 +482,6 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Heartbeat sending** - [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) - Requires design decisions on ping mechanism type, pong tracking, timer architecture, and client SDK coordination (2026-01-31)
 - **HighPriority flag (0x08)** - [Issue #178](https://github.com/beyond-immersion/bannou-service/issues/178) - Requires design decisions on queue architecture, concurrency model changes, and whether this feature is even needed (2026-01-31)
 - **Multi-instance broadcast** - [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181) - Requires design decisions on message deduplication, acknowledgment semantics, mode enforcement, and performance trade-offs (2026-01-31)
+- **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact (2026-02-08)
+- **Session mappings dead code** - [Issue #347](https://github.com/beyond-immersion/bannou-service/issues/347) - `_sessionServiceMappings` is dead code (never written to), `SetSessionServiceMappingsAsync` never called, internal proxy authorization may be broken (2026-02-08)
+- **Message queue backpressure** - [Issue #348](https://github.com/beyond-immersion/bannou-service/issues/348) - `MessageQueueSize` is dead config (T21 violation); decide whether to remove or implement application-level queueing (2026-02-08)
