@@ -1577,12 +1577,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(characterIndex);
 
-        // Setup: active quest instance
+        // Setup: active quest instance (QueryAsync used by GetCompressDataAsync)
         var activeInstance = CreateTestInstanceModel(activeQuestId, characterId);
         activeInstance.Status = QuestStatus.ACTIVE;
         _mockInstanceStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(activeInstance);
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel> { activeInstance });
 
         // Setup: definition for active quest
         var definition = CreateTestDefinitionModel(activeInstance.DefinitionId);
@@ -1590,6 +1592,15 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockDefinitionCache
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(definition);
+
+        // Setup: completed quest definition lookup
+        var completedDef = CreateTestDefinitionModel(Guid.NewGuid(), completedQuestCode);
+        completedDef.Category = QuestCategory.SIDE;
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { completedDef });
 
         // Setup: objective progress
         var progress = new ObjectiveProgressModel
@@ -1673,11 +1684,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var sideDef = CreateTestDefinitionModel(Guid.NewGuid(), "SIDE_1");
         sideDef.Category = QuestCategory.SIDE;
 
+        // Each completed quest code is queried individually, so use SetupSequence
         _mockDefinitionStore
-            .Setup(s => s.QueryAsync(
+            .SetupSequence(s => s.QueryAsync(
                 It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<QuestDefinitionModel> { mainDef1, mainDef2, sideDef });
+            .ReturnsAsync(new List<QuestDefinitionModel> { mainDef1 })
+            .ReturnsAsync(new List<QuestDefinitionModel> { mainDef2 })
+            .ReturnsAsync(new List<QuestDefinitionModel> { sideDef });
 
         var request = new GetCompressDataRequest { CharacterId = characterId };
 

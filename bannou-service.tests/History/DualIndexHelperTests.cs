@@ -366,10 +366,9 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        mockIndexStore.Verify(s => s.SaveAsync(
+        // Secondary index had only one record; removing it triggers deletion instead of save
+        mockIndexStore.Verify(s => s.DeleteAsync(
             $"{SecondaryIndexPrefix}{secondaryKey}",
-            It.Is<HistoryIndexData>(i => !i.RecordIds.Contains("rec-1")),
-            It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

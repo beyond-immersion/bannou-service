@@ -2611,7 +2611,7 @@ public partial class QuestService : IQuestService
                         var def = defs.FirstOrDefault();
                         if (def != null)
                         {
-                            var categoryName = def.Category.ToString().ToLowerInvariant();
+                            var categoryName = def.Category.ToString();
                             categoryBreakdown.TryGetValue(categoryName, out var count);
                             categoryBreakdown[categoryName] = count + 1;
                         }

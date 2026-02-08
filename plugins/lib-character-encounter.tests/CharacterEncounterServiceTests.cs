@@ -30,6 +30,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     private readonly Mock<IStateStore<GlobalCharacterIndexData>> _mockGlobalIndexStore;
     private readonly Mock<IStateStore<CustomTypeIndexData>> _mockCustomTypeIndexStore;
     private readonly Mock<IStateStore<TypeEncounterIndexData>> _mockTypeEncounterIndexStore;
+    private readonly Mock<IStateStore<EncounterPerspectiveIndexData>> _mockEncounterPerspectiveIndexStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<CharacterEncounterService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
@@ -49,6 +50,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockGlobalIndexStore = new Mock<IStateStore<GlobalCharacterIndexData>>();
         _mockCustomTypeIndexStore = new Mock<IStateStore<CustomTypeIndexData>>();
         _mockTypeEncounterIndexStore = new Mock<IStateStore<TypeEncounterIndexData>>();
+        _mockEncounterPerspectiveIndexStore = new Mock<IStateStore<EncounterPerspectiveIndexData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<CharacterEncounterService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -82,6 +84,9 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockStateStoreFactory
             .Setup(f => f.GetStore<TypeEncounterIndexData>(STATE_STORE))
             .Returns(_mockTypeEncounterIndexStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<EncounterPerspectiveIndexData>(STATE_STORE))
+            .Returns(_mockEncounterPerspectiveIndexStore.Object);
 
         // Default character client setup - all characters exist
         _mockCharacterClient
@@ -98,6 +103,14 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockTypeEncounterIndexStore
             .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<TypeEncounterIndexData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
+
+        // Default GetBulkAsync returns empty dictionaries to prevent NRE on bulk operations
+        _mockEncounterStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, EncounterData>());
+        _mockPerspectiveStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, PerspectiveData>());
 
         // Default message bus setup
         _mockMessageBus
@@ -736,6 +749,14 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
+        // Bulk load setups for query path
+        _mockPerspectiveStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, PerspectiveData> { { $"pers-{perspectiveId}", perspective } });
+        _mockEncounterStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, EncounterData> { { $"enc-{encounterId}", encounter } });
+
         // Act
         var (status, response) = await service.QueryByCharacterAsync(
             new QueryByCharacterRequest { CharacterId = characterId }, CancellationToken.None);
@@ -793,8 +814,11 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockEncounterStore
             .Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(encounter);
+        _mockEncounterStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, EncounterData> { { $"enc-{encounterId}", encounter } });
 
-        // Setup perspective queries
+        // Setup perspective queries (used by legacy fallback path)
         _mockPerspectiveStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("pers-")), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string key, CancellationToken _) =>
