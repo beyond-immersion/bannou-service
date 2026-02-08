@@ -956,10 +956,6 @@ components:
           type: string
           nullable: true
           description: Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null to include all)
-        includeChildren:
-          type: boolean
-          default: true
-          description: Whether to include child types in the response
         rootsOnly:
           type: boolean
           default: false

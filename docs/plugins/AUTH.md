@@ -244,7 +244,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ### Bugs (Fix Immediately)
 
-1. **Stale OAuth link not removed from reverse index on 404**: In `OAuthProviderService.FindOrCreateOAuthAccountAsync`, when a linked account returns 404, the `oauth-link:{provider}:{providerId}` key is deleted from the link store (line 431), but the corresponding entry is not removed from the `account-oauth-links:{accountId}` reverse index list. This leaves an orphaned entry in the reverse index. Impact is minor: on account deletion, `CleanupOAuthLinksForAccountAsync` will attempt to delete a non-existent link key (silent no-op), but the reverse index list slowly accumulates stale entries for accounts with repeatedly orphaned OAuth links.
+1. ~~**Stale OAuth link not removed from reverse index on 404**~~: **FIXED** (2026-02-08) - When `FindOrCreateOAuthAccountAsync` encounters a 404 for a linked account, it now calls `CleanupOAuthLinksForAccountAsync(existingAccountId)` instead of only deleting the single `oauth-link` key. This cleans up ALL stale OAuth link keys for the deleted account AND removes the `account-oauth-links:{accountId}` reverse index itself, preventing orphaned Redis entries.
 
 ### Intentional Quirks
 
@@ -273,3 +273,7 @@ No design considerations pending.
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+### Completed
+
+- **Orphaned reverse index on 404** (2026-02-08): Fixed `FindOrCreateOAuthAccountAsync` to call `CleanupOAuthLinksForAccountAsync` instead of single key deletion when detecting a stale link (account returns 404). Added test `FindOrCreateOAuthAccountAsync_WithStaleLink404_ShouldCleanupAllLinksAndCreateNewAccount`.

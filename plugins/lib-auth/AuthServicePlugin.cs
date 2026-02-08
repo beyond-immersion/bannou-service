@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SendGrid;
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -32,10 +33,58 @@ public class AuthServicePlugin : StandardServicePlugin<IAuthService>
         services.AddScoped<IEdgeRevocationService, EdgeRevocationService>();
         Logger?.LogDebug("Registered EdgeRevocationService");
 
-        // Register email service (default: console logging for development)
-        // Replace ConsoleEmailService with a concrete provider (SendGrid, SES, etc.) for production
-        services.AddSingleton<IEmailService, ConsoleEmailService>();
-        Logger?.LogDebug("Registered ConsoleEmailService (replace with production provider for deployment)");
+        // Register email service based on configuration (default: console logging)
+        services.AddSingleton<IEmailService>(sp =>
+        {
+            var config = sp.GetRequiredService<AuthServiceConfiguration>();
+            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+            switch (config.EmailProvider)
+            {
+                case EmailProvider.Sendgrid:
+                {
+                    if (string.IsNullOrWhiteSpace(config.SendGridApiKey))
+                    {
+                        throw new InvalidOperationException(
+                            "AUTH_SENDGRID_API_KEY is required when EmailProvider is 'sendgrid'");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(config.EmailFromAddress))
+                    {
+                        throw new InvalidOperationException(
+                            "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'sendgrid'");
+                    }
+
+                    ISendGridClient client = new SendGridClient(config.SendGridApiKey);
+                    var from = new SendGrid.Helpers.Mail.EmailAddress(config.EmailFromAddress, config.EmailFromName);
+                    return new SendGridEmailService(client, from,
+                        loggerFactory.CreateLogger<SendGridEmailService>());
+                }
+                case EmailProvider.Smtp:
+                {
+                    if (string.IsNullOrWhiteSpace(config.SmtpHost))
+                    {
+                        throw new InvalidOperationException(
+                            "AUTH_SMTP_HOST is required when EmailProvider is 'smtp'");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(config.EmailFromAddress))
+                    {
+                        throw new InvalidOperationException(
+                            "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'smtp'");
+                    }
+
+                    var from = new MimeKit.MailboxAddress(config.EmailFromName ?? "", config.EmailFromAddress);
+                    return new SmtpEmailService(
+                        config.SmtpHost, config.SmtpPort,
+                        config.SmtpUsername, config.SmtpPassword, config.SmtpUseSsl,
+                        from, loggerFactory.CreateLogger<SmtpEmailService>());
+                }
+                default:
+                    return new ConsoleEmailService(loggerFactory.CreateLogger<ConsoleEmailService>());
+            }
+        });
+        Logger?.LogDebug("Registered email service (provider: configuration-driven)");
 
         // Register helper services for better testability and separation of concerns
         services.AddScoped<ISessionService, SessionService>();

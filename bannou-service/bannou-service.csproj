@@ -32,7 +32,9 @@
 
   <ItemGroup>
     <!-- Common packages transitively available to all plugins via ServiceLib.targets -->
+    <PackageReference Include="MailKit" Version="4.*" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+    <PackageReference Include="SendGrid" Version="9.*" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
 
     <PackageReference Include="DotNetEnv" Version="3.1.1" />

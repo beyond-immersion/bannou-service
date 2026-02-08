@@ -3,7 +3,7 @@
 > **Plugin**: lib-relationship
 > **Schema**: schemas/relationship-api.yaml
 > **Version**: 2.0.0
-> **State Stores**: relationship-statestore (MySQL), relationship-type-statestore (MySQL)
+> **State Stores**: relationship-statestore (MySQL), relationship-type-statestore (MySQL), relationship-lock (Redis)
 
 ---
 
@@ -20,6 +20,7 @@ This plugin was consolidated from the former `lib-relationship` and `lib-relatio
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Persistence for relationship records, type definitions, and all indexes (two separate state stores) |
+| lib-state (`IDistributedLockProvider`) | Distributed locks for composite uniqueness enforcement and index read-modify-write operations |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
 | lib-messaging (`IEventConsumer`) | Event registration infrastructure (no current handlers) |
 
@@ -90,6 +91,7 @@ This plugin does not consume external events.
 | `SeedPageSize` | `RELATIONSHIP_TYPE_SEED_PAGE_SIZE` | `100` | Batch size for paginated relationship migration during merge and seed operations |
 | `MaxHierarchyDepth` | `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | `20` | Maximum depth for hierarchy traversal to prevent infinite loops |
 | `MaxMigrationErrorsToTrack` | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | `100` | Maximum number of individual migration error details to track |
+| `LockTimeoutSeconds` | `RELATIONSHIP_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed lock acquisition on index and uniqueness operations |
 
 ---
 
@@ -98,8 +100,9 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<RelationshipService>` | Scoped | Structured logging |
-| `RelationshipServiceConfiguration` | Singleton | All 3 config properties |
+| `RelationshipServiceConfiguration` | Singleton | All 4 config properties |
 | `IStateStoreFactory` | Singleton | State store access (both stores) |
+| `IDistributedLockProvider` | Singleton | Distributed locks for concurrency protection |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration |
 
@@ -121,7 +124,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 - **ListByType** (`/relationship/list-by-type`): Loads from type index, bulk-fetches, applies in-memory filtering and pagination.
 
-- **Update** (`/relationship/update`): Can modify metadata and relationship type. When type changes, updates type indexes (removes from old, adds to new). Immutable fields: entity1, entity2 (cannot change participants). Ended relationships cannot be updated (returns Conflict). Publishes `relationship.updated` with `changedFields`.
+- **Update** (`/relationship/update`): Can modify metadata and relationship type. When type changes, updates type indexes (adds to new first, then removes from old - crash-safe ordering). Immutable fields: entity1, entity2 (cannot change participants). Ended relationships cannot be updated (returns Conflict). Publishes `relationship.updated` with `changedFields`. Protected by distributed lock on relationship ID.
 
 - **End** (`/relationship/end`): Soft-deletes by setting `EndedAt` timestamp. Returns Conflict if already ended. Deletes the composite uniqueness key (allowing the same relationship to be recreated later). Does NOT remove from entity or type indexes (keeping history queryable). Publishes `relationship.deleted` with optional reason from the request (defaults to "Relationship ended" when null).
 
@@ -344,19 +347,7 @@ State Store Layout
 2. **No index cleanup**: Entity and type indexes accumulate relationship IDs indefinitely (both active and ended). Over time, indexes grow large with ended relationships that must be filtered on every query.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/342 -->
 
-3. **No optimistic concurrency**: Updates overwrite without version checking. Two concurrent updates to metadata will result in last-writer-wins with no conflict detection.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/343 -->
-
-4. **Type migration during merge**: Merge operations modify type indexes atomically but without distributed transaction guarantees. A crash between removing from old index and adding to new could leave the relationship in neither index.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/344 -->
-
-5. **Read-modify-write without distributed locks**: Index updates (add/remove from list) and composite key checks have no concurrency protection. Two concurrent creates with the same composite key could both pass the uniqueness check if timed precisely. Requires IDistributedLockProvider integration.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/223 -->
-
-6. **Read-modify-write on type indexes without distributed locks**: Index updates (`AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`) perform read-modify-write without distributed locks. Concurrent operations on the same indexes can cause lost updates.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/223 -->
-
-7. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This prevents data loss but leaves the deprecated type with remaining relationships that need manual cleanup.
+3. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This prevents data loss but leaves the deprecated type with remaining relationships that need manual cleanup.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/345 -->
 
 ---
@@ -367,4 +358,4 @@ State Store Layout
 
 ### Pending Issues
 
-- [#345](https://github.com/beyond-immersion/bannou-service/issues/345): Design question on merge behavior during partial migration failure (Design Consideration #7)
+- [#345](https://github.com/beyond-immersion/bannou-service/issues/345): Design question on merge behavior during partial migration failure (Design Consideration #3)

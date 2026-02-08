@@ -754,6 +754,75 @@ public class OAuthProviderServiceTests : IDisposable
         Assert.Equal(existingAccountId, result.Account.AccountId);
     }
 
+    [Fact]
+    public async Task FindOrCreateOAuthAccountAsync_WithStaleLink404_ShouldCleanupAllLinksAndCreateNewAccount()
+    {
+        // Arrange - OAuth link exists but points to a deleted account (404)
+        var userInfo = new OAuthUserInfo
+        {
+            ProviderId = "stale-link-id",
+            Email = "stale@example.com",
+            DisplayName = "Stale Link User"
+        };
+
+        var staleAccountId = Guid.NewGuid();
+        var newAccountId = Guid.NewGuid();
+        var newAccount = new AccountResponse
+        {
+            AccountId = newAccountId,
+            Email = "stale@example.com",
+            DisplayName = "Stale Link User"
+        };
+
+        var oauthLinkKey = "oauth-link:discord:stale-link-id";
+        var reverseIndexKey = $"account-oauth-links:{staleAccountId}";
+        var staleLinks = new List<string> { oauthLinkKey, "oauth-link:google:other-stale-id" };
+
+        // OAuth link exists pointing to stale account
+        _mockStringStore.Setup(s => s.GetAsync(oauthLinkKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(staleAccountId.ToString());
+
+        // Account service returns 404 (account was deleted)
+        _mockAccountClient.Setup(c => c.GetAccountAsync(
+            It.Is<GetAccountRequest>(r => r.AccountId == staleAccountId),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not Found", 404));
+
+        // Reverse index exists with multiple stale link keys
+        _mockListStore.Setup(s => s.GetAsync(reverseIndexKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(staleLinks);
+
+        // Create account succeeds for the new account
+        _mockAccountClient.Setup(c => c.CreateAccountAsync(
+            It.IsAny<CreateAccountRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(newAccount);
+
+        // State store saves succeed
+        _mockStringStore.Setup(s => s.SaveAsync(
+            oauthLinkKey,
+            It.IsAny<string>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act
+        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, CancellationToken.None);
+
+        // Assert - new account was created successfully
+        Assert.NotNull(result.Account);
+        Assert.True(result.IsNewAccount);
+        Assert.Equal(newAccountId, result.Account.AccountId);
+
+        // Verify CleanupOAuthLinksForAccountAsync was invoked:
+        // All stale oauth-link keys should be deleted
+        _mockStringStore.Verify(s => s.DeleteAsync(oauthLinkKey, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        _mockStringStore.Verify(s => s.DeleteAsync("oauth-link:google:other-stale-id", It.IsAny<CancellationToken>()), Times.Once);
+
+        // The reverse index itself should be deleted
+        _mockListStore.Verify(s => s.DeleteAsync(reverseIndexKey, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     #endregion
 
     #region ValidateSteamTicketAsync Tests

@@ -162,6 +162,61 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? SteamAppId { get; set; }
 
     /// <summary>
+    /// Email delivery provider (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit)
+    /// Environment variable: AUTH_EMAIL_PROVIDER
+    /// </summary>
+    public EmailProvider EmailProvider { get; set; } = EmailProvider.None;
+
+    /// <summary>
+    /// Sender email address for outgoing emails. Required when EmailProvider is not 'none'.
+    /// Environment variable: AUTH_EMAIL_FROM_ADDRESS
+    /// </summary>
+    public string? EmailFromAddress { get; set; }
+
+    /// <summary>
+    /// Display name for the sender in outgoing emails (e.g., 'Bannou Support'). Optional.
+    /// Environment variable: AUTH_EMAIL_FROM_NAME
+    /// </summary>
+    public string? EmailFromName { get; set; }
+
+    /// <summary>
+    /// SendGrid API key. Required when EmailProvider is 'sendgrid'.
+    /// Environment variable: AUTH_SENDGRID_API_KEY
+    /// </summary>
+    public string? SendGridApiKey { get; set; }
+
+    /// <summary>
+    /// SMTP server hostname. Required when EmailProvider is 'smtp'.
+    /// Environment variable: AUTH_SMTP_HOST
+    /// </summary>
+    public string? SmtpHost { get; set; }
+
+    /// <summary>
+    /// SMTP server port (587 for STARTTLS, 465 for implicit SSL, 25 for unencrypted).
+    /// Environment variable: AUTH_SMTP_PORT
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 65535)]
+    public int SmtpPort { get; set; } = 587;
+
+    /// <summary>
+    /// SMTP authentication username. Optional if server allows anonymous relay.
+    /// Environment variable: AUTH_SMTP_USERNAME
+    /// </summary>
+    public string? SmtpUsername { get; set; }
+
+    /// <summary>
+    /// SMTP authentication password. Optional if server allows anonymous relay.
+    /// Environment variable: AUTH_SMTP_PASSWORD
+    /// </summary>
+    public string? SmtpPassword { get; set; }
+
+    /// <summary>
+    /// Use SSL/TLS when connecting to SMTP server. When true with port 587, uses STARTTLS.
+    /// Environment variable: AUTH_SMTP_USE_SSL
+    /// </summary>
+    public bool SmtpUseSsl { get; set; } = true;
+
+    /// <summary>
     /// Password reset token expiration time in minutes
     /// Environment variable: AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES
     /// </summary>

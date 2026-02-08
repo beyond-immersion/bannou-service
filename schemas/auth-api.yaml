@@ -425,6 +425,11 @@ components:
       enum: [google, discord, twitch, steam]
       description: Authentication provider type
 
+    EmailProvider:
+      type: string
+      enum: [none, sendgrid, smtp]
+      description: Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit)
+
     InitOAuthResponse:
       type: object
       description: Response containing the OAuth authorization URL for redirect

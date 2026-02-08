@@ -124,6 +124,59 @@ x-service-configuration:
       env: AUTH_STEAM_APP_ID
       example: "480"
 
+    # Email Configuration
+    EmailProvider:
+      $ref: 'auth-api.yaml#/components/schemas/EmailProvider'
+      env: AUTH_EMAIL_PROVIDER
+      default: none
+      description: Email delivery provider (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit)
+    EmailFromAddress:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is not 'none')
+      env: AUTH_EMAIL_FROM_ADDRESS
+      description: Sender email address for outgoing emails. Required when EmailProvider is not 'none'.
+    EmailFromName:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable
+      env: AUTH_EMAIL_FROM_NAME
+      description: Display name for the sender in outgoing emails (e.g., 'Bannou Support'). Optional.
+
+    # SendGrid Configuration
+    SendGridApiKey:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is 'sendgrid')
+      env: AUTH_SENDGRID_API_KEY
+      description: SendGrid API key. Required when EmailProvider is 'sendgrid'.
+
+    # SMTP Configuration
+    SmtpHost:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is 'smtp')
+      env: AUTH_SMTP_HOST
+      description: SMTP server hostname. Required when EmailProvider is 'smtp'.
+    SmtpPort:
+      type: integer
+      env: AUTH_SMTP_PORT
+      default: 587
+      minimum: 1
+      maximum: 65535
+      description: SMTP server port (587 for STARTTLS, 465 for implicit SSL, 25 for unencrypted).
+    SmtpUsername:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (optional if server allows anonymous relay)
+      env: AUTH_SMTP_USERNAME
+      description: SMTP authentication username. Optional if server allows anonymous relay.
+    SmtpPassword:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (optional if server allows anonymous relay)
+      env: AUTH_SMTP_PASSWORD
+      description: SMTP authentication password. Optional if server allows anonymous relay.
+    SmtpUseSsl:
+      type: boolean
+      env: AUTH_SMTP_USE_SSL
+      default: true
+      description: Use SSL/TLS when connecting to SMTP server. When true with port 587, uses STARTTLS.
+
     # Password Reset
     PasswordResetTokenTtlMinutes:
       type: integer
