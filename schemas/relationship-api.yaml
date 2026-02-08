@@ -27,6 +27,21 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  x-references:
+    - target: character
+      sourceType: relationship
+      field: entity1Id/entity2Id
+      onDelete: cascade
+      cleanup:
+        endpoint: /relationship/cleanup-by-entity
+        payloadTemplate: '{"entityId": "{{resourceId}}", "entityType": "Character"}'
+    - target: realm
+      sourceType: relationship
+      field: entity1Id/entity2Id
+      onDelete: cascade
+      cleanup:
+        endpoint: /relationship/cleanup-by-entity
+        payloadTemplate: '{"entityId": "{{resourceId}}", "entityType": "Realm"}'
 x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
@@ -223,6 +238,35 @@ paths:
           description: Relationship not found
       x-permissions:
       - role: admin
+        states: {}
+
+  /relationship/cleanup-by-entity:
+    post:
+      operationId: cleanupByEntity
+      tags:
+      - Relationship Management
+      summary: Cleanup relationships referencing a deleted entity
+      description: |
+        Called by lib-resource cleanup coordination when a foundational entity
+        (character, realm) is deleted. Ends all active relationships where the
+        specified entity is either entity1 or entity2. Ended relationships are
+        preserved for history (soft-delete via endedAt). This endpoint is designed
+        for internal service-to-service calls during cascading resource cleanup.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByEntityRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByEntityResponse'
+      x-permissions:
+      - role: developer
         states: {}
 
   # ============================================================
@@ -823,6 +867,40 @@ components:
           nullable: true
           maxLength: 500
           description: Optional reason for ending the relationship
+
+    CleanupByEntityRequest:
+      description: Request to end all relationships referencing a deleted entity during cascading resource cleanup
+      type: object
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the deleted entity whose relationships should be ended
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of the deleted entity (e.g., Character, Realm)
+
+    CleanupByEntityResponse:
+      description: Response summarizing the results of a cascading relationship cleanup operation
+      type: object
+      additionalProperties: false
+      required:
+      - relationshipsEnded
+      - success
+      properties:
+        relationshipsEnded:
+          type: integer
+          description: Number of active relationships that were ended during cleanup
+        alreadyEnded:
+          type: integer
+          description: Number of relationships that were already ended (skipped)
+        success:
+          type: boolean
+          description: Whether the cleanup completed without errors
 
     # Response Models
     RelationshipResponse:

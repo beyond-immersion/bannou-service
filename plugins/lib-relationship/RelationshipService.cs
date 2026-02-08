@@ -670,6 +670,106 @@ public partial class RelationshipService : IRelationshipService
 
     #endregion
 
+    #region Cleanup Operations
+
+    /// <summary>
+    /// Ends all active relationships referencing a deleted entity.
+    /// Called by lib-resource cleanup coordination during cascading resource deletion.
+    /// Loads the entity index, iterates all relationships, and soft-deletes active ones.
+    /// </summary>
+    /// <param name="body">Request containing the deleted entity's ID and type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and cleanup result summary.</returns>
+    public async Task<(StatusCodes, CleanupByEntityResponse?)> CleanupByEntityAsync(
+        CleanupByEntityRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Starting cleanup of relationships for deleted entity {EntityId} ({EntityType})",
+                body.EntityId, body.EntityType);
+
+            var entityIndexKey = BuildEntityIndexKey(body.EntityType, body.EntityId);
+            var store = _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
+            var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+                .GetAsync(entityIndexKey, cancellationToken) ?? new List<Guid>();
+
+            if (relationshipIds.Count == 0)
+            {
+                _logger.LogDebug("No relationships found for entity {EntityId} ({EntityType})", body.EntityId, body.EntityType);
+                return (StatusCodes.OK, new CleanupByEntityResponse
+                {
+                    RelationshipsEnded = 0,
+                    AlreadyEnded = 0,
+                    Success = true
+                });
+            }
+
+            var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
+            var bulkResults = await store.GetBulkAsync(keys, cancellationToken);
+
+            var endedCount = 0;
+            var alreadyEndedCount = 0;
+            var now = DateTimeOffset.UtcNow;
+
+            foreach (var (key, model) in bulkResults)
+            {
+                if (model == null)
+                {
+                    _logger.LogWarning("Relationship {Key} in entity index but not found in store during cleanup", key);
+                    continue;
+                }
+
+                // Skip already-ended relationships
+                if (model.EndedAt.HasValue)
+                {
+                    alreadyEndedCount++;
+                    continue;
+                }
+
+                // End the relationship (soft-delete)
+                model.EndedAt = now;
+                model.UpdatedAt = now;
+
+                var relationshipKey = BuildRelationshipKey(model.RelationshipId);
+                await store.SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+                // Clear composite uniqueness key to allow future recreation
+                var compositeKey = BuildCompositeKey(
+                    model.Entity1Id, model.Entity1Type,
+                    model.Entity2Id, model.Entity2Type,
+                    model.RelationshipTypeId);
+                await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
+                    .DeleteAsync(compositeKey, cancellationToken);
+
+                // Publish deletion event for each ended relationship
+                await PublishRelationshipDeletedEventAsync(model, "Entity deleted (cascade cleanup)", cancellationToken);
+
+                endedCount++;
+            }
+
+            _logger.LogInformation(
+                "Cleanup complete for entity {EntityId} ({EntityType}): ended {EndedCount}, already ended {AlreadyEndedCount}",
+                body.EntityId, body.EntityType, endedCount, alreadyEndedCount);
+
+            return (StatusCodes.OK, new CleanupByEntityResponse
+            {
+                RelationshipsEnded = endedCount,
+                AlreadyEnded = alreadyEndedCount,
+                Success = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during cleanup for entity {EntityId} ({EntityType})", body.EntityId, body.EntityType);
+            await EmitErrorAsync("CleanupByEntity", "post:/relationship/cleanup-by-entity", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
     // ========================================================================
     // RELATIONSHIP TYPE OPERATIONS
     // ========================================================================

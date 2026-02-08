@@ -137,6 +137,22 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndRelationshipAsync(EndRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Cleanup relationships referencing a deleted entity
+    /// </summary>
+
+    /// <remarks>
+    /// Called by lib-resource cleanup coordination when a foundational entity
+    /// <br/>(character, realm) is deleted. Ends all active relationships where the
+    /// <br/>specified entity is either entity1 or entity2. Ended relationships are
+    /// <br/>preserved for history (soft-delete via endedAt). This endpoint is designed
+    /// <br/>for internal service-to-service calls during cascading resource cleanup.
+    /// </remarks>
+
+    /// <returns>Cleanup completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByEntityResponse>> CleanupByEntityAsync(CleanupByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Get relationship type by ID
     /// </summary>
 
@@ -471,6 +487,26 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         var statusCode = await _implementation.EndRelationshipAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Cleanup relationships referencing a deleted entity
+    /// </summary>
+    /// <remarks>
+    /// Called by lib-resource cleanup coordination when a foundational entity
+    /// <br/>(character, realm) is deleted. Ends all active relationships where the
+    /// <br/>specified entity is either entity1 or entity2. Ended relationships are
+    /// <br/>preserved for history (soft-delete via endedAt). This endpoint is designed
+    /// <br/>for internal service-to-service calls during cascading resource cleanup.
+    /// </remarks>
+    /// <returns>Cleanup completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("relationship/cleanup-by-entity")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByEntityResponse>> CleanupByEntity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CleanupByEntityAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
     }
 
     /// <summary>

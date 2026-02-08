@@ -172,6 +172,21 @@ public static class RelationshipPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/relationship/cleanup-by-entity",
+            Method = ServiceEndpointMethod.POST,
+            Description = "cleanupByEntity",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/relationship-type/get",
             Method = ServiceEndpointMethod.POST,
             Description = "getRelationshipType",

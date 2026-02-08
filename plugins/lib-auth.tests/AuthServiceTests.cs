@@ -729,6 +729,166 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task RequestPasswordResetAsync_WithExistingAccount_ShouldCallEmailService()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                Email = "user@example.com",
+                DisplayName = "TestUser"
+            });
+
+        _mockTokenService.Setup(t => t.GenerateSecureToken())
+            .Returns("test-reset-token-abc");
+
+        _configuration.PasswordResetBaseUrl = "https://example.com/reset";
+
+        var service = CreateAuthService();
+        var request = new PasswordResetRequest { Email = "user@example.com" };
+
+        // Act
+        var status = await service.RequestPasswordResetAsync(request);
+
+        // Assert - returns OK and email service was called
+        Assert.Equal(StatusCodes.OK, status);
+        _mockEmailService.Verify(e => e.SendAsync(
+            "user@example.com",
+            It.Is<string>(s => s.Contains("Password Reset")),
+            It.Is<string>(b => b.Contains("test-reset-token-abc")),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RequestPasswordResetAsync_WhenEmailServiceThrows_ShouldStillReturnOK()
+    {
+        // Arrange - email sending fails (fire-and-forget pattern)
+        var accountId = Guid.NewGuid();
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                Email = "user@example.com",
+                DisplayName = "TestUser"
+            });
+
+        _mockTokenService.Setup(t => t.GenerateSecureToken())
+            .Returns("test-reset-token");
+
+        _configuration.PasswordResetBaseUrl = "https://example.com/reset";
+
+        _mockEmailService.Setup(e => e.SendAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SendGrid API key invalid"));
+
+        var service = CreateAuthService();
+        var request = new PasswordResetRequest { Email = "user@example.com" };
+
+        // Act
+        var status = await service.RequestPasswordResetAsync(request);
+
+        // Assert - still returns OK despite email failure (enumeration protection)
+        Assert.Equal(StatusCodes.OK, status);
+    }
+
+    [Fact]
+    public async Task RequestPasswordResetAsync_WhenEmailServiceThrows_ShouldPublishErrorEvent()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                Email = "user@example.com",
+                DisplayName = "TestUser"
+            });
+
+        _mockTokenService.Setup(t => t.GenerateSecureToken())
+            .Returns("test-reset-token");
+
+        _configuration.PasswordResetBaseUrl = "https://example.com/reset";
+
+        _mockEmailService.Setup(e => e.SendAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP connection refused"));
+
+        var service = CreateAuthService();
+        var request = new PasswordResetRequest { Email = "user@example.com" };
+
+        // Act
+        await service.RequestPasswordResetAsync(request);
+
+        // Assert - error event published for monitoring
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "auth",
+            "SendPasswordResetEmail",
+            "InvalidOperationException",
+            "SMTP connection refused",
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RequestPasswordResetAsync_WithMissingPasswordResetBaseUrl_ShouldStillReturnOK()
+    {
+        // Arrange - PasswordResetBaseUrl not configured (SendPasswordResetEmailAsync throws)
+        var accountId = Guid.NewGuid();
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                Email = "user@example.com",
+                DisplayName = "TestUser"
+            });
+
+        _mockTokenService.Setup(t => t.GenerateSecureToken())
+            .Returns("test-reset-token");
+
+        // PasswordResetBaseUrl is null by default - SendPasswordResetEmailAsync will throw
+
+        var service = CreateAuthService();
+        var request = new PasswordResetRequest { Email = "user@example.com" };
+
+        // Act
+        var status = await service.RequestPasswordResetAsync(request);
+
+        // Assert - still returns OK (fire-and-forget catches the exception)
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Email service should NOT be called (threw before reaching it)
+        _mockEmailService.Verify(e => e.SendAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task ConfirmPasswordResetAsync_WithEmptyToken_ShouldReturnBadRequest()
     {
         // Arrange

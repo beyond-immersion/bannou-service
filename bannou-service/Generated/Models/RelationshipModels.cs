@@ -366,6 +366,59 @@ public partial class EndRelationshipRequest
 }
 
 /// <summary>
+/// Request to end all relationships referencing a deleted entity during cascading resource cleanup
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByEntityRequest
+{
+
+    /// <summary>
+    /// ID of the deleted entity whose relationships should be ended
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the deleted entity (e.g., Character, Realm)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response summarizing the results of a cascading relationship cleanup operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByEntityResponse
+{
+
+    /// <summary>
+    /// Number of active relationships that were ended during cleanup
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("relationshipsEnded")]
+    public int RelationshipsEnded { get; set; } = default!;
+
+    /// <summary>
+    /// Number of relationships that were already ended (skipped)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("alreadyEnded")]
+    public int AlreadyEnded { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the cleanup completed without errors
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Complete details of a relationship between two entities
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

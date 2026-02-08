@@ -23,6 +23,7 @@ This plugin was consolidated from the former `lib-relationship` and `lib-relatio
 | lib-state (`IDistributedLockProvider`) | Distributed locks for composite uniqueness enforcement and index read-modify-write operations |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
 | lib-messaging (`IEventConsumer`) | Event registration infrastructure (no current handlers) |
+| lib-resource (`IResourceClient`) | Cleanup callback registration for character and realm reference tracking (via `x-references`) |
 
 ---
 
@@ -112,7 +113,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 ## API Endpoints (Implementation Notes)
 
-### Relationship Endpoints (7 endpoints)
+### Relationship Endpoints (8 endpoints)
 
 - **Create** (`/relationship/create`): Validates entities are not the same (prevents self-relationships). Normalizes composite key bidirectionally (`A->B` and `B->A` produce the same key via string sort). Stores four keys: relationship data, two entity indexes, type index, and composite uniqueness key. Publishes `relationship.created`.
 
@@ -127,6 +128,8 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **Update** (`/relationship/update`): Can modify metadata and relationship type. When type changes, updates type indexes (adds to new first, then removes from old - crash-safe ordering). Immutable fields: entity1, entity2 (cannot change participants). Ended relationships cannot be updated (returns Conflict). Publishes `relationship.updated` with `changedFields`. Protected by distributed lock on relationship ID.
 
 - **End** (`/relationship/end`): Soft-deletes by setting `EndedAt` timestamp. Returns Conflict if already ended. Deletes the composite uniqueness key (allowing the same relationship to be recreated later). Does NOT remove from entity or type indexes (keeping history queryable). Publishes `relationship.deleted` with optional reason from the request (defaults to "Relationship ended" when null).
+
+- **CleanupByEntity** (`/relationship/cleanup-by-entity`): Called by lib-resource during cascading entity deletion. Loads the entity index for the deleted entity, bulk-fetches all relationships, and soft-deletes (ends) each active relationship. Skips already-ended relationships. Clears composite uniqueness keys for ended relationships to allow future recreation. Publishes `relationship.deleted` events for each ended relationship with reason "Entity deleted (cascade cleanup)". Returns counts of ended and already-ended relationships. Requires `developer` role (internal service-to-service only). Registered via `x-references` for character and realm targets.
 
 ### Relationship Type Endpoints (13 endpoints)
 
@@ -290,8 +293,7 @@ State Store Layout
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/335 -->
 2. **Bidirectional asymmetric metadata**: Allow entity1 and entity2 to have independent metadata perspectives on the same relationship.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/336 -->
-3. **Cascade cleanup on entity deletion**: Automatically end all relationships when an entity is permanently deleted.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/337 -->
+3. ~~**Cascade cleanup on entity deletion**~~: **FIXED** (2026-02-08) - Implemented `/relationship/cleanup-by-entity` endpoint with `x-references` declarations for character and realm. Registered cleanup callbacks with lib-resource during plugin startup. Issue #337.
 4. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/338 -->
 5. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
@@ -357,6 +359,7 @@ State Store Layout
 
 ### Completed
 
+- **2026-02-08**: Issue [#337](https://github.com/beyond-immersion/bannou-service/issues/337) - Cascade cleanup on entity deletion via `x-references` pattern with `/relationship/cleanup-by-entity` endpoint for character and realm targets
 - **2026-02-08**: Issue [#233](https://github.com/beyond-immersion/bannou-service/issues/233) - Removed dead `includeChildren` parameter from ListRelationshipTypesRequest schema (T21 violation, redundant with `rootsOnly`)
 
 ### Pending Issues

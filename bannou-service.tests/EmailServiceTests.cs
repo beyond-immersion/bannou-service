@@ -14,6 +14,16 @@ namespace BeyondImmersion.BannouService.Tests;
 /// </summary>
 public class EmailServiceTests
 {
+    /// <summary>
+    /// Creates a SendGrid Response with proper StringContent lifecycle management.
+    /// The returned Response owns the content; caller disposes via the out parameter.
+    /// </summary>
+    private static Response CreateResponse(HttpStatusCode statusCode, string content, out StringContent stringContent)
+    {
+        stringContent = new StringContent(content);
+        return new Response(statusCode, stringContent, null);
+    }
+
     #region ConsoleEmailService Tests
 
     [Fact]
@@ -49,9 +59,10 @@ public class EmailServiceTests
         var from = new EmailAddress("noreply@bannou.test", "Bannou Test");
         var mockLogger = new Mock<ILogger<SendGridEmailService>>();
 
+        using var content = new StringContent("");
         mockClient
             .Setup(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Response(HttpStatusCode.Accepted, new StringContent(""), null));
+            .ReturnsAsync(new Response(HttpStatusCode.Accepted, content, null));
 
         var service = new SendGridEmailService(mockClient.Object, from, mockLogger.Object);
 
@@ -77,9 +88,10 @@ public class EmailServiceTests
         var from = new EmailAddress("noreply@bannou.test", "Bannou Test");
         var mockLogger = new Mock<ILogger<SendGridEmailService>>();
 
+        using var content = new StringContent("Invalid API key");
         mockClient
             .Setup(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Response(HttpStatusCode.Unauthorized, new StringContent("Invalid API key"), null));
+            .ReturnsAsync(new Response(HttpStatusCode.Unauthorized, content, null));
 
         var service = new SendGridEmailService(mockClient.Object, from, mockLogger.Object);
 
@@ -98,9 +110,10 @@ public class EmailServiceTests
         var from = new EmailAddress("noreply@bannou.test", "Bannou Test");
         var mockLogger = new Mock<ILogger<SendGridEmailService>>();
 
+        using var content = new StringContent("Forbidden");
         mockClient
             .Setup(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Response(HttpStatusCode.Forbidden, new StringContent("Forbidden"), null));
+            .ReturnsAsync(new Response(HttpStatusCode.Forbidden, content, null));
 
         var service = new SendGridEmailService(mockClient.Object, from, mockLogger.Object);
 
@@ -133,9 +146,10 @@ public class EmailServiceTests
         var from = new EmailAddress("noreply@bannou.test");
         var mockLogger = new Mock<ILogger<SendGridEmailService>>();
 
+        using var content = new StringContent("");
         mockClient
             .Setup(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Response(HttpStatusCode.OK, new StringContent(""), null));
+            .ReturnsAsync(new Response(HttpStatusCode.OK, content, null));
 
         var service = new SendGridEmailService(mockClient.Object, from, mockLogger.Object);
 
@@ -162,9 +176,10 @@ public class EmailServiceTests
         var mockLogger = new Mock<ILogger<SendGridEmailService>>();
         using var cts = new CancellationTokenSource();
 
+        using var content = new StringContent("");
         mockClient
             .Setup(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), cts.Token))
-            .ReturnsAsync(new Response(HttpStatusCode.Accepted, new StringContent(""), null));
+            .ReturnsAsync(new Response(HttpStatusCode.Accepted, content, null));
 
         var service = new SendGridEmailService(mockClient.Object, from, mockLogger.Object);
 
@@ -185,9 +200,10 @@ public class EmailServiceTests
         var from = new EmailAddress("custom-sender@bannou.test", "Custom Sender");
         var mockLogger = new Mock<ILogger<SendGridEmailService>>();
 
+        using var content = new StringContent("");
         mockClient
             .Setup(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Response(HttpStatusCode.Accepted, new StringContent(""), null));
+            .ReturnsAsync(new Response(HttpStatusCode.Accepted, content, null));
 
         var service = new SendGridEmailService(mockClient.Object, from, mockLogger.Object);
 
