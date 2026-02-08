@@ -53,7 +53,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 |-------------|-----------|-----|---------|
 | `token:{jti}` | `TokenRevocationEntry` | Remaining token TTL | Revoked token entry with accountId, reason, expiry |
 | `token-index` | `List<string>` | **None** | Index of all revoked token JTIs |
-| `account:{accountId}` | `AccountRevocationEntry` | **None** | Account-level revocation (all tokens issued before a timestamp) |
+| `account:{accountId}` | `AccountRevocationEntry` | JwtExpirationMinutes * 60 + 300 | Account-level revocation (all tokens issued before a timestamp) |
 | `account-index` | `List<string>` | **None** | Index of all revoked account IDs |
 | `failed:{providerId}:token:{jti}` | `FailedEdgePushEntry` | **None** | Failed edge push awaiting retry |
 | `failed:{providerId}:account:{accountId}` | `FailedEdgePushEntry` | **None** | Failed account revocation push awaiting retry |
@@ -135,6 +135,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `IOAuthProviderService` | OAuth URL construction, code exchange, user info retrieval, account linking, Steam ticket validation |
 | `IEdgeRevocationService` | Coordinates token revocation across edge providers (CloudFlare, OpenResty) |
 | `IEdgeRevocationProvider` (collection) | CloudflareEdgeProvider and OpenrestyEdgeProvider, injected into EdgeRevocationService via `IEnumerable<IEdgeRevocationProvider>` |
+| `IEmailService` | Email sending abstraction (default: `ConsoleEmailService` logs to console; swap for SendGrid/SES in production) |
 | `IHttpClientFactory` | Used by OAuthProviderService for OAuth API calls and CloudflareEdgeProvider for KV writes |
 | `IEventConsumer` | Registers handlers for account.deleted, account.updated |
 
@@ -142,7 +143,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 
 ### Authentication (login, register)
 
-Login verifies password with `BCrypt.Verify` against the hash stored in Account service. Registration hashes with `BCrypt.HashPassword(workFactor: _configuration.BcryptWorkFactor)` (default 12) and creates the account. Both flows generate a JWT + refresh token via `ITokenService` and return a `ConnectUrl` for WebSocket connection. Failed logins publish audit events for brute force detection but always return 401 (no information leakage about whether the account exists).
+Login enforces per-email rate limiting via Redis counters before attempting authentication. If `MaxLoginAttempts` (default 5) is exceeded, the endpoint returns 401 for `LoginLockoutMinutes` (default 15 minutes) with no information leakage about whether the lockout is active or the account doesn't exist. On successful login, the counter is cleared. Login verifies password with `BCrypt.Verify` against the hash stored in Account service. Registration hashes with `BCrypt.HashPassword(workFactor: _configuration.BcryptWorkFactor)` (default 12) and creates the account. Both flows generate a JWT + refresh token via `ITokenService` and return a `ConnectUrl` for WebSocket connection. Failed logins increment the rate limit counter and publish audit events.
 
 ### OAuth (init, callback)
 
@@ -220,10 +221,10 @@ account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAs
 
 ## Stubs & Unimplemented Features
 
-### Email Sending (SendPasswordResetEmailAsync)
+### Email Delivery Provider
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/141 -->
 
-Password reset generates tokens and constructs reset URLs correctly, but the actual email delivery is a mock that logs to the console. The method signature and flow are complete - only the SMTP/provider integration (SendGrid, AWS SES) is missing. The `PasswordResetBaseUrl` configuration exists for constructing the reset link.
+Password reset uses the `IEmailService` abstraction (defined in `bannou-service/Services/`) to send emails. The default `ConsoleEmailService` logs the email subject, recipient, and body to the console via `ILogger.LogDebug`. The flow is complete end-to-end - only a production `IEmailService` implementation (SendGrid, AWS SES, etc.) is needed, registered in `AuthServicePlugin.cs` to replace `ConsoleEmailService`. The `PasswordResetBaseUrl` configuration exists for constructing the reset link.
 
 ### Audit Event Consumers
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/142 -->
@@ -232,8 +233,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ## Potential Extensions
 
-- **Rate limiting for login attempts**: Covered by [#142](https://github.com/beyond-immersion/bannou-service/issues/142) (Audit Event Consumers).
-- **Email delivery integration**: Covered by [#141](https://github.com/beyond-immersion/bannou-service/issues/141) (Email Sending).
+- **Email delivery integration**: Covered by [#141](https://github.com/beyond-immersion/bannou-service/issues/141) (Email Delivery Provider).
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/149 -->
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.

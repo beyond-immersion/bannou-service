@@ -202,11 +202,11 @@ public class EdgeRevocationServiceTests
         // Act
         await _service.RevokeAccountAsync(accountId, issuedBefore, reason);
 
-        // Assert - verify account entry was saved
+        // Assert - verify account entry was saved with TTL
         _mockAccountStore.Verify(s => s.SaveAsync(
             $"account:{accountId}",
             It.Is<AccountRevocationEntry>(e => e.AccountId == accountId && e.Reason == reason),
-            null,
+            It.Is<StateOptions?>(o => o != null && o.Ttl > 0),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - verify index was updated
