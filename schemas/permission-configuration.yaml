@@ -13,4 +13,11 @@ info:
   version: 1.0.0
 paths: {}
 x-service-configuration:
-  properties: {}
+  properties:
+    MaxConcurrentRecompilations:
+      type: integer
+      env: PERMISSION_MAX_CONCURRENT_RECOMPILATIONS
+      default: 50
+      minimum: 1
+      maximum: 500
+      description: Maximum number of concurrent session recompilations during service registration (bounds parallel Redis operations)

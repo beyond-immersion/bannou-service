@@ -9,7 +9,7 @@
 
 ## Overview
 
-Public-facing website service for browser-based access to news, account profile viewing, game downloads, CMS page management, and contact forms. This is a **pure CMS service** in Layer 3 (App Features) that intentionally does NOT access game data (characters, subscriptions, realms) to respect the service hierarchy. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint logs a debug message and returns `StatusCodes.NotImplemented`. No business logic, state storage, or cross-service calls are implemented. The schema defines a CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account profile viewing. When implemented, this service will require integration with the account service via generated clients, plus state stores for CMS data.
+Public-facing website service (L3 AppFeatures) for browser-based access to news, account profiles, game downloads, CMS pages, and contact forms. Intentionally does NOT access game data (characters, subscriptions, realms) to respect the service hierarchy. Uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility, which is an explicit exception to Bannou's POST-only pattern. **Currently a complete stub** -- every endpoint returns `NotImplemented`. When implemented, will require lib-account integration and state stores for CMS data.
 
 ---
 

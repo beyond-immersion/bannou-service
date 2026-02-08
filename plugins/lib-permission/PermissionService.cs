@@ -15,6 +15,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -362,18 +363,38 @@ public partial class PermissionService : IPermissionService
             _logger.LogInformation("Service {ServiceId} {Action} registered services list",
                 body.ServiceId, added ? "added to" : "already in");
 
-            // Recompile permissions for all active sessions
+            // Recompile permissions for all active sessions (parallel with configurable concurrency)
             var activeSessions = await cacheStore.GetSetAsync<string>(ACTIVE_SESSIONS_KEY, cancellationToken);
 
             var recompiledCount = 0;
-            foreach (var sessionId in activeSessions)
+            var stopwatch = Stopwatch.StartNew();
+
+            if (activeSessions.Count > 0)
             {
-                await RecompileSessionPermissionsAsync(sessionId, "service_registered");
-                recompiledCount++;
+                using var semaphore = new SemaphoreSlim(_configuration.MaxConcurrentRecompilations);
+                var tasks = activeSessions.Select(async sessionId =>
+                {
+                    await semaphore.WaitAsync(cancellationToken);
+                    try
+                    {
+                        await RecompileSessionPermissionsAsync(sessionId, "service_registered");
+                        Interlocked.Increment(ref recompiledCount);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                });
+                // RecompileSessionPermissionsAsync handles its own exceptions (logged + error event published)
+                // so Task.WhenAll won't throw — individual session failures don't abort the batch
+                await Task.WhenAll(tasks);
             }
 
-            _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
-                body.ServiceId, recompiledCount);
+            stopwatch.Stop();
+
+            _logger.LogInformation(
+                "Service {ServiceId} registered successfully, recompiled {Count} sessions in {ElapsedMs}ms (concurrency: {Concurrency})",
+                body.ServiceId, recompiledCount, stopwatch.ElapsedMilliseconds, _configuration.MaxConcurrentRecompilations);
 
             // Store the new hash for idempotent registration detection
             await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Permission)

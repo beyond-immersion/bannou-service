@@ -9,7 +9,7 @@
 
 ## Overview
 
-Realm-scoped species management for the Arcadia game world. Manages playable and NPC races with trait modifiers, realm-specific availability, and a full deprecation lifecycle (deprecate → merge → delete). Species are globally defined but assigned to specific realms, enabling different worlds to offer different playable options. Supports bulk seeding from configuration, code-based lookups (uppercase-normalized), and cross-service character reference checking to prevent orphaned data. Integrates with Character and Realm services for validation.
+Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. Manages playable and NPC races with trait modifiers, realm-specific availability, and a full deprecation lifecycle (deprecate, merge, delete). Species are globally defined but assigned to specific realms, enabling different worlds to offer different playable options. Supports bulk seeding from configuration and cross-service character reference checking to prevent orphaned data.
 
 ---
 

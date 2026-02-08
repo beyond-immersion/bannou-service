@@ -53,4 +53,11 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public Guid? ForceServiceId { get; set; }
 
+    /// <summary>
+    /// Maximum number of concurrent session recompilations during service registration (bounds parallel Redis operations)
+    /// Environment variable: PERMISSION_MAX_CONCURRENT_RECOMPILATIONS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 500)]
+    public int MaxConcurrentRecompilations { get; set; } = 50;
+
 }

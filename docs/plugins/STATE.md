@@ -9,35 +9,7 @@
 
 ## Overview
 
-The State service is the infrastructure abstraction layer that provides all Bannou services with access to Redis and MySQL backends through a unified API. It operates in a dual role: (1) as the `IStateStoreFactory` infrastructure library used by all services for state persistence, and (2) as an HTTP API providing direct state access for debugging and administration. Supports Redis (ephemeral/session data), MySQL (durable/queryable data), and InMemory (testing) backends with optimistic concurrency via ETags, TTL support, sorted sets, and JSON path queries.
-
-### Interface Hierarchy (as of 2026-02-03)
-
-```
-IStateStore<T>                    - Core CRUD (all backends)
-├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
-│   └── ISearchableStateStore<T>  - Full-text search (extends Cacheable)
-├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
-│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
-
-IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
-```
-
-**Key Design**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>` because all searchable stores are Redis-based and therefore support all cacheable operations (sets, sorted sets, counters, hashes). This ensures proper telemetry instrumentation for all operations when using searchable stores.
-
-**Backend Support Matrix**:
-
-| Interface | Redis | MySQL | InMemory | RedisSearch |
-|-----------|:-----:|:-----:|:--------:|:-----------:|
-| `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Counters) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Hashes) | ✅ | ❌ | ✅ | ✅ |
-| `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
-| `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
-| `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
-| `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
+The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports three backends (Redis for ephemeral/session data, MySQL for durable/queryable data, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
 
 ---
 
@@ -282,6 +254,36 @@ None.
 
 1. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/190 -->
+
+---
+
+## Interface Hierarchy
+
+```
+IStateStore<T>                    - Core CRUD (all backends)
+├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
+│   └── ISearchableStateStore<T>  - Full-text search (extends Cacheable)
+├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
+│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
+
+IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
+```
+
+**Key Design**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>` because all searchable stores are Redis-based and therefore support all cacheable operations (sets, sorted sets, counters, hashes). This ensures proper telemetry instrumentation for all operations when using searchable stores.
+
+**Backend Support Matrix**:
+
+| Interface | Redis | MySQL | InMemory | RedisSearch |
+|-----------|:-----:|:-----:|:--------:|:-----------:|
+| `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Counters) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Hashes) | ✅ | ❌ | ✅ | ✅ |
+| `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
+| `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
+| `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
+| `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
 
 ---
 

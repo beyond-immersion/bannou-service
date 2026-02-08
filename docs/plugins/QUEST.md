@@ -9,9 +9,7 @@
 
 ## Overview
 
-The Quest service provides objective-based gameplay progression as a thin orchestration layer over lib-contract. It translates game-flavored quest semantics (objectives, rewards, quest givers) into the Contract service's infrastructure (milestones, prebound APIs, parties). This design leverages Contract's robust state machine, consent flows, and cleanup orchestration while presenting a player-friendly quest API.
-
-**Layer**: **L2 (GameFoundation)** - Quest is a core game primitive alongside Character, Currency, and Items. It is agnostic to prerequisite sources; L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` to provide prerequisite validation without Quest depending on them. Quest calls L2 services directly for built-in prerequisites (currency, items, character level). The service is internal-only and integrates with the Actor service via the Variable Provider Factory pattern to expose quest data for ABML behavior expressions.
+The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
 
 ---
 

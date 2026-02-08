@@ -9,7 +9,7 @@
 
 ## Overview
 
-Historical event participation and lore management for realms. Tracks when realms participate in world events (wars, treaties, cataclysms) with role and impact tracking, and maintains machine-readable lore elements (origin myths, cultural practices, political systems) for behavior system consumption. Provides text summarization for realm archival. Uses shared History infrastructure helpers (`IDualIndexHelper`, `IBackstoryStorageHelper`) for the dual-index pattern and backstory storage, matching the character-history implementation.
+Historical event participation and lore management (L4 GameFeatures) for realms. Tracks when realms participate in world events (wars, treaties, cataclysms) with role and impact tracking, and maintains machine-readable lore elements (origin myths, cultural practices, political systems) for behavior system consumption. Provides text summarization for realm archival via lib-resource. Shares storage helper abstractions with the character-history service.
 
 ---
 

@@ -9,13 +9,7 @@
 
 ## Overview
 
-The Puppetmaster service orchestrates dynamic behaviors, regional watchers, and encounter coordination for the Arcadia game system. It "pulls the strings" while actors perform on stage. As an L4 (Game Features) service, it provides the missing link between the behavior execution runtime (lib-actor at L2) and the asset service (lib-asset at L3) - enabling dynamic ABML behavior loading that would otherwise violate the service hierarchy. The service implements `IBehaviorDocumentProvider` (priority 100) to supply runtime-loaded behaviors to actors via the provider chain pattern.
-
-**Key Responsibilities**:
-- Dynamic behavior document caching and loading from Asset service
-- Regional watcher lifecycle management (create/stop/list)
-- Resource snapshot caching for Event Brain actors
-- Automatic watcher startup on realm creation events
+The Puppetmaster service (L4 GameFeatures) orchestrates dynamic behaviors, regional watchers, and encounter coordination for the Arcadia game system. Provides the bridge between the behavior execution runtime (lib-actor at L2) and the asset service (lib-asset at L3), enabling dynamic ABML behavior loading that would otherwise violate the service hierarchy. Implements `IBehaviorDocumentProvider` to supply runtime-loaded behaviors to actors via the provider chain pattern. Also manages regional watcher lifecycle and resource snapshot caching for Event Brain actors.
 
 ---
 

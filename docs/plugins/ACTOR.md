@@ -9,7 +9,7 @@
 
 ## Overview
 
-Distributed actor management and execution for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters - NOT directly visible to players. Features multiple deployment modes (local `bannou`, `pool-per-type`, `shared-pool`, `auto-scale`), ABML behavior document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, encounter management for Event Brain actors, and pool-based distributed execution with heartbeat monitoring. The runtime (ActorRunner) executes configurable tick-based behavior loops with periodic state persistence and character state publishing.
+Distributed actor management and execution (L2 GameFoundation) for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters -- not directly visible to players. Supports multiple deployment modes (local, pool-per-type, shared-pool, auto-scale), ABML behavior document execution with hot-reload, GOAP planning integration, and bounded perception queues with urgency filtering. Receives data from L4 services (personality, encounters, history) via the Variable Provider Factory pattern without depending on them.
 
 ---
 

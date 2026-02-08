@@ -9,7 +9,7 @@
 
 ## Overview
 
-Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD operations and automated git repository synchronization. Features a trashcan (soft-delete with TTL-based expiration), namespace-scoped search indexes (dual implementation: Redis Search FT.* when available, in-memory ConcurrentDictionary fallback), YAML frontmatter parsing for git-synced content, archive creation via Asset Service bundle uploads, and browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Two background services handle startup index rebuilding and periodic repository sync scheduling. All mutations to repository-bound namespaces are rejected (403 Forbidden) unless the binding is disabled, enforcing git as the single source of truth for bound namespaces.
+Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD and automated git repository synchronization (git-bound namespaces reject mutations, enforcing git as single source of truth). Features browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Two background services handle index rebuilding and periodic repository sync.
 
 ---
 

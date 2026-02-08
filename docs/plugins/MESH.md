@@ -9,7 +9,7 @@
 
 ## Overview
 
-Native service mesh providing YARP-based HTTP routing and Redis-backed service discovery. Replaces Dapr-style sidecar invocation with direct in-process service-to-service calls. Provides endpoint registration with TTL-based health tracking, five load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), a distributed per-appId circuit breaker with cross-instance synchronization, and configurable retry logic with exponential backoff. Includes a background health check service for proactive failure detection with automatic deregistration after consecutive failures. Event-driven auto-registration from service heartbeats enables zero-configuration discovery.
+Native service mesh (L0 Infrastructure) providing direct in-process service-to-service calls with YARP-based HTTP routing and Redis-backed service discovery. Provides endpoint registration with TTL-based health tracking, configurable load balancing, a distributed per-appId circuit breaker, and retry logic with exponential backoff. Includes proactive health checking with automatic deregistration and event-driven auto-registration from Orchestrator heartbeats for zero-configuration discovery.
 
 ---
 

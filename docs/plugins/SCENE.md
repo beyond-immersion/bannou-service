@@ -9,7 +9,7 @@
 
 ## Overview
 
-Hierarchical composition storage for game worlds. Stores and retrieves scene documents as YAML-serialized node trees with support for multiple node types (group, mesh, marker, volume, emitter, reference, custom), scene-to-scene references with recursive resolution, an exclusive checkout/commit/discard workflow with heartbeat-extended TTL locks, game-specific validation rules registered per gameId+sceneType, full-text search across names/descriptions/tags, reverse reference and asset usage tracking via secondary indexes, scene duplication with regenerated node IDs, and version history with configurable retention. Does NOT compute world transforms, determine affordances, push data to other services, or interpret node behavior at runtime -- consumers decide what nodes mean. Scene content is serialized to YAML using YamlDotNet and stored in a single MySQL-backed state store under multiple key prefixes. The Scene Composer SDK extensions (attachment points, affordances, asset slots, marker types, volume shapes) are stored as node properties but not interpreted by the service.
+Hierarchical composition storage (L4 GameFeatures) for game worlds. Stores scene documents as node trees with support for multiple node types (group, mesh, marker, volume, emitter, reference, custom), scene-to-scene references with recursive resolution, an exclusive checkout/commit/discard workflow, game-specific validation rules, full-text search, and version history. Does not compute world transforms or interpret node behavior at runtime -- consumers decide what nodes mean.
 
 ---
 

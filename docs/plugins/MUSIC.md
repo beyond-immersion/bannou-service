@@ -9,7 +9,7 @@
 
 ## Overview
 
-Pure computation music generation using formal music theory rules and narrative-driven composition. Leverages two internal SDKs: `MusicTheory` (harmony, melody, pitch, time, style, MIDI-JSON output) and `MusicStoryteller` (narrative templates, emotional state planning, contour/density guidance). Generates complete compositions, chord progressions, melodies, and voice-led chord voicings. All generation is deterministic when a seed is provided, enabling Redis-based caching for repeat requests. No external service dependencies - fully self-contained computation.
+Pure computation music generation (L4 GameFeatures) using formal music theory rules and narrative-driven composition. Leverages two internal SDKs: `MusicTheory` (harmony, melody, pitch, MIDI-JSON output) and `MusicStoryteller` (narrative templates, emotional state planning). Generates complete compositions, chord progressions, melodies, and voice-led voicings. Deterministic when seeded, enabling Redis caching for repeat requests. No external service dependencies -- fully self-contained computation.
 
 ---
 

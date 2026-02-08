@@ -9,7 +9,7 @@
 
 ## Overview
 
-Generic save/load system for game state persistence with polymorphic ownership, versioned saves, and schema migration. Handles the full lifecycle of save data: slot creation (namespaced by game+owner), writing save data with automatic compression, loading with hot cache acceleration, delta/incremental saves via JSON Patch (RFC 6902), schema version registration with forward migration paths, version pinning/promotion, rolling cleanup based on category-specific retention limits, export/import via ZIP archives through the Asset service, and content hash integrity verification. Features a two-tier storage architecture where saves are immediately acknowledged in Redis hot cache and asynchronously uploaded to MinIO via the Asset service through a background worker with circuit breaker protection. Supports five save categories (QUICK_SAVE, AUTO_SAVE, MANUAL_SAVE, CHECKPOINT, STATE_SNAPSHOT) each with distinct compression and retention defaults. Designed for multi-device cloud sync with conflict detection windowing. Owners can be accounts, characters, sessions, or realms (polymorphic association pattern).
+Generic save/load system (L4 GameFeatures) for game state persistence with polymorphic ownership (accounts, characters, sessions, realms). Manages save slots, versioned writes with automatic compression, delta/incremental saves via JSON Patch (RFC 6902), schema migration with forward migration paths, and rolling cleanup by save category. Uses a two-tier storage architecture: Redis hot cache for immediate acknowledgment, with async upload to MinIO via the Asset service for durable storage. Supports export/import via ZIP archives and multi-device cloud sync with conflict detection.
 
 ---
 

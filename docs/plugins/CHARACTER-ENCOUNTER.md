@@ -9,7 +9,7 @@
 
 ## Overview
 
-Character encounter tracking service for memorable interactions between characters. Manages the lifecycle of encounters (shared interaction records) and perspectives (individual participant views), enabling dialogue triggers ("We've met before..."), grudges/alliances ("You killed my brother!"), quest hooks ("The merchant you saved has a job"), and NPC memory. Implements a multi-participant design where each encounter has one shared record with N perspectives (one per participant), scaling linearly O(N) for group events. Features time-based memory decay (configurable lazy-on-access or scheduled background modes), weighted sentiment aggregation across encounter histories, configurable encounter type codes (6 built-in + custom), automatic encounter pruning per-character and per-pair limits, and ETag-based optimistic concurrency for perspective updates. All state is maintained via manual index management (character, pair, location, global, custom-type) since the state store does not support prefix queries.
+Character encounter tracking service (L4 GameFeatures) for memorable interactions between characters, enabling NPC memory, dialogue triggers, grudges/alliances, and quest hooks. Manages encounters (shared interaction records) with per-participant perspectives, time-based memory decay, weighted sentiment aggregation, and configurable encounter type codes. Features automatic pruning per-character and per-pair limits, and provides `${encounters.*}` ABML variables to the Actor service's behavior system via the Variable Provider Factory pattern.
 
 ---
 

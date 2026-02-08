@@ -9,7 +9,7 @@
 
 ## Overview
 
-Spatial data management service for Arcadia game worlds. Handles authority-based channel ownership for exclusive write access, high-throughput ingest via dynamic RabbitMQ subscriptions, 3D spatial indexing with configurable cell sizes, affordance queries with multi-factor scoring, design-time authoring workflows (checkout/commit/release), and map definition templates. Uses a deterministic channel ID scheme (SHA-256 of region+kind) to ensure one authority per region/kind combination. Features per-kind TTL policies (durable for terrain/navigation/ownership, ephemeral for combat/visual effects), large payload offloading to lib-asset, event aggregation buffering to coalesce rapid object changes, configurable non-authority handling modes (reject_silent, reject_and_alert, accept_and_alert), and three takeover policies for authority succession (preserve_and_diff, require_consume, reset). Does NOT perform client-facing rendering or physics -- it is purely a spatial data store that game servers and NPC brains publish to and query from.
+Spatial data management service (L4 GameFeatures) for Arcadia game worlds. Provides authority-based channel ownership for exclusive write access to spatial regions, high-throughput ingest via dynamic RabbitMQ subscriptions, 3D spatial indexing with affordance queries, and design-time authoring workflows (checkout/commit/release). Purely a spatial data store -- does not perform rendering or physics. Game servers and NPC brains publish spatial data to and query from it.
 
 ---
 

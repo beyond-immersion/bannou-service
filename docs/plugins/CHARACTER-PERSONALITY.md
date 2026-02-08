@@ -9,7 +9,7 @@
 
 ## Overview
 
-Machine-readable personality traits and combat preferences for NPC behavior decisions. Features probabilistic personality evolution based on character experiences (trauma, victory, corruption, etc.) and combat preference adaptation based on battle outcomes. Traits are floating-point values on bipolar axes (e.g., -1.0 pacifist to +1.0 confrontational) that shift probabilistically based on experience intensity. Used by the Actor service's behavior system for decision-making.
+Machine-readable personality traits and combat preferences (L4 GameFeatures) for NPC behavior decisions. Features probabilistic personality evolution based on character experiences and combat preference adaptation based on battle outcomes. Traits are floating-point values on bipolar axes that shift based on experience intensity. Provides `${personality.*}` and `${combat.*}` ABML variables to the Actor service via the Variable Provider Factory pattern.
 
 ---
 

@@ -9,7 +9,7 @@
 
 ## Overview
 
-Ticket-based matchmaking with skill windows, query matching, party support, and configurable accept/decline flow. Players join queues by creating tickets with optional skill ratings, string/numeric properties, and query filters. A background service processes queues at configurable intervals, expanding skill windows over time until matches form or tickets timeout. Formed matches enter an accept/decline phase with configurable deadline. On full acceptance, creates a matchmade game session via `IGameSessionClient` with reservation tokens and publishes join shortcuts. Supports immediate match checks on ticket creation, auto-requeue on decline, and pending match state restoration on reconnection.
+Ticket-based matchmaking (L4 GameFeatures) with skill windows, query matching, party support, and configurable accept/decline flow. A background service processes queues at configurable intervals, expanding skill windows over time until matches form or tickets timeout. On full acceptance, creates a matchmade game session via lib-game-session with reservation tokens and publishes join shortcuts via Connect. Supports immediate match checks on ticket creation, auto-requeue on decline, and pending match state restoration on reconnection.
 
 ---
 

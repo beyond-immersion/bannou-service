@@ -9,7 +9,7 @@
 
 ## Overview
 
-The Voice service provides WebRTC-based voice communication for game sessions, supporting both P2P mesh topology (small groups) and scaled tier via SFU (Selective Forwarding Unit) for large rooms. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Features automatic tier upgrade when P2P rooms exceed capacity, permission-state-gated SDP answer exchange, and session-based participant tracking for privacy.
+The Voice service (L4 GameFeatures) provides WebRTC-based voice communication for game sessions, supporting both P2P mesh topology (small groups) and scaled tier via SFU for large rooms. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Features automatic tier upgrade when P2P rooms exceed capacity and permission-state-gated SDP exchange. Integrated with lib-game-session for room lifecycle management.
 
 ---
 

@@ -9,7 +9,7 @@
 
 ## Overview
 
-ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action Planning) runtime for NPC behavior management. The plugin provides three core subsystems: (1) a multi-phase ABML compiler pipeline (YAML parse, semantic analysis, variable registration, flow compilation, bytecode emission) that produces stack-based bytecode for a custom instruction set with 50+ opcodes across 7 categories, (2) an A* GOAP planner with urgency-tiered search parameters (low/medium/high) producing action sequences from world state and goal conditions, and (3) a 5-stage cognition pipeline (attention filtering, significance assessment, memory formation, goal impact evaluation, intention formation) with keyword-based memory retrieval. Supports streaming composition via continuation points and extension attachment, variant-based model caching with fallback chains, and behavior bundling through the asset service. The compiler outputs portable bytecode interpreted by both server and client SDKs.
+ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action Planning) runtime (L4 GameFeatures) for NPC behavior management. Provides three core subsystems: a multi-phase ABML compiler producing portable stack-based bytecode, an A*-based GOAP planner for action sequence generation from world state and goals, and a 5-stage cognition pipeline for NPC perception and intention formation. Compiled bytecode is interpreted by both the server-side ActorRunner (L2) and client SDKs. Supports streaming composition, variant-based model caching with fallback chains, and behavior bundling through the Asset service.
 
 ---
 

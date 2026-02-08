@@ -64,7 +64,7 @@ Tracks which ac... |
 
 **Version**: 2.0.0 | **Schema**: `schemas/account-api.yaml` | **Deep Dive**: [docs/plugins/ACCOUNT.md](plugins/ACCOUNT.md)
 
-The Account plugin is an internal-only CRUD service for managing user accounts. It is never exposed directly to the internet - all external account operations go through the Auth service, which calls Account via lib-mesh. The plugin handles account creation, lookup (by ID, email, or OAuth provider), updates, soft-deletion, and authentication method management (linking/unlinking OAuth providers). Email is optional - accounts created via OAuth or Steam may have no email address, in which case they are identified solely by their linked authentication methods.
+The Account plugin is an internal-only CRUD service (L1 AppFoundation) for managing user accounts. It is never exposed directly to the internet -- all external account operations go through the Auth service, which calls Account via lib-mesh. Handles account creation, lookup (by ID, email, or OAuth provider), updates, soft-deletion, and authentication method management (linking/unlinking OAuth providers). Email is optional -- accounts created via OAuth or Steam may have no email address, identified solely by their linked authentication methods.
 
 ---
 
@@ -72,7 +72,7 @@ The Account plugin is an internal-only CRUD service for managing user accounts. 
 
 **Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md)
 
-The Achievement plugin provides a multi-entity achievement and trophy system with progressive/binary unlock types, prerequisite chains, rarity calculations, and platform synchronization (Steam, Xbox, PlayStation). Achievements are scoped to game services, support event-driven auto-unlock from Analytics and Leaderboard events, and include a background service that periodically recalculates rarity percentages.
+The Achievement plugin (L4 GameFeatures) provides a multi-entity achievement and trophy system with progressive/binary unlock types, prerequisite chains, rarity calculations, and platform synchronization (Steam, Xbox, PlayStation). Achievements are scoped to game services, support event-driven auto-unlock from Analytics and Leaderboard events, and include a background service for periodic rarity recalculation.
 
 ---
 
@@ -80,7 +80,7 @@ The Achievement plugin provides a multi-entity achievement and trophy system wit
 
 **Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml` | **Deep Dive**: [docs/plugins/ACTOR.md](plugins/ACTOR.md)
 
-Distributed actor management and execution for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters - NOT directly visible to players. Features multiple deployment modes (local `bannou`, `pool-per-type`, `shared-pool`, `auto-scale`), ABML behavior document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, encounter management for Event Brain actors, and pool-based distributed execution with heartbeat monitoring. The runtime (ActorRunner) executes configurable tick-based behavior loops with periodic state persistence and character state publishing.
+Distributed actor management and execution (L2 GameFoundation) for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters -- not directly visible to players. Supports multiple deployment modes (local, pool-per-type, shared-pool, auto-scale), ABML behavior document execution with hot-reload, GOAP planning integration, and bounded perception queues with urgency filtering. Receives data from L4 services (personality, encounters, history) via the Variable Provider Factory pattern without depending on them.
 
 ---
 
@@ -88,7 +88,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 
 **Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml` | **Deep Dive**: [docs/plugins/ANALYTICS.md](plugins/ANALYTICS.md)
 
-The Analytics plugin is the central event aggregation point for all game-related statistics. It handles event ingestion (buffered via Redis sorted sets), entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. It publishes score updates and milestone events that are consumed by the Achievement and Leaderboard services for downstream processing. It subscribes to game session lifecycle events and character/realm history events to automatically ingest analytics data, resolving game service context via cached realm/character lookups.
+The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics only observes via event subscriptions -- it does not invoke L2/L4 service APIs and should not be called by L1/L2/L3 services.
 
 ---
 
@@ -96,7 +96,7 @@ The Analytics plugin is the central event aggregation point for all game-related
 
 **Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md)
 
-The Asset service provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. It never routes raw asset data through the WebSocket gateway; instead, it issues pre-signed URLs so clients upload/download directly to the storage backend. The service also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding and optimization.
+The Asset service (L3 AppFeatures) provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. Issues pre-signed URLs so clients upload/download directly to the storage backend, never routing raw asset data through the WebSocket gateway. Also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding. Used by lib-behavior, lib-save-load, lib-mapping, and lib-documentation for binary storage needs.
 
 ---
 
@@ -104,7 +104,7 @@ The Asset service provides storage, versioning, and distribution of large binary
 
 **Version**: 4.0.0 | **Schema**: `schemas/auth-api.yaml` | **Deep Dive**: [docs/plugins/AUTH.md](plugins/AUTH.md)
 
-The Auth plugin is the internet-facing authentication and session management service. It handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, TOTP-based multi-factor authentication (MFA), and session lifecycle management. It is the primary gateway between external users and the internal service mesh - after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections.
+The Auth plugin is the internet-facing authentication and session management service (L1 AppFoundation). Handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, TOTP-based MFA, and session lifecycle management. It is the primary gateway between external users and the internal service mesh -- after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections via lib-connect.
 
 ---
 
@@ -112,7 +112,7 @@ The Auth plugin is the internet-facing authentication and session management ser
 
 **Version**: 3.0.0 | **Schema**: `schemas/behavior-api.yaml` | **Deep Dive**: [docs/plugins/BEHAVIOR.md](plugins/BEHAVIOR.md)
 
-ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action Planning) runtime for NPC behavior management. The plugin provides three core subsystems: (1) a multi-phase ABML compiler pipeline (YAML parse, semantic analysis, variable registration, flow compilation, bytecode emission) that produces stack-based bytecode for a custom instruction set with 50+ opcodes across 7 categories, (2) an A* GOAP planner with urgency-tiered search parameters (low/medium/high) producing action sequences from world state and goal conditions, and (3) a 5-stage cognition pipeline (attention filtering, significance assessment, memory formation, goal impact evaluation, intention formation) with keyword-based memory retrieval. Supports streaming composition via continuation points and extension attachment, variant-based model caching with fallback chains, and behavior bundling through the asset service. The compiler outputs portable bytecode interpreted by both server and client SDKs.
+ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action Planning) runtime (L4 GameFeatures) for NPC behavior management. Provides three core subsystems: a multi-phase ABML compiler producing portable stack-based bytecode, an A*-based GOAP planner for action sequence generation from world state and goals, and a 5-stage cognition pipeline for NPC perception and intention formation. Compiled bytecode is interpreted by both the server-side ActorRunner (L2) and client SDKs. Supports streaming composition, variant-based model caching with fallback chains, and behavior bundling through the Asset service.
 
 ---
 
@@ -120,7 +120,7 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md)
 
-The Character service manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from Relationship service, L2), and a compression/archival system for dead characters that generates text summaries and tracks reference counts for cleanup eligibility. Per SERVICE_HIERARCHY, Character (L2) cannot depend on L4 services like CharacterPersonality or CharacterHistory - callers needing that data should aggregate from L4 services directly.
+The Character service (L2 GameFoundation) manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from lib-relationship), and compression/archival for dead characters via lib-resource. Per the service hierarchy, Character cannot depend on L4 services (personality, history, encounters) -- callers needing that data should aggregate from L4 services directly.
 
 ---
 
@@ -128,7 +128,7 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
 
-Character encounter tracking service for memorable interactions between characters. Manages the lifecycle of encounters (shared interaction records) and perspectives (individual participant views), enabling dialogue triggers ("We've met before..."), grudges/alliances ("You killed my brother!"), quest hooks ("The merchant you saved has a job"), and NPC memory. Implements a multi-participant design where each encounter has one shared record with N perspectives (one per participant), scaling linearly O(N) for group events. Features time-based memory decay (configurable lazy-on-access or scheduled background modes), weighted sentiment aggregation across encounter histories, configurable encounter type codes (6 built-in + custom), automatic encounter pruning per-character and per-pair limits, and ETag-based optimistic concurrency for perspective updates. All state is maintained via manual index management (character, pair, location, global, custom-type) since the state store does not support prefix queries.
+Character encounter tracking service (L4 GameFeatures) for memorable interactions between characters, enabling NPC memory, dialogue triggers, grudges/alliances, and quest hooks. Manages encounters (shared interaction records) with per-participant perspectives, time-based memory decay, weighted sentiment aggregation, and configurable encounter type codes. Features automatic pruning per-character and per-pair limits, and provides `${encounters.*}` ABML variables to the Actor service's behavior system via the Variable Provider Factory pattern.
 
 ---
 
@@ -136,7 +136,7 @@ Character encounter tracking service for memorable interactions between characte
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-history-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-HISTORY.md](plugins/CHARACTER-HISTORY.md)
 
-Historical event participation and backstory management for characters. Tracks when characters participate in world events (wars, disasters, political upheavals) with role and significance tracking, and maintains machine-readable backstory elements (origin, occupation, training, trauma, fears, goals) for behavior system consumption. Provides template-based text summarization for character compression. Uses helper abstractions (`IDualIndexHelper`, `IBackstoryStorageHelper`) for storage patterns shared with the realm-history service.
+Historical event participation and backstory management (L4 GameFeatures) for characters. Tracks when characters participate in world events (wars, disasters, political upheavals) with role and significance tracking, and maintains machine-readable backstory elements (origin, occupation, training, trauma, fears, goals) for behavior system consumption. Provides template-based text summarization for character compression via lib-resource. Shares storage helper abstractions with the realm-history service.
 
 ---
 
@@ -144,7 +144,7 @@ Historical event participation and backstory management for characters. Tracks w
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md)
 
-Machine-readable personality traits and combat preferences for NPC behavior decisions. Features probabilistic personality evolution based on character experiences (trauma, victory, corruption, etc.) and combat preference adaptation based on battle outcomes. Traits are floating-point values on bipolar axes (e.g., -1.0 pacifist to +1.0 confrontational) that shift probabilistically based on experience intensity. Used by the Actor service's behavior system for decision-making.
+Machine-readable personality traits and combat preferences (L4 GameFeatures) for NPC behavior decisions. Features probabilistic personality evolution based on character experiences and combat preference adaptation based on battle outcomes. Traits are floating-point values on bipolar axes that shift based on experience intensity. Provides `${personality.*}` and `${combat.*}` ABML variables to the Actor service via the Variable Provider Factory pattern.
 
 ---
 
@@ -162,7 +162,7 @@ system-wide consistency for cross-service concepts.
 
 **Version**: 2.0.0 | **Schema**: `schemas/connect-api.yaml` | **Deep Dive**: [docs/plugins/CONNECT.md](plugins/CONNECT.md)
 
-WebSocket-first edge gateway service providing zero-copy binary message routing between game clients and backend Bannou services. Manages persistent WebSocket connections with a 31-byte binary protocol header for request routing and a 16-byte response header. Implements client-salted GUID generation (SHA256-based, version 5/6/7 UUIDs) to prevent cross-session security exploits. Supports three connection modes (external, relayed, internal) with per-mode behavior differences for broadcast, auth, and capability handling. Features session shortcuts (pre-bound payload routing for game-specific flows), reconnection windows with token-based session restoration, per-session RabbitMQ subscriptions for server-to-client event delivery, rate limiting, meta endpoint introspection, peer-to-peer client routing, broadcast messaging, internal proxy for stateless HTTP forwarding, and admin notification forwarding for service error events. Registered as Singleton lifetime (unusual for Bannou services) because it maintains in-memory WebSocket connection state across all requests.
+WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary message routing between game clients and backend services. Manages persistent connections with client-salted GUID generation for cross-session security, three connection modes (external, relayed, internal), session shortcuts for game-specific flows, reconnection windows, and per-session RabbitMQ subscriptions for server-to-client event delivery. Internet-facing (the primary client entry point alongside Auth). Registered as Singleton (unusual for Bannou) because it maintains in-memory connection state.
 
 ---
 
@@ -170,7 +170,7 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 
 **Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md)
 
-Binding agreement management between entities with milestone-based progression, consent flows, prebound API execution, breach handling, guardian custody, and clause-type extensibility. Contracts follow a reactive design principle: external systems tell contracts when conditions are met or failed via API calls; contracts store state, emit events, and execute prebound APIs on state transitions. Templates define the structure (party roles, milestones, terms, enforcement mode), and instances are created from templates with merged terms, party consent tracking, and sequential milestone progression. Integrates with lib-escrow for asset-backed contracts through the guardian locking system, template value substitution, and clause execution. Supports four enforcement modes (advisory, event_only, consequence_based, community), configurable consent deadlines with lazy expiration, ISO 8601 duration-based cure periods for breaches, and batched prebound API execution with configurable parallelism and timeouts.
+Binding agreement management (L1 AppFoundation) between entities with milestone-based progression, consent flows, and prebound API execution on state transitions. Contracts are reactive: external systems report condition fulfillment via API calls; contracts store state, emit events, and execute callbacks. Templates define structure (party roles, milestones, terms, enforcement mode); instances track consent, sequential progression, and breach handling. Used as infrastructure by lib-quest (quest objectives map to contract milestones) and lib-escrow (asset-backed contracts via guardian locking). Has a known L1-to-L2 hierarchy violation: depends on lib-location for territory constraint checking.
 
 ---
 
@@ -178,7 +178,7 @@ Binding agreement management between entities with milestone-based progression, 
 
 **Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md)
 
-Multi-currency management service for game economies. Handles the full lifecycle of currency definitions (CRUD with scope/realm restrictions, precision, caps, autogain, expiration, item linkage, exchange rates), wallet management (create, get-or-create, freeze, unfreeze, close with balance transfer), balance operations (credit with earn/wallet cap enforcement, debit with negative-balance control, transfer with deterministic deadlock-free locking, batch credit), authorization holds (reserve/capture/release pattern for pre-auth scenarios), currency conversion via exchange-rate-to-base pivot, escrow integration (deposit/release/refund as thin wrappers around debit/credit with earn-cap bypass), transaction history with retention enforcement, and analytics stubs (global supply, wealth distribution). Features idempotency-key deduplication on all mutating balance operations, Redis cache layers for balances and holds, and a configurable CurrencyAutogainTaskService background worker that proactively applies passive income to all eligible wallets. The service uses distributed locks throughout for multi-instance safety and ETag-based optimistic concurrency for wallet/hold state transitions.
+Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features a background autogain worker for passive income and transaction history with configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
 ---
 
@@ -186,7 +186,7 @@ Multi-currency management service for game economies. Handles the full lifecycle
 
 **Version**: 1.0.0 | **Schema**: `schemas/documentation-api.yaml` | **Deep Dive**: [docs/plugins/DOCUMENTATION.md](plugins/DOCUMENTATION.md)
 
-Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD operations and automated git repository synchronization. Features a trashcan (soft-delete with TTL-based expiration), namespace-scoped search indexes (dual implementation: Redis Search FT.* when available, in-memory ConcurrentDictionary fallback), YAML frontmatter parsing for git-synced content, archive creation via Asset Service bundle uploads, and browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Two background services handle startup index rebuilding and periodic repository sync scheduling. All mutations to repository-bound namespaces are rejected (403 Forbidden) unless the binding is disabled, enforcing git as the single source of truth for bound namespaces.
+Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD and automated git repository synchronization (git-bound namespaces reject mutations, enforcing git as single source of truth). Features browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Two background services handle index rebuilding and periodic repository sync.
 
 ---
 
@@ -194,9 +194,7 @@ Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function cal
 
 **Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Deep Dive**: [docs/plugins/ESCROW.md](plugins/ESCROW.md)
 
-Full-custody orchestration layer for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes (full-consent requiring cryptographic tokens, initiator-trusted, single-party-trusted). Features a 13-state finite state machine, SHA-256-based token generation for deposit and release authorization, idempotent deposit handling, contract-bound conditional releases, per-party pending count tracking, custom asset type handler registration for extensibility, periodic validation with reaffirmation flow, and arbiter-mediated dispute resolution with split allocation support. Handles currency, items, item stacks, contracts, and custom asset types. Escrow calls lib-currency and lib-inventory APIs directly for asset movements; events are published for observability only.
-
-**Release/Refund Modes**: Configurable confirmation flows via `ReleaseMode` and `RefundMode` enums. For unbound escrows, `ReleaseMode` controls whether releases complete immediately or require downstream service and/or party confirmations. Contract-bound escrows skip release mode logic entirely - they rely on contract fulfillment verification.
+Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes and a 13-state finite state machine. Handles currency, items, contracts, and extensible custom asset types -- calling lib-currency and lib-inventory directly for asset movements. Integrates with lib-contract for conditional releases where contract fulfillment triggers escrow completion. See Release Modes section below for configurable confirmation flows.
 
 ---
 
@@ -204,7 +202,7 @@ Full-custody orchestration layer for multi-party asset exchanges. Manages the co
 
 **Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml` | **Deep Dive**: [docs/plugins/GAME-SERVICE.md](plugins/GAME-SERVICE.md)
 
-The Game Service is a minimal registry that maintains a catalog of available games/applications (e.g., Arcadia, Fantasia) that users can subscribe to. It provides simple CRUD operations for managing service definitions, with stub-name-based lookup for human-friendly identifiers. Internal-only, never internet-facing.
+The Game Service is a minimal registry (L2 GameFoundation) that maintains a catalog of available games/applications (e.g., Arcadia, Fantasia) that users can subscribe to. Provides simple CRUD operations for managing service definitions, with stub-name-based lookup for human-friendly identifiers. Internal-only, never internet-facing. Referenced by nearly all L2/L4 services for game-scoping operations.
 
 ---
 
@@ -212,7 +210,7 @@ The Game Service is a minimal registry that maintains a catalog of available gam
 
 **Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml` | **Deep Dive**: [docs/plugins/GAME-SESSION.md](plugins/GAME-SESSION.md)
 
-Hybrid lobby/matchmade game session management with subscription-driven shortcut publishing, voice integration, and real-time chat. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission service for `in_game` state tracking, Voice service for room lifecycle, and Subscription service for account eligibility. Features distributed subscriber session tracking via ETag-based optimistic concurrency, publishes WebSocket shortcuts to connected clients enabling one-click game join, **per-game horizontal scaling** via `SupportedGameServices` partitioning, and **generic lobbies** for open catch-all entry points without subscription requirements.
+Hybrid lobby/matchmade game session management (L2 GameFoundation) with subscription-driven shortcut publishing and voice integration. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission for `in_game` state tracking, Voice for room lifecycle, and Subscription for account eligibility. Publishes WebSocket shortcuts to connected clients for one-click game join and supports per-game horizontal scaling via `SupportedGameServices` partitioning.
 
 ---
 
@@ -220,7 +218,7 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 
 **Version**: 1.0.0 | **Schema**: `schemas/inventory-api.yaml` | **Deep Dive**: [docs/plugins/INVENTORY.md](plugins/INVENTORY.md)
 
-Container and item placement management for games. Handles container lifecycle (CRUD), item movement between containers, stacking operations (split/merge), and inventory queries. Does NOT handle item definitions or instances directly - delegates to lib-item for all item-level operations. Features distributed lock-protected modifications, Redis cache with MySQL backing, multiple constraint models (slot-only, weight-only, grid, volumetric, unlimited), category restrictions, nesting depth limits, and graceful degradation when the item service is unavailable. Designed as the placement layer that orchestrates lib-item.
+Container and item placement management (L2 GameFoundation) for games. Handles container lifecycle (CRUD), item movement between containers, stacking operations (split/merge), and inventory queries. Does NOT handle item definitions or instances directly -- delegates to lib-item for all item-level operations. Supports multiple constraint models (slot-only, weight-only, grid, volumetric, unlimited), category restrictions, and nesting depth limits. Designed as the placement layer that orchestrates lib-item.
 
 ---
 
@@ -228,7 +226,7 @@ Container and item placement management for games. Handles container lifecycle (
 
 **Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml` | **Deep Dive**: [docs/plugins/ITEM.md](plugins/ITEM.md)
 
-Dual-model item management with templates (definitions/prototypes) and instances (individual occurrences). Templates define immutable properties (code, game scope, quantity model, soulbound type) and mutable properties (name, description, stats, effects, rarity). Instances represent actual items in the game world with quantity, slot placement, durability, custom stats, and binding state. Features Redis read-through caching with configurable TTLs, optimistic concurrency for distributed list operations, and multiple quantity models (discrete stacks, continuous weights, unique items). Designed to pair with lib-inventory for container management.
+Dual-model item management (L2 GameFoundation) with templates (definitions/prototypes) and instances (individual occurrences). Templates define item properties (code, game scope, quantity model, stats, effects, rarity); instances represent actual items in the game world with quantity, durability, custom stats, and binding state. Supports multiple quantity models (discrete stacks, continuous weights, unique items). Designed to pair with lib-inventory for container placement management.
 
 ---
 
@@ -236,7 +234,7 @@ Dual-model item management with templates (definitions/prototypes) and instances
 
 **Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml` | **Deep Dive**: [docs/plugins/LEADERBOARD.md](plugins/LEADERBOARD.md)
 
-Real-time leaderboard management built on Redis Sorted Sets for O(log N) ranking operations. Supports polymorphic entity types (Account, Character, Guild, Actor, Custom), four score update modes (Replace, Increment, Max, Min), seasonal rotation with archival, and automatic score ingestion from Analytics events. Definitions are scoped per game service with configurable sort order, entity type restrictions, and public/private visibility. Provides percentile calculations, neighbor queries (entries around a given entity), and batch score submission.
+Real-time leaderboard management (L4 GameFeatures) built on Redis Sorted Sets. Supports polymorphic entity types (Account, Character, Guild, Actor, Custom), multiple score update modes, seasonal rotation with archival, and automatic score ingestion from Analytics events. Definitions are scoped per game service with configurable sort order and entity type restrictions. Provides percentile calculations, neighbor queries, and batch score submission.
 
 ---
 
@@ -244,7 +242,7 @@ Real-time leaderboard management built on Redis Sorted Sets for O(log N) ranking
 
 **Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
 
-Hierarchical location management for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation (soft-delete), circular reference prevention during parent reassignment, cascading depth updates, code-based lookups (uppercase-normalized per realm), and bulk seeding with two-pass parent resolution. Features Redis read-through caching with configurable TTL for frequently-accessed locations.
+Hierarchical location management (L2 GameFoundation) for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation, circular reference prevention, cascading depth updates, code-based lookups, and bulk seeding with two-pass parent resolution.
 
 ---
 
@@ -252,7 +250,7 @@ Hierarchical location management for the Arcadia game world. Manages physical pl
 
 **Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml` | **Deep Dive**: [docs/plugins/MAPPING.md](plugins/MAPPING.md)
 
-Spatial data management service for Arcadia game worlds. Handles authority-based channel ownership for exclusive write access, high-throughput ingest via dynamic RabbitMQ subscriptions, 3D spatial indexing with configurable cell sizes, affordance queries with multi-factor scoring, design-time authoring workflows (checkout/commit/release), and map definition templates. Uses a deterministic channel ID scheme (SHA-256 of region+kind) to ensure one authority per region/kind combination. Features per-kind TTL policies (durable for terrain/navigation/ownership, ephemeral for combat/visual effects), large payload offloading to lib-asset, event aggregation buffering to coalesce rapid object changes, configurable non-authority handling modes (reject_silent, reject_and_alert, accept_and_alert), and three takeover policies for authority succession (preserve_and_diff, require_consume, reset). Does NOT perform client-facing rendering or physics -- it is purely a spatial data store that game servers and NPC brains publish to and query from.
+Spatial data management service (L4 GameFeatures) for Arcadia game worlds. Provides authority-based channel ownership for exclusive write access to spatial regions, high-throughput ingest via dynamic RabbitMQ subscriptions, 3D spatial indexing with affordance queries, and design-time authoring workflows (checkout/commit/release). Purely a spatial data store -- does not perform rendering or physics. Game servers and NPC brains publish spatial data to and query from it.
 
 ---
 
@@ -260,7 +258,7 @@ Spatial data management service for Arcadia game worlds. Handles authority-based
 
 **Version**: 1.0.0 | **Schema**: `schemas/matchmaking-api.yaml` | **Deep Dive**: [docs/plugins/MATCHMAKING.md](plugins/MATCHMAKING.md)
 
-Ticket-based matchmaking with skill windows, query matching, party support, and configurable accept/decline flow. Players join queues by creating tickets with optional skill ratings, string/numeric properties, and query filters. A background service processes queues at configurable intervals, expanding skill windows over time until matches form or tickets timeout. Formed matches enter an accept/decline phase with configurable deadline. On full acceptance, creates a matchmade game session via `IGameSessionClient` with reservation tokens and publishes join shortcuts. Supports immediate match checks on ticket creation, auto-requeue on decline, and pending match state restoration on reconnection.
+Ticket-based matchmaking (L4 GameFeatures) with skill windows, query matching, party support, and configurable accept/decline flow. A background service processes queues at configurable intervals, expanding skill windows over time until matches form or tickets timeout. On full acceptance, creates a matchmade game session via lib-game-session with reservation tokens and publishes join shortcuts via Connect. Supports immediate match checks on ticket creation, auto-requeue on decline, and pending match state restoration on reconnection.
 
 ---
 
@@ -268,7 +266,7 @@ Ticket-based matchmaking with skill windows, query matching, party support, and 
 
 **Version**: 1.0.0 | **Schema**: `schemas/mesh-api.yaml` | **Deep Dive**: [docs/plugins/MESH.md](plugins/MESH.md)
 
-Native service mesh providing YARP-based HTTP routing and Redis-backed service discovery. Replaces Dapr-style sidecar invocation with direct in-process service-to-service calls. Provides endpoint registration with TTL-based health tracking, five load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), a distributed per-appId circuit breaker with cross-instance synchronization, and configurable retry logic with exponential backoff. Includes a background health check service for proactive failure detection with automatic deregistration after consecutive failures. Event-driven auto-registration from service heartbeats enables zero-configuration discovery.
+Native service mesh (L0 Infrastructure) providing direct in-process service-to-service calls with YARP-based HTTP routing and Redis-backed service discovery. Provides endpoint registration with TTL-based health tracking, configurable load balancing, a distributed per-appId circuit breaker, and retry logic with exponential backoff. Includes proactive health checking with automatic deregistration and event-driven auto-registration from Orchestrator heartbeats for zero-configuration discovery.
 
 ---
 
@@ -276,7 +274,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 **Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml` | **Deep Dive**: [docs/plugins/MESSAGING.md](plugins/MESSAGING.md)
 
-The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`/`IMessageTap`) used by all services for event publishing, subscription, and tapping, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, aggressive retry buffering, and crash-fast philosophy for unrecoverable failures.
+The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrastructure for Bannou. Operates in a dual role: as the `IMessageBus`/`IMessageSubscriber` infrastructure library used by all services for event publishing and subscription, and as an HTTP API providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, and aggressive retry buffering with crash-fast philosophy for unrecoverable failures.
 
 ---
 
@@ -284,7 +282,7 @@ The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. 
 
 **Version**: 1.0.0 | **Schema**: `schemas/music-api.yaml` | **Deep Dive**: [docs/plugins/MUSIC.md](plugins/MUSIC.md)
 
-Pure computation music generation using formal music theory rules and narrative-driven composition. Leverages two internal SDKs: `MusicTheory` (harmony, melody, pitch, time, style, MIDI-JSON output) and `MusicStoryteller` (narrative templates, emotional state planning, contour/density guidance). Generates complete compositions, chord progressions, melodies, and voice-led chord voicings. All generation is deterministic when a seed is provided, enabling Redis-based caching for repeat requests. No external service dependencies - fully self-contained computation.
+Pure computation music generation (L4 GameFeatures) using formal music theory rules and narrative-driven composition. Leverages two internal SDKs: `MusicTheory` (harmony, melody, pitch, MIDI-JSON output) and `MusicStoryteller` (narrative templates, emotional state planning). Generates complete compositions, chord progressions, melodies, and voice-led voicings. Deterministic when seeded, enabling Redis caching for repeat requests. No external service dependencies -- fully self-contained computation.
 
 ---
 
@@ -292,7 +290,7 @@ Pure computation music generation using formal music theory rules and narrative-
 
 **Version**: 3.0.0 | **Schema**: `schemas/orchestrator-api.yaml` | **Deep Dive**: [docs/plugins/ORCHESTRATOR.md](plugins/ORCHESTRATOR.md)
 
-Central intelligence for Bannou environment management and service orchestration. The Orchestrator manages the full lifecycle of distributed service deployments: deploying preset-based topologies with per-node service enablement, tearing down containers with infrastructure-level control, performing live topology updates (add/remove nodes, move/scale services, update environment), managing processing pools for on-demand worker containers (acquire/release/scale/cleanup), monitoring service health via heartbeat ingestion, maintaining versioned deployment configurations with rollback capability, resolving container orchestration backends (Docker Compose, Docker Swarm, Portainer, Kubernetes), retrieving container logs, cleaning up orphaned resources, listing deployment presets, broadcasting service-to-app-id routing mappings via pub/sub, and invalidating OpenResty routing caches on topology changes. The plugin features a pluggable backend architecture with `IContainerOrchestrator` abstraction, index-based state store patterns (avoiding KEYS/SCAN), ETag-based optimistic concurrency for heartbeat/routing indexes, and a secure mode that makes the orchestrator inaccessible via WebSocket (admin-only service-to-service calls).
+Central intelligence (L3 AppFeatures) for Bannou environment management and service orchestration. Manages distributed service deployments including preset-based topologies, live topology updates, processing pools for on-demand worker containers (used by lib-actor for NPC brains), service health monitoring via heartbeats, versioned deployment configurations with rollback, and service-to-app-id routing broadcasts consumed by lib-mesh. Features a pluggable backend architecture supporting Docker Compose, Docker Swarm, Portainer, and Kubernetes. Operates in a secure mode making it inaccessible via WebSocket (admin-only service-to-service calls).
 
 ---
 
@@ -300,7 +298,7 @@ Central intelligence for Bannou environment management and service orchestration
 
 **Version**: 3.0.0 | **Schema**: `schemas/permission-api.yaml` | **Deep Dive**: [docs/plugins/PERMISSION.md](plugins/PERMISSION.md)
 
-Redis-backed RBAC permission system for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via `IClientEventPublisher`. Features idempotent registration (SHA-256 hash comparison), atomic Redis set operations (`SADD`/`SREM`/`SISMEMBER`) for multi-instance-safe session tracking, and in-memory caching (`ConcurrentDictionary`) for compiled session capabilities.
+Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via the Connect service's per-session RabbitMQ queues.
 
 ---
 
@@ -308,13 +306,7 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 
 **Version**: 1.0.0 | **Schema**: `schemas/puppetmaster-api.yaml` | **Deep Dive**: [docs/plugins/PUPPETMASTER.md](plugins/PUPPETMASTER.md)
 
-The Puppetmaster service orchestrates dynamic behaviors, regional watchers, and encounter coordination for the Arcadia game system. It "pulls the strings" while actors perform on stage. As an L4 (Game Features) service, it provides the missing link between the behavior execution runtime (lib-actor at L2) and the asset service (lib-asset at L3) - enabling dynamic ABML behavior loading that would otherwise violate the service hierarchy. The service implements `IBehaviorDocumentProvider` (priority 100) to supply runtime-loaded behaviors to actors via the provider chain pattern.
-
-**Key Responsibilities**:
-- Dynamic behavior document caching and loading from Asset service
-- Regional watcher lifecycle management (create/stop/list)
-- Resource snapshot caching for Event Brain actors
-- Automatic watcher startup on realm creation events
+The Puppetmaster service (L4 GameFeatures) orchestrates dynamic behaviors, regional watchers, and encounter coordination for the Arcadia game system. Provides the bridge between the behavior execution runtime (lib-actor at L2) and the asset service (lib-asset at L3), enabling dynamic ABML behavior loading that would otherwise violate the service hierarchy. Implements `IBehaviorDocumentProvider` to supply runtime-loaded behaviors to actors via the provider chain pattern. Also manages regional watcher lifecycle and resource snapshot caching for Event Brain actors.
 
 ---
 
@@ -322,9 +314,7 @@ The Puppetmaster service orchestrates dynamic behaviors, regional watchers, and 
 
 **Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md)
 
-The Quest service provides objective-based gameplay progression as a thin orchestration layer over lib-contract. It translates game-flavored quest semantics (objectives, rewards, quest givers) into the Contract service's infrastructure (milestones, prebound APIs, parties). This design leverages Contract's robust state machine, consent flows, and cleanup orchestration while presenting a player-friendly quest API.
-
-**Layer**: **L2 (GameFoundation)** - Quest is a core game primitive alongside Character, Currency, and Items. It is agnostic to prerequisite sources; L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` to provide prerequisite validation without Quest depending on them. Quest calls L2 services directly for built-in prerequisites (currency, items, character level). The service is internal-only and integrates with the Actor service via the Variable Provider Factory pattern to expose quest data for ABML behavior expressions.
+The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
 
 ---
 
@@ -332,7 +322,7 @@ The Quest service provides objective-based gameplay progression as a thin orches
 
 **Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Deep Dive**: [docs/plugins/REALM.md](plugins/REALM.md)
 
-The Realm service manages top-level persistent worlds in the Arcadia game system. Realms are peer worlds (e.g., Omega, Arcadia, Fantasia) with no hierarchical relationships between them. Each realm operates as an independent world with distinct species populations and cultural contexts. Provides CRUD with deprecation lifecycle and seed-from-configuration support.
+The Realm service (L2 GameFoundation) manages top-level persistent worlds in the Arcadia game system. Realms are peer worlds (e.g., Omega, Arcadia, Fantasia) with no hierarchical relationships between them. Each realm operates as an independent world with distinct species populations and cultural contexts. Provides CRUD with deprecation lifecycle and seed-from-configuration support. Internal-only.
 
 ---
 
@@ -340,7 +330,7 @@ The Realm service manages top-level persistent worlds in the Arcadia game system
 
 **Version**: 1.0.0 | **Schema**: `schemas/realm-history-api.yaml` | **Deep Dive**: [docs/plugins/REALM-HISTORY.md](plugins/REALM-HISTORY.md)
 
-Historical event participation and lore management for realms. Tracks when realms participate in world events (wars, treaties, cataclysms) with role and impact tracking, and maintains machine-readable lore elements (origin myths, cultural practices, political systems) for behavior system consumption. Provides text summarization for realm archival. Uses shared History infrastructure helpers (`IDualIndexHelper`, `IBackstoryStorageHelper`) for the dual-index pattern and backstory storage, matching the character-history implementation.
+Historical event participation and lore management (L4 GameFeatures) for realms. Tracks when realms participate in world events (wars, treaties, cataclysms) with role and impact tracking, and maintains machine-readable lore elements (origin myths, cultural practices, political systems) for behavior system consumption. Provides text summarization for realm archival via lib-resource. Shares storage helper abstractions with the character-history service.
 
 ---
 
@@ -348,9 +338,7 @@ Historical event participation and lore management for realms. Tracks when realm
 
 **Version**: 2.0.0 | **Schema**: `schemas/relationship-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP.md](plugins/RELATIONSHIP.md)
 
-A unified relationship management service combining entity-to-entity relationships (character friendships, alliances, rivalries, etc.) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, soft-deletion with the ability to recreate ended relationships, hierarchical type definitions with parent-child hierarchy, inverse type tracking, bidirectional flags, deprecation with merge capability, and bulk seeding with dependency-ordered creation. Used by the Character service for managing inter-character bonds and family tree categorization, and by the Storyline service for narrative generation.
-
-This plugin was consolidated from the former `lib-relationship` and `lib-relationship-type` plugins into a single service. The merge operation is fully internalized: it reads type indexes directly, bulk-loads relationship models, handles composite key updates with collision detection, performs batch type index updates, and publishes a single `RelationshipTypeMergedEvent` summary event.
+A unified relationship management service (L2 GameFoundation) combining entity-to-entity relationships (character friendships, alliances, rivalries) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement, polymorphic entity types, soft-deletion with recreate capability, type deprecation with merge, and bulk seeding. Used by the Character service for inter-character bonds and family tree categorization, and by the Storyline service for narrative generation. Consolidated from the former separate relationship and relationship-type plugins.
 
 ---
 
@@ -358,17 +346,7 @@ This plugin was consolidated from the former `lib-relationship` and `lib-relatio
 
 **Version**: 1.0.0 | **Schema**: `schemas/resource-api.yaml` | **Deep Dive**: [docs/plugins/RESOURCE.md](plugins/RESOURCE.md)
 
-Resource reference tracking, lifecycle management, and hierarchical compression for foundational resources. Provides three core capabilities:
-
-1. **Reference Tracking**: Enables foundational services (L2) to safely delete resources by tracking references from higher-layer consumers (L3/L4) without violating the service hierarchy. Higher-layer services publish reference events when they create/delete references to foundational resources.
-
-2. **Cleanup Coordination**: Maintains reference counts using Redis sets and coordinates cleanup callbacks when resources are deleted. Supports CASCADE, RESTRICT, and DETACH deletion policies.
-
-3. **Hierarchical Compression**: Centralizes compression of resources and their dependents. Higher-layer services register compression callbacks that gather data for archival. The Resource service orchestrates callback execution, bundles data into unified archives stored in MySQL, and supports full decompression for data recovery.
-
-**Key Design Principle**: lib-resource (L1) uses opaque string identifiers for `resourceType` and `sourceType`. It does NOT enumerate or validate these against any service registry - that would create implicit coupling to higher layers. The strings are just identifiers that consumers self-report.
-
-**Why L1**: Any layer can depend on L1. Resources being tracked are at L2 or higher, and their consumers are at L3/L4. By placing this service at L1, all layers can use it without hierarchy violations.
+Resource reference tracking, lifecycle management, and hierarchical compression service (L1 AppFoundation) for foundational resources. Enables safe deletion of L2 resources by tracking references from higher-layer consumers (L3/L4) without hierarchy violations, coordinates cleanup callbacks with CASCADE/RESTRICT/DETACH policies, and centralizes compression of resources and their dependents into unified MySQL-backed archives. Placed at L1 so all layers can use it; uses opaque string identifiers for resource/source types to avoid coupling to higher layers. Currently integrated by lib-character (L2) for deletion checks, and by lib-actor, lib-character-encounter, lib-character-history, and lib-character-personality (L4) as reference publishers.
 
 ---
 
@@ -376,7 +354,7 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 
 **Version**: 1.0.0 | **Schema**: `schemas/save-load-api.yaml` | **Deep Dive**: [docs/plugins/SAVE-LOAD.md](plugins/SAVE-LOAD.md)
 
-Generic save/load system for game state persistence with polymorphic ownership, versioned saves, and schema migration. Handles the full lifecycle of save data: slot creation (namespaced by game+owner), writing save data with automatic compression, loading with hot cache acceleration, delta/incremental saves via JSON Patch (RFC 6902), schema version registration with forward migration paths, version pinning/promotion, rolling cleanup based on category-specific retention limits, export/import via ZIP archives through the Asset service, and content hash integrity verification. Features a two-tier storage architecture where saves are immediately acknowledged in Redis hot cache and asynchronously uploaded to MinIO via the Asset service through a background worker with circuit breaker protection. Supports five save categories (QUICK_SAVE, AUTO_SAVE, MANUAL_SAVE, CHECKPOINT, STATE_SNAPSHOT) each with distinct compression and retention defaults. Designed for multi-device cloud sync with conflict detection windowing. Owners can be accounts, characters, sessions, or realms (polymorphic association pattern).
+Generic save/load system (L4 GameFeatures) for game state persistence with polymorphic ownership (accounts, characters, sessions, realms). Manages save slots, versioned writes with automatic compression, delta/incremental saves via JSON Patch (RFC 6902), schema migration with forward migration paths, and rolling cleanup by save category. Uses a two-tier storage architecture: Redis hot cache for immediate acknowledgment, with async upload to MinIO via the Asset service for durable storage. Supports export/import via ZIP archives and multi-device cloud sync with conflict detection.
 
 ---
 
@@ -384,7 +362,7 @@ Generic save/load system for game state persistence with polymorphic ownership, 
 
 **Version**: 1.0.0 | **Schema**: `schemas/scene-api.yaml` | **Deep Dive**: [docs/plugins/SCENE.md](plugins/SCENE.md)
 
-Hierarchical composition storage for game worlds. Stores and retrieves scene documents as YAML-serialized node trees with support for multiple node types (group, mesh, marker, volume, emitter, reference, custom), scene-to-scene references with recursive resolution, an exclusive checkout/commit/discard workflow with heartbeat-extended TTL locks, game-specific validation rules registered per gameId+sceneType, full-text search across names/descriptions/tags, reverse reference and asset usage tracking via secondary indexes, scene duplication with regenerated node IDs, and version history with configurable retention. Does NOT compute world transforms, determine affordances, push data to other services, or interpret node behavior at runtime -- consumers decide what nodes mean. Scene content is serialized to YAML using YamlDotNet and stored in a single MySQL-backed state store under multiple key prefixes. The Scene Composer SDK extensions (attachment points, affordances, asset slots, marker types, volume shapes) are stored as node properties but not interpreted by the service.
+Hierarchical composition storage (L4 GameFeatures) for game worlds. Stores scene documents as node trees with support for multiple node types (group, mesh, marker, volume, emitter, reference, custom), scene-to-scene references with recursive resolution, an exclusive checkout/commit/discard workflow, game-specific validation rules, full-text search, and version history. Does not compute world transforms or interpret node behavior at runtime -- consumers decide what nodes mean.
 
 ---
 
@@ -392,7 +370,7 @@ Hierarchical composition storage for game worlds. Stores and retrieves scene doc
 
 **Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Deep Dive**: [docs/plugins/SPECIES.md](plugins/SPECIES.md)
 
-Realm-scoped species management for the Arcadia game world. Manages playable and NPC races with trait modifiers, realm-specific availability, and a full deprecation lifecycle (deprecate → merge → delete). Species are globally defined but assigned to specific realms, enabling different worlds to offer different playable options. Supports bulk seeding from configuration, code-based lookups (uppercase-normalized), and cross-service character reference checking to prevent orphaned data. Integrates with Character and Realm services for validation.
+Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. Manages playable and NPC races with trait modifiers, realm-specific availability, and a full deprecation lifecycle (deprecate, merge, delete). Species are globally defined but assigned to specific realms, enabling different worlds to offer different playable options. Supports bulk seeding from configuration and cross-service character reference checking to prevent orphaned data.
 
 ---
 
@@ -400,35 +378,7 @@ Realm-scoped species management for the Arcadia game world. Manages playable and
 
 **Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml` | **Deep Dive**: [docs/plugins/STATE.md](plugins/STATE.md)
 
-The State service is the infrastructure abstraction layer that provides all Bannou services with access to Redis and MySQL backends through a unified API. It operates in a dual role: (1) as the `IStateStoreFactory` infrastructure library used by all services for state persistence, and (2) as an HTTP API providing direct state access for debugging and administration. Supports Redis (ephemeral/session data), MySQL (durable/queryable data), and InMemory (testing) backends with optimistic concurrency via ETags, TTL support, sorted sets, and JSON path queries.
-
-### Interface Hierarchy (as of 2026-02-03)
-
-```
-IStateStore<T>                    - Core CRUD (all backends)
-├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
-│   └── ISearchableStateStore<T>  - Full-text search (extends Cacheable)
-├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
-│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
-
-IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
-```
-
-**Key Design**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>` because all searchable stores are Redis-based and therefore support all cacheable operations (sets, sorted sets, counters, hashes). This ensures proper telemetry instrumentation for all operations when using searchable stores.
-
-**Backend Support Matrix**:
-
-| Interface | Redis | MySQL | InMemory | RedisSearch |
-|-----------|:-----:|:-----:|:--------:|:-----------:|
-| `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Counters) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Hashes) | ✅ | ❌ | ✅ | ✅ |
-| `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
-| `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
-| `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
-| `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
+The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports three backends (Redis for ephemeral/session data, MySQL for durable/queryable data, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
 
 ---
 
@@ -436,7 +386,7 @@ IRedisOperations                  - Low-level Redis access (Lua scripts, transac
 
 **Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md)
 
-The Storyline service wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements - callers (gods/regional watchers) decide whether to instantiate them. The service is internal-only (Layer 4 Game Features) and requires the `developer` role for all endpoints.
+The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements -- callers (gods/regional watchers) decide whether to instantiate them. Internal-only, requires the `developer` role for all endpoints.
 
 ---
 
@@ -444,7 +394,7 @@ The Storyline service wraps the `storyline-theory` and `storyline-storyteller` S
 
 **Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md)
 
-The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that GameSession service consumes for real-time shortcut publishing. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
+The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
 
 ---
 
@@ -452,7 +402,7 @@ The Subscription service manages user subscriptions to game services, controllin
 
 **Version**: 1.0.0 | **Schema**: `schemas/telemetry-api.yaml` | **Deep Dive**: [docs/plugins/TELEMETRY.md](plugins/TELEMETRY.md)
 
-The Telemetry service provides unified observability infrastructure for Bannou services using OpenTelemetry standards. It operates in a dual role: (1) as the `ITelemetryProvider` infrastructure interface that lib-state, lib-messaging, and lib-mesh use for instrumentation, and (2) as an HTTP API providing health and status endpoints for observability configuration. The service is internal-only (empty x-permissions) and unique in that it does not use state stores or publish events - it purely configures and exposes OpenTelemetry SDK settings.
+The Telemetry service (L0 Infrastructure, optional) provides unified observability infrastructure for Bannou using OpenTelemetry standards. Operates in a dual role: as the `ITelemetryProvider` interface that lib-state, lib-messaging, and lib-mesh use for instrumentation, and as an HTTP API providing health and status endpoints. Unique among Bannou services: uses no state stores and publishes no events. When disabled, other L0 services receive a `NullTelemetryProvider` (all methods are no-ops).
 
 ---
 
@@ -460,7 +410,7 @@ The Telemetry service provides unified observability infrastructure for Bannou s
 
 **Version**: 1.1.0 | **Schema**: `schemas/voice-api.yaml` | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md)
 
-The Voice service provides WebRTC-based voice communication for game sessions, supporting both P2P mesh topology (small groups) and scaled tier via SFU (Selective Forwarding Unit) for large rooms. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Features automatic tier upgrade when P2P rooms exceed capacity, permission-state-gated SDP answer exchange, and session-based participant tracking for privacy.
+The Voice service (L4 GameFeatures) provides WebRTC-based voice communication for game sessions, supporting both P2P mesh topology (small groups) and scaled tier via SFU for large rooms. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Features automatic tier upgrade when P2P rooms exceed capacity and permission-state-gated SDP exchange. Integrated with lib-game-session for room lifecycle management.
 
 ---
 
@@ -468,7 +418,7 @@ The Voice service provides WebRTC-based voice communication for game sessions, s
 
 **Version**: 1.0.0 | **Schema**: `schemas/website-api.yaml` | **Deep Dive**: [docs/plugins/WEBSITE.md](plugins/WEBSITE.md)
 
-Public-facing website service for browser-based access to news, account profile viewing, game downloads, CMS page management, and contact forms. This is a **pure CMS service** in Layer 3 (App Features) that intentionally does NOT access game data (characters, subscriptions, realms) to respect the service hierarchy. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint logs a debug message and returns `StatusCodes.NotImplemented`. No business logic, state storage, or cross-service calls are implemented. The schema defines a CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account profile viewing. When implemented, this service will require integration with the account service via generated clients, plus state stores for CMS data.
+Public-facing website service (L3 AppFeatures) for browser-based access to news, account profiles, game downloads, CMS pages, and contact forms. Intentionally does NOT access game data (characters, subscriptions, realms) to respect the service hierarchy. Uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility, which is an explicit exception to Bannou's POST-only pattern. **Currently a complete stub** -- every endpoint returns `NotImplemented`. When implemented, will require lib-account integration and state stores for CMS data.
 
 ---
 

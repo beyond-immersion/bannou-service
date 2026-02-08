@@ -10,17 +10,7 @@
 
 ## Overview
 
-Resource reference tracking, lifecycle management, and hierarchical compression for foundational resources. Provides three core capabilities:
-
-1. **Reference Tracking**: Enables foundational services (L2) to safely delete resources by tracking references from higher-layer consumers (L3/L4) without violating the service hierarchy. Higher-layer services publish reference events when they create/delete references to foundational resources.
-
-2. **Cleanup Coordination**: Maintains reference counts using Redis sets and coordinates cleanup callbacks when resources are deleted. Supports CASCADE, RESTRICT, and DETACH deletion policies.
-
-3. **Hierarchical Compression**: Centralizes compression of resources and their dependents. Higher-layer services register compression callbacks that gather data for archival. The Resource service orchestrates callback execution, bundles data into unified archives stored in MySQL, and supports full decompression for data recovery.
-
-**Key Design Principle**: lib-resource (L1) uses opaque string identifiers for `resourceType` and `sourceType`. It does NOT enumerate or validate these against any service registry - that would create implicit coupling to higher layers. The strings are just identifiers that consumers self-report.
-
-**Why L1**: Any layer can depend on L1. Resources being tracked are at L2 or higher, and their consumers are at L3/L4. By placing this service at L1, all layers can use it without hierarchy violations.
+Resource reference tracking, lifecycle management, and hierarchical compression service (L1 AppFoundation) for foundational resources. Enables safe deletion of L2 resources by tracking references from higher-layer consumers (L3/L4) without hierarchy violations, coordinates cleanup callbacks with CASCADE/RESTRICT/DETACH policies, and centralizes compression of resources and their dependents into unified MySQL-backed archives. Placed at L1 so all layers can use it; uses opaque string identifiers for resource/source types to avoid coupling to higher layers. Currently integrated by lib-character (L2) for deletion checks, and by lib-actor, lib-character-encounter, lib-character-history, and lib-character-personality (L4) as reference publishers.
 
 ---
 

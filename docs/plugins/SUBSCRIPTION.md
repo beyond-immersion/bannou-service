@@ -9,7 +9,7 @@
 
 ## Overview
 
-The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that GameSession service consumes for real-time shortcut publishing. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
+The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
 
 ---
 

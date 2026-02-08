@@ -9,7 +9,7 @@
 
 ## Overview
 
-Real-time leaderboard management built on Redis Sorted Sets for O(log N) ranking operations. Supports polymorphic entity types (Account, Character, Guild, Actor, Custom), four score update modes (Replace, Increment, Max, Min), seasonal rotation with archival, and automatic score ingestion from Analytics events. Definitions are scoped per game service with configurable sort order, entity type restrictions, and public/private visibility. Provides percentile calculations, neighbor queries (entries around a given entity), and batch score submission.
+Real-time leaderboard management (L4 GameFeatures) built on Redis Sorted Sets. Supports polymorphic entity types (Account, Character, Guild, Actor, Custom), multiple score update modes, seasonal rotation with archival, and automatic score ingestion from Analytics events. Definitions are scoped per game service with configurable sort order and entity type restrictions. Provides percentile calculations, neighbor queries, and batch score submission.
 
 ---
 

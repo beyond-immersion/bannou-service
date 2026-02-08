@@ -9,7 +9,7 @@
 
 ## Overview
 
-WebSocket-first edge gateway service providing zero-copy binary message routing between game clients and backend Bannou services. Manages persistent WebSocket connections with a 31-byte binary protocol header for request routing and a 16-byte response header. Implements client-salted GUID generation (SHA256-based, version 5/6/7 UUIDs) to prevent cross-session security exploits. Supports three connection modes (external, relayed, internal) with per-mode behavior differences for broadcast, auth, and capability handling. Features session shortcuts (pre-bound payload routing for game-specific flows), reconnection windows with token-based session restoration, per-session RabbitMQ subscriptions for server-to-client event delivery, rate limiting, meta endpoint introspection, peer-to-peer client routing, broadcast messaging, internal proxy for stateless HTTP forwarding, and admin notification forwarding for service error events. Registered as Singleton lifetime (unusual for Bannou services) because it maintains in-memory WebSocket connection state across all requests.
+WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary message routing between game clients and backend services. Manages persistent connections with client-salted GUID generation for cross-session security, three connection modes (external, relayed, internal), session shortcuts for game-specific flows, reconnection windows, and per-session RabbitMQ subscriptions for server-to-client event delivery. Internet-facing (the primary client entry point alongside Auth). Registered as Singleton (unusual for Bannou) because it maintains in-memory connection state.
 
 ---
 

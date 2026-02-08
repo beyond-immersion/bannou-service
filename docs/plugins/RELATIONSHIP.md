@@ -9,9 +9,7 @@
 
 ## Overview
 
-A unified relationship management service combining entity-to-entity relationships (character friendships, alliances, rivalries, etc.) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, soft-deletion with the ability to recreate ended relationships, hierarchical type definitions with parent-child hierarchy, inverse type tracking, bidirectional flags, deprecation with merge capability, and bulk seeding with dependency-ordered creation. Used by the Character service for managing inter-character bonds and family tree categorization, and by the Storyline service for narrative generation.
-
-This plugin was consolidated from the former `lib-relationship` and `lib-relationship-type` plugins into a single service. The merge operation is fully internalized: it reads type indexes directly, bulk-loads relationship models, handles composite key updates with collision detection, performs batch type index updates, and publishes a single `RelationshipTypeMergedEvent` summary event.
+A unified relationship management service (L2 GameFoundation) combining entity-to-entity relationships (character friendships, alliances, rivalries) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement, polymorphic entity types, soft-deletion with recreate capability, type deprecation with merge, and bulk seeding. Used by the Character service for inter-character bonds and family tree categorization, and by the Storyline service for narrative generation. Consolidated from the former separate relationship and relationship-type plugins.
 
 ---
 

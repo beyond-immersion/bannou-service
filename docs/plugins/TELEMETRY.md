@@ -9,7 +9,7 @@
 
 ## Overview
 
-The Telemetry service provides unified observability infrastructure for Bannou services using OpenTelemetry standards. It operates in a dual role: (1) as the `ITelemetryProvider` infrastructure interface that lib-state, lib-messaging, and lib-mesh use for instrumentation, and (2) as an HTTP API providing health and status endpoints for observability configuration. The service is internal-only (empty x-permissions) and unique in that it does not use state stores or publish events - it purely configures and exposes OpenTelemetry SDK settings.
+The Telemetry service (L0 Infrastructure, optional) provides unified observability infrastructure for Bannou using OpenTelemetry standards. Operates in a dual role: as the `ITelemetryProvider` interface that lib-state, lib-messaging, and lib-mesh use for instrumentation, and as an HTTP API providing health and status endpoints. Unique among Bannou services: uses no state stores and publishes no events. When disabled, other L0 services receive a `NullTelemetryProvider` (all methods are no-ops).
 
 ---
 

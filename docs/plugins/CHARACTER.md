@@ -9,7 +9,7 @@
 
 ## Overview
 
-The Character service manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from Relationship service, L2), and a compression/archival system for dead characters that generates text summaries and tracks reference counts for cleanup eligibility. Per SERVICE_HIERARCHY, Character (L2) cannot depend on L4 services like CharacterPersonality or CharacterHistory - callers needing that data should aggregate from L4 services directly.
+The Character service (L2 GameFoundation) manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from lib-relationship), and compression/archival for dead characters via lib-resource. Per the service hierarchy, Character cannot depend on L4 services (personality, history, encounters) -- callers needing that data should aggregate from L4 services directly.
 
 ---
 

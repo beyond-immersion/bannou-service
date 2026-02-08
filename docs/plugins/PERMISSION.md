@@ -9,7 +9,7 @@
 
 ## Overview
 
-Redis-backed RBAC permission system for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via `IClientEventPublisher`. Features idempotent registration (SHA-256 hash comparison), atomic Redis set operations (`SADD`/`SREM`/`SISMEMBER`) for multi-instance-safe session tracking, and in-memory caching (`ConcurrentDictionary`) for compiled session capabilities.
+Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via the Connect service's per-session RabbitMQ queues.
 
 ---
 
@@ -78,7 +78,9 @@ No traditional topic-based event publications. Capability updates go directly to
 
 ## Configuration
 
-No service-specific configuration properties. The service uses only `ForceServiceId` from `IServiceConfiguration`.
+| Property | Type | Default | Range | Env Var | Description |
+|----------|------|---------|-------|---------|-------------|
+| `MaxConcurrentRecompilations` | int | 50 | 1-500 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | Bounds parallel session recompilations during service registration |
 
 ---
 
@@ -114,7 +116,7 @@ Service lifetime is **Singleton** (shared across all requests).
   2. Skips if hash unchanged AND service already registered (atomic `SISMEMBER` check)
   3. Stores matrix entries in Redis (service:state:role -> endpoints)
   4. Atomically adds service to registered_services set (`SADD` - multi-instance safe)
-  5. Recompiles ALL active sessions
+  5. Recompiles ALL active sessions in parallel (`SemaphoreSlim`-bounded `Task.WhenAll`, configurable via `MaxConcurrentRecompilations`)
   6. Stores new hash for future idempotency checks
 
 - **GetRegisteredServices** (`/permission/services/list`): Lists all registered services with their registration info. Used by test infrastructure to poll for service readiness.
@@ -232,8 +234,8 @@ None identified.
 
 ### Design Considerations
 
-1. **Full session recompilation on service registration**: Sequential recompilation of all active sessions during service registration. At 100K sessions, a hot-deployed service change triggers ~300s sequential recompilation. Solution: parallel recompilation with configurable `MaxConcurrentRecompilations` (semaphore-bounded `Task.WhenAll`). All design questions resolved — see [#236](https://github.com/beyond-immersion/bannou-service/issues/236) for implementation plan.
-<!-- AUDIT:READY:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/236 -->
+1. ~~**Full session recompilation on service registration**~~: **FIXED** (2026-02-08) - Replaced sequential recompilation with `SemaphoreSlim`-bounded parallel `Task.WhenAll`. Configurable via `MaxConcurrentRecompilations` (default: 50, range: 1-500). Includes timing metrics in registration log. See [#236](https://github.com/beyond-immersion/bannou-service/issues/236).
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/236 -->
 
 2. ~~**Permission matrix stored as individual keys**~~: **CLOSED** — 480 Redis keys with ~320 reads per recompilation (~3ms) is well within Redis capacity (100K+ ops/sec). The current simple key strategy is correct. Not on the hot message path (Connect validates locally). See [#237](https://github.com/beyond-immersion/bannou-service/issues/237).
 <!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/237 -->
@@ -245,4 +247,5 @@ None identified.
 
 ## Work Tracking
 
-None tracked.
+### Completed
+- **2026-02-08**: Issue #236 - Parallel session recompilation with configurable concurrency (`MaxConcurrentRecompilations`)

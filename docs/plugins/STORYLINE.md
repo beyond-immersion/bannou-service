@@ -9,7 +9,7 @@
 
 ## Overview
 
-The Storyline service wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements - callers (gods/regional watchers) decide whether to instantiate them. The service is internal-only (Layer 4 Game Features) and requires the `developer` role for all endpoints.
+The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements -- callers (gods/regional watchers) decide whether to instantiate them. Internal-only, requires the `developer` role for all endpoints.
 
 ---
 
