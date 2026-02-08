@@ -9,12 +9,12 @@ This document provides a compact reference of all Bannou services.
 
 | Service | Version | Endpoints | Description |
 |---------|---------|-----------|-------------|
-| [Account](#account) | 2.0.0 | 16 | Internal account management service (CRUD operations only, n... |
+| [Account](#account) | 2.0.0 | 18 | Internal account management service (CRUD operations only, n... |
 | [Achievement](#achievement) | 1.0.0 | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor](#actor) | 1.0.0 | 16 | Distributed actor management and execution for NPC brains, e... |
 | [Analytics](#analytics) | 1.0.0 | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset](#asset) | 1.0.0 | 20 | Asset management service for storage, versioning, and distri... |
-| [Auth](#auth) | 4.0.0 | 14 | Authentication and session management service (Internet-faci... |
+| [Auth](#auth) | 4.0.0 | 19 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 12 | Character management service for game worlds. |
 | [Character Encounter](#character-encounter) | 1.0.0 | 21 | Character encounter tracking service for memorable interacti... |
@@ -44,7 +44,7 @@ Des... |
 | [Quest](#quest) | 1.0.0 | 17 | Quest system providing objective-based gameplay progression ... |
 | [Realm](#realm) | 1.0.0 | 11 | Realm management service for game worlds. |
 | [Realm History](#realm-history) | 1.0.0 | 12 | Historical event participation and lore management for realm... |
-| [Relationship](#relationship) | 2.0.0 | 20 | Relationship and relationship type management service for en... |
+| [Relationship](#relationship) | 2.0.0 | 21 | Relationship and relationship type management service for en... |
 | [Resource](#resource) | 1.0.0 | 17 | Resource reference tracking and lifecycle management. |
 | [Save Load](#save-load) | 1.0.0 | 26 | Generic save/load system for game state persistence.
 Support... |
@@ -104,7 +104,7 @@ The Asset service provides storage, versioning, and distribution of large binary
 
 **Version**: 4.0.0 | **Schema**: `schemas/auth-api.yaml` | **Deep Dive**: [docs/plugins/AUTH.md](plugins/AUTH.md)
 
-The Auth plugin is the internet-facing authentication and session management service. It handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, and session lifecycle management. It is the primary gateway between external users and the internal service mesh - after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections.
+The Auth plugin is the internet-facing authentication and session management service. It handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, TOTP-based multi-factor authentication (MFA), and session lifecycle management. It is the primary gateway between external users and the internal service mesh - after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections.
 
 ---
 
@@ -300,7 +300,7 @@ Central intelligence for Bannou environment management and service orchestration
 
 **Version**: 3.0.0 | **Schema**: `schemas/permission-api.yaml` | **Deep Dive**: [docs/plugins/PERMISSION.md](plugins/PERMISSION.md)
 
-Redis-backed RBAC permission system for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via `IClientEventPublisher`. Features idempotent registration (SHA-256 hash comparison), distributed locks for concurrent registration safety, and in-memory caching (`ConcurrentDictionary`) for compiled session capabilities.
+Redis-backed RBAC permission system for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via `IClientEventPublisher`. Features idempotent registration (SHA-256 hash comparison), atomic Redis set operations (`SADD`/`SREM`/`SISMEMBER`) for multi-instance-safe session tracking, and in-memory caching (`ConcurrentDictionary`) for compiled session capabilities.
 
 ---
 
@@ -350,7 +350,7 @@ Historical event participation and lore management for realms. Tracks when realm
 
 A unified relationship management service combining entity-to-entity relationships (character friendships, alliances, rivalries, etc.) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, soft-deletion with the ability to recreate ended relationships, hierarchical type definitions with parent-child hierarchy, inverse type tracking, bidirectional flags, deprecation with merge capability, and bulk seeding with dependency-ordered creation. Used by the Character service for managing inter-character bonds and family tree categorization, and by the Storyline service for narrative generation.
 
-This plugin was consolidated from the former `lib-relationship` and `lib-relationship-type` plugins into a single service. Type merge operations now call internal methods directly rather than going through HTTP round-trips.
+This plugin was consolidated from the former `lib-relationship` and `lib-relationship-type` plugins into a single service. The merge operation is fully internalized: it reads type indexes directly, bulk-loads relationship models, handles composite key updates with collision detection, performs batch type index updates, and publishes a single `RelationshipTypeMergedEvent` summary event.
 
 ---
 
@@ -475,7 +475,7 @@ Public-facing website service for browser-based access to news, account profile 
 ## Summary
 
 - **Total services**: 45
-- **Total endpoints**: 617
+- **Total endpoints**: 625
 
 ---
 

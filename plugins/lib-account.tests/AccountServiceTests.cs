@@ -108,8 +108,8 @@ public class AccountServiceTests
             e.Permissions.All(p => p.Role == "user" || p.Role == "admin")).ToList();
 
         Assert.Equal(18, guardedEndpoints.Count);
-        Assert.Equal(13, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
-        Assert.Equal(3, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "user")));
+        Assert.Equal(14, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
+        Assert.Equal(4, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "user")));
     }
 
     [Fact]

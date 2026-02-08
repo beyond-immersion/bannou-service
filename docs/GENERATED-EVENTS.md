@@ -91,6 +91,10 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `AuthLoginFailedEvent` | Custom | `auth-login-failed` | Published when a login attempt fails (for brute fo... |
 | `AuthLoginSuccessfulEvent` | Custom | `auth-login-successful` | Published when a user successfully authenticates w... |
+| `AuthMfaDisabledEvent` | Custom | `auth-mfa-disabled` | Published when MFA is disabled for an account |
+| `AuthMfaEnabledEvent` | Custom | `auth-mfa-enabled` | Published when MFA is successfully enabled for an ... |
+| `AuthMfaFailedEvent` | Custom | `auth-mfa-failed` | Published when MFA verification fails during login |
+| `AuthMfaVerifiedEvent` | Custom | `auth-mfa-verified` | Published when MFA verification succeeds during lo... |
 | `AuthOAuthLoginSuccessfulEvent` | Custom | `auth-o-auth-login-successful` | Published when a user authenticates via OAuth prov... |
 | `AuthPasswordResetSuccessfulEvent` | Custom | `auth-password-reset-successful` | Published when a password reset is successfully co... |
 | `AuthRegistrationSuccessfulEvent` | Custom | `auth-registration-successful` | Published when a new user successfully registers |
@@ -384,6 +388,12 @@ This document lists all events defined in Bannou's event schemas.
 | `RealmLoreUpdatedEvent` | Lifecycle (Updated) | `realm-lore.updated` | Published when a realm's lore is updated |
 | `RealmParticipationDeletedEvent` | Lifecycle (Deleted) | `realm-participation.deleted` | Published when a realm's participation record is d... |
 | `RealmParticipationRecordedEvent` | Custom | `realm-participation-recorded` | Published when a realm's participation in a histor... |
+
+### Relationship
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `RelationshipTypeMergedEvent` | Custom | `relationship-type-merged` | Published when a relationship type merge operation... |
 
 ### Resource
 

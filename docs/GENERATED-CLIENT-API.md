@@ -9,12 +9,12 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 
 | Service | Proxy Property | Methods | Description |
 |---------|---------------|---------|-------------|
-| [Bannou Account Service API](#account) | `client.Account` | 16 | Internal account management service (CRUD operations only, n... |
+| [Bannou Account Service API](#account) | `client.Account` | 18 | Internal account management service (CRUD operations only, n... |
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor Service API](#actor) | `client.Actor` | 16 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
-| [Bannou Auth Service API](#auth) | `client.Auth` | 13 | Authentication and session management service (Internet-faci... |
+| [Bannou Auth Service API](#auth) | `client.Auth` | 18 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Bannou Character Service API](#character) | `client.Character` | 12 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
@@ -42,7 +42,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Quest Service API](#quest) | `client.Quest` | 17 | Quest system providing objective-based gameplay progression ... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 11 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
-| [Relationship Service API](#relationship) | `client.Relationship` | 20 | Relationship and relationship type management service for en... |
+| [Relationship Service API](#relationship) | `client.Relationship` | 21 | Relationship and relationship type management service for en... |
 | [Resource Lifecycle API](#resource) | `client.Resource` | 17 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
@@ -102,10 +102,12 @@ Internal account management service (CRUD operations only, never exposed to inte
 | `UpdateAccountAsync` | `UpdateAccountRequest` | `AccountResponse` | Update account |
 | `DeleteAccountEventAsync` | `DeleteAccountRequest` | *(fire-and-forget)* | Delete account |
 | `UpdatePasswordhashEventAsync` | `UpdatePasswordRequest` | *(fire-and-forget)* | Update account password hash |
+| `UpdateMfaEventAsync` | `UpdateMfaRequest` | *(fire-and-forget)* | Update MFA settings for an account |
 | `BatchgetaccountsAsync` | `BatchGetAccountsRequest` | `BatchGetAccountsResponse` | Get multiple accounts by ID |
 | `CountaccountsAsync` | `CountAccountsRequest` | `CountAccountsResponse` | Count accounts matching filters |
 | `BulkupdaterolesAsync` | `BulkUpdateRolesRequest` | `BulkUpdateRolesResponse` | Bulk update roles for multiple accounts |
 | `UpdateVerificationstatusEventAsync` | `UpdateVerificationRequest` | *(fire-and-forget)* | Update email verification status |
+| `UpdateEmailAsync` | `UpdateEmailRequest` | `AccountResponse` | Update account email address |
 
 ### Authentication Methods
 
@@ -271,10 +273,20 @@ Authentication and session management service (Internet-facing).
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `LoginAsync` | `LoginRequest` | `AuthResponse` | Login with email/password |
+| `LoginAsync` | `LoginRequest` | `LoginResponse` | Login with email/password |
 | `RegisterAsync` | `RegisterRequest` | `RegisterResponse` | Register new user account |
 | `LogoutEventAsync` | `LogoutRequest` | *(fire-and-forget)* | Logout and invalidate tokens |
 | `ListProvidersAsync` | - | `ProvidersResponse` | List available authentication providers |
+
+### MFA
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SetupmfaAsync` | - | `MfaSetupResponse` | Initialize MFA setup |
+| `EnablemfaEventAsync` | `MfaEnableRequest` | *(fire-and-forget)* | Confirm MFA setup with TOTP code |
+| `DisablemfaEventAsync` | `MfaDisableRequest` | *(fire-and-forget)* | Disable MFA for current account |
+| `AdmindisablemfaEventAsync` | `AdminDisableMfaRequest` | *(fire-and-forget)* | Admin override to disable MFA |
+| `VerifymfaAsync` | `MfaVerifyRequest` | `AuthResponse` | Verify MFA code during login |
 
 ### OAuth
 
@@ -1479,6 +1491,7 @@ Relationship and relationship type management service for entity-to-entity relat
 | `ListRelationshipsbytypeAsync` | `ListRelationshipsByTypeRequest` | `RelationshipListResponse` | List all relationships of a specific type |
 | `UpdateRelationshipAsync` | `UpdateRelationshipRequest` | `RelationshipResponse` | Update relationship metadata |
 | `EndrelationshipEventAsync` | `EndRelationshipRequest` | *(fire-and-forget)* | End a relationship |
+| `CleanupbyentityAsync` | `CleanupByEntityRequest` | `CleanupByEntityResponse` | Cleanup relationships referencing a deleted entity |
 
 ### Relationship Type Admin
 
@@ -1900,7 +1913,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 44
-- **Total methods**: 611
+- **Total methods**: 619
 
 ---
 

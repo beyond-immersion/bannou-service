@@ -7,7 +7,7 @@
 
 ## Overview
 
-The Auth plugin is the internet-facing authentication and session management service. It handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, and session lifecycle management. It is the primary gateway between external users and the internal service mesh - after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections.
+The Auth plugin is the internet-facing authentication and session management service. It handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, TOTP-based multi-factor authentication (MFA), and session lifecycle management. It is the primary gateway between external users and the internal service mesh - after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections.
 
 ## Dependencies (What This Plugin Relies On)
 
@@ -25,6 +25,7 @@ The Auth plugin is the internet-facing authentication and session management ser
 - `AWSSDK.SimpleEmailV2` (4.x, Apache-2.0) - AWS SES v2 email delivery (via bannou-service)
 - `SendGrid` (9.x, MIT) - SendGrid API email delivery (via bannou-service)
 - `MailKit` (4.x, MIT) - SMTP email delivery (via bannou-service)
+- `Otp.NET` (1.4.1, MIT) - TOTP generation and validation (RFC 6238)
 
 ## Dependents (What Relies On This Plugin)
 
@@ -50,6 +51,8 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `account-oauth-links:{accountId}` | `List<string>` | **None** | Reverse index of OAuth link keys for account (for cleanup on deletion) |
 | `login-attempts:{normalizedEmail}` | counter (Redis `INCR`) | LoginLockoutMinutes * 60 | Failed login attempt counter for rate limiting (via `ICacheableStateStore.IncrementAsync`) |
 | `password-reset:{token}` | `PasswordResetData` | PasswordResetTokenTtlMinutes * 60 | Pending password reset (accountId, email, expiry) |
+| `mfa-challenge-{token}` | `MfaChallengeData` | MfaChallengeTtlMinutes * 60 | MFA challenge token linking to accountId (created after password verification, consumed on MFA verify) |
+| `mfa-setup-{token}` | `MfaSetupData` | MfaChallengeTtlMinutes * 60 | Pending MFA setup (encrypted secret, hashed recovery codes, consumed on MFA enable) |
 
 **Store**: `edge-revocation` (Backend: Redis) - Used when EdgeRevocationEnabled=true
 
@@ -77,6 +80,10 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `auth.oauth.successful` | `AuthOAuthLoginSuccessfulEvent` | Successful OAuth provider login |
 | `auth.steam.successful` | `AuthSteamLoginSuccessfulEvent` | Successful Steam ticket verification |
 | `auth.password-reset.successful` | `AuthPasswordResetSuccessfulEvent` | Password reset completed |
+| `auth.mfa.enabled` | `AuthMfaEnabledEvent` | MFA successfully enabled for an account |
+| `auth.mfa.disabled` | `AuthMfaDisabledEvent` | MFA disabled (by user or admin, includes reason) |
+| `auth.mfa.verified` | `AuthMfaVerifiedEvent` | Successful MFA verification (TOTP or recovery code) |
+| `auth.mfa.failed` | `AuthMfaFailedEvent` | Failed MFA attempt (invalid code, expired challenge, no recovery codes) |
 
 ### Consumed Events
 
@@ -133,6 +140,9 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `CloudflareKvNamespaceId` | `AUTH_CLOUDFLARE_KV_NAMESPACE_ID` | null | CloudFlare KV namespace ID for storing revoked tokens |
 | `CloudflareApiToken` | `AUTH_CLOUDFLARE_API_TOKEN` | null | CloudFlare API token with Workers KV write permissions |
 | `OpenrestyEdgeEnabled` | `AUTH_OPENRESTY_EDGE_ENABLED` | false | Enable OpenResty/NGINX edge revocation (reads from Redis directly) |
+| `MfaEncryptionKey` | `AUTH_MFA_ENCRYPTION_KEY` | null | AES-256-GCM encryption key for TOTP secrets at rest. Must be >= 32 characters. Validated at runtime when MFA operations are attempted. |
+| `MfaIssuerName` | `AUTH_MFA_ISSUER_NAME` | Bannou | Issuer name displayed in authenticator apps (appears in the TOTP URI) |
+| `MfaChallengeTtlMinutes` | `AUTH_MFA_CHALLENGE_TTL_MINUTES` | 5 | TTL for MFA challenge and setup tokens in Redis (1-30 minutes) |
 
 **Note:** JWT core settings (`JwtSecret`, `JwtIssuer`, `JwtAudience`) are NOT in AuthServiceConfiguration. They live in the app-wide `AppConfiguration` singleton, which is constructor-injected into `TokenService`, `AuthService`, and `OAuthProviderService`. This is because JWT is cross-cutting platform infrastructure (`BANNOU_JWT_*`), not auth-specific config - nodes without the auth plugin still need JWT settings to validate tokens on authenticated endpoints.
 
@@ -153,13 +163,14 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `IEdgeRevocationProvider` (collection) | CloudflareEdgeProvider and OpenrestyEdgeProvider, injected into EdgeRevocationService via `IEnumerable<IEdgeRevocationProvider>` |
 | `IEmailService` | Email sending abstraction. Provider selected by `AUTH_EMAIL_PROVIDER`: `ConsoleEmailService` (none/default), `SendGridEmailService` (sendgrid), `SmtpEmailService` (smtp), or `SesEmailService` (ses). Registered as singleton via factory in AuthServicePlugin. |
 | `IHttpClientFactory` | Used by OAuthProviderService for OAuth API calls and CloudflareEdgeProvider for KV writes |
+| `IMfaService` | TOTP secret generation/encryption, code validation, recovery code management, challenge/setup token lifecycle |
 | `IEventConsumer` | Registers handlers for account.deleted, account.updated |
 
 ## API Endpoints (Implementation Notes)
 
 ### Authentication (login, register)
 
-Login enforces per-email rate limiting via Redis counters before attempting authentication. If `MaxLoginAttempts` (default 5) is exceeded, the endpoint returns 401 for `LoginLockoutMinutes` (default 15 minutes) with no information leakage about whether the lockout is active or the account doesn't exist. On successful login, the counter is cleared. Login verifies password with `BCrypt.Verify` against the hash stored in Account service. Registration hashes with `BCrypt.HashPassword(workFactor: _configuration.BcryptWorkFactor)` (default 12) and creates the account. Both flows generate a JWT + refresh token via `ITokenService` and return a `ConnectUrl` for WebSocket connection. Failed logins increment the rate limit counter and publish audit events.
+Login enforces per-email rate limiting via Redis counters before attempting authentication. If `MaxLoginAttempts` (default 5) is exceeded, the endpoint returns 401 for `LoginLockoutMinutes` (default 15 minutes) with no information leakage about whether the lockout is active or the account doesn't exist. On successful login, the counter is cleared. Login verifies password with `BCrypt.Verify` against the hash stored in Account service. If the account has MFA enabled, login returns a `LoginResponse` with `RequiresMfa = true` and a challenge token (no JWT issued yet); the client must call `/auth/mfa/verify` with the challenge token and a TOTP code to complete authentication. If MFA is not enabled, login returns tokens directly. Registration hashes with `BCrypt.HashPassword(workFactor: _configuration.BcryptWorkFactor)` (default 12) and creates the account. Both non-MFA login and registration generate a JWT + refresh token via `ITokenService` and return a `ConnectUrl` for WebSocket connection. Failed logins increment the rate limit counter and publish audit events.
 
 ### OAuth (init, callback)
 
@@ -176,6 +187,18 @@ Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOA
 ### Password (reset, confirm)
 
 `RequestPasswordReset` always returns 200 regardless of whether the account exists (prevents email enumeration). If the account exists, it generates a cryptographically secure token via `GenerateSecureToken()`, stores it in Redis with TTL, and sends an email via `IEmailService` (fire-and-forget: failures are logged and error events published but never affect the response). `ConfirmPasswordReset` validates the token, hashes the new password, and updates it via Account service.
+
+### Multi-Factor Authentication (setup, enable, disable, admin-disable, verify)
+
+MFA uses TOTP (RFC 6238) with a two-step login flow. When MFA is enabled, `LoginAsync` returns `LoginResponse { RequiresMfa = true, MfaChallengeToken = ... }` instead of tokens. The client then calls `VerifyMfaAsync` with the challenge token and a 6-digit TOTP code (or recovery code) to complete authentication.
+
+**Setup flow**: `SetupMfaAsync` generates a TOTP secret via `IMfaService`, encrypts it with AES-256-GCM (key from `MfaEncryptionKey` config, derived via SHA-256), generates 10 recovery codes, stores encrypted secret + BCrypt-hashed codes in a Redis setup token, and returns the plain secret, otpauth URI, and plain recovery codes to the client for QR scanning. `EnableMfaAsync` consumes the setup token, validates a TOTP code to confirm the user has configured their authenticator, and persists MFA settings to Account via `UpdateMfaAsync`.
+
+**Disable flow**: `DisableMfaAsync` requires the current TOTP code or a valid recovery code. `AdminDisableMfaAsync` bypasses verification and accepts an optional reason string. Both clear MFA fields in Account.
+
+**Verify flow**: `VerifyMfaAsync` consumes the MFA challenge token (single-use, Redis-backed), validates either a TOTP code or recovery code. Recovery code verification uses optimistic concurrency with up to 3 retry attempts on 409 Conflict (re-fetch account, re-verify, retry). On success, generates full JWT tokens and publishes login events.
+
+**Recovery codes**: 10 codes in `xxxx-xxxx` format (lowercase alphanumeric), BCrypt-hashed for storage. Each code is single-use (removed from the list after verification). When all codes are consumed, a warning is logged but MFA remains active.
 
 ### Sessions (list, terminate)
 
@@ -200,15 +223,28 @@ Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOA
 ## Visual Aid
 
 ```
-Login/Register/OAuth ──► TokenService.GenerateAccessTokenAsync()
-                              │
-                              ├─ session:{key} ◄── SessionDataModel (accountId, roles, jti, expiry)
-                              │
-                              ├─ account-sessions:{accountId} ◄── [key1, key2, ...]
-                              │
-                              ├─ session-id-index:{sessionId} ──► sessionKey
-                              │
-                              └─ JWT (contains session_key + jti claims)
+Login ──► Password OK?
+              │
+              ├─ MFA disabled ──► TokenService.GenerateAccessTokenAsync()
+              │                        │
+              │                        ├─ session:{key} ◄── SessionDataModel
+              │                        ├─ account-sessions:{accountId} ◄── [key1, ...]
+              │                        ├─ session-id-index:{sessionId} ──► sessionKey
+              │                        └─ JWT (session_key + jti claims)
+              │
+              └─ MFA enabled ──► MfaService.CreateMfaChallengeAsync()
+                                      │
+                                      ├─ mfa-challenge-{token} ◄── MfaChallengeData
+                                      └─ Return LoginResponse { requiresMfa: true }
+                                              │
+                                              ▼
+                                      /auth/mfa/verify (TOTP or recovery code)
+                                              │
+                                              └─ TokenService.GenerateAccessTokenAsync()
+
+Register/OAuth ──► TokenService.GenerateAccessTokenAsync()
+                        │
+                        └─ (same session flow as above)
                                      │
                                      ▼
                               TokenService.ValidateTokenAsync (called by Connect on WS upgrade)
@@ -244,8 +280,8 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ## Potential Extensions
 
-- **Multi-factor authentication (post-launch)**: TOTP-based second factor after password verification. All design questions are pre-answered by industry standards: TOTP only (RFC 6238), 10 hashed recovery codes generated at setup, opt-in per account, OAuth providers handle their own MFA (Auth doesn't layer on top). Implementation requires new `mfa-setup` / `mfa-verify` endpoints, a Redis key for TOTP secrets, and a new `account.mfa-enabled` event. Low priority - no day-one requirement.
-<!-- AUDIT:PRE_ANSWERED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/149 -->
+- ~~**Multi-factor authentication**~~: **IMPLEMENTED** (2026-02-08) - TOTP-based MFA with 5 new endpoints (setup, enable, disable, admin-disable, verify), AES-256-GCM encrypted secrets, BCrypt-hashed recovery codes, Redis-backed challenge tokens, and 4 MFA event types. See "Multi-Factor Authentication" in API Endpoints above.
+<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/149 -->
 - **Additional edge revocation providers (when needed)**: Fastly and AWS Lambda@Edge providers were proposed (#160) but closed as premature - no deployment target selected yet. The `IEdgeRevocationProvider` interface is already extensible; adding a provider is a single class implementing `PushTokenRevocationAsync`/`PushAccountRevocationAsync`/`RemoveExpiredEntriesAsync`. Revisit when production CDN/edge infrastructure is chosen.
 <!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/160 -->
 
@@ -295,6 +331,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **Edge revocation on logout/terminate** (2026-02-08): `LogoutAsync` and `TerminateSessionAsync` now push token revocations to edge providers, matching the existing behavior in `InvalidateAllSessionsForAccountAsync`.
+- **Multi-factor authentication** (2026-02-08): Full TOTP-based MFA implementation with 5 endpoints, AES-256-GCM encrypted secrets, BCrypt-hashed recovery codes, Redis-backed challenge tokens, and 4 MFA audit events. Issue #149.
 
 ### Evaluated & Closed
 

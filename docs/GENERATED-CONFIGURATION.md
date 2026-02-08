@@ -16,6 +16,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | bool | `true` | When true, automatically manages the anonymous role. If remo... |
 | `ACCOUNT_CREATE_LOCK_EXPIRY_SECONDS` | int | `10` | Lock expiry in seconds for account creation email uniqueness... |
 | `ACCOUNT_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for list operations when not specified |
+| `ACCOUNT_EMAIL_CHANGE_LOCK_EXPIRY_SECONDS` | int | `10` | Lock expiry in seconds for email uniqueness check during ema... |
 | `ACCOUNT_LIST_BATCH_SIZE` | int | `100` | Number of accounts to process per batch in list operations |
 | `ACCOUNT_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for list operations |
 | `ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE` | int | `10000` | Maximum number of accounts to scan when filtering by provide... |
@@ -204,10 +205,18 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_EDGE_REVOCATION_ENABLED` | bool | `false` | Master switch for edge-layer token revocation. When enabled,... |
 | `AUTH_EDGE_REVOCATION_MAX_RETRY_ATTEMPTS` | int | `3` | Maximum retry attempts for failed edge pushes before giving ... |
 | `AUTH_EDGE_REVOCATION_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for edge provider push operations. Operat... |
+| `AUTH_EMAIL_FROM_ADDRESS` | string | **REQUIRED** | Sender email address for outgoing emails. Required when Emai... |
+| `AUTH_EMAIL_FROM_NAME` | string | **REQUIRED** | Display name for the sender in outgoing emails (e.g., 'Banno... |
+| `AUTH_EMAIL_PROVIDER` | string | `none` | Email delivery provider (none=console logging, sendgrid=Send... |
 | `AUTH_GOOGLE_CLIENT_ID` | string | **REQUIRED** | Google OAuth client ID |
 | `AUTH_GOOGLE_CLIENT_SECRET` | string | **REQUIRED** | Google OAuth client secret |
 | `AUTH_GOOGLE_REDIRECT_URI` | string | **REQUIRED** | Google OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN... |
 | `AUTH_JWT_EXPIRATION_MINUTES` | int | `60` | JWT token expiration time in minutes |
+| `AUTH_LOGIN_LOCKOUT_MINUTES` | int | `15` | Duration in minutes to lock out an email after exceeding Max... |
+| `AUTH_MAX_LOGIN_ATTEMPTS` | int | `5` | Maximum failed login attempts before lockout. After this man... |
+| `AUTH_MFA_CHALLENGE_TTL_MINUTES` | int | `5` | TTL in minutes for MFA challenge tokens issued during login ... |
+| `AUTH_MFA_ENCRYPTION_KEY` | string | **REQUIRED** | AES-256-GCM encryption key for TOTP secrets at rest. Require... |
+| `AUTH_MFA_ISSUER_NAME` | string | `Bannou` | Issuer name displayed in authenticator apps (appears as serv... |
 | `AUTH_MOCK_DISCORD_ID` | string | `mock-discord-123456` | Mock Discord user ID for testing |
 | `AUTH_MOCK_GOOGLE_ID` | string | `mock-google-123456` | Mock Google user ID for testing |
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
@@ -216,7 +225,16 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_OPENRESTY_EDGE_ENABLED` | bool | `false` | Enable OpenResty/NGINX edge revocation verification. When en... |
 | `AUTH_PASSWORD_RESET_BASE_URL` | string | **REQUIRED** | Base URL for password reset page |
 | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | int | `30` | Password reset token expiration time in minutes |
+| `AUTH_SENDGRID_API_KEY` | string | **REQUIRED** | SendGrid API key. Required when EmailProvider is 'sendgrid'. |
 | `AUTH_SESSION_TOKEN_TTL_DAYS` | int | `7` | Session token TTL in days for persistent sessions |
+| `AUTH_SES_ACCESS_KEY_ID` | string | **REQUIRED** | AWS access key ID for SES API authentication. Required when ... |
+| `AUTH_SES_REGION` | string | `us-east-1` | AWS region for SES API (e.g., us-east-1, eu-west-1). SES mus... |
+| `AUTH_SES_SECRET_ACCESS_KEY` | string | **REQUIRED** | AWS secret access key for SES API authentication. Required w... |
+| `AUTH_SMTP_HOST` | string | **REQUIRED** | SMTP server hostname. Required when EmailProvider is 'smtp'. |
+| `AUTH_SMTP_PASSWORD` | string | **REQUIRED** | SMTP authentication password. Optional if server allows anon... |
+| `AUTH_SMTP_PORT` | int | `587` | SMTP server port (587 for STARTTLS, 465 for implicit SSL, 25... |
+| `AUTH_SMTP_USERNAME` | string | **REQUIRED** | SMTP authentication username. Optional if server allows anon... |
+| `AUTH_SMTP_USE_SSL` | bool | `true` | Use SSL/TLS when connecting to SMTP server. When true with p... |
 | `AUTH_STEAM_API_KEY` | string | **REQUIRED** | Steam Web API key for session ticket validation |
 | `AUTH_STEAM_APP_ID` | string | **REQUIRED** | Steam application ID |
 | `AUTH_TWITCH_CLIENT_ID` | string | **REQUIRED** | Twitch OAuth client ID |
@@ -700,14 +718,6 @@ Final ... |
 | `ORCHESTRATOR_ROUTING_TTL_SECONDS` | int | `300` | TTL in seconds for service routing entries in state store |
 | `ORCHESTRATOR_SECURE_WEBSOCKET` | bool | `true` | When true, publishes blank permission registration making or... |
 
-### Permission
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `PERMISSION_LOCK_BASE_DELAY_MS` | int | `100` | Base delay in ms between lock retry attempts (exponential ba... |
-| `PERMISSION_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiration time in seconds |
-| `PERMISSION_LOCK_MAX_RETRIES` | int | `10` | Maximum retries for acquiring distributed lock |
-
 ### Puppetmaster
 
 | Environment Variable | Type | Default | Description |
@@ -738,9 +748,9 @@ CHECK_ALL (defaul... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `RELATIONSHIP_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on index... |
 | `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | int | `20` | Maximum depth for hierarchy traversal to prevent infinite lo... |
 | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | int | `100` | Maximum number of individual migration error details to trac... |
-| `RELATIONSHIP_TYPE_SEED_PAGE_SIZE` | int | `100` | Number of records to process per page during seed operations |
 
 ### Resource
 
@@ -931,9 +941,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 704
-- **Required (no default)**: 42
-- **Optional (has default)**: 662
+- **Total properties**: 719
+- **Required (no default)**: 51
+- **Optional (has default)**: 668
 
 ## Environment Variable Naming Convention
 
