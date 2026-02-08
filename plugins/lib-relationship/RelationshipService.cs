@@ -721,30 +721,54 @@ public partial class RelationshipService : IRelationshipService
                     continue;
                 }
 
-                // Skip already-ended relationships
+                // Skip already-ended relationships (pre-lock check to avoid unnecessary lock acquisition)
                 if (model.EndedAt.HasValue)
                 {
                     alreadyEndedCount++;
                     continue;
                 }
 
-                // End the relationship (soft-delete)
-                model.EndedAt = now;
-                model.UpdatedAt = now;
+                // Acquire distributed lock per relationship to prevent race conditions with
+                // concurrent EndRelationship/UpdateRelationship calls (per IMPLEMENTATION TENETS)
+                await using var lockResponse = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.RelationshipLock,
+                    model.RelationshipId.ToString(),
+                    Guid.NewGuid().ToString(),
+                    _configuration.LockTimeoutSeconds,
+                    cancellationToken);
 
+                if (!lockResponse.Success)
+                {
+                    _logger.LogWarning("Could not acquire lock for relationship {RelationshipId} during cleanup", model.RelationshipId);
+                    continue;
+                }
+
+                // Re-fetch after lock acquisition to ensure we have latest state
                 var relationshipKey = BuildRelationshipKey(model.RelationshipId);
-                await store.SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+                var latestModel = await store.GetAsync(relationshipKey, cancellationToken);
+
+                if (latestModel == null || latestModel.EndedAt.HasValue)
+                {
+                    alreadyEndedCount++;
+                    continue;
+                }
+
+                // End the relationship (soft-delete)
+                latestModel.EndedAt = now;
+                latestModel.UpdatedAt = now;
+
+                await store.SaveAsync(relationshipKey, latestModel, cancellationToken: cancellationToken);
 
                 // Clear composite uniqueness key to allow future recreation
                 var compositeKey = BuildCompositeKey(
-                    model.Entity1Id, model.Entity1Type,
-                    model.Entity2Id, model.Entity2Type,
-                    model.RelationshipTypeId);
+                    latestModel.Entity1Id, latestModel.Entity1Type,
+                    latestModel.Entity2Id, latestModel.Entity2Type,
+                    latestModel.RelationshipTypeId);
                 await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
                     .DeleteAsync(compositeKey, cancellationToken);
 
                 // Publish deletion event for each ended relationship
-                await PublishRelationshipDeletedEventAsync(model, "Entity deleted (cascade cleanup)", cancellationToken);
+                await PublishRelationshipDeletedEventAsync(latestModel, "Entity deleted (cascade cleanup)", cancellationToken);
 
                 endedCount++;
             }
