@@ -56,13 +56,14 @@ public class CharacterHistoryServiceTests
             .Returns(_mockJsonQueryableStore.Object);
     }
 
-    private CharacterHistoryService CreateService()
+    private CharacterHistoryService CreateService(CharacterHistoryServiceConfiguration? configuration = null)
     {
         return new CharacterHistoryService(
             _mockMessageBus.Object,
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            configuration ?? new CharacterHistoryServiceConfiguration());
     }
 
     #region Constructor Validation
@@ -86,6 +87,8 @@ public class CharacterHistoryServiceTests
 
         // Assert
         Assert.NotNull(config);
+        Assert.Equal(600, config.BackstoryCacheTtlSeconds);
+        Assert.Equal(100, config.MaxBackstoryElements);
     }
 
     #endregion
@@ -541,6 +544,205 @@ public class CharacterHistoryServiceTests
             "character-history.backstory.updated",
             It.IsAny<CharacterBackstoryUpdatedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Backstory Element Limit Tests
+
+    [Fact]
+    public async Task SetBackstoryAsync_ReplaceExceedsLimit_ReturnsBadRequest()
+    {
+        // Arrange
+        var config = new CharacterHistoryServiceConfiguration { MaxBackstoryElements = 3 };
+        var service = CreateService(config);
+        var characterId = Guid.NewGuid();
+
+        var request = new SetBackstoryRequest
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElement>
+            {
+                new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "a", Value = "v", Strength = 0.5f },
+                new BackstoryElement { ElementType = BackstoryElementType.TRAUMA, Key = "b", Value = "v", Strength = 0.5f },
+                new BackstoryElement { ElementType = BackstoryElementType.GOAL, Key = "c", Value = "v", Strength = 0.5f },
+                new BackstoryElement { ElementType = BackstoryElementType.FEAR, Key = "d", Value = "v", Strength = 0.5f }
+            },
+            ReplaceExisting = true
+        };
+
+        // Act
+        var (status, result) = await service.SetBackstoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+
+        // Verify no state was saved
+        _mockBackstoryStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<BackstoryData>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SetBackstoryAsync_MergeExceedsLimit_ReturnsBadRequest()
+    {
+        // Arrange
+        var config = new CharacterHistoryServiceConfiguration { MaxBackstoryElements = 2 };
+        var service = CreateService(config);
+        var characterId = Guid.NewGuid();
+
+        var existingBackstory = new BackstoryData
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElementData>
+            {
+                new BackstoryElementData { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "north", Strength = 0.9f },
+                new BackstoryElementData { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "siege", Strength = 0.7f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
+        };
+
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBackstory);
+
+        // Request adds a new element (GOAL doesn't exist yet), which would push count to 3
+        var request = new SetBackstoryRequest
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElement>
+            {
+                new BackstoryElement { ElementType = BackstoryElementType.GOAL, Key = "revenge", Value = "v", Strength = 0.8f }
+            },
+            ReplaceExisting = false
+        };
+
+        // Act
+        var (status, result) = await service.SetBackstoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task SetBackstoryAsync_MergeWithUpdatesOnly_AllowsAtLimit()
+    {
+        // Arrange: 2 existing elements at limit of 2, merging updates to same type+key pairs
+        var config = new CharacterHistoryServiceConfiguration { MaxBackstoryElements = 2 };
+        var service = CreateService(config);
+        var characterId = Guid.NewGuid();
+
+        var existingBackstory = new BackstoryData
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElementData>
+            {
+                new BackstoryElementData { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "old", Strength = 0.5f },
+                new BackstoryElementData { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "old", Strength = 0.3f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
+        };
+
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBackstory);
+
+        // Request updates existing elements (same type+key), no new additions
+        var request = new SetBackstoryRequest
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElement>
+            {
+                new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "updated", Strength = 0.9f },
+                new BackstoryElement { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "updated", Strength = 0.8f }
+            },
+            ReplaceExisting = false
+        };
+
+        // Act
+        var (status, result) = await service.SetBackstoryAsync(request, CancellationToken.None);
+
+        // Assert - should succeed because no new elements are added, just updates
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task AddBackstoryElementAsync_ExceedsLimit_ReturnsBadRequest()
+    {
+        // Arrange
+        var config = new CharacterHistoryServiceConfiguration { MaxBackstoryElements = 2 };
+        var service = CreateService(config);
+        var characterId = Guid.NewGuid();
+
+        var existingBackstory = new BackstoryData
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElementData>
+            {
+                new BackstoryElementData { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "north", Strength = 0.9f },
+                new BackstoryElementData { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "siege", Strength = 0.7f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
+        };
+
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBackstory);
+
+        // Adding a new element type that doesn't exist yet
+        var request = new AddBackstoryElementRequest
+        {
+            CharacterId = characterId,
+            Element = new BackstoryElement { ElementType = BackstoryElementType.GOAL, Key = "revenge", Value = "avenge", Strength = 0.8f }
+        };
+
+        // Act
+        var (status, result) = await service.AddBackstoryElementAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task AddBackstoryElementAsync_UpdateExistingAtLimit_Succeeds()
+    {
+        // Arrange: at limit of 2, but updating existing element (same type+key)
+        var config = new CharacterHistoryServiceConfiguration { MaxBackstoryElements = 2 };
+        var service = CreateService(config);
+        var characterId = Guid.NewGuid();
+
+        var existingBackstory = new BackstoryData
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElementData>
+            {
+                new BackstoryElementData { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "north", Strength = 0.5f },
+                new BackstoryElementData { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "siege", Strength = 0.7f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
+        };
+
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBackstory);
+
+        // Updating existing ORIGIN/homeland element (upsert - same type+key)
+        var request = new AddBackstoryElementRequest
+        {
+            CharacterId = characterId,
+            Element = new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "updated value", Strength = 0.95f }
+        };
+
+        // Act
+        var (status, result) = await service.AddBackstoryElementAsync(request, CancellationToken.None);
+
+        // Assert - should succeed because this is an update, not a new element
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
     }
 
     #endregion

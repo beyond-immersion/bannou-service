@@ -23,6 +23,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<CharacterHistoryService> _logger;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly CharacterHistoryServiceConfiguration _configuration;
     private readonly IDualIndexHelper<ParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
 
@@ -46,11 +47,13 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<CharacterHistoryService> logger,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        CharacterHistoryServiceConfiguration configuration)
     {
         _messageBus = messageBus;
         _logger = logger;
         _stateStoreFactory = stateStoreFactory;
+        _configuration = configuration;
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<ParticipationData>(
@@ -436,6 +439,51 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         try
         {
             var elementDataList = body.Elements.Select(MapToBackstoryElementData).ToList();
+            var maxElements = _configuration.MaxBackstoryElements;
+
+            if (body.ReplaceExisting)
+            {
+                // Replace mode: the final count equals the input count
+                if (elementDataList.Count > maxElements)
+                {
+                    _logger.LogWarning(
+                        "SetBackstory rejected for character {CharacterId}: {Count} elements exceeds limit of {Limit}",
+                        body.CharacterId, elementDataList.Count, maxElements);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+            else
+            {
+                // Merge mode: calculate post-merge count (existing + truly new elements)
+                var existing = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
+                if (existing != null)
+                {
+                    var existingElements = existing.Elements;
+                    var newElementCount = elementDataList.Count(newEl =>
+                        !existingElements.Any(e =>
+                            e.ElementType == newEl.ElementType && e.Key == newEl.Key));
+                    var postMergeCount = existingElements.Count + newElementCount;
+
+                    if (postMergeCount > maxElements)
+                    {
+                        _logger.LogWarning(
+                            "SetBackstory merge rejected for character {CharacterId}: post-merge count {PostMerge} exceeds limit of {Limit} (existing={Existing}, new={New})",
+                            body.CharacterId, postMergeCount, maxElements, existingElements.Count, newElementCount);
+                        return (StatusCodes.BadRequest, null);
+                    }
+                }
+                else
+                {
+                    // No existing backstory: the final count equals the input count
+                    if (elementDataList.Count > maxElements)
+                    {
+                        _logger.LogWarning(
+                            "SetBackstory rejected for character {CharacterId}: {Count} elements exceeds limit of {Limit}",
+                            body.CharacterId, elementDataList.Count, maxElements);
+                        return (StatusCodes.BadRequest, null);
+                    }
+                }
+            }
 
             var result = await _backstoryHelper.SetAsync(
                 body.CharacterId.ToString(),
@@ -511,6 +559,22 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         try
         {
             var elementData = MapToBackstoryElementData(body.Element);
+
+            // Validate element count limit (only for truly new elements, not updates)
+            var existing = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
+            if (existing != null)
+            {
+                var isUpdate = existing.Elements.Any(e =>
+                    e.ElementType == elementData.ElementType && e.Key == elementData.Key);
+
+                if (!isUpdate && existing.Elements.Count >= _configuration.MaxBackstoryElements)
+                {
+                    _logger.LogWarning(
+                        "AddBackstoryElement rejected for character {CharacterId}: {Count} elements already at limit of {Limit}",
+                        body.CharacterId, existing.Elements.Count, _configuration.MaxBackstoryElements);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
 
             var result = await _backstoryHelper.AddElementAsync(
                 body.CharacterId.ToString(),

@@ -20,3 +20,9 @@ x-service-configuration:
       description: TTL in seconds for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.
       default: 600
       env: CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS
+    # Element Limits
+    MaxBackstoryElements:
+      type: integer
+      description: Maximum number of backstory elements allowed per character. Prevents unbounded growth from repeated AddBackstoryElement or SetBackstory calls. Returns BadRequest when limit would be exceeded.
+      default: 100
+      env: CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS

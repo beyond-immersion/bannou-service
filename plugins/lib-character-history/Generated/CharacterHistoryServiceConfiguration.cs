@@ -59,4 +59,10 @@ public class CharacterHistoryServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int BackstoryCacheTtlSeconds { get; set; } = 600;
 
+    /// <summary>
+    /// Maximum number of backstory elements allowed per character. Prevents unbounded growth from repeated AddBackstoryElement or SetBackstory calls. Returns BadRequest when limit would be exceeded.
+    /// Environment variable: CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS
+    /// </summary>
+    public int MaxBackstoryElements { get; set; } = 100;
+
 }
