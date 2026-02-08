@@ -220,7 +220,7 @@ public partial class RelationshipService : IRelationshipService
 
             if (entity1RelationshipIds.Count == 0)
             {
-                return (StatusCodes.OK, CreateEmptyListResponse(1, 20));
+                return (StatusCodes.OK, CreateEmptyListResponse(body.Page, body.PageSize));
             }
 
             // Bulk load all relationships from entity1
@@ -263,17 +263,26 @@ public partial class RelationshipService : IRelationshipService
                 filtered = filtered.Where(r => r.RelationshipTypeId == typeId);
             }
 
-            var results = filtered.OrderByDescending(r => r.CreatedAt).ToList();
-            var responses = results.Select(MapToResponse).ToList();
+            // Apply pagination
+            var page = body.Page;
+            var pageSize = body.PageSize;
+            var totalCount = filtered.Count();
+            var pagedResults = filtered
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var responses = pagedResults.Select(MapToResponse).ToList();
 
             return (StatusCodes.OK, new RelationshipListResponse
             {
                 Relationships = responses,
-                TotalCount = responses.Count,
-                Page = 1,
-                PageSize = responses.Count,
-                HasNextPage = false,
-                HasPreviousPage = false
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                HasNextPage = (page * pageSize) < totalCount,
+                HasPreviousPage = page > 1
             });
         }
         catch (Exception ex)

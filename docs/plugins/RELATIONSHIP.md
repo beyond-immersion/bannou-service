@@ -117,7 +117,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 - **ListByEntity** (`/relationship/list-by-entity`): Loads all relationship IDs from entity index, bulk-fetches models, filters in-memory (active/ended, type, etc.), then applies pagination. Returns full `RelationshipListResponse` with pagination metadata.
 
-- **GetBetween** (`/relationship/get-between`): Fetches entity1's full relationship list, filters in-memory for those involving entity2. Does not paginate (returns all matching relationships). Always reports `HasNextPage: false`.
+- **GetBetween** (`/relationship/get-between`): Fetches entity1's full relationship list, filters in-memory for those involving entity2. Supports pagination via `page` and `pageSize` parameters (defaults: 1 and 20).
 
 - **ListByType** (`/relationship/list-by-type`): Loads from type index, bulk-fetches, applies in-memory filtering and pagination.
 
@@ -283,11 +283,16 @@ State Store Layout
 1. **Relationship strength/weight**: Numeric field for weighted relationship graphs (e.g., closeness scores).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/335 -->
 2. **Bidirectional asymmetric metadata**: Allow entity1 and entity2 to have independent metadata perspectives on the same relationship.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/336 -->
 3. **Cascade cleanup on entity deletion**: Automatically end all relationships when an entity is permanently deleted.
-4. **Pagination for GetBetween**: Currently returns all relationships between two entities without pagination support.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/337 -->
+4. ~~**Pagination for GetBetween**~~: **FIXED** (2026-02-08) - Added `page` and `pageSize` fields to `GetRelationshipsBetweenRequest` schema (defaults: page=1, pageSize=20, max 100). Service now applies Skip/Take pagination matching the `ListRelationshipsByEntity` pattern.
 5. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/338 -->
 6. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/339 -->
 7. **Category-based permissions**: Allow different roles to create relationships of different categories.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/340 -->
 
 ---
 
@@ -331,10 +336,13 @@ State Store Layout
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: All list operations load the full index, bulk-fetch all relationship models, filter in memory, then paginate. For entities with thousands of relationships, this loads everything into memory before applying page limits.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/341 -->
 
 2. **No index cleanup**: Entity and type indexes accumulate relationship IDs indefinitely (both active and ended). Over time, indexes grow large with ended relationships that must be filtered on every query.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/342 -->
 
 3. **No optimistic concurrency**: Updates overwrite without version checking. Two concurrent updates to metadata will result in last-writer-wins with no conflict detection.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/343 -->
 
 4. **Type migration during merge**: Merge operations modify type indexes atomically but without distributed transaction guarantees. A crash between removing from old index and adding to new could leave the relationship in neither index.
 
