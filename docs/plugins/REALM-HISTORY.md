@@ -20,7 +20,7 @@ Historical event participation and lore management (L4 GameFeatures) for realms.
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and lore |
 | lib-messaging (`IMessageBus`) | Publishing participation, lore lifecycle, and resource reference events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
-| lib-resource (`IResourceClient`) | Registering cleanup and compression callbacks during plugin startup |
+| lib-resource (`IResourceClient`) | Registering cleanup and compression callbacks during plugin startup (in `RealmHistoryServicePlugin`, not in service constructor) |
 | lib-resource (events) | Publishes `resource.reference.registered` and `resource.reference.unregistered` events for realm reference tracking |
 | `IDualIndexHelper` | Dual-index storage pattern for participation records (from `bannou-service/History/`) |
 | `IBackstoryStorageHelper` | Lore element storage with merge/replace semantics (from `bannou-service/History/`) |
@@ -105,7 +105,7 @@ Service lifetime is **Scoped** (per-request). The helper classes are instantiate
 - **Record** (`/realm-history/record-participation`): Creates unique participation ID. Stores record and updates both realm and event indexes. Registers realm reference with lib-resource. Publishes recorded event.
 - **GetParticipation** (`/realm-history/get-participation`): Fetches all records for a realm using bulk fetch, filters by event category and minimum impact, sorts by event date descending, paginates via `PaginationHelper` (default page size 20).
 - **GetEventParticipants** (`/realm-history/get-event-participants`): Inverse query using secondary index with bulk fetch. Filters by role, sorts by impact descending.
-- **DeleteParticipation** (`/realm-history/delete-participation`): Unregisters realm reference, removes record and updates both indexes. Does not delete empty index documents. Publishes deletion event.
+- **DeleteParticipation** (`/realm-history/delete-participation`): Unregisters realm reference, removes record and updates both indexes. DualIndexHelper deletes empty index documents automatically. Publishes deletion event.
 
 ### Lore Operations (4 endpoints)
 
@@ -215,11 +215,7 @@ None identified.
 4. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure with no schema validation. Enables flexibility but sacrifices type safety and queryability.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/308 -->
 
-5. ~~**DeleteParticipation doesn't delete empty indices**~~: **FIXED** (2026-02-06) - DualIndexHelper.RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Applies to both realm-history and character-history since they share the DualIndexHelper infrastructure.
-
-6. ~~**DeleteAll is O(n) with N+1 queries**~~: **FIXED** (2026-02-06) - Documentation was stale. DualIndexHelper.RemoveAllByPrimaryKeyAsync already uses bulk operations for all state store interactions (GetBulkAsync, SaveBulkAsync, DeleteBulkAsync). The only remaining O(n) is the resource reference unregistration loop, which publishes individual events - this is expected behavior for event publishing.
-
-7. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection. Concurrent participation recordings for the same realm could result in lost index entries. (Duplicate of #3 - same root cause, different symptom description)
+5. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection. Concurrent participation recordings for the same realm could result in lost index entries. (Duplicate of #3 - same root cause, different symptom description)
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/307 -->
 
 ---
@@ -239,6 +235,4 @@ None identified.
 
 ### Completed
 
-- **2026-02-06**: Documentation cleanup - "Read-modify-write without distributed locks" (#7) is a duplicate of "No concurrency control on indexes" (#3). Both track the same root cause (no locking in DualIndexHelper). Linked both to issue #307.
-- **2026-02-06**: Documentation cleanup - "DeleteAll is O(n) with N+1 queries" was stale. DualIndexHelper already uses bulk operations. Remaining O(n) for reference unregistration is expected event publishing behavior.
-- **2026-02-06**: Fixed empty index cleanup in DualIndexHelper - RemoveRecordAsync and RemoveAllByPrimaryKeyAsync now delete index documents when they become empty rather than saving empty lists. Shared fix affects both realm-history and character-history.
+(No items)

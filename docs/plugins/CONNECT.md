@@ -458,7 +458,7 @@ No bugs identified.
 
 5. ~~**Account session index staleness**~~: **FIXED** (2026-02-08) - Replaced read-modify-write pattern with atomic Redis Set operations (`ICacheableStateStore.AddToSetAsync`/`RemoveFromSetAsync`) fixing T9 race condition. Added heartbeat-based liveness filtering in `GetSessionsForAccountAsync` — sessions without a heartbeat (5-minute TTL) are filtered out and lazily cleaned from the index.
 
-6. **ServerSalt shared requirement**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value. If different instances use different salts, session shortcuts and GUID validation will fail across instances. This is enforced by a fail-fast check in the constructor.
+6. ~~**ServerSalt shared requirement**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. The constructor already enforces this with a fail-fast check (`InvalidOperationException` if null/empty), and all three GUID generation methods validate the salt parameter. No design planning needed.
 
 7. **Instance ID non-deterministic**: `_instanceId` is generated as `Guid.NewGuid()`. This means the same physical machine generates different instance IDs on restart, which could affect heartbeat tracking in distributed scenarios.
 
@@ -471,6 +471,8 @@ No bugs identified.
 11. **Internal mode skips capability initialization entirely**: Internal mode connections (lines 633-660) skip all service mapping, capability manifest, and RabbitMQ subscription setup. They only get peer routing capability via a simplified message loop.
 
 12. **Connection state allocated before connection limit check**: A new `ConnectionState` is allocated (line 618) before the defense-in-depth connection limit check (line 624). Auth validation happens earlier in the controller. On high load, connections that pass the controller check but fail the service-level race check still allocate and GC these objects.
+
+13. **ServerSalt shared requirement (enforced)**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value for distributed deployments. The constructor enforces this with a fail-fast check — startup aborts with `InvalidOperationException` if ServerSalt is null/empty. Different salts across instances would cause GUID validation failures and broken session shortcuts. All three GUID generation methods (`GenerateServiceGuid`, `GenerateClientGuid`, `GenerateSessionShortcutGuid`) also validate the salt parameter. Documented in schema and enforced at runtime per multi-instance safety requirements.
 
 ---
 
@@ -491,3 +493,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 - **RabbitMQ subscription lifecycle** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). RabbitMQ's native `x-expires` mechanism handles orphaned queue cleanup automatically. No code change needed.
 - **Account session index staleness** - Fixed T9 race condition and staleness (2026-02-08). Replaced read-modify-write `IStateStore<HashSet<string>>` with atomic `ICacheableStateStore<string>.AddToSetAsync/RemoveFromSetAsync`. Added heartbeat liveness filtering in `GetSessionsForAccountAsync`.
+- **ServerSalt shared requirement** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). Constructor fail-fast check and GUID generator validation already enforce this requirement. No code change needed.
