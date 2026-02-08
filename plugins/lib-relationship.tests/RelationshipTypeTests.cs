@@ -1400,7 +1400,6 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
     {
         // Assert that configuration includes relationship-type properties
         var config = new RelationshipServiceConfiguration();
-        Assert.Equal(100, config.SeedPageSize);
         Assert.Equal(20, config.MaxHierarchyDepth);
         Assert.Equal(100, config.MaxMigrationErrorsToTrack);
     }

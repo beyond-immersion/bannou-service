@@ -90,7 +90,6 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `SeedPageSize` | `RELATIONSHIP_TYPE_SEED_PAGE_SIZE` | `100` | Batch size for paginated relationship migration during merge and seed operations |
 | `MaxHierarchyDepth` | `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | `20` | Maximum depth for hierarchy traversal to prevent infinite loops |
 | `MaxMigrationErrorsToTrack` | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | `100` | Maximum number of individual migration error details to track |
 | `LockTimeoutSeconds` | `RELATIONSHIP_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed lock acquisition on index and uniqueness operations |
@@ -150,7 +149,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **DeleteRelationshipType** (`/relationship-type/delete`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship-type.deleted`.
 - **DeprecateRelationshipType** (`/relationship-type/deprecate`): Sets `IsDeprecated=true` with timestamp and optional reason. Returns Conflict if already deprecated.
 - **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Returns BadRequest if not deprecated.
-- **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated (BadRequest otherwise). Target must not be deprecated (Conflict otherwise). Paginates through all relationships (including ended) via internal `ListRelationshipsByTypeAsync` call using `SeedPageSize`. Migrates each via `MigrateRelationshipTypeInternalAsync` which bypasses the ended-relationship check. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Optional `deleteAfterMerge` deletes source if all migrations succeed.
+- **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated (BadRequest otherwise). Target must not be deprecated (Conflict otherwise). Acquires distributed locks on both source and target type indexes (source first for deterministic ordering). Reads both type indexes directly from state store, bulk-loads all source relationships via `GetBulkAsync`. Per-relationship migration under individual lock: deletes old composite key, checks for target composite key collision (ends relationship as duplicate if collision detected), creates new composite key for active relationships. Batch-updates both type indexes after all migrations. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Publishes single `RelationshipTypeMergedEvent` summary event. Optional `deleteAfterMerge` deletes source if all migrations succeed.
 - **SeedRelationshipTypes** (`/relationship-type/seed`): Dependency-ordered bulk creation. Multi-pass algorithm: in each pass, processes types whose parents are already created or have no parent. Max iterations = `pending.Count * 2`. Resolves parent/inverse types by code. Supports `updateExisting` flag. Returns created/updated/skipped/error counts.
 
 ---
@@ -302,7 +301,7 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-1. ~~**`IncludeChildren` parameter ignored**~~: **FIXED** (2026-02-08) - Removed the dead `includeChildren` property from the schema. It was redundant with `rootsOnly` and never functional (T21 violation). Issue #233.
+*No stubs identified.*
 
 ---
 
@@ -312,12 +311,11 @@ State Store Layout
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/335 -->
 2. **Bidirectional asymmetric metadata**: Allow entity1 and entity2 to have independent metadata perspectives on the same relationship.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/336 -->
-3. ~~**Cascade cleanup on entity deletion**~~: **FIXED** (2026-02-08) - Implemented `/relationship/cleanup-by-entity` endpoint with `x-references` declarations for character and realm. Registered cleanup callbacks with lib-resource during plugin startup. Issue #337.
-4. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
+3. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/338 -->
-5. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
+4. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/339 -->
-6. **Category-based permissions**: Allow different roles to create relationships of different categories.
+5. **Category-based permissions**: Allow different roles to create relationships of different categories.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/340 -->
 
 ---
@@ -374,12 +372,6 @@ State Store Layout
 ## Work Tracking
 
 *This section tracks active development work. Markers are managed by `/audit-plugin`.*
-
-### Completed
-
-- **2026-02-08**: Issue [#333](https://github.com/beyond-immersion/bannou-service/issues/333) - Internalized merge operation: replaced paginated public endpoint calls with direct type index reads, bulk model loading, per-relationship composite key updates with collision detection, batch index updates, and single `RelationshipTypeMergedEvent` summary event
-- **2026-02-08**: Issue [#337](https://github.com/beyond-immersion/bannou-service/issues/337) - Cascade cleanup on entity deletion via `x-references` pattern with `/relationship/cleanup-by-entity` endpoint for character and realm targets
-- **2026-02-08**: Issue [#233](https://github.com/beyond-immersion/bannou-service/issues/233) - Removed dead `includeChildren` parameter from ListRelationshipTypesRequest schema (T21 violation, redundant with `rootsOnly`)
 
 ### Pending Issues
 

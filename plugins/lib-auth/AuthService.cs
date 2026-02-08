@@ -588,6 +588,7 @@ public partial class AuthService : IAuthService
             var sessionKey = validateResponse.SessionKey.ToString("N");
 
             var invalidatedSessions = new List<string>();
+            var sessionsToRevoke = new List<(string jti, TimeSpan ttl)>();
 
             if (body?.AllSessions == true)
             {
@@ -600,10 +601,21 @@ public partial class AuthService : IAuthService
                 {
                     var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
-                    // Load session data to get SessionIds for reverse index cleanup, then delete
+                    // Load session data to get SessionIds for reverse index cleanup and JTIs for edge revocation, then delete
                     foreach (var key in sessionKeys)
                     {
                         var sessionData = await sessionStore.GetAsync($"session:{key}", cancellationToken);
+
+                        // Collect JTI before deletion for edge revocation
+                        if (sessionData?.Jti != null)
+                        {
+                            var remainingTtl = sessionData.ExpiresAt - DateTimeOffset.UtcNow;
+                            if (remainingTtl > TimeSpan.Zero)
+                            {
+                                sessionsToRevoke.Add((sessionData.Jti, remainingTtl));
+                            }
+                        }
+
                         await sessionStore.DeleteAsync($"session:{key}", cancellationToken);
 
                         // Clean up reverse index if session data was still available
@@ -629,8 +641,20 @@ public partial class AuthService : IAuthService
             }
             else
             {
-                // Logout current session only
+                // Logout current session only - load session data before deletion to get JTI
                 var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
+                var sessionData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
+
+                // Collect JTI before deletion for edge revocation
+                if (sessionData?.Jti != null)
+                {
+                    var remainingTtl = sessionData.ExpiresAt - DateTimeOffset.UtcNow;
+                    if (remainingTtl > TimeSpan.Zero)
+                    {
+                        sessionsToRevoke.Add((sessionData.Jti, remainingTtl));
+                    }
+                }
+
                 await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
 
                 // Remove session from account index
@@ -639,6 +663,26 @@ public partial class AuthService : IAuthService
                 invalidatedSessions.Add(sessionKey);
 
                 _logger.LogInformation("Session logged out successfully for account: {AccountId}", validateResponse.AccountId);
+            }
+
+            // Push revocations to edge providers (defense-in-depth)
+            if (_edgeRevocationService.IsEnabled && sessionsToRevoke.Count > 0)
+            {
+                _logger.LogDebug("Pushing {Count} token revocations to edge providers for logout, account {AccountId}",
+                    sessionsToRevoke.Count, validateResponse.AccountId);
+
+                foreach (var (jti, ttl) in sessionsToRevoke)
+                {
+                    try
+                    {
+                        await _edgeRevocationService.RevokeTokenAsync(jti, validateResponse.AccountId, ttl, "Logout", cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Edge revocation failures should not block session invalidation
+                        _logger.LogWarning(ex, "Failed to push edge revocation for JTI {Jti} during logout", jti);
+                    }
+                }
             }
 
             // Publish session invalidation event for Connect service to disconnect clients
@@ -697,6 +741,25 @@ public partial class AuthService : IAuthService
 
             // Remove reverse index entry
             await _sessionService.RemoveSessionIdReverseIndexAsync(sessionId, cancellationToken);
+
+            // Push revocation to edge providers (defense-in-depth)
+            if (_edgeRevocationService.IsEnabled && sessionData?.Jti != null)
+            {
+                var remainingTtl = sessionData.ExpiresAt - DateTimeOffset.UtcNow;
+                if (remainingTtl > TimeSpan.Zero)
+                {
+                    try
+                    {
+                        await _edgeRevocationService.RevokeTokenAsync(
+                            sessionData.Jti, sessionData.AccountId, remainingTtl, "AdminAction", cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Edge revocation failures should not block session termination
+                        _logger.LogWarning(ex, "Failed to push edge revocation for JTI {Jti} during session termination", sessionData.Jti);
+                    }
+                }
+            }
 
             // Publish SessionInvalidatedEvent to disconnect WebSocket clients
             if (sessionData != null)

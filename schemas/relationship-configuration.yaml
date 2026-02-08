@@ -17,12 +17,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    # Relationship Type - Seed Operation Configuration
-    SeedPageSize:
-      type: integer
-      description: Number of records to process per page during seed operations
-      env: RELATIONSHIP_TYPE_SEED_PAGE_SIZE
-      default: 100
     # Relationship Type - Safety Limits
     MaxHierarchyDepth:
       type: integer

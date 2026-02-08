@@ -54,12 +54,6 @@ public class RelationshipServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Number of records to process per page during seed operations
-    /// Environment variable: RELATIONSHIP_TYPE_SEED_PAGE_SIZE
-    /// </summary>
-    public int SeedPageSize { get; set; } = 100;
-
-    /// <summary>
     /// Maximum depth for hierarchy traversal to prevent infinite loops on corrupted data
     /// Environment variable: RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH
     /// </summary>

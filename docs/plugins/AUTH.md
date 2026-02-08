@@ -277,9 +277,13 @@ No bugs identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **Logout and TerminateSession do not push edge revocations**: `InvalidateAllSessionsForAccountAsync` (called on `account.deleted`) collects JTIs from sessions and pushes them to edge providers (CloudFlare, OpenResty). However, `LogoutAsync` and `TerminateSessionAsync` delete sessions from Redis and publish `session.invalidated` events but never call `IEdgeRevocationService`. This means a logged-out JWT remains valid at the edge layer until it naturally expires. Whether this matters depends on whether edge revocation is meant only for account-level security events (deletion, compromise) or also for user-initiated logout.
+1. ~~**Logout and TerminateSession do not push edge revocations**~~: **FIXED** (2026-02-08) - Both `LogoutAsync` and `TerminateSessionAsync` now collect JTIs from session data before deletion and push token revocations to edge providers (CloudFlare, OpenResty) when `EdgeRevocationEnabled=true`. Follows the same best-effort pattern as `InvalidateAllSessionsForAccountAsync`: edge revocation failures are logged as warnings but never block session invalidation or event publishing.
 
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+### Completed
+
+- **Edge revocation on logout/terminate** (2026-02-08): `LogoutAsync` and `TerminateSessionAsync` now push token revocations to edge providers, matching the existing behavior in `InvalidateAllSessionsForAccountAsync`.
 
