@@ -14,9 +14,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACCOUNT_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
 | `ACCOUNT_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
 | `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | bool | `true` | When true, automatically manages the anonymous role. If remo... |
+| `ACCOUNT_CREATE_LOCK_EXPIRY_SECONDS` | int | `10` | Lock expiry in seconds for account creation email uniqueness... |
 | `ACCOUNT_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for list operations when not specified |
 | `ACCOUNT_LIST_BATCH_SIZE` | int | `100` | Number of accounts to process per batch in list operations |
 | `ACCOUNT_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for list operations |
+| `ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE` | int | `10000` | Maximum number of accounts to scan when filtering by provide... |
 
 ### Achievement
 
@@ -929,9 +931,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 702
+- **Total properties**: 704
 - **Required (no default)**: 42
-- **Optional (has default)**: 660
+- **Optional (has default)**: 662
 
 ## Environment Variable Naming Convention
 

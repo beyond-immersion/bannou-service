@@ -5348,6 +5348,78 @@ paths:
       x-permissions:
       - role: developer
         states: {}
+  /item/use:
+    post:
+      operationId: useItem
+      tags:
+      - Item Instance
+      summary: Use an item (execute its behavior contract)
+      description: |
+        Uses an item by executing its behavior contract. The item's template must have
+        a useBehaviorContractTemplateId defined. Creates a transient contract instance,
+        completes the "use" milestone (triggering prebound APIs), and consumes the item
+        on success if the template defines it as consumable. Returns failure if the
+        contract's prebound APIs fail.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseItemRequest'
+      responses:
+        '200':
+          description: Item used successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UseItemResponse'
+        '400':
+          description: Item template has no behavior contract or invalid request
+        '404':
+          description: Item instance not found
+        '422':
+          description: Item use failed (contract prebound APIs failed)
+      x-permissions:
+      - role: user
+        states: {}
+  /item/use-step:
+    post:
+      operationId: useItemStep
+      tags:
+      - Item Instance
+      summary: Complete a specific step of a multi-step item use
+      description: |
+        For items with multi-milestone use behaviors, completes a specific milestone.
+        The first call (without an existing contractInstanceId on the item) creates
+        the contract instance and stores it on the item; subsequent calls progress
+        the existing contract. Item is consumed only when all required milestones
+        are complete (per itemUseBehavior).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseItemStepRequest'
+      responses:
+        '200':
+          description: Step completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UseItemStepResponse'
+        '400':
+          description: Invalid request or item template has no behavior contract
+        '404':
+          description: Item instance not found
+        '409':
+          description: Another operation is in progress on this item 
+            (distributed lock held)
+        '422':
+          description: Step execution failed (CanUse validation or milestone 
+            completion)
+      x-permissions:
+      - role: user
+        states: {}
   /item/instance/list-by-container:
     post:
       operationId: listItemsByContainer
@@ -7286,7 +7358,7 @@ paths:
       summary: Get relationship type by ID
       operationId: getRelationshipType
       tags:
-      - RelationshipType
+      - Relationship Type Management
       x-permissions:
       - role: user
         states: {}
@@ -7312,7 +7384,7 @@ paths:
         "SON", "MOTHER", "FRIEND")
       operationId: getRelationshipTypeByCode
       tags:
-      - RelationshipType
+      - Relationship Type Management
       x-permissions:
       - role: user
         states: {}
@@ -7338,7 +7410,7 @@ paths:
         filtering
       operationId: listRelationshipTypes
       tags:
-      - RelationshipType
+      - Relationship Type Management
       x-permissions:
       - role: user
         states: {}
@@ -7362,7 +7434,7 @@ paths:
         as their parent
       operationId: getChildRelationshipTypes
       tags:
-      - RelationshipType
+      - Relationship Type Management
       x-permissions:
       - role: user
         states: {}
@@ -7390,7 +7462,7 @@ paths:
         This enables queries like "find all CHILD relationships" to match SON, DAUGHTER, etc.
       operationId: matchesHierarchy
       tags:
-      - RelationshipType
+      - Relationship Type Management
       x-permissions:
       - role: user
         states: {}
@@ -7417,7 +7489,7 @@ paths:
         For example, for "SON" might return ["CHILD", "FAMILY"].
       operationId: getAncestors
       tags:
-      - RelationshipType
+      - Relationship Type Management
       x-permissions:
       - role: user
         states: {}
@@ -12156,6 +12228,17 @@ components:
         baseCurrency:
           type: string
           description: Base currency used for conversion
+    CanUseBehavior:
+      type: string
+      description: |
+        Controls CanUse validation behavior.
+        - disabled: Skip CanUse validation even if template is configured
+        - block: CanUse failure prevents use (default)
+        - warn_and_proceed: CanUse failure logs warning but proceeds with use
+      enum:
+      - disabled
+      - block
+      - warn_and_proceed
     CancelJobRequest:
       type: object
       additionalProperties: false
@@ -14522,6 +14605,17 @@ components:
       description: Schema defining required context variables for behavior 
         execution
       additionalProperties: true
+    ContractBindingType:
+      type: string
+      description: |
+        Type of contract binding on an item instance.
+        - none: No contract bound
+        - session: Temporary binding for multi-step use (managed by Item service)
+        - lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)
+      enum:
+      - none
+      - session
+      - lifecycle
     ContractInstanceResponse:
       type: object
       description: Contract instance details
@@ -15725,6 +15819,21 @@ components:
           format: uuid
           nullable: true
           description: Source entity ID (quest ID, creature ID, etc.)
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Bound contract instance ID. For persistent item-contract bindings (status effects,
+            licenses, memberships), this references the controlling contract. NULL for items
+            without persistent contract relationships.
+        contractBindingType:
+          $ref: '#/components/schemas/ContractBindingType'
+          nullable: true
+          description: |
+            Type of contract binding. When contractInstanceId is provided, this indicates
+            whether it's a lifecycle binding (managed externally) or session binding
+            (managed by Item service). Defaults to 'lifecycle' when contractInstanceId is set.
     CreateItemTemplateRequest:
       type: object
       description: Request to create a new item template
@@ -15874,6 +15983,40 @@ components:
           type: object
           nullable: true
           description: Any other game-specific data
+        useBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template ID for executable item behavior. When 
+            set, the item can be "used" via /item/use, which creates a transient
+            contract instance, completes its "use" milestone (triggering 
+            prebound APIs), and optionally consumes the item.
+        canUseBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Contract template for pre-use validation. When set, /item/use first executes
+            this contract's "validate" milestone before proceeding. If validation fails,
+            the item is NOT consumed and the main use behavior is NOT executed.
+        onUseFailedBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Contract template executed when the main use behavior fails. Enables cleanup,
+            partial rollback, or consequence application. Item is NOT consumed on failure
+            regardless of this template's outcome.
+        itemUseBehavior:
+          $ref: '#/components/schemas/ItemUseBehavior'
+          nullable: true
+          description: How the item should behave when used (defaults to 
+            destroy_on_success)
+        canUseBehavior:
+          $ref: '#/components/schemas/CanUseBehavior'
+          nullable: true
+          description: How CanUse validation failures should be handled 
+            (defaults to block)
     CreateLeaderboardDefinitionRequest:
       type: object
       description: Request to create a new leaderboard
@@ -19388,10 +19531,11 @@ components:
           items:
             $ref: '#/components/schemas/FamilyMember'
           description: Sibling relationships (including half-siblings)
-        spouse:
-          $ref: '#/components/schemas/FamilyMember'
-          nullable: true
-          description: Current spouse (if any)
+        spouses:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyMember'
+          description: Spousal relationships (spouse, husband, wife)
         pastLives:
           type: array
           items:
@@ -22617,6 +22761,19 @@ components:
           format: uuid
           nullable: true
           description: Source entity ID
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Bound contract instance ID. For persistent item-contract bindings or active
+            multi-step use sessions, this references the controlling contract.
+        contractBindingType:
+          $ref: '#/components/schemas/ContractBindingType'
+          nullable: true
+          description: |
+            Type of contract binding. 'session' for multi-step use in progress,
+            'lifecycle' for external orchestrator-managed bindings, null/none otherwise.
         createdAt:
           type: string
           format: date-time
@@ -22818,6 +22975,34 @@ components:
           type: object
           nullable: true
           description: Other game-specific data
+        useBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template ID for executable item behavior (null 
+            if not usable)
+        canUseBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for pre-use validation (null if not 
+            configured)
+        onUseFailedBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for use failure handling (null if not 
+            configured)
+        itemUseBehavior:
+          $ref: '#/components/schemas/ItemUseBehavior'
+          nullable: true
+          description: How the item behaves when used (null defaults to 
+            destroy_on_success)
+        canUseBehavior:
+          $ref: '#/components/schemas/CanUseBehavior'
+          nullable: true
+          description: How CanUse validation failures are handled (null defaults
+            to block)
         isActive:
           type: boolean
           description: Whether template is active
@@ -22842,6 +23027,17 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+    ItemUseBehavior:
+      type: string
+      description: |
+        Controls item consumption on use.
+        - disabled: Item cannot be used (/item/use returns 400)
+        - destroy_on_success: Item consumed only if use behavior succeeds (default)
+        - destroy_always: Item consumed regardless of success/failure
+      enum:
+      - disabled
+      - destroy_on_success
+      - destroy_always
     JoinMatchmakingRequest:
       type: object
       description: Request to join a matchmaking queue
@@ -29404,7 +29600,7 @@ components:
         relationshipTypeId:
           type: string
           format: uuid
-          description: Relationship type ID (from RelationshipType service)
+          description: Relationship type ID defining the kind of relationship
         startedAt:
           type: string
           format: date-time
@@ -34177,6 +34373,31 @@ components:
           type: boolean
           nullable: true
           description: Active status
+        useBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template ID for executable item behavior (null 
+            to clear)
+        canUseBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for pre-use validation (null to clear)
+        onUseFailedBehaviorContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for use failure handling (null to 
+            clear)
+        itemUseBehavior:
+          $ref: '#/components/schemas/ItemUseBehavior'
+          nullable: true
+          description: How the item should behave when used
+        canUseBehavior:
+          $ref: '#/components/schemas/CanUseBehavior'
+          nullable: true
+          description: How CanUse validation failures should be handled
     UpdateLeaderboardDefinitionRequest:
       type: object
       description: Request to update a leaderboard definition
@@ -34507,6 +34728,171 @@ components:
             type: string
           description: Headers the client must include when uploading to the 
             pre-signed URL
+    UseItemRequest:
+      type: object
+      description: Request to use an item instance by executing its behavior 
+        contract
+      additionalProperties: false
+      required:
+      - instanceId
+      - userId
+      - userType
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item instance to use
+        userId:
+          type: string
+          format: uuid
+          description: Unique identifier of the entity using the item 
+            (character, account, or actor)
+        userType:
+          type: string
+          maxLength: 64
+          description: Type of user entity performing the use action (e.g., 
+            character, account, actor)
+        targetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional unique identifier of the target entity for 
+            directional item effects
+        targetType:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Type of target entity when targetId is provided
+        context:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional context data passed to contract template value
+            substitution
+    UseItemResponse:
+      type: object
+      description: Response containing the result of an item use attempt
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - templateId
+      - consumed
+      properties:
+        success:
+          type: boolean
+          description: Whether the item use behavior executed successfully
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item instance that was used
+        templateId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item template defining the used 
+            item
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique identifier of the contract instance created for 
+            this use (null if creation failed)
+        consumed:
+          type: boolean
+          description: Whether the item was consumed (quantity decremented or 
+            destroyed)
+        remainingQuantity:
+          type: number
+          format: double
+          nullable: true
+          description: Remaining quantity after use (null if item was fully 
+            consumed or destroyed)
+        failureReason:
+          type: string
+          nullable: true
+          description: Human-readable reason for failure when success is false
+    UseItemStepRequest:
+      type: object
+      description: Request to complete a step of a multi-step item use
+      additionalProperties: false
+      required:
+      - instanceId
+      - userId
+      - userType
+      - milestoneCode
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance being used
+        userId:
+          type: string
+          format: uuid
+          description: User performing the step
+        userType:
+          type: string
+          maxLength: 64
+          description: Type of user entity (e.g., character, account, actor)
+        milestoneCode:
+          type: string
+          maxLength: 64
+          description: Milestone code to complete in the use behavior contract
+        evidence:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Evidence data for this milestone completion (passed to 
+            contract)
+        context:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional context data passed to contract template value
+            substitution
+    UseItemStepResponse:
+      type: object
+      description: Response from completing a multi-step item use milestone
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - contractInstanceId
+      - completedMilestone
+      - isComplete
+      - consumed
+      properties:
+        success:
+          type: boolean
+          description: Whether the step completed successfully
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance tracking this use session
+        completedMilestone:
+          type: string
+          description: The milestone that was completed
+        remainingMilestones:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Milestones still to be completed (null if complete or 
+            failed)
+        isComplete:
+          type: boolean
+          description: Whether all required milestones are complete
+        consumed:
+          type: boolean
+          description: Whether item was consumed (only true when all steps 
+            complete per itemUseBehavior)
+        failureReason:
+          type: string
+          nullable: true
+          description: Human-readable reason for failure when success is false
     ValidateAbmlRequest:
       description: Request to validate ABML YAML content against schema and 
         semantic rules
@@ -35539,8 +35925,6 @@ tags:
   description: Realm management service for game worlds.
 - name: Bannou Realm History
   description: Historical event participation and lore management for realms.
-- name: Bannou RelationshipType
-  description: Relationship type management service for game worlds.
 - name: Bannou Scene
   description: Hierarchical composition storage for game worlds.
 - name: Bannou Species
@@ -35568,8 +35952,8 @@ tags:
   description: Pure computation music generation using formal music theory 
     rules.
 - name: Relationship
-  description: Generic relationship management service for entity-to-entity 
-    relationships.
+  description: Relationship and relationship type management service for 
+    entity-to-entity
 - name: Resource Lifecycle
   description: Resource reference tracking and lifecycle management.
 - name: Save-Load

@@ -4007,6 +4007,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/item/use': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Use an item (execute its behavior contract)
+     * @description Uses an item by executing its behavior contract. The item's template must have
+     *     a useBehaviorContractTemplateId defined. Creates a transient contract instance,
+     *     completes the "use" milestone (triggering prebound APIs), and consumes the item
+     *     on success if the template defines it as consumable. Returns failure if the
+     *     contract's prebound APIs fail.
+     */
+    post: operations['useItem'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/use-step': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Complete a specific step of a multi-step item use
+     * @description For items with multi-milestone use behaviors, completes a specific milestone.
+     *     The first call (without an existing contractInstanceId on the item) creates
+     *     the contract instance and stores it on the item; subsequent calls progress
+     *     the existing contract. Item is consumed only when all required milestones
+     *     are complete (per itemUseBehavior).
+     */
+    post: operations['useItemStep'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/item/instance/list-by-container': {
     parameters: {
       query?: never;
@@ -9065,6 +9113,14 @@ export interface components {
       /** @description Base currency used for conversion */
       baseCurrency: string;
     };
+    /**
+     * @description Controls CanUse validation behavior.
+     *     - disabled: Skip CanUse validation even if template is configured
+     *     - block: CanUse failure prevents use (default)
+     *     - warn_and_proceed: CanUse failure logs warning but proceeds with use
+     * @enum {string}
+     */
+    CanUseBehavior: 'disabled' | 'block' | 'warn_and_proceed';
     /** @description Request to cancel an async metabundle creation job */
     CancelJobRequest: {
       /**
@@ -10594,6 +10650,14 @@ export interface components {
     ContextSchemaData: {
       [key: string]: unknown;
     };
+    /**
+     * @description Type of contract binding on an item instance.
+     *     - none: No contract bound
+     *     - session: Temporary binding for multi-step use (managed by Item service)
+     *     - lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)
+     * @enum {string}
+     */
+    ContractBindingType: 'none' | 'session' | 'lifecycle';
     /** @description Contract instance details */
     ContractInstanceResponse: {
       /**
@@ -11381,6 +11445,19 @@ export interface components {
        * @description Source entity ID (quest ID, creature ID, etc.)
        */
       originId?: string | null;
+      /**
+       * Format: uuid
+       * @description Bound contract instance ID. For persistent item-contract bindings (status effects,
+       *     licenses, memberships), this references the controlling contract. NULL for items
+       *     without persistent contract relationships.
+       */
+      contractInstanceId?: string | null;
+      /**
+       * @description Type of contract binding. When contractInstanceId is provided, this indicates
+       *     whether it's a lifecycle binding (managed externally) or session binding
+       *     (managed by Item service). Defaults to 'lifecycle' when contractInstanceId is set.
+       */
+      contractBindingType?: components['schemas']['ContractBindingType'];
     };
     /** @description Request to create a new item template */
     CreateItemTemplateRequest: {
@@ -11462,6 +11539,29 @@ export interface components {
       display?: Record<string, never> | null;
       /** @description Any other game-specific data */
       metadata?: Record<string, never> | null;
+      /**
+       * Format: uuid
+       * @description Contract template ID for executable item behavior. When set, the item can be "used" via /item/use, which creates a transient contract instance, completes its "use" milestone (triggering prebound APIs), and optionally consumes the item.
+       */
+      useBehaviorContractTemplateId?: string | null;
+      /**
+       * Format: uuid
+       * @description Contract template for pre-use validation. When set, /item/use first executes
+       *     this contract's "validate" milestone before proceeding. If validation fails,
+       *     the item is NOT consumed and the main use behavior is NOT executed.
+       */
+      canUseBehaviorContractTemplateId?: string | null;
+      /**
+       * Format: uuid
+       * @description Contract template executed when the main use behavior fails. Enables cleanup,
+       *     partial rollback, or consequence application. Item is NOT consumed on failure
+       *     regardless of this template's outcome.
+       */
+      onUseFailedBehaviorContractTemplateId?: string | null;
+      /** @description How the item should behave when used (defaults to destroy_on_success) */
+      itemUseBehavior?: components['schemas']['ItemUseBehavior'];
+      /** @description How CanUse validation failures should be handled (defaults to block) */
+      canUseBehavior?: components['schemas']['CanUseBehavior'];
     };
     /** @description Request to create a new leaderboard */
     CreateLeaderboardDefinitionRequest: {
@@ -13844,8 +13944,8 @@ export interface components {
       children?: components['schemas']['FamilyMember'][];
       /** @description Sibling relationships (including half-siblings) */
       siblings?: components['schemas']['FamilyMember'][];
-      /** @description Current spouse (if any) */
-      spouse?: components['schemas']['FamilyMember'];
+      /** @description Spousal relationships (spouse, husband, wife) */
+      spouses?: components['schemas']['FamilyMember'][];
       /** @description Previous incarnations (if reincarnation tracked) */
       pastLives?: components['schemas']['PastLifeReference'][];
     };
@@ -16066,6 +16166,17 @@ export interface components {
        */
       originId?: string | null;
       /**
+       * Format: uuid
+       * @description Bound contract instance ID. For persistent item-contract bindings or active
+       *     multi-step use sessions, this references the controlling contract.
+       */
+      contractInstanceId?: string | null;
+      /**
+       * @description Type of contract binding. 'session' for multi-step use in progress,
+       *     'lifecycle' for external orchestrator-managed bindings, null/none otherwise.
+       */
+      contractBindingType?: components['schemas']['ContractBindingType'];
+      /**
        * Format: date-time
        * @description Instance creation timestamp
        */
@@ -16185,6 +16296,25 @@ export interface components {
       display?: Record<string, never> | null;
       /** @description Other game-specific data */
       metadata?: Record<string, never> | null;
+      /**
+       * Format: uuid
+       * @description Contract template ID for executable item behavior (null if not usable)
+       */
+      useBehaviorContractTemplateId?: string | null;
+      /**
+       * Format: uuid
+       * @description Contract template for pre-use validation (null if not configured)
+       */
+      canUseBehaviorContractTemplateId?: string | null;
+      /**
+       * Format: uuid
+       * @description Contract template for use failure handling (null if not configured)
+       */
+      onUseFailedBehaviorContractTemplateId?: string | null;
+      /** @description How the item behaves when used (null defaults to destroy_on_success) */
+      itemUseBehavior?: components['schemas']['ItemUseBehavior'];
+      /** @description How CanUse validation failures are handled (null defaults to block) */
+      canUseBehavior?: components['schemas']['CanUseBehavior'];
       /** @description Whether template is active */
       isActive: boolean;
       /** @description Whether template is deprecated */
@@ -16210,6 +16340,14 @@ export interface components {
        */
       updatedAt: string;
     };
+    /**
+     * @description Controls item consumption on use.
+     *     - disabled: Item cannot be used (/item/use returns 400)
+     *     - destroy_on_success: Item consumed only if use behavior succeeds (default)
+     *     - destroy_always: Item consumed regardless of success/failure
+     * @enum {string}
+     */
+    ItemUseBehavior: 'disabled' | 'destroy_on_success' | 'destroy_always';
     /** @description Request to join a matchmaking queue */
     JoinMatchmakingRequest: {
       /**
@@ -20508,7 +20646,7 @@ export interface components {
       entity2Type: components['schemas']['EntityType'];
       /**
        * Format: uuid
-       * @description Relationship type ID (from RelationshipType service)
+       * @description Relationship type ID defining the kind of relationship
        */
       relationshipTypeId: string;
       /**
@@ -23608,6 +23746,25 @@ export interface components {
       metadata?: Record<string, never> | null;
       /** @description Active status */
       isActive?: boolean | null;
+      /**
+       * Format: uuid
+       * @description Contract template ID for executable item behavior (null to clear)
+       */
+      useBehaviorContractTemplateId?: string | null;
+      /**
+       * Format: uuid
+       * @description Contract template for pre-use validation (null to clear)
+       */
+      canUseBehaviorContractTemplateId?: string | null;
+      /**
+       * Format: uuid
+       * @description Contract template for use failure handling (null to clear)
+       */
+      onUseFailedBehaviorContractTemplateId?: string | null;
+      /** @description How the item should behave when used */
+      itemUseBehavior?: components['schemas']['ItemUseBehavior'];
+      /** @description How CanUse validation failures should be handled */
+      canUseBehavior?: components['schemas']['CanUseBehavior'];
     };
     /** @description Request to update a leaderboard definition */
     UpdateLeaderboardDefinitionRequest: {
@@ -23792,6 +23949,111 @@ export interface components {
       requiredHeaders?: {
         [key: string]: string;
       };
+    };
+    /** @description Request to use an item instance by executing its behavior contract */
+    UseItemRequest: {
+      /**
+       * Format: uuid
+       * @description Unique identifier of the item instance to use
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Unique identifier of the entity using the item (character, account, or actor)
+       */
+      userId: string;
+      /** @description Type of user entity performing the use action (e.g., character, account, actor) */
+      userType: string;
+      /**
+       * Format: uuid
+       * @description Optional unique identifier of the target entity for directional item effects
+       */
+      targetId?: string | null;
+      /** @description Type of target entity when targetId is provided */
+      targetType?: string | null;
+      /** @description Additional context data passed to contract template value substitution */
+      context?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Response containing the result of an item use attempt */
+    UseItemResponse: {
+      /** @description Whether the item use behavior executed successfully */
+      success: boolean;
+      /**
+       * Format: uuid
+       * @description Unique identifier of the item instance that was used
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Unique identifier of the item template defining the used item
+       */
+      templateId: string;
+      /**
+       * Format: uuid
+       * @description Unique identifier of the contract instance created for this use (null if creation failed)
+       */
+      contractInstanceId?: string | null;
+      /** @description Whether the item was consumed (quantity decremented or destroyed) */
+      consumed: boolean;
+      /**
+       * Format: double
+       * @description Remaining quantity after use (null if item was fully consumed or destroyed)
+       */
+      remainingQuantity?: number | null;
+      /** @description Human-readable reason for failure when success is false */
+      failureReason?: string | null;
+    };
+    /** @description Request to complete a step of a multi-step item use */
+    UseItemStepRequest: {
+      /**
+       * Format: uuid
+       * @description Item instance being used
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description User performing the step
+       */
+      userId: string;
+      /** @description Type of user entity (e.g., character, account, actor) */
+      userType: string;
+      /** @description Milestone code to complete in the use behavior contract */
+      milestoneCode: string;
+      /** @description Evidence data for this milestone completion (passed to contract) */
+      evidence?: {
+        [key: string]: unknown;
+      } | null;
+      /** @description Additional context data passed to contract template value substitution */
+      context?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Response from completing a multi-step item use milestone */
+    UseItemStepResponse: {
+      /** @description Whether the step completed successfully */
+      success: boolean;
+      /**
+       * Format: uuid
+       * @description Item instance ID
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Contract instance tracking this use session
+       */
+      contractInstanceId: string;
+      /** @description The milestone that was completed */
+      completedMilestone: string;
+      /** @description Milestones still to be completed (null if complete or failed) */
+      remainingMilestones?: string[] | null;
+      /** @description Whether all required milestones are complete */
+      isComplete: boolean;
+      /** @description Whether item was consumed (only true when all steps complete per itemUseBehavior) */
+      consumed: boolean;
+      /** @description Human-readable reason for failure when success is false */
+      failureReason?: string | null;
     };
     /** @description Request to validate ABML YAML content against schema and semantic rules */
     ValidateAbmlRequest: {
@@ -30505,6 +30767,103 @@ export interface operations {
       };
       /** @description Item is bound and cannot be destroyed */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  useItem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UseItemRequest'];
+      };
+    };
+    responses: {
+      /** @description Item used successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UseItemResponse'];
+        };
+      };
+      /** @description Item template has no behavior contract or invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item instance not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item use failed (contract prebound APIs failed) */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  useItemStep: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UseItemStepRequest'];
+      };
+    };
+    responses: {
+      /** @description Step completed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UseItemStepResponse'];
+        };
+      };
+      /** @description Invalid request or item template has no behavior contract */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item instance not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Another operation is in progress on this item (distributed lock held) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Step execution failed (CanUse validation or milestone completion) */
+      422: {
         headers: {
           [name: string]: unknown;
         };

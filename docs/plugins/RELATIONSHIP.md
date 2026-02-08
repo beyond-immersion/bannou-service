@@ -142,7 +142,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **UpdateRelationshipType** (`/relationship-type/update`): Partial update with `changedFields` tracking. Code is immutable. Parent reassignment validates no cycle via `WouldCreateCycleAsync`, updates parent indexes, and recalculates depth. Publishes update event only if changes detected.
 - **DeleteRelationshipType** (`/relationship-type/delete`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship-type.deleted`.
 - **DeprecateRelationshipType** (`/relationship-type/deprecate`): Sets `IsDeprecated=true` with timestamp and optional reason. Returns Conflict if already deprecated.
-- **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Returns Conflict if not deprecated.
+- **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Returns BadRequest if not deprecated.
 - **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated (BadRequest otherwise). Paginates through relationships via internal `ListRelationshipsByTypeAsync` call using `SeedPageSize`. Updates each to target type via internal `UpdateRelationshipAsync`. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Optional `deleteAfterMerge` deletes source if all migrations succeed.
 - **SeedRelationshipTypes** (`/relationship-type/seed`): Dependency-ordered bulk creation. Multi-pass algorithm: in each pass, processes types whose parents are already created or have no parent. Max iterations = `pending.Count * 2`. Resolves parent/inverse types by code. Supports `updateExisting` flag. Returns created/updated/skipped/error counts.
 
@@ -281,6 +281,7 @@ State Store Layout
 ## Potential Extensions
 
 1. **Relationship strength/weight**: Numeric field for weighted relationship graphs (e.g., closeness scores).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/335 -->
 2. **Bidirectional asymmetric metadata**: Allow entity1 and entity2 to have independent metadata perspectives on the same relationship.
 3. **Cascade cleanup on entity deletion**: Automatically end all relationships when an entity is permanently deleted.
 4. **Pagination for GetBetween**: Currently returns all relationships between two entities without pagination support.
@@ -298,7 +299,7 @@ State Store Layout
 
 2. ~~**`MergeRelationshipTypeAsync` does not validate target is non-deprecated**~~: **FIXED** (2026-02-08) - Added `targetModel.IsDeprecated` check after target existence validation, returning `StatusCodes.Conflict` as documented in the API schema.
 
-3. **`UndeprecateRelationshipTypeAsync` returns wrong status code**: The API schema defines `400: Relationship type is not deprecated`, but the implementation returns `StatusCodes.Conflict` (409) when the type is not deprecated. Clients expecting the documented 400 response will misinterpret the 409.
+3. ~~**`UndeprecateRelationshipTypeAsync` returns wrong status code**~~: **FIXED** (2026-02-08) - Changed from `StatusCodes.Conflict` (409) to `StatusCodes.BadRequest` (400) to match the API schema's documented `400: Relationship type is not deprecated` response.
 
 ### Intentional Quirks (Documented Behavior)
 

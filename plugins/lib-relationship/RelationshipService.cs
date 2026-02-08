@@ -1500,7 +1500,7 @@ public partial class RelationshipService : IRelationshipService
             if (!model.IsDeprecated)
             {
                 _logger.LogDebug("Relationship type not deprecated: {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.Conflict, null);
+                return (StatusCodes.BadRequest, null);
             }
 
             model.IsDeprecated = false;

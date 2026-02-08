@@ -626,6 +626,29 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         Assert.False(response.IsDeprecated);
     }
 
+    [Fact]
+    public async Task UndeprecateRelationshipTypeAsync_NotDeprecated_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeId = Guid.NewGuid();
+        var model = CreateTestRelationshipTypeModel(typeId, "ACTIVE", "Active Type");
+        // model.IsDeprecated defaults to false
+
+        _mockRtModelStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        var request = new UndeprecateRelationshipTypeRequest { RelationshipTypeId = typeId };
+
+        // Act
+        var (status, response) = await service.UndeprecateRelationshipTypeAsync(request);
+
+        // Assert - schema specifies 400 for "Relationship type is not deprecated"
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
     #endregion
 
     #region MergeRelationshipType Tests
