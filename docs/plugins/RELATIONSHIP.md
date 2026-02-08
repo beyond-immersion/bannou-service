@@ -333,6 +333,10 @@ State Store Layout
 12. **Merge calls public endpoint methods, not direct state store operations**: `MergeRelationshipTypeAsync` calls `this.ListRelationshipsByTypeAsync()` and `this.UpdateRelationshipAsync()` internally. While this avoids HTTP round-trips (both methods are in the same service), it still goes through the full public endpoint logic: constructing request/response models, publishing update events for each migrated relationship, and returning status code tuples. A deeper internalization would read the `type-idx` directly and bulk-update state store records, avoiding per-relationship event publishing and response model overhead.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/333 -->
 
+13. **Recursive child query breadth-unbounded**: `GetChildRelationshipTypesAsync` with `recursive=true` traverses the full subtree. `MaxHierarchyDepth` (default 20) bounds depth but not breadth. This is acceptable because relationship types are admin-curated taxonomies with realistic totals of ~50-100 types, making breadth explosion a theoretical rather than practical concern.
+
+14. **Seed multi-pass iteration limit is `2*N`**: The dependency resolution algorithm uses `maxIterations = pending.Count * 2`. This limit is provably unreachable: each iteration processes at least one type (or the loop breaks early with unresolvable parent errors), so N types require at most N iterations. The `2*N` limit exists as an infinite loop guard but cannot be hit in practice.
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: All list operations load the full index, bulk-fetch all relationship models, filter in memory, then paginate. For entities with thousands of relationships, this loads everything into memory before applying page limits.
@@ -345,15 +349,17 @@ State Store Layout
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/343 -->
 
 4. **Type migration during merge**: Merge operations modify type indexes atomically but without distributed transaction guarantees. A crash between removing from old index and adding to new could leave the relationship in neither index.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/344 -->
 
 5. **Read-modify-write without distributed locks**: Index updates (add/remove from list) and composite key checks have no concurrency protection. Two concurrent creates with the same composite key could both pass the uniqueness check if timed precisely. Requires IDistributedLockProvider integration.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/223 -->
 
-6. **Recursive child query unbounded**: `GetChildRelationshipTypesAsync` with `recursive=true` traverses the full subtree. Deep hierarchies with many branches could generate many state store calls. The `MaxHierarchyDepth` limit bounds depth but not breadth.
+6. ~~**Recursive child query unbounded**~~: **FIXED** (2026-02-08) - Moved to Intentional Quirks. Depth is bounded by `MaxHierarchyDepth` (default 20). Breadth is unbounded but relationship types are admin-curated taxonomies (realistic max ~50-100 types total), making breadth explosion a theoretical rather than practical concern.
 
-7. **Seed multi-pass has fixed iteration limit**: The dependency resolution algorithm uses `maxIterations = pending.Count * 2`. For a list of N types, max 2N passes. Extremely deep dependency chains could fail to resolve within the limit.
+7. ~~**Seed multi-pass has fixed iteration limit**~~: **FIXED** (2026-02-08) - Moved to Intentional Quirks. The `2*N` limit is provably sufficient: each iteration processes at least one type (or the loop breaks early on unresolvable parents), so N types need at most N iterations. The limit cannot be reached in normal operation.
 
 8. **Read-modify-write on type indexes without distributed locks**: Index updates (`AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`) perform read-modify-write without distributed locks. Concurrent operations on the same indexes can cause lost updates.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/223 -->
 
 9. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This prevents data loss but leaves the deprecated type with remaining relationships that need manual cleanup.
 
