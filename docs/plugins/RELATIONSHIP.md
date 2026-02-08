@@ -87,9 +87,9 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `SeedPageSize` | `RELATIONSHIP_SEED_PAGE_SIZE` | `100` | Batch size for paginated relationship migration during merge |
-| `MaxHierarchyDepth` | `RELATIONSHIP_MAX_HIERARCHY_DEPTH` | `20` | Maximum depth for hierarchy traversal to prevent infinite loops |
-| `MaxMigrationErrorsToTrack` | `RELATIONSHIP_MAX_MIGRATION_ERRORS_TO_TRACK` | `100` | Maximum number of individual migration error details to track |
+| `SeedPageSize` | `RELATIONSHIP_TYPE_SEED_PAGE_SIZE` | `100` | Batch size for paginated relationship migration during merge and seed operations |
+| `MaxHierarchyDepth` | `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | `20` | Maximum depth for hierarchy traversal to prevent infinite loops |
+| `MaxMigrationErrorsToTrack` | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | `100` | Maximum number of individual migration error details to track |
 
 ---
 
@@ -123,28 +123,28 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 - **Update** (`/relationship/update`): Can modify metadata and relationship type. When type changes, updates type indexes (removes from old, adds to new). Immutable fields: entity1, entity2 (cannot change participants). Ended relationships cannot be updated (returns Conflict). Publishes `relationship.updated` with `changedFields`.
 
-- **End** (`/relationship/end`): Soft-deletes by setting `EndedAt` timestamp. Deletes the composite uniqueness key (allowing the same relationship to be recreated later). Does NOT remove from entity or type indexes (keeping history queryable). Publishes `relationship.deleted`.
+- **End** (`/relationship/end`): Soft-deletes by setting `EndedAt` timestamp. Returns Conflict if already ended. Deletes the composite uniqueness key (allowing the same relationship to be recreated later). Does NOT remove from entity or type indexes (keeping history queryable). Publishes `relationship.deleted`. Note: the `reason` field from the request is ignored (see Bugs section).
 
 ### Relationship Type Endpoints (13 endpoints)
 
 #### Read Operations (6 endpoints)
 
-- **GetRelationshipType** (`/relationship/get-type`): Direct lookup by type ID. Returns full definition with parent/inverse references.
-- **GetRelationshipTypeByCode** (`/relationship/get-type-by-code`): Code index lookup (uppercase-normalized). Returns NotFound if code index missing or model missing.
-- **ListRelationshipTypes** (`/relationship/list-types`): Loads all IDs from `all-types`, bulk-loads types. Filters by `category`, `rootsOnly`, `includeDeprecated`. **Note**: `includeChildren` parameter is ignored (see Stubs section). In-memory filtering (no pagination support).
-- **GetChildRelationshipTypes** (`/relationship/get-children`): Verifies parent exists, loads child IDs from parent index. Supports `recursive` flag for full subtree traversal with depth limit.
-- **MatchesHierarchy** (`/relationship/matches-hierarchy`): Checks if a type matches or descends from an ancestor type. Walks parent chain iteratively. Returns `{ Matches: bool, Depth: int }` where depth is 0 for same type, -1 for no match.
-- **GetAncestors** (`/relationship/get-ancestors`): Returns full ancestry chain from type up to root. Walks parent pointers iteratively with `MaxHierarchyDepth` limit.
+- **GetRelationshipType** (`/relationship-type/get`): Direct lookup by type ID. Returns full definition with parent/inverse references.
+- **GetRelationshipTypeByCode** (`/relationship-type/get-by-code`): Code index lookup (uppercase-normalized). Returns NotFound if code index missing or model missing.
+- **ListRelationshipTypes** (`/relationship-type/list`): Loads all IDs from `all-types`, bulk-loads types. Filters by `category`, `rootsOnly`, `includeDeprecated`. **Note**: `includeChildren` parameter is ignored (see Stubs section). In-memory filtering (no pagination support).
+- **GetChildRelationshipTypes** (`/relationship-type/get-children`): Verifies parent exists, loads child IDs from parent index. Supports `recursive` flag for full subtree traversal with depth limit.
+- **MatchesHierarchy** (`/relationship-type/matches-hierarchy`): Checks if a type matches or descends from an ancestor type. Walks parent chain iteratively. Returns `{ Matches: bool, Depth: int }` where depth is 0 for same type, -1 for no match.
+- **GetAncestors** (`/relationship-type/get-ancestors`): Returns full ancestry chain from type up to root. Walks parent pointers iteratively with `MaxHierarchyDepth` limit.
 
 #### Write Operations (7 endpoints)
 
-- **CreateRelationshipType** (`/relationship/create-type`): Normalizes code to uppercase. Validates parent exists (if specified). Resolves inverse type ID by code. Calculates depth from parent. Updates all indexes (code, parent, all-types). Publishes `relationship-type.created`.
-- **UpdateRelationshipType** (`/relationship/update-type`): Partial update with `changedFields` tracking. Code is immutable. Parent reassignment validates no cycle via `WouldCreateCycleAsync`, updates parent indexes, and recalculates depth. Publishes update event only if changes detected.
-- **DeleteRelationshipType** (`/relationship/delete-type`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship-type.deleted`.
-- **DeprecateRelationshipType** (`/relationship/deprecate-type`): Sets `IsDeprecated=true` with timestamp and optional reason. Returns Conflict if already deprecated.
-- **UndeprecateRelationshipType** (`/relationship/undeprecate-type`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Returns Conflict if not deprecated.
-- **MergeRelationshipType** (`/relationship/merge-type`): Source must be deprecated (BadRequest otherwise). Paginates through relationships via internal `ListRelationshipsByTypeAsync` call using `SeedPageSize`. Updates each to target type via internal `UpdateRelationshipAsync`. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Optional `deleteAfterMerge` deletes source if all migrations succeed.
-- **SeedRelationshipTypes** (`/relationship/seed-types`): Dependency-ordered bulk creation. Multi-pass algorithm: in each pass, processes types whose parents are already created or have no parent. Max iterations = `pending.Count * 2`. Resolves parent/inverse types by code. Supports `updateExisting` flag. Returns created/updated/skipped/error counts.
+- **CreateRelationshipType** (`/relationship-type/create`): Normalizes code to uppercase. Validates parent exists (if specified). Resolves inverse type ID by code. Calculates depth from parent. Updates all indexes (code, parent, all-types). Publishes `relationship-type.created`.
+- **UpdateRelationshipType** (`/relationship-type/update`): Partial update with `changedFields` tracking. Code is immutable. Parent reassignment validates no cycle via `WouldCreateCycleAsync`, updates parent indexes, and recalculates depth. Publishes update event only if changes detected.
+- **DeleteRelationshipType** (`/relationship-type/delete`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship-type.deleted`.
+- **DeprecateRelationshipType** (`/relationship-type/deprecate`): Sets `IsDeprecated=true` with timestamp and optional reason. Returns Conflict if already deprecated.
+- **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Returns Conflict if not deprecated.
+- **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated (BadRequest otherwise). Paginates through relationships via internal `ListRelationshipsByTypeAsync` call using `SeedPageSize`. Updates each to target type via internal `UpdateRelationshipAsync`. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Optional `deleteAfterMerge` deletes source if all migrations succeed.
+- **SeedRelationshipTypes** (`/relationship-type/seed`): Dependency-ordered bulk creation. Multi-pass algorithm: in each pass, processes types whose parents are already created or have no parent. Max iterations = `pending.Count * 2`. Resolves parent/inverse types by code. Supports `updateExisting` flag. Returns created/updated/skipped/error counts.
 
 ---
 
@@ -296,6 +296,10 @@ State Store Layout
 
 1. **`EndRelationshipAsync` ignores `reason` field**: The `EndRelationshipRequest` schema defines a `reason` field (string, nullable, maxLength 500), but the implementation never reads `body.Reason`. Instead, it passes the hardcoded string `"Relationship ended"` as `deletedReason` to `PublishRelationshipDeletedEventAsync`. The request's reason is silently discarded.
 
+2. **`MergeRelationshipTypeAsync` does not validate target is non-deprecated**: The API schema documents a `409: Cannot merge into a deprecated type` response, but the implementation only verifies the target exists - it never checks `targetModel.IsDeprecated`. Merging into a deprecated target type will succeed silently, potentially migrating relationships to a type that shouldn't be used for new data.
+
+3. **`UndeprecateRelationshipTypeAsync` returns wrong status code**: The API schema defines `400: Relationship type is not deprecated`, but the implementation returns `StatusCodes.Conflict` (409) when the type is not deprecated. Clients expecting the documented 400 response will misinterpret the 409.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Self-relationship with different types allowed**: The self-relationship check compares both ID and type. Entity A (type: character) -> Entity A (type: npc) is allowed. This supports entities that span multiple type classifications.
@@ -343,6 +347,8 @@ State Store Layout
 8. **Read-modify-write on type indexes without distributed locks**: Index updates (`AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`) perform read-modify-write without distributed locks. Concurrent operations on the same indexes can cause lost updates.
 
 9. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This prevents data loss but leaves the deprecated type with remaining relationships that need manual cleanup.
+
+10. **Merge only migrates active relationships**: `MergeRelationshipTypeAsync` calls `ListRelationshipsByTypeAsync` without setting `IncludeEnded = true`, so ended relationships are NOT migrated. However, `DeleteRelationshipTypeAsync` checks for ALL relationships including ended ones (`IncludeEnded = true`). This means `deleteAfterMerge` will always fail if the source type has any ended relationships, since the merge skips them but the delete finds them.
 
 ---
 

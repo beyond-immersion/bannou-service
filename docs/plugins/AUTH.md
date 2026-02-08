@@ -17,6 +17,7 @@ The Auth plugin is the internet-facing authentication and session management ser
 | lib-messaging (IMessageBus) | Publishing session lifecycle events and audit events |
 | lib-account (IAccountClient) | Account CRUD: lookup by email, create, get by ID, update password, add auth methods |
 | AppConfiguration (DI singleton) | JWT secret, issuer, audience, and ServiceDomain via constructor-injected config |
+| IHttpClientFactory | HTTP calls to OAuth providers (Discord, Google, Twitch, Steam) and CloudFlare KV API |
 
 **External NuGet dependencies:**
 - `Microsoft.IdentityModel.Tokens` (8.15.0) - JWT creation and validation
@@ -87,13 +88,13 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `JwtExpirationMinutes` | `AUTH_JWT_EXPIRATION_MINUTES` | 60 | How long access tokens and sessions are valid |
 | `SessionTokenTtlDays` | `AUTH_SESSION_TOKEN_TTL_DAYS` | 7 | How long refresh tokens remain valid |
 | `PasswordResetTokenTtlMinutes` | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | 30 | How long password reset tokens remain valid |
-| `PasswordResetBaseUrl` | `AUTH_PASSWORD_RESET_BASE_URL` | required | Base URL for password reset links in emails |
+| `PasswordResetBaseUrl` | `AUTH_PASSWORD_RESET_BASE_URL` | null | Base URL for password reset links in emails (throws `InvalidOperationException` at runtime if null when password reset is attempted) |
 | `ConnectUrl` | `AUTH_CONNECT_URL` | `ws://localhost:5014/connect` | WebSocket URL returned to clients after authentication |
 | `MockProviders` | `AUTH_MOCK_PROVIDERS` | false | Enable mock OAuth for testing (bypasses real provider calls) |
-| `MockDiscordId` | `AUTH_MOCK_DISCORD_ID` | - | Mock Discord user ID for testing |
-| `MockGoogleId` | `AUTH_MOCK_GOOGLE_ID` | - | Mock Google user ID for testing |
-| `MockTwitchId` | `AUTH_MOCK_TWITCH_ID` | - | Mock Twitch user ID for testing |
-| `MockSteamId` | `AUTH_MOCK_STEAM_ID` | - | Mock Steam ID for testing |
+| `MockDiscordId` | `AUTH_MOCK_DISCORD_ID` | `mock-discord-123456` | Mock Discord user ID for testing |
+| `MockGoogleId` | `AUTH_MOCK_GOOGLE_ID` | `mock-google-123456` | Mock Google user ID for testing |
+| `MockTwitchId` | `AUTH_MOCK_TWITCH_ID` | `mock-twitch-123456` | Mock Twitch user ID for testing |
+| `MockSteamId` | `AUTH_MOCK_STEAM_ID` | `76561198000000000` | Mock Steam ID for testing |
 | `DiscordClientId` | `AUTH_DISCORD_CLIENT_ID` | null | Discord OAuth application client ID |
 | `DiscordClientSecret` | `AUTH_DISCORD_CLIENT_SECRET` | null | Discord OAuth application secret |
 | `DiscordRedirectUri` | `AUTH_DISCORD_REDIRECT_URI` | null | Discord OAuth callback URL (derived from ServiceDomain if not set) |
@@ -131,13 +132,15 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `ISessionService` | Session CRUD, account-session indexing, invalidation, session lifecycle event publishing, edge revocation coordination |
 | `IOAuthProviderService` | OAuth URL construction, code exchange, user info retrieval, account linking, Steam ticket validation |
 | `IEdgeRevocationService` | Coordinates token revocation across edge providers (CloudFlare, OpenResty) |
+| `IEdgeRevocationProvider` (collection) | CloudflareEdgeProvider and OpenrestyEdgeProvider, injected into EdgeRevocationService via `IEnumerable<IEdgeRevocationProvider>` |
+| `IHttpClientFactory` | Used by OAuthProviderService for OAuth API calls and CloudflareEdgeProvider for KV writes |
 | `IEventConsumer` | Registers handlers for account.deleted, account.updated |
 
 ## API Endpoints (Implementation Notes)
 
 ### Authentication (login, register)
 
-Login verifies password with `BCrypt.Verify` against the hash stored in Account service. Registration hashes with `BCrypt.HashPassword(workFactor: 12)` and creates the account. Both flows generate a JWT + refresh token via `ITokenService` and return a `ConnectUrl` for WebSocket connection. Failed logins publish audit events for brute force detection but always return 401 (no information leakage about whether the account exists).
+Login verifies password with `BCrypt.Verify` against the hash stored in Account service. Registration hashes with `BCrypt.HashPassword(workFactor: _configuration.BcryptWorkFactor)` (default 12) and creates the account. Both flows generate a JWT + refresh token via `ITokenService` and return a `ConnectUrl` for WebSocket connection. Failed logins publish audit events for brute force detection but always return 401 (no information leakage about whether the account exists).
 
 ### OAuth (init, callback)
 
@@ -162,6 +165,14 @@ Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOA
 ### Logout
 
 `LogoutAsync` validates the JWT via `ValidateTokenAsync` and uses the session key from the response directly. Supports single-session logout (deletes the current session) or all-sessions logout (fetches the account-sessions index and deletes all). Publishes `session.invalidated` via `ISessionService` after cleanup.
+
+### Providers (list-providers)
+
+`ListProvidersAsync` returns the list of available authentication providers based on which OAuth clients are configured. Checks for non-empty `DiscordClientId`, `GoogleClientId`, `TwitchClientId`, and `SteamApiKey` in configuration. Returns provider name, display name, auth type (oauth vs ticket), and init URL. Steam has `AuthUrl = null` because it uses session tickets from the game client, not browser redirects.
+
+### InitOAuth (manual controller GET endpoint)
+
+`InitOAuth` is implemented in the manual `AuthController.cs` partial class as an `[HttpGet]` endpoint, not via the generated interface. It receives `provider`, `redirectUri`, and optional `state` as query/route parameters, delegates to `AuthService.InitOAuthAsync`, and returns a 302 redirect to the OAuth provider's authorization URL. This is the only GET endpoint in Auth (browser-facing OAuth redirect flow exception to POST-only pattern).
 
 ### Revocation List (Edge Synchronization)
 
@@ -242,11 +253,15 @@ No bugs currently identified.
 
 4. **RefreshTokenAsync ignores the JWT parameter**: The refresh token alone is the credential for obtaining a new access token. Validating the (possibly expired) JWT would defeat the purpose of the refresh flow.
 
-5. **DeviceInfo always returns "Unknown" placeholders**: `SessionService.GetAccountSessionsAsync` returns hardcoded device information (`Platform: "Unknown"`, `Browser: "Unknown"`, `DeviceType: Desktop`) because device capture is unimplemented. The constants `UNKNOWN_PLATFORM` and `UNKNOWN_BROWSER` exist for future implementation (SessionService.cs:21-23).
+5. **DeviceInfo always returns "Unknown" placeholders**: `SessionService.GetAccountSessionsAsync` returns hardcoded device information (`Platform: "Unknown"`, `Browser: "Unknown"`, `DeviceType: Desktop`) because device capture is unimplemented. The constants `UNKNOWN_PLATFORM` and `UNKNOWN_BROWSER` are defined at the top of `SessionService.cs`.
 
 6. **Edge revocation is best-effort**: When `EdgeRevocationEnabled=true`, token revocations are pushed to configured edge providers (CloudFlare, OpenResty) but failures don't block session invalidation. Failed pushes are stored in a retry set and retried on subsequent revocation operations. If max retries are exceeded, the failure is logged but the session is still invalidated. This design prioritizes session invalidation reliability over edge propagation completeness.
 
 7. **Account revocations never expire**: Token-level revocations in the edge-revocation store expire when the original JWT would have expired. Account-level revocations (all tokens before timestamp) have no TTL and persist indefinitely until explicitly cleaned up.
+
+8. **SessionDataModel and EdgeRevocationModels use Unix timestamp storage**: `SessionDataModel`, `TokenRevocationEntry`, and `AccountRevocationEntry` store all timestamps as `long` Unix epoch properties (e.g., `CreatedAtUnix`, `ExpiresAtUnix`) with `[JsonIgnore]` computed `DateTimeOffset` accessors. This avoids `System.Text.Json` `DateTimeOffset` serialization quirks in Redis. The `LastActiveAtUnix` field defaults to `0` for sessions created before the field was introduced; `GetAccountSessionsAsync` falls back to `CreatedAt` when `LastActiveAtUnix == 0`.
+
+9. **InitOAuth is a manual GET controller endpoint**: Unlike all other Auth endpoints which are generated POST endpoints routed via WebSocket, `InitOAuth` is manually implemented in `AuthController.cs` as `[HttpGet("auth/oauth/{provider}/init")]` returning a 302 redirect. This is because OAuth authorization flows require browser redirects, not JSON responses.
 
 ### Design Considerations (Requires Planning)
 
@@ -255,20 +270,3 @@ No design considerations pending.
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
-
-### Completed
-
-- **2026-02-03**: Token revocation list implemented as Edge Revocation system. The "Token revocation list" potential extension from [#143](https://github.com/beyond-immersion/bannou-service/issues/143) is now fully implemented via `IEdgeRevocationService` with CloudFlare and OpenResty provider support. Removed from Potential Extensions.
-
-- **2026-02-03**: Subscription integration architectural issue resolved. The subscription integration (`ISubscriptionClient`, `HandleSubscriptionUpdatedAsync`) was removed entirely. Auth no longer has any subscription-related code - downstream services handle subscription state directly and call Permission to grant states.
-
-- **2026-01-30**: Removed "SendPasswordResetEmailAsync unused cancellation token" from Design Considerations. This is not a design issue - it's a natural consequence of the synchronous mock implementation and will be addressed when email integration is implemented (tracked by [#141](https://github.com/beyond-immersion/bannou-service/issues/141)).
-
-- **2026-01-30**: Made `Email` properly nullable across Account and Auth services ([#151](https://github.com/beyond-immersion/bannou-service/issues/151)). OAuth/Steam accounts that don't provide email now honestly have `Email = null` instead of synthetic placeholder emails like `steam_123@oauth.local`. Changes:
-  - `AccountResponse.Email` is now `string?` (nullable in schema)
-  - `CreateAccountRequest.email` is now optional
-  - `SessionDataModel.Email` is now `string?`
-  - `AccountModel.Email` is now `string?`
-  - Account lifecycle events (`AccountCreatedEvent`, etc.) have nullable `Email`
-  - Removed synthetic email generation in `OAuthProviderService`
-  - Password reset flow validates email exists before proceeding
