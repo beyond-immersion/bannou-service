@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -212,8 +213,8 @@ public partial class AccountService : IAccountService
         var scanLimit = _configuration.ProviderFilterMaxScanSize;
         var scanResult = await jsonStore.JsonQueryPagedAsync(
             conditions,
-            page: 1,
-            pageSize: scanLimit,
+            offset: 0,
+            limit: scanLimit,
             cancellationToken: cancellationToken);
 
         if (scanResult.TotalCount > scanLimit)
@@ -286,6 +287,7 @@ public partial class AccountService : IAccountService
         CreateAccountRequest body,
         CancellationToken cancellationToken = default)
     {
+        ILockResponse? emailLock = null;
         try
         {
             _logger.LogInformation("Creating account for email: {Email}", body.Email ?? "(no email - OAuth/Steam)");
@@ -293,7 +295,6 @@ public partial class AccountService : IAccountService
             // Check if email already exists (only if email provided)
             // Uses distributed lock to prevent TOCTOU race on concurrent registrations
             var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
-            ILockResponse? emailLock = null;
             if (!string.IsNullOrEmpty(body.Email))
             {
                 var normalizedEmail = body.Email.ToLowerInvariant();
