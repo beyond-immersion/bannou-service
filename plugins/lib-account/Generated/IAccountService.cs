@@ -90,6 +90,11 @@ public partial interface IAccountService : IBannouService
         Task<StatusCodes> UpdatePasswordHashAsync(UpdatePasswordRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// UpdateMfa operation
+        /// </summary>
+        Task<StatusCodes> UpdateMfaAsync(UpdateMfaRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// BatchGetAccounts operation
         /// </summary>
         Task<(StatusCodes, BatchGetAccountsResponse?)> BatchGetAccountsAsync(BatchGetAccountsRequest body, CancellationToken cancellationToken = default(CancellationToken));

@@ -114,6 +114,9 @@ public partial class AccountService : IAccountService
                     CreatedAt = item.Value.CreatedAt,
                     UpdatedAt = item.Value.UpdatedAt,
                     Roles = item.Value.Roles,
+                    MfaEnabled = item.Value.MfaEnabled,
+                    MfaSecret = item.Value.MfaSecret,
+                    MfaRecoveryCodes = item.Value.MfaRecoveryCodes,
                     AuthMethods = authMethods
                 });
             }
@@ -255,6 +258,9 @@ public partial class AccountService : IAccountService
                         CreatedAt = account.CreatedAt,
                         UpdatedAt = account.UpdatedAt,
                         Roles = account.Roles,
+                        MfaEnabled = account.MfaEnabled,
+                        MfaSecret = account.MfaSecret,
+                        MfaRecoveryCodes = account.MfaRecoveryCodes,
                         AuthMethods = authMethods
                     });
                 }
@@ -396,6 +402,9 @@ public partial class AccountService : IAccountService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles, // Return stored roles
+                MfaEnabled = account.MfaEnabled,
+                MfaSecret = account.MfaSecret,
+                MfaRecoveryCodes = account.MfaRecoveryCodes,
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
@@ -502,6 +511,9 @@ public partial class AccountService : IAccountService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles, // Return stored roles
+                MfaEnabled = account.MfaEnabled,
+                MfaSecret = account.MfaSecret,
+                MfaRecoveryCodes = account.MfaRecoveryCodes,
                 AuthMethods = authMethods
             };
 
@@ -623,6 +635,9 @@ public partial class AccountService : IAccountService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles, // Return stored roles
+                MfaEnabled = account.MfaEnabled,
+                MfaSecret = account.MfaSecret,
+                MfaRecoveryCodes = account.MfaRecoveryCodes,
                 AuthMethods = authMethods
             };
 
@@ -694,6 +709,9 @@ public partial class AccountService : IAccountService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles, // Return stored roles
+                MfaEnabled = account.MfaEnabled,
+                MfaSecret = account.MfaSecret,
+                MfaRecoveryCodes = account.MfaRecoveryCodes,
                 AuthMethods = authMethods
             };
 
@@ -939,6 +957,9 @@ public partial class AccountService : IAccountService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles,
+                MfaEnabled = account.MfaEnabled,
+                MfaSecret = account.MfaSecret,
+                MfaRecoveryCodes = account.MfaRecoveryCodes,
                 AuthMethods = authMethods
             };
 
@@ -1039,6 +1060,9 @@ public partial class AccountService : IAccountService
                     CreatedAt = account.CreatedAt,
                     UpdatedAt = account.UpdatedAt,
                     Roles = account.Roles,
+                    MfaEnabled = account.MfaEnabled,
+                    MfaSecret = account.MfaSecret,
+                    MfaRecoveryCodes = account.MfaRecoveryCodes,
                     AuthMethods = authMethodsNoChange
                 });
             }
@@ -1068,6 +1092,9 @@ public partial class AccountService : IAccountService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles, // Return stored roles
+                MfaEnabled = account.MfaEnabled,
+                MfaSecret = account.MfaSecret,
+                MfaRecoveryCodes = account.MfaRecoveryCodes,
                 AuthMethods = authMethods
             };
 
@@ -1294,6 +1321,56 @@ public partial class AccountService : IAccountService
     }
 
     /// <inheritdoc/>
+    public async Task<StatusCodes> UpdateMfaAsync(
+        UpdateMfaRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var accountId = body.AccountId;
+            _logger.LogInformation("Updating MFA settings for account {AccountId}, enabled: {MfaEnabled}", accountId, body.MfaEnabled);
+
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+            if (account == null || account.DeletedAt.HasValue)
+            {
+                _logger.LogWarning("Account not found for MFA update: {AccountId}", accountId);
+                return StatusCodes.NotFound;
+            }
+
+            account.MfaEnabled = body.MfaEnabled;
+            account.MfaSecret = body.MfaSecret;
+            account.MfaRecoveryCodes = body.MfaRecoveryCodes?.ToList();
+            account.UpdatedAt = DateTimeOffset.UtcNow;
+
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for MFA update on account {AccountId}", accountId);
+                return StatusCodes.Conflict;
+            }
+
+            _logger.LogInformation("MFA settings updated for account {AccountId}, enabled: {MfaEnabled}", accountId, body.MfaEnabled);
+            await PublishAccountUpdatedEventAsync(account, new[] { "mfaEnabled", "mfaSecret", "mfaRecoveryCodes" }, cancellationToken);
+
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating MFA settings for account {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdateMfa",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId });
+            return StatusCodes.InternalServerError;
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<StatusCodes> UpdateVerificationStatusAsync(
         UpdateVerificationRequest body,
         CancellationToken cancellationToken = default)
@@ -1421,6 +1498,9 @@ public partial class AccountService : IAccountService
                     CreatedAt = account.CreatedAt,
                     UpdatedAt = account.UpdatedAt,
                     Roles = account.Roles,
+                    MfaEnabled = account.MfaEnabled,
+                    MfaSecret = account.MfaSecret,
+                    MfaRecoveryCodes = account.MfaRecoveryCodes,
                     AuthMethods = authMethodsNoChange
                 });
             }
@@ -1481,6 +1561,9 @@ public partial class AccountService : IAccountService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles,
+                MfaEnabled = account.MfaEnabled,
+                MfaSecret = account.MfaSecret,
+                MfaRecoveryCodes = account.MfaRecoveryCodes,
                 AuthMethods = authMethods
             };
 
@@ -1682,6 +1765,9 @@ public partial class AccountService : IAccountService
                         CreatedAt = account.CreatedAt,
                         UpdatedAt = account.UpdatedAt,
                         Roles = account.Roles,
+                        MfaEnabled = account.MfaEnabled,
+                        MfaSecret = account.MfaSecret,
+                        MfaRecoveryCodes = account.MfaRecoveryCodes,
                         AuthMethods = authMethods ?? new List<AuthMethodInfo>()
                     });
                 }
@@ -2059,6 +2145,15 @@ public class AccountModel
 
     /// <summary>Custom metadata key-value pairs for the account.</summary>
     public Dictionary<string, object>? Metadata { get; set; }
+
+    /// <summary>Whether multi-factor authentication is enabled for this account.</summary>
+    public bool MfaEnabled { get; set; }
+
+    /// <summary>Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts/decrypts, Account stores opaque ciphertext.</summary>
+    public string? MfaSecret { get; set; }
+
+    /// <summary>BCrypt-hashed single-use recovery codes. Auth service generates/verifies, Account stores opaque hashes.</summary>
+    public List<string>? MfaRecoveryCodes { get; set; }
 
     /// <summary>
     /// Unix epoch timestamp for account creation.

@@ -316,6 +316,33 @@ paths:
         '404':
           description: Account not found
 
+  /account/mfa/update:
+    post:
+      summary: Update MFA settings for an account
+      description: |
+        Sets or clears MFA-related fields (mfaEnabled, mfaSecret, mfaRecoveryCodes) atomically.
+        Used by Auth service during MFA enable/disable flows. Auth owns the encryption logic;
+        Account stores the opaque encrypted data.
+      operationId: updateMfa
+      tags:
+      - Account Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMfaRequest'
+      responses:
+        '200':
+          description: MFA settings updated successfully
+        '404':
+          description: Account not found
+        '409':
+          description: Concurrent modification detected
+
   /account/batch-get:
     post:
       summary: Get multiple accounts by ID
@@ -663,6 +690,32 @@ components:
           type: string
           description: New pre-hashed password from Auth service
 
+    UpdateMfaRequest:
+      type: object
+      description: Request to update MFA settings for an account
+      additionalProperties: false
+      required:
+      - accountId
+      - mfaEnabled
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
+        mfaEnabled:
+          type: boolean
+          description: Whether to enable or disable MFA
+        mfaSecret:
+          type: string
+          nullable: true
+          description: Encrypted TOTP secret (set when enabling, null when disabling)
+        mfaRecoveryCodes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: BCrypt-hashed recovery codes (set when enabling, null when disabling)
+
     UpdateVerificationRequest:
       type: object
       description: Request to update email verification status
@@ -775,6 +828,20 @@ components:
           additionalProperties: true
           nullable: true
           description: Custom metadata associated with the account
+        mfaEnabled:
+          type: boolean
+          default: false
+          description: Whether multi-factor authentication is enabled for this account
+        mfaSecret:
+          type: string
+          nullable: true
+          description: Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.
+        mfaRecoveryCodes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes.
 
     AuthMethodInfo:
       type: object

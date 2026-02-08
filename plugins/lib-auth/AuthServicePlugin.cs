@@ -120,7 +120,8 @@ public class AuthServicePlugin : StandardServicePlugin<IAuthService>
         services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IOAuthProviderService, OAuthProviderService>();
-        Logger?.LogDebug("Registered Auth helper services (SessionService, TokenService, OAuthProviderService)");
+        services.AddScoped<IMfaService, MfaService>();
+        Logger?.LogDebug("Registered Auth helper services (SessionService, TokenService, OAuthProviderService, MfaService)");
 
         Logger?.LogDebug("Service dependencies configured");
     }

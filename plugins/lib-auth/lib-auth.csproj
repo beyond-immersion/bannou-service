@@ -11,6 +11,7 @@
     <!-- Domain-specific packages not provided by bannou-service -->
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.15.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Otp.NET" Version="1.4.1" />
   </ItemGroup>
 
 </Project>

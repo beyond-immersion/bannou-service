@@ -155,6 +155,20 @@ public interface IAccountController : BeyondImmersion.BannouService.Controllers.
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHashAsync(UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Update MFA settings for an account
+    /// </summary>
+
+    /// <remarks>
+    /// Sets or clears MFA-related fields (mfaEnabled, mfaSecret, mfaRecoveryCodes) atomically.
+    /// <br/>Used by Auth service during MFA enable/disable flows. Auth owns the encryption logic;
+    /// <br/>Account stores the opaque encrypted data.
+    /// </remarks>
+
+    /// <returns>MFA settings updated successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateMfaAsync(UpdateMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Get multiple accounts by ID
     /// </summary>
 
@@ -401,6 +415,24 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var statusCode = await _implementation.UpdatePasswordHashAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Update MFA settings for an account
+    /// </summary>
+    /// <remarks>
+    /// Sets or clears MFA-related fields (mfaEnabled, mfaSecret, mfaRecoveryCodes) atomically.
+    /// <br/>Used by Auth service during MFA enable/disable flows. Auth owns the encryption logic;
+    /// <br/>Account stores the opaque encrypted data.
+    /// </remarks>
+    /// <returns>MFA settings updated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("account/mfa/update")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var statusCode = await _implementation.UpdateMfaAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode);
     }
 

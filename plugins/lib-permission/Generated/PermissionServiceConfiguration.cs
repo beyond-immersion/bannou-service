@@ -53,22 +53,4 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public Guid? ForceServiceId { get; set; }
 
-    /// <summary>
-    /// Maximum retries for acquiring distributed lock
-    /// Environment variable: PERMISSION_LOCK_MAX_RETRIES
-    /// </summary>
-    public int LockMaxRetries { get; set; } = 10;
-
-    /// <summary>
-    /// Base delay in ms between lock retry attempts (exponential backoff applied)
-    /// Environment variable: PERMISSION_LOCK_BASE_DELAY_MS
-    /// </summary>
-    public int LockBaseDelayMs { get; set; } = 100;
-
-    /// <summary>
-    /// Distributed lock expiration time in seconds
-    /// Environment variable: PERMISSION_LOCK_EXPIRY_SECONDS
-    /// </summary>
-    public int LockExpirySeconds { get; set; } = 30;
-
 }

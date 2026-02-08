@@ -399,6 +399,41 @@ public partial class UpdatePasswordRequest
 }
 
 /// <summary>
+/// Request to update MFA settings for an account
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateMfaRequest
+{
+
+    /// <summary>
+    /// ID of the account to update
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether to enable or disable MFA
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; } = default!;
+
+    /// <summary>
+    /// Encrypted TOTP secret (set when enabling, null when disabling)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaSecret")]
+    public string? MfaSecret { get; set; } = default!;
+
+    /// <summary>
+    /// BCrypt-hashed recovery codes (set when enabling, null when disabling)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaRecoveryCodes")]
+    public System.Collections.Generic.ICollection<string>? MfaRecoveryCodes { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to update email verification status
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -556,6 +591,24 @@ public partial class AccountResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Whether multi-factor authentication is enabled for this account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaSecret")]
+    public string? MfaSecret { get; set; } = default!;
+
+    /// <summary>
+    /// BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaRecoveryCodes")]
+    public System.Collections.Generic.ICollection<string>? MfaRecoveryCodes { get; set; } = default!;
 
 }
 

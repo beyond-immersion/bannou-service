@@ -233,8 +233,7 @@ Event-Driven Auto-Registration
 
 ## Stubs & Unimplemented Features
 
-1. **Local routing mode is minimal**: `LocalMeshStateManager` provides in-memory state for testing but does not simulate failure scenarios or load balancing nuances. All calls return the same local endpoint regardless of app-id.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/162 -->
+*No stubs remaining - all features are implemented.*
 
 ---
 
@@ -282,7 +281,8 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **2026-02-07**: Closed [#161](https://github.com/beyond-immersion/bannou-service/issues/161) - removed `metadata` field from `RegisterEndpointRequest` schema.
 - **2026-02-07**: Closed [#219](https://github.com/beyond-immersion/bannou-service/issues/219) - distributed circuit breaker implementation complete.
-- **2026-02-07**: Created [#323](https://github.com/beyond-immersion/bannou-service/issues/323) for future degradation events (tied to Orchestrator response).
+- **2026-02-07**: Closed [#323](https://github.com/beyond-immersion/bannou-service/issues/323) - degradation events implemented (health check failures + endpoint degraded).
 - **2026-02-07**: Closed [#322](https://github.com/beyond-immersion/bannou-service/issues/322) - all production readiness items complete, including event topic fix (`bannou.service-heartbeat`).
-- **2026-02-07**: Created [#324](https://github.com/beyond-immersion/bannou-service/issues/324) for request-level timeout in MeshInvocationClient.
 - **2026-02-07**: Closed [#324](https://github.com/beyond-immersion/bannou-service/issues/324) - Added `RequestTimeoutSeconds` configuration (default 30s) for per-request timeout.
+- **2026-02-08**: Closed [#162](https://github.com/beyond-immersion/bannou-service/issues/162) - LocalMeshStateManager minimal by design; testing uses mocked interfaces (unit) and real Redis (integration).
+- **2026-02-08**: Closed [#144](https://github.com/beyond-immersion/bannou-service/issues/144) - ABML `service_call` contradicts established architecture; forbidden at compiler and runtime. Purpose-built actions and Variable Providers are the correct patterns.

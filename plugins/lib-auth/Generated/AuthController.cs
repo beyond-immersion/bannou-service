@@ -51,9 +51,9 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     /// </summary>
 
 
-    /// <returns>Login successful</returns>
+    /// <returns>Login successful or MFA challenge issued</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> LoginAsync(LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginAsync(LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Register new user account
@@ -211,6 +211,84 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ProvidersResponse>> ListProvidersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Initialize MFA setup
+    /// </summary>
+
+    /// <remarks>
+    /// Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR
+    /// <br/>code scanning and the recovery codes in plain text (shown only once). The setup is
+    /// <br/>not active until confirmed via /auth/mfa/enable with a valid TOTP code.
+    /// </remarks>
+
+    /// <param name="jwt">JWT access token</param>
+
+    /// <returns>MFA setup initiated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MfaSetupResponse>> SetupMfaAsync(string jwt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Confirm MFA setup with TOTP code
+    /// </summary>
+
+    /// <remarks>
+    /// Verifies a TOTP code against the pending setup secret to prove the authenticator
+    /// <br/>app is correctly configured. On success, persists MFA settings to the account and
+    /// <br/>MFA is active for all subsequent password logins.
+    /// </remarks>
+
+    /// <param name="jwt">JWT access token</param>
+
+
+    /// <returns>MFA enabled successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EnableMfaAsync(string jwt, MfaEnableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Disable MFA for current account
+    /// </summary>
+
+    /// <remarks>
+    /// Disables MFA for the authenticated account. Requires a valid TOTP code or
+    /// <br/>recovery code to prevent unauthorized disable. Clears the TOTP secret and
+    /// <br/>recovery codes from the account.
+    /// </remarks>
+
+    /// <param name="jwt">JWT access token</param>
+
+
+    /// <returns>MFA disabled successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DisableMfaAsync(string jwt, MfaDisableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Admin override to disable MFA
+    /// </summary>
+
+    /// <remarks>
+    /// Allows administrators to disable MFA for any account without TOTP verification.
+    /// <br/>For account recovery when a user has lost their authenticator and all recovery codes.
+    /// </remarks>
+
+    /// <returns>MFA disabled by admin</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AdminDisableMfaAsync(AdminDisableMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Verify MFA code during login
+    /// </summary>
+
+    /// <remarks>
+    /// Completes the MFA challenge issued during login by verifying a TOTP code or
+    /// <br/>recovery code. On success, returns full authentication tokens (same as a
+    /// <br/>non-MFA login would). The challenge token is single-use and has a configurable
+    /// <br/>TTL (default 5 minutes).
+    /// </remarks>
+
+    /// <returns>MFA verified, tokens issued</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifyMfaAsync(MfaVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -263,10 +341,10 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <summary>
     /// Login with email/password
     /// </summary>
-    /// <returns>Login successful</returns>
+    /// <returns>Login successful or MFA challenge issued</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/login")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> Login([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> Login([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         var (statusCode, result) = await _implementation.LoginAsync(body, cancellationToken);
@@ -476,6 +554,111 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.ListProvidersAsync(cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Initialize MFA setup
+    /// </summary>
+    /// <remarks>
+    /// Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR
+    /// <br/>code scanning and the recovery codes in plain text (shown only once). The setup is
+    /// <br/>not active until confirmed via /auth/mfa/enable with a valid TOTP code.
+    /// </remarks>
+    /// <param name="jwt">JWT access token</param>
+    /// <returns>MFA setup initiated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/setup")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MfaSetupResponse>> SetupMfa(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var jwt = HttpContext.ExtractBearerToken();
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        var (statusCode, result) = await _implementation.SetupMfaAsync(jwt, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Confirm MFA setup with TOTP code
+    /// </summary>
+    /// <remarks>
+    /// Verifies a TOTP code against the pending setup secret to prove the authenticator
+    /// <br/>app is correctly configured. On success, persists MFA settings to the account and
+    /// <br/>MFA is active for all subsequent password logins.
+    /// </remarks>
+    /// <param name="jwt">JWT access token</param>
+    /// <returns>MFA enabled successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/enable")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EnableMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MfaEnableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var jwt = HttpContext.ExtractBearerToken();
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        var statusCode = await _implementation.EnableMfaAsync(jwt, body, cancellationToken);
+        return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Disable MFA for current account
+    /// </summary>
+    /// <remarks>
+    /// Disables MFA for the authenticated account. Requires a valid TOTP code or
+    /// <br/>recovery code to prevent unauthorized disable. Clears the TOTP secret and
+    /// <br/>recovery codes from the account.
+    /// </remarks>
+    /// <param name="jwt">JWT access token</param>
+    /// <returns>MFA disabled successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/disable")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DisableMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MfaDisableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var jwt = HttpContext.ExtractBearerToken();
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        var statusCode = await _implementation.DisableMfaAsync(jwt, body, cancellationToken);
+        return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Admin override to disable MFA
+    /// </summary>
+    /// <remarks>
+    /// Allows administrators to disable MFA for any account without TOTP verification.
+    /// <br/>For account recovery when a user has lost their authenticator and all recovery codes.
+    /// </remarks>
+    /// <returns>MFA disabled by admin</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/admin-disable")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AdminDisableMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdminDisableMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var statusCode = await _implementation.AdminDisableMfaAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Verify MFA code during login
+    /// </summary>
+    /// <remarks>
+    /// Completes the MFA challenge issued during login by verifying a TOTP code or
+    /// <br/>recovery code. On success, returns full authentication tokens (same as a
+    /// <br/>non-MFA login would). The challenge token is single-use and has a configurable
+    /// <br/>TTL (default 5 minutes).
+    /// </remarks>
+    /// <returns>MFA verified, tokens issued</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/verify")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifyMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MfaVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.VerifyMfaAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

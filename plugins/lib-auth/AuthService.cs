@@ -34,6 +34,7 @@ public partial class AuthService : IAuthService
     private readonly IOAuthProviderService _oauthService;
     private readonly IEdgeRevocationService _edgeRevocationService;
     private readonly IEmailService _emailService;
+    private readonly IMfaService _mfaService;
 
     public AuthService(
         IAccountClient accountClient,
@@ -47,6 +48,7 @@ public partial class AuthService : IAuthService
         IOAuthProviderService oauthService,
         IEdgeRevocationService edgeRevocationService,
         IEmailService emailService,
+        IMfaService mfaService,
         IEventConsumer eventConsumer)
     {
         _accountClient = accountClient;
@@ -60,6 +62,7 @@ public partial class AuthService : IAuthService
         _oauthService = oauthService;
         _edgeRevocationService = edgeRevocationService;
         _emailService = emailService;
+        _mfaService = mfaService;
 
         // Register event handlers via partial class (AuthServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -89,7 +92,7 @@ public partial class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, AuthResponse?)> LoginAsync(
+    public async Task<(StatusCodes, LoginResponse?)> LoginAsync(
         LoginRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -169,7 +172,21 @@ public partial class AuthService : IAuthService
             await authCacheStore.DeleteCounterAsync(rateLimitKey, cancellationToken);
             _logger.LogDebug("Password verification successful for email: {Email}", body.Email);
 
-            // Generate tokens (returns both accessToken and sessionId for event publishing)
+            // Check if MFA is enabled for this account
+            if (account.MfaEnabled)
+            {
+                var challengeToken = await _mfaService.CreateMfaChallengeAsync(account.AccountId, cancellationToken);
+                _logger.LogInformation("MFA required for account {AccountId}, challenge issued", account.AccountId);
+
+                return (StatusCodes.OK, new LoginResponse
+                {
+                    AccountId = account.AccountId,
+                    RequiresMfa = true,
+                    MfaChallengeToken = challengeToken
+                });
+            }
+
+            // No MFA - proceed with full token generation
             var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
 
             var refreshToken = _tokenService.GenerateRefreshToken();
@@ -183,9 +200,10 @@ public partial class AuthService : IAuthService
             // Publish audit event for successful login
             await PublishLoginSuccessfulEventAsync(account.AccountId, body.Email, sessionId);
 
-            return (StatusCodes.OK, new AuthResponse
+            return (StatusCodes.OK, new LoginResponse
             {
                 AccountId = account.AccountId,
+                RequiresMfa = false,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
@@ -1123,6 +1141,397 @@ public partial class AuthService : IAuthService
         });
     }
 
+    #region MFA Endpoints
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, MfaSetupResponse?)> SetupMfaAsync(
+        string jwt,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Validate JWT and extract account
+            var (validateStatus, validation) = await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
+            if (validateStatus != StatusCodes.OK || validation == null)
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            // Get account to check current MFA status
+            AccountResponse account;
+            try
+            {
+                account = await _accountClient.GetAccountAsync(
+                    new GetAccountRequest { AccountId = validation.AccountId }, cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (account.MfaEnabled)
+            {
+                _logger.LogWarning("MFA setup attempted but already enabled for account {AccountId}", account.AccountId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Generate TOTP secret and recovery codes
+            var secret = _mfaService.GenerateSecret();
+            var recoveryCodes = _mfaService.GenerateRecoveryCodes();
+
+            // Encrypt secret and hash recovery codes for storage
+            var encryptedSecret = _mfaService.EncryptSecret(secret);
+            var hashedRecoveryCodes = _mfaService.HashRecoveryCodes(recoveryCodes);
+
+            // Build otpauth:// URI for QR code
+            var accountIdentifier = account.Email ?? account.AccountId.ToString();
+            var totpUri = _mfaService.BuildTotpUri(secret, accountIdentifier);
+
+            // Store setup data in Redis with TTL (pending confirmation)
+            var setupToken = await _mfaService.CreateMfaSetupAsync(
+                account.AccountId, encryptedSecret, hashedRecoveryCodes, cancellationToken);
+
+            _logger.LogInformation("MFA setup initiated for account {AccountId}", account.AccountId);
+
+            return (StatusCodes.OK, new MfaSetupResponse
+            {
+                SetupToken = setupToken,
+                TotpUri = totpUri,
+                RecoveryCodes = recoveryCodes
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during MFA setup");
+            await PublishErrorEventAsync("SetupMfa", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<StatusCodes> EnableMfaAsync(
+        string jwt,
+        MfaEnableRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Validate JWT
+            var (validateStatus, validation) = await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
+            if (validateStatus != StatusCodes.OK || validation == null)
+            {
+                return StatusCodes.Unauthorized;
+            }
+
+            // Consume setup token (single-use)
+            var setupData = await _mfaService.ConsumeMfaSetupAsync(body.SetupToken, cancellationToken);
+            if (setupData == null)
+            {
+                _logger.LogWarning("MFA enable failed: setup token not found or expired");
+                return StatusCodes.BadRequest;
+            }
+
+            // Verify the setup token belongs to this account
+            if (setupData.AccountId != validation.AccountId)
+            {
+                _logger.LogWarning("MFA enable failed: setup token account mismatch");
+                return StatusCodes.BadRequest;
+            }
+
+            // Decrypt the secret to validate the TOTP code
+            var secret = _mfaService.DecryptSecret(setupData.EncryptedSecret);
+            if (!_mfaService.ValidateTotp(secret, body.TotpCode))
+            {
+                _logger.LogWarning("MFA enable failed: invalid TOTP code for account {AccountId}", validation.AccountId);
+                return StatusCodes.BadRequest;
+            }
+
+            // Persist MFA settings to account via AccountClient
+            await _accountClient.UpdateMfaAsync(new UpdateMfaRequest
+            {
+                AccountId = validation.AccountId,
+                MfaEnabled = true,
+                MfaSecret = setupData.EncryptedSecret,
+                MfaRecoveryCodes = setupData.HashedRecoveryCodes
+            }, cancellationToken);
+
+            _logger.LogInformation("MFA enabled for account {AccountId}", validation.AccountId);
+            await PublishMfaEnabledEventAsync(validation.AccountId);
+
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during MFA enable");
+            await PublishErrorEventAsync("EnableMfa", ex.GetType().Name, ex.Message);
+            return StatusCodes.InternalServerError;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<StatusCodes> DisableMfaAsync(
+        string jwt,
+        MfaDisableRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Validate JWT
+            var (validateStatus, validation) = await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
+            if (validateStatus != StatusCodes.OK || validation == null)
+            {
+                return StatusCodes.Unauthorized;
+            }
+
+            // Get account
+            AccountResponse account;
+            try
+            {
+                account = await _accountClient.GetAccountAsync(
+                    new GetAccountRequest { AccountId = validation.AccountId }, cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return StatusCodes.NotFound;
+            }
+
+            if (!account.MfaEnabled)
+            {
+                return StatusCodes.NotFound;
+            }
+
+            // Require exactly one of totpCode or recoveryCode
+            if (string.IsNullOrWhiteSpace(body.TotpCode) && string.IsNullOrWhiteSpace(body.RecoveryCode))
+            {
+                return StatusCodes.BadRequest;
+            }
+
+            // Verify the provided code
+            if (!string.IsNullOrWhiteSpace(body.TotpCode))
+            {
+                var encryptedSecret = account.MfaSecret
+                    ?? throw new InvalidOperationException("Account has MFA enabled but no encrypted secret stored");
+                var secret = _mfaService.DecryptSecret(encryptedSecret);
+                if (!_mfaService.ValidateTotp(secret, body.TotpCode))
+                {
+                    _logger.LogWarning("MFA disable failed: invalid TOTP code for account {AccountId}", account.AccountId);
+                    return StatusCodes.BadRequest;
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(body.RecoveryCode))
+            {
+                var hashedCodes = account.MfaRecoveryCodes?.ToList()
+                    ?? throw new InvalidOperationException("Account has MFA enabled but no recovery codes stored");
+                var (valid, _) = _mfaService.VerifyRecoveryCode(body.RecoveryCode, hashedCodes);
+                if (!valid)
+                {
+                    _logger.LogWarning("MFA disable failed: invalid recovery code for account {AccountId}", account.AccountId);
+                    return StatusCodes.BadRequest;
+                }
+            }
+
+            // Clear MFA settings
+            await _accountClient.UpdateMfaAsync(new UpdateMfaRequest
+            {
+                AccountId = account.AccountId,
+                MfaEnabled = false,
+                MfaSecret = null,
+                MfaRecoveryCodes = null
+            }, cancellationToken);
+
+            _logger.LogInformation("MFA disabled by user for account {AccountId}", account.AccountId);
+            await PublishMfaDisabledEventAsync(account.AccountId, MfaDisabledBy.Self, null);
+
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during MFA disable");
+            await PublishErrorEventAsync("DisableMfa", ex.GetType().Name, ex.Message);
+            return StatusCodes.InternalServerError;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<StatusCodes> AdminDisableMfaAsync(
+        AdminDisableMfaRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Get account
+            AccountResponse account;
+            try
+            {
+                account = await _accountClient.GetAccountAsync(
+                    new GetAccountRequest { AccountId = body.AccountId }, cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return StatusCodes.NotFound;
+            }
+
+            if (!account.MfaEnabled)
+            {
+                return StatusCodes.NotFound;
+            }
+
+            // Admin override - no TOTP verification required
+            await _accountClient.UpdateMfaAsync(new UpdateMfaRequest
+            {
+                AccountId = body.AccountId,
+                MfaEnabled = false,
+                MfaSecret = null,
+                MfaRecoveryCodes = null
+            }, cancellationToken);
+
+            _logger.LogInformation("MFA disabled by admin for account {AccountId}, reason: {Reason}",
+                body.AccountId, body.Reason ?? "(none)");
+            await PublishMfaDisabledEventAsync(body.AccountId, MfaDisabledBy.Admin, body.Reason);
+
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during admin MFA disable for account {AccountId}", body.AccountId);
+            await PublishErrorEventAsync("AdminDisableMfa", ex.GetType().Name, ex.Message);
+            return StatusCodes.InternalServerError;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, AuthResponse?)> VerifyMfaAsync(
+        MfaVerifyRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Consume challenge token (single-use)
+            var accountId = await _mfaService.ConsumeMfaChallengeAsync(body.ChallengeToken, cancellationToken);
+            if (accountId == null)
+            {
+                _logger.LogWarning("MFA verify failed: challenge token not found or expired");
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            // Get account
+            AccountResponse account;
+            try
+            {
+                account = await _accountClient.GetAccountAsync(
+                    new GetAccountRequest { AccountId = accountId.Value }, cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogError("Account {AccountId} not found during MFA verify (should not happen)", accountId.Value);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Require exactly one of totpCode or recoveryCode
+            if (string.IsNullOrWhiteSpace(body.TotpCode) && string.IsNullOrWhiteSpace(body.RecoveryCode))
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            MfaVerificationMethod method;
+            int? recoveryCodesRemaining = null;
+
+            if (!string.IsNullOrWhiteSpace(body.TotpCode))
+            {
+                method = MfaVerificationMethod.Totp;
+                var encryptedSecret = account.MfaSecret
+                    ?? throw new InvalidOperationException("Account has MFA enabled but no encrypted secret stored");
+                var secret = _mfaService.DecryptSecret(encryptedSecret);
+                if (!_mfaService.ValidateTotp(secret, body.TotpCode))
+                {
+                    _logger.LogWarning("MFA verify failed: invalid TOTP code for account {AccountId}", accountId.Value);
+                    await PublishMfaFailedEventAsync(accountId.Value, MfaVerificationMethod.Totp, MfaFailedReason.InvalidCode);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+            else
+            {
+                method = MfaVerificationMethod.RecoveryCode;
+                var hashedCodes = account.MfaRecoveryCodes?.ToList()
+                    ?? throw new InvalidOperationException("Account has MFA enabled but no recovery codes stored");
+                var (valid, matchIndex) = _mfaService.VerifyRecoveryCode(body.RecoveryCode ?? string.Empty, hashedCodes);
+
+                if (!valid)
+                {
+                    _logger.LogWarning("MFA verify failed: invalid recovery code for account {AccountId}", accountId.Value);
+                    await PublishMfaFailedEventAsync(accountId.Value, MfaVerificationMethod.RecoveryCode, MfaFailedReason.InvalidCode);
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                // Remove used recovery code and update account (with retry on conflict)
+                hashedCodes.RemoveAt(matchIndex);
+                recoveryCodesRemaining = hashedCodes.Count;
+
+                if (hashedCodes.Count == 0)
+                {
+                    _logger.LogWarning("Account {AccountId} has used all recovery codes", accountId.Value);
+                }
+
+                // Update recovery codes in account (retry on 409 Conflict)
+                var updated = false;
+                for (var attempt = 0; attempt < 3 && !updated; attempt++)
+                {
+                    try
+                    {
+                        await _accountClient.UpdateMfaAsync(new UpdateMfaRequest
+                        {
+                            AccountId = accountId.Value,
+                            MfaEnabled = true,
+                            MfaSecret = account.MfaSecret,
+                            MfaRecoveryCodes = hashedCodes
+                        }, cancellationToken);
+                        updated = true;
+                    }
+                    catch (ApiException ex) when (ex.StatusCode == 409 && attempt < 2)
+                    {
+                        // Re-fetch account for fresh recovery codes, re-verify, and retry
+                        _logger.LogDebug("Conflict on recovery code update, retrying (attempt {Attempt})", attempt + 1);
+                        account = await _accountClient.GetAccountAsync(
+                            new GetAccountRequest { AccountId = accountId.Value }, cancellationToken);
+                        hashedCodes = account.MfaRecoveryCodes?.ToList() ?? new List<string>();
+                        var (reValid, reIndex) = _mfaService.VerifyRecoveryCode(body.RecoveryCode ?? string.Empty, hashedCodes);
+                        if (reValid)
+                        {
+                            hashedCodes.RemoveAt(reIndex);
+                            recoveryCodesRemaining = hashedCodes.Count;
+                        }
+                    }
+                }
+            }
+
+            // MFA verified - generate full tokens
+            var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+            var refreshToken = _tokenService.GenerateRefreshToken();
+            await _tokenService.StoreRefreshTokenAsync(accountId.Value, refreshToken, cancellationToken);
+
+            _logger.LogInformation("MFA verification successful for account {AccountId} via {Method}", accountId.Value, method);
+            await PublishMfaVerifiedEventAsync(accountId.Value, method, sessionId, recoveryCodesRemaining);
+            await PublishLoginSuccessfulEventAsync(accountId.Value, account.Email ?? accountId.Value.ToString(), sessionId);
+
+            return (StatusCodes.OK, new AuthResponse
+            {
+                AccountId = accountId.Value,
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                ExpiresIn = _configuration.JwtExpirationMinutes * 60,
+                ConnectUrl = EffectiveConnectUrl
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during MFA verification");
+            await PublishErrorEventAsync("VerifyMfa", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
     #region Private Helper Methods
 
     // Token generation and session management methods use ITokenService and ISessionService.
@@ -1338,6 +1747,10 @@ public partial class AuthService : IAuthService
     private const string AUTH_OAUTH_SUCCESSFUL_TOPIC = "auth.oauth.successful";
     private const string AUTH_STEAM_SUCCESSFUL_TOPIC = "auth.steam.successful";
     private const string AUTH_PASSWORD_RESET_SUCCESSFUL_TOPIC = "auth.password-reset.successful";
+    private const string AUTH_MFA_ENABLED_TOPIC = "auth.mfa.enabled";
+    private const string AUTH_MFA_DISABLED_TOPIC = "auth.mfa.disabled";
+    private const string AUTH_MFA_VERIFIED_TOPIC = "auth.mfa.verified";
+    private const string AUTH_MFA_FAILED_TOPIC = "auth.mfa.failed";
 
     /// <summary>
     /// Publish AuthLoginSuccessfulEvent for security audit trail.
@@ -1488,6 +1901,101 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish AuthPasswordResetSuccessfulEvent for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes an MFA enabled audit event.
+    /// </summary>
+    private async Task PublishMfaEnabledEventAsync(Guid accountId)
+    {
+        try
+        {
+            var eventModel = new AuthMfaEnabledEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId
+            };
+            await _messageBus.TryPublishAsync(AUTH_MFA_ENABLED_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthMfaEnabledEvent for account {AccountId}", accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthMfaEnabledEvent for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes an MFA disabled audit event.
+    /// </summary>
+    private async Task PublishMfaDisabledEventAsync(Guid accountId, MfaDisabledBy disabledBy, string? adminReason)
+    {
+        try
+        {
+            var eventModel = new AuthMfaDisabledEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                DisabledBy = disabledBy,
+                AdminReason = adminReason
+            };
+            await _messageBus.TryPublishAsync(AUTH_MFA_DISABLED_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthMfaDisabledEvent for account {AccountId}, by {DisabledBy}", accountId, disabledBy);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthMfaDisabledEvent for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes an MFA verification success audit event.
+    /// </summary>
+    private async Task PublishMfaVerifiedEventAsync(Guid accountId, MfaVerificationMethod method, Guid sessionId, int? recoveryCodesRemaining)
+    {
+        try
+        {
+            var eventModel = new AuthMfaVerifiedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                Method = method,
+                SessionId = sessionId,
+                RecoveryCodesRemaining = recoveryCodesRemaining
+            };
+            await _messageBus.TryPublishAsync(AUTH_MFA_VERIFIED_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthMfaVerifiedEvent for account {AccountId}, method {Method}", accountId, method);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthMfaVerifiedEvent for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes an MFA verification failure audit event.
+    /// </summary>
+    private async Task PublishMfaFailedEventAsync(Guid accountId, MfaVerificationMethod method, MfaFailedReason reason)
+    {
+        try
+        {
+            var eventModel = new AuthMfaFailedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                Method = method,
+                Reason = reason
+            };
+            await _messageBus.TryPublishAsync(AUTH_MFA_FAILED_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthMfaFailedEvent for account {AccountId}, reason {Reason}", accountId, reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthMfaFailedEvent for account {AccountId}", accountId);
         }
     }
 

@@ -291,3 +291,24 @@ x-service-configuration:
       default: false
       description: Enable OpenResty/NGINX edge revocation verification. When enabled, the OpenResty Lua scripts read revocation entries directly from Redis (auth:edge prefix) to block revoked tokens at the edge layer before requests reach upstream services.
       env: AUTH_OPENRESTY_EDGE_ENABLED
+
+    # MFA Configuration
+    MfaEncryptionKey:
+      type: string
+      nullable: true  # NRT: Optional - validated at runtime when MFA operations are attempted
+      env: AUTH_MFA_ENCRYPTION_KEY
+      description: AES-256-GCM encryption key for TOTP secrets at rest. Required when MFA is used. Must be at least 32 characters. Throws InvalidOperationException at runtime if null when MFA setup is attempted.
+
+    MfaIssuerName:
+      type: string
+      env: AUTH_MFA_ISSUER_NAME
+      default: "Bannou"
+      description: Issuer name displayed in authenticator apps (appears as service name in Google Authenticator, Authy, etc.)
+
+    MfaChallengeTtlMinutes:
+      type: integer
+      env: AUTH_MFA_CHALLENGE_TTL_MINUTES
+      default: 5
+      minimum: 1
+      maximum: 30
+      description: TTL in minutes for MFA challenge tokens issued during login and MFA setup tokens during enrollment

@@ -13,22 +13,4 @@ info:
   version: 1.0.0
 paths: {}
 x-service-configuration:
-  properties:
-    # === Distributed Lock Parameters (Tier 1) ===
-    LockMaxRetries:
-      type: integer
-      env: PERMISSION_LOCK_MAX_RETRIES
-      default: 10
-      description: Maximum retries for acquiring distributed lock
-
-    LockBaseDelayMs:
-      type: integer
-      env: PERMISSION_LOCK_BASE_DELAY_MS
-      default: 100
-      description: Base delay in ms between lock retry attempts (exponential backoff applied)
-
-    LockExpirySeconds:
-      type: integer
-      env: PERMISSION_LOCK_EXPIRY_SECONDS
-      default: 30
-      description: Distributed lock expiration time in seconds
+  properties: {}

@@ -580,6 +580,202 @@ public partial class PasswordResetConfirmRequest
 }
 
 /// <summary>
+/// Response from email/password login. May contain full tokens (no MFA) or a challenge token (MFA required).
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LoginResponse
+{
+
+    /// <summary>
+    /// Account ID (always present regardless of MFA status)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// If true, client must complete MFA via /auth/mfa/verify before receiving tokens
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requiresMfa")]
+    public bool RequiresMfa { get; set; } = default!;
+
+    /// <summary>
+    /// Short-lived challenge token for /auth/mfa/verify (only present when requiresMfa is true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaChallengeToken")]
+    public string? MfaChallengeToken { get; set; } = default!;
+
+    /// <summary>
+    /// JWT access token (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accessToken")]
+    public string? AccessToken { get; set; } = default!;
+
+    /// <summary>
+    /// Refresh token (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("refreshToken")]
+    public string? RefreshToken { get; set; } = default!;
+
+    /// <summary>
+    /// Seconds until access token expires (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresIn")]
+    public int? ExpiresIn { get; set; } = default!;
+
+    /// <summary>
+    /// WebSocket connect URL (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("connectUrl")]
+    public System.Uri? ConnectUrl { get; set; } = default!;
+
+    /// <summary>
+    /// Account roles (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
+
+}
+
+/// <summary>
+/// MFA setup data containing TOTP URI for QR code and recovery codes
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MfaSetupResponse
+{
+
+    /// <summary>
+    /// Token to pass to /auth/mfa/enable to confirm setup
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("setupToken")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SetupToken { get; set; } = default!;
+
+    /// <summary>
+    /// otpauth:// URI for authenticator app QR code scanning
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totpUri")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TotpUri { get; set; } = default!;
+
+    /// <summary>
+    /// 10 single-use recovery codes (shown only once, user must save them)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recoveryCodes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> RecoveryCodes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to confirm MFA setup with a valid TOTP code proving authenticator is configured
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MfaEnableRequest
+{
+
+    /// <summary>
+    /// Setup token from /auth/mfa/setup response
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("setupToken")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SetupToken { get; set; } = default!;
+
+    /// <summary>
+    /// 6-digit TOTP code from authenticator app
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totpCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(6, MinimumLength = 6)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{6}$")]
+    public string TotpCode { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to disable MFA. Exactly one of totpCode or recoveryCode must be provided.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MfaDisableRequest
+{
+
+    /// <summary>
+    /// Current 6-digit TOTP code from authenticator app
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totpCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(6, MinimumLength = 6)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{6}$")]
+    public string? TotpCode { get; set; } = default!;
+
+    /// <summary>
+    /// Single-use recovery code (format xxxx-xxxx)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recoveryCode")]
+    public string? RecoveryCode { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Admin request to forcefully disable MFA for a user account
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AdminDisableMfaRequest
+{
+
+    /// <summary>
+    /// Account ID to disable MFA for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Administrative reason for disabling MFA (stored in audit event)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to verify MFA during login. Exactly one of totpCode or recoveryCode must be provided.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MfaVerifyRequest
+{
+
+    /// <summary>
+    /// Challenge token from LoginResponse when requiresMfa was true
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("challengeToken")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ChallengeToken { get; set; } = default!;
+
+    /// <summary>
+    /// 6-digit TOTP code from authenticator app
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totpCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(6, MinimumLength = 6)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{6}$")]
+    public string? TotpCode { get; set; } = default!;
+
+    /// <summary>
+    /// Single-use recovery code (format xxxx-xxxx)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recoveryCode")]
+    public string? RecoveryCode { get; set; } = default!;
+
+}
+
+/// <summary>
 /// List of available authentication providers
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

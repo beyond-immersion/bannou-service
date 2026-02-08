@@ -247,6 +247,21 @@ public static class AccountPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/account/mfa/update",
+            Method = ServiceEndpointMethod.POST,
+            Description = "updateMfa",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/account/batch-get",
             Method = ServiceEndpointMethod.POST,
             Description = "batchGetAccounts",

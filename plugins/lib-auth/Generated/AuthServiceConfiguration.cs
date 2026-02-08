@@ -322,4 +322,23 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// </summary>
     public bool OpenrestyEdgeEnabled { get; set; } = false;
 
+    /// <summary>
+    /// AES-256-GCM encryption key for TOTP secrets at rest. Required when MFA is used. Must be at least 32 characters. Throws InvalidOperationException at runtime if null when MFA setup is attempted.
+    /// Environment variable: AUTH_MFA_ENCRYPTION_KEY
+    /// </summary>
+    public string? MfaEncryptionKey { get; set; }
+
+    /// <summary>
+    /// Issuer name displayed in authenticator apps (appears as service name in Google Authenticator, Authy, etc.)
+    /// Environment variable: AUTH_MFA_ISSUER_NAME
+    /// </summary>
+    public string MfaIssuerName { get; set; } = "Bannou";
+
+    /// <summary>
+    /// TTL in minutes for MFA challenge tokens issued during login and MFA setup tokens during enrollment
+    /// Environment variable: AUTH_MFA_CHALLENGE_TTL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 30)]
+    public int MfaChallengeTtlMinutes { get; set; } = 5;
+
 }

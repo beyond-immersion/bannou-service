@@ -31,7 +31,6 @@ public partial class PermissionService : IPermissionService
     private readonly PermissionServiceConfiguration _configuration;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
-    private readonly IDistributedLockProvider _lockProvider;
     private readonly IClientEventPublisher _clientEventPublisher;
     private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
@@ -44,7 +43,6 @@ public partial class PermissionService : IPermissionService
     private const string SESSION_PERMISSIONS_KEY = "session:{0}:permissions";
     private const string PERMISSION_MATRIX_KEY = "permissions:{0}:{1}:{2}"; // service:state:role
     private const string PERMISSION_VERSION_KEY = "permission_versions";
-    private const string SERVICE_LOCK_KEY = "lock:service-registration:{0}";
     private const string PERMISSION_HASH_KEY = "permission_hash:{0}"; // Stores hash of service permission data for idempotent registration
 
     // Cache for compiled permissions (in-memory cache with lib-state backing)
@@ -55,7 +53,6 @@ public partial class PermissionService : IPermissionService
         PermissionServiceConfiguration configuration,
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
-        IDistributedLockProvider lockProvider,
         IClientEventPublisher clientEventPublisher,
         IEventConsumer eventConsumer)
     {
@@ -63,7 +60,6 @@ public partial class PermissionService : IPermissionService
         _configuration = configuration;
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
-        _lockProvider = lockProvider;
         _clientEventPublisher = clientEventPublisher;
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
@@ -253,7 +249,7 @@ public partial class PermissionService : IPermissionService
 
     /// <summary>
     /// Register service permission matrix and trigger recompilation for all active sessions.
-    /// Uses lib-state atomic transactions to prevent race conditions.
+    /// Uses ICacheableStateStore atomic set operations for multi-instance safety.
     /// </summary>
     public async Task<(StatusCodes, RegistrationResponse?)> RegisterServicePermissionsAsync(
         ServicePermissionMatrix body,
@@ -271,10 +267,9 @@ public partial class PermissionService : IPermissionService
             var storedHash = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Permission)
                 .GetAsync(hashKey, cancellationToken);
 
-            // Also check if service is in registered_services (might be cleared independently of hash)
-            var registeredServices = await _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission)
-                .GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
-            var isServiceAlreadyRegistered = registeredServices.Contains(body.ServiceId);
+            // Atomic membership check - no read-modify-write needed
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+            var isServiceAlreadyRegistered = await cacheStore.SetContainsAsync<string>(REGISTERED_SERVICES_KEY, body.ServiceId, cancellationToken);
 
             if (storedHash != null && storedHash == newHash && isServiceAlreadyRegistered)
             {
@@ -362,110 +357,14 @@ public partial class PermissionService : IPermissionService
                 .SaveAsync(serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
             _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
 
-            // Update the centralized registered_services list (enables "list all registered services" queries)
-            // Uses Redis-based distributed lock to prevent race conditions when multiple services register concurrently
-            // NO FALLBACK - if lock fails after retries, registration fails. We don't mask failures with alternative paths.
-            // RETRY IS NOT A FALLBACK - retrying lock acquisition is the correct approach for handling lock contention.
-            const string LOCK_RESOURCE = "registered_services_lock";
-            var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
-
-            // Acquire distributed lock with retry to handle concurrent registration contention
-            // Lock contention is expected when multiple services register simultaneously (e.g., during tests or startup)
-            var maxRetries = _configuration.LockMaxRetries;
-            var baseDelayMs = _configuration.LockBaseDelayMs;
-            ILockResponse? serviceLock = null;
-
-            for (int attempt = 0; attempt < maxRetries; attempt++)
-            {
-                try
-                {
-                    serviceLock = await _lockProvider.LockAsync(
-                        StateStoreDefinitions.Permission,
-                        LOCK_RESOURCE,
-                        lockOwnerId,
-                        expiryInSeconds: _configuration.LockExpirySeconds,  // Lock expires after configured seconds if not released
-                        cancellationToken: cancellationToken);
-
-                    if (serviceLock.Success)
-                    {
-                        if (attempt > 0)
-                        {
-                            _logger.LogDebug("Acquired lock for {ServiceId} on attempt {Attempt}", body.ServiceId, attempt + 1);
-                        }
-                        break;
-                    }
-
-                    // Lock is held by another process - wait with exponential backoff and jitter
-                    var delayMs = baseDelayMs * (1 << Math.Min(attempt, 5)) + Random.Shared.Next(0, 50);
-                    _logger.LogDebug("Lock contention for {ServiceId}, attempt {Attempt}/{MaxRetries}, waiting {DelayMs}ms",
-                        body.ServiceId, attempt + 1, maxRetries, delayMs);
-                    await Task.Delay(delayMs, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Exception on lock attempt {Attempt} for {ServiceId}", attempt + 1, body.ServiceId);
-                    if (attempt == maxRetries - 1)
-                    {
-                        _logger.LogError(ex, "Exception while acquiring distributed lock for {ServiceId} after {MaxRetries} attempts. " +
-                            "Lock store: {LockStore}, Resource: {LockResource}, Owner: {LockOwner}",
-                            body.ServiceId, maxRetries, StateStoreDefinitions.Permission, LOCK_RESOURCE, lockOwnerId);
-                        await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.ServiceId, LockStore = StateStoreDefinitions.Permission, LockResource = LOCK_RESOURCE });
-                        return (StatusCodes.InternalServerError, null);
-                    }
-                    // Brief delay before retry on exception
-                    await Task.Delay(baseDelayMs, cancellationToken);
-                }
-            }
-
-            // Null check for safety - serviceLock should never be null after the loop
-            // but we handle it explicitly to satisfy null safety requirements
-            if (serviceLock == null)
-            {
-                _logger.LogError("Lock response was null for {ServiceId} - this should never happen", body.ServiceId);
-                await PublishErrorEventAsync("RegisterServicePermissions", "lock_null", "Lock acquisition returned null response", dependency: "state", details: new { body.ServiceId });
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            await using (serviceLock)
-            {
-                if (!serviceLock.Success)
-                {
-                    _logger.LogError("Failed to acquire distributed lock for {ServiceId} after {MaxRetries} attempts - " +
-                        "cannot safely update registered services. This indicates persistent lock contention or Redis issues.",
-                        body.ServiceId, maxRetries);
-                    await PublishErrorEventAsync("RegisterServicePermissions", "lock_failed", $"Failed to acquire distributed lock after {maxRetries} attempts", dependency: "state", details: new { body.ServiceId, MaxRetries = maxRetries });
-                    return (StatusCodes.InternalServerError, null);
-                }
-
-                _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
-
-                // Now we have exclusive access - safe to read-modify-write
-                // CRITICAL: Keep lock scope minimal to avoid timeout during concurrent registrations
-                var registeredServicesStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-                var lockedServices = await registeredServicesStore.GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
-
-                _logger.LogInformation("Current registered services (locked): {Services}",
-                    string.Join(", ", lockedServices));
-
-                if (!lockedServices.Contains(body.ServiceId))
-                {
-                    lockedServices.Add(body.ServiceId);
-                    await registeredServicesStore.SaveAsync(REGISTERED_SERVICES_KEY, lockedServices, cancellationToken: cancellationToken);
-                    _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
-                        body.ServiceId, string.Join(", ", lockedServices));
-                }
-                else
-                {
-                    _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
-                }
-            } // End of await using (serviceLock) - release lock BEFORE expensive session recompilation
-
-            // Session recompilation happens OUTSIDE the lock to prevent lock timeouts
-            // during concurrent service registrations at startup
-            var registeredStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeSessions = await registeredStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
+            // Atomic add to registered_services set - no lock needed, SADD is inherently atomic
+            var added = await cacheStore.AddToSetAsync<string>(REGISTERED_SERVICES_KEY, body.ServiceId, cancellationToken: cancellationToken);
+            _logger.LogInformation("Service {ServiceId} {Action} registered services list",
+                body.ServiceId, added ? "added to" : "already in");
 
             // Recompile permissions for all active sessions
+            var activeSessions = await cacheStore.GetSetAsync<string>(ACTIVE_SESSIONS_KEY, cancellationToken);
+
             var recompiledCount = 0;
             foreach (var sessionId in activeSessions)
             {
@@ -475,9 +374,6 @@ public partial class PermissionService : IPermissionService
 
             _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
                 body.ServiceId, recompiledCount);
-
-            // Note: RecompileSessionPermissionsAsync already handles publishing via PublishCapabilityUpdateAsync,
-            // which checks activeConnections before publishing to avoid RabbitMQ crashes
 
             // Store the new hash for idempotent registration detection
             await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Permission)
@@ -541,15 +437,13 @@ public partial class PermissionService : IPermissionService
             }
             var newVersion = currentVersion + 1;
 
-            // Get active sessions
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-            activeSessions.Add(body.SessionId.ToString());
+            // Atomic add to activeSessions - SADD is inherently safe for concurrent access
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+            await cacheStore.AddToSetAsync<string>(ACTIVE_SESSIONS_KEY, body.SessionId.ToString(), cancellationToken: cancellationToken);
 
-            // Save session state and active sessions
+            // Save session state
             await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
                 .SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
-            await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
 
             // Recompile session permissions using the states we already have
             // (avoids read-after-write consistency issues by not re-reading from state store)
@@ -595,15 +489,13 @@ public partial class PermissionService : IPermissionService
             // Update role
             sessionStates["role"] = body.NewRole;
 
-            // Get active sessions
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-            activeSessions.Add(body.SessionId.ToString());
+            // Atomic add to activeSessions - SADD is inherently safe for concurrent access
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+            await cacheStore.AddToSetAsync<string>(ACTIVE_SESSIONS_KEY, body.SessionId.ToString(), cancellationToken: cancellationToken);
 
-            // Save session states and active sessions
+            // Save session states
             await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
                 .SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
-            await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
 
             // Recompile all permissions for this session using the states we already have
             // (avoids read-after-write consistency issues by not re-reading from state store)
@@ -880,8 +772,9 @@ public partial class PermissionService : IPermissionService
             var compiledPermissions = new Dictionary<string, HashSet<string>>();
 
             // First, get all registered services and check "default" state permissions for the role
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
             var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var registeredServices = await hashSetStore.GetAsync(REGISTERED_SERVICES_KEY) ?? new HashSet<string>();
+            var registeredServices = await cacheStore.GetSetAsync<string>(REGISTERED_SERVICES_KEY);
 
             _logger.LogDebug("Found {Count} registered services: {Services}",
                 registeredServices.Count, string.Join(", ", registeredServices));
@@ -1009,10 +902,10 @@ public partial class PermissionService : IPermissionService
             // Skip this check when called from HandleSessionConnectedAsync (we just added the session)
             if (!skipActiveConnectionsCheck)
             {
-                var activeConnections = await _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission)
-                    .GetAsync(ACTIVE_CONNECTIONS_KEY) ?? new HashSet<string>();
+                var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+                var isConnected = await cacheStore.SetContainsAsync<string>(ACTIVE_CONNECTIONS_KEY, sessionId);
 
-                if (!activeConnections.Contains(sessionId))
+                if (!isConnected)
                 {
                     _logger.LogDebug("Skipping capability publish for session {SessionId} - not in activeConnections (reason: {Reason})",
                         sessionId, reason);
@@ -1081,15 +974,16 @@ public partial class PermissionService : IPermissionService
         {
             _logger.LogDebug("Getting list of registered services");
 
-            // Get all registered service IDs
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var registeredServiceIds = await hashSetStore.GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
+            // Get all registered service IDs via atomic set read
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+            var registeredServiceIds = await cacheStore.GetSetAsync<string>(REGISTERED_SERVICES_KEY, cancellationToken);
 
             _logger.LogDebug("Found {Count} registered services: {Services}",
                 registeredServiceIds.Count, string.Join(", ", registeredServiceIds));
 
             var services = new List<RegisteredServiceInfo>();
             var registrationStore = _stateStoreFactory.GetStore<ServiceRegistrationInfo>(StateStoreDefinitions.Permission);
+            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
 
             foreach (var serviceId in registeredServiceIds)
             {
@@ -1233,26 +1127,17 @@ public partial class PermissionService : IPermissionService
             // Store session states
             await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
 
-            // Add to activeConnections (sessions with WebSocket connections where exchange exists)
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeConnections = await hashSetStore.GetAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken) ?? new HashSet<string>();
-
-            if (!activeConnections.Contains(sessionId))
+            // Atomic add to activeConnections and activeSessions - SADD is inherently safe for concurrent access
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+            var addedToConnections = await cacheStore.AddToSetAsync<string>(ACTIVE_CONNECTIONS_KEY, sessionId, cancellationToken: cancellationToken);
+            if (addedToConnections)
             {
-                activeConnections.Add(sessionId);
-                await hashSetStore.SaveAsync(ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
+                var connectionCount = await cacheStore.SetCountAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken);
                 _logger.LogDebug("Added session {SessionId} to active connections. Total: {Count}",
-                    sessionId, activeConnections.Count);
+                    sessionId, connectionCount);
             }
 
-            // Also ensure session is in activeSessions for state tracking
-            var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-
-            if (!activeSessions.Contains(sessionId))
-            {
-                activeSessions.Add(sessionId);
-                await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
-            }
+            await cacheStore.AddToSetAsync<string>(ACTIVE_SESSIONS_KEY, sessionId, cancellationToken: cancellationToken);
 
             // Compile and publish initial capabilities for this session using the states we just built
             // This overload avoids read-after-write consistency issues
@@ -1294,28 +1179,20 @@ public partial class PermissionService : IPermissionService
             _logger.LogDebug("Handling session disconnected: {SessionId}, Reconnectable: {Reconnectable}",
                 sessionId, reconnectable);
 
-            // Remove from activeConnections (no longer has WebSocket/exchange)
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeConnections = await hashSetStore.GetAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken) ?? new HashSet<string>();
-
-            if (activeConnections.Contains(sessionId))
+            // Atomic remove from activeConnections - SREM is inherently safe for concurrent access
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+            var removed = await cacheStore.RemoveFromSetAsync<string>(ACTIVE_CONNECTIONS_KEY, sessionId, cancellationToken);
+            if (removed)
             {
-                activeConnections.Remove(sessionId);
-                await hashSetStore.SaveAsync(ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
+                var remainingCount = await cacheStore.SetCountAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken);
                 _logger.LogDebug("Removed session {SessionId} from active connections. Remaining: {Count}",
-                    sessionId, activeConnections.Count);
+                    sessionId, remainingCount);
             }
 
             // If not reconnectable, also remove from activeSessions and clear session state
             if (!reconnectable)
             {
-                var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-
-                if (activeSessions.Contains(sessionId))
-                {
-                    activeSessions.Remove(sessionId);
-                    await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
-                }
+                await cacheStore.RemoveFromSetAsync<string>(ACTIVE_SESSIONS_KEY, sessionId, cancellationToken);
 
                 // Clear session state and permissions cache
                 await ClearSessionStateAsync(new ClearSessionStateRequest { SessionId = Guid.Parse(sessionId) }, cancellationToken);
