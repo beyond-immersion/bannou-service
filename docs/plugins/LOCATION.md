@@ -23,7 +23,7 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 | lib-messaging (`IEventConsumer`) | Event handler registration (partial class pattern, no handlers) |
 | lib-realm (`IRealmClient`) | Realm existence validation on creation; realm code resolution during seed |
 | lib-resource (`IResourceClient`) | Reference tracking checks before deletion; cleanup coordination |
-| lib-contract (`IContractClient`) | Territory clause type registration during plugin startup (graceful degradation if unavailable) |
+| lib-contract (`IContractClient`) | Territory clause type registration during plugin startup (hard dependency — fail-fast per FOUNDATION TENETS) |
 
 ---
 
@@ -114,7 +114,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **ListRootLocations** (`/location/list-root`): Loads `root-locations:{realmId}` index. Returns top-level locations with no parent.
 - **GetLocationAncestors** (`/location/get-ancestors`): Walks parent chain iteratively. Safety limit via `MaxAncestorDepth` config (default 20) to prevent infinite loops from corrupted data.
 - **GetLocationDescendants** (`/location/get-descendants`): Recursive traversal via `CollectDescendantsAsync`. Safety limit of 20 depth levels. Optional `maxDepth` parameter.
-- **ValidateTerritory** (`/location/validate-territory`): Territory constraint checking designed for Contract service's clause handler system. Builds location + ancestor hierarchy set, checks for overlap with territory location IDs. Supports two modes: `exclusive` (location must NOT overlap territory) and `inclusive` (location MUST be within territory). The `territory_constraint` clause type is registered with Contract during plugin startup via `LocationServicePlugin.OnRunningAsync()`.
+- **ValidateTerritory** (`/location/validate-territory`): Territory constraint checking designed for Contract service's clause handler system. Builds location + ancestor hierarchy set, checks for overlap with territory location IDs. Supports two modes: `exclusive` (location must NOT overlap territory) and `inclusive` (location MUST be within territory). Defaults to `Exclusive` mode when `TerritoryMode` is not specified. The `territory_constraint` clause type is registered with Contract during plugin startup via `LocationServicePlugin.OnRunningAsync()`.
 - **LocationExists** (`/location/exists`): Quick existence check. Returns `Exists` boolean and `IsActive` (not deprecated) flag.
 
 ### Write Operations (8 endpoints)
@@ -234,7 +234,7 @@ None. All features are fully implemented.
 
 ### Bugs
 
-1. **T4 Violation: Graceful degradation for L1 dependency**: `LocationServicePlugin.OnRunningAsync()` uses `GetService<IContractClient>()` with a null check that returns early if Contract is unavailable. Per SERVICE_HIERARCHY and T4, Contract (L1) is guaranteed available when Location (L2) runs. The null check should throw `InvalidOperationException` instead of silently returning. (Note: The code is in `OnRunningAsync` rather than the constructor because plugin load order isn't currently layer-based - that's a separate infrastructure improvement tracked elsewhere.)
+1. ~~**T4 Violation: Graceful degradation for L1 dependency**~~: **FIXED** (2026-02-08) - Changed `GetService<IContractClient>()` to `GetRequiredService<IContractClient>()` and removed null-check early return. Added `ServiceProvider ?? throw` guard. Removed catch-all exception handlers — only 409 Conflict (idempotent) is caught. Contract (L1) is guaranteed available when Location (L2) runs; failures now crash startup as expected per FOUNDATION TENETS.
 
 ### Intentional Quirks
 
@@ -252,7 +252,7 @@ None. All features are fully implemented.
 
 7. **Delete executes cleanup callbacks**: When external references exist, `DeleteLocation` calls `IResourceClient.ExecuteCleanupAsync` with `CleanupPolicy.ALL_REQUIRED`. This executes CASCADE/DETACH callbacks registered by higher-layer services (L3/L4) before allowing deletion.
 
-8. **Contract clause registration is in OnRunningAsync**: During plugin startup, Location registers the `territory_constraint` clause type with Contract via `OnRunningAsync()` rather than in the constructor. This is because plugin load order isn't currently layer-based, so cross-plugin DI isn't safe in constructors. The graceful degradation (null check that returns early) is a separate bug - see Bugs section.
+8. **Contract clause registration is in OnRunningAsync**: During plugin startup, Location registers the `territory_constraint` clause type with Contract via `OnRunningAsync()` rather than in the constructor. Registration is in `OnRunningAsync` because it requires making an API call (not just storing a reference), and `OnRunningAsync` is the appropriate lifecycle phase for startup API calls. Layer-based plugin loading ensures L1 Contract is already registered when L2 Location's `OnRunningAsync` fires. Uses `GetRequiredService` and fail-fast per FOUNDATION TENETS.
 
 ### Design Considerations
 
@@ -262,4 +262,5 @@ No design considerations currently pending.
 
 ## Work Tracking
 
-No active work tracking items.
+- **Spatial coordinates** (Potential Extensions #1): NEEDS_DESIGN - requires design decision for mapping integration ([#165](https://github.com/beyond-immersion/bannou-service/issues/165))
+- **T4 Violation: Graceful degradation for L1 dependency** (Bugs #1): COMPLETED (2026-02-08) - Changed to `GetRequiredService` with fail-fast behavior

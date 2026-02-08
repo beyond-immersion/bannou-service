@@ -441,6 +441,8 @@ No bugs identified.
 
 5. **All text WebSocket frames rejected**: Authentication happens via the HTTP `Authorization` header during WebSocket upgrade, not via text messages. Once the WebSocket is established, ALL text frames return a `TextProtocolNotSupported` (14) binary error response. The binary protocol is required for all API messages because zero-copy routing depends on the 16-byte service GUID in the binary header. See `docs/WEBSOCKET-PROTOCOL.md` for protocol details.
 
+6. **Orphaned RabbitMQ queues self-clean via TTL**: Per-session RabbitMQ queues are created with `x-expires` set to `ReconnectionWindowSeconds` (default 300s). If the Connect instance crashes, orphaned queues persist for up to 5 minutes without consumers before RabbitMQ automatically deletes them. This is by design: the queue must persist during the reconnection window to buffer server-to-client events for delivery on reconnect.
+
 ### Design Considerations (Requires Planning)
 
 1. **Single-instance limitation for P2P**: Peer-to-peer routing (`RouteToClientAsync`) only works when both clients are connected to the same Connect instance. The `_connectionManager.TryGetSessionIdByPeerGuid()` lookup is in-memory only. Distributed P2P requires cross-instance peer registry.
@@ -452,9 +454,9 @@ No bugs identified.
 3. **No backpressure on message queue**: The `MessageQueueSize` config exists but there is no explicit backpressure mechanism. If a client is slow to consume messages, the WebSocket send buffer grows unbounded.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/348 -->
 
-4. **RabbitMQ subscription lifecycle**: Per-session RabbitMQ subscriptions are created on connect and should be cleaned up on disconnect. If the Connect instance crashes, orphaned queues remain in RabbitMQ until they TTL-expire.
+4. ~~**RabbitMQ subscription lifecycle**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. RabbitMQ's native `x-expires` (set to `ReconnectionWindowSeconds`, default 300s) automatically deletes orphaned queues after 5 minutes without consumers. This is the correct design: queues persist during the reconnection window to buffer messages, then self-clean. No application-layer cleanup needed.
 
-5. **Account session index staleness**: The `account-sessions:{accountId}` HashSet is updated on connect/disconnect but uses the session TTL. If a session crashes without cleanup, the index contains stale session IDs until Redis TTL expires.
+5. ~~**Account session index staleness**~~: **FIXED** (2026-02-08) - Replaced read-modify-write pattern with atomic Redis Set operations (`ICacheableStateStore.AddToSetAsync`/`RemoveFromSetAsync`) fixing T9 race condition. Added heartbeat-based liveness filtering in `GetSessionsForAccountAsync` — sessions without a heartbeat (5-minute TTL) are filtered out and lazily cleaned from the index.
 
 6. **ServerSalt shared requirement**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value. If different instances use different salts, session shortcuts and GUID validation will fail across instances. This is enforced by a fail-fast check in the constructor.
 
@@ -485,3 +487,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact (2026-02-08)
 - **Session mappings dead code** - [Issue #347](https://github.com/beyond-immersion/bannou-service/issues/347) - `_sessionServiceMappings` is dead code (never written to), `SetSessionServiceMappingsAsync` never called, internal proxy authorization may be broken (2026-02-08)
 - **Message queue backpressure** - [Issue #348](https://github.com/beyond-immersion/bannou-service/issues/348) - `MessageQueueSize` is dead config (T21 violation); decide whether to remove or implement application-level queueing (2026-02-08)
+
+### Completed
+- **RabbitMQ subscription lifecycle** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). RabbitMQ's native `x-expires` mechanism handles orphaned queue cleanup automatically. No code change needed.
+- **Account session index staleness** - Fixed T9 race condition and staleness (2026-02-08). Replaced read-modify-write `IStateStore<HashSet<string>>` with atomic `ICacheableStateStore<string>.AddToSetAsync/RemoveFromSetAsync`. Added heartbeat liveness filtering in `GetSessionsForAccountAsync`.
