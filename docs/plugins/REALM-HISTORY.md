@@ -77,8 +77,7 @@ This plugin does not consume external events.
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `ForceServiceId` | `REALM_HISTORY_FORCE_SERVICE_ID` | null | Framework-level override for service ID |
-
-The generated `RealmHistoryServiceConfiguration` contains only the framework-level `ForceServiceId` property. No service-specific configuration is defined.
+| `MaxLoreElements` | `REALM_HISTORY_MAX_LORE_ELEMENTS` | 100 | Maximum lore elements per realm. Returns BadRequest when exceeded. |
 
 ---
 
@@ -87,7 +86,7 @@ The generated `RealmHistoryServiceConfiguration` contains only the framework-lev
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<RealmHistoryService>` | Scoped | Structured logging |
-| `RealmHistoryServiceConfiguration` | Singleton | Framework config (minimal, only ForceServiceId) |
+| `RealmHistoryServiceConfiguration` | Singleton | Service config (MaxLoreElements limit, ForceServiceId) |
 | `IStateStoreFactory` | Singleton | State store access (passed to helpers) |
 | `IMessageBus` | Scoped | Event publishing |
 | `IEventConsumer` | Scoped | Event registration (no handlers currently) |
@@ -110,8 +109,8 @@ Service lifetime is **Scoped** (per-request). The helper classes are instantiate
 ### Lore Operations (4 endpoints)
 
 - **GetLore** (`/realm-history/get-lore`): Returns OK with empty list if no lore exists (never 404). Filters by element type and strength threshold. Converts timestamps via `TimestampHelper.FromUnixSeconds`.
-- **SetLore** (`/realm-history/set-lore`): Merge-or-replace semantics controlled by `replaceExisting` flag. Merge updates existing elements by type+key pair and adds new ones. Registers realm reference on new lore creation. Publishes created or updated event.
-- **AddLoreElement** (`/realm-history/add-lore-element`): Adds single element. Updates if type+key match exists. Creates lore document if none exists. Registers realm reference on new lore creation. Publishes created or updated event.
+- **SetLore** (`/realm-history/set-lore`): Merge-or-replace semantics controlled by `replaceExisting` flag. Merge updates existing elements by type+key pair and adds new ones. Validates against `MaxLoreElements` limit — replace mode checks input count, merge mode calculates post-merge count (existing + truly new). Returns BadRequest when limit exceeded. Registers realm reference on new lore creation. Publishes created or updated event.
+- **AddLoreElement** (`/realm-history/add-lore-element`): Adds single element. Updates if type+key match exists. Validates against `MaxLoreElements` limit — only rejects truly new elements when at limit; updates to existing type+key pairs are always allowed. Creates lore document if none exists. Registers realm reference on new lore creation. Publishes created or updated event.
 - **DeleteLore** (`/realm-history/delete-lore`): Unregisters realm reference, removes entire lore document. Returns NotFound if no lore exists.
 
 ### Management Operations (2 endpoints)
@@ -239,4 +238,5 @@ None identified.
 
 ### Completed
 
+- **2026-02-08**: [#350](https://github.com/beyond-immersion/bannou-service/issues/350) - Configurable lore element count limit. Added `MaxLoreElements` config property (default 100) with validation in `SetRealmLoreAsync` and `AddRealmLoreElementAsync`. Follow-up from character-history #207.
 - **2026-02-08**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations. Replaced in-memory fetch-all-then-paginate with server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. DualIndexHelper retained for write operations only.

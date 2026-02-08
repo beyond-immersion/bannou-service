@@ -77,8 +77,9 @@ This plugin does not consume external events.
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `BackstoryCacheTtlSeconds` | `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS` | 600 | TTL in seconds for backstory cache entries |
+| `MaxBackstoryElements` | `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | 100 | Maximum backstory elements per character; returns BadRequest when exceeded |
 
-The generated `CharacterHistoryServiceConfiguration` is injected into `BackstoryCache` for TTL configuration.
+The generated `CharacterHistoryServiceConfiguration` is injected into both `BackstoryCache` (for TTL) and `CharacterHistoryService` (for element limits).
 
 ---
 
@@ -87,7 +88,7 @@ The generated `CharacterHistoryServiceConfiguration` is injected into `Backstory
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CharacterHistoryService>` | Scoped | Structured logging |
-| `CharacterHistoryServiceConfiguration` | Singleton | Typed configuration (BackstoryCacheTtlSeconds); injected into constructor but only consumed by `BackstoryCache` |
+| `CharacterHistoryServiceConfiguration` | Singleton | Typed configuration (BackstoryCacheTtlSeconds, MaxBackstoryElements); injected into service constructor and `BackstoryCache` |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Scoped | Event publishing (including resource reference events) |
 | `IEventConsumer` | Scoped | Event registration (no handlers) |
@@ -124,8 +125,8 @@ The `CharacterHistoryTemplate` provides compile-time validation for `${candidate
 ### Backstory Operations (4 endpoints)
 
 - **GetBackstory** (`/character-history/get-backstory`): Returns NotFound if no backstory exists. Filters by element types array and minimum strength. UpdatedAt is null if never updated.
-- **SetBackstory** (`/character-history/set-backstory`): Merge-or-replace semantics via `replaceExisting` flag. Merge matches by type+key pair. Publishes created or updated event with element count.
-- **AddBackstoryElement** (`/character-history/add-backstory-element`): Adds or updates single element (updates if type+key match exists). Creates backstory document if none exists.
+- **SetBackstory** (`/character-history/set-backstory`): Merge-or-replace semantics via `replaceExisting` flag. Merge matches by type+key pair. Validates element count against `MaxBackstoryElements` limit (returns BadRequest if exceeded). For merge mode, only truly new elements count toward the limit -- updates to existing type+key pairs are always allowed. Publishes created or updated event with element count.
+- **AddBackstoryElement** (`/character-history/add-backstory-element`): Adds or updates single element (updates if type+key match exists). Creates backstory document if none exists. Rejects adding new elements when at `MaxBackstoryElements` limit (updates to existing type+key pairs are always allowed at any count).
 - **DeleteBackstory** (`/character-history/delete-backstory`): Removes entire backstory. Returns NotFound if no backstory exists.
 
 ### Management Operations (2 endpoints)
@@ -209,12 +210,14 @@ None. The service is feature-complete for its scope.
 
 1. **AI-powered summarization**: Replace template-based text with LLM-generated narrative prose.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/230 -->
-2. **Backstory element limits**: Configurable maximum elements per character to prevent unbounded growth.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/207 -->
+2. ~~**Backstory element limits**~~: FIXED (2026-02-08) - Added `MaxBackstoryElements` config property (default 100). Validation at service level in SetBackstory and AddBackstoryElement; returns BadRequest when limit exceeded. See [#207](https://github.com/beyond-immersion/bannou-service/issues/207).
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/207 -->
 3. ~~**Participation pagination at store level**~~: FIXED - Implemented server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. See [#200](https://github.com/beyond-immersion/bannou-service/issues/200).
 <!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/200 -->
 4. **Cross-character event correlation**: Query which characters participated together in the same events.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/231 -->
+5. **Batch reference unregistration in DeleteAll**: `DeleteAllHistoryAsync` publishes N individual `resource.reference.unregistered` events before bulk deletion. The DualIndexHelper bulk path is already optimized (~7 bulk operations regardless of N), but the reference unregistration loop remains O(N) messages. Blocked on lib-resource batch unregister support.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/351 -->
 
 ---
 
@@ -251,8 +254,8 @@ None.
 1. ~~**In-memory pagination for all list operations**~~: FIXED - `GetParticipationAsync` and `GetEventParticipantsAsync` now use server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`, pushing filters and pagination to the database. See [#200](https://github.com/beyond-immersion/bannou-service/issues/200).
 <!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/200 -->
 
-2. **No backstory element count limit**: No maximum on elements per character. Unbounded growth possible if AddBackstoryElement is called repeatedly without cleanup.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/207 -->
+2. ~~**No backstory element count limit**~~: FIXED (2026-02-08) - Added configurable `MaxBackstoryElements` (default 100) with service-level validation. Returns BadRequest when limit exceeded. Updates to existing type+key pairs are always allowed. See [#207](https://github.com/beyond-immersion/bannou-service/issues/207).
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/207 -->
 
 3. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure. On deserialization from JSON, becomes `JsonElement` or similar untyped object. No schema validation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/308 -->
@@ -271,14 +274,15 @@ None.
 ## Work Tracking
 
 ### Pending Design Review
+- **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for DeleteAll (blocked on lib-resource infrastructure; O(N) messages for N participations)
 - **2026-02-06**: [#311](https://github.com/beyond-immersion/bannou-service/issues/311) - AddBackstoryElement event does not distinguish element added vs updated (need to survey consumers for actual requirement)
 - **2026-02-06**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - Empty string entityId should throw, not return null silently (part of systemic silent-failure pattern fix)
 - **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history (parallel service API consistency)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
-- **2026-01-31**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Add configurable backstory element count limit (prevent unbounded growth)
 - **2026-02-01**: [#230](https://github.com/beyond-immersion/bannou-service/issues/230) - AI-powered summarization (requires building new LLM service infrastructure)
 - **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
 
 ### Completed
 
+- **2026-02-08**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Added configurable `MaxBackstoryElements` limit (default 100). Service-level validation in SetBackstory and AddBackstoryElement; returns BadRequest when exceeded. Updates to existing type+key pairs always allowed.
 - **2026-02-08**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations. Replaced in-memory fetch-all-then-paginate with server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. DualIndexHelper retained for write operations only.

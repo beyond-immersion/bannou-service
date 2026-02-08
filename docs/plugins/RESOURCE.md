@@ -483,6 +483,9 @@ None currently.
 
 5. **Reference lifecycle hooks**: Pre-register/post-unregister hooks for validation or side effects.
 
+6. **Batch reference unregistration**: When higher-layer services bulk-delete entities (e.g., character-history deleting all participations), each entity publishes an individual `resource.reference.unregistered` event. A batch unregister event or endpoint would reduce O(N) messages to a single operation.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/351 -->
+
 ---
 
 ## Integration Pattern
@@ -677,6 +680,9 @@ None currently. Previous design gaps (callback listing/removal, dry-run preview)
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above.
+
+### Pending Design Review
+- **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for bulk entity deletion (affects character-history, character-encounter, character-personality, actor)
 
 ### Active
 

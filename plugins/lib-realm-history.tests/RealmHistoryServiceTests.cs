@@ -104,6 +104,16 @@ public class RealmHistoryServiceTests
         Assert.NotNull(config);
     }
 
+    [Fact]
+    public void RealmHistoryServiceConfiguration_MaxLoreElements_DefaultIs100()
+    {
+        // Arrange & Act
+        var config = new RealmHistoryServiceConfiguration();
+
+        // Assert
+        Assert.Equal(100, config.MaxLoreElements);
+    }
+
     #endregion
 
     #region RecordRealmParticipation Tests
@@ -533,6 +543,239 @@ public class RealmHistoryServiceTests
             "realm-history.lore.updated",
             It.IsAny<RealmLoreUpdatedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Lore Element Limit Tests
+
+    [Fact]
+    public async Task SetRealmLoreAsync_ReplaceMode_ExceedsLimit_ReturnsBadRequest()
+    {
+        // Arrange
+        _configuration.MaxLoreElements = 2;
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var request = new SetRealmLoreRequest
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElement>
+            {
+                new RealmLoreElement { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "k1", Value = "v1", Strength = 0.5f },
+                new RealmLoreElement { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "k2", Value = "v2", Strength = 0.5f },
+                new RealmLoreElement { ElementType = RealmLoreElementType.POLITICAL_SYSTEM, Key = "k3", Value = "v3", Strength = 0.5f }
+            },
+            ReplaceExisting = true
+        };
+
+        // Act
+        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task SetRealmLoreAsync_MergeMode_PostMergeExceedsLimit_ReturnsBadRequest()
+    {
+        // Arrange
+        _configuration.MaxLoreElements = 2;
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var existingLore = new RealmLoreData
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElementData>
+            {
+                new RealmLoreElementData { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "existing1", Value = "v1", Strength = 0.5f },
+                new RealmLoreElementData { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "existing2", Value = "v2", Strength = 0.5f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingLore);
+
+        var request = new SetRealmLoreRequest
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElement>
+            {
+                // This is a truly new element (different type+key), pushing count to 3 > limit of 2
+                new RealmLoreElement { ElementType = RealmLoreElementType.POLITICAL_SYSTEM, Key = "new1", Value = "v3", Strength = 0.5f }
+            },
+            ReplaceExisting = false
+        };
+
+        // Act
+        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task SetRealmLoreAsync_MergeMode_UpdatesExisting_AllowedEvenAtLimit()
+    {
+        // Arrange
+        _configuration.MaxLoreElements = 2;
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var existingLore = new RealmLoreData
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElementData>
+            {
+                new RealmLoreElementData { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "creation", Value = "old", Strength = 0.5f },
+                new RealmLoreElementData { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "farming", Value = "old", Strength = 0.5f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingLore);
+
+        var request = new SetRealmLoreRequest
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElement>
+            {
+                // Same type+key as existing = update, not new. Count stays at 2 (at limit, not over)
+                new RealmLoreElement { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "creation", Value = "updated", Strength = 0.9f }
+            },
+            ReplaceExisting = false
+        };
+
+        // Act
+        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task AddRealmLoreElementAsync_AtLimit_NewElement_ReturnsBadRequest()
+    {
+        // Arrange
+        _configuration.MaxLoreElements = 2;
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var existingLore = new RealmLoreData
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElementData>
+            {
+                new RealmLoreElementData { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "k1", Value = "v1", Strength = 0.5f },
+                new RealmLoreElementData { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "k2", Value = "v2", Strength = 0.5f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingLore);
+
+        var request = new AddRealmLoreElementRequest
+        {
+            RealmId = realmId,
+            Element = new RealmLoreElement
+            {
+                ElementType = RealmLoreElementType.POLITICAL_SYSTEM,
+                Key = "new_element",
+                Value = "v3",
+                Strength = 0.5f
+            }
+        };
+
+        // Act
+        var (status, result) = await service.AddRealmLoreElementAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task AddRealmLoreElementAsync_AtLimit_UpdateExisting_Allowed()
+    {
+        // Arrange
+        _configuration.MaxLoreElements = 2;
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        var existingLore = new RealmLoreData
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElementData>
+            {
+                new RealmLoreElementData { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "creation", Value = "old_value", Strength = 0.5f },
+                new RealmLoreElementData { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "farming", Value = "old_value", Strength = 0.5f }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingLore);
+
+        var request = new AddRealmLoreElementRequest
+        {
+            RealmId = realmId,
+            Element = new RealmLoreElement
+            {
+                // Same type+key = update, allowed even at limit
+                ElementType = RealmLoreElementType.ORIGIN_MYTH,
+                Key = "creation",
+                Value = "updated_value",
+                Strength = 0.9f
+            }
+        };
+
+        // Act
+        var (status, result) = await service.AddRealmLoreElementAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task SetRealmLoreAsync_MergeMode_NoExistingLore_ExceedsLimit_ReturnsBadRequest()
+    {
+        // Arrange
+        _configuration.MaxLoreElements = 1;
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmLoreData?)null);
+
+        var request = new SetRealmLoreRequest
+        {
+            RealmId = realmId,
+            Elements = new List<RealmLoreElement>
+            {
+                new RealmLoreElement { ElementType = RealmLoreElementType.ORIGIN_MYTH, Key = "k1", Value = "v1", Strength = 0.5f },
+                new RealmLoreElement { ElementType = RealmLoreElementType.CULTURAL_PRACTICE, Key = "k2", Value = "v2", Strength = 0.5f }
+            },
+            ReplaceExisting = false
+        };
+
+        // Act
+        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
     }
 
     #endregion

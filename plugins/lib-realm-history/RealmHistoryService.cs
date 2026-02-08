@@ -25,6 +25,7 @@ public partial class RealmHistoryService : IRealmHistoryService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<RealmHistoryService> _logger;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly RealmHistoryServiceConfiguration _configuration;
     private readonly IDualIndexHelper<RealmParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<RealmLoreData, RealmLoreElementData> _loreHelper;
 
@@ -54,9 +55,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         _messageBus = messageBus;
         _logger = logger;
         _stateStoreFactory = stateStoreFactory;
-
-        // Note: stateStoreFactory is also passed to helpers; configuration is currently unused but kept for future use
-        _ = configuration; // Suppress unused parameter warning
+        _configuration = configuration;
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<RealmParticipationData>(
@@ -443,6 +442,51 @@ public partial class RealmHistoryService : IRealmHistoryService
         try
         {
             var elementDataList = body.Elements.Select(MapToRealmLoreElementData).ToList();
+            var maxElements = _configuration.MaxLoreElements;
+
+            if (body.ReplaceExisting)
+            {
+                // Replace mode: the final count equals the input count
+                if (elementDataList.Count > maxElements)
+                {
+                    _logger.LogWarning(
+                        "SetLore rejected for realm {RealmId}: {Count} elements exceeds limit of {Limit}",
+                        body.RealmId, elementDataList.Count, maxElements);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+            else
+            {
+                // Merge mode: calculate post-merge count (existing + truly new elements)
+                var existing = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+                if (existing != null)
+                {
+                    var existingElements = existing.Elements;
+                    var newElementCount = elementDataList.Count(newEl =>
+                        !existingElements.Any(e =>
+                            e.ElementType == newEl.ElementType && e.Key == newEl.Key));
+                    var postMergeCount = existingElements.Count + newElementCount;
+
+                    if (postMergeCount > maxElements)
+                    {
+                        _logger.LogWarning(
+                            "SetLore merge rejected for realm {RealmId}: post-merge count {PostMerge} exceeds limit of {Limit} (existing={Existing}, new={New})",
+                            body.RealmId, postMergeCount, maxElements, existingElements.Count, newElementCount);
+                        return (StatusCodes.BadRequest, null);
+                    }
+                }
+                else
+                {
+                    // No existing lore: the final count equals the input count
+                    if (elementDataList.Count > maxElements)
+                    {
+                        _logger.LogWarning(
+                            "SetLore rejected for realm {RealmId}: {Count} elements exceeds limit of {Limit}",
+                            body.RealmId, elementDataList.Count, maxElements);
+                        return (StatusCodes.BadRequest, null);
+                    }
+                }
+            }
 
             var result = await _loreHelper.SetAsync(
                 body.RealmId.ToString(),
@@ -520,6 +564,22 @@ public partial class RealmHistoryService : IRealmHistoryService
         try
         {
             var elementData = MapToRealmLoreElementData(body.Element);
+
+            // Validate element count limit (only for truly new elements, not updates)
+            var existing = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+            if (existing != null)
+            {
+                var isUpdate = existing.Elements.Any(e =>
+                    e.ElementType == elementData.ElementType && e.Key == elementData.Key);
+
+                if (!isUpdate && existing.Elements.Count >= _configuration.MaxLoreElements)
+                {
+                    _logger.LogWarning(
+                        "AddLoreElement rejected for realm {RealmId}: {Count} elements already at limit of {Limit}",
+                        body.RealmId, existing.Elements.Count, _configuration.MaxLoreElements);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
 
             var result = await _loreHelper.AddElementAsync(
                 body.RealmId.ToString(),

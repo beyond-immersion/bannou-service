@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: Realm History Service Configuration
+  description: |
+    Configuration schema for Realm History service.
+    Properties are bound to environment variables with REALM_HISTORY_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Element Limits
+    MaxLoreElements:
+      type: integer
+      description: Maximum number of lore elements allowed per realm. Prevents unbounded growth from repeated AddLoreElement or SetLore calls. Returns BadRequest when limit would be exceeded.
+      default: 100
+      env: REALM_HISTORY_MAX_LORE_ELEMENTS
