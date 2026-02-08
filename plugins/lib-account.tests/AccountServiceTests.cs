@@ -24,7 +24,8 @@ public class AccountServiceTests
     private readonly Mock<IStateStore<List<AuthMethodInfo>>> _mockAuthMethodsStore;
     private readonly Mock<IJsonQueryableStateStore<AccountModel>> _mockJsonQueryableStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ILockResponse> _mockLockResponse;
 
     private const string ACCOUNT_STATE_STORE = "account-statestore";
 
@@ -38,7 +39,19 @@ public class AccountServiceTests
         _mockAuthMethodsStore = new Mock<IStateStore<List<AuthMethodInfo>>>();
         _mockJsonQueryableStore = new Mock<IJsonQueryableStateStore<AccountModel>>();
         _mockMessageBus = new Mock<IMessageBus>();
-        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockLockResponse = new Mock<ILockResponse>();
+
+        // Default lock behavior: always succeeds
+        _mockLockResponse.Setup(r => r.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_mockLockResponse.Object);
 
         // Setup default factory returns
         _mockStateStoreFactory
@@ -143,7 +156,7 @@ public class AccountServiceTests
             configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
     }
 
     [Fact]
@@ -570,7 +583,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -601,7 +614,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -632,7 +645,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -663,7 +676,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -698,7 +711,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -745,7 +758,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -791,7 +804,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -837,7 +850,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock email index lookup
         _mockStringStore
@@ -888,7 +901,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock email index lookup
         _mockStringStore
@@ -942,7 +955,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         var request = new CreateAccountRequest
         {

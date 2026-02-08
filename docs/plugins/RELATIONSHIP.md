@@ -320,6 +320,9 @@ State Store Layout
 
 11. **Inverse type resolved by code, not ID**: When creating/updating a type with `InverseTypeCode`, the ID is resolved via index lookup at that moment. If the inverse type is later deleted, `InverseTypeId` becomes stale (points to non-existent type).
 
+12. **Merge calls public endpoint methods, not direct state store operations**: `MergeRelationshipTypeAsync` calls `this.ListRelationshipsByTypeAsync()` and `this.UpdateRelationshipAsync()` internally. While this avoids HTTP round-trips (both methods are in the same service), it still goes through the full public endpoint logic: constructing request/response models, publishing update events for each migrated relationship, and returning status code tuples. A deeper internalization would read the `type-idx` directly and bulk-update state store records, avoiding per-relationship event publishing and response model overhead.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/333 -->
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: All list operations load the full index, bulk-fetch all relationship models, filter in memory, then paginate. For entities with thousands of relationships, this loads everything into memory before applying page limits.
