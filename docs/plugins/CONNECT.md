@@ -25,7 +25,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | Permission service (via events) | Receives `SessionCapabilitiesEvent` containing permissions; no direct API call |
 | Auth service (via events) | Receives `session.invalidated` events to force-disconnect sessions |
 | `IServiceAppMappingResolver` | Dynamic app-id resolution for distributed service routing |
-| `IHttpClientFactory` | Named HTTP client ("ConnectMeshProxy") for internal proxy requests |
+| `IHttpClientFactory` | Named HTTP client ("ConnectMeshProxy") registered in plugin with configurable timeout; injected but `CreateClient` never called in service code |
 | `IServiceScopeFactory` | Creates scoped DI containers for per-request ServiceNavigator resolution |
 | `ICapabilityManifestBuilder` | Builds capability manifest JSON from service mappings for client delivery |
 
@@ -54,7 +54,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `ws-mappings:{sessionId}` | `Dictionary<string, Guid>` | Service endpoint to client-salted GUID mappings |
 | `heartbeat:{sessionId}` | `SessionHeartbeat` | Connection liveness tracking (instance ID, last seen, connection count) |
 | `reconnect:{token}` | `string` (sessionId) | Reconnection token to session ID mapping (TTL = reconnection window) |
-| `account-sessions:{accountId:N}` | `HashSet<string>` | All active session IDs for an account (for GetAccountSessions endpoint) |
+| `account-sessions:{accountId:N}` | Redis Set of `string` | All active session IDs for an account (atomic SADD/SREM via `ICacheableStateStore<string>`) |
 
 ---
 
@@ -92,7 +92,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 |----------|---------|---------|---------|
 | `MaxConcurrentConnections` | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | `10000` | Maximum concurrent WebSocket connections |
 | `HeartbeatIntervalSeconds` | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | `30` | Interval between heartbeat messages |
-| `MessageQueueSize` | `CONNECT_MESSAGE_QUEUE_SIZE` | `1000` | Maximum queued messages per connection |
+| `MessageQueueSize` | `CONNECT_MESSAGE_QUEUE_SIZE` | `1000` | **Dead config** — defined but never referenced in service code (see Design Consideration #3) |
 | `BufferSize` | `CONNECT_BUFFER_SIZE` | `65536` | Size of message receive buffers (bytes) |
 | `EnableClientToClientRouting` | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | `true` | Enable peer-to-peer message routing |
 | `MaxMessagesPerMinute` | `CONNECT_MAX_MESSAGES_PER_MINUTE` | `1000` | Rate limit per client per window |
@@ -123,7 +123,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `IMeshInvocationClient` | Singleton | HTTP request creation and service invocation |
 | `IMessageBus` | Scoped | Event publishing (session lifecycle, error, permission recompile) |
 | `IMessageSubscriber` | Singleton | Per-session dynamic RabbitMQ subscription management |
-| `IHttpClientFactory` | Singleton | Named HTTP client for internal proxy |
+| `IHttpClientFactory` | Singleton | Injected but `CreateClient` never called; named client registered in plugin with configurable timeout |
 | `IServiceAppMappingResolver` | Singleton | Dynamic app-id resolution for distributed routing |
 | `IServiceScopeFactory` | Singleton | Creates scoped DI containers for ServiceNavigator |
 | `ConnectServiceConfiguration` | Singleton | All 22 configuration properties |
@@ -443,6 +443,14 @@ No bugs identified.
 
 6. **RabbitMQ queue persistence and consumer lifecycle**: Per-session RabbitMQ queues are created with `x-expires` set to `ReconnectionWindowSeconds` (default 300s). On disconnect (both forced and normal), only the consumer is cancelled — the queue itself persists and buffers messages. For normal disconnects, this enables seamless message delivery on reconnect (new consumer attaches to same queue). For forced disconnects, the queue persists until RabbitMQ's `x-expires` auto-deletes it (5 min max). Application code only manages consumers, not queues — RabbitMQ handles queue lifecycle via native TTL mechanisms. If a Connect instance crashes, orphaned queues self-clean the same way.
 
+7. **ServerSalt shared requirement (enforced)**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value for distributed deployments. The constructor enforces this with a fail-fast check — startup aborts with `InvalidOperationException` if ServerSalt is null/empty. Different salts across instances would cause GUID validation failures and broken session shortcuts. All three GUID generation methods (`GenerateServiceGuid`, `GenerateClientGuid`, `GenerateSessionShortcutGuid`) also validate the salt parameter.
+
+8. **Non-deterministic instance ID**: `_instanceId` is generated as `Guid.NewGuid()` on each service start. This is intentional: it tracks the runtime process, not the physical machine. When a Connect instance restarts, the new process gets a new ID, correctly distinguishing it from the crashed instance. Old heartbeats expire via TTL (5 minutes), and Redis-persisted session state enables seamless takeover by the new instance.
+
+9. **Disconnect event published before account index removal**: In the finally block, `session.disconnected` is published before `RemoveSessionFromAccountAsync` is called. This means consumers receiving the event could theoretically still see the session in `GetAccountSessions`. In practice this is safe: no consumer of `session.disconnected` calls `GetAccountSessions`, and heartbeat-based liveness filtering in `GetSessionsForAccountAsync` filters out disconnected sessions.
+
+10. **Internal mode minimal initialization**: Internal mode connections skip service mapping, capability manifest, RabbitMQ subscription, session state persistence, heartbeat tracking, and reconnection windows. They receive only a minimal response (sessionId + peerGuid) and enter a simplified binary-only message loop (`HandleInternalModeMessageLoopAsync`). This is intentional design for server-to-server WebSocket communication using specialized authentication (ServiceToken or NetworkTrust).
+
 ### Design Considerations (Requires Planning)
 
 1. **Single-instance limitation for P2P**: Peer-to-peer routing (`RouteToClientAsync`) only works when both clients are connected to the same Connect instance. The `_connectionManager.TryGetSessionIdByPeerGuid()` lookup is in-memory only. Distributed P2P requires cross-instance peer registry.
@@ -454,32 +462,8 @@ No bugs identified.
 3. **No backpressure on message queue**: The `MessageQueueSize` config exists but there is no explicit backpressure mechanism. If a client is slow to consume messages, the WebSocket send buffer grows unbounded.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/348 -->
 
-4. ~~**RabbitMQ subscription lifecycle**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. RabbitMQ's native `x-expires` (set to `ReconnectionWindowSeconds`, default 300s) automatically deletes orphaned queues after 5 minutes without consumers. This is the correct design: queues persist during the reconnection window to buffer messages, then self-clean. No application-layer cleanup needed.
-
-5. ~~**Account session index staleness**~~: **FIXED** (2026-02-08) - Replaced read-modify-write pattern with atomic Redis Set operations (`ICacheableStateStore.AddToSetAsync`/`RemoveFromSetAsync`) fixing T9 race condition. Added heartbeat-based liveness filtering in `GetSessionsForAccountAsync` — sessions without a heartbeat (5-minute TTL) are filtered out and lazily cleaned from the index.
-
-6. ~~**ServerSalt shared requirement**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. The constructor already enforces this with a fail-fast check (`InvalidOperationException` if null/empty), and all three GUID generation methods validate the salt parameter. No design planning needed.
-
-7. ~~**Instance ID non-deterministic**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. The non-deterministic ID correctly tracks runtime processes (not physical machines), which is essential for container orchestration, restart detection, and multi-process scaling. Old heartbeats expire via TTL (5 min), enabling correct liveness detection.
-
-8. **Session subsumed skips cleanup but disconnect event still published**: When a session is "subsumed" by a new connection (same session ID), the subsumed connection's finally block still publishes `session.disconnected` and removes from the account index (lines 857-876) before checking the subsume condition (line 888). Only RabbitMQ unsubscription and reconnection window logic are skipped for subsumed connections.
+4. **Session subsumed skips cleanup but disconnect event still published**: When a session is "subsumed" by a new connection (same session ID), the subsumed connection's finally block still publishes `session.disconnected` and removes from the account index before checking the subsume condition. Only RabbitMQ unsubscription and reconnection window logic are skipped for subsumed connections.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/349 -->
-
-9. ~~**Disconnect event published before account index removal**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. The event-before-cleanup ordering is correct: (1) no consumer of `session.disconnected` calls `GetAccountSessions`, making the race theoretical, (2) heartbeat-based liveness filtering (Design Consideration #5) ensures stale entries are filtered out, (3) event-first is safer — if index removal fails, consumers still know about the disconnect and heartbeat TTL cleans up.
-
-10. ~~**RabbitMQ consumer cancelled during reconnection, queue buffers messages**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. This describes correct behavior: consumer cancellation on disconnect is intentional, queue persistence enables message buffering during reconnection window, and forced disconnects rely on RabbitMQ's `x-expires` TTL for queue cleanup. Already covered by Intentional Quirk #6.
-
-11. ~~**Internal mode skips capability initialization entirely**~~: **FIXED** (2026-02-08) - Reclassified to Intentional Quirk. Internal mode is intentionally designed for server-to-server WebSocket connections that don't need client-facing infrastructure (permissions, shortcuts, client events, reconnection). Has dedicated code path, separate message loop, and specialized auth modes (ServiceToken/NetworkTrust).
-
-12. ~~**Connection state allocated before connection limit check**~~: **FIXED** (2026-02-08) - Reordered the defense-in-depth connection limit check to execute before `ConnectionState` allocation, eliminating ~10 unnecessary object allocations per rejected connection under high load.
-
-13. **ServerSalt shared requirement (enforced)**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value for distributed deployments. The constructor enforces this with a fail-fast check — startup aborts with `InvalidOperationException` if ServerSalt is null/empty. Different salts across instances would cause GUID validation failures and broken session shortcuts. All three GUID generation methods (`GenerateServiceGuid`, `GenerateClientGuid`, `GenerateSessionShortcutGuid`) also validate the salt parameter. Documented in schema and enforced at runtime per multi-instance safety requirements.
-
-14. **Non-deterministic instance ID**: `_instanceId` is generated as `Guid.NewGuid()` on each service start. This is intentional: it tracks the runtime process, not the physical machine. When a Connect instance restarts, the new process gets a new ID, correctly distinguishing it from the crashed instance. Old heartbeats expire via TTL (5 minutes), and Redis-persisted session state enables seamless takeover by the new instance. This design is essential for container orchestration, blue-green deployments, and multi-process scaling on the same host.
-
-15. **Disconnect event published before account index removal**: In the finally block, `session.disconnected` is published before `RemoveSessionFromAccountAsync` is called. This means consumers receiving the event could theoretically still see the session in `GetAccountSessions`. In practice this is safe: no consumer of `session.disconnected` calls `GetAccountSessions`, and heartbeat-based liveness filtering in `GetSessionsForAccountAsync` filters out disconnected sessions. The event-first ordering is also the safer design — if index removal fails, consumers still know about the disconnect.
-
-16. **Internal mode minimal initialization**: Internal mode connections skip service mapping, capability manifest, RabbitMQ subscription, session state persistence, heartbeat tracking, and reconnection windows. They receive only a minimal response (sessionId + peerGuid) and enter a simplified binary-only message loop (`HandleInternalModeMessageLoopAsync`) supporting peer routing and broadcast. This is intentional design for server-to-server WebSocket communication where the full client-facing infrastructure is unnecessary. Internal mode uses specialized authentication (ServiceToken or NetworkTrust) instead of user JWTs.
 
 ---
 
@@ -499,11 +483,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Session subsumed spurious disconnect** - [Issue #349](https://github.com/beyond-immersion/bannou-service/issues/349) - Subsumed connection publishes `session.disconnected` before checking subsume condition, causing state churn in Permission, GameSession, Actor, Matchmaking (2026-02-08)
 
 ### Completed
-- **RabbitMQ subscription lifecycle** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). RabbitMQ's native `x-expires` mechanism handles orphaned queue cleanup automatically. No code change needed.
-- **Account session index staleness** - Fixed T9 race condition and staleness (2026-02-08). Replaced read-modify-write `IStateStore<HashSet<string>>` with atomic `ICacheableStateStore<string>.AddToSetAsync/RemoveFromSetAsync`. Added heartbeat liveness filtering in `GetSessionsForAccountAsync`.
-- **ServerSalt shared requirement** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). Constructor fail-fast check and GUID generator validation already enforce this requirement. No code change needed.
-- **Instance ID non-deterministic** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). Non-deterministic ID correctly tracks runtime processes for liveness detection, container orchestration, and restart recovery. No code change needed.
-- **Disconnect event before account index removal** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). Event-first ordering is correct: no disconnect consumer calls GetAccountSessions, heartbeat liveness filtering handles stale entries, and event-first is safer than cleanup-first. No code change needed.
-- **RabbitMQ consumer cancelled during reconnection** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). Describes correct behavior: consumer cancellation on disconnect is intentional, queue persistence enables message buffering. Merged into existing Intentional Quirk #6. No code change needed.
-- **Internal mode skips capability initialization** - Reclassified from Design Consideration to Intentional Quirk (2026-02-08). Internal mode is intentionally designed for server-to-server WebSocket connections with minimal initialization. No code change needed.
-- **Connection state allocated before connection limit check** - Fixed allocation ordering (2026-02-08). Moved defense-in-depth connection limit check before `ConnectionState` allocation to eliminate unnecessary GC pressure under high load.
+
+(No completed items — all processed strikethrough items have been cleaned up.)

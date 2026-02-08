@@ -117,8 +117,8 @@ The `CharacterHistoryTemplate` provides compile-time validation for `${candidate
 ### Participation Operations (4 endpoints)
 
 - **Record** (`/character-history/record-participation`): Checks for existing participation for same characterId+eventId (returns 409 Conflict if duplicate). Creates unique participation ID. Stores record and updates dual indexes (character and event). Registers character reference with lib-resource. Publishes recorded event.
-- **GetParticipation** (`/character-history/get-participation`): Fetches all records for a character via primary index, filters by event category and minimum significance, sorts by event date descending, paginates in-memory (max 100 per page).
-- **GetEventParticipants** (`/character-history/get-event-participants`): Inverse query via secondary (event) index. Filters by role, sorts by significance descending.
+- **GetParticipation** (`/character-history/get-participation`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by character ID, optional event category, and minimum significance at the database level. Sorts by event date descending. Bypasses DualIndexHelper for reads.
+- **GetEventParticipants** (`/character-history/get-event-participants`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by event ID and optional role at the database level. Sorts by significance descending. Bypasses DualIndexHelper for reads.
 - **DeleteParticipation** (`/character-history/delete-participation`): Retrieves record first (to get index keys for cleanup), removes from both indexes, publishes deletion event.
 
 ### Backstory Operations (4 endpoints)
@@ -211,8 +211,8 @@ None. The service is feature-complete for its scope.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/230 -->
 2. **Backstory element limits**: Configurable maximum elements per character to prevent unbounded growth.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/207 -->
-3. **Participation pagination at store level**: Database-side pagination instead of in-memory for large histories.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/200 -->
+3. ~~**Participation pagination at store level**~~: FIXED - Implemented server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. See [#200](https://github.com/beyond-immersion/bannou-service/issues/200).
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/200 -->
 4. **Cross-character event correlation**: Query which characters participated together in the same events.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/231 -->
 
@@ -248,8 +248,8 @@ None.
 
 ### Design Considerations (Requires Planning)
 
-1. **In-memory pagination for all list operations**: Fetches ALL participation records into memory, then filters and paginates. Characters with thousands of participations load entire list. Should implement store-level pagination.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/200 -->
+1. ~~**In-memory pagination for all list operations**~~: FIXED - `GetParticipationAsync` and `GetEventParticipantsAsync` now use server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`, pushing filters and pagination to the database. See [#200](https://github.com/beyond-immersion/bannou-service/issues/200).
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/200 -->
 
 2. **No backstory element count limit**: No maximum on elements per character. Unbounded growth possible if AddBackstoryElement is called repeatedly without cleanup.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/207 -->
@@ -275,11 +275,10 @@ None.
 - **2026-02-06**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - Empty string entityId should throw, not return null silently (part of systemic silent-failure pattern fix)
 - **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history (parallel service API consistency)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
-- **2026-01-31**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations (in-memory pagination causes memory pressure for characters with many participations)
 - **2026-01-31**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Add configurable backstory element count limit (prevent unbounded growth)
 - **2026-02-01**: [#230](https://github.com/beyond-immersion/bannou-service/issues/230) - AI-powered summarization (requires building new LLM service infrastructure)
 - **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
 
 ### Completed
 
-(No pending completed items.)
+- **2026-02-08**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations. Replaced in-memory fetch-all-then-paginate with server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. DualIndexHelper retained for write operations only.

@@ -65,6 +65,22 @@ public class RealmHistoryServiceTests
             _mockEventConsumer.Object);
     }
 
+    private void SetupJsonQueryPagedAsync(
+        List<RealmParticipationData> items, long totalCount, int offset = 0, int limit = 20)
+    {
+        var queryResults = items.Select(m =>
+            new JsonQueryResult<RealmParticipationData>($"realm-participation-{m.ParticipationId}", m)).ToList();
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<RealmParticipationData>(queryResults, totalCount, offset, limit));
+    }
+
     #region Constructor Validation
 
     /// <summary>

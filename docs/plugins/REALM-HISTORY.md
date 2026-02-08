@@ -103,8 +103,8 @@ Service lifetime is **Scoped** (per-request). The helper classes are instantiate
 ### Participation Operations (4 endpoints)
 
 - **Record** (`/realm-history/record-participation`): Creates unique participation ID. Stores record and updates both realm and event indexes. Registers realm reference with lib-resource. Publishes recorded event.
-- **GetParticipation** (`/realm-history/get-participation`): Fetches all records for a realm using bulk fetch, filters by event category and minimum impact, sorts by event date descending, paginates via `PaginationHelper` (default page size 20).
-- **GetEventParticipants** (`/realm-history/get-event-participants`): Inverse query using secondary index with bulk fetch. Filters by role, sorts by impact descending.
+- **GetParticipation** (`/realm-history/get-participation`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by realm ID, optional event category, and minimum impact at the database level. Sorts by event date descending. Bypasses DualIndexHelper for reads.
+- **GetEventParticipants** (`/realm-history/get-event-participants`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by event ID and optional role at the database level. Sorts by impact descending. Bypasses DualIndexHelper for reads.
 - **DeleteParticipation** (`/realm-history/delete-participation`): Unregisters realm reference, removes record and updates both indexes. DualIndexHelper deletes empty index documents automatically. Publishes deletion event.
 
 ### Lore Operations (4 endpoints)
@@ -143,24 +143,29 @@ Dual-Index Storage Pattern
 
   GetParticipation(realmId=R1)
        │
-       └──► realm-participation-index-R1 → [id1, id2, id3]
+       └──► JsonQueryPagedAsync (bypasses index)
+                │
+                Conditions: $.ParticipationId EXISTS
+                            $.RealmId = R1
+                            $.EventCategory = WAR  (optional)
+                            $.Impact >= 0.5        (optional)
+                SortBy: $.EventDateUnix DESC
                 │
                 ▼
-            GetBulkAsync: realm-participation-{id1}, {id2}, {id3}
-                │
-                ▼
-            Filter (category, minImpact) → Sort (date desc) → Paginate
+            Server-side filtered + paginated results
 
 
   GetEventParticipants(eventId=E1)
        │
-       └──► realm-participation-event-E1 → [id1, id4, id5]
+       └──► JsonQueryPagedAsync (bypasses index)
+                │
+                Conditions: $.ParticipationId EXISTS
+                            $.EventId = E1
+                            $.Role = DEFENDER  (optional)
+                SortBy: $.Impact DESC
                 │
                 ▼
-            GetBulkAsync: realm-participation-{id1}, {id4}, {id5}
-                │
-                ▼
-            Filter (role) → Sort (impact desc) → Paginate
+            Server-side filtered + paginated results
 ```
 
 ---
@@ -203,8 +208,8 @@ None identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **In-memory filtering and pagination**: All list operations load full indexes, fetch all records via bulk fetch, filter in memory, then paginate. For realms with very high participation counts (thousands of events), this loads everything into memory.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/200 -->
+1. ~~**In-memory filtering and pagination**~~: FIXED - `GetRealmParticipationAsync` and `GetRealmEventParticipantsAsync` now use server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`, pushing filters and pagination to the database. See [#200](https://github.com/beyond-immersion/bannou-service/issues/200).
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/200 -->
 
 2. **Lore stored as single document**: All lore elements for a realm are stored in one `RealmLoreData` object. Very large lore collections (hundreds of elements) would be loaded/saved atomically on every modification.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/306 -->
@@ -227,7 +232,6 @@ None identified.
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
 - **2026-02-06**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Concurrency control for DualIndexHelper index updates (read-modify-write pattern without locking; shared infrastructure with character-history)
 - **2026-02-06**: [#306](https://github.com/beyond-immersion/bannou-service/issues/306) - Single-document storage for lore elements (evaluate whether document storage is problematic for large lore collections; shared pattern with character-history via BackstoryStorageHelper)
-- **2026-02-02**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations (shared issue with character-history; in-memory pagination causes memory pressure for realms with many participations)
 - **2026-02-02**: [#266](https://github.com/beyond-immersion/bannou-service/issues/266) - Event-level aggregation (API design decisions needed: metrics, role breakdowns, filtering, new endpoint vs enhancement)
 - **2026-02-02**: [#268](https://github.com/beyond-immersion/bannou-service/issues/268) - Lore inheritance (BLOCKED: requires realm hierarchy which contradicts current Realm service design of "peer worlds with no hierarchical relationships")
 - **2026-02-02**: [#269](https://github.com/beyond-immersion/bannou-service/issues/269) - AI-powered summarization (BLOCKED on character-history #230 which tracks shared LLM infrastructure work)
@@ -235,4 +239,4 @@ None identified.
 
 ### Completed
 
-(No items)
+- **2026-02-08**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations. Replaced in-memory fetch-all-then-paginate with server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. DualIndexHelper retained for write operations only.
