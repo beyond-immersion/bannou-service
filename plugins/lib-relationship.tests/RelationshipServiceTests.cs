@@ -546,7 +546,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         Assert.NotNull(capturedEvent);
         Assert.Equal("relationship.deleted", capturedTopic);
         Assert.Equal(relationshipId, capturedEvent.RelationshipId);
-        // Note: Reason is not part of the event schema - it's only stored in the model
+        Assert.Equal("Test reason", capturedEvent.DeletedReason);
     }
 
     #endregion

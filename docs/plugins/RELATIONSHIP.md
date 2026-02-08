@@ -123,7 +123,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 - **Update** (`/relationship/update`): Can modify metadata and relationship type. When type changes, updates type indexes (removes from old, adds to new). Immutable fields: entity1, entity2 (cannot change participants). Ended relationships cannot be updated (returns Conflict). Publishes `relationship.updated` with `changedFields`.
 
-- **End** (`/relationship/end`): Soft-deletes by setting `EndedAt` timestamp. Returns Conflict if already ended. Deletes the composite uniqueness key (allowing the same relationship to be recreated later). Does NOT remove from entity or type indexes (keeping history queryable). Publishes `relationship.deleted`. Note: the `reason` field from the request is ignored (see Bugs section).
+- **End** (`/relationship/end`): Soft-deletes by setting `EndedAt` timestamp. Returns Conflict if already ended. Deletes the composite uniqueness key (allowing the same relationship to be recreated later). Does NOT remove from entity or type indexes (keeping history queryable). Publishes `relationship.deleted` with optional reason from the request (defaults to "Relationship ended" when null).
 
 ### Relationship Type Endpoints (13 endpoints)
 
@@ -294,9 +294,9 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-1. **`EndRelationshipAsync` ignores `reason` field**: The `EndRelationshipRequest` schema defines a `reason` field (string, nullable, maxLength 500), but the implementation never reads `body.Reason`. Instead, it passes the hardcoded string `"Relationship ended"` as `deletedReason` to `PublishRelationshipDeletedEventAsync`. The request's reason is silently discarded.
+1. ~~**`EndRelationshipAsync` ignores `reason` field**~~: **FIXED** (2026-02-08) - `EndRelationshipAsync` now passes `body.Reason ?? "Relationship ended"` to the event publisher, using the caller's reason when provided and falling back to the default message when null.
 
-2. **`MergeRelationshipTypeAsync` does not validate target is non-deprecated**: The API schema documents a `409: Cannot merge into a deprecated type` response, but the implementation only verifies the target exists - it never checks `targetModel.IsDeprecated`. Merging into a deprecated target type will succeed silently, potentially migrating relationships to a type that shouldn't be used for new data.
+2. ~~**`MergeRelationshipTypeAsync` does not validate target is non-deprecated**~~: **FIXED** (2026-02-08) - Added `targetModel.IsDeprecated` check after target existence validation, returning `StatusCodes.Conflict` as documented in the API schema.
 
 3. **`UndeprecateRelationshipTypeAsync` returns wrong status code**: The API schema defines `400: Relationship type is not deprecated`, but the implementation returns `StatusCodes.Conflict` (409) when the type is not deprecated. Clients expecting the documented 400 response will misinterpret the 409.
 

@@ -719,6 +719,42 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
     }
 
     [Fact]
+    public async Task MergeRelationshipTypeAsync_TargetDeprecated_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+
+        var sourceModel = CreateTestRelationshipTypeModel(sourceId, "SOURCE", "Source Type");
+        sourceModel.IsDeprecated = true;
+
+        var targetModel = CreateTestRelationshipTypeModel(targetId, "TARGET", "Target Type");
+        targetModel.IsDeprecated = true;
+
+        _mockRtModelStore
+            .Setup(s => s.GetAsync($"type:{sourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceModel);
+
+        _mockRtModelStore
+            .Setup(s => s.GetAsync($"type:{targetId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(targetModel);
+
+        var request = new MergeRelationshipTypeRequest
+        {
+            SourceTypeId = sourceId,
+            TargetTypeId = targetId
+        };
+
+        // Act
+        var (status, response) = await service.MergeRelationshipTypeAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
     public async Task MergeRelationshipTypeAsync_NoRelationshipsToMigrate_ReturnsOKWithZeroMigrated()
     {
         // Arrange

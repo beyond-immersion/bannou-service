@@ -598,7 +598,7 @@ public partial class RelationshipService : IRelationshipService
                 .DeleteAsync(compositeKey, cancellationToken);
 
             // Publish relationship deleted/ended event
-            await PublishRelationshipDeletedEventAsync(model, "Relationship ended", cancellationToken);
+            await PublishRelationshipDeletedEventAsync(model, body.Reason ?? "Relationship ended", cancellationToken);
 
             _logger.LogInformation("Ended relationship: {RelationshipId}", body.RelationshipId);
             return StatusCodes.OK;
@@ -1562,6 +1562,12 @@ public partial class RelationshipService : IRelationshipService
             {
                 _logger.LogDebug("Target relationship type not found: {TypeId}", body.TargetTypeId);
                 return (StatusCodes.NotFound, null);
+            }
+
+            if (targetModel.IsDeprecated)
+            {
+                _logger.LogDebug("Cannot merge into deprecated target type: {TypeId}", body.TargetTypeId);
+                return (StatusCodes.Conflict, null);
             }
 
             // Migrate all relationships from source type to target type using internal methods
