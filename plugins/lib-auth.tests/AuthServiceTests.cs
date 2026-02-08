@@ -1045,4 +1045,390 @@ public class AuthServiceTests
     }
 
     #endregion
+
+    #region Rate Limiting Tests
+
+    /// <summary>
+    /// Verifies that login is blocked when the failed attempt counter has reached MaxLoginAttempts.
+    /// Should return Unauthorized, publish a RateLimited audit event, and never call AccountClient.
+    /// </summary>
+    [Fact]
+    public async Task LoginAsync_WhenRateLimited_ReturnsUnauthorizedAndPublishesEvent()
+    {
+        // Arrange - counter already at max (5)
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(
+            It.Is<string>(k => k.StartsWith("login-attempts:")),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)5);
+
+        var service = CreateAuthService();
+        var request = new LoginRequest { Email = "attacker@example.com", Password = "guessing" };
+
+        // Act
+        var (status, response) = await service.LoginAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+
+        // Should publish login failed event with RateLimited reason
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "auth.login.failed",
+            It.Is<AuthLoginFailedEvent>(e => e.Reason == AuthLoginFailedReason.RateLimited),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Should NOT attempt account lookup (short-circuited by rate limit check)
+        _mockAccountClient.Verify(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that login is also blocked when the counter exceeds MaxLoginAttempts (not just equal).
+    /// </summary>
+    [Fact]
+    public async Task LoginAsync_WhenCounterExceedsMax_ReturnsUnauthorized()
+    {
+        // Arrange - counter well above max
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(
+            It.Is<string>(k => k.StartsWith("login-attempts:")),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)50);
+
+        var service = CreateAuthService();
+        var request = new LoginRequest { Email = "persistent-attacker@example.com", Password = "still-guessing" };
+
+        // Act
+        var (status, response) = await service.LoginAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+    }
+
+    /// <summary>
+    /// Verifies that a wrong password increments the rate limit counter and publishes InvalidCredentials event.
+    /// </summary>
+    [Fact]
+    public async Task LoginAsync_WithWrongPassword_IncrementsCounterAndPublishesEvent()
+    {
+        // Arrange - no prior attempts
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)null);
+
+        var accountId = Guid.NewGuid();
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                Email = "user@example.com",
+                DisplayName = "TestUser",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("correct-password")
+            });
+
+        var service = CreateAuthService();
+        var request = new LoginRequest { Email = "user@example.com", Password = "wrong-password" };
+
+        // Act
+        var (status, response) = await service.LoginAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+
+        // Verify counter was incremented with lockout TTL
+        _mockCacheableStore.Verify(s => s.IncrementAsync(
+            It.Is<string>(k => k == "login-attempts:user@example.com"),
+            1,
+            It.Is<StateOptions>(o => o.Ttl == _configuration.LoginLockoutMinutes * 60),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify InvalidCredentials event published with account ID
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "auth.login.failed",
+            It.Is<AuthLoginFailedEvent>(e =>
+                e.Reason == AuthLoginFailedReason.InvalidCredentials &&
+                e.AccountId == accountId),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that a login attempt with a non-existent account increments the rate limit counter.
+    /// This prevents email enumeration by making non-existent accounts cost the same as wrong passwords.
+    /// </summary>
+    [Fact]
+    public async Task LoginAsync_WithNonExistentAccount_IncrementsCounterAndPublishesEvent()
+    {
+        // Arrange - no prior attempts
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)null);
+
+        // Account not found throws ApiException with 404
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404));
+
+        var service = CreateAuthService();
+        var request = new LoginRequest { Email = "nobody@example.com", Password = "anypassword" };
+
+        // Act
+        var (status, response) = await service.LoginAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+
+        // Verify counter was incremented
+        _mockCacheableStore.Verify(s => s.IncrementAsync(
+            It.Is<string>(k => k == "login-attempts:nobody@example.com"),
+            1,
+            It.Is<StateOptions>(o => o.Ttl == _configuration.LoginLockoutMinutes * 60),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify AccountNotFound event published (no account ID since account doesn't exist)
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "auth.login.failed",
+            It.Is<AuthLoginFailedEvent>(e =>
+                e.Reason == AuthLoginFailedReason.AccountNotFound &&
+                e.AccountId == null),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that a successful login clears the rate limit counter.
+    /// </summary>
+    [Fact]
+    public async Task LoginAsync_WithCorrectPassword_ClearsRateLimitCounter()
+    {
+        // Arrange - 3 prior failed attempts (below threshold of 5)
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)3);
+
+        var accountId = Guid.NewGuid();
+        var correctPassword = "correct-password";
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                Email = "user@example.com",
+                DisplayName = "TestUser",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(correctPassword)
+            });
+
+        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
+            It.IsAny<AccountResponse>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("test-access-token", Guid.NewGuid()));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken())
+            .Returns("test-refresh-token");
+
+        var service = CreateAuthService();
+        var request = new LoginRequest { Email = "user@example.com", Password = correctPassword };
+
+        // Act
+        var (status, response) = await service.LoginAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify counter was deleted on success
+        _mockCacheableStore.Verify(s => s.DeleteCounterAsync(
+            It.Is<string>(k => k == "login-attempts:user@example.com"),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify counter was NOT incremented (successful login)
+        _mockCacheableStore.Verify(s => s.IncrementAsync(
+            It.IsAny<string>(),
+            It.IsAny<long>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that login proceeds normally when the counter is below MaxLoginAttempts.
+    /// The counter having a value doesn't block login if it's under the threshold.
+    /// </summary>
+    [Fact]
+    public async Task LoginAsync_WithCounterBelowMax_ProceedsNormally()
+    {
+        // Arrange - 4 attempts (one below the default max of 5)
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)4);
+
+        var accountId = Guid.NewGuid();
+        var correctPassword = "correct-password";
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                Email = "user@example.com",
+                DisplayName = "TestUser",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(correctPassword)
+            });
+
+        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
+            It.IsAny<AccountResponse>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("test-token", Guid.NewGuid()));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken())
+            .Returns("test-refresh");
+
+        var service = CreateAuthService();
+        var request = new LoginRequest { Email = "user@example.com", Password = correctPassword };
+
+        // Act
+        var (status, response) = await service.LoginAsync(request);
+
+        // Assert - login should succeed since 4 < 5
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Account lookup should have been called (not blocked)
+        _mockAccountClient.Verify(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that login proceeds when no counter exists (first login attempt for this email).
+    /// GetCounterAsync returns null for non-existent keys.
+    /// </summary>
+    [Fact]
+    public async Task LoginAsync_WithNoExistingCounter_ProceedsNormally()
+    {
+        // Arrange - no counter exists (first attempt)
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)null);
+
+        var accountId = Guid.NewGuid();
+        var correctPassword = "my-password";
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                Email = "fresh@example.com",
+                DisplayName = "FreshUser",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(correctPassword)
+            });
+
+        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
+            It.IsAny<AccountResponse>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("token", Guid.NewGuid()));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken())
+            .Returns("refresh");
+
+        var service = CreateAuthService();
+        var request = new LoginRequest { Email = "fresh@example.com", Password = correctPassword };
+
+        // Act
+        var (status, response) = await service.LoginAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    /// <summary>
+    /// Verifies that email is normalized (trimmed and lowercased) for the rate limit key.
+    /// This prevents bypassing rate limits with "User@Example.com" vs "user@example.com".
+    /// </summary>
+    [Fact]
+    public async Task LoginAsync_NormalizesEmailForRateLimitKey()
+    {
+        // Arrange - counter at max for the normalized form
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(
+            "login-attempts:attacker@example.com",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)5);
+
+        var service = CreateAuthService();
+
+        // Act - send email with mixed case and whitespace
+        var request = new LoginRequest { Email = "  Attacker@Example.COM  ", Password = "guessing" };
+        var (status, response) = await service.LoginAsync(request);
+
+        // Assert - should be blocked because normalized email matches the counter
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+
+        // Verify the counter was checked with the normalized key
+        _mockCacheableStore.Verify(s => s.GetCounterAsync(
+            "login-attempts:attacker@example.com",
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that the rate limit lockout TTL uses the configured LoginLockoutMinutes value
+    /// converted to seconds.
+    /// </summary>
+    [Fact]
+    public async Task LoginAsync_UsesConfiguredLockoutTtl()
+    {
+        // Arrange - custom lockout of 30 minutes
+        _configuration.LoginLockoutMinutes = 30;
+
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)null);
+
+        // Account not found
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404));
+
+        var service = CreateAuthService();
+        var request = new LoginRequest { Email = "test@example.com", Password = "pass" };
+
+        // Act
+        await service.LoginAsync(request);
+
+        // Assert - TTL should be 30 * 60 = 1800 seconds
+        _mockCacheableStore.Verify(s => s.IncrementAsync(
+            It.IsAny<string>(),
+            1,
+            It.Is<StateOptions>(o => o.Ttl == 1800),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
 }
