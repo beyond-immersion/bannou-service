@@ -44,14 +44,10 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<CharacterHistoryService> logger,
-        CharacterHistoryServiceConfiguration configuration,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _logger = logger;
-
-        // Note: stateStoreFactory and configuration are used only during construction
-        // stateStoreFactory is passed to helpers; configuration is currently unused but kept for future use
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<ParticipationData>(

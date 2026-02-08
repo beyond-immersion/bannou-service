@@ -507,7 +507,7 @@ All serialization via `BannouJson` uses these settings:
 3. **Fail-Fast Required Config**: Required values without defaults MUST throw at startup
 4. **No Hardcoded Credentials**: Never fall back to hardcoded credentials or connection strings
 5. **Use AppConstants**: Shared defaults use `AppConstants` constants, not hardcoded strings
-6. **No Dead Configuration**: Every defined config property MUST be referenced in service code
+6. **No Dead Configuration**: Every defined config property MUST be referenced somewhere in the plugin (service class, cache, provider, background worker, etc.)
 7. **No Hardcoded Tunables**: Any tunable value (limits, timeouts, thresholds, capacities) MUST be a configuration property. A hardcoded tunable is a sign you need to create a new config property.
 8. **Use Defined Infrastructure**: If a cache/ephemeral state store is defined for the service in `schemas/state-stores.yaml`, the service MUST implement cache read-through/write-through using that store
 9. **NEVER Add Secondary Fallbacks for Schema-Defaulted Properties**: If a configuration property has a default value in the schema (which compiles into the C# property initializer), service code MUST NOT add a null-coalescing fallback. This is absolutely forbidden because:
@@ -518,7 +518,7 @@ All serialization via `BannouJson` uses these settings:
 
 ### Configuration Completeness (MANDATORY)
 
-**Rule**: Configuration properties exist to be used. If a property is defined in the configuration schema, the service implementation MUST reference it. Unused config properties indicate either dead schema (remove from configuration YAML) or missing functionality (implement the feature that uses it).
+**Rule**: Configuration properties exist to be used. If a property is defined in the configuration schema, the plugin MUST reference it somewhere — in the service class, a cache, a provider, a background worker, or any other component within the plugin. A property used by `BackstoryCache` but not by `CharacterHistoryService` is NOT dead config. Unused config properties indicate either dead schema (remove from configuration YAML) or missing functionality (implement the feature that uses it).
 
 **Hardcoded Tunables are Forbidden**:
 

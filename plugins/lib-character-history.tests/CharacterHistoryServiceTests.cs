@@ -20,7 +20,6 @@ namespace BeyondImmersion.BannouService.CharacterHistory.Tests;
 public class CharacterHistoryServiceTests
 {
     private readonly Mock<ILogger<CharacterHistoryService>> _mockLogger;
-    private readonly CharacterHistoryServiceConfiguration _configuration;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<ParticipationData>> _mockParticipationStore;
     private readonly Mock<IStateStore<HistoryIndexData>> _mockIndexStore;
@@ -33,7 +32,6 @@ public class CharacterHistoryServiceTests
     public CharacterHistoryServiceTests()
     {
         _mockLogger = new Mock<ILogger<CharacterHistoryService>>();
-        _configuration = new CharacterHistoryServiceConfiguration();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockParticipationStore = new Mock<IStateStore<ParticipationData>>();
         _mockIndexStore = new Mock<IStateStore<HistoryIndexData>>();
@@ -59,7 +57,6 @@ public class CharacterHistoryServiceTests
             _mockMessageBus.Object,
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
-            _configuration,
             _mockEventConsumer.Object);
     }
 
