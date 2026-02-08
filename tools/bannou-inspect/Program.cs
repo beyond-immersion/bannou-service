@@ -4,6 +4,7 @@ var rootCommand = new RootCommand("Bannou Assembly Inspector - IntelliSense-like
 {
     TypeCommand.Create(),
     MethodCommand.Create(),
+    ConstructorCommand.Create(),
     ListTypesCommand.Create(),
     SearchCommand.Create()
 };

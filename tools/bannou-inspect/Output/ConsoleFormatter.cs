@@ -44,6 +44,16 @@ public static class ConsoleFormatter
             Console.WriteLine($"  <{string.Join(", ", info.GenericParameters)}>");
         }
 
+        if (info.Constructors.Count > 0)
+        {
+            Console.WriteLine();
+            WriteSection($"Constructors ({info.Constructors.Count})");
+            foreach (var ctor in info.Constructors)
+            {
+                WriteConstructorSignature(ctor, "  ");
+            }
+        }
+
         if (info.Properties.Count > 0)
         {
             Console.WriteLine();
@@ -168,6 +178,68 @@ public static class ConsoleFormatter
     }
 
     /// <summary>
+    /// Formats constructor information for console display.
+    /// </summary>
+    public static void WriteConstructorInfo(IReadOnlyList<Models.ConstructorInfo> constructors, string typeName)
+    {
+        if (constructors.Count == 0)
+        {
+            Console.WriteLine($"No public constructors found for {typeName}.");
+            return;
+        }
+
+        Console.WriteLine();
+        WriteHeader($"Constructors for {typeName}");
+
+        foreach (var ctor in constructors)
+        {
+            Console.WriteLine();
+            WriteConstructorSignature(ctor, "");
+
+            if (!string.IsNullOrWhiteSpace(ctor.Summary))
+            {
+                Console.WriteLine();
+                WriteWrapped(ctor.Summary, "  ");
+            }
+
+            if (ctor.Parameters.Count > 0)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("  Parameters:");
+                Console.ResetColor();
+                foreach (var param in ctor.Parameters)
+                {
+                    var defaultStr = param.IsOptional ? $" = {param.DefaultValue ?? "default"}" : "";
+                    Console.WriteLine($"    {param.Type} {param.Name}{defaultStr}");
+                    if (!string.IsNullOrWhiteSpace(param.Description))
+                    {
+                        WriteWrapped(param.Description, "      // ");
+                    }
+                }
+            }
+
+            if (ctor.Exceptions.Count > 0)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("  Exceptions:");
+                Console.ResetColor();
+                foreach (var exc in ctor.Exceptions)
+                {
+                    Console.WriteLine($"    {exc.Type}");
+                    if (!string.IsNullOrWhiteSpace(exc.Description))
+                    {
+                        WriteWrapped(exc.Description, "      ");
+                    }
+                }
+            }
+        }
+
+        Console.WriteLine();
+    }
+
+    /// <summary>
     /// Writes a list of types to the console.
     /// </summary>
     public static void WriteTypeList(IReadOnlyList<string> types, string heading)
@@ -221,6 +293,21 @@ public static class ConsoleFormatter
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine($"{text}:");
+        Console.ResetColor();
+    }
+
+    private static void WriteConstructorSignature(Models.ConstructorInfo ctor, string indent)
+    {
+        var modifierStr = ctor.IsStatic ? "static " : "";
+
+        var paramStr = string.Join(", ", ctor.Parameters.Select(p =>
+        {
+            var optional = p.IsOptional ? " = " + (p.DefaultValue ?? "default") : "";
+            return $"{p.Type} {p.Name}{optional}";
+        }));
+
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine($"{indent}{modifierStr}{ctor.TypeName}({paramStr})");
         Console.ResetColor();
     }
 

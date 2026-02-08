@@ -78,6 +78,9 @@ inspect-type: ## Inspect a type. Usage: make inspect-type TYPE="IChannel" PKG="R
 inspect-method: ## Inspect a method. Usage: make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"
 	@dotnet run --project tools/bannou-inspect -- method "$(METHOD)" --package "$(PKG)"
 
+inspect-constructor: ## Inspect constructors. Usage: make inspect-constructor TYPE="ConnectionFactory" PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- constructor "$(TYPE)" --package "$(PKG)"
+
 inspect-search: ## Search for types. Usage: make inspect-search PATTERN="*Connection*" PKG="RabbitMQ.Client"
 	@dotnet run --project tools/bannou-inspect -- search "$(PATTERN)" --package "$(PKG)"
 

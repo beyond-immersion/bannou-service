@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using OtpNet;
 
@@ -54,11 +55,9 @@ public class MfaService : IMfaService
             OtpType.Totp,
             secret,
             accountIdentifier,
-            _configuration.MfaIssuerName)
-        {
-            Digits = 6,
-            Period = 30
-        };
+            _configuration.MfaIssuerName,
+            digits: 6,
+            period: 30);
         return otpUri.ToString();
     }
 
@@ -165,7 +164,7 @@ public class MfaService : IMfaService
 
         var store = _stateStoreFactory.GetStore<MfaChallengeData>(StateStoreDefinitions.Auth);
         var key = $"{MFA_CHALLENGE_KEY_PREFIX}{token}";
-        await store.SaveAsync(key, challengeData, ttl: TimeSpan.FromMinutes(_configuration.MfaChallengeTtlMinutes), cancellationToken: ct);
+        await store.SaveAsync(key, challengeData, new StateOptions { Ttl = _configuration.MfaChallengeTtlMinutes * 60 }, ct);
 
         _logger.LogDebug("Created MFA challenge for account {AccountId}, TTL {TtlMinutes}m", accountId, _configuration.MfaChallengeTtlMinutes);
         return token;
@@ -212,7 +211,7 @@ public class MfaService : IMfaService
 
         var store = _stateStoreFactory.GetStore<MfaSetupData>(StateStoreDefinitions.Auth);
         var key = $"{MFA_SETUP_KEY_PREFIX}{token}";
-        await store.SaveAsync(key, setupData, ttl: TimeSpan.FromMinutes(_configuration.MfaChallengeTtlMinutes), cancellationToken: ct);
+        await store.SaveAsync(key, setupData, new StateOptions { Ttl = _configuration.MfaChallengeTtlMinutes * 60 }, ct);
 
         _logger.LogDebug("Created MFA setup token for account {AccountId}, TTL {TtlMinutes}m", accountId, _configuration.MfaChallengeTtlMinutes);
         return token;

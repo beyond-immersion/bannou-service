@@ -37,6 +37,7 @@ public class AuthServiceEventsTests
     private readonly Mock<IEmailService> _mockEmailService;
     private readonly Mock<ICacheableStateStore<SessionDataModel>> _mockCacheableStore;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IMfaService> _mockMfaService;
 
     public AuthServiceEventsTests()
     {
@@ -80,6 +81,7 @@ public class AuthServiceEventsTests
         _mockEmailService = new Mock<IEmailService>();
         _mockCacheableStore = new Mock<ICacheableStateStore<SessionDataModel>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockMfaService = new Mock<IMfaService>();
 
         // Setup default behavior for edge revocation service (disabled by default)
         _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(false);
@@ -124,6 +126,7 @@ public class AuthServiceEventsTests
             _mockOAuthService.Object,
             _mockEdgeRevocationService.Object,
             _mockEmailService.Object,
+            _mockMfaService.Object,
             _mockEventConsumer.Object);
     }
 

@@ -305,6 +305,7 @@ make test                      # Run unit tests (dotnet test)
 # Assembly Inspection (for understanding external APIs)
 make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
 make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"
+make inspect-constructor TYPE="ConnectionFactory" PKG="RabbitMQ.Client"
 make inspect-search PATTERN="*Connection*" PKG="RabbitMQ.Client"
 make inspect-list PKG="RabbitMQ.Client"
 ```

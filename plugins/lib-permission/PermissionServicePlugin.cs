@@ -9,6 +9,4 @@ public class PermissionServicePlugin : StandardServicePlugin<IPermissionService>
 {
     public override string PluginName => "permission";
     public override string DisplayName => "Permission Service";
-
-    // Note: IDistributedLockProvider is registered by lib-state's StateServicePlugin
 }

@@ -9,7 +9,7 @@
 
 ## Overview
 
-Redis-backed RBAC permission system for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via `IClientEventPublisher`. Features idempotent registration (SHA-256 hash comparison), distributed locks for concurrent registration safety, and in-memory caching (`ConcurrentDictionary`) for compiled session capabilities.
+Redis-backed RBAC permission system for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via `IClientEventPublisher`. Features idempotent registration (SHA-256 hash comparison), atomic Redis set operations (`SADD`/`SREM`/`SISMEMBER`) for multi-instance-safe session tracking, and in-memory caching (`ConcurrentDictionary`) for compiled session capabilities.
 
 ---
 
@@ -17,8 +17,7 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for session states, permissions, matrix data, indexes |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for concurrent service registration |
+| lib-state (`IStateStoreFactory`) | Redis persistence for session states, permissions, matrix data, indexes; `ICacheableStateStore<string>` for atomic set operations on session/service tracking sets |
 | lib-messaging (`IMessageBus`) | Error event publishing |
 | lib-messaging (`IEventConsumer`) | 5 event subscriptions (session lifecycle, state changes, registrations) |
 | lib-messaging (`IClientEventPublisher`) | Push capability updates to WebSocket sessions |
@@ -43,9 +42,9 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `active_sessions` | `HashSet<string>` | All sessions that have ever connected |
-| `active_connections` | `HashSet<string>` | Sessions with active WebSocket connections (safe to publish to) |
-| `registered_services` | `HashSet<string>` | List of all services that have registered permissions |
+| `active_sessions` | Redis Set (atomic `SADD`/`SREM`) | All sessions that have ever connected |
+| `active_connections` | Redis Set (atomic `SADD`/`SREM`) | Sessions with active WebSocket connections (safe to publish to) |
+| `registered_services` | Redis Set (atomic `SADD`/`SREM`) | List of all services that have registered permissions |
 | `service-registered:{serviceId}` | Registration object | Individual service registration marker with timestamp |
 | `session:{sessionId}:states` | `Dictionary<string, string>` | Per-session state map (role, service states) |
 | `session:{sessionId}:permissions` | `Dictionary<string, object>` | Compiled permission set (service -> endpoint list + version) |
@@ -79,11 +78,7 @@ No traditional topic-based event publications. Capability updates go directly to
 
 ## Configuration
 
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `LockMaxRetries` | `PERMISSION_LOCK_MAX_RETRIES` | `10` | Maximum retries for acquiring distributed lock |
-| `LockBaseDelayMs` | `PERMISSION_LOCK_BASE_DELAY_MS` | `100` | Base delay between lock retries (exponential backoff) |
-| `LockExpirySeconds` | `PERMISSION_LOCK_EXPIRY_SECONDS` | `30` | Distributed lock expiration time |
+No service-specific configuration properties. The service uses only `ForceServiceId` from `IServiceConfiguration`.
 
 ---
 
@@ -92,10 +87,9 @@ No traditional topic-based event publications. Capability updates go directly to
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<PermissionService>` | Singleton | Structured logging |
-| `PermissionServiceConfiguration` | Singleton | All 3 config properties |
-| `IStateStoreFactory` | Singleton | Redis state operations |
+| `PermissionServiceConfiguration` | Singleton | Service configuration |
+| `IStateStoreFactory` | Singleton | Redis state operations (`IStateStore<T>` + `ICacheableStateStore<string>`) |
 | `IMessageBus` | Scoped (injected) | Error event publishing |
-| `IDistributedLockProvider` | Singleton | Distributed lock acquisition |
 | `IClientEventPublisher` | Scoped (injected) | Session-specific capability push |
 | `IEventConsumer` | Scoped (injected) | Event handler registration |
 
@@ -115,12 +109,12 @@ Service lifetime is **Singleton** (shared across all requests).
 
 ### Service Management (2 endpoints)
 
-- **RegisterServicePermissions** (`/permission/register-service`): Complex registration flow:
+- **RegisterServicePermissions** (`/permission/register-service`): Registration flow:
   1. Computes SHA-256 hash of permission data for idempotency
-  2. Skips if hash unchanged AND service already registered
+  2. Skips if hash unchanged AND service already registered (atomic `SISMEMBER` check)
   3. Stores matrix entries in Redis (service:state:role -> endpoints)
-  4. Acquires distributed lock with exponential backoff + jitter for registered_services list update
-  5. Recompiles ALL active sessions outside lock scope (prevents lock timeout)
+  4. Atomically adds service to registered_services set (`SADD` - multi-instance safe)
+  5. Recompiles ALL active sessions
   6. Stores new hash for future idempotency checks
 
 - **GetRegisteredServices** (`/permission/services/list`): Lists all registered services with their registration info. Used by test infrastructure to poll for service readiness.
@@ -153,8 +147,7 @@ Permission Compilation Flow
                 │
                 ├── Store matrix: permissions:{service}:{state}:{role} → [endpoints]
                 │
-                ├── Lock: registered_services_lock (with retry/backoff)
-                │    └── Add serviceId to registered_services set
+                ├── Atomic SADD: Add serviceId to registered_services set
                 │
                 └── For each active session:
                      └── RecompileSessionPermissionsAsync
@@ -245,8 +238,8 @@ None identified.
 2. **Permission matrix stored as individual keys**: Each `service:state:role` combination is a separate Redis key. For 40 services with 3 states and 4 roles, this is 480 keys. Queries during recompilation read many keys per session.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/237 -->
 
-3. **Read-modify-write on session sets**: `activeConnections`/`activeSessions` set operations without distributed locks. Multiple instances could overwrite each other's additions/removals. Requires atomic set operations in lib-state or distributed lock refactoring.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/248 -->
+3. ~~**Read-modify-write on session sets**~~: **FIXED** - All three tracking sets (`activeConnections`, `activeSessions`, `registered_services`) now use `ICacheableStateStore<string>` atomic set operations (`SADD`/`SREM`/`SISMEMBER`/`SMEMBERS`), eliminating the read-modify-write race condition. The distributed lock and its 3 config properties were removed entirely.
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/248 -->
 
 ---
 

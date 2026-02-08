@@ -79,7 +79,7 @@ public class AccountServiceTests
         // Assert
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(16, endpoints.Count); // 16 endpoints defined in account-api.yaml with x-permissions
+        Assert.Equal(18, endpoints.Count); // 16 endpoints defined in account-api.yaml with x-permissions
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class AccountServiceTests
         var guardedEndpoints = endpoints.Where(e =>
             e.Permissions.All(p => p.Role == "user" || p.Role == "admin")).ToList();
 
-        Assert.Equal(16, guardedEndpoints.Count);
+        Assert.Equal(18, guardedEndpoints.Count);
         Assert.Equal(13, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
         Assert.Equal(3, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "user")));
     }
@@ -126,7 +126,7 @@ public class AccountServiceTests
         Assert.Equal("account", registrationEvent.ServiceName);
         Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(16, registrationEvent.Endpoints.Count);
+        Assert.Equal(18, registrationEvent.Endpoints.Count);
     }
 
     [Fact]
