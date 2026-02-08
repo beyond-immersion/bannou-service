@@ -26,6 +26,13 @@ info:
     - topic: character.compressed
       event: CharacterCompressedEvent
       description: Published when a character is compressed to archive format
+    # Custom realm transition events (defined in character-api.yaml)
+    - topic: character.realm.joined
+      event: CharacterRealmJoinedEvent
+      description: Published when a character joins a realm (creation or transfer)
+    - topic: character.realm.left
+      event: CharacterRealmLeftEvent
+      description: Published when a character leaves a realm (deletion or transfer)
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/character-lifecycle-events.yaml

@@ -26,6 +26,11 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  # Resource lifecycle configuration (see SCHEMA-RULES.md "x-resource-lifecycle")
+  x-resource-lifecycle:
+    resourceType: character
+    gracePeriodSeconds: 2592000              # 30 days (matches CleanupGracePeriodDays config default)
+    cleanupPolicy: ALL_REQUIRED              # Abort deletion if any cleanup callback fails
   # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
   x-compression-callback:
     resourceType: character

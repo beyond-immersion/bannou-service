@@ -13,6 +13,16 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 ---
 
+## Schema Extensions
+
+| Extension | Value | Purpose |
+|-----------|-------|---------|
+| `x-service-layer` | `GameFoundation` | L2 service - depends on L0/L1/L2 only |
+| `x-resource-lifecycle` | `resourceType: character`, `gracePeriodSeconds: 2592000`, `cleanupPolicy: ALL_REQUIRED` | 30-day grace period before cleanup; deletion aborts if any cleanup callback fails |
+| `x-compression-callback` | `resourceType: character`, `priority: 0` | Provides base character data for hierarchical compression via Resource service |
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 | Dependency | Usage |
@@ -27,8 +37,9 @@ The Character service manages game world characters for Arcadia. Characters are 
 | lib-relationship-type (`IRelationshipTypeClient`) | Maps relationship type IDs to codes for family tree categorization |
 | lib-contract (`IContractClient`) | Queries contracts where character is a party (L1 - allowed) |
 | lib-resource (`IResourceClient`) | Queries L4 references (Actor, Encounter) via event-driven pattern (L1 - allowed) |
+| lib-resource (`IResourceTemplateRegistry`) | Registers `CharacterBaseTemplate` for ABML compile-time path validation (e.g., `${candidate.character.name}`) |
 
-> **Refactoring Consideration**: This plugin injects 9 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+> **Refactoring Consideration**: This plugin injects 9 service clients individually in the service constructor (10 including `IEventConsumer`). Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
 ---
 
@@ -114,6 +125,10 @@ This plugin does not consume external events.
 
 Service lifetime is **Scoped** (per-request).
 
+**Plugin Startup** (`CharacterServicePlugin.OnRunningAsync`):
+1. Registers `CharacterBaseTemplate` with `IResourceTemplateRegistry` for ABML compile-time path validation
+2. Registers compression callback with lib-resource via generated `CharacterCompressionCallbacks.RegisterAsync`
+
 ---
 
 ## API Endpoints (Implementation Notes)
@@ -124,7 +139,7 @@ Service lifetime is **Scoped** (per-request).
 - **Get**: Two-step lookup via global index (characterId -> realmId) then data fetch.
 - **Update**: Smart field tracking with `ChangedFields` list. Setting `DeathDate` automatically sets `Status` to `Dead`. `SpeciesId` is mutable (supports species merge migrations).
 - **Delete**: Checks for L4 references via lib-resource, executes cleanup callbacks (CASCADE) to delete dependent data in CharacterPersonality/CharacterHistory/etc., then removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates. Returns Conflict if cleanup is blocked by RESTRICT policy.
-- **List/ByRealm**: Server-side filtering and pagination via `IJsonQueryableStateStore` MySQL JSON queries. Builds query conditions for realm, status, and species filters, delegates to `JsonQueryPagedAsync` for O(log N + P) performance. Clamps page size to `MaxPageSize`.
+- **List/ByRealm**: Server-side filtering and pagination via `IJsonQueryableStateStore` MySQL JSON queries. Builds query conditions for realm, status, and species filters, delegates to `JsonQueryPagedAsync` for O(log N + P) performance. Results are sorted by `$.Name` ascending. Clamps page size to `MaxPageSize`.
 - **TransferRealm**: Moves a character to a different realm. Validates target realm is active, acquires distributed lock, deletes from old realm-partitioned key, saves to new realm-partitioned key, updates indexes, and publishes `character.realm.left` (reason: "transfer"), `character.realm.joined` (with previousRealmId), and `character.updated` events.
 
 ### Enriched Character (`/character/get-enriched`)
@@ -246,8 +261,8 @@ None currently tracked.
 
 1. **Batch compression**: Compress multiple dead characters in one operation. Would need to be implemented in Resource service as a batch variant of `/resource/compress/execute`.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
-2. **Character purge background service**: Automated purge of characters eligible for cleanup (zero references past grace period). Deferred until operational need arises.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/263 -->
+2. **Character purge background service**: Automated purge of characters eligible for cleanup (zero references past grace period). Dead `CharacterRetentionDays` config was removed (T21 violation); new config with clear semantics should be designed when this is implemented. Deferred until operational need arises.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/263 -->
 
 ---
 
@@ -295,19 +310,9 @@ No active work items.
 
 ### Historical
 
-- **2026-02-07**: Replaced in-memory list filtering with server-side MySQL JSON queries via `IJsonQueryableStateStore<CharacterModel>.JsonQueryPagedAsync`. List/ByRealm operations now use server-side filtering (realm, status, species) and pagination (OFFSET/LIMIT), enabling O(log N + P) performance for 100k+ characters per realm.
-- **2026-02-07**: Changed `spouse` (single FamilyMember) to `spouses` (array of FamilyMember) in `FamilyTreeResponse` schema. Breaking API change to support multiple spousal relationships. Updated `BuildFamilyTreeAsync` to append to list instead of overwrite, and `GenerateFamilySummaryAsync` to join multiple spouse names. Closes [GitHub Issue #271](https://github.com/beyond-immersion/bannou-service/issues/271).
-- **2026-02-07**: Removed dead `CharacterRetentionDays` configuration property (T21 violation). Was defined in schema with default 90 but never referenced in service code. Closes [GitHub Issue #212](https://github.com/beyond-immersion/bannou-service/issues/212).
-- **2026-02-03**: Added centralized compression support via Resource service (L1). Character now provides `/character/get-compress-data` callback endpoint (returns base character data + family summary) invoked by Resource service during hierarchical compression. Full character compression (including L4 data from CharacterPersonality, CharacterHistory, CharacterEncounter) is now orchestrated by `/resource/compress/execute`. The legacy `/character/compress` endpoint remains but only archives L2 data.
-- **2026-02-03**: Fixed Character's delete flow to call `ExecuteCleanupAsync` via lib-resource, properly triggering CASCADE cleanup in L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor) via their registered cleanup callbacks. This follows the x-references contract pattern (see `docs/reference/SCHEMA-RULES.md`).
-- **2026-02-02**: Removed FIXED item from Potential Extensions (parallel family tree lookups) - verified implemented via `Task.WhenAll` and `GetBulkAsync`, no quirks remain.
-- **2026-02-02**: Moved "orphaned" and "single parent household" labels from Design Considerations to Intentional Quirks (#9, #10) - current behavior is semantically correct (orphaned = no parent relationships, single parent = one relationship exists).
-- **2026-02-02**: Moved "INCARNATION tracking is directional" from Design Considerations to Intentional Quirks - this is correct semantic behavior (past lives, not future incarnations).
-- **2026-02-02**: Moved "Family tree silently skips unknown relationship types" from Design Considerations to Intentional Quirks - this is intentional graceful degradation (partial data preferred over error).
-- **2026-02-02**: Moved "Global index double-write" from Design Considerations to Intentional Quirks - this is an intentional performance pattern, not a planning consideration.
-- **2026-02-02**: Parallelized family tree lookups - `BuildFamilyTreeAsync` now uses `Task.WhenAll` for relationship type lookups and `GetBulkAsync` for character loading, reducing N+M sequential calls to 2 bulk operations.
-- **2026-02-02**: Removed dead configuration properties (`CompressionMaxBackstoryPoints`, `CompressionMaxLifeEvents`, `PersonalityTraitThreshold`) from schema - these were designed for L4 data inclusion that SERVICE_HIERARCHY now prohibits.
-- **2026-02-02**: Documentation audit - removed stale hierarchy violation warnings. Code was already using correct event-driven pattern via `IResourceClient` for L4 reference counting; doc was out of date.
-- **2026-02-01**: Implemented realm transfer feature (`/character/transfer-realm` endpoint). Validates target realm, acquires distributed lock, atomically moves character between realm-partitioned keys, updates realm and global indexes, publishes realm transition and update events.
-- **2026-01-31**: Expanded reference counting in `CheckCharacterReferencesAsync` to check encounters, contracts, and actors in addition to relationships.
-- **2026-01-31**: Added distributed locking to `UpdateCharacterAsync` and `CompressCharacterAsync` per [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189).
+See git history for full changelog. Key milestones:
+- **2026-02-07**: Server-side MySQL JSON queries, plural `spouses`, removed dead config, schema extensions
+- **2026-02-03**: Centralized compression via Resource service (L1), delete flow with `ExecuteCleanupAsync`
+- **2026-02-02**: Parallel family tree lookups, quirk categorization audit, dead config removal
+- **2026-02-01**: Realm transfer feature
+- **2026-01-31**: Expanded reference counting, distributed locking
