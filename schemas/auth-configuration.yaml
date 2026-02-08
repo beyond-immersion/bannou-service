@@ -129,7 +129,7 @@ x-service-configuration:
       $ref: 'auth-api.yaml#/components/schemas/EmailProvider'
       env: AUTH_EMAIL_PROVIDER
       default: none
-      description: Email delivery provider (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit)
+      description: Email delivery provider (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
     EmailFromAddress:
       type: string
       nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is not 'none')
@@ -147,6 +147,23 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is 'sendgrid')
       env: AUTH_SENDGRID_API_KEY
       description: SendGrid API key. Required when EmailProvider is 'sendgrid'.
+
+    # AWS SES Configuration
+    SesAccessKeyId:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is 'ses')
+      env: AUTH_SES_ACCESS_KEY_ID
+      description: AWS access key ID for SES API authentication. Required when EmailProvider is 'ses'.
+    SesSecretAccessKey:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is 'ses')
+      env: AUTH_SES_SECRET_ACCESS_KEY
+      description: AWS secret access key for SES API authentication. Required when EmailProvider is 'ses'.
+    SesRegion:
+      type: string
+      env: AUTH_SES_REGION
+      default: "us-east-1"
+      description: AWS region for SES API (e.g., us-east-1, eu-west-1). SES must be configured in this region.
 
     # SMTP Configuration
     SmtpHost:

@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <!-- Common packages transitively available to all plugins via ServiceLib.targets -->
+    <PackageReference Include="AWSSDK.SimpleEmailV2" Version="4.*" />
     <PackageReference Include="MailKit" Version="4.*" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="SendGrid" Version="9.*" />

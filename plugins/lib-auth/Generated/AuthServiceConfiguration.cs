@@ -162,7 +162,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? SteamAppId { get; set; }
 
     /// <summary>
-    /// Email delivery provider (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit)
+    /// Email delivery provider (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
     /// Environment variable: AUTH_EMAIL_PROVIDER
     /// </summary>
     public EmailProvider EmailProvider { get; set; } = EmailProvider.None;
@@ -184,6 +184,24 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// Environment variable: AUTH_SENDGRID_API_KEY
     /// </summary>
     public string? SendGridApiKey { get; set; }
+
+    /// <summary>
+    /// AWS access key ID for SES API authentication. Required when EmailProvider is 'ses'.
+    /// Environment variable: AUTH_SES_ACCESS_KEY_ID
+    /// </summary>
+    public string? SesAccessKeyId { get; set; }
+
+    /// <summary>
+    /// AWS secret access key for SES API authentication. Required when EmailProvider is 'ses'.
+    /// Environment variable: AUTH_SES_SECRET_ACCESS_KEY
+    /// </summary>
+    public string? SesSecretAccessKey { get; set; }
+
+    /// <summary>
+    /// AWS region for SES API (e.g., us-east-1, eu-west-1). SES must be configured in this region.
+    /// Environment variable: AUTH_SES_REGION
+    /// </summary>
+    public string SesRegion { get; set; } = "us-east-1";
 
     /// <summary>
     /// SMTP server hostname. Required when EmailProvider is 'smtp'.

@@ -22,6 +22,7 @@ The Auth plugin is the internet-facing authentication and session management ser
 **External NuGet dependencies:**
 - `Microsoft.IdentityModel.Tokens` (8.15.0) - JWT creation and validation
 - `BCrypt.Net-Next` (4.0.3) - Password hashing
+- `AWSSDK.SimpleEmailV2` (4.x, Apache-2.0) - AWS SES v2 email delivery (via bannou-service)
 - `SendGrid` (9.x, MIT) - SendGrid API email delivery (via bannou-service)
 - `MailKit` (4.x, MIT) - SMTP email delivery (via bannou-service)
 
@@ -90,9 +91,12 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 |----------|---------|---------|---------|
 | `JwtExpirationMinutes` | `AUTH_JWT_EXPIRATION_MINUTES` | 60 | How long access tokens and sessions are valid |
 | `SessionTokenTtlDays` | `AUTH_SESSION_TOKEN_TTL_DAYS` | 7 | How long refresh tokens remain valid |
-| `EmailProvider` | `AUTH_EMAIL_PROVIDER` | none | Email delivery provider enum: `none` (console logging), `sendgrid` (SendGrid API), `smtp` (SMTP via MailKit) |
+| `EmailProvider` | `AUTH_EMAIL_PROVIDER` | none | Email delivery provider enum: `none` (console logging), `sendgrid` (SendGrid API), `smtp` (SMTP via MailKit), `ses` (AWS SES v2) |
 | `EmailFromAddress` | `AUTH_EMAIL_FROM_ADDRESS` | null | Sender email address for outgoing emails. Required when EmailProvider is not 'none'. |
 | `EmailFromName` | `AUTH_EMAIL_FROM_NAME` | null | Display name for outgoing emails (e.g., 'Bannou Support'). Optional. |
+| `SesAccessKeyId` | `AUTH_SES_ACCESS_KEY_ID` | null | AWS access key ID for SES API. Required when EmailProvider is 'ses'. |
+| `SesSecretAccessKey` | `AUTH_SES_SECRET_ACCESS_KEY` | null | AWS secret access key for SES API. Required when EmailProvider is 'ses'. |
+| `SesRegion` | `AUTH_SES_REGION` | us-east-1 | AWS region for SES API (e.g., us-east-1, eu-west-1) |
 | `SendGridApiKey` | `AUTH_SENDGRID_API_KEY` | null | SendGrid API key. Required when EmailProvider is 'sendgrid'. |
 | `SmtpHost` | `AUTH_SMTP_HOST` | null | SMTP server hostname. Required when EmailProvider is 'smtp'. |
 | `SmtpPort` | `AUTH_SMTP_PORT` | 587 | SMTP server port (587 for STARTTLS, 465 for implicit SSL, 25 for unencrypted) |
@@ -147,7 +151,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `IOAuthProviderService` | OAuth URL construction, code exchange, user info retrieval, account linking, Steam ticket validation |
 | `IEdgeRevocationService` | Coordinates token revocation across edge providers (CloudFlare, OpenResty) |
 | `IEdgeRevocationProvider` (collection) | CloudflareEdgeProvider and OpenrestyEdgeProvider, injected into EdgeRevocationService via `IEnumerable<IEdgeRevocationProvider>` |
-| `IEmailService` | Email sending abstraction. Provider selected by `AUTH_EMAIL_PROVIDER`: `ConsoleEmailService` (none/default), `SendGridEmailService` (sendgrid), or `SmtpEmailService` (smtp). Registered as singleton via factory in AuthServicePlugin. |
+| `IEmailService` | Email sending abstraction. Provider selected by `AUTH_EMAIL_PROVIDER`: `ConsoleEmailService` (none/default), `SendGridEmailService` (sendgrid), `SmtpEmailService` (smtp), or `SesEmailService` (ses). Registered as singleton via factory in AuthServicePlugin. |
 | `IHttpClientFactory` | Used by OAuthProviderService for OAuth API calls and CloudflareEdgeProvider for KV writes |
 | `IEventConsumer` | Registers handlers for account.deleted, account.updated |
 
@@ -236,7 +240,7 @@ account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAs
 ### ~~Email Delivery Provider~~
 <!-- AUDIT:RESOLVED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/141 -->
 
-~~Password reset email delivery was a console-only mock.~~ **FIXED** (2026-02-08) - Implemented two production email providers (`SendGridEmailService` and `SmtpEmailService`) behind the `IEmailService` abstraction. Provider selection is configuration-driven via `AUTH_EMAIL_PROVIDER` enum (none/sendgrid/smtp). Email delivery is fire-and-forget: failures are logged and error events published, but `RequestPasswordReset` always returns 200 for enumeration protection. Default remains `none` (console logging) for development.
+~~Password reset email delivery was a console-only mock.~~ **FIXED** (2026-02-08) - Implemented three production email providers (`SendGridEmailService`, `SmtpEmailService`, and `SesEmailService`) behind the `IEmailService` abstraction. Provider selection is configuration-driven via `AUTH_EMAIL_PROVIDER` enum (none/sendgrid/smtp/ses). Email delivery is fire-and-forget: failures are logged and error events published, but `RequestPasswordReset` always returns 200 for enumeration protection. Default remains `none` (console logging) for development.
 
 ### Audit Event Consumers
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/142 -->
@@ -245,7 +249,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ## Potential Extensions
 
-- ~~**Email delivery integration**~~: Resolved by [#141](https://github.com/beyond-immersion/bannou-service/issues/141) - SendGrid and SMTP providers implemented.
+- ~~**Email delivery integration**~~: Resolved by [#141](https://github.com/beyond-immersion/bannou-service/issues/141) - SendGrid, SMTP, and AWS SES providers implemented.
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/149 -->
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.

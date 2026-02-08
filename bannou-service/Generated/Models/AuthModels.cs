@@ -69,7 +69,7 @@ public enum Provider
 #pragma warning restore CS1591
 
 /// <summary>
-/// Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit)
+/// Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -84,6 +84,9 @@ public enum EmailProvider
 
     [System.Runtime.Serialization.EnumMember(Value = @"smtp")]
     Smtp = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ses")]
+    Ses = 3,
 
 }
 #pragma warning restore CS1591

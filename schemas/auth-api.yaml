@@ -427,8 +427,8 @@ components:
 
     EmailProvider:
       type: string
-      enum: [none, sendgrid, smtp]
-      description: Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit)
+      enum: [none, sendgrid, smtp, ses]
+      description: Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
 
     InitOAuthResponse:
       type: object

@@ -1,3 +1,6 @@
+using Amazon;
+using Amazon.Runtime;
+using Amazon.SimpleEmailV2;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
@@ -80,6 +83,32 @@ public class AuthServicePlugin : StandardServicePlugin<IAuthService>
                         config.SmtpHost, config.SmtpPort,
                         config.SmtpUsername, config.SmtpPassword, config.SmtpUseSsl,
                         from, loggerFactory.CreateLogger<SmtpEmailService>());
+                }
+                case EmailProvider.Ses:
+                {
+                    if (string.IsNullOrWhiteSpace(config.SesAccessKeyId))
+                    {
+                        throw new InvalidOperationException(
+                            "AUTH_SES_ACCESS_KEY_ID is required when EmailProvider is 'ses'");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(config.SesSecretAccessKey))
+                    {
+                        throw new InvalidOperationException(
+                            "AUTH_SES_SECRET_ACCESS_KEY is required when EmailProvider is 'ses'");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(config.EmailFromAddress))
+                    {
+                        throw new InvalidOperationException(
+                            "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'ses'");
+                    }
+
+                    var credentials = new BasicAWSCredentials(config.SesAccessKeyId, config.SesSecretAccessKey);
+                    var sesClient = new AmazonSimpleEmailServiceV2Client(
+                        credentials, RegionEndpoint.GetBySystemName(config.SesRegion));
+                    return new SesEmailService(sesClient, config.EmailFromAddress,
+                        loggerFactory.CreateLogger<SesEmailService>());
                 }
                 default:
                     return new ConsoleEmailService(loggerFactory.CreateLogger<ConsoleEmailService>());
