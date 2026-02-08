@@ -28,7 +28,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
-| [Item Service API](#item) | `client.Item` | 14 | Item template and instance management service. |
+| [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Bannou Location Service API](#location) | `client.Location` | 18 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
@@ -42,8 +42,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Quest Service API](#quest) | `client.Quest` | 17 | Quest system providing objective-based gameplay progression ... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 11 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
-| [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
-| [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for game worlds. |
+| [Relationship Service API](#relationship) | `client.Relationship` | 20 | Relationship and relationship type management service for en... |
 | [Resource Lifecycle API](#resource) | `client.Resource` | 17 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
@@ -966,6 +965,8 @@ Item template and instance management service.
 | `BinditeminstanceAsync` | `BindItemInstanceRequest` | `ItemInstanceResponse` | Bind item to character |
 | `UnbinditeminstanceAsync` | `UnbindItemInstanceRequest` | `ItemInstanceResponse` | Unbind item from character |
 | `DestroyiteminstanceAsync` | `DestroyItemInstanceRequest` | `DestroyItemInstanceResponse` | Destroy item instance |
+| `UseitemAsync` | `UseItemRequest` | `UseItemResponse` | Use an item (execute its behavior contract) |
+| `UseitemstepAsync` | `UseItemStepRequest` | `UseItemStepResponse` | Complete a specific step of a multi-step item use |
 
 ### Item Query
 
@@ -1463,9 +1464,9 @@ Historical event participation and lore management for realms.
 
 ## Relationship Service API {#relationship}
 
-**Proxy**: `client.Relationship` | **Version**: 1.0.0
+**Proxy**: `client.Relationship` | **Version**: 2.0.0
 
-Generic relationship management service for entity-to-entity relationships.
+Relationship and relationship type management service for entity-to-entity relationships in the Arcadia game world.
 
 ### Relationship Management
 
@@ -1479,26 +1480,7 @@ Generic relationship management service for entity-to-entity relationships.
 | `UpdateRelationshipAsync` | `UpdateRelationshipRequest` | `RelationshipResponse` | Update relationship metadata |
 | `EndrelationshipEventAsync` | `EndRelationshipRequest` | *(fire-and-forget)* | End a relationship |
 
----
-
-## Bannou RelationshipType Service API {#relationship-type}
-
-**Proxy**: `client.RelationshipType` | **Version**: 2.0.0
-
-Relationship type management service for game worlds.
-
-### RelationshipType
-
-| Method | Request | Response | Summary |
-|--------|---------|----------|---------|
-| `GetRelationshiptypeAsync` | `GetRelationshipTypeRequest` | `RelationshipTypeResponse` | Get relationship type by ID |
-| `GetRelationshiptypebycodeAsync` | `GetRelationshipTypeByCodeRequest` | `RelationshipTypeResponse` | Get relationship type by code |
-| `ListRelationshiptypesAsync` | `ListRelationshipTypesRequest` | `RelationshipTypeListResponse` | List all relationship types |
-| `GetChildrelationshiptypesAsync` | `GetChildRelationshipTypesRequest` | `RelationshipTypeListResponse` | Get child types for a parent type |
-| `MatcheshierarchyAsync` | `MatchesHierarchyRequest` | `MatchesHierarchyResponse` | Check if type matches ancestor in hierarchy |
-| `GetAncestorsAsync` | `GetAncestorsRequest` | `RelationshipTypeListResponse` | Get all ancestors of a relationship type |
-
-### RelationshipType Admin
+### Relationship Type Admin
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
@@ -1509,6 +1491,17 @@ Relationship type management service for game worlds.
 | `UndeprecaterelationshiptypeAsync` | `UndeprecateRelationshipTypeRequest` | `RelationshipTypeResponse` | Restore a deprecated relationship type |
 | `MergerelationshiptypeAsync` | `MergeRelationshipTypeRequest` | `MergeRelationshipTypeResponse` | Merge a deprecated type into another type |
 | `SeedrelationshiptypesAsync` | `SeedRelationshipTypesRequest` | `SeedRelationshipTypesResponse` | Seed relationship types from configuration |
+
+### Relationship Type Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetRelationshiptypeAsync` | `GetRelationshipTypeRequest` | `RelationshipTypeResponse` | Get relationship type by ID |
+| `GetRelationshiptypebycodeAsync` | `GetRelationshipTypeByCodeRequest` | `RelationshipTypeResponse` | Get relationship type by code |
+| `ListRelationshiptypesAsync` | `ListRelationshipTypesRequest` | `RelationshipTypeListResponse` | List all relationship types |
+| `GetChildrelationshiptypesAsync` | `GetChildRelationshipTypesRequest` | `RelationshipTypeListResponse` | Get child types for a parent type |
+| `MatcheshierarchyAsync` | `MatchesHierarchyRequest` | `MatchesHierarchyResponse` | Check if type matches ancestor in hierarchy |
+| `GetAncestorsAsync` | `GetAncestorsRequest` | `RelationshipTypeListResponse` | Get all ancestors of a relationship type |
 
 ---
 
@@ -1906,8 +1899,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 45
-- **Total methods**: 609
+- **Total services**: 44
+- **Total methods**: 611
 
 ---
 

@@ -33,8 +33,7 @@ The Character service manages game world characters for Arcadia. Characters are 
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-realm (`IRealmClient`) | Validates realm exists and is active before character creation |
 | lib-species (`ISpeciesClient`) | Validates species exists and belongs to the specified realm |
-| lib-relationship (`IRelationshipClient`) | Queries relationships for family tree and cleanup reference counting |
-| lib-relationship-type (`IRelationshipTypeClient`) | Maps relationship type IDs to codes for family tree categorization |
+| lib-relationship (`IRelationshipClient`) | Queries relationships for family tree and cleanup reference counting; maps type IDs to codes for family tree categorization |
 | lib-contract (`IContractClient`) | Queries contracts where character is a party (L1 - allowed) |
 | lib-resource (`IResourceClient`) | Queries L4 references (Actor, Encounter) via event-driven pattern (L1 - allowed) |
 | lib-resource (`IResourceTemplateRegistry`) | Registers `CharacterBaseTemplate` for ABML compile-time path validation (e.g., `${candidate.character.name}`) |
@@ -117,8 +116,7 @@ This plugin does not consume external events.
 | `IMessageBus` | Scoped | Event publishing |
 | `IRealmClient` | Scoped | Realm validation |
 | `ISpeciesClient` | Scoped | Species validation |
-| `IRelationshipClient` | Scoped | Family tree and reference counting |
-| `IRelationshipTypeClient` | Scoped | Relationship code lookup |
+| `IRelationshipClient` | Scoped | Family tree, reference counting, and type code lookup |
 | `IContractClient` | Scoped | Contract reference counting (L1 - allowed) |
 | `IResourceClient` | Scoped | L4 reference counting via event-driven pattern |
 | `IEventConsumer` | Scoped | Event registration (no handlers defined) |
@@ -151,7 +149,7 @@ Per SERVICE_HIERARCHY, Character (L2) can only enrich with data from L2 or lower
 | `includePersonality` | CharacterPersonality (L4) | **NOT INCLUDED** - callers should call L4 directly |
 | `includeCombatPreferences` | CharacterPersonality (L4) | **NOT INCLUDED** - callers should call L4 directly |
 | `includeBackstory` | CharacterHistory (L4) | **NOT INCLUDED** - callers should call L4 directly |
-| `includeFamilyTree` | Relationship + RelationshipType (L2) | ✅ Included |
+| `includeFamilyTree` | Relationship (L2) | ✅ Included |
 
 If L4 enrichment flags are set, the service logs a debug message explaining the SERVICE_HIERARCHY constraint but does not fail.
 
@@ -276,7 +274,7 @@ None currently tracked.
 
 1. **Compression delegated to Resource service**: Full character compression (including L4 data) is now handled by the centralized Resource service (L1). Character provides a `/character/get-compress-data` callback endpoint that Resource invokes during compression orchestration. The legacy `/character/compress` endpoint still exists but only archives L2 data. For hierarchical compression that includes CharacterPersonality, CharacterHistory, and CharacterEncounter data, use `/resource/compress/execute` with `resourceType="character"`.
 
-2. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be resolved (type deleted, RelationshipType service unavailable), the relationship is excluded from the family tree with no indication in the response. This is intentional graceful degradation: partial valid data is preferred over failing the entire enrichment. A warning is logged (`"Could not look up relationship type {TypeId}"`) for observability. The alternative (returning uncategorized relationships) would break the structured Parents/Children/Siblings/Spouses/PastLives response format.
+2. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be resolved (type deleted, Relationship service unavailable), the relationship is excluded from the family tree with no indication in the response. This is intentional graceful degradation: partial valid data is preferred over failing the entire enrichment. A warning is logged (`"Could not look up relationship type {TypeId}"`) for observability. The alternative (returning uncategorized relationships) would break the structured Parents/Children/Siblings/Spouses/PastLives response format.
 
 3. **INCARNATION tracking is directional (past lives only)**: The `PastLives` field only populates when the queried character is Entity2 in an INCARNATION relationship. This is semantically correct: INCARNATION means "Entity1 died and was reincarnated as Entity2". When querying Entity2, Entity1 is correctly shown as a past life. When querying Entity1, Entity2 is NOT shown because that would be a "future incarnation" (you wouldn't know your future incarnations). The field is named `PastLives`, not `Incarnations`, reinforcing this semantic meaning.
 

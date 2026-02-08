@@ -270,7 +270,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for acquiring distributed locks during ch... |
 | `CHARACTER_MAX_PAGE_SIZE` | int | `100` | Maximum page size for list queries |
 | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts when updating realm character index (... |
-| `CHARACTER_RETENTION_DAYS` | int | `90` | Number of days to retain deleted characters before permanent... |
 
 ### Character Encounter
 
@@ -484,6 +483,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `ITEM_BINDING_ALLOW_ADMIN_OVERRIDE` | bool | `true` | Whether admins can unbind soulbound items |
+| `ITEM_CAN_USE_MILESTONE_CODE` | string | `validate` | Milestone code to complete for CanUse validation contracts |
 | `ITEM_DEFAULT_MAX_STACK_SIZE` | int | `99` | Default max stack size for new templates when not specified |
 | `ITEM_DEFAULT_RARITY` | string | `common` | Default rarity for new templates when not specified |
 | `ITEM_DEFAULT_SOULBOUND_TYPE` | string | `none` | Default soulbound type for new templates |
@@ -492,7 +492,14 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ITEM_LIST_OPERATION_MAX_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency on list op... |
 | `ITEM_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on item instance mo... |
 | `ITEM_MAX_INSTANCES_PER_QUERY` | int | `1000` | Maximum item instances returned in a single query |
+| `ITEM_ON_USE_FAILED_MILESTONE_CODE` | string | `handle_failure` | Milestone code to complete for OnUseFailed handler contracts |
+| `ITEM_SYSTEM_PARTY_ID` | string | **REQUIRED** | System party ID for item use contracts (null uses determinis... |
+| `ITEM_SYSTEM_PARTY_TYPE` | string | `system` | Entity type string for the system party in item use contract... |
 | `ITEM_TEMPLATE_CACHE_TTL_SECONDS` | int | `3600` | TTL for template cache entries in seconds (templates change ... |
+| `ITEM_USE_EVENT_BATCH_MAX_SIZE` | int | `100` | Maximum number of use records per batched event before force... |
+| `ITEM_USE_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating item use events by ... |
+| `ITEM_USE_MILESTONE_CODE` | string | `use` | Milestone code to complete when using items via contract beh... |
+| `ITEM_USE_STEP_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock timeout in seconds for UseItemStep operatio... |
 
 ### Leaderboard
 
@@ -568,6 +575,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_CONNECT_TIMEOUT_SECONDS` | int | `10` | TCP connection timeout in seconds |
 | `MESH_DEFAULT_LOAD_BALANCER` | string | `RoundRobin` | Default load balancing algorithm |
 | `MESH_DEFAULT_MAX_CONNECTIONS` | int | `1000` | Default max connections for auto-registered endpoints when h... |
+| `MESH_DEGRADATION_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating degradation events ... |
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
 | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to FullServiceMappingsEvent for routing... |
 | `MESH_ENDPOINT_CACHE_MAX_SIZE` | int | `0` | Maximum number of app-ids to cache endpoint resolutions for.... |
@@ -576,6 +584,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_ENDPOINT_PORT` | int | `80` | Port for mesh endpoint registration. |
 | `MESH_ENDPOINT_TTL_SECONDS` | int | `90` | TTL for endpoint registration (should be > 2x heartbeat inte... |
 | `MESH_HEALTH_CHECK_ENABLED` | bool | `false` | Whether to perform active health checks on endpoints |
+| `MESH_HEALTH_CHECK_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating health check failur... |
 | `MESH_HEALTH_CHECK_FAILURE_THRESHOLD` | int | `3` | Consecutive health check failures before deregistering endpo... |
 | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | int | `60` | Interval between active health checks |
 | `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | int | `10` | Delay in seconds before health check service starts probing ... |
@@ -587,6 +596,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_MAX_SERVICE_MAPPINGS_DISPLAYED` | int | `10` | Maximum service mappings shown in diagnostic logs |
 | `MESH_MAX_TOP_ENDPOINTS_RETURNED` | int | `2` | Maximum top endpoints returned in health status queries |
 | `MESH_POOLED_CONNECTION_LIFETIME_MINUTES` | int | `2` | How long to keep pooled HTTP connections alive in minutes |
+| `MESH_REQUEST_TIMEOUT_SECONDS` | int | `30` | Maximum time in seconds for a complete request/response cycl... |
 | `MESH_RETRY_DELAY_MILLISECONDS` | int | `100` | Initial delay between retries (doubles on each retry) |
 | `MESH_USE_LOCAL_ROUTING` | bool | `false` | Use local-only routing instead of lib-state. All calls route... |
 
@@ -722,7 +732,7 @@ Final ... |
 CHECK_ALL (defaul... |
 | `QUEST_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL for objective progress cache |
 
-### Relationship Type
+### Relationship
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
@@ -821,6 +831,8 @@ CHECK_ALL (defaul... |
 |---------------------|------|---------|-------------|
 | `STATE_CONNECTION_RETRY_COUNT` | int | `10` | Maximum number of connection retry attempts for MySQL initia... |
 | `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
+| `STATE_ENABLE_ERROR_EVENT_PUBLISHING` | bool | `true` | Enable publishing error events when state store operations f... |
+| `STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating identical error eve... |
 | `STATE_INMEMORY_FALLBACK_LIMIT` | int | `10000` | Maximum entries for in-memory LINQ fallback before throwing ... |
 | `STATE_MIN_RETRY_DELAY_MS` | int | `1000` | Minimum delay in milliseconds between MySQL connection retry... |
 | `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
@@ -917,9 +929,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 690
-- **Required (no default)**: 41
-- **Optional (has default)**: 649
+- **Total properties**: 702
+- **Required (no default)**: 42
+- **Optional (has default)**: 660
 
 ## Environment Variable Naming Convention
 

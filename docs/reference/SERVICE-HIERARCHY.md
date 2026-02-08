@@ -138,8 +138,7 @@ These services provide the core game infrastructure - worlds, characters, specie
 | **character** | Game world characters |
 | **species** | Character type definitions |
 | **location** | Hierarchical places within realms |
-| **relationship-type** | Relationship taxonomy definitions |
-| **relationship** | Entity-to-entity relationships |
+| **relationship** | Entity-to-entity relationships and type taxonomy |
 | **subscription** | Account-to-game access mapping |
 | **currency** | Multi-currency economy management |
 | **item** | Item templates and instances |
@@ -865,7 +864,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 |-------|----------|
 | **L0** | state, messaging, mesh (required); telemetry (optional)† |
 | **L1** | account, auth, connect, permission, contract, resource |
-| **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory, game-session, actor, quest |
+| **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest |
 | **L3** | asset, orchestrator, documentation, website |
 | **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
 | **L5** | (reserved for third-party plugins and internal meta-services) |

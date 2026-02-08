@@ -30,7 +30,7 @@ Des... |
 | [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Game Session](#game-session) | 2.0.0 | 11 | Minimal game session management for games. |
 | [Inventory](#inventory) | 1.0.0 | 16 | Container and inventory management service for games. |
-| [Item](#item) | 1.0.0 | 14 | Item template and instance management service. |
+| [Item](#item) | 1.0.0 | 16 | Item template and instance management service. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Location](#location) | 1.0.0 | 18 | Location management service for game worlds. |
 | [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for game worlds. |
@@ -44,8 +44,7 @@ Des... |
 | [Quest](#quest) | 1.0.0 | 17 | Quest system providing objective-based gameplay progression ... |
 | [Realm](#realm) | 1.0.0 | 11 | Realm management service for game worlds. |
 | [Realm History](#realm-history) | 1.0.0 | 12 | Historical event participation and lore management for realm... |
-| [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
-| [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for game worlds. |
+| [Relationship](#relationship) | 2.0.0 | 20 | Relationship and relationship type management service for en... |
 | [Resource](#resource) | 1.0.0 | 17 | Resource reference tracking and lifecycle management. |
 | [Save Load](#save-load) | 1.0.0 | 26 | Generic save/load system for game state persistence.
 Support... |
@@ -347,17 +346,11 @@ Historical event participation and lore management for realms. Tracks when realm
 
 ## Relationship {#relationship}
 
-**Version**: 1.0.0 | **Schema**: `schemas/relationship-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP.md](plugins/RELATIONSHIP.md)
+**Version**: 2.0.0 | **Schema**: `schemas/relationship-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP.md](plugins/RELATIONSHIP.md)
 
-A generic relationship management service for entity-to-entity relationships (character friendships, alliances, rivalries, etc.). Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, and soft-deletion with the ability to recreate ended relationships. Used by the Character service for managing inter-character bonds and by the RelationshipType service for type merge migrations.
+A unified relationship management service combining entity-to-entity relationships (character friendships, alliances, rivalries, etc.) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, soft-deletion with the ability to recreate ended relationships, hierarchical type definitions with parent-child hierarchy, inverse type tracking, bidirectional flags, deprecation with merge capability, and bulk seeding with dependency-ordered creation. Used by the Character service for managing inter-character bonds and family tree categorization, and by the Storyline service for narrative generation.
 
----
-
-## Relationship Type {#relationship-type}
-
-**Version**: 2.0.0 | **Schema**: `schemas/relationship-type-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP-TYPE.md](plugins/RELATIONSHIP-TYPE.md)
-
-Hierarchical relationship type definitions for entity-to-entity relationships in the Arcadia game world. Defines the taxonomy of possible relationships (e.g., PARENT → FATHER/MOTHER, FRIEND, RIVAL) with parent-child hierarchy, inverse type tracking, and bidirectional flags. Supports deprecation with merge capability via `IRelationshipClient` to migrate existing relationships. Provides hierarchy queries (ancestors, children, `matchesHierarchy` for polymorphic matching), code-based lookups, and bulk seeding with dependency-ordered creation. Internal-only service (not internet-facing).
+This plugin was consolidated from the former `lib-relationship` and `lib-relationship-type` plugins into a single service. Type merge operations now call internal methods directly rather than going through HTTP round-trips.
 
 ---
 
@@ -453,8 +446,6 @@ The Storyline service wraps the `storyline-theory` and `storyline-storyteller` S
 
 The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that GameSession service consumes for real-time shortcut publishing. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
 
-> **Note**: Auth service previously consumed subscription events incorrectly. This was an architectural error - Auth should only manage JWTs and roles.
-
 ---
 
 ## Telemetry {#telemetry}
@@ -483,8 +474,8 @@ Public-facing website service for browser-based access to news, account profile 
 
 ## Summary
 
-- **Total services**: 46
-- **Total endpoints**: 615
+- **Total services**: 45
+- **Total endpoints**: 617
 
 ---
 
