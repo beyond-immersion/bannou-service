@@ -45,71 +45,71 @@ public class AuthServicePlugin : StandardServicePlugin<IAuthService>
             switch (config.EmailProvider)
             {
                 case EmailProvider.Sendgrid:
-                {
-                    if (string.IsNullOrWhiteSpace(config.SendGridApiKey))
                     {
-                        throw new InvalidOperationException(
-                            "AUTH_SENDGRID_API_KEY is required when EmailProvider is 'sendgrid'");
-                    }
+                        if (string.IsNullOrWhiteSpace(config.SendGridApiKey))
+                        {
+                            throw new InvalidOperationException(
+                                "AUTH_SENDGRID_API_KEY is required when EmailProvider is 'sendgrid'");
+                        }
 
-                    if (string.IsNullOrWhiteSpace(config.EmailFromAddress))
-                    {
-                        throw new InvalidOperationException(
-                            "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'sendgrid'");
-                    }
+                        if (string.IsNullOrWhiteSpace(config.EmailFromAddress))
+                        {
+                            throw new InvalidOperationException(
+                                "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'sendgrid'");
+                        }
 
-                    ISendGridClient client = new SendGridClient(config.SendGridApiKey);
-                    var from = new SendGrid.Helpers.Mail.EmailAddress(config.EmailFromAddress, config.EmailFromName);
-                    return new SendGridEmailService(client, from,
-                        loggerFactory.CreateLogger<SendGridEmailService>());
-                }
+                        ISendGridClient client = new SendGridClient(config.SendGridApiKey);
+                        var from = new SendGrid.Helpers.Mail.EmailAddress(config.EmailFromAddress, config.EmailFromName);
+                        return new SendGridEmailService(client, from,
+                            loggerFactory.CreateLogger<SendGridEmailService>());
+                    }
                 case EmailProvider.Smtp:
-                {
-                    if (string.IsNullOrWhiteSpace(config.SmtpHost))
                     {
-                        throw new InvalidOperationException(
-                            "AUTH_SMTP_HOST is required when EmailProvider is 'smtp'");
-                    }
+                        if (string.IsNullOrWhiteSpace(config.SmtpHost))
+                        {
+                            throw new InvalidOperationException(
+                                "AUTH_SMTP_HOST is required when EmailProvider is 'smtp'");
+                        }
 
-                    if (string.IsNullOrWhiteSpace(config.EmailFromAddress))
-                    {
-                        throw new InvalidOperationException(
-                            "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'smtp'");
-                    }
+                        if (string.IsNullOrWhiteSpace(config.EmailFromAddress))
+                        {
+                            throw new InvalidOperationException(
+                                "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'smtp'");
+                        }
 
-                    // MailboxAddress requires non-null display name; coalesce satisfies constructor (empty if not configured)
-                    var from = new MimeKit.MailboxAddress(config.EmailFromName ?? "", config.EmailFromAddress);
-                    return new SmtpEmailService(
-                        config.SmtpHost, config.SmtpPort,
-                        config.SmtpUsername, config.SmtpPassword, config.SmtpUseSsl,
-                        from, loggerFactory.CreateLogger<SmtpEmailService>());
-                }
+                        // MailboxAddress requires non-null display name; coalesce satisfies constructor (empty if not configured)
+                        var from = new MimeKit.MailboxAddress(config.EmailFromName ?? "", config.EmailFromAddress);
+                        return new SmtpEmailService(
+                            config.SmtpHost, config.SmtpPort,
+                            config.SmtpUsername, config.SmtpPassword, config.SmtpUseSsl,
+                            from, loggerFactory.CreateLogger<SmtpEmailService>());
+                    }
                 case EmailProvider.Ses:
-                {
-                    if (string.IsNullOrWhiteSpace(config.SesAccessKeyId))
                     {
-                        throw new InvalidOperationException(
-                            "AUTH_SES_ACCESS_KEY_ID is required when EmailProvider is 'ses'");
-                    }
+                        if (string.IsNullOrWhiteSpace(config.SesAccessKeyId))
+                        {
+                            throw new InvalidOperationException(
+                                "AUTH_SES_ACCESS_KEY_ID is required when EmailProvider is 'ses'");
+                        }
 
-                    if (string.IsNullOrWhiteSpace(config.SesSecretAccessKey))
-                    {
-                        throw new InvalidOperationException(
-                            "AUTH_SES_SECRET_ACCESS_KEY is required when EmailProvider is 'ses'");
-                    }
+                        if (string.IsNullOrWhiteSpace(config.SesSecretAccessKey))
+                        {
+                            throw new InvalidOperationException(
+                                "AUTH_SES_SECRET_ACCESS_KEY is required when EmailProvider is 'ses'");
+                        }
 
-                    if (string.IsNullOrWhiteSpace(config.EmailFromAddress))
-                    {
-                        throw new InvalidOperationException(
-                            "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'ses'");
-                    }
+                        if (string.IsNullOrWhiteSpace(config.EmailFromAddress))
+                        {
+                            throw new InvalidOperationException(
+                                "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'ses'");
+                        }
 
-                    var credentials = new BasicAWSCredentials(config.SesAccessKeyId, config.SesSecretAccessKey);
-                    var sesClient = new AmazonSimpleEmailServiceV2Client(
-                        credentials, RegionEndpoint.GetBySystemName(config.SesRegion));
-                    return new SesEmailService(sesClient, config.EmailFromAddress,
-                        loggerFactory.CreateLogger<SesEmailService>());
-                }
+                        var credentials = new BasicAWSCredentials(config.SesAccessKeyId, config.SesSecretAccessKey);
+                        var sesClient = new AmazonSimpleEmailServiceV2Client(
+                            credentials, RegionEndpoint.GetBySystemName(config.SesRegion));
+                        return new SesEmailService(sesClient, config.EmailFromAddress,
+                            loggerFactory.CreateLogger<SesEmailService>());
+                    }
                 default:
                     return new ConsoleEmailService(loggerFactory.CreateLogger<ConsoleEmailService>());
             }

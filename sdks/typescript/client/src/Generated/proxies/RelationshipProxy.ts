@@ -95,4 +95,22 @@ export class RelationshipProxy {
       Schemas['RelationshipListResponse']
     >('/relationship/list-by-type', request, channel, timeout);
   }
+
+  /**
+   * Cleanup relationships referencing a deleted entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByEntityAsync(
+    request: Schemas['CleanupByEntityRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CleanupByEntityResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['CleanupByEntityRequest'],
+      Schemas['CleanupByEntityResponse']
+    >('/relationship/cleanup-by-entity', request, channel, timeout);
+  }
 }

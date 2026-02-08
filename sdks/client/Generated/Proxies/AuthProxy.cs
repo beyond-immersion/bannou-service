@@ -33,14 +33,14 @@ public sealed class AuthProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing AuthResponse on success.</returns>
-    public Task<ApiResponse<AuthResponse>> LoginAsync(
+    /// <returns>ApiResponse containing LoginResponse on success.</returns>
+    public Task<ApiResponse<LoginResponse>> LoginAsync(
         LoginRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<LoginRequest, AuthResponse>(
+        return _client.InvokeAsync<LoginRequest, LoginResponse>(
             "/auth/login", request, channel, timeout, cancellationToken);
     }
 
@@ -244,5 +244,87 @@ public sealed class AuthProxy
     {
         return _client.InvokeAsync<object, ProvidersResponse>(
             "/auth/providers", new {}, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Initialize MFA setup
+    /// </summary>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing MfaSetupResponse on success.</returns>
+    public Task<ApiResponse<MfaSetupResponse>> SetupMfaAsync(
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<object, MfaSetupResponse>(
+            "/auth/mfa/setup", new {}, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Confirm MFA setup with TOTP code
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task EnableMfaEventAsync(
+        MfaEnableRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<MfaEnableRequest>(
+            "/auth/mfa/enable", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// Disable MFA for current account
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task DisableMfaEventAsync(
+        MfaDisableRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<MfaDisableRequest>(
+            "/auth/mfa/disable", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// Admin override to disable MFA
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task AdminDisableMfaEventAsync(
+        AdminDisableMfaRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<AdminDisableMfaRequest>(
+            "/auth/mfa/admin-disable", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// Verify MFA code during login
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing AuthResponse on success.</returns>
+    public Task<ApiResponse<AuthResponse>> VerifyMfaAsync(
+        MfaVerifyRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<MfaVerifyRequest, AuthResponse>(
+            "/auth/mfa/verify", request, channel, timeout, cancellationToken);
     }
 }

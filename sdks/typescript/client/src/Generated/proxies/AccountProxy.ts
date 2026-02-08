@@ -62,6 +62,23 @@ export class AccountProxy {
   }
 
   /**
+   * Update MFA settings for an account
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async updateMfaEventAsync(
+    request: Schemas['UpdateMfaRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['UpdateMfaRequest']>(
+      '/account/mfa/update',
+      request,
+      channel
+    );
+  }
+
+  /**
    * Update email verification status
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

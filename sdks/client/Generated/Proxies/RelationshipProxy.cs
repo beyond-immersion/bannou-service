@@ -151,6 +151,24 @@ public sealed class RelationshipProxy
     }
 
     /// <summary>
+    /// Cleanup relationships referencing a deleted entity
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CleanupByEntityResponse on success.</returns>
+    public Task<ApiResponse<CleanupByEntityResponse>> CleanupByEntityAsync(
+        CleanupByEntityRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CleanupByEntityRequest, CleanupByEntityResponse>(
+            "/relationship/cleanup-by-entity", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get relationship type by ID
     /// </summary>
     /// <param name="request">The request payload.</param>

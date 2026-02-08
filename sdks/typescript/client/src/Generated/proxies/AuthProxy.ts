@@ -35,8 +35,8 @@ export class AuthProxy {
     request: Schemas['LoginRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['AuthResponse']>> {
-    return this.client.invokeAsync<Schemas['LoginRequest'], Schemas['AuthResponse']>(
+  ): Promise<ApiResponse<Schemas['LoginResponse']>> {
+    return this.client.invokeAsync<Schemas['LoginRequest'], Schemas['LoginResponse']>(
       '/auth/login',
       request,
       channel,
@@ -234,6 +234,78 @@ export class AuthProxy {
     return this.client.invokeAsync<object, Schemas['ProvidersResponse']>(
       '/auth/providers',
       {},
+      channel,
+      timeout
+    );
+  }
+
+  /**
+   * Initialize MFA setup
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async setupMfaAsync(
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['MfaSetupResponse']>> {
+    return this.client.invokeAsync<object, Schemas['MfaSetupResponse']>(
+      '/auth/mfa/setup',
+      {},
+      channel,
+      timeout
+    );
+  }
+
+  /**
+   * Confirm MFA setup with TOTP code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async enableMfaEventAsync(
+    request: Schemas['MfaEnableRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['MfaEnableRequest']>(
+      '/auth/mfa/enable',
+      request,
+      channel
+    );
+  }
+
+  /**
+   * Disable MFA for current account
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async disableMfaEventAsync(
+    request: Schemas['MfaDisableRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['MfaDisableRequest']>(
+      '/auth/mfa/disable',
+      request,
+      channel
+    );
+  }
+
+  /**
+   * Verify MFA code during login
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async verifyMfaAsync(
+    request: Schemas['MfaVerifyRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['AuthResponse']>> {
+    return this.client.invokeAsync<Schemas['MfaVerifyRequest'], Schemas['AuthResponse']>(
+      '/auth/mfa/verify',
+      request,
       channel,
       timeout
     );

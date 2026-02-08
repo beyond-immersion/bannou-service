@@ -903,10 +903,10 @@ public partial class AuthService : IAuthService
 
         var subject = "Password Reset Request";
         var body = $"You requested a password reset for your account.\n" +
-                   $"Click the link below to reset your password:\n" +
-                   $"{resetUrl}\n" +
-                   $"This link will expire in {expiresInMinutes} minutes.\n" +
-                   $"If you did not request this reset, please ignore this email.";
+                    $"Click the link below to reset your password:\n" +
+                    $"{resetUrl}\n" +
+                    $"This link will expire in {expiresInMinutes} minutes.\n" +
+                    $"If you did not request this reset, please ignore this email.";
 
         await _emailService.SendAsync(email, subject, body, cancellationToken);
     }

@@ -1350,6 +1350,123 @@ public partial class RelationshipController
 
     #endregion
 
+    #region Meta Endpoints for CleanupByEntity
+
+    private static readonly string _CleanupByEntity_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByEntityRequest",
+    "$defs": {
+        "CleanupByEntityRequest": {
+            "description": "Request to end all relationships referencing a deleted entity during cascading resource cleanup",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "entityId",
+                "entityType"
+            ],
+            "properties": {
+                "entityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the deleted entity whose relationships should be ended"
+                },
+                "entityType": {
+                    "type": "object",
+                    "description": "Type of the deleted entity (e.g., Character, Realm)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByEntity_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByEntityResponse",
+    "$defs": {
+        "CleanupByEntityResponse": {
+            "description": "Response summarizing the results of a cascading relationship cleanup operation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "relationshipsEnded",
+                "success"
+            ],
+            "properties": {
+                "relationshipsEnded": {
+                    "type": "integer",
+                    "description": "Number of active relationships that were ended during cleanup"
+                },
+                "alreadyEnded": {
+                    "type": "integer",
+                    "description": "Number of relationships that were already ended (skipped)"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the cleanup completed without errors"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByEntity_Info = """
+{
+    "summary": "Cleanup relationships referencing a deleted entity",
+    "description": "Called by lib-resource cleanup coordination when a foundational entity\n(character, realm) is deleted. Ends all active relationships where the\nspecified entity is either entity1 or entity2. Ended relationships are\npreserved for history (soft-delete via endedAt). This endpoint is designed\nfor internal service-to-service calls during cascading resource cleanup.\n",
+    "tags": [
+        "Relationship Management"
+    ],
+    "deprecated": false,
+    "operationId": "cleanupByEntity"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupByEntity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship/cleanup-by-entity/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByEntity_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Relationship",
+            "POST",
+            "/relationship/cleanup-by-entity",
+            _CleanupByEntity_Info));
+
+    /// <summary>Returns request schema for CleanupByEntity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship/cleanup-by-entity/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByEntity_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship/cleanup-by-entity",
+            "request-schema",
+            _CleanupByEntity_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupByEntity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship/cleanup-by-entity/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByEntity_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship/cleanup-by-entity",
+            "response-schema",
+            _CleanupByEntity_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupByEntity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/relationship/cleanup-by-entity/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByEntity_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Relationship",
+            "POST",
+            "/relationship/cleanup-by-entity",
+            _CleanupByEntity_Info,
+            _CleanupByEntity_RequestSchema,
+            _CleanupByEntity_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetRelationshipType
 
     private static readonly string _GetRelationshipType_RequestSchema = """
@@ -1748,11 +1865,6 @@ public partial class RelationshipController
                     "type": "string",
                     "nullable": true,
                     "description": "Filter by category (e.g., \"FAMILY\", \"SOCIAL\", \"ECONOMIC\") (null to include all)"
-                },
-                "includeChildren": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Whether to include child types in the response"
                 },
                 "rootsOnly": {
                     "type": "boolean",

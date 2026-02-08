@@ -38,6 +38,28 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/account/mfa/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update MFA settings for an account
+     * @description Sets or clears MFA-related fields (mfaEnabled, mfaSecret, mfaRecoveryCodes) atomically.
+     *     Used by Auth service during MFA enable/disable flows. Auth owns the encryption logic;
+     *     Account stores the opaque encrypted data.
+     */
+    post: operations['updateMfa'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/account/verification/update': {
     parameters: {
       query?: never;
@@ -1057,6 +1079,95 @@ export interface paths {
      *     Steam authentication uses session tickets, not OAuth, but is included for completeness.
      */
     post: operations['listProviders'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/mfa/setup': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Initialize MFA setup
+     * @description Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR
+     *     code scanning and the recovery codes in plain text (shown only once). The setup is
+     *     not active until confirmed via /auth/mfa/enable with a valid TOTP code.
+     */
+    post: operations['setupMfa'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/mfa/enable': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Confirm MFA setup with TOTP code
+     * @description Verifies a TOTP code against the pending setup secret to prove the authenticator
+     *     app is correctly configured. On success, persists MFA settings to the account and
+     *     MFA is active for all subsequent password logins.
+     */
+    post: operations['enableMfa'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/mfa/disable': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Disable MFA for current account
+     * @description Disables MFA for the authenticated account. Requires a valid TOTP code or
+     *     recovery code to prevent unauthorized disable. Clears the TOTP secret and
+     *     recovery codes from the account.
+     */
+    post: operations['disableMfa'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/mfa/verify': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Verify MFA code during login
+     * @description Completes the MFA challenge issued during login by verifying a TOTP code or
+     *     recovery code. On success, returns full authentication tokens (same as a
+     *     non-MFA login would). The challenge token is single-use and has a configurable
+     *     TTL (default 5 minutes).
+     */
+    post: operations['verifyMfa'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5619,6 +5730,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/relationship/cleanup-by-entity': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cleanup relationships referencing a deleted entity
+     * @description Called by lib-resource cleanup coordination when a foundational entity
+     *     (character, realm) is deleted. Ends all active relationships where the
+     *     specified entity is either entity1 or entity2. Ended relationships are
+     *     preserved for history (soft-delete via endedAt). This endpoint is designed
+     *     for internal service-to-service calls during cascading resource cleanup.
+     */
+    post: operations['cleanupByEntity'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/relationship-type/get': {
     parameters: {
       query?: never;
@@ -7545,6 +7680,15 @@ export interface components {
       metadata?: {
         [key: string]: unknown;
       } | null;
+      /**
+       * @description Whether multi-factor authentication is enabled for this account
+       * @default false
+       */
+      mfaEnabled: boolean;
+      /** @description Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext. */
+      mfaSecret?: string | null;
+      /** @description BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes. */
+      mfaRecoveryCodes?: string[] | null;
     };
     /** @description Achievement definition details */
     AchievementDefinitionResponse: {
@@ -8335,11 +8479,6 @@ export interface components {
       connectUrl: string;
       /** @description List of roles assigned to the authenticated user */
       roles?: string[] | null;
-      /**
-       * @description Whether the user needs to complete two-factor authentication
-       * @default false
-       */
-      requiresTwoFactor: boolean;
     };
     /** @description Request to checkout for authoring */
     AuthoringCheckoutRequest: {
@@ -9755,6 +9894,25 @@ export interface components {
       /** @description IDs of actors that were cleaned up */
       actorIds?: string[];
       /** @description Whether cleanup completed successfully */
+      success: boolean;
+    };
+    /** @description Request to end all relationships referencing a deleted entity during cascading resource cleanup */
+    CleanupByEntityRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the deleted entity whose relationships should be ended
+       */
+      entityId: string;
+      /** @description Type of the deleted entity (e.g., Character, Realm) */
+      entityType: components['schemas']['EntityType'];
+    };
+    /** @description Response summarizing the results of a cascading relationship cleanup operation */
+    CleanupByEntityResponse: {
+      /** @description Number of active relationships that were ended during cleanup */
+      relationshipsEnded: number;
+      /** @description Number of relationships that were already ended (skipped) */
+      alreadyEnded?: number;
+      /** @description Whether the cleanup completed without errors */
       success: boolean;
     };
     /** @description Result of executing a single cleanup callback */
@@ -15369,6 +15527,16 @@ export interface components {
        * @default false
        */
       includeEnded: boolean;
+      /**
+       * @description Page number for paginated results (1-based)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page (max 100)
+       * @default 20
+       */
+      pageSize: number;
     };
     /** @description Request to retrieve a scenario definition */
     GetScenarioDefinitionRequest: {
@@ -17288,11 +17456,6 @@ export interface components {
       /** @description Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null to include all) */
       category?: string | null;
       /**
-       * @description Whether to include child types in the response
-       * @default true
-       */
-      includeChildren: boolean;
-      /**
        * @description Only return types with no parent (root types)
        * @default false
        */
@@ -17895,6 +18058,31 @@ export interface components {
       /** @description Information about the client device (optional) */
       deviceInfo?: components['schemas']['DeviceInfo'];
     };
+    /** @description Response from email/password login. May contain full tokens (no MFA) or a challenge token (MFA required). */
+    LoginResponse: {
+      /**
+       * Format: uuid
+       * @description Account ID (always present regardless of MFA status)
+       */
+      accountId: string;
+      /** @description If true, client must complete MFA via /auth/mfa/verify before receiving tokens */
+      requiresMfa: boolean;
+      /** @description Short-lived challenge token for /auth/mfa/verify (only present when requiresMfa is true) */
+      mfaChallengeToken?: string | null;
+      /** @description JWT access token (only present when requiresMfa is false) */
+      accessToken?: string | null;
+      /** @description Refresh token (only present when requiresMfa is false) */
+      refreshToken?: string | null;
+      /** @description Seconds until access token expires (only present when requiresMfa is false) */
+      expiresIn?: number | null;
+      /**
+       * Format: uri
+       * @description WebSocket connect URL (only present when requiresMfa is false)
+       */
+      connectUrl?: string | null;
+      /** @description Account roles (only present when requiresMfa is false) */
+      roles?: string[] | null;
+    };
     /** @description Site logo configuration including image URL and accessibility text */
     Logo: {
       /**
@@ -18130,6 +18318,38 @@ export interface components {
      * @enum {string}
      */
     MetadataType: 'instance_data' | 'runtime_state';
+    /** @description Request to disable MFA. Exactly one of totpCode or recoveryCode must be provided. */
+    MfaDisableRequest: {
+      /** @description Current 6-digit TOTP code from authenticator app */
+      totpCode?: string | null;
+      /** @description Single-use recovery code (format xxxx-xxxx) */
+      recoveryCode?: string | null;
+    };
+    /** @description Request to confirm MFA setup with a valid TOTP code proving authenticator is configured */
+    MfaEnableRequest: {
+      /** @description Setup token from /auth/mfa/setup response */
+      setupToken: string;
+      /** @description 6-digit TOTP code from authenticator app */
+      totpCode: string;
+    };
+    /** @description MFA setup data containing TOTP URI for QR code and recovery codes */
+    MfaSetupResponse: {
+      /** @description Token to pass to /auth/mfa/enable to confirm setup */
+      setupToken: string;
+      /** @description otpauth:// URI for authenticator app QR code scanning */
+      totpUri: string;
+      /** @description 10 single-use recovery codes (shown only once, user must save them) */
+      recoveryCodes: string[];
+    };
+    /** @description Request to verify MFA during login. Exactly one of totpCode or recoveryCode must be provided. */
+    MfaVerifyRequest: {
+      /** @description Challenge token from LoginResponse when requiresMfa was true */
+      challengeToken: string;
+      /** @description 6-digit TOTP code from authenticator app */
+      totpCode?: string | null;
+      /** @description Single-use recovery code (format xxxx-xxxx) */
+      recoveryCode?: string | null;
+    };
     /** @description A single MIDI event */
     MidiEvent: {
       /** @description Absolute tick position */
@@ -23782,6 +24002,20 @@ export interface components {
       /** @description New visibility setting */
       isPublic?: boolean | null;
     };
+    /** @description Request to update MFA settings for an account */
+    UpdateMfaRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the account to update
+       */
+      accountId: string;
+      /** @description Whether to enable or disable MFA */
+      mfaEnabled: boolean;
+      /** @description Encrypted TOTP secret (set when enabling, null when disabling) */
+      mfaSecret?: string | null;
+      /** @description BCrypt-hashed recovery codes (set when enabling, null when disabling) */
+      mfaRecoveryCodes?: string[] | null;
+    };
     /**
      * @description How to handle score updates
      * @enum {string}
@@ -24205,9 +24439,9 @@ export interface components {
       accountId: string;
       /**
        * Format: uuid
-       * @description Session identifier for WebSocket connections and service routing
+       * @description Internal session key used by Connect service for WebSocket connection tracking and service routing
        */
-      sessionId: string;
+      sessionKey: string;
       /** @description List of roles assigned to the authenticated user */
       roles?: string[] | null;
       /**
@@ -24725,6 +24959,42 @@ export interface operations {
       };
       /** @description Account not found */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  updateMfa: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateMfaRequest'];
+      };
+    };
+    responses: {
+      /** @description MFA settings updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Account not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Concurrent modification detected */
+      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -25857,13 +26127,13 @@ export interface operations {
       };
     };
     responses: {
-      /** @description Login successful */
+      /** @description Login successful or MFA challenge issued */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['AuthResponse'];
+          'application/json': components['schemas']['LoginResponse'];
         };
       };
       /** @description Invalid credentials */
@@ -26212,6 +26482,152 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ProvidersResponse'];
         };
+      };
+    };
+  };
+  setupMfa: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description JWT access token */
+        jwt: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description MFA setup initiated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MfaSetupResponse'];
+        };
+      };
+      /** @description MFA already enabled for this account */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  enableMfa: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description JWT access token */
+        jwt: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MfaEnableRequest'];
+      };
+    };
+    responses: {
+      /** @description MFA enabled successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid TOTP code or expired setup token */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description MFA already enabled */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  disableMfa: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description JWT access token */
+        jwt: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MfaDisableRequest'];
+      };
+    };
+    responses: {
+      /** @description MFA disabled successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid TOTP code or recovery code */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description MFA not enabled for this account */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  verifyMfa: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MfaVerifyRequest'];
+      };
+    };
+    responses: {
+      /** @description MFA verified, tokens issued */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AuthResponse'];
+        };
+      };
+      /** @description Invalid TOTP code or recovery code */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Challenge token not found, expired, or already used */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
@@ -33004,6 +33420,30 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['RelationshipListResponse'];
+        };
+      };
+    };
+  };
+  cleanupByEntity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CleanupByEntityRequest'];
+      };
+    };
+    responses: {
+      /** @description Cleanup completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CleanupByEntityResponse'];
         };
       };
     };

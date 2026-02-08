@@ -41,11 +41,11 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Login successful
+          description: Login successful or MFA challenge issued
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/LoginResponse'
         '401':
           description: Invalid credentials
         '429':
@@ -75,24 +75,30 @@ paths:
         \         },\n                \"appVersion\": {\n                    \"type\": \"string\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Version of the client application\"\n                }\n\
         \            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
-        ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
-        containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"accountId\",\n                \"accessToken\",\n        \
-        \        \"refreshToken\",\n                \"expiresIn\",\n                \"connectUrl\"\n            ],\n     \
-        \       \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the authenticated
-        account\"\n                },\n                \"accessToken\": {\n                    \"type\": \"string\",\n   \
-        \                 \"description\": \"JWT access token for API authentication\"\n                },\n             \
-        \   \"refreshToken\": {\n                    \"type\": \"string\",\n                    \"description\": \"Token used
-        to obtain new access tokens when the current one expires\"\n                },\n                \"expiresIn\": {\n\
-        \                    \"type\": \"integer\",\n                    \"description\": \"Seconds until access token expires\"\
-        \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
-        \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"List of roles assigned to the authenticated user\"\n             \
-        \   }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoginResponse\"\
+        ,\n    \"$defs\": {\n        \"LoginResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response from email/password login. May contain full tokens (no MFA) or a challenge token (MFA required).\",\n\
+        \            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\",\n     \
+        \           \"requiresMfa\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Account ID (always present regardless of MFA status)\"\n                },\n                \"requiresMfa\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"If true, client must complete
+        MFA via /auth/mfa/verify before receiving tokens\"\n                },\n                \"mfaChallengeToken\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Short-lived challenge token for /auth/mfa/verify (only present when requiresMfa is true)\"\n                },\n\
+        \                \"accessToken\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"JWT access token (only present when requiresMfa is false)\"\n      \
+        \          },\n                \"refreshToken\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Refresh token (only present when requiresMfa is false)\"\
+        \n                },\n                \"expiresIn\": {\n                    \"type\": \"integer\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Seconds until access token expires (only present
+        when requiresMfa is false)\"\n                },\n                \"connectUrl\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n               \
+        \     \"description\": \"WebSocket connect URL (only present when requiresMfa is false)\"\n                },\n  \
+        \              \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n        \
+        \                \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Account roles (only present when requiresMfa is false)\"\n                }\n     \
+        \       }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Login with email/password\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Authentication\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"login\"\n}"
   /auth/register:
@@ -777,6 +783,251 @@ paths:
         if their client credentials are configured.\\nSteam authentication uses session tickets, not OAuth, but is included
         for completeness.\\n\",\n    \"tags\": [\n        \"Authentication\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"listProviders\"\n}"
+  /auth/mfa/setup:
+    post:
+      summary: Initialize MFA setup
+      description: |
+        Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR
+        code scanning and the recovery codes in plain text (shown only once). The setup is
+        not active until confirmed via /auth/mfa/enable with a valid TOTP code.
+      operationId: setupMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: user
+        states: {}
+      parameters:
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token
+        x-from-authorization: bearer
+      responses:
+        '200':
+          description: MFA setup initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaSetupResponse'
+        '409':
+          description: MFA already enabled for this account
+      x-request-schema-json: '{}'
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MfaSetupResponse\"\
+        ,\n    \"$defs\": {\n        \"MfaSetupResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"MFA setup data containing TOTP URI for QR code and recovery codes\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"setupToken\",\n                \"totpUri\",\n                \"recoveryCodes\"\
+        \n            ],\n            \"properties\": {\n                \"setupToken\": {\n                    \"type\":
+        \"string\",\n                    \"description\": \"Token to pass to /auth/mfa/enable to confirm setup\"\n       \
+        \         },\n                \"totpUri\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"otpauth:// URI for authenticator app QR code scanning\"\n                },\n                \"recoveryCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"10 single-use recovery codes (shown only
+        once, user must save them)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Initialize MFA setup\",\n    \"description\": \"Generates a TOTP secret
+        and 10 recovery codes. Returns an otpauth:// URI for QR\\ncode scanning and the recovery codes in plain text (shown
+        only once). The setup is\\nnot active until confirmed via /auth/mfa/enable with a valid TOTP code.\\n\",\n    \"tags\"\
+        : [\n        \"MFA\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"setupMfa\"\n}"
+  /auth/mfa/enable:
+    post:
+      summary: Confirm MFA setup with TOTP code
+      description: |
+        Verifies a TOTP code against the pending setup secret to prove the authenticator
+        app is correctly configured. On success, persists MFA settings to the account and
+        MFA is active for all subsequent password logins.
+      operationId: enableMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: user
+        states: {}
+      parameters:
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token
+        x-from-authorization: bearer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaEnableRequest'
+      responses:
+        '200':
+          description: MFA enabled successfully
+        '400':
+          description: Invalid TOTP code or expired setup token
+        '409':
+          description: MFA already enabled
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MfaEnableRequest\"\
+        ,\n    \"$defs\": {\n        \"MfaEnableRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to confirm MFA setup with a valid TOTP code proving authenticator is configured\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"setupToken\",\n                \"totpCode\"\n           \
+        \ ],\n            \"properties\": {\n                \"setupToken\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Setup token from /auth/mfa/setup response\"\n                },\n        \
+        \        \"totpCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 6,\n     \
+        \               \"maxLength\": 6,\n                    \"pattern\": \"^\\\\d{6}$\",\n                    \"description\"\
+        : \"6-digit TOTP code from authenticator app\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Confirm MFA setup with TOTP code\",\n    \"description\": \"Verifies a
+        TOTP code against the pending setup secret to prove the authenticator\\napp is correctly configured. On success, persists
+        MFA settings to the account and\\nMFA is active for all subsequent password logins.\\n\",\n    \"tags\": [\n     \
+        \   \"MFA\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"enableMfa\"\n}"
+  /auth/mfa/disable:
+    post:
+      summary: Disable MFA for current account
+      description: |
+        Disables MFA for the authenticated account. Requires a valid TOTP code or
+        recovery code to prevent unauthorized disable. Clears the TOTP secret and
+        recovery codes from the account.
+      operationId: disableMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: user
+        states: {}
+      parameters:
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token
+        x-from-authorization: bearer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaDisableRequest'
+      responses:
+        '200':
+          description: MFA disabled successfully
+        '400':
+          description: Invalid TOTP code or recovery code
+        '404':
+          description: MFA not enabled for this account
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MfaDisableRequest\"\
+        ,\n    \"$defs\": {\n        \"MfaDisableRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to disable MFA. Exactly one of totpCode or recoveryCode must be provided.\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"totpCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"minLength\": 6,\n                    \"maxLength\"\
+        : 6,\n                    \"pattern\": \"^\\\\d{6}$\",\n                    \"description\": \"Current 6-digit TOTP
+        code from authenticator app\"\n                },\n                \"recoveryCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Single-use recovery
+        code (format xxxx-xxxx)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Disable MFA for current account\",\n    \"description\": \"Disables MFA
+        for the authenticated account. Requires a valid TOTP code or\\nrecovery code to prevent unauthorized disable. Clears
+        the TOTP secret and\\nrecovery codes from the account.\\n\",\n    \"tags\": [\n        \"MFA\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"disableMfa\"\n}"
+  /auth/mfa/admin-disable:
+    post:
+      summary: Admin override to disable MFA
+      description: |
+        Allows administrators to disable MFA for any account without TOTP verification.
+        For account recovery when a user has lost their authenticator and all recovery codes.
+      operationId: adminDisableMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDisableMfaRequest'
+      responses:
+        '200':
+          description: MFA disabled by admin
+        '404':
+          description: Account not found or MFA not enabled
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AdminDisableMfaRequest\"\
+        ,\n    \"$defs\": {\n        \"AdminDisableMfaRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Admin request to forcefully disable MFA for a user account\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"accountId\"\n            ],\n            \"properties\": {\n     \
+        \           \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Account ID to disable MFA for\"\n                },\n                \"\
+        reason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Administrative reason for disabling MFA (stored in audit event)\"\n                }\n   \
+        \         }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Admin override to disable MFA\",\n    \"description\": \"Allows administrators
+        to disable MFA for any account without TOTP verification.\\nFor account recovery when a user has lost their authenticator
+        and all recovery codes.\\n\",\n    \"tags\": [\n        \"MFA\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"adminDisableMfa\"\n}"
+  /auth/mfa/verify:
+    post:
+      summary: Verify MFA code during login
+      description: |
+        Completes the MFA challenge issued during login by verifying a TOTP code or
+        recovery code. On success, returns full authentication tokens (same as a
+        non-MFA login would). The challenge token is single-use and has a configurable
+        TTL (default 5 minutes).
+      operationId: verifyMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: anonymous
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaVerifyRequest'
+      responses:
+        '200':
+          description: MFA verified, tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid TOTP code or recovery code
+        '401':
+          description: Challenge token not found, expired, or already used
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MfaVerifyRequest\"\
+        ,\n    \"$defs\": {\n        \"MfaVerifyRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to verify MFA during login. Exactly one of totpCode or recoveryCode must be provided.\",\n           \
+        \ \"additionalProperties\": false,\n            \"required\": [\n                \"challengeToken\"\n            ],\n\
+        \            \"properties\": {\n                \"challengeToken\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Challenge token from LoginResponse when requiresMfa was true\"\n         \
+        \       },\n                \"totpCode\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"minLength\": 6,\n                    \"maxLength\": 6,\n                    \"pattern\"\
+        : \"^\\\\d{6}$\",\n                    \"description\": \"6-digit TOTP code from authenticator app\"\n           \
+        \     },\n                \"recoveryCode\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Single-use recovery code (format xxxx-xxxx)\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
+        ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
+        containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"accountId\",\n                \"accessToken\",\n        \
+        \        \"refreshToken\",\n                \"expiresIn\",\n                \"connectUrl\"\n            ],\n     \
+        \       \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the authenticated
+        account\"\n                },\n                \"accessToken\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"JWT access token for API authentication\"\n                },\n             \
+        \   \"refreshToken\": {\n                    \"type\": \"string\",\n                    \"description\": \"Token used
+        to obtain new access tokens when the current one expires\"\n                },\n                \"expiresIn\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Seconds until access token expires\"\
+        \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
+        \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"List of roles assigned to the authenticated user\"\n             \
+        \   }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Verify MFA code during login\",\n    \"description\": \"Completes the MFA
+        challenge issued during login by verifying a TOTP code or\\nrecovery code. On success, returns full authentication
+        tokens (same as a\\nnon-MFA login would). The challenge token is single-use and has a configurable\\nTTL (default
+        5 minutes).\\n\",\n    \"tags\": [\n        \"MFA\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"verifyMfa\"\
+        \n}"
 components:
   securitySchemes:
     BearerAuth:
@@ -792,6 +1043,15 @@ components:
       - twitch
       - steam
       description: Authentication provider type
+    EmailProvider:
+      type: string
+      enum:
+      - none
+      - sendgrid
+      - smtp
+      - ses
+      description: Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, 
+        ses=AWS SES v2)
     InitOAuthResponse:
       type: object
       description: Response containing the OAuth authorization URL for redirect
@@ -1122,6 +1382,138 @@ components:
           format: password
           minLength: 8
           description: New password to set for the account
+    LoginResponse:
+      type: object
+      description: Response from email/password login. May contain full tokens (no MFA) or a challenge token (MFA 
+        required).
+      additionalProperties: false
+      required:
+      - accountId
+      - requiresMfa
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID (always present regardless of MFA status)
+        requiresMfa:
+          type: boolean
+          description: If true, client must complete MFA via /auth/mfa/verify before receiving tokens
+        mfaChallengeToken:
+          type: string
+          nullable: true
+          description: Short-lived challenge token for /auth/mfa/verify (only present when requiresMfa is true)
+        accessToken:
+          type: string
+          nullable: true
+          description: JWT access token (only present when requiresMfa is false)
+        refreshToken:
+          type: string
+          nullable: true
+          description: Refresh token (only present when requiresMfa is false)
+        expiresIn:
+          type: integer
+          nullable: true
+          description: Seconds until access token expires (only present when requiresMfa is false)
+        connectUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: WebSocket connect URL (only present when requiresMfa is false)
+        roles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Account roles (only present when requiresMfa is false)
+    MfaSetupResponse:
+      type: object
+      description: MFA setup data containing TOTP URI for QR code and recovery codes
+      additionalProperties: false
+      required:
+      - setupToken
+      - totpUri
+      - recoveryCodes
+      properties:
+        setupToken:
+          type: string
+          description: Token to pass to /auth/mfa/enable to confirm setup
+        totpUri:
+          type: string
+          description: otpauth:// URI for authenticator app QR code scanning
+        recoveryCodes:
+          type: array
+          items:
+            type: string
+          description: 10 single-use recovery codes (shown only once, user must save them)
+    MfaEnableRequest:
+      type: object
+      description: Request to confirm MFA setup with a valid TOTP code proving authenticator is configured
+      additionalProperties: false
+      required:
+      - setupToken
+      - totpCode
+      properties:
+        setupToken:
+          type: string
+          description: Setup token from /auth/mfa/setup response
+        totpCode:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: '^\d{6}$'
+          description: 6-digit TOTP code from authenticator app
+    MfaDisableRequest:
+      type: object
+      description: Request to disable MFA. Exactly one of totpCode or recoveryCode must be provided.
+      additionalProperties: false
+      properties:
+        totpCode:
+          type: string
+          nullable: true
+          minLength: 6
+          maxLength: 6
+          pattern: '^\d{6}$'
+          description: Current 6-digit TOTP code from authenticator app
+        recoveryCode:
+          type: string
+          nullable: true
+          description: Single-use recovery code (format xxxx-xxxx)
+    AdminDisableMfaRequest:
+      type: object
+      description: Admin request to forcefully disable MFA for a user account
+      additionalProperties: false
+      required:
+      - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID to disable MFA for
+        reason:
+          type: string
+          nullable: true
+          description: Administrative reason for disabling MFA (stored in audit event)
+    MfaVerifyRequest:
+      type: object
+      description: Request to verify MFA during login. Exactly one of totpCode or recoveryCode must be provided.
+      additionalProperties: false
+      required:
+      - challengeToken
+      properties:
+        challengeToken:
+          type: string
+          description: Challenge token from LoginResponse when requiresMfa was true
+        totpCode:
+          type: string
+          nullable: true
+          minLength: 6
+          maxLength: 6
+          pattern: '^\d{6}$'
+          description: 6-digit TOTP code from authenticator app
+        recoveryCode:
+          type: string
+          nullable: true
+          description: Single-use recovery code (format xxxx-xxxx)
     ProvidersResponse:
       type: object
       description: List of available authentication providers

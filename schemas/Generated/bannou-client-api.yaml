@@ -135,6 +135,32 @@ paths:
           description: Password hash updated successfully
         '404':
           description: Account not found
+  /account/mfa/update:
+    post:
+      summary: Update MFA settings for an account
+      description: |
+        Sets or clears MFA-related fields (mfaEnabled, mfaSecret, mfaRecoveryCodes) atomically.
+        Used by Auth service during MFA enable/disable flows. Auth owns the encryption logic;
+        Account stores the opaque encrypted data.
+      operationId: updateMfa
+      tags:
+      - Account Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMfaRequest'
+      responses:
+        '200':
+          description: MFA settings updated successfully
+        '404':
+          description: Account not found
+        '409':
+          description: Concurrent modification detected
   /account/verification/update:
     post:
       summary: Update email verification status
@@ -1115,11 +1141,11 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Login successful
+          description: Login successful or MFA challenge issued
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/LoginResponse'
         '401':
           description: Invalid credentials
         '429':
@@ -1440,6 +1466,135 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProvidersResponse'
+  /auth/mfa/setup:
+    post:
+      summary: Initialize MFA setup
+      description: |
+        Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR
+        code scanning and the recovery codes in plain text (shown only once). The setup is
+        not active until confirmed via /auth/mfa/enable with a valid TOTP code.
+      operationId: setupMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: user
+        states: {}
+      parameters:
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token
+        x-from-authorization: bearer
+      responses:
+        '200':
+          description: MFA setup initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaSetupResponse'
+        '409':
+          description: MFA already enabled for this account
+  /auth/mfa/enable:
+    post:
+      summary: Confirm MFA setup with TOTP code
+      description: |
+        Verifies a TOTP code against the pending setup secret to prove the authenticator
+        app is correctly configured. On success, persists MFA settings to the account and
+        MFA is active for all subsequent password logins.
+      operationId: enableMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: user
+        states: {}
+      parameters:
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token
+        x-from-authorization: bearer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaEnableRequest'
+      responses:
+        '200':
+          description: MFA enabled successfully
+        '400':
+          description: Invalid TOTP code or expired setup token
+        '409':
+          description: MFA already enabled
+  /auth/mfa/disable:
+    post:
+      summary: Disable MFA for current account
+      description: |
+        Disables MFA for the authenticated account. Requires a valid TOTP code or
+        recovery code to prevent unauthorized disable. Clears the TOTP secret and
+        recovery codes from the account.
+      operationId: disableMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: user
+        states: {}
+      parameters:
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token
+        x-from-authorization: bearer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaDisableRequest'
+      responses:
+        '200':
+          description: MFA disabled successfully
+        '400':
+          description: Invalid TOTP code or recovery code
+        '404':
+          description: MFA not enabled for this account
+  /auth/mfa/verify:
+    post:
+      summary: Verify MFA code during login
+      description: |
+        Completes the MFA challenge issued during login by verifying a TOTP code or
+        recovery code. On success, returns full authentication tokens (same as a
+        non-MFA login would). The challenge token is single-use and has a configurable
+        TTL (default 5 minutes).
+      operationId: verifyMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: anonymous
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaVerifyRequest'
+      responses:
+        '200':
+          description: MFA verified, tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid TOTP code or recovery code
+        '401':
+          description: Challenge token not found, expired, or already used
   /compile:
     post:
       summary: Compile ABML behavior definition
@@ -7353,6 +7508,34 @@ paths:
       x-permissions:
       - role: user
         states: {}
+  /relationship/cleanup-by-entity:
+    post:
+      operationId: cleanupByEntity
+      tags:
+      - Relationship Management
+      summary: Cleanup relationships referencing a deleted entity
+      description: |
+        Called by lib-resource cleanup coordination when a foundational entity
+        (character, realm) is deleted. Ends all active relationships where the
+        specified entity is either entity1 or entity2. Ended relationships are
+        preserved for history (soft-delete via endedAt). This endpoint is designed
+        for internal service-to-service calls during cascading resource cleanup.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByEntityRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByEntityResponse'
+      x-permissions:
+      - role: developer
+        states: {}
   /relationship-type/get:
     post:
       summary: Get relationship type by ID
@@ -9866,6 +10049,23 @@ components:
           additionalProperties: true
           nullable: true
           description: Custom metadata associated with the account
+        mfaEnabled:
+          type: boolean
+          default: false
+          description: Whether multi-factor authentication is enabled for this 
+            account
+        mfaSecret:
+          type: string
+          nullable: true
+          description: Encrypted TOTP secret (AES-256-GCM ciphertext). Auth 
+            service encrypts and decrypts. Account stores opaque ciphertext.
+        mfaRecoveryCodes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: BCrypt-hashed single-use recovery codes. Auth service 
+            generates and verifies. Account stores opaque hashes.
     AchievementDefinitionResponse:
       type: object
       description: Achievement definition details
@@ -11078,11 +11278,6 @@ components:
             type: string
           nullable: true
           description: List of roles assigned to the authenticated user
-        requiresTwoFactor:
-          type: boolean
-          default: false
-          description: Whether the user needs to complete two-factor 
-            authentication
     AuthoringCheckoutRequest:
       type: object
       description: Request to checkout for authoring
@@ -13187,6 +13382,42 @@ components:
         success:
           type: boolean
           description: Whether cleanup completed successfully
+    CleanupByEntityRequest:
+      description: Request to end all relationships referencing a deleted entity
+        during cascading resource cleanup
+      type: object
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the deleted entity whose relationships should be 
+            ended
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Type of the deleted entity (e.g., Character, Realm)
+    CleanupByEntityResponse:
+      description: Response summarizing the results of a cascading relationship 
+        cleanup operation
+      type: object
+      additionalProperties: false
+      required:
+      - relationshipsEnded
+      - success
+      properties:
+        relationshipsEnded:
+          type: integer
+          description: Number of active relationships that were ended during 
+            cleanup
+        alreadyEnded:
+          type: integer
+          description: Number of relationships that were already ended (skipped)
+        success:
+          type: boolean
+          description: Whether the cleanup completed without errors
     CleanupCallbackResult:
       type: object
       additionalProperties: false
@@ -21610,6 +21841,17 @@ components:
           type: boolean
           default: false
           description: Include relationships that have ended
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for paginated results (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of results per page (max 100)
     GetScenarioDefinitionRequest:
       type: object
       additionalProperties: false
@@ -24451,10 +24693,6 @@ components:
           nullable: true
           description: Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC")
             (null to include all)
-        includeChildren:
-          type: boolean
-          default: true
-          description: Whether to include child types in the response
         rootsOnly:
           type: boolean
           default: false
@@ -25320,6 +25558,7 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           description: Email address for authentication
         password:
           type: string
@@ -25334,6 +25573,53 @@ components:
           $ref: '#/components/schemas/DeviceInfo'
           nullable: true
           description: Information about the client device (optional)
+    LoginResponse:
+      type: object
+      description: Response from email/password login. May contain full tokens 
+        (no MFA) or a challenge token (MFA required).
+      additionalProperties: false
+      required:
+      - accountId
+      - requiresMfa
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID (always present regardless of MFA status)
+        requiresMfa:
+          type: boolean
+          description: If true, client must complete MFA via /auth/mfa/verify 
+            before receiving tokens
+        mfaChallengeToken:
+          type: string
+          nullable: true
+          description: Short-lived challenge token for /auth/mfa/verify (only 
+            present when requiresMfa is true)
+        accessToken:
+          type: string
+          nullable: true
+          description: JWT access token (only present when requiresMfa is false)
+        refreshToken:
+          type: string
+          nullable: true
+          description: Refresh token (only present when requiresMfa is false)
+        expiresIn:
+          type: integer
+          nullable: true
+          description: Seconds until access token expires (only present when 
+            requiresMfa is false)
+        connectUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: WebSocket connect URL (only present when requiresMfa is 
+            false)
+        roles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Account roles (only present when requiresMfa is false)
     Logo:
       description: Site logo configuration including image URL and accessibility
         text
@@ -25650,6 +25936,86 @@ components:
       enum:
       - instance_data
       - runtime_state
+    MfaDisableRequest:
+      type: object
+      description: Request to disable MFA. Exactly one of totpCode or 
+        recoveryCode must be provided.
+      additionalProperties: false
+      properties:
+        totpCode:
+          type: string
+          nullable: true
+          minLength: 6
+          maxLength: 6
+          pattern: '^\d{6}$'
+          description: Current 6-digit TOTP code from authenticator app
+        recoveryCode:
+          type: string
+          nullable: true
+          description: Single-use recovery code (format xxxx-xxxx)
+    MfaEnableRequest:
+      type: object
+      description: Request to confirm MFA setup with a valid TOTP code proving 
+        authenticator is configured
+      additionalProperties: false
+      required:
+      - setupToken
+      - totpCode
+      properties:
+        setupToken:
+          type: string
+          description: Setup token from /auth/mfa/setup response
+        totpCode:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: '^\d{6}$'
+          description: 6-digit TOTP code from authenticator app
+    MfaSetupResponse:
+      type: object
+      description: MFA setup data containing TOTP URI for QR code and recovery 
+        codes
+      additionalProperties: false
+      required:
+      - setupToken
+      - totpUri
+      - recoveryCodes
+      properties:
+        setupToken:
+          type: string
+          description: Token to pass to /auth/mfa/enable to confirm setup
+        totpUri:
+          type: string
+          description: otpauth:// URI for authenticator app QR code scanning
+        recoveryCodes:
+          type: array
+          items:
+            type: string
+          description: 10 single-use recovery codes (shown only once, user must 
+            save them)
+    MfaVerifyRequest:
+      type: object
+      description: Request to verify MFA during login. Exactly one of totpCode 
+        or recoveryCode must be provided.
+      additionalProperties: false
+      required:
+      - challengeToken
+      properties:
+        challengeToken:
+          type: string
+          description: Challenge token from LoginResponse when requiresMfa was 
+            true
+        totpCode:
+          type: string
+          nullable: true
+          minLength: 6
+          maxLength: 6
+          pattern: '^\d{6}$'
+          description: 6-digit TOTP code from authenticator app
+        recoveryCode:
+          type: string
+          nullable: true
+          description: Single-use recovery code (format xxxx-xxxx)
     MidiEvent:
       x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent
       description: A single MIDI event
@@ -26942,6 +27308,7 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           description: Email address associated with the account to reset
     PastLifeReference:
       description: Reference to a past incarnation
@@ -32501,6 +32868,8 @@ components:
       properties:
         ticket:
           type: string
+          pattern: '^[0-9A-Fa-f]+$'
+          minLength: 16
           description: |
             Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
             Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
@@ -34427,6 +34796,33 @@ components:
           type: boolean
           nullable: true
           description: New visibility setting
+    UpdateMfaRequest:
+      type: object
+      description: Request to update MFA settings for an account
+      additionalProperties: false
+      required:
+      - accountId
+      - mfaEnabled
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
+        mfaEnabled:
+          type: boolean
+          description: Whether to enable or disable MFA
+        mfaSecret:
+          type: string
+          nullable: true
+          description: Encrypted TOTP secret (set when enabling, null when 
+            disabling)
+        mfaRecoveryCodes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: BCrypt-hashed recovery codes (set when enabling, null 
+            when disabling)
     UpdateMode:
       type: string
       description: How to handle score updates
@@ -35146,7 +35542,7 @@ components:
       required:
       - valid
       - accountId
-      - sessionId
+      - sessionKey
       properties:
         valid:
           type: boolean
@@ -35156,11 +35552,11 @@ components:
           format: uuid
           description: Unique identifier for the account associated with the 
             token
-        sessionId:
+        sessionKey:
           type: string
           format: uuid
-          description: Session identifier for WebSocket connections and service 
-            routing
+          description: Internal session key used by Connect service for 
+            WebSocket connection tracking and service routing
         roles:
           type: array
           items:

@@ -718,6 +718,12 @@ Final ... |
 | `ORCHESTRATOR_ROUTING_TTL_SECONDS` | int | `300` | TTL in seconds for service routing entries in state store |
 | `ORCHESTRATOR_SECURE_WEBSOCKET` | bool | `true` | When true, publishes blank permission registration making or... |
 
+### Permission
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | int | `50` | Maximum number of concurrent session recompilations during s... |
+
 ### Puppetmaster
 
 | Environment Variable | Type | Default | Description |
@@ -941,9 +947,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 719
+- **Total properties**: 720
 - **Required (no default)**: 51
-- **Optional (has default)**: 668
+- **Optional (has default)**: 669
 
 ## Environment Variable Naming Convention
 

@@ -27,6 +27,21 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  x-references:
+  - target: character
+    sourceType: relationship
+    field: entity1Id/entity2Id
+    onDelete: cascade
+    cleanup:
+      endpoint: /relationship/cleanup-by-entity
+      payloadTemplate: '{"entityId": "{{resourceId}}", "entityType": "Character"}'
+  - target: realm
+    sourceType: relationship
+    field: entity1Id/entity2Id
+    onDelete: cascade
+    cleanup:
+      endpoint: /relationship/cleanup-by-entity
+      payloadTemplate: '{"entityId": "{{resourceId}}", "entityType": "Realm"}'
 x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
@@ -570,6 +585,59 @@ paths:
         key is cleared, allowing new relationships\\nbetween the same entities with the same type.\\n\",\n    \"tags\": [\n\
         \        \"Relationship Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"endRelationship\"\
         \n}"
+  /relationship/cleanup-by-entity:
+    post:
+      operationId: cleanupByEntity
+      tags:
+      - Relationship Management
+      summary: Cleanup relationships referencing a deleted entity
+      description: |
+        Called by lib-resource cleanup coordination when a foundational entity
+        (character, realm) is deleted. Ends all active relationships where the
+        specified entity is either entity1 or entity2. Ended relationships are
+        preserved for history (soft-delete via endedAt). This endpoint is designed
+        for internal service-to-service calls during cascading resource cleanup.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByEntityRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByEntityResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByEntityRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByEntityRequest\": {\n            \"description\": \"Request to end all relationships
+        referencing a deleted entity during cascading resource cleanup\",\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"required\": [\n                \"entityId\",\n                \"\
+        entityType\"\n            ],\n            \"properties\": {\n                \"entityId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the
+        deleted entity whose relationships should be ended\"\n                },\n                \"entityType\": {\n    \
+        \                \"type\": \"object\",\n                    \"description\": \"Type of the deleted entity (e.g., Character,
+        Realm)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByEntityResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupByEntityResponse\": {\n            \"description\": \"Response summarizing the
+        results of a cascading relationship cleanup operation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"relationshipsEnded\",\n                \"success\"\n    \
+        \        ],\n            \"properties\": {\n                \"relationshipsEnded\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Number of active relationships that were ended during cleanup\"\
+        \n                },\n                \"alreadyEnded\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Number of relationships that were already ended (skipped)\"\n                },\n  \
+        \              \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
+        Whether the cleanup completed without errors\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Cleanup relationships referencing a deleted entity\",\n    \"description\"\
+        : \"Called by lib-resource cleanup coordination when a foundational entity\\n(character, realm) is deleted. Ends all
+        active relationships where the\\nspecified entity is either entity1 or entity2. Ended relationships are\\npreserved
+        for history (soft-delete via endedAt). This endpoint is designed\\nfor internal service-to-service calls during cascading
+        resource cleanup.\\n\",\n    \"tags\": [\n        \"Relationship Management\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"cleanupByEntity\"\n}"
   /relationship-type/get:
     post:
       summary: Get relationship type by ID
@@ -753,13 +821,11 @@ paths:
         ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"category\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by category (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\", \\\"ECONOMIC\\\") (null to include all)\"\n        \
-        \        },\n                \"includeChildren\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"default\": true,\n                    \"description\": \"Whether to include child types in the response\"\n\
-        \                },\n                \"rootsOnly\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Only return types with no parent (root types)\"\
-        \n                },\n                \"includeDeprecated\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"default\": false,\n                    \"description\": \"Whether to include deprecated types in
-        the response\"\n                }\n            }\n        }\n    }\n}"
+        \        },\n                \"rootsOnly\": {\n                    \"type\": \"boolean\",\n                    \"\
+        default\": false,\n                    \"description\": \"Only return types with no parent (root types)\"\n      \
+        \          },\n                \"includeDeprecated\": {\n                    \"type\": \"boolean\",\n            \
+        \        \"default\": false,\n                    \"description\": \"Whether to include deprecated types in the response\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RelationshipTypeListResponse\"\
         ,\n    \"$defs\": {\n        \"RelationshipTypeListResponse\": {\n            \"description\": \"Response containing
         a list of relationship types with total count\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -1807,6 +1873,38 @@ components:
           nullable: true
           maxLength: 500
           description: Optional reason for ending the relationship
+    CleanupByEntityRequest:
+      description: Request to end all relationships referencing a deleted entity during cascading resource cleanup
+      type: object
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the deleted entity whose relationships should be ended
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of the deleted entity (e.g., Character, Realm)
+    CleanupByEntityResponse:
+      description: Response summarizing the results of a cascading relationship cleanup operation
+      type: object
+      additionalProperties: false
+      required:
+      - relationshipsEnded
+      - success
+      properties:
+        relationshipsEnded:
+          type: integer
+          description: Number of active relationships that were ended during cleanup
+        alreadyEnded:
+          type: integer
+          description: Number of relationships that were already ended (skipped)
+        success:
+          type: boolean
+          description: Whether the cleanup completed without errors
     RelationshipResponse:
       description: Complete details of a relationship between two entities
       type: object
@@ -1930,10 +2028,6 @@ components:
           type: string
           nullable: true
           description: Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null to include all)
-        includeChildren:
-          type: boolean
-          default: true
-          description: Whether to include child types in the response
         rootsOnly:
           type: boolean
           default: false

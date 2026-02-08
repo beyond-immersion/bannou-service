@@ -1,9 +1,9 @@
-using System.Security.Cryptography;
-using System.Text;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using OtpNet;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace BeyondImmersion.BannouService.Auth.Services;
 
