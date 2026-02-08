@@ -203,14 +203,14 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-1. **Permission TTL**: Auto-expire session permissions after configurable period, forcing recompilation on next access.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/198 -->
-2. **Fine-grained caching**: Cache compiled permissions per-service instead of per-session for more granular invalidation.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/209 -->
-3. **Permission delegation**: Allow services to grant temporary elevated permissions to specific sessions.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/234 -->
-4. **Audit trail**: Log permission checks and changes for security auditing.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/235 -->
+1. **Permission TTL**: Auto-expire in-memory cached permissions after configurable period, forcing Redis refresh on next access. Safety net for lost RabbitMQ events. Default disabled (0). See [#198](https://github.com/beyond-immersion/bannou-service/issues/198) for implementation plan — all design questions resolved.
+<!-- AUDIT:READY:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/198 -->
+2. ~~**Fine-grained caching**~~: **CLOSED** — Per-service caching provides no invalidation benefit (all triggers operate at session level) and would increase memory ~40x. Per-session is the correct granularity. Additionally, Connect's local event-driven cache is the actual hot path, making Permission's in-memory cache secondary. See [#209](https://github.com/beyond-immersion/bannou-service/issues/209).
+<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/209 -->
+3. ~~**Permission delegation**~~: **CLOSED** — The existing state-based permission system (`UpdateSessionState` with arbitrary states registered via x-permissions) already handles all proposed delegation use cases. Adding a parallel delegation mechanism would create unnecessary complexity. See [#234](https://github.com/beyond-immersion/bannou-service/issues/234).
+<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/234 -->
+4. ~~**Audit trail**~~: **CLOSED (mis-scoped)** — Connect owns the hot-path validation (local cache, not Permission API). Permission changes are already event-driven via `SessionCapabilitiesEvent`. Denial auditing is a Connect concern. Storage/retention/queries are Analytics (L4) concerns. See [#235](https://github.com/beyond-immersion/bannou-service/issues/235).
+<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/235 -->
 
 ---
 
@@ -232,11 +232,11 @@ None identified.
 
 ### Design Considerations
 
-1. **Full session recompilation on service registration**: Every time a service registers, ALL active sessions are recompiled. With many concurrent sessions and frequent service restarts, this generates O(sessions * services) Redis operations.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/236 -->
+1. **Full session recompilation on service registration**: Sequential recompilation of all active sessions during service registration. At 100K sessions, a hot-deployed service change triggers ~300s sequential recompilation. Solution: parallel recompilation with configurable `MaxConcurrentRecompilations` (semaphore-bounded `Task.WhenAll`). All design questions resolved — see [#236](https://github.com/beyond-immersion/bannou-service/issues/236) for implementation plan.
+<!-- AUDIT:READY:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/236 -->
 
-2. **Permission matrix stored as individual keys**: Each `service:state:role` combination is a separate Redis key. For 40 services with 3 states and 4 roles, this is 480 keys. Queries during recompilation read many keys per session.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/237 -->
+2. ~~**Permission matrix stored as individual keys**~~: **CLOSED** — 480 Redis keys with ~320 reads per recompilation (~3ms) is well within Redis capacity (100K+ ops/sec). The current simple key strategy is correct. Not on the hot message path (Connect validates locally). See [#237](https://github.com/beyond-immersion/bannou-service/issues/237).
+<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/237 -->
 
 3. ~~**Read-modify-write on session sets**~~: **FIXED** - All three tracking sets (`activeConnections`, `activeSessions`, `registered_services`) now use `ICacheableStateStore<string>` atomic set operations (`SADD`/`SREM`/`SISMEMBER`/`SMEMBERS`), eliminating the read-modify-write race condition. The distributed lock and its 3 config properties were removed entirely.
 <!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/248 -->
