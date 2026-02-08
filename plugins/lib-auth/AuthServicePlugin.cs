@@ -74,6 +74,7 @@ public class AuthServicePlugin : StandardServicePlugin<IAuthService>
                             "AUTH_EMAIL_FROM_ADDRESS is required when EmailProvider is 'smtp'");
                     }
 
+                    // MailboxAddress requires non-null display name; coalesce satisfies constructor (empty if not configured)
                     var from = new MimeKit.MailboxAddress(config.EmailFromName ?? "", config.EmailFromAddress);
                     return new SmtpEmailService(
                         config.SmtpHost, config.SmtpPort,

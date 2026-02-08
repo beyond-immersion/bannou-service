@@ -780,8 +780,17 @@ public partial class AuthService : IAuthService
                     new StateOptions { Ttl = resetTokenTtlMinutes * 60 },
                     cancellationToken);
 
-                // Send password reset email (mock implementation logs to console)
-                await SendPasswordResetEmailAsync(accountEmail, resetToken, resetTokenTtlMinutes, cancellationToken);
+                // Fire-and-forget email delivery: never let email failures affect the response.
+                // Always return 200 for enumeration protection regardless of delivery outcome.
+                try
+                {
+                    await SendPasswordResetEmailAsync(accountEmail, resetToken, resetTokenTtlMinutes, cancellationToken);
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError(emailEx, "Failed to send password reset email for account {AccountId}", account.AccountId);
+                    await PublishErrorEventAsync("SendPasswordResetEmail", emailEx.GetType().Name, emailEx.Message);
+                }
 
                 _logger.LogInformation("Password reset token generated for account {AccountId}, expires in {Minutes} minutes",
                     account.AccountId, resetTokenTtlMinutes);
@@ -800,7 +809,8 @@ public partial class AuthService : IAuthService
 
     /// <summary>
     /// Send password reset email via IEmailService abstraction.
-    /// The concrete implementation (console, SendGrid, SES, etc.) is determined by DI registration.
+    /// The concrete implementation (console, SendGrid, SMTP) is determined by AUTH_EMAIL_PROVIDER config.
+    /// Caller must catch exceptions - email delivery failures must not affect the HTTP response.
     /// </summary>
     private async Task SendPasswordResetEmailAsync(string email, string resetToken, int expiresInMinutes, CancellationToken cancellationToken)
     {

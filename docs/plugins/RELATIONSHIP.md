@@ -134,7 +134,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 - **GetRelationshipType** (`/relationship-type/get`): Direct lookup by type ID. Returns full definition with parent/inverse references.
 - **GetRelationshipTypeByCode** (`/relationship-type/get-by-code`): Code index lookup (uppercase-normalized). Returns NotFound if code index missing or model missing.
-- **ListRelationshipTypes** (`/relationship-type/list`): Loads all IDs from `all-types`, bulk-loads types. Filters by `category`, `rootsOnly`, `includeDeprecated`. **Note**: `includeChildren` parameter is ignored (see Stubs section). In-memory filtering (no pagination support).
+- **ListRelationshipTypes** (`/relationship-type/list`): Loads all IDs from `all-types`, bulk-loads types. Filters by `category`, `rootsOnly`, `includeDeprecated`. In-memory filtering (no pagination support).
 - **GetChildRelationshipTypes** (`/relationship-type/get-children`): Verifies parent exists, loads child IDs from parent index. Supports `recursive` flag for full subtree traversal with depth limit.
 - **MatchesHierarchy** (`/relationship-type/matches-hierarchy`): Checks if a type matches or descends from an ancestor type. Walks parent chain iteratively. Returns `{ Matches: bool, Depth: int }` where depth is 0 for same type, -1 for no match.
 - **GetAncestors** (`/relationship-type/get-ancestors`): Returns full ancestry chain from type up to root. Walks parent pointers iteratively with `MaxHierarchyDepth` limit.
@@ -280,8 +280,7 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-1. **`IncludeChildren` parameter ignored**: The `ListRelationshipTypesRequest.IncludeChildren` property exists in the schema (default: `true`) but is not used in `ListRelationshipTypesAsync`. The list endpoint always returns all types matching the filters, regardless of this flag's value.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/233 -->
+1. ~~**`IncludeChildren` parameter ignored**~~: **FIXED** (2026-02-08) - Removed the dead `includeChildren` property from the schema. It was redundant with `rootsOnly` and never functional (T21 violation). Issue #233.
 
 ---
 
@@ -355,6 +354,10 @@ State Store Layout
 ## Work Tracking
 
 *This section tracks active development work. Markers are managed by `/audit-plugin`.*
+
+### Completed
+
+- **2026-02-08**: Issue [#233](https://github.com/beyond-immersion/bannou-service/issues/233) - Removed dead `includeChildren` parameter from ListRelationshipTypesRequest schema (T21 violation, redundant with `rootsOnly`)
 
 ### Pending Issues
 

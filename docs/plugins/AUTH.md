@@ -22,6 +22,8 @@ The Auth plugin is the internet-facing authentication and session management ser
 **External NuGet dependencies:**
 - `Microsoft.IdentityModel.Tokens` (8.15.0) - JWT creation and validation
 - `BCrypt.Net-Next` (4.0.3) - Password hashing
+- `SendGrid` (9.x, MIT) - SendGrid API email delivery (via bannou-service)
+- `MailKit` (4.x, MIT) - SMTP email delivery (via bannou-service)
 
 ## Dependents (What Relies On This Plugin)
 
@@ -88,6 +90,15 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 |----------|---------|---------|---------|
 | `JwtExpirationMinutes` | `AUTH_JWT_EXPIRATION_MINUTES` | 60 | How long access tokens and sessions are valid |
 | `SessionTokenTtlDays` | `AUTH_SESSION_TOKEN_TTL_DAYS` | 7 | How long refresh tokens remain valid |
+| `EmailProvider` | `AUTH_EMAIL_PROVIDER` | none | Email delivery provider enum: `none` (console logging), `sendgrid` (SendGrid API), `smtp` (SMTP via MailKit) |
+| `EmailFromAddress` | `AUTH_EMAIL_FROM_ADDRESS` | null | Sender email address for outgoing emails. Required when EmailProvider is not 'none'. |
+| `EmailFromName` | `AUTH_EMAIL_FROM_NAME` | null | Display name for outgoing emails (e.g., 'Bannou Support'). Optional. |
+| `SendGridApiKey` | `AUTH_SENDGRID_API_KEY` | null | SendGrid API key. Required when EmailProvider is 'sendgrid'. |
+| `SmtpHost` | `AUTH_SMTP_HOST` | null | SMTP server hostname. Required when EmailProvider is 'smtp'. |
+| `SmtpPort` | `AUTH_SMTP_PORT` | 587 | SMTP server port (587 for STARTTLS, 465 for implicit SSL, 25 for unencrypted) |
+| `SmtpUsername` | `AUTH_SMTP_USERNAME` | null | SMTP authentication username. Optional if server allows anonymous relay. |
+| `SmtpPassword` | `AUTH_SMTP_PASSWORD` | null | SMTP authentication password. Optional if server allows anonymous relay. |
+| `SmtpUseSsl` | `AUTH_SMTP_USE_SSL` | true | Use SSL/TLS when connecting to SMTP server |
 | `PasswordResetTokenTtlMinutes` | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | 30 | How long password reset tokens remain valid |
 | `PasswordResetBaseUrl` | `AUTH_PASSWORD_RESET_BASE_URL` | null | Base URL for password reset links in emails (throws `InvalidOperationException` at runtime if null when password reset is attempted) |
 | `ConnectUrl` | `AUTH_CONNECT_URL` | `ws://localhost:5014/connect` | WebSocket URL returned to clients after authentication (only used when `BANNOU_SERVICE_DOMAIN` is unset; see Quirk #9) |
@@ -136,7 +147,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `IOAuthProviderService` | OAuth URL construction, code exchange, user info retrieval, account linking, Steam ticket validation |
 | `IEdgeRevocationService` | Coordinates token revocation across edge providers (CloudFlare, OpenResty) |
 | `IEdgeRevocationProvider` (collection) | CloudflareEdgeProvider and OpenrestyEdgeProvider, injected into EdgeRevocationService via `IEnumerable<IEdgeRevocationProvider>` |
-| `IEmailService` | Email sending abstraction (default: `ConsoleEmailService` logs to console; swap for SendGrid/SES in production) |
+| `IEmailService` | Email sending abstraction. Provider selected by `AUTH_EMAIL_PROVIDER`: `ConsoleEmailService` (none/default), `SendGridEmailService` (sendgrid), or `SmtpEmailService` (smtp). Registered as singleton via factory in AuthServicePlugin. |
 | `IHttpClientFactory` | Used by OAuthProviderService for OAuth API calls and CloudflareEdgeProvider for KV writes |
 | `IEventConsumer` | Registers handlers for account.deleted, account.updated |
 
@@ -222,10 +233,10 @@ account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAs
 
 ## Stubs & Unimplemented Features
 
-### Email Delivery Provider
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/141 -->
+### ~~Email Delivery Provider~~
+<!-- AUDIT:RESOLVED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/141 -->
 
-Password reset uses the `IEmailService` abstraction (defined in `bannou-service/Services/`) to send emails. The default `ConsoleEmailService` logs the email subject, recipient, and body to the console via `ILogger.LogDebug`. The flow is complete end-to-end - only a production `IEmailService` implementation (SendGrid, AWS SES, etc.) is needed, registered in `AuthServicePlugin.cs` to replace `ConsoleEmailService`. The `PasswordResetBaseUrl` configuration exists for constructing the reset link.
+~~Password reset email delivery was a console-only mock.~~ **FIXED** (2026-02-08) - Implemented two production email providers (`SendGridEmailService` and `SmtpEmailService`) behind the `IEmailService` abstraction. Provider selection is configuration-driven via `AUTH_EMAIL_PROVIDER` enum (none/sendgrid/smtp). Email delivery is fire-and-forget: failures are logged and error events published, but `RequestPasswordReset` always returns 200 for enumeration protection. Default remains `none` (console logging) for development.
 
 ### Audit Event Consumers
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/142 -->
@@ -234,7 +245,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ## Potential Extensions
 
-- **Email delivery integration**: Covered by [#141](https://github.com/beyond-immersion/bannou-service/issues/141) (Email Delivery Provider).
+- ~~**Email delivery integration**~~: Resolved by [#141](https://github.com/beyond-immersion/bannou-service/issues/141) - SendGrid and SMTP providers implemented.
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/149 -->
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.
@@ -277,3 +288,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **Orphaned reverse index on 404** (2026-02-08): Fixed `FindOrCreateOAuthAccountAsync` to call `CleanupOAuthLinksForAccountAsync` instead of single key deletion when detecting a stale link (account returns 404). Added test `FindOrCreateOAuthAccountAsync_WithStaleLink404_ShouldCleanupAllLinksAndCreateNewAccount`.
+- **Email delivery provider** (2026-02-08): Issue #141 - Implemented `SendGridEmailService` and `SmtpEmailService` behind `IEmailService` abstraction. Added `EmailProvider` enum and 9 configuration properties to auth schema. Hardened `RequestPasswordReset` to always return 200 regardless of email delivery outcome.
