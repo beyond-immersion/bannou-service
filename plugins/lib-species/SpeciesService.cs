@@ -1097,14 +1097,25 @@ public partial class SpeciesService : ISpeciesService
                 }
                 catch (ApiException ex)
                 {
-                    _logger.LogWarning(ex, "Character service error fetching characters for species migration at page {Page}: {StatusCode}",
-                        page, ex.StatusCode);
-                    hasMorePages = false;
+                    _logger.LogError(ex, "Character service error fetching characters for species migration at page {Page}: {StatusCode}, aborting merge after {MigratedCount} migrated",
+                        page, ex.StatusCode, migratedCount);
+                    await _messageBus.TryPublishErrorAsync(
+                        "species", "MergeSpecies", "page_fetch_failed", ex.Message,
+                        dependency: "character", endpoint: "post:/character/list",
+                        details: $"Page={page}, MigratedSoFar={migratedCount}, FailedSoFar={failedCount}",
+                        stack: ex.StackTrace, cancellationToken: cancellationToken);
+                    return (StatusCodes.InternalServerError, null);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Error fetching characters for species migration at page {Page}", page);
-                    hasMorePages = false;
+                    _logger.LogError(ex, "Error fetching characters for species migration at page {Page}, aborting merge after {MigratedCount} migrated",
+                        page, migratedCount);
+                    await _messageBus.TryPublishErrorAsync(
+                        "species", "MergeSpecies", "page_fetch_failed", ex.Message,
+                        dependency: "character", endpoint: "post:/character/list",
+                        details: $"Page={page}, MigratedSoFar={migratedCount}, FailedSoFar={failedCount}",
+                        stack: ex.StackTrace, cancellationToken: cancellationToken);
+                    return (StatusCodes.InternalServerError, null);
                 }
             }
 

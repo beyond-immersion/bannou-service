@@ -2181,8 +2181,10 @@ public partial class ItemService : IItemService
                 ? new List<string>()
                 : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
 
-            var effectiveLimit = Math.Min(ids.Count, _configuration.MaxInstancesPerQuery);
-            var idsToFetch = ids.Take(effectiveLimit).ToList();
+            var actualCount = ids.Count;
+            var effectiveLimit = _configuration.MaxInstancesPerQuery;
+            var wasTruncated = actualCount > effectiveLimit;
+            var idsToFetch = wasTruncated ? ids.Take(effectiveLimit).ToList() : ids;
 
             // Load all instances in bulk (cache + persistent store)
             var modelsById = await GetInstancesBulkWithCacheAsync(idsToFetch, cancellationToken);
@@ -2200,7 +2202,8 @@ public partial class ItemService : IItemService
             return (StatusCodes.OK, new ListItemsResponse
             {
                 Items = items,
-                TotalCount = items.Count
+                TotalCount = actualCount,
+                WasTruncated = wasTruncated
             });
         }
         catch (Exception ex)

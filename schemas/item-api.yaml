@@ -1630,6 +1630,7 @@ components:
       required:
       - items
       - totalCount
+      - wasTruncated
       properties:
         items:
           type: array
@@ -1638,7 +1639,11 @@ components:
           description: List of items
         totalCount:
           type: integer
-          description: Total number of matching items
+          description: Total number of matching items (actual count, may exceed items returned)
+        wasTruncated:
+          type: boolean
+          description: True if the result was truncated due to MaxInstancesPerQuery limit
+          default: false
 
     BatchGetItemInstancesRequest:
       type: object

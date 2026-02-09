@@ -111,7 +111,7 @@ Service lifetime is **Scoped** (per-request). The helper classes are instantiate
 
 ### Lore Operations (4 endpoints)
 
-- **GetLore** (`/realm-history/get-lore`): Returns OK with empty list if no lore exists (never 404). Filters by element type and strength threshold. Converts timestamps via `TimestampHelper.FromUnixSeconds`.
+- **GetLore** (`/realm-history/get-lore`): Returns NotFound if no lore exists (consistent with character-history's GetBackstory). Filters by element type and strength threshold. Converts timestamps via `TimestampHelper.FromUnixSeconds`.
 - **SetLore** (`/realm-history/set-lore`): Merge-or-replace semantics controlled by `replaceExisting` flag. Merge updates existing elements by type+key pair and adds new ones. Validates against `MaxLoreElements` limit — replace mode checks input count, merge mode calculates post-merge count (existing + truly new). Returns BadRequest when limit exceeded. Write operations protected by distributed lock; returns 409 Conflict if lock cannot be acquired. Registers realm reference on new lore creation. Publishes created or updated event.
 - **AddLoreElement** (`/realm-history/add-lore-element`): Adds single element. Updates if type+key match exists. Validates against `MaxLoreElements` limit — only rejects truly new elements when at limit; updates to existing type+key pairs are always allowed. Creates lore document if none exists. Registers realm reference on new lore creation. Publishes created or updated event.
 - **DeleteLore** (`/realm-history/delete-lore`): Unregisters realm reference, removes entire lore document. Returns NotFound if no lore exists.
@@ -199,8 +199,8 @@ None identified.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **GetLore returns OK with empty list**: Unlike DeleteLore (which returns NotFound for missing lore), GetLore always returns 200 OK with an empty elements list. Read operations are lenient; delete operations are strict. This differs from character-history's `GetBackstory` which returns 404 NotFound for missing backstory.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/309 -->
+1. ~~**GetLore returns OK with empty list**~~: **FIXED** (2026-02-09) - GetLore now returns NotFound when no lore document exists, consistent with character-history's GetBackstory and with DeleteLore's own behavior. See [#309](https://github.com/beyond-immersion/bannou-service/issues/309).
+<!-- AUDIT:FIXED:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/309 -->
 
 2. **Summarize is a read-only operation (no event)**: `SummarizeRealmHistoryAsync` does not publish any event because it's a pure read operation that doesn't modify state. Per FOUNDATION TENETS (Event-Driven Architecture), events notify about state changes - read operations don't trigger events. This is consistent with other read operations like `GetRealmLore` and `GetRealmParticipation`.
 
@@ -230,7 +230,7 @@ None identified.
 ## Work Tracking
 
 ### Pending Design Review
-- **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history (parallel service API consistency; GetLore returns OK with empty list while GetBackstory returns NotFound)
+- ~~**2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history~~ → **COMPLETED** (see below)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
 - ~~**2026-02-06**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Concurrency control for DualIndexHelper index updates~~ → **COMPLETED** (see below)
 - **2026-02-06**: [#306](https://github.com/beyond-immersion/bannou-service/issues/306) - Single-document storage for lore elements (evaluate whether document storage is problematic for large lore collections; shared pattern with character-history via BackstoryStorageHelper)
@@ -243,4 +243,5 @@ None identified.
 
 - **2026-02-08**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Added distributed locking to DualIndexHelper and BackstoryStorageHelper write operations. Lock per primary key (realmId) for index updates, per entityId for lore. Lock failure returns `StatusCodes.Conflict`. Configurable timeout via `IndexLockTimeoutSeconds` (default 15). Lock owner IDs use key prefix for traceability (e.g., `"realm-participation-{guid}"`). Secondary index is intentionally NOT locked: locking would serialize all writes across unrelated realms referencing the same event (global bottleneck), and reads bypass indexes entirely via `JsonQueryPagedAsync`. Worst-case race produces a stale index entry that self-heals on next write/delete.
 - **2026-02-08**: [#350](https://github.com/beyond-immersion/bannou-service/issues/350) - Configurable lore element count limit. Added `MaxLoreElements` config property (default 100) with validation in `SetRealmLoreAsync` and `AddRealmLoreElementAsync`. Follow-up from character-history #207.
+- **2026-02-09**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - GetRealmLore now returns NotFound when no lore document exists, consistent with character-history's GetBackstory. Previously returned OK with empty elements list, collapsing the semantic distinction between "never created" and "exists with zero elements." Breaking change: consumers checking for OK must now handle NotFound.
 - **2026-02-08**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations. Replaced in-memory fetch-all-then-paginate with server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. DualIndexHelper retained for write operations only.

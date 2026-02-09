@@ -232,7 +232,7 @@ None.
 
 ### Intentional Quirks
 
-1. **Backstory returns NotFound vs empty list**: Unlike the parallel realm-history service which returns OK with empty elements, character-history returns NotFound for missing backstory. Inconsistent design between similar services.
+1. ~~**Backstory returns NotFound vs empty list**~~: **FIXED** (2026-02-09) - Realm-history updated to return NotFound for missing lore, matching character-history's behavior. Both parallel services are now consistent. See [#309](https://github.com/beyond-immersion/bannou-service/issues/309).
 
 2. **UpdatedAt null semantics**: `GetBackstory` returns `UpdatedAt = null` when backstory has never been modified after initial creation (CreatedAtUnix == UpdatedAtUnix).
 
@@ -263,8 +263,8 @@ None.
 3. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure. On deserialization from JSON, becomes `JsonElement` or similar untyped object. No schema validation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/308 -->
 
-4. **Parallel service pattern with realm-history**: Both services use nearly identical patterns (dual-index participations, document-based lore/backstory, template summarization) but with subtle behavioral differences (NotFound vs empty list for missing data).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/309 -->
+4. ~~**Parallel service pattern with realm-history**~~: FIXED (2026-02-09) - Realm-history updated to return NotFound for missing lore, matching character-history's behavior. Both services now have consistent NotFound semantics for missing documents. See [#309](https://github.com/beyond-immersion/bannou-service/issues/309).
+<!-- AUDIT:FIXED:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/309 -->
 
 5. ~~**Empty string entityId returns silently instead of throwing**~~: FIXED (2026-02-08) - All helper methods now throw `ArgumentNullException` for null or empty string parameters, consistent with `AddRecordAsync`/`SetAsync`/`AddElementAsync` which already threw. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 <!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/310 -->
@@ -280,13 +280,14 @@ None.
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for DeleteAll (blocked on lib-resource infrastructure; O(N) messages for N participations)
 - **2026-02-06**: [#311](https://github.com/beyond-immersion/bannou-service/issues/311) - AddBackstoryElement event does not distinguish element added vs updated (need to survey consumers for actual requirement)
 - ~~**2026-02-06**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - Empty string entityId should throw, not return null silently~~ → **COMPLETED** (see below)
-- **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history (parallel service API consistency)
+- ~~**2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history~~ → **COMPLETED** (see below)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
 - **2026-02-01**: [#230](https://github.com/beyond-immersion/bannou-service/issues/230) - AI-powered summarization (requires building new LLM service infrastructure)
 - **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
 
 ### Completed
 
+- **2026-02-09**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolved NotFound vs empty-list inconsistency. Realm-history's GetRealmLore updated to return NotFound for missing lore, matching character-history's GetBackstory. Both parallel services now have consistent semantics.
 - **2026-02-08**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - All DualIndexHelper and BackstoryStorageHelper methods now throw `ArgumentNullException` for null/empty string parameters. Previously, read and delete methods silently returned null/empty/false, hiding programmer errors. Write methods (`AddRecordAsync`, `SetAsync`, `AddElementAsync`) already threw correctly.
 - **2026-02-08**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Added distributed locking to DualIndexHelper and BackstoryStorageHelper write operations. Lock per primary key (characterId) for index updates, per entityId for backstory. Lock failure returns `StatusCodes.Conflict`. Configurable timeout via `IndexLockTimeoutSeconds` (default 15). Lock owner IDs use key prefix for traceability (e.g., `"character-participation-{guid}"`). Secondary index is intentionally NOT locked: locking would serialize all writes across unrelated entities referencing the same event (global bottleneck), and reads bypass indexes entirely via `JsonQueryPagedAsync`. Worst-case race produces a stale index entry that self-heals on next write/delete.
 - **2026-02-08**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Added configurable `MaxBackstoryElements` limit (default 100). Service-level validation in SetBackstory and AddBackstoryElement; returns BadRequest when exceeded. Updates to existing type+key pairs always allowed.

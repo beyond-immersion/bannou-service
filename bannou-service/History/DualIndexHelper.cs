@@ -196,6 +196,8 @@ public class DualIndexHelper<TRecord> : IDualIndexHelper<TRecord> where TRecord 
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(recordId)) throw new ArgumentNullException(nameof(recordId));
+        if (string.IsNullOrEmpty(primaryKey)) throw new ArgumentNullException(nameof(primaryKey));
+        if (string.IsNullOrEmpty(secondaryKey)) throw new ArgumentNullException(nameof(secondaryKey));
 
         // Acquire distributed lock on primary key per IMPLEMENTATION TENETS
         await using var lockResponse = await _lockProvider.LockAsync(
@@ -220,42 +222,36 @@ public class DualIndexHelper<TRecord> : IDualIndexHelper<TRecord> where TRecord 
 
         // Update primary index (read-modify-write protected by lock)
         var indexStore = _stateStoreFactory.GetStore<HistoryIndexData>(_stateStoreName);
-        if (!string.IsNullOrEmpty(primaryKey))
+        var primaryIndexKey = $"{_primaryIndexPrefix}{primaryKey}";
+        var primaryIndex = await indexStore.GetAsync(primaryIndexKey, cancellationToken);
+        if (primaryIndex != null)
         {
-            var primaryIndexKey = $"{_primaryIndexPrefix}{primaryKey}";
-            var primaryIndex = await indexStore.GetAsync(primaryIndexKey, cancellationToken);
-            if (primaryIndex != null)
+            primaryIndex.RecordIds.Remove(recordId);
+            // Delete empty index documents to avoid accumulating stale data
+            if (primaryIndex.RecordIds.Count == 0)
             {
-                primaryIndex.RecordIds.Remove(recordId);
-                // Delete empty index documents to avoid accumulating stale data
-                if (primaryIndex.RecordIds.Count == 0)
-                {
-                    await indexStore.DeleteAsync(primaryIndexKey, cancellationToken);
-                }
-                else
-                {
-                    await indexStore.SaveAsync(primaryIndexKey, primaryIndex, cancellationToken: cancellationToken);
-                }
+                await indexStore.DeleteAsync(primaryIndexKey, cancellationToken);
+            }
+            else
+            {
+                await indexStore.SaveAsync(primaryIndexKey, primaryIndex, cancellationToken: cancellationToken);
             }
         }
 
         // Update secondary index (not locked; see AddRecordAsync comment)
-        if (!string.IsNullOrEmpty(secondaryKey))
+        var secondaryIndexKey = $"{_secondaryIndexPrefix}{secondaryKey}";
+        var secondaryIndex = await indexStore.GetAsync(secondaryIndexKey, cancellationToken);
+        if (secondaryIndex != null)
         {
-            var secondaryIndexKey = $"{_secondaryIndexPrefix}{secondaryKey}";
-            var secondaryIndex = await indexStore.GetAsync(secondaryIndexKey, cancellationToken);
-            if (secondaryIndex != null)
+            secondaryIndex.RecordIds.Remove(recordId);
+            // Delete empty index documents to avoid accumulating stale data
+            if (secondaryIndex.RecordIds.Count == 0)
             {
-                secondaryIndex.RecordIds.Remove(recordId);
-                // Delete empty index documents to avoid accumulating stale data
-                if (secondaryIndex.RecordIds.Count == 0)
-                {
-                    await indexStore.DeleteAsync(secondaryIndexKey, cancellationToken);
-                }
-                else
-                {
-                    await indexStore.SaveAsync(secondaryIndexKey, secondaryIndex, cancellationToken: cancellationToken);
-                }
+                await indexStore.DeleteAsync(secondaryIndexKey, cancellationToken);
+            }
+            else
+            {
+                await indexStore.SaveAsync(secondaryIndexKey, secondaryIndex, cancellationToken: cancellationToken);
             }
         }
 
