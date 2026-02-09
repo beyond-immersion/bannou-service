@@ -89,13 +89,6 @@ x-service-configuration:
       default: 300
       description: Window for client reconnection after disconnect in seconds (default 5 minutes)
 
-    # === HTTP Client Configuration (Tier 2) ===
-    HttpClientTimeoutSeconds:
-      type: integer
-      env: CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS
-      default: 120
-      description: Timeout in seconds for HTTP client requests to backend services
-
     # === WebSocket Connection Management (Tier 2) ===
     RpcCleanupIntervalSeconds:
       type: integer

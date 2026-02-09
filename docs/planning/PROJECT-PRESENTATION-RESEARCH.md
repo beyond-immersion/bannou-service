@@ -1,12 +1,12 @@
 ================================================================================
-PART 1: SYNTHESIZED INVESTOR PRESENTATION FRAMEWORK
+PART 1: SYNTHESIZED PROJECT PRESENTATION FRAMEWORK
 ================================================================================
 
-All 6 agents have completed their research. Let me now synthesize everything into a comprehensive investor presentation framework.
+All 6 agents have completed their research. Let me now synthesize everything into a comprehensive project presentation framework.
 
 ---
 
-# Bannou Investor Presentation Framework
+# Bannou Project Presentation Framework
 
 ## Recommended Pitch Deck Structure (10-12 slides)
 
@@ -179,7 +179,7 @@ Game Client <--WebSocket--> [Connect Gateway] <--mesh--> [45 Backend Services]
 
 *(Fill in with your specifics)*
 
-Highlight: Prior gaming/infrastructure experience is the #1 signal gaming VCs look for. Pragma's Riot Games pedigree was a key investor signal.
+Highlight: Prior gaming/infrastructure experience is the #1 signal gaming VCs look for. Pragma's Riot Games pedigree was a key project signal.
 
 ---
 
@@ -209,21 +209,6 @@ Specific amount, specific milestones. Example structure:
 
 ---
 
-## Target Investors
-
-| Investor | Focus | Why Relevant |
-|----------|-------|--------------|
-| **a16z Games/Speedrun** | $600M gaming fund, 43% in infrastructure/tools | Infrastructure-first thesis |
-| **BITKRAFT Ventures** | Active in gaming infrastructure | Backend deals |
-| **Insight Partners** | Led Pragma's Series B | Proven gaming backend interest |
-| **Lightspeed Venture Partners** | Major backer of Inworld AI ($500M val) | AI x Gaming thesis |
-| **Heavybit** | Developer-first companies | Dev tools expertise |
-| **Griffin Gaming, MAKERS Fund, Play Ventures** | Gaming-focused VCs | Industry knowledge |
-
-**Market climate**: Gaming VCs back founders before traction -- often pre-revenue -- if technical fundamentals and team are strong. AI-focused gaming startups raised first-round valuations 2.5x higher than non-AI peers in 2025.
-
----
-
 This framework should give you a strong foundation. Want me to drill deeper into any specific section, refine the messaging for a particular audience, or help draft actual slide content?
 
 The codebase metrics agent just finished with more precise numbers. Here's an updated **"By The Numbers"** slide with the final data:
@@ -248,18 +233,18 @@ The codebase metrics agent just finished with more precise numbers. Here's an up
 | **Supported Engines** | Unity, Unreal, Godot, Stride |
 | **SDK Platforms** | C#, TypeScript, Unreal C++ |
 
-The velocity stat is particularly compelling for investors: **478 commits in ~6 weeks of 2026** shows intense, sustained development momentum. And the **5:1 amplification ratio** (82K lines of schema producing 408K lines of generated code) demonstrates the leverage of the schema-first approach.
+The velocity stat is particularly compelling: **478 commits in ~6 weeks of 2026** shows intense, sustained development momentum. And the **5:1 amplification ratio** (82K lines of schema producing 408K lines of generated code) demonstrates the leverage of the schema-first approach.
 
 
 ================================================================================
 PART 2: GUIDES & ARCHITECTURE RESEARCH
 ================================================================================
 
-I now have a comprehensive understanding of Bannou's architecture. Here is the investor-friendly technical summary.
+I now have a comprehensive understanding of Bannou's architecture. Here is the user-friendly technical summary.
 
 ---
 
-# Bannou: Investor-Friendly Technical Architecture Summary
+# Bannou: User-Friendly Technical Architecture Summary
 
 ## Executive Overview
 
@@ -610,14 +595,14 @@ The 2026 commit velocity is extremely high, indicating an intense development ph
 
 
 ================================================================================
-PART 4: INVESTOR PITCH STRATEGY RESEARCH
+PART 4: PROJECT PITCH STRATEGY RESEARCH
 ================================================================================
 
 Now let me compile all of this research into a comprehensive, organized summary.
 
 ---
 
-# Comprehensive Research: Investor Presentation Strategy for Gaming/Backend Infrastructure Platforms
+# Comprehensive Research: Project Presentation Strategy for Gaming/Backend Infrastructure Platforms
 
 ## 1. Pitch Deck Structure
 
@@ -651,7 +636,7 @@ The consensus across Sequoia, YC, and general VC advice converges on a 10-15 sli
 
 **Slide 7: Business Model**
 - Consumption-based pricing dominates infrastructure. Show how revenue scales with customer growth.
-- Investors expect clear unit economics by Series A.
+- Clients expect clear unit economics by Series A.
 
 **Slide 8: Traction**
 - Always include timeframes. "We grew from 0 to 1,000 users in 8 weeks" beats "We have 1,000 users."
@@ -668,7 +653,7 @@ The consensus across Sequoia, YC, and general VC advice converges on a 10-15 sli
 
 **Slide 11: Team**
 - Roles and impressive credentials concisely. Not titles -- actual achievements.
-- For gaming infrastructure: prior experience at studios or infrastructure companies is critical. Pragma's founders having Riot Games engineering experience was a key investor signal.
+- For gaming infrastructure: prior experience at studios or infrastructure companies is critical. Pragma's founders having Riot Games engineering experience was a key signal.
 
 **Slide 12: Ask / Use of Funds**
 - Specific amount, specific milestones the money will unlock.
@@ -687,7 +672,7 @@ Sources:
 
 ### Core Principle: Outcomes Over Architecture
 
-Investors do not buy technology -- they buy what technology does for customers. The rule from Fast Company's coverage of this topic: "People don't buy technology; they buy speed, convenience, empowerment, safety, and the stories behind those outcomes."
+Clients do not buy technology -- they buy what technology does for customers. The rule from Fast Company's coverage of this topic: "People don't buy technology; they buy speed, convenience, empowerment, safety, and the stories behind those outcomes."
 
 ### Specific Techniques
 
@@ -717,7 +702,7 @@ Sources:
 
 ---
 
-## 3. Key Metrics Investors Care About
+## 3. Key Metrics Clients Care About
 
 ### Market Metrics
 
@@ -752,7 +737,7 @@ Sources:
 
 ### Revenue Model Expectations
 
-Consumption-based pricing dominates infrastructure. Investors expect clear unit economics showing how revenue scales with customer growth. Average seed rounds for dev tools in 2025: $3-7M with strong unit economics expected by Series A.
+Consumption-based pricing dominates infrastructure. Clients expect clear unit economics showing how revenue scales with customer growth. Average seed rounds for dev tools in 2025: $3-7M with strong unit economics expected by Series A.
 
 Sources:
 - [US SaaS Seed-Round Benchmarks 2025](https://www.metal.so/collections/us-saas-seed-round-benchmarks-2025-average-round-size-valuations-dilution)
@@ -804,7 +789,7 @@ Sources:
 
 ## 5. Moats and Defensibility
 
-### What Makes Investors Excited About Infrastructure Plays
+### What Makes Clients Excited About Infrastructure Plays
 
 **1. Platform Gravity (The Snowflake Model)**
 Snowflake owns no hardware yet is worth $60B+ because of platform gravity. The analogy applies: once studios build on your platform, migration cost is enormous. Every service integrated, every event subscription configured, every state store populated increases switching cost.
@@ -820,14 +805,14 @@ Developer platforms with workflow integration build dependency-driven defensibil
 - Indirect: More studios attract more tool builders who build integrations, which attract more studios
 
 **5. Switching Costs Quantified**
-Investors prefer switching costs measured in concrete terms: "Migrating off our platform requires re-implementing 15+ backend services, estimated at 12-18 months of engineering time for a mid-size studio." Quote this in developer-hours, not abstract terms.
+Clients prefer switching costs measured in concrete terms: "Migrating off our platform requires re-implementing 15+ backend services, estimated at 12-18 months of engineering time for a mid-size studio." Quote this in developer-hours, not abstract terms.
 
 **6. Schema-First as IP Moat**
 The schema-driven architecture itself is a moat: years of refinement on service contracts, event hierarchies, and configuration patterns that represent deep domain expertise. This is not something a competitor can replicate by hiring 10 engineers for 6 months.
 
-### Quantifying for Investors
+### Quantifying
 
-Investors are skeptical of vague moat claims. Provide specifics:
+Clients are skeptical of vague moat claims. Provide specifics:
 - "Our platform has 45 integrated services with 627 API endpoints, representing [X] engineer-years of development"
 - "Average integration depth per customer: [N] services, [M] event subscriptions"
 - "Customer switching cost: estimated [X] months of full-team engineering effort"
@@ -846,13 +831,13 @@ Sources:
 Based on analysis of 50+ reviewed pitch decks and VC feedback:
 
 **1. Leading with Technology Instead of Problem**
-The most common mistake. Investors do not care about your architecture until they understand the pain you solve. Never open with "We built a schema-driven monoservice..." Open with "Game studios waste millions on backend infrastructure."
+The most common mistake. Clients do not care about your architecture until they understand the pain you solve. Never open with "We built a schema-driven monoservice..." Open with "Game studios waste millions on backend infrastructure."
 
 **2. No "Why Now" Slide (75% of decks omit this)**
 Generic claims like "gaming is growing" fail. Be specific: "AWS discontinued GameLift dedicated servers in 2024. Unity's pricing crisis pushed studios to seek alternatives. AI NPCs require backend infrastructure that did not exist 2 years ago."
 
 **3. No Go-to-Market Plan (40% of decks skip or phone this in)**
-Saying "word of mouth" or "community" without numbers, sequencing, or rationale is a red flag. Investors need to see: Who are your first 10 customers? How do you reach them? What is the conversion funnel?
+Saying "word of mouth" or "community" without numbers, sequencing, or rationale is a red flag. They need to see: Who are your first 10 customers? How do you reach them? What is the conversion funnel?
 
 **4. Claiming No Competition**
 This signals either ignorance or that the market does not exist. Always show competitors and explain why you are different. The competition slide should demonstrate deep market understanding.
@@ -864,7 +849,7 @@ This signals either ignorance or that the market does not exist. Always show com
 Specify the exact amount, the milestones it will unlock, and the expected runway. "We are raising $X to achieve Y by Z date" -- not vague descriptions of how funds might be used.
 
 **7. Jargon Without Translation**
-Even technical investors want clarity. Every acronym and technical term should be translated. "ABML bytecode" means nothing to a generalist VC. "A language that lets game designers program NPC behavior without writing code" is immediately clear.
+Even technical client want clarity. Every acronym and technical term should be translated. "ABML bytecode" means nothing to a generalist VC. "A language that lets game designers program NPC behavior without writing code" is immediately clear.
 
 **8. Not Showing Traction with Timeframes**
 "We have 50 studios interested" is weak. "50 studios signed up to our waitlist in 3 weeks without marketing spend" shows momentum.
@@ -881,7 +866,7 @@ Sources:
 
 ### Proven Framing Patterns
 
-The "[Known Company] for [Your Market]" formula works when used carefully. The key is picking an analogy where the investor immediately grasps the business model and scale potential.
+The "[Known Company] for [Your Market]" formula works when used carefully. The key is picking an analogy where the client immediately grasps the business model and scale potential.
 
 **For a gaming backend platform, strong analogies include:**
 
@@ -902,7 +887,7 @@ The "[Known Company] for [Your Market]" formula works when used carefully. The k
 
 ### Analogy Anti-Patterns
 
-- Do not use analogies that require explanation ("We are the Kubernetes of gaming" -- most investors will not know Kubernetes deeply enough)
+- Do not use analogies that require explanation ("We are the Kubernetes of gaming" -- most clients will not know Kubernetes deeply enough)
 - Do not use analogies with negative connotations ("We are the Facebook of gaming" -- privacy/trust baggage)
 - Do not stack analogies ("We are AWS meets Unity meets Stripe" -- pick one primary analogy)
 
@@ -916,7 +901,7 @@ Sources:
 
 ### Gaming Backend Infrastructure
 
-| Company | Amount | Stage | Date | Investors | Focus |
+| Company | Amount | Stage | Date | Clients | Focus |
 |---------|--------|-------|------|-----------|-------|
 | **Pragma** | $12.75M | Series B | Mar 2025 | Insight Partners, Square Enix, Greylock, Upfront Ventures | Backend game engine: matchmaking, accounts, analytics, monetization |
 | **Inworld AI** | $117M+ total | Multiple rounds | 2021-2024 | Lightspeed, Intel Capital, Samsung Next, CRV | AI NPC character engine, $500M valuation |
@@ -937,16 +922,16 @@ Sources:
 2. **Infrastructure + Tools = 43%** of a16z Speedrun portfolio (close second to AI at 49%)
 3. **Backend-as-a-Service is proven**: Pragma's positioning as "the de facto backend game engine" with Riot Games pedigree founders secured multiple rounds
 4. **Open-source as go-to-market**: Rivet going open-source and partnering with Akamai for free infrastructure shows community-led growth strategy working
-5. **Live-service focus**: Investors are particularly interested in infrastructure that enables ongoing revenue (live ops, monetization, analytics) over one-time purchases
+5. **Live-service focus**: Clients are particularly interested in infrastructure that enables ongoing revenue (live ops, monetization, analytics) over one-time purchases
 6. **Pre-revenue is acceptable in gaming infra**: Gaming VCs back founders before traction, often pre-launch or pre-revenue, if technical fundamentals and team are strong
 
-### Investor Landscape
+### The Landscape
 
 - **a16z Games**: $600M gaming fund (part of $7.2B raise in 2024), Speedrun accelerator investing up to $1M per company, 43% of portfolio in infrastructure/tools
 - **BITKRAFT Ventures**: Active in gaming infrastructure backend deals
 - **Insight Partners**: Led Pragma's Series B
 - **Lightspeed Venture Partners**: Major backer of Inworld AI
-- **Heavybit**: Leading investor specifically for developer-first companies
+- **Heavybit**: Leading specifically for developer-first companies
 - **Griffin Gaming Partners, MAKERS Fund, Play Ventures**: Active gaming-focused VCs
 
 ### Market Climate Note
@@ -969,19 +954,19 @@ Sources:
 
 ## Summary: Actionable Takeaways for Bannou
 
-Based on everything above, here are the highest-leverage actions for preparing an investor presentation:
+Based on everything above, here are the highest-leverage actions for preparing a project presentation:
 
 1. **Craft the one-liner first**. Spend disproportionate time on a single sentence that passes the "parent test." Something like: "Bannou is a complete backend engine for multiplayer games with built-in AI NPC infrastructure."
 
-2. **Lead with the studio pain story**, not the architecture. The monoservice design, schema-first development, and plugin architecture are the "how" -- investors need the "why" first.
+2. **Lead with the studio pain story**, not the architecture. The monoservice design, schema-first development, and plugin architecture are the "how" -- clients need the "why" first.
 
 3. **The "Why Now" is your strongest slide** if you can nail the convergence of: AI NPCs going mainstream, live-service games dominating revenue, AWS/Unity disruptions creating openings, and studios demanding turnkey backends.
 
-4. **AI-native is your differentiator**. The fact that Bannou was designed from the ground up to support 100K+ concurrent AI NPCs (actor service, behavior compilation, GOAP planning) puts you in the hottest investment category. Lean into this heavily.
+4. **AI-native is your differentiator**. The fact that Bannou was designed from the ground up to support 100K+ concurrent AI NPCs (actor service, behavior compilation, GOAP planning) puts you in the hottest category. Lean into this heavily.
 
 5. **Quantify the moat** in developer-hours of switching cost, number of integrated services, and schema-driven consistency that compounds over time.
 
-6. **Target the right investors**: a16z Games/Speedrun, BITKRAFT, Insight Partners, Lightspeed, and Heavybit are all actively investing in this space.
+6. **Target the right clients**: a16z Games/Speedrun, BITKRAFT, Insight Partners, Lightspeed, and Heavybit are all actively participating in this space.
 
 7. **The monoservice architecture is a genuine "Why Now" ingredient**: explain it as "What if you could start as a monolith for simplicity but scale to microservices without rewriting anything?" -- this is a novel technical contribution that solves a real problem studios face.
 
@@ -1114,7 +1099,7 @@ These features are actively in development or have recently been completed and a
 
 ---
 
-### 4. KEY INNOVATIONS THAT WOULD EXCITE INVESTORS
+### 4. KEY INNOVATIONS THAT WOULD EXCITE CLIENTS
 
 **Innovation 1: Autonomous Narrative Directors (Regional Watchers / Gods)**
 
@@ -1157,7 +1142,7 @@ Storylines only generate the current phase plus a trigger condition. When the pl
 
 **Innovation 7: The Network Effect of Play History**
 
-The most compelling investor pitch is the compounding content generation:
+The most compelling project pitch is the compounding content generation:
 - Traditional games: Content is finite, authored in advance, consumed once
 - Bannou games: Content is generated from accumulated play history, creating a flywheel where more play = more content = more play
 - This is structurally similar to the data network effects that make social platforms valuable, but applied to game content
@@ -1194,11 +1179,11 @@ The most compelling investor pitch is the compounding content generation:
 PART 6: UNIQUE TECHNOLOGY DEEP DIVE
 ================================================================================
 
-I now have comprehensive data on all six technologies. Here is the complete investor pitch analysis.
+I now have comprehensive data on all six technologies. Here is the complete project pitch analysis.
 
 ---
 
-# Bannou: Proprietary Technology Deep Dive for Investor Pitch
+# Bannou: Proprietary Technology Deep Dive for Project Pitch
 
 ## 1. ABML (Arcadia Behavior Markup Language)
 
@@ -1501,7 +1486,7 @@ This is not a "we used open-source libraries" story. Every major component is bu
 PART 7: PLUGIN DEEP DIVE SURVEY
 ================================================================================
 
-# Bannou Platform Capabilities: Investor Appeal Summary
+# Bannou Platform Capabilities: Client Appeal Summary
 
 All information below is extracted from the deep dive documentation in `/home/lysander/repos/bannou/docs/plugins/`.
 
@@ -1514,7 +1499,7 @@ All information below is extracted from the deep dive documentation in `/home/ly
 ### What It Is
 The foundational infrastructure layer that makes Bannou a true monoservice platform -- a single codebase deployable as a monolith for development or fully distributed microservices for production, with no code changes required.
 
-### Investor-Impressive Technical Details
+### Impressive Technical Details
 
 **Service Mesh (lib-mesh)**
 - YARP-based HTTP routing with 5 load balancing algorithms (Round Robin, Random, Least Connections, Power of Two Choices, First Available)
@@ -1552,7 +1537,7 @@ All four services are fully implemented with no stubs. State and Messaging are b
 ### What It Is
 A WebSocket-first edge gateway with binary protocol routing and integrated WebRTC voice communication -- clients connect once and get bidirectional real-time communication for all game services.
 
-### Investor-Impressive Technical Details
+### Impressive Technical Details
 
 **Connect (WebSocket Gateway)**
 - Zero-copy binary message routing via 31-byte headers -- the gateway routes messages to backend services without ever deserializing the JSON payload
@@ -1581,7 +1566,7 @@ Connect is fully implemented and production-ready (Singleton, 21 config properti
 ### What It Is
 The complete foundational game backend -- persistent worlds, characters, species, locations, items, inventories, multi-currency economies, quests, and entity relationships. Everything a multiplayer game needs to function.
 
-### Investor-Impressive Technical Details
+### Impressive Technical Details
 
 **Character**
 - Realm-partitioned MySQL storage for scalable queries across potentially millions of characters
@@ -1625,7 +1610,7 @@ All 12 services are fully implemented with no stubs. Currency alone has 8 state 
 ### What It Is
 A complete autonomous NPC intelligence stack -- from low-level bytecode execution to high-level personality evolution, memory formation, and dynamic behavior orchestration. This is Bannou's most technically differentiated capability.
 
-### Investor-Impressive Technical Details
+### Impressive Technical Details
 
 **Actor (NPC Brain Runtime)**
 - Distributed NPC brain execution supporting 100,000+ concurrent actors across a cluster
@@ -1680,7 +1665,7 @@ All six services are feature-complete. The Actor service has 30+ configuration p
 ### What It Is
 A full-featured game economy with multi-currency management, secure multi-party trading, and flexible item/inventory systems -- from simple gold coins to complex auction houses.
 
-### Investor-Impressive Technical Details
+### Impressive Technical Details
 
 **Escrow (Multi-Party Trading)**
 - 13-state finite state machine managing the complete escrow lifecycle
@@ -1712,7 +1697,7 @@ Currency has 8 state stores and is fully implemented. Escrow's 13-state FSM is c
 ### What It Is
 Complete competitive and social infrastructure -- skill-based matchmaking, real-time leaderboards, cross-platform achievements, event analytics with skill ratings, and flexible entity relationships.
 
-### Investor-Impressive Technical Details
+### Impressive Technical Details
 
 **Matchmaking**
 - Skill-window expansion: search range automatically widens over time to balance match quality against wait time
@@ -1753,7 +1738,7 @@ All services are feature-complete. Matchmaking has 1 known bug (reconnection sho
 ### What It Is
 A complete content creation and world-building toolkit -- hierarchical scene composition, 3D spatial data management, procedural music generation, AI-driven narrative planning, and flexible save/load with cloud sync.
 
-### Investor-Impressive Technical Details
+### Impressive Technical Details
 
 **Scene (World Composition)**
 - Hierarchical node trees stored as YAML in MySQL with 7 node types (group, mesh, marker, volume, emitter, reference, custom)
@@ -1803,7 +1788,7 @@ Music is fully self-contained with zero external dependencies. Scene and Mapping
 ### What It Is
 Enterprise-grade security infrastructure -- multi-provider authentication with MFA, RBAC with real-time permission updates, binding contract management, and automated resource lifecycle tracking.
 
-### Investor-Impressive Technical Details
+### Impressive Technical Details
 
 **Auth (Authentication)**
 - Multi-provider authentication: email/password, OAuth (Discord, Google, Twitch), and Steam session ticket verification
@@ -1862,7 +1847,7 @@ Auth has 46 configuration properties and is fully implemented including MFA and 
 | Services with zero identified bugs | ~90% |
 | Services marked feature-complete | ~95% |
 
-## Key Differentiators for Investors
+## Key Differentiators
 
 1. **Monoservice Architecture**: Single binary, any deployment topology -- from laptop to global cluster with zero code changes. No other game backend platform offers this flexibility.
 
