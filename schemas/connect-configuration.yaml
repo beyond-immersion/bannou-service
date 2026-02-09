@@ -24,11 +24,6 @@ x-service-configuration:
       description: Interval between heartbeat messages
       default: 30
       env: CONNECT_HEARTBEAT_INTERVAL_SECONDS
-    MessageQueueSize:
-      type: integer
-      description: Maximum number of queued messages per connection
-      default: 1000
-      env: CONNECT_MESSAGE_QUEUE_SIZE
     BufferSize:
       type: integer
       description: Size of message buffers in bytes

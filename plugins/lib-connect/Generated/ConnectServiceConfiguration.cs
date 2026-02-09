@@ -91,12 +91,6 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public int HeartbeatIntervalSeconds { get; set; } = 30;
 
     /// <summary>
-    /// Maximum number of queued messages per connection
-    /// Environment variable: CONNECT_MESSAGE_QUEUE_SIZE
-    /// </summary>
-    public int MessageQueueSize { get; set; } = 1000;
-
-    /// <summary>
     /// Size of message buffers in bytes
     /// Environment variable: CONNECT_BUFFER_SIZE
     /// </summary>

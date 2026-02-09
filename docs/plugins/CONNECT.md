@@ -51,7 +51,6 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `ws-session:{sessionId}` | `ConnectionStateData` | Full connection state (account, timestamps, reconnection info, roles, authorizations) |
-| `ws-mappings:{sessionId}` | `Dictionary<string, Guid>` | Service endpoint to client-salted GUID mappings |
 | `heartbeat:{sessionId}` | `SessionHeartbeat` | Connection liveness tracking (instance ID, last seen, connection count) |
 | `reconnect:{token}` | `string` (sessionId) | Reconnection token to session ID mapping (TTL = reconnection window) |
 | `account-sessions:{accountId:N}` | Redis Set of `string` | All active session IDs for an account (atomic SADD/SREM via `ICacheableStateStore<string>`) |
@@ -92,7 +91,6 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 |----------|---------|---------|---------|
 | `MaxConcurrentConnections` | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | `10000` | Maximum concurrent WebSocket connections |
 | `HeartbeatIntervalSeconds` | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | `30` | Interval between heartbeat messages |
-| `MessageQueueSize` | `CONNECT_MESSAGE_QUEUE_SIZE` | `1000` | **Dead config** — defined but never referenced in service code (see Design Consideration #3) |
 | `BufferSize` | `CONNECT_BUFFER_SIZE` | `65536` | Size of message receive buffers (bytes) |
 | `EnableClientToClientRouting` | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | `true` | Enable peer-to-peer message routing |
 | `MaxMessagesPerMinute` | `CONNECT_MAX_MESSAGES_PER_MINUTE` | `1000` | Rate limit per client per window |
@@ -126,7 +124,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `IHttpClientFactory` | Singleton | Injected but `CreateClient` never called; named client registered in plugin with configurable timeout |
 | `IServiceAppMappingResolver` | Singleton | Dynamic app-id resolution for distributed routing |
 | `IServiceScopeFactory` | Singleton | Creates scoped DI containers for ServiceNavigator |
-| `ConnectServiceConfiguration` | Singleton | All 22 configuration properties |
+| `ConnectServiceConfiguration` | Singleton | All 21 configuration properties |
 | `ILogger<ConnectService>` | Singleton | Structured logging |
 | `ILoggerFactory` | Singleton | Logger creation for child components |
 | `IEventConsumer` | Singleton | Event consumer registration for pub/sub handlers |
@@ -155,7 +153,7 @@ Service lifetime is **Singleton** (unique among Bannou services). This is requir
 
 ### Internal Proxy (1 endpoint)
 
-- **ProxyInternalRequest** (`POST /internal/proxy`): Stateless HTTP proxy for internal service-to-service calls through Connect. Validates session has access via local capability mappings (checks `_sessionServiceMappings`). Resolves app-id via `IServiceAppMappingResolver`. Builds HTTP request with path/query parameters. Routes through `IMeshInvocationClient`. Supports GET/POST/PUT/DELETE/PATCH. Returns raw response body and status code.
+- **ProxyInternalRequest** (`POST /internal/proxy`): Stateless HTTP proxy for internal service-to-service calls through Connect. Validates session has access via connection state capability mappings (`ConnectionState.ServiceMappings`, populated by Permission service). Returns `NotFound` if session not connected, `Forbidden` if endpoint not in capability manifest. Resolves app-id via `IServiceAppMappingResolver`. Builds HTTP request with path/query parameters. Routes through `IMeshInvocationClient`. Supports GET/POST/PUT/DELETE/PATCH. Returns raw response body and status code.
 
 ---
 
@@ -456,11 +454,9 @@ No bugs identified.
 1. **Single-instance limitation for P2P**: Peer-to-peer routing (`RouteToClientAsync`) only works when both clients are connected to the same Connect instance. The `_connectionManager.TryGetSessionIdByPeerGuid()` lookup is in-memory only. Distributed P2P requires cross-instance peer registry.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/346 -->
 
-2. **Session mappings dual storage**: Service mappings are stored both in-memory (`_sessionServiceMappings` ConcurrentDictionary) and in Redis (via `ISessionManager`). These can drift if Redis writes fail silently or if multiple instances serve the same session.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/347 -->
+2. ~~**Session mappings dual storage**~~: **FIXED** (2026-02-09) - Removed dead `_sessionServiceMappings` field and unused `Set/GetSessionServiceMappingsAsync` methods. `ProxyInternalRequestAsync` now validates against `ConnectionState.ServiceMappings` (the active source of truth, populated by Permission service). Removed stale `ws-mappings:*` Redis cleanup.
 
-3. **No backpressure on message queue**: The `MessageQueueSize` config exists but there is no explicit backpressure mechanism. If a client is slow to consume messages, the WebSocket send buffer grows unbounded.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/348 -->
+3. ~~**No backpressure on message queue**~~: **FIXED** (2026-02-09) - Removed dead `MessageQueueSize` config property (T21 violation). RabbitMQ per-session queues provide backpressure: when `WebSocket.SendAsync` blocks (slow client), the RabbitMQ consumer callback blocks, causing RabbitMQ to buffer messages in the session queue. No application-level queue needed.
 
 4. ~~**Session subsumed publishes spurious disconnect event**~~: **FIXED** (2026-02-08) - Moved `RemoveConnectionIfMatch` (subsume check) before disconnect event publication. When subsumed, the entire disconnect path is skipped: no `session.disconnected` event, no account index removal, no RabbitMQ unsubscription, no reconnection window. Previously, the subsume check happened after the disconnect event, causing unnecessary state churn across all consumers (Permission, GameSession, Actor, Matchmaking).
 
@@ -474,8 +470,8 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Multi-instance broadcast** - [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181) - Requires design decisions on message deduplication, acknowledgment semantics, mode enforcement, and performance trade-offs (2026-01-31)
 - **Trace context propagation** - [Issue #184](https://github.com/beyond-immersion/bannou-service/issues/184) - Both proposed options (header extension, JSON injection) break protocol or zero-copy; server-side tracing sufficient for launch (2026-01-31)
 - **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact; no production consumers yet (2026-02-08)
-- **Session mappings dead code** - [Issue #347](https://github.com/beyond-immersion/bannou-service/issues/347) - `_sessionServiceMappings` is dead code (never written to), `SetSessionServiceMappingsAsync` never called; remove both (2026-02-08)
-- **Dead MessageQueueSize config** - [Issue #348](https://github.com/beyond-immersion/bannou-service/issues/348) - `MessageQueueSize` is dead config (T21 violation); remove from schema, RabbitMQ is the backpressure mechanism (2026-02-08)
+- ~~**Session mappings dead code**~~ - [Issue #347](https://github.com/beyond-immersion/bannou-service/issues/347) - FIXED (2026-02-09): Removed dead `_sessionServiceMappings`, unused `Set/GetSessionServiceMappingsAsync`, and stale `ws-mappings:*` cleanup; fixed `ProxyInternalRequestAsync` to use `ConnectionState.ServiceMappings`
+- ~~**Dead MessageQueueSize config**~~ - [Issue #348](https://github.com/beyond-immersion/bannou-service/issues/348) - FIXED (2026-02-09): Removed dead `MessageQueueSize` from schema; RabbitMQ is the backpressure mechanism
 
 ### Closed (Not Planned)
 - **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - CLOSED: violates zero-copy routing; TLS handles transport; E2E encryption is client SDK concern (2026-02-08)

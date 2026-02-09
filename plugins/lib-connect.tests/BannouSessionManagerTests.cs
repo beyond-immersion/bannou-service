@@ -535,11 +535,8 @@ public class BannouSessionManagerTests
         // Act
         await _sessionManager.RemoveSessionAsync(sessionId);
 
-        // Assert - all three stores should have delete called
+        // Assert - connection and heartbeat stores should have delete called
         _mockConnectionStore.Verify(s => s.DeleteAsync(
-            It.Is<string>(k => k.Contains(sessionId)),
-            It.IsAny<CancellationToken>()), Times.Once);
-        _mockMappingsStore.Verify(s => s.DeleteAsync(
             It.Is<string>(k => k.Contains(sessionId)),
             It.IsAny<CancellationToken>()), Times.Once);
         _mockHeartbeatStore.Verify(s => s.DeleteAsync(
@@ -643,7 +640,6 @@ public class BannouSessionManagerTests
 
         var mockStateStoreFactory = new Mock<IStateStoreFactory>();
         var mockConnectionStore = new Mock<IStateStore<ConnectionStateData>>();
-        var mockMappingsStore = new Mock<IStateStore<Dictionary<string, Guid>>>();
         var mockHeartbeatStore = new Mock<IStateStore<SessionHeartbeat>>();
         var mockStringStore = new Mock<IStateStore<string>>();
 
@@ -651,9 +647,6 @@ public class BannouSessionManagerTests
         mockConnectionStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ConnectionStateData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, ConnectionStateData, StateOptions?, CancellationToken>((k, v, opts, ct) => capturedOptions = opts)
-            .ReturnsAsync("etag-1");
-        mockMappingsStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
         mockHeartbeatStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionHeartbeat>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -663,7 +656,6 @@ public class BannouSessionManagerTests
             .ReturnsAsync("etag-1");
 
         mockStateStoreFactory.Setup(f => f.GetStore<ConnectionStateData>(It.IsAny<string>())).Returns(mockConnectionStore.Object);
-        mockStateStoreFactory.Setup(f => f.GetStore<Dictionary<string, Guid>>(It.IsAny<string>())).Returns(mockMappingsStore.Object);
         mockStateStoreFactory.Setup(f => f.GetStore<SessionHeartbeat>(It.IsAny<string>())).Returns(mockHeartbeatStore.Object);
         mockStateStoreFactory.Setup(f => f.GetStore<string>(It.IsAny<string>())).Returns(mockStringStore.Object);
 
@@ -698,16 +690,12 @@ public class BannouSessionManagerTests
 
         var mockStateStoreFactory = new Mock<IStateStoreFactory>();
         var mockConnectionStore = new Mock<IStateStore<ConnectionStateData>>();
-        var mockMappingsStore = new Mock<IStateStore<Dictionary<string, Guid>>>();
         var mockHeartbeatStore = new Mock<IStateStore<SessionHeartbeat>>();
         var mockStringStore = new Mock<IStateStore<string>>();
 
         StateOptions? capturedOptions = null;
         mockConnectionStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ConnectionStateData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
-        mockMappingsStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
         mockHeartbeatStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionHeartbeat>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -718,7 +706,6 @@ public class BannouSessionManagerTests
             .ReturnsAsync("etag-1");
 
         mockStateStoreFactory.Setup(f => f.GetStore<ConnectionStateData>(It.IsAny<string>())).Returns(mockConnectionStore.Object);
-        mockStateStoreFactory.Setup(f => f.GetStore<Dictionary<string, Guid>>(It.IsAny<string>())).Returns(mockMappingsStore.Object);
         mockStateStoreFactory.Setup(f => f.GetStore<SessionHeartbeat>(It.IsAny<string>())).Returns(mockHeartbeatStore.Object);
         mockStateStoreFactory.Setup(f => f.GetStore<string>(It.IsAny<string>())).Returns(mockStringStore.Object);
 
