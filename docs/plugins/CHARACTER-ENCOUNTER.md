@@ -374,6 +374,7 @@ No stubs or unimplemented features remain.
 2. ~~**Hardcoded cache TTL in EncounterDataCache (IMPLEMENTATION TENETS - T21)**~~: **FIXED** (2026-02-09) - Added `EncounterCacheTtlMinutes` (default 5) and `EncounterCacheMaxResultsPerQuery` (default 50) to configuration schema. `EncounterDataCache` now reads both from injected `CharacterEncounterServiceConfiguration` instead of hardcoded constants.
 
 3. **EncounterDataCache never explicitly invalidated**: The `EncounterDataCache` has an `InvalidateAll()` method but it is never called from the service. Writes to encounters/perspectives (RecordEncounter, UpdatePerspective, RefreshMemory, DeleteEncounter, DeleteByCharacter) do not invalidate cached data, meaning Actor behavior sees stale encounter data for up to the cache TTL (5 minutes). This is particularly impactful for `UpdatePerspective` and `RefreshMemory` where the caller expects immediate effect on NPC behavior.
+<!-- AUDIT:IN_PROGRESS:2026-02-09 -->
 
 ### Intentional Quirks
 

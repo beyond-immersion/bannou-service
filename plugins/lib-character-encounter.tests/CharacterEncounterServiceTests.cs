@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
+using BeyondImmersion.BannouService.CharacterEncounter.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -35,6 +36,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     private readonly Mock<ILogger<CharacterEncounterService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
+    private readonly Mock<IEncounterDataCache> _mockEncounterDataCache;
 
     private const string STATE_STORE = "character-encounter-statestore";
 
@@ -55,6 +57,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockLogger = new Mock<ILogger<CharacterEncounterService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockCharacterClient = new Mock<ICharacterClient>();
+        _mockEncounterDataCache = new Mock<IEncounterDataCache>();
 
         // Setup default factory returns
         _mockStateStoreFactory
@@ -129,7 +132,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             _mockLogger.Object,
             Configuration,
             _mockEventConsumer.Object,
-            _mockCharacterClient.Object);
+            _mockCharacterClient.Object,
+            _mockEncounterDataCache.Object);
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.CharacterEncounter.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -31,6 +32,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private readonly ILogger<CharacterEncounterService> _logger;
     private readonly CharacterEncounterServiceConfiguration _configuration;
     private readonly ICharacterClient _characterClient;
+    private readonly IEncounterDataCache _encounterDataCache;
 
     // Key prefixes for different data types
     private const string ENCOUNTER_KEY_PREFIX = "enc-";
@@ -71,13 +73,15 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         ILogger<CharacterEncounterService> logger,
         CharacterEncounterServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        ICharacterClient characterClient)
+        ICharacterClient characterClient,
+        IEncounterDataCache encounterDataCache)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _characterClient = characterClient;
+        _encounterDataCache = encounterDataCache;
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
@@ -601,6 +605,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             foreach (var participantId in participantIds)
             {
                 await RegisterCharacterReferenceAsync(encounterId.ToString(), participantId, cancellationToken);
+            }
+
+            // Invalidate encounter cache for all participants so Actor sees fresh data
+            foreach (var participantId in participantIds)
+            {
+                _encounterDataCache.Invalidate(participantId);
             }
 
             _logger.LogInformation("Recorded encounter {EncounterId} with {Count} perspectives",
@@ -1251,6 +1261,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 NewSentimentShift = body.SentimentShift
             }, cancellationToken: cancellationToken);
 
+            // Invalidate encounter cache for the affected character
+            _encounterDataCache.Invalidate(body.CharacterId);
+
             _logger.LogInformation("Updated perspective {PerspectiveId}", perspective.PerspectiveId);
 
             return (StatusCodes.OK, new PerspectiveResponse
@@ -1324,6 +1337,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 PreviousStrength = previousStrength,
                 NewStrength = perspective.MemoryStrength
             }, cancellationToken: cancellationToken);
+
+            // Invalidate encounter cache for the affected character
+            _encounterDataCache.Invalidate(body.CharacterId);
 
             _logger.LogDebug("Refreshed memory {PerspectiveId}: {OldStrength} -> {NewStrength}",
                 perspective.PerspectiveId, previousStrength, perspective.MemoryStrength);
@@ -1410,6 +1426,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 await UnregisterCharacterReferenceAsync(body.EncounterId.ToString(), participantId, cancellationToken);
             }
 
+            // Invalidate encounter cache for all participants
+            foreach (var participantId in participantIds)
+            {
+                _encounterDataCache.Invalidate(participantId);
+            }
+
             _logger.LogInformation("Deleted encounter {EncounterId} with {Count} perspectives",
                 body.EncounterId, perspectivesDeleted);
 
@@ -1470,6 +1492,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             // Delete encounters that this character was part of
             var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+            var affectedCharacterIds = new HashSet<Guid> { body.CharacterId };
             foreach (var encounterId in processedEncounterIds)
             {
                 var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
@@ -1485,6 +1508,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
                 // Update pair indexes
                 var participantIds = encounter.ParticipantIds;
+                foreach (var pid in participantIds) affectedCharacterIds.Add(pid);
                 await RemoveFromPairIndexesAsync(participantIds, encounterId, cancellationToken);
 
                 // Update location index
@@ -1507,6 +1531,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     DeletedByCharacterCleanup = true,
                     CleanupCharacterId = body.CharacterId
                 }, cancellationToken: cancellationToken);
+            }
+
+            // Invalidate encounter cache for all affected characters
+            foreach (var affectedId in affectedCharacterIds)
+            {
+                _encounterDataCache.Invalidate(affectedId);
             }
 
             _logger.LogInformation("Deleted {Encounters} encounters and {Perspectives} perspectives for character {CharacterId}",
