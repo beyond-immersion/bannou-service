@@ -34,20 +34,33 @@ public partial class CharacterPersonalityService
 // ============================================================================
 // INTERNAL DATA MODELS
 // ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class CharacterPersonalityStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record CharacterPersonalityCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+
+/// <summary>
+/// Internal storage model for personality data.
+/// </summary>
+internal class PersonalityData
+{
+    public Guid CharacterId { get; set; }
+    public Dictionary<TraitAxis, float> Traits { get; set; } = new();
+    public string? ArchetypeHint { get; set; }
+    public int Version { get; set; }
+    public long CreatedAtUnix { get; set; }
+    public long UpdatedAtUnix { get; set; }
+}
+
+/// <summary>
+/// Internal storage model for combat preferences data.
+/// </summary>
+internal class CombatPreferencesData
+{
+    public Guid CharacterId { get; set; }
+    public CombatStyle Style { get; set; } = CombatStyle.BALANCED;
+    public PreferredRange PreferredRange { get; set; } = PreferredRange.MEDIUM;
+    public GroupRole GroupRole { get; set; } = GroupRole.FRONTLINE;
+    public float RiskTolerance { get; set; } = 0.5f;
+    public float RetreatThreshold { get; set; } = 0.3f;
+    public bool ProtectAllies { get; set; } = true;
+    public int Version { get; set; }
+    public long CreatedAtUnix { get; set; }
+    public long UpdatedAtUnix { get; set; }
+}

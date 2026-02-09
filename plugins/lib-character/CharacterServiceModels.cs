@@ -31,23 +31,50 @@ public partial class CharacterService
     // are defined at namespace level as internal classes.
 }
 
-// ============================================================================
-// INTERNAL DATA MODELS
-// ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class CharacterStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record CharacterCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+/// <summary>
+/// Character data model for lib-state storage.
+/// Uses Guid types for type-safe ID handling per IMPLEMENTATION TENETS.
+/// </summary>
+internal class CharacterModel
+{
+    public Guid CharacterId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Guid RealmId { get; set; }
+    public Guid SpeciesId { get; set; }
+    public CharacterStatus Status { get; set; } = CharacterStatus.Alive;
+
+    // Store as DateTimeOffset directly - lib-state handles serialization
+    public DateTimeOffset BirthDate { get; set; }
+    public DateTimeOffset? DeathDate { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// Archive data model for compressed characters.
+/// Uses Guid types for type-safe ID handling per IMPLEMENTATION TENETS.
+/// </summary>
+internal class CharacterArchiveModel
+{
+    public Guid CharacterId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Guid RealmId { get; set; }
+    public Guid SpeciesId { get; set; }
+    public long BirthDateUnix { get; set; }
+    public long DeathDateUnix { get; set; }
+    public long CompressedAtUnix { get; set; }
+    public string? PersonalitySummary { get; set; }
+    public List<string> KeyBackstoryPoints { get; set; } = new();
+    public List<string> MajorLifeEvents { get; set; } = new();
+    public string? FamilySummary { get; set; }
+}
+
+/// <summary>
+/// Reference count tracking data for cleanup eligibility.
+/// Uses Guid type for type-safe ID handling per IMPLEMENTATION TENETS.
+/// </summary>
+internal class RefCountData
+{
+    public Guid CharacterId { get; set; }
+    public long? ZeroRefSinceUnix { get; set; }
+}

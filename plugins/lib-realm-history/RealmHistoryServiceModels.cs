@@ -32,22 +32,46 @@ public partial class RealmHistoryService
 }
 
 // ============================================================================
-// INTERNAL DATA MODELS
+// Internal Data Models
 // ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class RealmHistoryStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record RealmHistoryCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+
+/// <summary>
+/// Internal storage model for realm participation data.
+/// </summary>
+internal class RealmParticipationData
+{
+    public Guid ParticipationId { get; set; }
+    public Guid RealmId { get; set; }
+    public Guid EventId { get; set; }
+    public string EventName { get; set; } = string.Empty;
+    public RealmEventCategory EventCategory { get; set; }
+    public RealmEventRole Role { get; set; }
+    public long EventDateUnix { get; set; }
+    public float Impact { get; set; }
+    public object? Metadata { get; set; }
+    public long CreatedAtUnix { get; set; }
+}
+
+/// <summary>
+/// Internal storage model for realm lore data.
+/// </summary>
+internal class RealmLoreData
+{
+    public Guid RealmId { get; set; }
+    public List<RealmLoreElementData> Elements { get; set; } = new();
+    public long CreatedAtUnix { get; set; }
+    public long UpdatedAtUnix { get; set; }
+}
+
+/// <summary>
+/// Internal storage model for a realm lore element.
+/// </summary>
+internal class RealmLoreElementData
+{
+    public RealmLoreElementType ElementType { get; set; }
+    public string Key { get; set; } = string.Empty;
+    public string Value { get; set; } = string.Empty;
+    public float Strength { get; set; }
+    public Guid? RelatedEntityId { get; set; }
+    public string? RelatedEntityType { get; set; }
+}
