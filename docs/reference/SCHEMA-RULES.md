@@ -74,6 +74,48 @@ Run `make generate` or `scripts/generate-all-services.sh` to execute the full pi
 | `schemas/*.yaml` | Yes | Edit schemas, regenerate code |
 | `schemas/Generated/*.yaml` | **Never** | Generated lifecycle events + meta schemas |
 
+### New Service Bootstrap
+
+Running `generate-service.sh {service}` bootstraps an entire new plugin from scratch. This command:
+
+1. **Calls `generate-project.sh`** to create the plugin project:
+   - `plugins/lib-{service}/` directory
+   - `plugins/lib-{service}/lib-{service}.csproj` (with `ServiceLib.targets` import)
+   - `plugins/lib-{service}/AssemblyInfo.cs` (`ApiController`, `InternalsVisibleTo` for tests)
+   - Adds `lib-{service}` to `bannou-service.sln` via `dotnet sln add`
+
+2. **Generates all code** into `plugins/lib-{service}/Generated/`:
+   - `I{Service}Service.cs` - service interface
+   - `{Service}Controller.cs` - HTTP routing
+   - `{Service}Controller.Meta.cs` - runtime schema introspection
+   - `{Service}ServiceConfiguration.cs` - typed config class
+   - `{Service}PermissionRegistration.cs` - permission matrix
+   - `{Service}EventsController.cs` - event subscription handlers (from `x-event-subscriptions`)
+
+3. **Generates shared code** into `bannou-service/Generated/`:
+   - `Models/{Service}Models.cs` - request/response models
+   - `Clients/{Service}Client.cs` - client for other services to call this service
+   - `Events/{Service}EventsModels.cs` - event models
+   - Updated `StateStoreDefinitions.cs` with new store constants
+
+4. **Creates template files** (one-time, never overwritten):
+   - `{Service}Service.cs` - business logic with TODO stubs for each endpoint
+   - `{Service}ServiceModels.cs` - internal storage models placeholder
+   - `{Service}ServicePlugin.cs` - plugin registration skeleton
+
+5. **Calls `generate-tests.sh`** to create the test project:
+   - `plugins/lib-{service}.tests/` directory, `.csproj`, `AssemblyInfo.cs`, `GlobalUsings.cs`
+   - `{Service}ServiceTests.cs` template with basic constructor validation test
+   - Adds `lib-{service}.tests` to `bannou-service.sln` via `dotnet sln add`
+
+**Not auto-generated**: `{Service}ServiceEvents.cs` must be created manually when the service subscribes to events via `x-event-subscriptions`. This file is a partial class of `{Service}Service` containing `RegisterEventConsumers` and handler methods.
+
+**Prerequisites**: Before running `generate-service.sh`, create the schema files:
+- `schemas/{service}-api.yaml` (required)
+- `schemas/{service}-events.yaml` (required for event publishing/subscription)
+- `schemas/{service}-configuration.yaml` (required for config properties)
+- Update `schemas/state-stores.yaml` with service-specific stores
+
 ---
 
 ## Extension Attributes (x-*)
