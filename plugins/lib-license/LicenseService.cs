@@ -13,10 +13,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-license.tests")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace BeyondImmersion.BannouService.License;
 
@@ -210,6 +206,79 @@ public partial class LicenseService : ILicenseService
             ContainerId = model.ContainerId,
             CreatedAt = model.CreatedAt
         };
+    }
+
+    #endregion
+
+    #region Board Cache Reconciliation
+
+    /// <summary>
+    /// Loads or rebuilds the board cache. Tries Redis cache first; on miss,
+    /// queries inventory as the authoritative source and rebuilds the cache.
+    /// </summary>
+    private async Task<BoardCacheModel> LoadOrRebuildBoardCacheAsync(
+        BoardInstanceModel board,
+        IReadOnlyList<LicenseDefinitionModel> definitions,
+        CancellationToken cancellationToken)
+    {
+        // Try cache first
+        var cache = await BoardCache.GetAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
+        if (cache != null)
+        {
+            return cache;
+        }
+
+        // Cache miss: rebuild from inventory (authoritative source)
+        _logger.LogInformation("Board cache miss for board {BoardId}, rebuilding from inventory", board.BoardId);
+
+        var containerContents = await _inventoryClient.GetContainerAsync(
+            new GetContainerRequest { ContainerId = board.ContainerId, IncludeContents = true },
+            cancellationToken);
+
+        // Build a lookup from item template ID to definition for matching
+        var defsByTemplateId = definitions
+            .GroupBy(d => d.ItemTemplateId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var unlockedEntries = new List<UnlockedLicenseEntry>();
+        foreach (var item in containerContents.Items)
+        {
+            if (defsByTemplateId.TryGetValue(item.TemplateId, out var matchingDefs))
+            {
+                // Find the definition that matches this item (could be multiple defs with same template)
+                // Use the first unmatched one
+                var matchedDef = matchingDefs.FirstOrDefault(d =>
+                    !unlockedEntries.Any(u => u.Code == d.Code));
+
+                if (matchedDef != null)
+                {
+                    unlockedEntries.Add(new UnlockedLicenseEntry
+                    {
+                        Code = matchedDef.Code,
+                        PositionX = matchedDef.PositionX,
+                        PositionY = matchedDef.PositionY,
+                        ItemInstanceId = item.InstanceId,
+                        UnlockedAt = board.CreatedAt // Best approximation when rebuilding
+                    });
+                }
+            }
+        }
+
+        cache = new BoardCacheModel
+        {
+            BoardId = board.BoardId,
+            UnlockedPositions = unlockedEntries,
+            LastUpdated = DateTimeOffset.UtcNow
+        };
+
+        // Persist rebuilt cache
+        await BoardCache.SaveAsync(
+            BuildBoardCacheKey(board.BoardId),
+            cache,
+            new StateOptions { Ttl = _configuration.BoardCacheTtlSeconds },
+            cancellationToken);
+
+        return cache;
     }
 
     #endregion
@@ -417,10 +486,11 @@ public partial class LicenseService : ILicenseService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Update mutable fields
-            if (body.Name != null) template.Name = body.Name;
-            if (body.Description != null) template.Description = body.Description;
-            if (body.IsActive.HasValue) template.IsActive = body.IsActive.Value;
+            // Update mutable fields, tracking what changed
+            var changedFields = new List<string>();
+            if (body.Name != null) { template.Name = body.Name; changedFields.Add("name"); }
+            if (body.Description != null) { template.Description = body.Description; changedFields.Add("description"); }
+            if (body.IsActive.HasValue) { template.IsActive = body.IsActive.Value; changedFields.Add("isActive"); }
             template.UpdatedAt = DateTimeOffset.UtcNow;
 
             await BoardTemplateStore.SaveAsync(
@@ -444,7 +514,7 @@ public partial class LicenseService : ILicenseService
                     IsActive = template.IsActive,
                     CreatedAt = template.CreatedAt,
                     UpdatedAt = template.UpdatedAt,
-                    ChangedFields = new List<string>()
+                    ChangedFields = changedFields
                 },
                 cancellationToken: cancellationToken);
 
@@ -618,7 +688,7 @@ public partial class LicenseService : ILicenseService
                 ItemTemplateId = body.ItemTemplateId,
                 Prerequisites = body.Prerequisites?.ToList(),
                 Description = body.Description,
-                Metadata = body.Metadata as Dictionary<string, object>,
+                Metadata = MetadataHelper.ConvertToDictionary(body.Metadata),
                 CreatedAt = now
             };
 
@@ -734,7 +804,7 @@ public partial class LicenseService : ILicenseService
             if (body.LpCost.HasValue) definition.LpCost = body.LpCost.Value;
             if (body.Prerequisites != null) definition.Prerequisites = body.Prerequisites.ToList();
             if (body.Description != null) definition.Description = body.Description;
-            if (body.Metadata != null) definition.Metadata = body.Metadata as Dictionary<string, object>;
+            if (body.Metadata != null) definition.Metadata = MetadataHelper.ConvertToDictionary(body.Metadata);
 
             await DefinitionStore.SaveAsync(
                 BuildDefinitionKey(body.BoardTemplateId, body.Code),
@@ -894,16 +964,30 @@ public partial class LicenseService : ILicenseService
             }
 
             // Create inventory container (slot_only, maxSlots = gridWidth * gridHeight)
-            var containerResponse = await _inventoryClient.CreateContainerAsync(
-                new CreateContainerRequest
-                {
-                    OwnerId = body.CharacterId,
-                    OwnerType = ContainerOwnerType.Character,
-                    ContainerType = "license_board",
-                    ConstraintModel = ContainerConstraintModel.SlotOnly,
-                    MaxSlots = template.GridWidth * template.GridHeight
-                },
-                cancellationToken);
+            ContainerResponse containerResponse;
+            try
+            {
+                containerResponse = await _inventoryClient.CreateContainerAsync(
+                    new CreateContainerRequest
+                    {
+                        OwnerId = body.CharacterId,
+                        OwnerType = ContainerOwnerType.Character,
+                        ContainerType = "license_board",
+                        ConstraintModel = ContainerConstraintModel.SlotOnly,
+                        MaxSlots = template.GridWidth * template.GridHeight
+                    },
+                    cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Failed to create inventory container for board (character {CharacterId})", body.CharacterId);
+                await _messageBus.TryPublishErrorAsync(
+                    "license", "CreateBoard", "container_creation_failed", ex.Message,
+                    dependency: "inventory", endpoint: "post:/license/board/create",
+                    details: $"CharacterId: {body.CharacterId}", stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
 
             var now = DateTimeOffset.UtcNow;
             var board = new BoardInstanceModel
@@ -934,7 +1018,8 @@ public partial class LicenseService : ILicenseService
                     UnlockedPositions = new List<UnlockedLicenseEntry>(),
                     LastUpdated = now
                 },
-                cancellationToken: cancellationToken);
+                new StateOptions { Ttl = _configuration.BoardCacheTtlSeconds },
+                cancellationToken);
 
             _logger.LogInformation(
                 "Created board {BoardId} for character {CharacterId} with container {ContainerId}",
@@ -1137,8 +1222,8 @@ public partial class LicenseService : ILicenseService
             var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
             if (board == null)
             {
-                await PublishUnlockFailedAsync(body.BoardId, Guid.Empty, body.LicenseCode,
-                    UnlockFailureReason.BoardNotFound, cancellationToken);
+                // Cannot publish failed event: schema requires characterId but board not found means no character context
+                _logger.LogWarning("Board {BoardId} not found for unlock attempt", body.BoardId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -1162,9 +1247,13 @@ public partial class LicenseService : ILicenseService
                 return (StatusCodes.NotFound, null);
             }
 
-            // 5-6. Load board cache to check already unlocked
-            var cache = await BoardCache.GetAsync(BuildBoardCacheKey(body.BoardId), cancellationToken)
-                ?? new BoardCacheModel { BoardId = body.BoardId, UnlockedPositions = new List<UnlockedLicenseEntry>() };
+            // 5. Load all definitions for adjacency/prerequisite checks and cache rebuild
+            var allDefinitions = await DefinitionStore.QueryAsync(
+                d => d.BoardTemplateId == board.BoardTemplateId,
+                cancellationToken: cancellationToken);
+
+            // 5-6. Load board cache (with inventory fallback as authoritative source)
+            var cache = await LoadOrRebuildBoardCacheAsync(board, allDefinitions, cancellationToken);
 
             var alreadyUnlocked = cache.UnlockedPositions.Any(u => u.Code == body.LicenseCode);
             if (alreadyUnlocked)
@@ -1208,7 +1297,7 @@ public partial class LicenseService : ILicenseService
                 }
             }
 
-            // 9. Create contract instance and execute unlock milestone
+            // 9a. Create contract instance with two parties
             Guid contractInstanceId;
             try
             {
@@ -1234,10 +1323,80 @@ public partial class LicenseService : ILicenseService
                     },
                     cancellationToken);
                 contractInstanceId = contractInstance.ContractId;
+
+                // 9b. Set template values for prebound API execution
+                var templateValues = new Dictionary<string, string>
+                {
+                    ["characterId"] = board.CharacterId.ToString(),
+                    ["boardId"] = body.BoardId.ToString(),
+                    ["lpCost"] = definition.LpCost.ToString(),
+                    ["licenseCode"] = body.LicenseCode,
+                    ["itemTemplateId"] = definition.ItemTemplateId.ToString(),
+                    ["gameServiceId"] = board.GameServiceId.ToString()
+                };
+
+                // Add definition metadata values as template values
+                if (definition.Metadata != null)
+                {
+                    foreach (var kvp in definition.Metadata)
+                    {
+                        templateValues[kvp.Key] = kvp.Value?.ToString() ?? string.Empty;
+                    }
+                }
+
+                await _contractClient.SetContractTemplateValuesAsync(
+                    new SetTemplateValuesRequest
+                    {
+                        ContractInstanceId = contractInstanceId,
+                        TemplateValues = templateValues
+                    },
+                    cancellationToken);
+
+                // 9c. Auto-propose the contract
+                await _contractClient.ProposeContractInstanceAsync(
+                    new ProposeContractInstanceRequest { ContractId = contractInstanceId },
+                    cancellationToken);
+
+                // 9d. Auto-consent both parties
+                await _contractClient.ConsentToContractAsync(
+                    new ConsentToContractRequest
+                    {
+                        ContractId = contractInstanceId,
+                        PartyEntityId = board.CharacterId,
+                        PartyEntityType = EntityType.Character
+                    },
+                    cancellationToken);
+
+                await _contractClient.ConsentToContractAsync(
+                    new ConsentToContractRequest
+                    {
+                        ContractId = contractInstanceId,
+                        PartyEntityId = board.GameServiceId,
+                        PartyEntityType = EntityType.System
+                    },
+                    cancellationToken);
+
+                // 9e. Complete the "unlock" milestone
+                await _contractClient.CompleteMilestoneAsync(
+                    new CompleteMilestoneRequest
+                    {
+                        ContractId = contractInstanceId,
+                        MilestoneCode = "unlock",
+                        Evidence = new { boardId = body.BoardId, licenseCode = body.LicenseCode }
+                    },
+                    cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Contract execution failed for unlock of {Code} on board {BoardId} (status {StatusCode})",
+                    body.LicenseCode, body.BoardId, ex.StatusCode);
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.ContractFailed, cancellationToken);
+                return (StatusCodes.InternalServerError, null);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Contract creation failed for unlock of {Code} on board {BoardId}",
+                _logger.LogError(ex, "Contract execution failed for unlock of {Code} on board {BoardId}",
                     body.LicenseCode, body.BoardId);
                 await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
                     UnlockFailureReason.ContractFailed, cancellationToken);
@@ -1245,9 +1404,21 @@ public partial class LicenseService : ILicenseService
             }
 
             // 10. Load character to get realm context for item creation
-            var character = await _characterClient.GetCharacterAsync(
-                new GetCharacterRequest { CharacterId = board.CharacterId },
-                cancellationToken);
+            CharacterResponse character;
+            try
+            {
+                character = await _characterClient.GetCharacterAsync(
+                    new GetCharacterRequest { CharacterId = board.CharacterId },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogError(ex, "Character {CharacterId} not found during unlock of {Code} on board {BoardId}",
+                    board.CharacterId, body.LicenseCode, body.BoardId);
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.ContractFailed, cancellationToken);
+                return (StatusCodes.NotFound, null);
+            }
 
             // 11. Create item instance
             ItemInstanceResponse itemInstance;
@@ -1263,27 +1434,65 @@ public partial class LicenseService : ILicenseService
                     },
                     cancellationToken);
             }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Item creation failed for unlock of {Code} on board {BoardId} (status {StatusCode})",
+                    body.LicenseCode, body.BoardId, ex.StatusCode);
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.ContractFailed, cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Item creation failed for unlock of {Code} on board {BoardId}",
+                _logger.LogError(ex, "Unexpected error creating item for unlock of {Code} on board {BoardId}",
                     body.LicenseCode, body.BoardId);
                 await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
                     UnlockFailureReason.ContractFailed, cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // 13. Update board cache
-            cache.UnlockedPositions.Add(new UnlockedLicenseEntry
+            // 13. Update board cache with optimistic concurrency retry
+            var cacheKey = BuildBoardCacheKey(body.BoardId);
+            for (var attempt = 0; attempt <= _configuration.MaxConcurrencyRetries; attempt++)
             {
-                Code = body.LicenseCode,
-                PositionX = definition.PositionX,
-                PositionY = definition.PositionY,
-                ItemInstanceId = itemInstance.InstanceId,
-                UnlockedAt = DateTimeOffset.UtcNow
-            });
-            cache.LastUpdated = DateTimeOffset.UtcNow;
+                var (currentCache, etag) = await BoardCache.GetWithETagAsync(cacheKey, cancellationToken);
+                currentCache ??= new BoardCacheModel { BoardId = body.BoardId, UnlockedPositions = new List<UnlockedLicenseEntry>() };
 
-            await BoardCache.SaveAsync(BuildBoardCacheKey(body.BoardId), cache, cancellationToken: cancellationToken);
+                currentCache.UnlockedPositions.Add(new UnlockedLicenseEntry
+                {
+                    Code = body.LicenseCode,
+                    PositionX = definition.PositionX,
+                    PositionY = definition.PositionY,
+                    ItemInstanceId = itemInstance.InstanceId,
+                    UnlockedAt = DateTimeOffset.UtcNow
+                });
+                currentCache.LastUpdated = DateTimeOffset.UtcNow;
+
+                if (etag == null)
+                {
+                    // No existing cache entry - create new with TTL
+                    await BoardCache.SaveAsync(cacheKey, currentCache,
+                        new StateOptions { Ttl = _configuration.BoardCacheTtlSeconds },
+                        cancellationToken);
+                    break;
+                }
+
+                var newEtag = await BoardCache.TrySaveAsync(cacheKey, currentCache, etag, cancellationToken);
+                if (newEtag != null)
+                {
+                    break;
+                }
+
+                if (attempt == _configuration.MaxConcurrencyRetries)
+                {
+                    _logger.LogWarning("Board cache concurrency conflict after {Attempts} retries for board {BoardId}",
+                        _configuration.MaxConcurrencyRetries, body.BoardId);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                _logger.LogDebug("Board cache concurrency conflict on attempt {Attempt} for board {BoardId}, retrying",
+                    attempt + 1, body.BoardId);
+            }
 
             // 14. Publish license.unlocked event
             await _messageBus.TryPublishAsync(
@@ -1380,9 +1589,13 @@ public partial class LicenseService : ILicenseService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Load board cache
-            var cache = await BoardCache.GetAsync(BuildBoardCacheKey(body.BoardId), cancellationToken)
-                ?? new BoardCacheModel { BoardId = body.BoardId, UnlockedPositions = new List<UnlockedLicenseEntry>() };
+            // Load all definitions for cache rebuild if needed
+            var allDefinitions = await DefinitionStore.QueryAsync(
+                d => d.BoardTemplateId == board.BoardTemplateId,
+                cancellationToken: cancellationToken);
+
+            // Load board cache (with inventory fallback as authoritative source)
+            var cache = await LoadOrRebuildBoardCacheAsync(board, allDefinitions, cancellationToken);
 
             // Check adjacency
             var isStartingNode = template.StartingNodes.Any(
@@ -1475,9 +1688,8 @@ public partial class LicenseService : ILicenseService
                 d => d.BoardTemplateId == board.BoardTemplateId,
                 cancellationToken: cancellationToken);
 
-            // Load board cache
-            var cache = await BoardCache.GetAsync(BuildBoardCacheKey(body.BoardId), cancellationToken)
-                ?? new BoardCacheModel { BoardId = body.BoardId, UnlockedPositions = new List<UnlockedLicenseEntry>() };
+            // Load board cache (with inventory fallback as authoritative source)
+            var cache = await LoadOrRebuildBoardCacheAsync(board, definitions, cancellationToken);
 
             var unlockedLookup = cache.UnlockedPositions.ToDictionary(u => u.Code);
 
@@ -1585,7 +1797,7 @@ public partial class LicenseService : ILicenseService
                     ItemTemplateId = defRequest.ItemTemplateId,
                     Prerequisites = defRequest.Prerequisites?.ToList(),
                     Description = defRequest.Description,
-                    Metadata = defRequest.Metadata as Dictionary<string, object>,
+                    Metadata = MetadataHelper.ConvertToDictionary(defRequest.Metadata),
                     CreatedAt = now
                 };
 

@@ -17,6 +17,7 @@ public class LicenseServicePlugin : BaseBannouPlugin
 
     private ILicenseService? _service;
     private IServiceProvider? _serviceProvider;
+    private IServiceScope? _scope;
 
     /// <summary>
     /// Configure services for dependency injection - mimics existing [BannouService] registration.
@@ -63,8 +64,9 @@ public class LicenseServicePlugin : BaseBannouPlugin
         {
             // Get service instance from DI container with proper scope handling
             // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
-            using var scope = _serviceProvider?.CreateScope();
-            _service = scope?.ServiceProvider.GetService<ILicenseService>();
+            // Scope stored as field (not using var) because _service is used in OnRunningAsync/OnShutdownAsync
+            _scope = _serviceProvider?.CreateScope();
+            _service = _scope?.ServiceProvider.GetService<ILicenseService>();
 
             if (_service == null)
             {
@@ -136,6 +138,11 @@ public class LicenseServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during License service shutdown");
+        }
+        finally
+        {
+            _scope?.Dispose();
+            _scope = null;
         }
     }
 }
