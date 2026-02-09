@@ -66,6 +66,14 @@ Osherove standard: `UnitOfWork_StateUnderTest_ExpectedBehavior` (e.g., `GetAccou
 - Don't assert specific counts - only verify expected items are present
 - Tests should be independent - previous failures shouldn't impact current test
 
+### Testing Tiers
+
+| Tier | Location | Purpose |
+|------|----------|---------|
+| Unit | `lib-{service}.tests/` | Business logic with mocked dependencies |
+| HTTP | `http-tester/Tests/` | Service-to-service calls via lib-mesh, generated code |
+| Edge | `edge-tester/Tests/` | Client perspective through Connect and binary protocol |
+
 ---
 
 ## Tenet 12: Test Integrity (ABSOLUTE)

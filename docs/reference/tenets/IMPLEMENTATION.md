@@ -30,6 +30,13 @@ info:
       handler: HandleAccountDeleted      # Method name without Async suffix
 ```
 
+### Generated Files
+
+Running `make generate` produces:
+
+- `Generated/{Service}EventsController.cs` - Event subscription handlers (always regenerated)
+- `{Service}ServiceEvents.cs` - Handler registrations (generated once, then manual)
+
 ### Implementation Pattern
 
 In the service constructor (see Tenet 6 for full pattern):

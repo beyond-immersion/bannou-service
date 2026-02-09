@@ -125,7 +125,28 @@ plugins/lib-{service}/
 └── lib-{service}.csproj         # <EmbeddedResource Include="Scripts\*.lua" />
 ```
 
-See lib-mesh and lib-state for loader class examples.
+See lib-mesh and lib-state for loader class examples. Loader class pattern:
+
+```csharp
+public static class MyServiceLuaScripts
+{
+    public static string MyOperation => GetScript("MyOperation");
+
+    private static string GetScript(string name)
+    {
+        return _scriptCache.GetOrAdd(name, n =>
+        {
+            var resourceName = $"BeyondImmersion.BannouService.MyService.Scripts.{n}.lua";
+            using var stream = typeof(MyServiceLuaScripts).Assembly.GetManifestResourceStream(resourceName)
+                ?? throw new InvalidOperationException($"Lua script '{n}' not found");
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        });
+    }
+
+    private static readonly ConcurrentDictionary<string, string> _scriptCache = new();
+}
+```
 
 **Best practices**: Use `redis.pcall()` over `redis.call()`, keep scripts minimal (atomic part only, handle results in C#), parameterize all scripts (KEYS[] and ARGV[]).
 
@@ -166,6 +187,19 @@ await _messageBus.PublishAsync("account.created", new { AccountId = id });
 | Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
 | Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
 | Common Client Events | `common-client-events.yaml` | `bannou-service/Generated/CommonClientEventsModels.cs` |
+
+### Event Schema Pattern
+
+```yaml
+EventName:
+  type: object
+  required: [eventId, timestamp, entityId]
+  properties:
+    eventId: { type: string, format: uuid }
+    timestamp: { type: string, format: date-time }
+    entityId: { type: string }
+    # ... entity-specific fields
+```
 
 ### Topic Naming Convention
 
@@ -273,6 +307,14 @@ For complex services, decompose into helper services in `Services/` subdirectory
 - Endpoints without x-permissions are **not exposed** to WebSocket clients
 
 **Role hierarchy**: `anonymous` → `user` → `developer` → `admin` (higher includes lower). Client must have the highest role specified AND all states specified.
+
+```yaml
+# Example: User role + must be in lobby
+x-permissions:
+  - role: user
+    states:
+      game-session: in_lobby  # Requires BOTH user role AND in_lobby state
+```
 
 | Role | Use When | Examples |
 |------|----------|----------|
