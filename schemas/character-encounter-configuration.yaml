@@ -128,6 +128,13 @@ x-service-configuration:
       default: 50
       minimum: 10
       maximum: 500
+    MaxParticipantsPerEncounter:
+      type: integer
+      description: Maximum participants allowed per encounter (caps O(N^2) pair index creation)
+      env: CHARACTER_ENCOUNTER_MAX_PARTICIPANTS_PER_ENCOUNTER
+      default: 20
+      minimum: 2
+      maximum: 100
     DuplicateTimestampToleranceMinutes:
       type: integer
       description: Time window in minutes for duplicate encounter detection. Encounters with the same participants, type, and timestamp within this window are considered duplicates.

@@ -103,6 +103,7 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 | `SeedBuiltInTypesOnStartup` | `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | `true` | Auto-seed built-in types on startup |
 | `EncounterCacheTtlMinutes` | `CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES` | `5` | TTL in minutes for the in-memory encounter data cache |
 | `EncounterCacheMaxResultsPerQuery` | `CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY` | `50` | Max encounter results loaded per cache query |
+| `MaxParticipantsPerEncounter` | `CHARACTER_ENCOUNTER_MAX_PARTICIPANTS_PER_ENCOUNTER` | `20` | Max participants per encounter (caps O(N^2) pair index creation) |
 | `DuplicateTimestampToleranceMinutes` | `CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES` | `5` | Time window in minutes for duplicate encounter detection |
 
 ---
@@ -391,9 +392,9 @@ No stubs or unimplemented features remain.
 
 ### Design Considerations (Requires Planning)
 
-1. **No pagination for GetAllPerspectiveIdsAsync**: The `DecayMemories` endpoint with no characterId specified loads ALL perspective IDs from ALL characters via the global index. With many characters and encounters, this could exhaust memory. The code comments acknowledge this: "in production, this would need batching."
+1. ~~**No pagination for GetAllPerspectiveIdsAsync**~~: **FIXED** (2026-02-09) - Refactored `DecayMemoriesAsync` to iterate per-character instead of collecting all perspective IDs into a single list. Memory is now bounded to one character's perspectives at a time. Removed the dead `GetAllPerspectiveIdsAsync` method. Pattern matches `MemoryDecaySchedulerService` which already iterated per-character.
 
-2. **Pair index combinatorial explosion**: For a group encounter with N participants, N*(N-1)/2 pair indexes are created/updated. A 10-participant encounter creates 45 pair index entries. This is documented as O(N^2) in the schema.
+2. ~~**Pair index combinatorial explosion**~~: **FIXED** (2026-02-09) - Added `MaxParticipantsPerEncounter` config property (default: 20, range 2-100) and server-side validation in `RecordEncounterAsync` rejecting requests exceeding the limit. With 20 participants, max pair indexes per encounter is 190, which is a reasonable upper bound. Also added `maxItems: 100` to schema `participantIds` as a hard ceiling. The O(N^2) behavior is inherent to the pair index design but is now bounded.
 
 3. **No transactionality**: Recording an encounter involves multiple sequential writes (encounter, perspectives, character indexes, pair indexes, location index). If the service crashes mid-operation, indexes can become inconsistent with actual data.
 
@@ -412,3 +413,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Bug #1 - Dead `ServerSalt` config**: Removed from schema (2026-02-09). Service uses random GUIDs, not salted.
 - **Bug #2 - Hardcoded cache TTL and max results**: Added `EncounterCacheTtlMinutes` and `EncounterCacheMaxResultsPerQuery` config properties (2026-02-09). Cache now reads from configuration.
 - **Bug #3 - EncounterDataCache never explicitly invalidated**: Injected `IEncounterDataCache` into service constructor and added `Invalidate()` calls in all write methods (2026-02-09). Actor behavior now sees fresh data immediately after writes.
+- **Design #1 - No pagination for GetAllPerspectiveIdsAsync**: Refactored `DecayMemoriesAsync` to iterate per-character (2026-02-09). Memory bounded to one character's perspectives at a time. Removed dead `GetAllPerspectiveIdsAsync` method.
+- **Design #2 - Pair index combinatorial explosion**: Added `MaxParticipantsPerEncounter` config property (default: 20) and server-side validation (2026-02-09). O(N^2) pair index creation now bounded by configurable limit.

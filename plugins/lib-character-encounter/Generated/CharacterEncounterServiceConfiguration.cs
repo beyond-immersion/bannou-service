@@ -196,6 +196,13 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     public int EncounterCacheMaxResultsPerQuery { get; set; } = 50;
 
     /// <summary>
+    /// Maximum participants allowed per encounter (caps O(N^2) pair index creation)
+    /// Environment variable: CHARACTER_ENCOUNTER_MAX_PARTICIPANTS_PER_ENCOUNTER
+    /// </summary>
+    [ConfigRange(Minimum = 2, Maximum = 100)]
+    public int MaxParticipantsPerEncounter { get; set; } = 20;
+
+    /// <summary>
     /// Time window in minutes for duplicate encounter detection. Encounters with the same participants, type, and timestamp within this window are considered duplicates.
     /// Environment variable: CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES
     /// </summary>

@@ -457,10 +457,17 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         try
         {
-            // Validate minimum participants
+            // Validate participant count bounds
             if (body.ParticipantIds.Count < 2)
             {
                 _logger.LogWarning("Encounter requires at least 2 participants");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (body.ParticipantIds.Count > _configuration.MaxParticipantsPerEncounter)
+            {
+                _logger.LogWarning("Encounter has {Count} participants, exceeding limit of {Max}",
+                    body.ParticipantIds.Count, _configuration.MaxParticipantsPerEncounter);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -1592,60 +1599,69 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             var memoriesFaded = 0;
             var dryRun = body.DryRun;
 
-            IEnumerable<Guid> perspectiveIds;
+            // Collect character IDs to process: either a single character or all via global index.
+            // Per-character iteration keeps memory bounded to one character's perspectives at a time,
+            // avoiding the previous pattern of loading ALL perspective IDs into a single list.
+            IReadOnlyList<Guid> characterIds;
             if (body.CharacterId.HasValue)
             {
-                perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId.Value, cancellationToken);
+                characterIds = [body.CharacterId.Value];
             }
             else
             {
-                // Process all perspectives (in production, this would need batching)
-                perspectiveIds = await GetAllPerspectiveIdsAsync(cancellationToken);
+                var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+                var globalIndex = await globalIndexStore.GetAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
+                characterIds = globalIndex?.CharacterIds ?? [];
             }
 
-            foreach (var perspectiveId in perspectiveIds)
+            foreach (var characterId in characterIds)
             {
-                var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}";
-                var (perspective, pEtag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
-                if (perspective == null) continue;
+                var perspectiveIds = await GetCharacterPerspectiveIdsAsync(characterId, cancellationToken);
 
-                var (decayed, faded) = CalculateDecay(perspective);
-
-                if (decayed)
+                foreach (var perspectiveId in perspectiveIds)
                 {
-                    perspectivesProcessed++;
-                    var decayAmount = GetDecayAmount(perspective);
-                    var previousStrength = perspective.MemoryStrength;
+                    var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}";
+                    var (perspective, pEtag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
+                    if (perspective == null) continue;
 
-                    if (!dryRun)
-                    {
-                        perspective.MemoryStrength = Math.Max(0, previousStrength - decayAmount);
-                        perspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                        var decayResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, pEtag ?? string.Empty, cancellationToken);
-                        if (decayResult == null)
-                        {
-                            _logger.LogWarning("Concurrent modification during decay for perspective {PerspectiveId}, skipping", perspectiveId);
-                            continue;
-                        }
-                    }
+                    var (decayed, faded) = CalculateDecay(perspective);
 
-                    if (faded)
+                    if (decayed)
                     {
-                        memoriesFaded++;
+                        perspectivesProcessed++;
+                        var decayAmount = GetDecayAmount(perspective);
+                        var previousStrength = perspective.MemoryStrength;
 
                         if (!dryRun)
                         {
-                            await _messageBus.TryPublishAsync(ENCOUNTER_MEMORY_FADED_TOPIC, new EncounterMemoryFadedEvent
+                            perspective.MemoryStrength = Math.Max(0, previousStrength - decayAmount);
+                            perspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                            var decayResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, pEtag ?? string.Empty, cancellationToken);
+                            if (decayResult == null)
                             {
-                                EventId = Guid.NewGuid(),
-                                Timestamp = DateTimeOffset.UtcNow,
-                                EncounterId = perspective.EncounterId,
-                                CharacterId = perspective.CharacterId,
-                                PerspectiveId = perspective.PerspectiveId,
-                                PreviousStrength = previousStrength,
-                                NewStrength = perspective.MemoryStrength,
-                                FadeThreshold = (float)_configuration.MemoryFadeThreshold
-                            }, cancellationToken: cancellationToken);
+                                _logger.LogWarning("Concurrent modification during decay for perspective {PerspectiveId}, skipping", perspectiveId);
+                                continue;
+                            }
+                        }
+
+                        if (faded)
+                        {
+                            memoriesFaded++;
+
+                            if (!dryRun)
+                            {
+                                await _messageBus.TryPublishAsync(ENCOUNTER_MEMORY_FADED_TOPIC, new EncounterMemoryFadedEvent
+                                {
+                                    EventId = Guid.NewGuid(),
+                                    Timestamp = DateTimeOffset.UtcNow,
+                                    EncounterId = perspective.EncounterId,
+                                    CharacterId = perspective.CharacterId,
+                                    PerspectiveId = perspective.PerspectiveId,
+                                    PreviousStrength = previousStrength,
+                                    NewStrength = perspective.MemoryStrength,
+                                    FadeThreshold = (float)_configuration.MemoryFadeThreshold
+                                }, cancellationToken: cancellationToken);
+                            }
                         }
                     }
                 }
@@ -3023,26 +3039,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         return deleted;
     }
 
-    private async Task<IEnumerable<Guid>> GetAllPerspectiveIdsAsync(CancellationToken cancellationToken)
-    {
-        var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
-        var globalIndex = await globalIndexStore.GetAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
-
-        if (globalIndex == null || globalIndex.CharacterIds.Count == 0)
-        {
-            return Enumerable.Empty<Guid>();
-        }
-
-        var allPerspectiveIds = new List<Guid>();
-        foreach (var characterId in globalIndex.CharacterIds)
-        {
-            var perspectiveIds = await GetCharacterPerspectiveIdsAsync(characterId, cancellationToken);
-            allPerspectiveIds.AddRange(perspectiveIds);
-        }
-
-        return allPerspectiveIds;
-    }
-
     private async Task<PerspectiveData> ApplyLazyDecayAsync(IStateStore<PerspectiveData> store, PerspectiveData perspective, CancellationToken cancellationToken)
     {
         if (!_configuration.MemoryDecayEnabled || _configuration.MemoryDecayMode != MemoryDecayMode.Lazy)
@@ -3204,108 +3200,4 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             UpdatedAt = data.UpdatedAtUnix.HasValue ? DateTimeOffset.FromUnixTimeSeconds(data.UpdatedAtUnix.Value) : null
         };
     }
-}
-
-// ============================================================================
-// Internal Data Models
-// ============================================================================
-
-internal record BuiltInEncounterType(string Code, string Name, string Description, EmotionalImpact DefaultEmotionalImpact, int SortOrder);
-
-internal class EncounterTypeData
-{
-    public Guid TypeId { get; set; }
-    public string Code { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public bool IsBuiltIn { get; set; }
-    public EmotionalImpact? DefaultEmotionalImpact { get; set; }
-    public int SortOrder { get; set; }
-    public bool IsActive { get; set; } = true;
-    public long CreatedAtUnix { get; set; }
-}
-
-internal class EncounterData
-{
-    public Guid EncounterId { get; set; }
-    public long Timestamp { get; set; }
-    public Guid RealmId { get; set; }
-    public Guid? LocationId { get; set; }
-    public string EncounterTypeCode { get; set; } = string.Empty;
-    public string? Context { get; set; }
-    public EncounterOutcome Outcome { get; set; }
-    public List<Guid> ParticipantIds { get; set; } = new();
-    public object? Metadata { get; set; }
-    public long CreatedAtUnix { get; set; }
-}
-
-internal class PerspectiveData
-{
-    public Guid PerspectiveId { get; set; }
-    public Guid EncounterId { get; set; }
-    public Guid CharacterId { get; set; }
-    public EmotionalImpact EmotionalImpact { get; set; }
-    public float? SentimentShift { get; set; }
-    public float MemoryStrength { get; set; } = 1.0f;
-    public string? RememberedAs { get; set; }
-    public long? LastDecayedAtUnix { get; set; }
-    public long CreatedAtUnix { get; set; }
-    public long? UpdatedAtUnix { get; set; }
-}
-
-internal class CharacterIndexData
-{
-    public Guid CharacterId { get; set; }
-    public List<Guid> PerspectiveIds { get; set; } = new();
-}
-
-internal class PairIndexData
-{
-    public Guid CharacterIdA { get; set; }
-    public Guid CharacterIdB { get; set; }
-    public List<Guid> EncounterIds { get; set; } = new();
-}
-
-internal class LocationIndexData
-{
-    public Guid LocationId { get; set; }
-    public List<Guid> EncounterIds { get; set; } = new();
-}
-
-/// <summary>
-/// Global index tracking all character IDs that have encounter perspectives.
-/// Used for global memory decay operations.
-/// </summary>
-internal class GlobalCharacterIndexData
-{
-    public List<Guid> CharacterIds { get; set; } = new();
-}
-
-/// <summary>
-/// Index tracking all custom encounter type codes.
-/// Used for listing custom types since state stores don't support prefix queries.
-/// </summary>
-internal class CustomTypeIndexData
-{
-    public List<string> TypeCodes { get; set; } = new();
-}
-
-/// <summary>
-/// Index tracking encounter IDs using a specific encounter type code.
-/// Used for validating type deletion (409 if encounters exist using the type).
-/// </summary>
-internal class TypeEncounterIndexData
-{
-    public string TypeCode { get; set; } = string.Empty;
-    public List<Guid> EncounterIds { get; set; } = new();
-}
-
-/// <summary>
-/// Index mapping encounter IDs to their perspective IDs.
-/// Eliminates O(N*M) scan when loading perspectives for an encounter.
-/// </summary>
-internal class EncounterPerspectiveIndexData
-{
-    public Guid EncounterId { get; set; }
-    public List<Guid> PerspectiveIds { get; set; } = new();
 }
