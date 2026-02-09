@@ -18,6 +18,7 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and backstory |
+| lib-state (`IDistributedLockProvider`) | Distributed locks for DualIndexHelper and BackstoryStorageHelper write operations (per IMPLEMENTATION TENETS: multi-instance safety) |
 | lib-messaging (`IMessageBus`) | Publishing participation and backstory lifecycle events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-resource (`IResourceClient`) | Hard dependency (L1): registers cleanup callbacks and compression callbacks on startup |
@@ -78,6 +79,7 @@ This plugin does not consume external events.
 |----------|---------|---------|---------|
 | `BackstoryCacheTtlSeconds` | `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS` | 600 | TTL in seconds for backstory cache entries |
 | `MaxBackstoryElements` | `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | 100 | Maximum backstory elements per character; returns BadRequest when exceeded |
+| `IndexLockTimeoutSeconds` | `CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | 15 | Distributed lock timeout for DualIndexHelper and BackstoryStorageHelper write operations |
 
 The generated `CharacterHistoryServiceConfiguration` is injected into both `BackstoryCache` (for TTL) and `CharacterHistoryService` (for element limits).
 
@@ -88,10 +90,11 @@ The generated `CharacterHistoryServiceConfiguration` is injected into both `Back
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CharacterHistoryService>` | Scoped | Structured logging |
-| `CharacterHistoryServiceConfiguration` | Singleton | Typed configuration (BackstoryCacheTtlSeconds, MaxBackstoryElements); injected into service constructor and `BackstoryCache` |
+| `CharacterHistoryServiceConfiguration` | Singleton | Typed configuration (BackstoryCacheTtlSeconds, MaxBackstoryElements, IndexLockTimeoutSeconds); injected into service constructor and `BackstoryCache` |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Scoped | Event publishing (including resource reference events) |
 | `IEventConsumer` | Scoped | Event registration (no handlers) |
+| `IDistributedLockProvider` | Singleton | Distributed locking for helper write operations |
 | `IDualIndexHelper<ParticipationData>` | (inline) | Dual-index CRUD for participations |
 | `IBackstoryStorageHelper<BackstoryData, BackstoryElementData>` | (inline) | Backstory CRUD with merge semantics |
 | `CharacterHistoryReferenceTracking` | (generated partial class) | `RegisterCharacterReferenceAsync`/`UnregisterCharacterReferenceAsync` helpers and cleanup callback registration |
@@ -117,15 +120,15 @@ The `CharacterHistoryTemplate` provides compile-time validation for `${candidate
 
 ### Participation Operations (4 endpoints)
 
-- **Record** (`/character-history/record-participation`): Checks for existing participation for same characterId+eventId (returns 409 Conflict if duplicate). Creates unique participation ID. Stores record and updates dual indexes (character and event). Registers character reference with lib-resource. Publishes recorded event.
+- **Record** (`/character-history/record-participation`): Checks for existing participation for same characterId+eventId (returns 409 Conflict if duplicate). Creates unique participation ID. Stores record and updates dual indexes (character and event) under distributed lock. Returns 409 Conflict if lock cannot be acquired. Registers character reference with lib-resource. Publishes recorded event.
 - **GetParticipation** (`/character-history/get-participation`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by character ID, optional event category, and minimum significance at the database level. Sorts by event date descending. Bypasses DualIndexHelper for reads.
 - **GetEventParticipants** (`/character-history/get-event-participants`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by event ID and optional role at the database level. Sorts by significance descending. Bypasses DualIndexHelper for reads.
-- **DeleteParticipation** (`/character-history/delete-participation`): Retrieves record first (to get index keys for cleanup), removes from both indexes, publishes deletion event.
+- **DeleteParticipation** (`/character-history/delete-participation`): Retrieves record first (to get index keys for cleanup), removes from both indexes under distributed lock. Returns 409 Conflict if lock cannot be acquired. Publishes deletion event.
 
 ### Backstory Operations (4 endpoints)
 
 - **GetBackstory** (`/character-history/get-backstory`): Returns NotFound if no backstory exists. Filters by element types array and minimum strength. UpdatedAt is null if never updated.
-- **SetBackstory** (`/character-history/set-backstory`): Merge-or-replace semantics via `replaceExisting` flag. Merge matches by type+key pair. Validates element count against `MaxBackstoryElements` limit (returns BadRequest if exceeded). For merge mode, only truly new elements count toward the limit -- updates to existing type+key pairs are always allowed. Publishes created or updated event with element count.
+- **SetBackstory** (`/character-history/set-backstory`): Merge-or-replace semantics via `replaceExisting` flag. Merge matches by type+key pair. Validates element count against `MaxBackstoryElements` limit (returns BadRequest if exceeded). For merge mode, only truly new elements count toward the limit -- updates to existing type+key pairs are always allowed. Write operations protected by distributed lock; returns 409 Conflict if lock cannot be acquired. Publishes created or updated event with element count.
 - **AddBackstoryElement** (`/character-history/add-backstory-element`): Adds or updates single element (updates if type+key match exists). Creates backstory document if none exists. Rejects adding new elements when at `MaxBackstoryElements` limit (updates to existing type+key pairs are always allowed at any count).
 - **DeleteBackstory** (`/character-history/delete-backstory`): Removes entire backstory. Returns NotFound if no backstory exists.
 
@@ -233,7 +236,7 @@ None.
 
 2. **UpdatedAt null semantics**: `GetBackstory` returns `UpdatedAt = null` when backstory has never been modified after initial creation (CreatedAtUnix == UpdatedAtUnix).
 
-3. **Helper abstractions constructed inline**: `DualIndexHelper` and `BackstoryStorageHelper` are instantiated directly in the constructor rather than registered in DI. This is intentional: helpers require service-specific configuration (key prefixes, data access lambdas) that can't be generalized. Testing works via `IStateStoreFactory` mocking - no special setup required.
+3. **Helper abstractions constructed inline**: `DualIndexHelper` and `BackstoryStorageHelper` are instantiated directly in the constructor rather than registered in DI. This is intentional: helpers require service-specific configuration (key prefixes, data access lambdas) that can't be generalized. Both helpers accept `IDistributedLockProvider` and `IndexLockTimeoutSeconds` for multi-instance safe write operations. Lock failure returns `StatusCodes.Conflict` to callers. Testing works via `IStateStoreFactory` and `IDistributedLockProvider` mocking.
 
 4. **Summarize is a read-only operation (no event)**: `SummarizeHistoryAsync` does not publish any event because it's a pure read operation that doesn't modify state. Per FOUNDATION TENETS (Event-Driven Architecture), events notify about state changes - read operations don't trigger events. This is consistent with other read operations like `GetBackstory` and `GetParticipation`.
 
@@ -263,8 +266,8 @@ None.
 4. **Parallel service pattern with realm-history**: Both services use nearly identical patterns (dual-index participations, document-based lore/backstory, template summarization) but with subtle behavioral differences (NotFound vs empty list for missing data).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/309 -->
 
-5. **Empty string entityId returns silently instead of throwing**: Helper methods (DualIndexHelper, BackstoryStorageHelper) check `string.IsNullOrEmpty(entityId)` and return null/empty/false. With NRTs, null is a compile-time warning (redundant check). But empty string `""` is a runtime bug that should throw `ArgumentException`, not silently return null. This hides programmer errors.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/310 -->
+5. ~~**Empty string entityId returns silently instead of throwing**~~: FIXED (2026-02-08) - All helper methods now throw `ArgumentNullException` for null or empty string parameters, consistent with `AddRecordAsync`/`SetAsync`/`AddElementAsync` which already threw. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/310 -->
 
 6. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/311 -->
@@ -276,7 +279,7 @@ None.
 ### Pending Design Review
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for DeleteAll (blocked on lib-resource infrastructure; O(N) messages for N participations)
 - **2026-02-06**: [#311](https://github.com/beyond-immersion/bannou-service/issues/311) - AddBackstoryElement event does not distinguish element added vs updated (need to survey consumers for actual requirement)
-- **2026-02-06**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - Empty string entityId should throw, not return null silently (part of systemic silent-failure pattern fix)
+- ~~**2026-02-06**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - Empty string entityId should throw, not return null silently~~ → **COMPLETED** (see below)
 - **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history (parallel service API consistency)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
 - **2026-02-01**: [#230](https://github.com/beyond-immersion/bannou-service/issues/230) - AI-powered summarization (requires building new LLM service infrastructure)
@@ -284,5 +287,7 @@ None.
 
 ### Completed
 
+- **2026-02-08**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - All DualIndexHelper and BackstoryStorageHelper methods now throw `ArgumentNullException` for null/empty string parameters. Previously, read and delete methods silently returned null/empty/false, hiding programmer errors. Write methods (`AddRecordAsync`, `SetAsync`, `AddElementAsync`) already threw correctly.
+- **2026-02-08**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Added distributed locking to DualIndexHelper and BackstoryStorageHelper write operations. Lock per primary key (characterId) for index updates, per entityId for backstory. Lock failure returns `StatusCodes.Conflict`. Configurable timeout via `IndexLockTimeoutSeconds` (default 15). Lock owner IDs use key prefix for traceability (e.g., `"character-participation-{guid}"`). Secondary index is intentionally NOT locked: locking would serialize all writes across unrelated entities referencing the same event (global bottleneck), and reads bypass indexes entirely via `JsonQueryPagedAsync`. Worst-case race produces a stale index entry that self-heals on next write/delete.
 - **2026-02-08**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Added configurable `MaxBackstoryElements` limit (default 100). Service-level validation in SetBackstory and AddBackstoryElement; returns BadRequest when exceeded. Updates to existing type+key pairs always allowed.
 - **2026-02-08**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations. Replaced in-memory fetch-all-then-paginate with server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. DualIndexHelper retained for write operations only.

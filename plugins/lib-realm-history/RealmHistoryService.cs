@@ -50,7 +50,8 @@ public partial class RealmHistoryService : IRealmHistoryService
         IStateStoreFactory stateStoreFactory,
         ILogger<RealmHistoryService> logger,
         RealmHistoryServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IDistributedLockProvider lockProvider)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -63,7 +64,9 @@ public partial class RealmHistoryService : IRealmHistoryService
             StateStoreDefinitions.RealmHistory,
             PARTICIPATION_KEY_PREFIX,
             PARTICIPATION_INDEX_KEY_PREFIX,
-            PARTICIPATION_BY_EVENT_KEY_PREFIX);
+            PARTICIPATION_BY_EVENT_KEY_PREFIX,
+            lockProvider,
+            configuration.IndexLockTimeoutSeconds);
 
         // Initialize lore helper using shared backstory storage infrastructure
         _loreHelper = new BackstoryStorageHelper<RealmLoreData, RealmLoreElementData>(
@@ -98,7 +101,9 @@ public partial class RealmHistoryService : IRealmHistoryService
                 GetCreatedAtUnix = l => l.CreatedAtUnix,
                 SetCreatedAtUnix = (l, ts) => l.CreatedAtUnix = ts,
                 GetUpdatedAtUnix = l => l.UpdatedAtUnix,
-                SetUpdatedAtUnix = (l, ts) => l.UpdatedAtUnix = ts
+                SetUpdatedAtUnix = (l, ts) => l.UpdatedAtUnix = ts,
+                LockProvider = lockProvider,
+                LockTimeoutSeconds = configuration.IndexLockTimeoutSeconds
             });
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -138,12 +143,19 @@ public partial class RealmHistoryService : IRealmHistoryService
             };
 
             // Use helper to store record and update both indices
-            await _participationHelper.AddRecordAsync(
+            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+            var addResult = await _participationHelper.AddRecordAsync(
                 participationData,
                 participationId.ToString(),
                 body.RealmId.ToString(),
                 body.EventId.ToString(),
                 cancellationToken);
+
+            if (!addResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for realm {RealmId} participation recording", body.RealmId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new RealmParticipationRecordedEvent
@@ -325,11 +337,18 @@ public partial class RealmHistoryService : IRealmHistoryService
             await UnregisterRealmReferenceAsync(body.ParticipationId.ToString(), data.RealmId, cancellationToken);
 
             // Use helper to remove record and update both indices
-            await _participationHelper.RemoveRecordAsync(
+            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+            var removeResult = await _participationHelper.RemoveRecordAsync(
                 body.ParticipationId.ToString(),
                 data.RealmId.ToString(),
                 data.EventId.ToString(),
                 cancellationToken);
+
+            if (!removeResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for participation {ParticipationId} deletion", body.ParticipationId);
+                return StatusCodes.Conflict;
+            }
 
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new RealmParticipationDeletedEvent
@@ -488,11 +507,21 @@ public partial class RealmHistoryService : IRealmHistoryService
                 }
             }
 
-            var result = await _loreHelper.SetAsync(
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var lockResult = await _loreHelper.SetAsync(
                 body.RealmId.ToString(),
                 elementDataList,
                 body.ReplaceExisting,
                 cancellationToken);
+
+            if (!lockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore set", body.RealmId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var result = lockResult.Value
+                ?? throw new InvalidOperationException("Lock acquired but lore set result is null");
 
             var response = new RealmLoreResponse
             {
@@ -581,10 +610,20 @@ public partial class RealmHistoryService : IRealmHistoryService
                 }
             }
 
-            var result = await _loreHelper.AddElementAsync(
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var lockResult = await _loreHelper.AddElementAsync(
                 body.RealmId.ToString(),
                 elementData,
                 cancellationToken);
+
+            if (!lockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore element add", body.RealmId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var result = lockResult.Value
+                ?? throw new InvalidOperationException("Lock acquired but lore add element result is null");
 
             var response = new RealmLoreResponse
             {
@@ -654,9 +693,16 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            var deleted = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var lockResult = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);
 
-            if (!deleted)
+            if (!lockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore deletion", body.RealmId);
+                return StatusCodes.Conflict;
+            }
+
+            if (!lockResult.Value)
             {
                 return StatusCodes.NotFound;
             }
@@ -719,10 +765,19 @@ public partial class RealmHistoryService : IRealmHistoryService
             }
 
             // Use helper to delete all participations and update event indices
-            var participationsDeleted = await _participationHelper.RemoveAllByPrimaryKeyAsync(
+            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+            var participationLockResult = await _participationHelper.RemoveAllByPrimaryKeyAsync(
                 body.RealmId.ToString(),
                 record => record.EventId.ToString(),
                 cancellationToken);
+
+            if (!participationLockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for realm {RealmId} participation bulk deletion", body.RealmId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var participationsDeleted = participationLockResult.Value;
 
             // Check if lore exists to unregister its reference
             var existingLore = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
@@ -732,7 +787,16 @@ public partial class RealmHistoryService : IRealmHistoryService
             }
 
             // Use helper to delete lore
-            var loreDeleted = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var loreLockResult = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);
+
+            if (!loreLockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore deletion during history purge", body.RealmId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var loreDeleted = loreLockResult.Value;
 
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new RealmHistoryDeletedEvent
@@ -1003,12 +1067,19 @@ public partial class RealmHistoryService : IRealmHistoryService
                         CreatedAtUnix = participation.CreatedAt.ToUnixTimeSeconds()
                     };
 
-                    await _participationHelper.AddRecordAsync(
+                    // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+                    var addResult = await _participationHelper.AddRecordAsync(
                         participationData,
                         participation.ParticipationId.ToString(),
                         participation.RealmId.ToString(),
                         participation.EventId.ToString(),
                         cancellationToken);
+
+                    if (!addResult.LockAcquired)
+                    {
+                        _logger.LogWarning("Failed to acquire lock during archive restoration for realm {RealmId}", body.RealmId);
+                        return (StatusCodes.Conflict, null);
+                    }
 
                     // Re-register realm reference
                     await RegisterRealmReferenceAsync(participation.ParticipationId.ToString(), participation.RealmId, cancellationToken);
@@ -1023,11 +1094,18 @@ public partial class RealmHistoryService : IRealmHistoryService
                 // Aggregate all elements from all lore responses
                 var allElements = archiveData.LoreElements.SelectMany(lr => lr.Elements).ToList();
                 var elementDataList = allElements.Select(MapToRealmLoreElementData).ToList();
-                await _loreHelper.SetAsync(
+                // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+                var setResult = await _loreHelper.SetAsync(
                     body.RealmId.ToString(),
                     elementDataList,
                     replaceExisting: true,
                     cancellationToken);
+
+                if (!setResult.LockAcquired)
+                {
+                    _logger.LogWarning("Failed to acquire lock during lore restoration for realm {RealmId}", body.RealmId);
+                    return (StatusCodes.Conflict, null);
+                }
 
                 // Re-register realm reference for lore
                 await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);

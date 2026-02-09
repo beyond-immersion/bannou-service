@@ -48,7 +48,8 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         IStateStoreFactory stateStoreFactory,
         ILogger<CharacterHistoryService> logger,
         IEventConsumer eventConsumer,
-        CharacterHistoryServiceConfiguration configuration)
+        CharacterHistoryServiceConfiguration configuration,
+        IDistributedLockProvider lockProvider)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -61,7 +62,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             StateStoreDefinitions.CharacterHistory,
             PARTICIPATION_KEY_PREFIX,
             PARTICIPATION_INDEX_KEY_PREFIX,
-            PARTICIPATION_BY_EVENT_KEY_PREFIX);
+            PARTICIPATION_BY_EVENT_KEY_PREFIX,
+            lockProvider,
+            configuration.IndexLockTimeoutSeconds);
 
         // Initialize backstory helper using shared backstory storage infrastructure
         _backstoryHelper = new BackstoryStorageHelper<BackstoryData, BackstoryElementData>(
@@ -96,7 +99,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 GetCreatedAtUnix = b => b.CreatedAtUnix,
                 SetCreatedAtUnix = (b, ts) => b.CreatedAtUnix = ts,
                 GetUpdatedAtUnix = b => b.UpdatedAtUnix,
-                SetUpdatedAtUnix = (b, ts) => b.UpdatedAtUnix = ts
+                SetUpdatedAtUnix = (b, ts) => b.UpdatedAtUnix = ts,
+                LockProvider = lockProvider,
+                LockTimeoutSeconds = configuration.IndexLockTimeoutSeconds
             });
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -148,12 +153,19 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             };
 
             // Use helper to store record and update both indices
-            await _participationHelper.AddRecordAsync(
+            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+            var addResult = await _participationHelper.AddRecordAsync(
                 participationData,
                 participationId.ToString(),
                 body.CharacterId.ToString(),
                 body.EventId.ToString(),
                 cancellationToken);
+
+            if (!addResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId} participation recording", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new CharacterParticipationRecordedEvent
@@ -330,11 +342,18 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             await UnregisterCharacterReferenceAsync(body.ParticipationId.ToString(), data.CharacterId, cancellationToken);
 
             // Use helper to remove record and update both indices
-            await _participationHelper.RemoveRecordAsync(
+            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+            var removeResult = await _participationHelper.RemoveRecordAsync(
                 body.ParticipationId.ToString(),
                 data.CharacterId.ToString(),
                 data.EventId.ToString(),
                 cancellationToken);
+
+            if (!removeResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for participation {ParticipationId} deletion", body.ParticipationId);
+                return StatusCodes.Conflict;
+            }
 
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new CharacterParticipationDeletedEvent
@@ -485,11 +504,21 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 }
             }
 
-            var result = await _backstoryHelper.SetAsync(
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var lockResult = await _backstoryHelper.SetAsync(
                 body.CharacterId.ToString(),
                 elementDataList,
                 body.ReplaceExisting,
                 cancellationToken);
+
+            if (!lockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId} backstory set", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var result = lockResult.Value
+                ?? throw new InvalidOperationException("Lock acquired but backstory set result is null");
 
             var response = new BackstoryResponse
             {
@@ -576,10 +605,20 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 }
             }
 
-            var result = await _backstoryHelper.AddElementAsync(
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var lockResult = await _backstoryHelper.AddElementAsync(
                 body.CharacterId.ToString(),
                 elementData,
                 cancellationToken);
+
+            if (!lockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId} backstory element add", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var result = lockResult.Value
+                ?? throw new InvalidOperationException("Lock acquired but backstory add element result is null");
 
             var response = new BackstoryResponse
             {
@@ -647,9 +686,16 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            var deleted = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var lockResult = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
 
-            if (!deleted)
+            if (!lockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId} backstory deletion", body.CharacterId);
+                return StatusCodes.Conflict;
+            }
+
+            if (!lockResult.Value)
             {
                 return StatusCodes.NotFound;
             }
@@ -711,10 +757,19 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             }
 
             // Use helper to delete all participations and update event indices
-            var participationsDeleted = await _participationHelper.RemoveAllByPrimaryKeyAsync(
+            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+            var participationLockResult = await _participationHelper.RemoveAllByPrimaryKeyAsync(
                 body.CharacterId.ToString(),
                 record => record.EventId.ToString(),
                 cancellationToken);
+
+            if (!participationLockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId} participation bulk deletion", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var participationsDeleted = participationLockResult.Value;
 
             // Check if backstory exists to unregister its reference
             var existingBackstory = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
@@ -724,7 +779,16 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             }
 
             // Use helper to delete backstory
-            var backstoryDeleted = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var backstoryLockResult = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
+
+            if (!backstoryLockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId} backstory deletion during history purge", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var backstoryDeleted = backstoryLockResult.Value;
 
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new CharacterHistoryDeletedEvent
@@ -1156,12 +1220,19 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                         CreatedAtUnix = participation.CreatedAt.ToUnixTimeSeconds()
                     };
 
-                    await _participationHelper.AddRecordAsync(
+                    // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+                    var addResult = await _participationHelper.AddRecordAsync(
                         participationData,
                         participationData.ParticipationId.ToString(),
                         body.CharacterId.ToString(),
                         participationData.EventId.ToString(),
                         cancellationToken);
+
+                    if (!addResult.LockAcquired)
+                    {
+                        _logger.LogWarning("Failed to acquire lock during archive restoration for character {CharacterId}", body.CharacterId);
+                        return (StatusCodes.Conflict, null);
+                    }
 
                     // Register character reference for restored participation
                     await RegisterCharacterReferenceAsync(participationData.ParticipationId.ToString(), body.CharacterId, cancellationToken);
@@ -1180,11 +1251,18 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                     .Select(MapToBackstoryElementData)
                     .ToList();
 
-                await _backstoryHelper.SetAsync(
+                // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+                var setResult = await _backstoryHelper.SetAsync(
                     body.CharacterId.ToString(),
                     elementDataList,
                     replaceExisting: true,
                     cancellationToken);
+
+                if (!setResult.LockAcquired)
+                {
+                    _logger.LogWarning("Failed to acquire lock during backstory restoration for character {CharacterId}", body.CharacterId);
+                    return (StatusCodes.Conflict, null);
+                }
 
                 // Register character reference for restored backstory
                 await RegisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);

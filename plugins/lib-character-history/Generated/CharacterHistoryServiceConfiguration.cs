@@ -65,4 +65,10 @@ public class CharacterHistoryServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MaxBackstoryElements { get; set; } = 100;
 
+    /// <summary>
+    /// Timeout in seconds for distributed locks during index and backstory write operations. Matches established patterns in Currency, Inventory, and Contract services.
+    /// Environment variable: CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int IndexLockTimeoutSeconds { get; set; } = 15;
+
 }

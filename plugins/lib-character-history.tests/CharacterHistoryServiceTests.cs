@@ -27,6 +27,7 @@ public class CharacterHistoryServiceTests
     private readonly Mock<IJsonQueryableStateStore<ParticipationData>> _mockJsonQueryableStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     private const string STATE_STORE = "character-history-statestore";
 
@@ -40,6 +41,16 @@ public class CharacterHistoryServiceTests
         _mockJsonQueryableStore = new Mock<IJsonQueryableStateStore<ParticipationData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+
+        // Default: lock provider succeeds
+        var successLock = new Mock<ILockResponse>();
+        successLock.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
 
         // Setup default factory returns
         _mockStateStoreFactory
@@ -63,7 +74,8 @@ public class CharacterHistoryServiceTests
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             _mockEventConsumer.Object,
-            configuration ?? new CharacterHistoryServiceConfiguration());
+            configuration ?? new CharacterHistoryServiceConfiguration(),
+            _mockLockProvider.Object);
     }
 
     #region Constructor Validation

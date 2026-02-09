@@ -26,3 +26,9 @@ x-service-configuration:
       description: Maximum number of backstory elements allowed per character. Prevents unbounded growth from repeated AddBackstoryElement or SetBackstory calls. Returns BadRequest when limit would be exceeded.
       default: 100
       env: CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS
+    # Concurrency Control
+    IndexLockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed locks during index and backstory write operations. Matches established patterns in Currency, Inventory, and Contract services.
+      default: 15
+      env: CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS

@@ -18,6 +18,7 @@ Historical event participation and lore management (L4 GameFeatures) for realms.
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and lore |
+| lib-state (`IDistributedLockProvider`) | Distributed locks for DualIndexHelper and BackstoryStorageHelper write operations (per IMPLEMENTATION TENETS: multi-instance safety) |
 | lib-messaging (`IMessageBus`) | Publishing participation, lore lifecycle, and resource reference events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-resource (`IResourceClient`) | Registering cleanup and compression callbacks during plugin startup (in `RealmHistoryServicePlugin`, not in service constructor) |
@@ -78,6 +79,7 @@ This plugin does not consume external events.
 |----------|---------|---------|---------|
 | `ForceServiceId` | `REALM_HISTORY_FORCE_SERVICE_ID` | null | Framework-level override for service ID |
 | `MaxLoreElements` | `REALM_HISTORY_MAX_LORE_ELEMENTS` | 100 | Maximum lore elements per realm. Returns BadRequest when exceeded. |
+| `IndexLockTimeoutSeconds` | `REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | 15 | Distributed lock timeout for DualIndexHelper and BackstoryStorageHelper write operations |
 
 ---
 
@@ -86,10 +88,11 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<RealmHistoryService>` | Scoped | Structured logging |
-| `RealmHistoryServiceConfiguration` | Singleton | Service config (MaxLoreElements limit, ForceServiceId) |
+| `RealmHistoryServiceConfiguration` | Singleton | Service config (MaxLoreElements limit, IndexLockTimeoutSeconds, ForceServiceId) |
 | `IStateStoreFactory` | Singleton | State store access (passed to helpers) |
 | `IMessageBus` | Scoped | Event publishing |
 | `IEventConsumer` | Scoped | Event registration (no handlers currently) |
+| `IDistributedLockProvider` | Singleton | Distributed locking for helper write operations |
 | `DualIndexHelper<RealmParticipationData>` | Instance | Participation dual-index storage (instantiated in constructor) |
 | `BackstoryStorageHelper<RealmLoreData, RealmLoreElementData>` | Instance | Lore element storage (instantiated in constructor) |
 
@@ -101,15 +104,15 @@ Service lifetime is **Scoped** (per-request). The helper classes are instantiate
 
 ### Participation Operations (4 endpoints)
 
-- **Record** (`/realm-history/record-participation`): Creates unique participation ID. Stores record and updates both realm and event indexes. Registers realm reference with lib-resource. Publishes recorded event.
+- **Record** (`/realm-history/record-participation`): Creates unique participation ID. Stores record and updates both realm and event indexes under distributed lock. Returns 409 Conflict if lock cannot be acquired. Registers realm reference with lib-resource. Publishes recorded event.
 - **GetParticipation** (`/realm-history/get-participation`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by realm ID, optional event category, and minimum impact at the database level. Sorts by event date descending. Bypasses DualIndexHelper for reads.
 - **GetEventParticipants** (`/realm-history/get-event-participants`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by event ID and optional role at the database level. Sorts by impact descending. Bypasses DualIndexHelper for reads.
-- **DeleteParticipation** (`/realm-history/delete-participation`): Unregisters realm reference, removes record and updates both indexes. DualIndexHelper deletes empty index documents automatically. Publishes deletion event.
+- **DeleteParticipation** (`/realm-history/delete-participation`): Unregisters realm reference, removes record and updates both indexes under distributed lock. Returns 409 Conflict if lock cannot be acquired. DualIndexHelper deletes empty index documents automatically. Publishes deletion event.
 
 ### Lore Operations (4 endpoints)
 
 - **GetLore** (`/realm-history/get-lore`): Returns OK with empty list if no lore exists (never 404). Filters by element type and strength threshold. Converts timestamps via `TimestampHelper.FromUnixSeconds`.
-- **SetLore** (`/realm-history/set-lore`): Merge-or-replace semantics controlled by `replaceExisting` flag. Merge updates existing elements by type+key pair and adds new ones. Validates against `MaxLoreElements` limit — replace mode checks input count, merge mode calculates post-merge count (existing + truly new). Returns BadRequest when limit exceeded. Registers realm reference on new lore creation. Publishes created or updated event.
+- **SetLore** (`/realm-history/set-lore`): Merge-or-replace semantics controlled by `replaceExisting` flag. Merge updates existing elements by type+key pair and adds new ones. Validates against `MaxLoreElements` limit — replace mode checks input count, merge mode calculates post-merge count (existing + truly new). Returns BadRequest when limit exceeded. Write operations protected by distributed lock; returns 409 Conflict if lock cannot be acquired. Registers realm reference on new lore creation. Publishes created or updated event.
 - **AddLoreElement** (`/realm-history/add-lore-element`): Adds single element. Updates if type+key match exists. Validates against `MaxLoreElements` limit — only rejects truly new elements when at limit; updates to existing type+key pairs are always allowed. Creates lore document if none exists. Registers realm reference on new lore creation. Publishes created or updated event.
 - **DeleteLore** (`/realm-history/delete-lore`): Unregisters realm reference, removes entire lore document. Returns NotFound if no lore exists.
 
@@ -213,14 +216,14 @@ None identified.
 2. **Lore stored as single document**: All lore elements for a realm are stored in one `RealmLoreData` object. Very large lore collections (hundreds of elements) would be loaded/saved atomically on every modification.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/306 -->
 
-3. **No concurrency control on indexes**: Dual-index updates (add to realm index AND event index) are not transactional. A crash between the two updates could leave indexes inconsistent.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/307 -->
+3. ~~**No concurrency control on indexes**~~: FIXED (2026-02-08) - DualIndexHelper and BackstoryStorageHelper write operations now use distributed locks per primary key. Lock failure returns `StatusCodes.Conflict`. Lock owner IDs use key prefix for traceability (e.g., `"realm-participation-{guid}"`). Secondary index is intentionally NOT locked: locking would serialize all writes across unrelated realms referencing the same event (global bottleneck), and reads bypass indexes entirely via `JsonQueryPagedAsync`. Worst-case race produces a stale index entry that self-heals on next write/delete. See [#307](https://github.com/beyond-immersion/bannou-service/issues/307).
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/307 -->
 
 4. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure with no schema validation. Enables flexibility but sacrifices type safety and queryability.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/308 -->
 
-5. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection. Concurrent participation recordings for the same realm could result in lost index entries. (Duplicate of #3 - same root cause, different symptom description)
-<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/307 -->
+5. ~~**Read-modify-write without distributed locks**~~: FIXED (2026-02-08) - See #3 above. Same issue, now resolved.
+<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/307 -->
 
 ---
 
@@ -229,7 +232,7 @@ None identified.
 ### Pending Design Review
 - **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history (parallel service API consistency; GetLore returns OK with empty list while GetBackstory returns NotFound)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
-- **2026-02-06**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Concurrency control for DualIndexHelper index updates (read-modify-write pattern without locking; shared infrastructure with character-history)
+- ~~**2026-02-06**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Concurrency control for DualIndexHelper index updates~~ → **COMPLETED** (see below)
 - **2026-02-06**: [#306](https://github.com/beyond-immersion/bannou-service/issues/306) - Single-document storage for lore elements (evaluate whether document storage is problematic for large lore collections; shared pattern with character-history via BackstoryStorageHelper)
 - **2026-02-02**: [#266](https://github.com/beyond-immersion/bannou-service/issues/266) - Event-level aggregation (API design decisions needed: metrics, role breakdowns, filtering, new endpoint vs enhancement)
 - **2026-02-02**: [#268](https://github.com/beyond-immersion/bannou-service/issues/268) - Lore inheritance (BLOCKED: requires realm hierarchy which contradicts current Realm service design of "peer worlds with no hierarchical relationships")
@@ -238,5 +241,6 @@ None identified.
 
 ### Completed
 
+- **2026-02-08**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Added distributed locking to DualIndexHelper and BackstoryStorageHelper write operations. Lock per primary key (realmId) for index updates, per entityId for lore. Lock failure returns `StatusCodes.Conflict`. Configurable timeout via `IndexLockTimeoutSeconds` (default 15). Lock owner IDs use key prefix for traceability (e.g., `"realm-participation-{guid}"`). Secondary index is intentionally NOT locked: locking would serialize all writes across unrelated realms referencing the same event (global bottleneck), and reads bypass indexes entirely via `JsonQueryPagedAsync`. Worst-case race produces a stale index entry that self-heals on next write/delete.
 - **2026-02-08**: [#350](https://github.com/beyond-immersion/bannou-service/issues/350) - Configurable lore element count limit. Added `MaxLoreElements` config property (default 100) with validation in `SetRealmLoreAsync` and `AddRealmLoreElementAsync`. Follow-up from character-history #207.
 - **2026-02-08**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations. Replaced in-memory fetch-all-then-paginate with server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. DualIndexHelper retained for write operations only.

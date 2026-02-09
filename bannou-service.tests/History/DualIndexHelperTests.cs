@@ -35,38 +35,52 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         public string EventId { get; set; } = string.Empty;
     }
 
-    private (Mock<IStateStoreFactory>, Mock<IStateStore<TestRecord>>, Mock<IStateStore<HistoryIndexData>>) CreateMocks()
+    private (Mock<IStateStoreFactory>, Mock<IStateStore<TestRecord>>, Mock<IStateStore<HistoryIndexData>>, Mock<IDistributedLockProvider>) CreateMocks()
     {
         var mockFactory = new Mock<IStateStoreFactory>();
         var mockRecordStore = new Mock<IStateStore<TestRecord>>();
         var mockIndexStore = new Mock<IStateStore<HistoryIndexData>>();
+        var mockLockProvider = new Mock<IDistributedLockProvider>();
 
         mockFactory.Setup(f => f.GetStore<TestRecord>(TestStateStoreName)).Returns(mockRecordStore.Object);
         mockFactory.Setup(f => f.GetStore<HistoryIndexData>(TestStateStoreName)).Returns(mockIndexStore.Object);
 
-        return (mockFactory, mockRecordStore, mockIndexStore);
+        // Default: lock provider succeeds
+        var successLock = new Mock<ILockResponse>();
+        successLock.Setup(l => l.Success).Returns(true);
+        mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        return (mockFactory, mockRecordStore, mockIndexStore, mockLockProvider);
     }
 
-    private DualIndexHelper<TestRecord> CreateHelper(Mock<IStateStoreFactory> mockFactory)
+    private DualIndexHelper<TestRecord> CreateHelper(Mock<IStateStoreFactory> mockFactory, Mock<IDistributedLockProvider> mockLockProvider)
     {
         return new DualIndexHelper<TestRecord>(
             mockFactory.Object,
             TestStateStoreName,
             RecordPrefix,
             PrimaryIndexPrefix,
-            SecondaryIndexPrefix);
+            SecondaryIndexPrefix,
+            mockLockProvider.Object,
+            15);
     }
 
     [Fact]
     public void Constructor_WithConfiguration_SetsPropertiesCorrectly()
     {
-        var (mockFactory, _, _) = CreateMocks();
+        var (mockFactory, _, _, mockLockProvider) = CreateMocks();
         var config = new DualIndexConfiguration(
             mockFactory.Object,
             TestStateStoreName,
             RecordPrefix,
             PrimaryIndexPrefix,
-            SecondaryIndexPrefix);
+            SecondaryIndexPrefix,
+            mockLockProvider.Object,
+            15);
 
         var helper = new DualIndexHelper<TestRecord>(config);
         Assert.NotNull(helper);
@@ -76,8 +90,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task AddRecordAsync_SavesRecordAndUpdatesIndices()
     {
         // Arrange
-        var (mockFactory, mockRecordStore, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, mockRecordStore, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var record = new TestRecord { Id = "rec-1", Name = "Test", EventId = "event-1" };
         var recordId = "rec-1";
@@ -93,7 +107,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.AddRecordAsync(record, recordId, primaryKey, secondaryKey);
 
         // Assert
-        Assert.Equal(recordId, result);
+        Assert.True(result.LockAcquired);
+        Assert.Equal(recordId, result.Value);
 
         mockRecordStore.Verify(s => s.SaveAsync(
             $"{RecordPrefix}{recordId}",
@@ -118,8 +133,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task AddRecordAsync_WithExistingIndex_AppendsToList()
     {
         // Arrange
-        var (mockFactory, mockRecordStore, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, mockRecordStore, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var record = new TestRecord { Id = "rec-2", Name = "Test", EventId = "event-1" };
         var recordId = "rec-2";
@@ -152,8 +167,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     [Fact]
     public async Task AddRecordAsync_WithEmptyRecordId_ThrowsArgumentNullException()
     {
-        var (mockFactory, _, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, _, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             helper.AddRecordAsync(new TestRecord(), "", "pk", "sk"));
@@ -163,8 +178,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task GetRecordAsync_WithValidId_ReturnsRecord()
     {
         // Arrange
-        var (mockFactory, mockRecordStore, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, mockRecordStore, _, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var record = new TestRecord { Id = "rec-1", Name = "Test" };
         mockRecordStore.Setup(s => s.GetAsync($"{RecordPrefix}rec-1", It.IsAny<CancellationToken>()))
@@ -183,8 +198,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task GetRecordAsync_WithInvalidId_ReturnsNull()
     {
         // Arrange
-        var (mockFactory, mockRecordStore, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, mockRecordStore, _, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         mockRecordStore.Setup(s => s.GetAsync($"{RecordPrefix}non-existent", It.IsAny<CancellationToken>()))
             .ReturnsAsync((TestRecord?)null);
@@ -197,21 +212,21 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public async Task GetRecordAsync_WithEmptyId_ReturnsNull()
+    public async Task GetRecordAsync_WithEmptyId_ThrowsArgumentNullException()
     {
-        var (mockFactory, _, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, _, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
-        var result = await helper.GetRecordAsync("");
-        Assert.Null(result);
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            helper.GetRecordAsync(""));
     }
 
     [Fact]
     public async Task GetRecordIdsByPrimaryKeyAsync_ReturnsRecordIds()
     {
         // Arrange
-        var (mockFactory, _, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var index = new HistoryIndexData
         {
@@ -236,8 +251,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task GetRecordIdsByPrimaryKeyAsync_WithNoIndex_ReturnsEmptyList()
     {
         // Arrange
-        var (mockFactory, _, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         mockIndexStore.Setup(s => s.GetAsync($"{PrimaryIndexPrefix}entity-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync((HistoryIndexData?)null);
@@ -250,21 +265,21 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public async Task GetRecordIdsByPrimaryKeyAsync_WithEmptyKey_ReturnsEmptyList()
+    public async Task GetRecordIdsByPrimaryKeyAsync_WithEmptyKey_ThrowsArgumentNullException()
     {
-        var (mockFactory, _, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, _, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
-        var result = await helper.GetRecordIdsByPrimaryKeyAsync("");
-        Assert.Empty(result);
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            helper.GetRecordIdsByPrimaryKeyAsync(""));
     }
 
     [Fact]
     public async Task GetRecordIdsBySecondaryKeyAsync_ReturnsRecordIds()
     {
         // Arrange
-        var (mockFactory, _, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var index = new HistoryIndexData
         {
@@ -288,8 +303,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task GetRecordsByPrimaryKeyAsync_ReturnsRecords()
     {
         // Arrange
-        var (mockFactory, mockRecordStore, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, mockRecordStore, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var index = new HistoryIndexData
         {
@@ -323,8 +338,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task RemoveRecordAsync_DeletesRecordAndUpdatesIndices()
     {
         // Arrange
-        var (mockFactory, mockRecordStore, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, mockRecordStore, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var record = new TestRecord { Id = "rec-1", Name = "Test" };
         var recordKey = $"{RecordPrefix}rec-1";
@@ -356,7 +371,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.RemoveRecordAsync("rec-1", primaryKey, secondaryKey);
 
         // Assert
-        Assert.True(result);
+        Assert.True(result.LockAcquired);
+        Assert.True(result.Value);
         mockRecordStore.Verify(s => s.DeleteAsync(recordKey, It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify indices were updated (rec-1 should be removed)
@@ -376,8 +392,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task RemoveRecordAsync_WithNonExistentRecord_ReturnsFalse()
     {
         // Arrange
-        var (mockFactory, mockRecordStore, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, mockRecordStore, _, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         mockRecordStore.Setup(s => s.GetAsync($"{RecordPrefix}rec-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync((TestRecord?)null);
@@ -386,26 +402,27 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.RemoveRecordAsync("rec-1", "entity-1", "event-1");
 
         // Assert
-        Assert.False(result);
+        Assert.True(result.LockAcquired);
+        Assert.False(result.Value);
         mockRecordStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task RemoveRecordAsync_WithEmptyId_ReturnsFalse()
+    public async Task RemoveRecordAsync_WithEmptyId_ThrowsArgumentNullException()
     {
-        var (mockFactory, _, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, _, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
-        var result = await helper.RemoveRecordAsync("", "entity-1", "event-1");
-        Assert.False(result);
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            helper.RemoveRecordAsync("", "entity-1", "event-1"));
     }
 
     [Fact]
     public async Task RemoveAllByPrimaryKeyAsync_DeletesAllRecordsAndUpdatesIndices()
     {
         // Arrange
-        var (mockFactory, mockRecordStore, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, mockRecordStore, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var primaryKey = "entity-1";
         var primaryIndex = new HistoryIndexData
@@ -462,28 +479,29 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.RemoveAllByPrimaryKeyAsync(primaryKey, r => r.EventId);
 
         // Assert
-        Assert.Equal(2, result);
+        Assert.True(result.LockAcquired);
+        Assert.Equal(2, result.Value);
         mockRecordStore.Verify(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()), Times.Once);
         mockRecordStore.Verify(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()), Times.Once);
         mockIndexStore.Verify(s => s.DeleteAsync($"{PrimaryIndexPrefix}{primaryKey}", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task RemoveAllByPrimaryKeyAsync_WithEmptyKey_ReturnsZero()
+    public async Task RemoveAllByPrimaryKeyAsync_WithEmptyKey_ThrowsArgumentNullException()
     {
-        var (mockFactory, _, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, _, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
-        var result = await helper.RemoveAllByPrimaryKeyAsync("", r => r.EventId);
-        Assert.Equal(0, result);
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            helper.RemoveAllByPrimaryKeyAsync("", r => r.EventId));
     }
 
     [Fact]
     public async Task HasRecordsForPrimaryKeyAsync_WithRecords_ReturnsTrue()
     {
         // Arrange
-        var (mockFactory, _, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var index = new HistoryIndexData
         {
@@ -505,8 +523,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task HasRecordsForPrimaryKeyAsync_WithEmptyIndex_ReturnsFalse()
     {
         // Arrange
-        var (mockFactory, _, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var index = new HistoryIndexData
         {
@@ -528,8 +546,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task HasRecordsForPrimaryKeyAsync_WithNoIndex_ReturnsFalse()
     {
         // Arrange
-        var (mockFactory, _, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         mockIndexStore.Setup(s => s.GetAsync($"{PrimaryIndexPrefix}entity-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync((HistoryIndexData?)null);
@@ -545,8 +563,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task GetRecordCountByPrimaryKeyAsync_ReturnsCorrectCount()
     {
         // Arrange
-        var (mockFactory, _, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         var index = new HistoryIndexData
         {
@@ -568,8 +586,8 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public async Task GetRecordCountByPrimaryKeyAsync_WithNoIndex_ReturnsZero()
     {
         // Arrange
-        var (mockFactory, _, mockIndexStore) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, mockIndexStore, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
         mockIndexStore.Setup(s => s.GetAsync($"{PrimaryIndexPrefix}entity-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync((HistoryIndexData?)null);
@@ -582,12 +600,12 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public async Task GetRecordCountByPrimaryKeyAsync_WithEmptyKey_ReturnsZero()
+    public async Task GetRecordCountByPrimaryKeyAsync_WithEmptyKey_ThrowsArgumentNullException()
     {
-        var (mockFactory, _, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
+        var (mockFactory, _, _, mockLockProvider) = CreateMocks();
+        var helper = CreateHelper(mockFactory, mockLockProvider);
 
-        var result = await helper.GetRecordCountByPrimaryKeyAsync("");
-        Assert.Equal(0, result);
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            helper.GetRecordCountByPrimaryKeyAsync(""));
     }
 }

@@ -59,4 +59,10 @@ public class RealmHistoryServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MaxLoreElements { get; set; } = 100;
 
+    /// <summary>
+    /// Timeout in seconds for distributed locks during index and lore write operations. Matches established patterns in Currency, Inventory, and Contract services.
+    /// Environment variable: REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int IndexLockTimeoutSeconds { get; set; } = 15;
+
 }

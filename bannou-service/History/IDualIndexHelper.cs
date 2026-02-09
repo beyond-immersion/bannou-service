@@ -10,12 +10,16 @@ namespace BeyondImmersion.BannouService.History;
 /// <param name="RecordKeyPrefix">Prefix for record keys (e.g., "participation-").</param>
 /// <param name="PrimaryIndexPrefix">Prefix for primary index keys (e.g., "participation-index-").</param>
 /// <param name="SecondaryIndexPrefix">Prefix for secondary index keys (e.g., "participation-event-").</param>
+/// <param name="LockProvider">Provider for distributed locking during write operations.</param>
+/// <param name="LockTimeoutSeconds">Timeout in seconds for distributed lock acquisition.</param>
 public record DualIndexConfiguration(
     IStateStoreFactory StateStoreFactory,
     string StateStoreName,
     string RecordKeyPrefix,
     string PrimaryIndexPrefix,
-    string SecondaryIndexPrefix
+    string SecondaryIndexPrefix,
+    IDistributedLockProvider LockProvider,
+    int LockTimeoutSeconds
 );
 
 /// <summary>
@@ -23,6 +27,7 @@ public record DualIndexConfiguration(
 /// Dual-index allows efficient querying from two dimensions:
 /// - Primary: "Find all records for entity X" (e.g., all participations for a character)
 /// - Secondary: "Find all records related to Y" (e.g., all participants in an event)
+/// Write operations acquire a distributed lock on the primary key per IMPLEMENTATION TENETS.
 /// </summary>
 /// <typeparam name="TRecord">Type of record being stored.</typeparam>
 public interface IDualIndexHelper<TRecord> where TRecord : class
@@ -30,14 +35,15 @@ public interface IDualIndexHelper<TRecord> where TRecord : class
     /// <summary>
     /// Adds a record with dual-index entries.
     /// Creates index entries for both primary and secondary keys.
+    /// Acquires a distributed lock on the primary key before modifying indexes.
     /// </summary>
     /// <param name="record">The record to store.</param>
     /// <param name="recordId">Unique identifier for the record.</param>
     /// <param name="primaryKey">Primary index key (e.g., character ID).</param>
     /// <param name="secondaryKey">Secondary index key (e.g., event ID).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The record ID.</returns>
-    Task<string> AddRecordAsync(
+    /// <returns>Lockable result containing the record ID, or lock failure.</returns>
+    Task<LockableResult<string>> AddRecordAsync(
         TRecord record,
         string recordId,
         string primaryKey,
@@ -96,13 +102,14 @@ public interface IDualIndexHelper<TRecord> where TRecord : class
 
     /// <summary>
     /// Removes a record and updates both indices.
+    /// Acquires a distributed lock on the primary key before modifying indexes.
     /// </summary>
     /// <param name="recordId">The record identifier.</param>
     /// <param name="primaryKey">Primary index key.</param>
     /// <param name="secondaryKey">Secondary index key.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if record was found and deleted.</returns>
-    Task<bool> RemoveRecordAsync(
+    /// <returns>Lockable result containing whether record was found and deleted.</returns>
+    Task<LockableResult<bool>> RemoveRecordAsync(
         string recordId,
         string primaryKey,
         string secondaryKey,
@@ -111,12 +118,13 @@ public interface IDualIndexHelper<TRecord> where TRecord : class
     /// <summary>
     /// Removes all records for a primary key and updates secondary indices.
     /// Used during entity deletion/archival.
+    /// Acquires a distributed lock on the primary key before modifying indexes.
     /// </summary>
     /// <param name="primaryKey">The primary key whose records should be deleted.</param>
     /// <param name="getSecondaryKey">Function to extract secondary key from record.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Number of records deleted.</returns>
-    Task<int> RemoveAllByPrimaryKeyAsync(
+    /// <returns>Lockable result containing number of records deleted.</returns>
+    Task<LockableResult<int>> RemoveAllByPrimaryKeyAsync(
         string primaryKey,
         Func<TRecord, string> getSecondaryKey,
         CancellationToken cancellationToken = default);
