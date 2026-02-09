@@ -579,7 +579,7 @@ public class SessionShortcutTests
         connectionState.AddOrUpdateShortcut(shortcut);
 
         var message = new BinaryMessage(
-            MessageFlags.Binary | MessageFlags.HighPriority,
+            MessageFlags.Binary | MessageFlags.Reserved0x08,
             42, // specific channel
             123, // specific sequence
             shortcutRouteGuid,
@@ -593,7 +593,6 @@ public class SessionShortcutTests
         // Assert
         Assert.True(routeInfo.IsValid);
         Assert.Equal(42, routeInfo.Channel);
-        Assert.Equal(MessagePriority.High, routeInfo.Priority);
         Assert.True(routeInfo.RequiresResponse); // Binary flag without Response flag means request
     }
 

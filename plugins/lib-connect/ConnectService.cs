@@ -1391,7 +1391,6 @@ public partial class ConnectService : IConnectService, IDisposable
             TargetType = routeInfo.TargetType,
             TargetId = routeInfo.TargetId,
             Channel = routeInfo.Channel,
-            Priority = routeInfo.Priority,
             RequiresResponse = true, // Meta requests always expect a response
             ServiceName = $"{serviceName}:GET:{metaPath}"
         };

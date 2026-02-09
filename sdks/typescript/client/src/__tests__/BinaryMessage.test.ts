@@ -16,7 +16,6 @@ import {
   expectsResponse,
   isResponse,
   isClientRouted,
-  isHighPriority,
   isSuccess,
   isError,
   isMeta,
@@ -76,7 +75,7 @@ describe('BinaryMessage', () => {
 
     it('should preserve additional flags', () => {
       const msg = createResponse(
-        MessageFlags.HighPriority,
+        MessageFlags.Reserved0x08,
         1,
         42,
         123456789n,
@@ -85,7 +84,7 @@ describe('BinaryMessage', () => {
       );
 
       expect(msg.flags & MessageFlags.Response).toBe(MessageFlags.Response);
-      expect(msg.flags & MessageFlags.HighPriority).toBe(MessageFlags.HighPriority);
+      expect(msg.flags & MessageFlags.Reserved0x08).toBe(MessageFlags.Reserved0x08);
     });
   });
 
@@ -106,10 +105,10 @@ describe('BinaryMessage', () => {
         '12345678-1234-5678-9abc-def012345678',
         1n,
         '{}',
-        MessageFlags.HighPriority
+        MessageFlags.Reserved0x08
       );
 
-      expect(msg.flags).toBe(MessageFlags.HighPriority);
+      expect(msg.flags).toBe(MessageFlags.Reserved0x08);
     });
   });
 
@@ -148,7 +147,7 @@ describe('BinaryMessage', () => {
 
       it('should round-trip request messages', () => {
         const original = createRequest(
-          MessageFlags.HighPriority,
+          MessageFlags.Reserved0x08,
           1000,
           50000,
           'abcdef12-3456-789a-bcde-f01234567890',
@@ -205,7 +204,7 @@ describe('BinaryMessage', () => {
 
       it('should round-trip response messages', () => {
         const original = createResponse(
-          MessageFlags.HighPriority,
+          MessageFlags.Reserved0x08,
           500,
           12345,
           0x123456789n,
@@ -346,20 +345,6 @@ describe('BinaryMessage', () => {
       });
     });
 
-    describe('isHighPriority', () => {
-      it('should detect HighPriority flag', () => {
-        const msg = createRequest(
-          MessageFlags.HighPriority,
-          0,
-          1,
-          '12345678-1234-5678-9abc-def012345678',
-          1n,
-          new Uint8Array(0)
-        );
-        expect(isHighPriority(msg)).toBe(true);
-      });
-    });
-
     describe('isSuccess', () => {
       it('should return true for success response', () => {
         const msg = createResponse(MessageFlags.None, 0, 1, 1n, 0, new Uint8Array(0));
@@ -413,7 +398,7 @@ describe('BinaryMessage', () => {
 
   describe('combined flags', () => {
     it('should handle multiple flags', () => {
-      const flags = MessageFlags.HighPriority | MessageFlags.Binary | MessageFlags.Encrypted;
+      const flags = MessageFlags.Reserved0x08 | MessageFlags.Binary | MessageFlags.Reserved0x02;
       const msg = createRequest(
         flags,
         0,
@@ -427,7 +412,6 @@ describe('BinaryMessage', () => {
       const parsed = parse(bytes);
 
       expect(parsed.flags).toBe(flags);
-      expect(isHighPriority(parsed)).toBe(true);
     });
   });
 });

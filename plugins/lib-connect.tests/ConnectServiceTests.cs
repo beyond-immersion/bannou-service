@@ -113,7 +113,7 @@ public class ConnectServiceTests
         var testPayload = Encoding.UTF8.GetBytes("Test cross-platform payload");
 
         var message = new BinaryMessage(
-            MessageFlags.Binary | MessageFlags.HighPriority,
+            MessageFlags.Binary | MessageFlags.Reserved0x08,
             1234, // channel
             5678, // sequence
             testGuid,

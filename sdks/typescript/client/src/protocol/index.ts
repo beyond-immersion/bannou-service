@@ -53,7 +53,6 @@ export {
   expectsResponse,
   isResponse,
   isClientRouted,
-  isHighPriority,
   isSuccess,
   isError,
   isMeta,

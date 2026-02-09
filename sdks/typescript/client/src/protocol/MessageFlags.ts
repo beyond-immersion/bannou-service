@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * const flags = MessageFlags.Binary | MessageFlags.HighPriority;
+ * const flags = MessageFlags.Binary | MessageFlags.Event;
  * ```
  */
 export const MessageFlags = {
@@ -20,20 +20,23 @@ export const MessageFlags = {
    */
   Binary: 0x01,
 
-  /**
-   * Message payload is encrypted
-   */
-  Encrypted: 0x02,
+  // Bits 0x02, 0x04, 0x08 are reserved. These were originally defined as Encrypted,
+  // Compressed, and HighPriority respectively, but all three were removed because they
+  // conflict with Connect's zero-copy routing architecture. Connect forwards payloads
+  // unchanged to backend services; gateway-level encryption, compression, or priority
+  // queuing would require payload transformation, destroying that property.
+  // Transport-level concerns (TLS, permessage-deflate) handle encryption and compression.
+  // Endpoint-to-endpoint concerns are signaled by clients and handled by target services.
+  // Values are preserved to avoid shifting existing flag assignments.
 
-  /**
-   * Message payload is compressed (gzip)
-   */
-  Compressed: 0x04,
+  /** Reserved for future use. Do not assign. */
+  Reserved0x02: 0x02,
 
-  /**
-   * Deliver at high priority, skip to front of queues
-   */
-  HighPriority: 0x08,
+  /** Reserved for future use. Do not assign. */
+  Reserved0x04: 0x04,
+
+  /** Reserved for future use. Do not assign. */
+  Reserved0x08: 0x08,
 
   /**
    * Fire-and-forget message, no response expected

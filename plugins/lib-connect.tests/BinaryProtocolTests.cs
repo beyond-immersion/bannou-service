@@ -55,7 +55,7 @@ public class BinaryProtocolTests
         var originalPayload = Encoding.UTF8.GetBytes("Hello, cross-platform world!");
 
         var originalMessage = new BinaryMessage(
-            MessageFlags.Binary | MessageFlags.HighPriority,
+            MessageFlags.Binary | MessageFlags.Reserved0x08,
             1234,
             5678,
             originalGuid,

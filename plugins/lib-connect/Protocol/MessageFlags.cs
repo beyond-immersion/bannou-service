@@ -19,20 +19,29 @@ public enum MessageFlags : byte
     /// </summary>
     Binary = 0x01,
 
-    /// <summary>
-    /// Message payload is encrypted
-    /// </summary>
-    Encrypted = 0x02,
+    // Bits 0x02, 0x04, 0x08 are reserved. These were originally defined as Encrypted,
+    // Compressed, and HighPriority respectively, but all three were removed because they
+    // conflict with Connect's zero-copy routing architecture. Connect forwards payloads
+    // unchanged to backend services; gateway-level encryption, compression, or priority
+    // queuing would require payload transformation, destroying that property.
+    // Transport-level concerns (TLS, permessage-deflate) handle encryption and compression.
+    // Endpoint-to-endpoint concerns are signaled by clients and handled by target services.
+    // Values are preserved to avoid shifting existing flag assignments.
 
     /// <summary>
-    /// Message payload is compressed (gzip)
+    /// Reserved for future use. Do not assign.
     /// </summary>
-    Compressed = 0x04,
+    Reserved0x02 = 0x02,
 
     /// <summary>
-    /// Deliver at high priority, skip to front of queues
+    /// Reserved for future use. Do not assign.
     /// </summary>
-    HighPriority = 0x08,
+    Reserved0x04 = 0x04,
+
+    /// <summary>
+    /// Reserved for future use. Do not assign.
+    /// </summary>
+    Reserved0x08 = 0x08,
 
     /// <summary>
     /// Fire-and-forget message, no response expected

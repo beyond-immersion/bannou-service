@@ -17,9 +17,9 @@ describe('MessageFlags', () => {
     it('should have correct bit values', () => {
       expect(MessageFlags.None).toBe(0x00);
       expect(MessageFlags.Binary).toBe(0x01);
-      expect(MessageFlags.Encrypted).toBe(0x02);
-      expect(MessageFlags.Compressed).toBe(0x04);
-      expect(MessageFlags.HighPriority).toBe(0x08);
+      expect(MessageFlags.Reserved0x02).toBe(0x02);
+      expect(MessageFlags.Reserved0x04).toBe(0x04);
+      expect(MessageFlags.Reserved0x08).toBe(0x08);
       expect(MessageFlags.Event).toBe(0x10);
       expect(MessageFlags.Client).toBe(0x20);
       expect(MessageFlags.Response).toBe(0x40);
@@ -29,9 +29,9 @@ describe('MessageFlags', () => {
     it('should be distinct powers of 2', () => {
       const flags = [
         MessageFlags.Binary,
-        MessageFlags.Encrypted,
-        MessageFlags.Compressed,
-        MessageFlags.HighPriority,
+        MessageFlags.Reserved0x02,
+        MessageFlags.Reserved0x04,
+        MessageFlags.Reserved0x08,
         MessageFlags.Event,
         MessageFlags.Client,
         MessageFlags.Response,
@@ -58,11 +58,11 @@ describe('MessageFlags', () => {
     });
 
     it('should detect flags in combined values', () => {
-      const combined = MessageFlags.Binary | MessageFlags.Encrypted | MessageFlags.HighPriority;
+      const combined = MessageFlags.Binary | MessageFlags.Reserved0x02 | MessageFlags.Reserved0x08;
 
       expect(hasFlag(combined, MessageFlags.Binary)).toBe(true);
-      expect(hasFlag(combined, MessageFlags.Encrypted)).toBe(true);
-      expect(hasFlag(combined, MessageFlags.HighPriority)).toBe(true);
+      expect(hasFlag(combined, MessageFlags.Reserved0x02)).toBe(true);
+      expect(hasFlag(combined, MessageFlags.Reserved0x08)).toBe(true);
       expect(hasFlag(combined, MessageFlags.Response)).toBe(false);
       expect(hasFlag(combined, MessageFlags.Event)).toBe(false);
     });
@@ -76,7 +76,7 @@ describe('MessageFlags', () => {
   describe('isResponse', () => {
     it('should return true when Response flag is set', () => {
       expect(isResponse(MessageFlags.Response)).toBe(true);
-      expect(isResponse(MessageFlags.Response | MessageFlags.HighPriority)).toBe(true);
+      expect(isResponse(MessageFlags.Response | MessageFlags.Reserved0x08)).toBe(true);
     });
 
     it('should return false when Response flag is not set', () => {
@@ -100,7 +100,7 @@ describe('MessageFlags', () => {
   describe('isMeta', () => {
     it('should return true when Meta flag is set', () => {
       expect(isMeta(MessageFlags.Meta)).toBe(true);
-      expect(isMeta(MessageFlags.Meta | MessageFlags.HighPriority)).toBe(true);
+      expect(isMeta(MessageFlags.Meta | MessageFlags.Reserved0x08)).toBe(true);
     });
 
     it('should return false when Meta flag is not set', () => {
@@ -112,7 +112,7 @@ describe('MessageFlags', () => {
   describe('isBinary', () => {
     it('should return true when Binary flag is set', () => {
       expect(isBinary(MessageFlags.Binary)).toBe(true);
-      expect(isBinary(MessageFlags.Binary | MessageFlags.Compressed)).toBe(true);
+      expect(isBinary(MessageFlags.Binary | MessageFlags.Reserved0x04)).toBe(true);
     });
 
     it('should return false when Binary flag is not set', () => {
@@ -123,7 +123,7 @@ describe('MessageFlags', () => {
 
   describe('flag combinations', () => {
     it('should allow combining multiple flags with bitwise OR', () => {
-      const combined = MessageFlags.Binary | MessageFlags.Encrypted | MessageFlags.HighPriority;
+      const combined = MessageFlags.Binary | MessageFlags.Reserved0x02 | MessageFlags.Reserved0x08;
 
       expect(combined).toBe(0x01 | 0x02 | 0x08);
       expect(combined).toBe(0x0b);
@@ -132,9 +132,9 @@ describe('MessageFlags', () => {
     it('should allow combining all flags', () => {
       const all =
         MessageFlags.Binary |
-        MessageFlags.Encrypted |
-        MessageFlags.Compressed |
-        MessageFlags.HighPriority |
+        MessageFlags.Reserved0x02 |
+        MessageFlags.Reserved0x04 |
+        MessageFlags.Reserved0x08 |
         MessageFlags.Event |
         MessageFlags.Client |
         MessageFlags.Response |

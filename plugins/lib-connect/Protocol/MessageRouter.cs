@@ -83,7 +83,6 @@ public static class MessageRouter
             // ServiceName format: "servicename:METHOD:/path" for RouteToServiceAsync
             routeInfo.ServiceName = $"{shortcut.TargetService}:{shortcut.TargetMethod}:{shortcut.TargetEndpoint}";
 
-            routeInfo.Priority = message.IsHighPriority ? MessagePriority.High : MessagePriority.Normal;
             routeInfo.Channel = message.Channel;
             routeInfo.RequiresResponse = message.ExpectsResponse;
 
@@ -108,7 +107,6 @@ public static class MessageRouter
                 routeInfo.ErrorMessage = "Broadcast requires Client flag (0x20)";
             }
 
-            routeInfo.Priority = message.IsHighPriority ? MessagePriority.High : MessagePriority.Normal;
             routeInfo.Channel = message.Channel;
             routeInfo.RequiresResponse = message.ExpectsResponse;
             return routeInfo;
@@ -140,9 +138,6 @@ public static class MessageRouter
                 return routeInfo;
             }
         }
-
-        // Determine processing priority
-        routeInfo.Priority = message.IsHighPriority ? MessagePriority.High : MessagePriority.Normal;
 
         // Validate channel
         if (message.Channel > 1000) // Arbitrary reasonable limit
@@ -236,7 +231,6 @@ public class MessageRouteInfo
     public string? ServiceName { get; set; }
 
     public ushort Channel { get; set; }
-    public MessagePriority Priority { get; set; }
     public bool RequiresResponse { get; set; }
 
     #region Session Shortcut Properties
@@ -275,15 +269,6 @@ public enum RouteType
 
     /// <summary>Broadcast to all connected peers (Relayed/Internal modes only).</summary>
     Broadcast
-}
-
-/// <summary>
-/// Message processing priority levels.
-/// </summary>
-public enum MessagePriority
-{
-    Normal,
-    High
 }
 
 /// <summary>
