@@ -1923,6 +1923,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                         // Update character index
                         await AddToCharacterIndexAsync(body.CharacterId, perspectiveModel.PerspectiveId, cancellationToken);
 
+                        // Update encounter-perspective index for O(1) perspective lookup by encounter
+                        await AddToEncounterPerspectiveIndexAsync(perspectiveModel.EncounterId, perspectiveModel.PerspectiveId, cancellationToken);
+
                         perspectivesRestored++;
                     }
                 }
