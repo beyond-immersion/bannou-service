@@ -705,23 +705,3 @@ public partial class SubscriptionService : ISubscriptionService
 
     #endregion
 }
-
-/// <summary>
-/// Internal storage model using Unix timestamps to avoid serialization issues.
-/// Accessible to test project via InternalsVisibleTo attribute.
-/// </summary>
-internal class SubscriptionDataModel
-{
-    public Guid SubscriptionId { get; set; }
-    public Guid AccountId { get; set; }
-    public Guid ServiceId { get; set; }
-    public string StubName { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public long StartDateUnix { get; set; }
-    public long? ExpirationDateUnix { get; set; }
-    public bool IsActive { get; set; }
-    public long? CancelledAtUnix { get; set; }
-    public string? CancellationReason { get; set; }
-    public long CreatedAtUnix { get; set; }
-    public long? UpdatedAtUnix { get; set; }
-}

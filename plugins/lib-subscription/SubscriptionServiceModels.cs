@@ -31,23 +31,22 @@ public partial class SubscriptionService
     // are defined at namespace level as internal classes.
 }
 
-// ============================================================================
-// INTERNAL DATA MODELS
-// ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class SubscriptionStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record SubscriptionCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+/// <summary>
+/// Internal storage model using Unix timestamps to avoid serialization issues.
+/// Accessible to test project via InternalsVisibleTo attribute.
+/// </summary>
+internal class SubscriptionDataModel
+{
+    public Guid SubscriptionId { get; set; }
+    public Guid AccountId { get; set; }
+    public Guid ServiceId { get; set; }
+    public string StubName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public long StartDateUnix { get; set; }
+    public long? ExpirationDateUnix { get; set; }
+    public bool IsActive { get; set; }
+    public long? CancelledAtUnix { get; set; }
+    public string? CancellationReason { get; set; }
+    public long CreatedAtUnix { get; set; }
+    public long? UpdatedAtUnix { get; set; }
+}

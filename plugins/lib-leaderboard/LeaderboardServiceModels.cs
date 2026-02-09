@@ -31,23 +31,21 @@ public partial class LeaderboardService
     // are defined at namespace level as internal classes.
 }
 
-// ============================================================================
-// INTERNAL DATA MODELS
-// ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class LeaderboardStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record LeaderboardCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+/// <summary>
+/// Internal storage model for leaderboard definition.
+/// </summary>
+internal class LeaderboardDefinitionData
+{
+    public Guid GameServiceId { get; set; }
+    public string LeaderboardId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public List<EntityType>? EntityTypes { get; set; }
+    public SortOrder SortOrder { get; set; }
+    public UpdateMode UpdateMode { get; set; }
+    public bool IsSeasonal { get; set; }
+    public bool IsPublic { get; set; }
+    public int? CurrentSeason { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public object? Metadata { get; set; }
+}

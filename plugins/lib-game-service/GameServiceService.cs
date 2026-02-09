@@ -611,19 +611,3 @@ public partial class GameServiceService : IGameServiceService
 
     #endregion
 }
-
-/// <summary>
-/// Internal storage model using Unix timestamps to avoid serialization issues.
-/// Accessible to test project via InternalsVisibleTo attribute.
-/// Uses Guid for ServiceId per IMPLEMENTATION TENETS (Type Safety).
-/// </summary>
-internal class GameServiceRegistryModel
-{
-    public Guid ServiceId { get; set; }
-    public string StubName { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public bool IsActive { get; set; }
-    public long CreatedAtUnix { get; set; }
-    public long? UpdatedAtUnix { get; set; }
-}

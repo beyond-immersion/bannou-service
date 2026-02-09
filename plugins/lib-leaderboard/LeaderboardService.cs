@@ -1097,26 +1097,3 @@ public partial class LeaderboardService : ILeaderboardService
 
     #endregion
 }
-
-#region Internal Data Models
-
-/// <summary>
-/// Internal storage model for leaderboard definition.
-/// </summary>
-internal class LeaderboardDefinitionData
-{
-    public Guid GameServiceId { get; set; }
-    public string LeaderboardId { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public List<EntityType>? EntityTypes { get; set; }
-    public SortOrder SortOrder { get; set; }
-    public UpdateMode UpdateMode { get; set; }
-    public bool IsSeasonal { get; set; }
-    public bool IsPublic { get; set; }
-    public int? CurrentSeason { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public object? Metadata { get; set; }
-}
-
-#endregion

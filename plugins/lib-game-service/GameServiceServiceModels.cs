@@ -31,23 +31,18 @@ public partial class GameServiceService
     // are defined at namespace level as internal classes.
 }
 
-// ============================================================================
-// INTERNAL DATA MODELS
-// ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class GameServiceStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record GameServiceCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+/// <summary>
+/// Internal storage model using Unix timestamps to avoid serialization issues.
+/// Accessible to test project via InternalsVisibleTo attribute.
+/// Uses Guid for ServiceId per IMPLEMENTATION TENETS (Type Safety).
+/// </summary>
+internal class GameServiceRegistryModel
+{
+    public Guid ServiceId { get; set; }
+    public string StubName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
+    public long CreatedAtUnix { get; set; }
+    public long? UpdatedAtUnix { get; set; }
+}
