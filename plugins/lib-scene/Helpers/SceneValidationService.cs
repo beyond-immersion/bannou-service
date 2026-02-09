@@ -286,6 +286,33 @@ public class SceneValidationService : ISceneValidationService
                     }
                 }
                 break;
+
+            case ValidationRuleType.RequireAnnotation:
+                errors.Add(new ValidationError
+                {
+                    RuleId = rule.RuleId,
+                    Message = $"Validation rule type '{rule.RuleType}' is not yet implemented; rule was skipped",
+                    Severity = ValidationSeverity.Warning
+                });
+                break;
+
+            case ValidationRuleType.CustomExpression:
+                errors.Add(new ValidationError
+                {
+                    RuleId = rule.RuleId,
+                    Message = $"Validation rule type '{rule.RuleType}' is not yet implemented; rule was skipped",
+                    Severity = ValidationSeverity.Warning
+                });
+                break;
+
+            default:
+                errors.Add(new ValidationError
+                {
+                    RuleId = rule.RuleId,
+                    Message = $"Unknown validation rule type '{rule.RuleType}'; rule was skipped",
+                    Severity = ValidationSeverity.Warning
+                });
+                break;
         }
 
         return errors;

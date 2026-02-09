@@ -91,6 +91,7 @@ Spatial data management service (L4 GameFeatures) for Arcadia game worlds. Provi
 | `MaxCheckoutDurationSeconds` | `MAPPING_MAX_CHECKOUT_DURATION_SECONDS` | `1800` | Maximum authoring lock duration (30 min) |
 | `DefaultLayerCacheTtlSeconds` | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | `3600` | Default TTL for ephemeral layer data (1 hour) |
 | `EventAggregationWindowMs` | `MAPPING_EVENT_AGGREGATION_WINDOW_MS` | `100` | Buffering window for MapObjectsChangedEvent (0 = disabled) |
+| `MaxBufferFlushRetries` | `MAPPING_MAX_BUFFER_FLUSH_RETRIES` | `3` | Maximum retry attempts for flushing spatial change buffers before discarding |
 | `TtlTerrain` | `MAPPING_TTL_TERRAIN` | `-1` | Terrain TTL (-1 = durable, no expiry) |
 | `TtlStaticGeometry` | `MAPPING_TTL_STATIC_GEOMETRY` | `-1` | Static geometry TTL (durable) |
 | `TtlNavigation` | `MAPPING_TTL_NAVIGATION` | `-1` | Navigation TTL (durable) |
@@ -399,7 +400,7 @@ Authoring Workflow
 
 1. **Authority token contains expiry but expiry is NOT checked from token**: The token embeds channelId and expiresAt, but `ValidateAuthorityAsync` only uses the token's channelId for basic validation. Actual expiry is checked against `AuthorityRecord.ExpiresAt` which is updated by heartbeats. This is intentional -- heartbeats extend authority without re-issuing tokens.
 
-2. **Event aggregation buffer is fire-and-forget**: The timer callback uses `Task.Run` to flush changes and cannot propagate exceptions. If the flush fails (e.g., message bus unavailable), the changes are silently lost. The buffer is removed from the dictionary after flush regardless of success.
+2. ~~**Event aggregation buffer is fire-and-forget**~~: **FIXED** (2026-02-08) - The buffer now retries with exponential backoff (100ms base, up to `MaxBufferFlushRetries` attempts) before discarding changes. Failures are logged at Error level and published via `TryPublishErrorAsync`. Buffer is only removed/disposed after success or max retries exhausted. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 
 3. **Update-as-upsert semantics**: `ObjectAction.Updated` for a non-existent object is treated as a create (upsert). This prevents data loss when object creation events are missed but means "update only if exists" semantics cannot be expressed.
 
@@ -444,5 +445,7 @@ Authoring Workflow
 *No pending investigation items.*
 
 ### Completed
+
+- **2026-02-08**: Fixed event aggregation buffer fire-and-forget ([#310](https://github.com/beyond-immersion/bannou-service/issues/310)). Buffer now retries flush with exponential backoff (configurable via `MaxBufferFlushRetries`, default 3). Only disposes after success or max retries exhausted. Failures reported via `TryPublishErrorAsync`.
 
 - **2026-01-31**: Fixed spatial index garbage collection on channel reset. `ClearChannelDataAsync` now properly cleans up all spatial and type indexes before deleting objects by fetching each object's Position/Bounds/ObjectType and calling the existing cleanup methods.

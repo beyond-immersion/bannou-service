@@ -378,7 +378,7 @@ Optimistic Concurrency Pattern (Checkout)
 4. **SceneReferenceBrokenEvent**: The topic and event type are defined in the events schema, but no code path currently publishes this event. It would need to be triggered when a scene is force-deleted despite references (currently blocked by the 409 Conflict check).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/257 -->
 
-5. **require_annotation and custom_expression validation rules**: The `ValidationRuleType` enum includes these values, but `ApplyValidationRule` in `SceneValidationService` only handles `require_tag`, `forbid_tag`, and `require_node_type`. The other types silently pass.
+5. ~~**require_annotation and custom_expression validation rules silently ignored**~~: **FIXED** (2026-02-08) - `ApplyValidationRule` now returns a `Warning`-severity `ValidationError` for unimplemented rule types (`RequireAnnotation`, `CustomExpression`) and unknown types (default case). Rules are no longer silently skipped. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 
 6. ~~**referenceSceneId field on SceneNode**~~: **Implemented**. The `GetReferenceSceneId()` helper now uses the typed `ReferenceSceneId` field as the primary source, with `annotations.reference.sceneAssetId` as a fallback for backward compatibility with legacy scene data.
 
@@ -455,6 +455,8 @@ No bugs identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-02-08**: Fixed unimplemented validation rule types silently passing ([#310](https://github.com/beyond-immersion/bannou-service/issues/310)). `RequireAnnotation`, `CustomExpression`, and any future enum values now return `Warning`-severity `ValidationError` instead of being silently skipped. Callers can see which rules were not applied.
 
 - **2026-01-31**: Removed dead config properties `AssetBucket` and `AssetContentType` from scene-configuration.yaml per IMPLEMENTATION TENETS (T21 Configuration-First). These were never used in SceneService.cs - scene content is stored directly in state store. Updated tests accordingly.
 

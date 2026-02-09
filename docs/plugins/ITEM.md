@@ -317,7 +317,7 @@ UseItemAsync(instanceId, userId, userType, targetId?, targetType?, context?)
 
 ### Query Operations (3 endpoints)
 
-- **ListItemsByContainer** (`/item/instance/list-by-container`): Loads container index, fetches each instance. Enforces `MaxInstancesPerQuery` as hard limit (not pagination - excess silently truncated).
+- **ListItemsByContainer** (`/item/instance/list-by-container`): Loads container index, fetches each instance. Enforces `MaxInstancesPerQuery` as hard limit. Response includes `totalCount` (actual item count) and `wasTruncated` (true if capped).
 - **ListItemsByTemplate** (`/item/instance/list-by-template`): Loads template index with optional realm filter. Pagination support.
 - **BatchGetItemInstances** (`/item/instance/batch-get`): Bulk retrieval by instance IDs. Returns found items and `notFound` ID list separately.
 
@@ -491,7 +491,7 @@ No bugs identified.
 
 1. **Quantity flooring for Discrete**: When creating discrete instances, the quantity is `Math.Floor()`'d to the nearest integer. A request for 5.7 arrows creates 5.
 
-2. **MaxInstancesPerQuery is a hard cap**: `ListItemsByContainer` enforces the limit as truncation, not pagination. If a container has 1001 items and the limit is 1000, the last item is silently excluded.
+2. ~~**MaxInstancesPerQuery is a hard cap**~~: **FIXED** (2026-02-08) - `ListItemsByContainer` now reports `totalCount` as the actual item count and sets `wasTruncated = true` when the response is capped by `MaxInstancesPerQuery`. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 
 3. **Bind event enrichment fallback**: When binding an item, if the template cannot be loaded (data inconsistency), the event's `TemplateCode` field is set to `missing:{templateId}` rather than failing the operation.
 
@@ -499,7 +499,7 @@ No bugs identified.
 
 5. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified.
 
-6. **ListItemsByContainer doesn't support pagination**: Unlike `ListItemsByTemplate` which uses Offset/Limit from the request, `ListItemsByContainer` just returns up to `MaxInstancesPerQuery` items with no offset support. Large containers lose items silently.
+6. **ListItemsByContainer doesn't support pagination**: Unlike `ListItemsByTemplate` which uses Offset/Limit from the request, `ListItemsByContainer` just returns up to `MaxInstancesPerQuery` items with no offset support. The `wasTruncated` flag signals when items are capped, but callers cannot page through them.
 
 7. **Bind doesn't enforce SoulboundType**: `BindItemInstanceAsync` binds any item regardless of its template's `SoulboundType`. The soulbound type is metadata for game logic, not enforced by the service.
 
@@ -534,6 +534,8 @@ No bugs identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-02-08**: Fixed `ListItemsByContainer` silent truncation ([#310](https://github.com/beyond-immersion/bannou-service/issues/310)). Added `wasTruncated` boolean to `ListItemsResponse` schema. `totalCount` now reports actual item count (not truncated count). Callers can detect when results are capped by `MaxInstancesPerQuery`.
 
 - **2026-02-07**: Itemize Anything Extensions ([#330](https://github.com/beyond-immersion/bannou-service/issues/330)). Added CanUse validation (`canUseBehaviorContractTemplateId`, `canUseBehavior`), OnUseFailed handler (`onUseFailedBehaviorContractTemplateId`), multi-step workflows (`/item/use-step` endpoint with session contract bindings), and per-template use behavior configuration (`ItemUseBehavior` enum: disabled, destroy_on_success, destroy_always). New events: `item.use-step-completed`, `item.use-step-failed`. Three new config properties: `CanUseMilestoneCode`, `OnUseFailedMilestoneCode`, `UseStepLockTimeoutSeconds`.
 

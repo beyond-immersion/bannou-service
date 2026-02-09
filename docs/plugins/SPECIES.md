@@ -221,7 +221,7 @@ State Store Layout
 
 2. **Realm validation asymmetry**: `CreateSpecies` and `AddSpeciesToRealm` validate realm is active (not deprecated). `RemoveSpeciesFromRealm` doesn't validate realm status at all (only checks species membership). `ListSpeciesByRealm` validates realm exists but allows deprecated realms.
 
-3. **Page fetch error during merge stops migration**: If fetching a page of characters fails during merge, `hasMorePages` is set to false which terminates the loop. Characters on subsequent pages are silently un-migrated. No retry logic.
+3. ~~**Page fetch error during merge stops migration**~~: **FIXED** (2026-02-08) - Page fetch errors during merge now return `InternalServerError` immediately instead of silently setting `hasMorePages = false`. Errors are logged at Error level and published via `TryPublishErrorAsync` with context (page number, migrated/failed counts). See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 
 4. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.
 
@@ -250,6 +250,8 @@ State Store Layout
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-02-08**: Fixed species merge silent pagination abort ([#310](https://github.com/beyond-immersion/bannou-service/issues/310)). Page fetch errors during `MergeSpeciesAsync` now return `InternalServerError` with error logging and `TryPublishErrorAsync` instead of silently terminating the migration loop.
 
 - **2026-01-31**: Fixed species.created event to populate all lifecycle fields (was only setting 7 of 18 fields)
 - **2026-01-31**: Fixed DeleteSpecies to enforce deprecation requirement - now returns BadRequest if species is not deprecated, matching schema documentation
