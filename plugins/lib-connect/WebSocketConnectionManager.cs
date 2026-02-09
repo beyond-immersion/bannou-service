@@ -336,27 +336,3 @@ public class WebSocketConnectionManager
         _peerGuidToSessionId.Clear();
     }
 }
-
-/// <summary>
-/// Represents a WebSocket connection with its associated state.
-/// </summary>
-public class WebSocketConnection
-{
-    public string SessionId { get; }
-    public WebSocket WebSocket { get; }
-    public ConnectionState ConnectionState { get; }
-    public DateTimeOffset CreatedAt { get; }
-
-    /// <summary>
-    /// Metadata dictionary for storing connection-specific flags like forced_disconnect.
-    /// </summary>
-    public Dictionary<string, object> Metadata { get; } = new();
-
-    public WebSocketConnection(string sessionId, WebSocket webSocket, ConnectionState connectionState)
-    {
-        SessionId = sessionId;
-        WebSocket = webSocket;
-        ConnectionState = connectionState;
-        CreatedAt = DateTimeOffset.UtcNow;
-    }
-}

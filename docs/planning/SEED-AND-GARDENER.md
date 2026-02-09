@@ -178,6 +178,7 @@ SeedTypeDefinition
 │   ├── DisplayName (string)
 │   └── MinTotalGrowth (float) -- threshold to enter this phase
 ├── BondCardinality (int) -- 0 = no bonding, 1 = pair bond, N = group bond
+├── BondPermanent (bool) -- true = bonds cannot be dissolved (guardian), false = dissolvable (dungeon_master)
 └── CapabilityRules (list)
     ├── CapabilityCode (string) -- e.g., "combat.stance"
     ├── Domain (string) -- which domain this maps to
@@ -191,6 +192,7 @@ For Arcadia's guardian spirits, the seed type definition would be:
 - AllowedOwnerTypes: `["account"]`
 - GrowthPhases: Nascent (0), Awakening (5.0), Aware (25.0), Attuned (100.0)
 - BondCardinality: 1 (pair bonds)
+- BondPermanent: true (guardian bonds are permanent and unbreakable)
 
 #### Growth Domains
 
@@ -1473,7 +1475,7 @@ components:
       type: object
       required:
         [seedTypeCode, gameServiceId, displayName, description,
-         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality]
+         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent]
       properties:
         seedTypeCode:
           type: string
@@ -1506,6 +1508,13 @@ components:
           description: >
             Max bond participants. 0 = no bonding, 1 = pair bonds,
             N = group bonds of up to N+1 participants.
+        bondPermanent:
+          type: boolean
+          description: >
+            Whether bonds of this type are permanent (cannot be dissolved).
+            True for guardian spirit pair bonds, false for dungeon-master
+            bonds that can end when the contract dissolves.
+          default: false
         capabilityRules:
           type: array
           items:
@@ -1783,7 +1792,7 @@ components:
       type: object
       required:
         [seedTypeCode, gameServiceId, displayName, description,
-         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality]
+         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent]
       properties:
         seedTypeCode:
           type: string
@@ -1814,6 +1823,9 @@ components:
         bondCardinality:
           type: integer
           description: Bond participant limit.
+        bondPermanent:
+          type: boolean
+          description: Whether bonds of this type are permanent.
         capabilityRules:
           type: array
           items:
@@ -3266,11 +3278,11 @@ components:
 
 ## Open Design Questions
 
-1. **Seed bond permanence**: Should bond permanence be a property of the seed type definition (guardian bonds are permanent, dungeon-master bonds are dissolvable)? Recommendation: Yes, add a `bondPermanent` boolean to `SeedTypeDefinition`.
+1. ~~**Seed bond permanence**~~: **Resolved.** Added `bondPermanent: boolean` (default: false) to `SeedTypeDefinition`, `RegisterSeedTypeRequest`, and `SeedTypeResponse`. Guardian bonds set this to true (permanent, unbreakable). Dungeon-master bonds leave it false (dissolvable when contract ends).
 
-2. **Growth decay**: Should unused domains decay over time? Arguments for: prevents seeds from being "good at everything" after enough time, encourages specialization. Arguments against: punishes players who take breaks. Recommendation: Off by default, configurable per seed type definition.
+2. **Growth decay per seed type** ([#352](https://github.com/beyond-immersion/bannou-service/issues/352)): Should unused domains decay over time? Currently global config; needs per-type configuration. Not blocking -- global default (off) works for initial implementation.
 
-3. **Cross-seed growth sharing**: How much growth crosses between seeds of the same owner? Full sharing means a combat-heavy guardian seed immediately gives a dungeon master seed combat capability. Recommendation: Configurable multiplier per seed type pair (default 0.0 -- no cross-pollination unless explicitly configured).
+3. **Cross-seed growth sharing** ([#353](https://github.com/beyond-immersion/bannou-service/issues/353)): How much growth crosses between seeds of the same type owned by the same entity? Not blocking -- default 0.0 (no sharing) for initial implementation.
 
 4. **Void position protocol**: The UpdatePosition endpoint will be called frequently. Should this use the standard POST JSON pattern or a lighter-weight binary protocol through Connect? Recommendation: Start with POST JSON; optimize to binary only if latency/throughput becomes a problem.
 
@@ -3278,6 +3290,6 @@ components:
 
 6. **Seed type registration timing**: Should seed types be registered via API at runtime, or seeded from configuration on startup? Recommendation: Both -- configuration for built-in types, API for dynamic types added later.
 
-7. **Cross-seed-type growth transfer**: When an entity holds multiple seed types (e.g., a character with both `guardian` and `dungeon_master` seeds), should combat experience earned in the guardian context partially feed the dungeon_master seed's command domains? This would require a configurable transfer matrix per seed-type pair. Recommendation: Start with no cross-type transfer (each seed grows independently from its own events), add transfer matrices only when validated by gameplay testing. The dungeon-as-actor doc also raises this question for `dungeon_master` -> `guardian` transfer.
+7. **Cross-seed-type growth transfer** ([#354](https://github.com/beyond-immersion/bannou-service/issues/354)): When an entity holds multiple seed types (e.g., a character with both `guardian` and `dungeon_master` seeds), should experience in one type partially feed the other? Requires a domain mapping / transfer matrix. Not blocking -- default is no cross-type transfer for initial implementation.
 
 8. **Gardener orchestration extraction trigger**: At what point would shared orchestration patterns across seed consumers justify extracting a generic "growth orchestration" layer at L2? Current position: not until at least three consumers demonstrate genuinely shared orchestration logic (not just shared seed CRUD, which is already at L2). The abstraction should be extracted from working code, not pre-designed.

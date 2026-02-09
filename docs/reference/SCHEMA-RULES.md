@@ -17,8 +17,8 @@ This is the authoritative reference for all schema authoring in Bannou. It cover
 7. [Configuration Schema Rules](#configuration-schema-rules)
 8. [API Schema Rules](#api-schema-rules)
 9. [Event Schema Rules](#event-schema-rules)
-10. [Common Anti-Patterns](#common-anti-patterns)
-11. [Quick Reference Tables](#quick-reference-tables)
+10. [Mandatory Type Reuse via $ref](#mandatory-type-reuse-via-ref-critical)
+11. [NRT Quick Reference](#nrt-quick-reference)
 12. [Validation Checklist](#validation-checklist)
 
 ---
@@ -89,13 +89,7 @@ paths:
   /account/get:
     post:
       x-permissions:
-        - role: user  # Requires user role
-      # ...
-  /admin/delete:
-    post:
-      x-permissions:
-        - role: admin  # Requires admin role
-      # ...
+        - role: user
   /health:
     post:
       x-permissions: []  # Explicitly public (rare)
@@ -103,13 +97,7 @@ paths:
 
 **Role hierarchy**: `anonymous` → `user` → `developer` → `admin`
 
-**With state requirements**:
-```yaml
-x-permissions:
-  - role: user
-    states:
-      game-session: in_lobby  # Must be user AND in_lobby state
-```
+**With state requirements**: Add `states: { game-session: in_lobby }` to require both role AND state.
 
 ### x-lifecycle (Lifecycle Event Generation)
 
@@ -134,59 +122,29 @@ x-lifecycle:
 - `EntityNameUpdatedEvent` - Full entity data + `changedFields` array
 - `EntityNameDeletedEvent` - Entity ID + `deletedReason`
 
-If `resource_mapping` is specified, each generated event includes `x-resource-mapping` extension for Puppetmaster watch subscriptions (see below).
+If `resource_mapping` is specified, each generated event includes `x-resource-mapping` for Puppetmaster watch subscriptions.
 
 **NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** - use `x-lifecycle` instead.
 
 ### x-resource-mapping (Resource Event Mapping)
 
-Defined on **event schema definitions** in `{service}-events.yaml`, declares how the event relates to a watchable resource. This enables Puppetmaster's watch system to auto-discover event-to-resource mappings.
+Defined on **event schema definitions** in `{service}-events.yaml`, declares how the event relates to a watchable resource for Puppetmaster's watch system.
 
 **For lifecycle events**: Use `resource_mapping` in `x-lifecycle` (above) - the generator adds `x-resource-mapping` automatically.
 
 **For manually-defined events** (non-lifecycle):
 
 ```yaml
-# In character-personality-events.yaml
-components:
-  schemas:
-    PersonalityUpdatedEvent:
-      type: object
-      x-resource-mapping:
-        resource_type: character             # Required: Type of resource this event affects
-        resource_id_field: characterId       # Required: JSON field containing resource ID
-        source_type: character-personality   # Required: Source type identifier for filtering
-        is_deletion: false                   # Optional: True if deletion event (inferred if omitted)
-      properties:
-        characterId:
-          type: string
-          format: uuid
-        # ...
+PersonalityUpdatedEvent:
+  type: object
+  x-resource-mapping:
+    resource_type: character             # Type of resource this event affects
+    resource_id_field: characterId       # JSON field containing resource ID
+    source_type: character-personality   # Source type identifier for filtering
+    is_deletion: false                   # Optional (inferred from event name ending in "Deleted")
 ```
 
-**Field definitions**:
-- `resource_type`: The type of resource this event affects (e.g., "character", "realm")
-- `resource_id_field`: JSON field name in the event payload containing the resource ID
-- `source_type`: Identifier for the data source (used for watch filtering)
-- `is_deletion`: Whether this event indicates resource deletion (optional, inferred from event name ending in "Deleted" if omitted)
-
-**Generated output** (`bannou-service/Generated/ResourceEventMappings.cs`):
-- Static class with `IReadOnlyList<ResourceEventMappingEntry>` containing all discovered mappings
-- Used by Puppetmaster's watch system to subscribe to appropriate event topics
-
-**Example generated code**:
-```csharp
-public static class ResourceEventMappings
-{
-    public static readonly IReadOnlyList<ResourceEventMappingEntry> All =
-    [
-        new("character", "character", "character.created", "characterId", false),
-        new("character", "character", "character.deleted", "characterId", true),
-        new("character", "character-personality", "personality.updated", "characterId", false),
-        // ...
-    ];
-}
-```
+**Generated output**: `bannou-service/Generated/ResourceEventMappings.cs` - static class with `IReadOnlyList<ResourceEventMappingEntry>` used by Puppetmaster's watch system.
 
 ### x-event-subscriptions (Event Handler Generation)
 
@@ -198,12 +156,8 @@ info:
     - topic: account.deleted
       event: AccountDeletedEvent
       handler: HandleAccountDeleted
-    - topic: session.connected
-      event: SessionConnectedEvent
-      handler: HandleSessionConnected
 ```
 
-**Field definitions**:
 - `topic`: RabbitMQ routing key
 - `event`: Event model class name
 - `handler`: Handler method name (without `Async` suffix)
@@ -212,7 +166,7 @@ info:
 
 ### x-service-layer (Service Hierarchy Layer)
 
-Defined at the **root level** of `{service}-api.yaml`, declares the service's position in the service hierarchy per [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md). This controls plugin load order and enables safe cross-layer constructor injection.
+Defined at the **root level** of `{service}-api.yaml`, declares the service's position in the hierarchy per [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md). Controls plugin load order and enables safe cross-layer constructor injection.
 
 ```yaml
 openapi: 3.0.0
@@ -220,9 +174,6 @@ info:
   title: Location Service API
   version: 1.0.0
 x-service-layer: GameFoundation  # L2 service
-
-servers:
-  - url: http://localhost:5012
 ```
 
 **Valid values** (in load order):
@@ -235,25 +186,15 @@ servers:
 | `GameFeatures` | L4 | Optional game capabilities | actor, behavior, matchmaking, analytics, achievement |
 | `Extensions` | L5 | Third-party/meta-services | Custom plugins that need full stack |
 
-**Numeric values also accepted** (for programmatic generation):
-- `0` = Infrastructure, `100` = AppFoundation, `200` = GameFoundation
-- `300` = AppFeatures, `400` = GameFeatures, `500` = Extensions
+**Numeric values also accepted** (for programmatic generation): `0` = Infrastructure, `100` = AppFoundation, `200` = GameFoundation, `300` = AppFeatures, `400` = GameFeatures, `500` = Extensions.
 
-**Generated output**: The `[BannouService]` attribute includes `layer: ServiceLayer.{Value}`:
-```csharp
-[BannouService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-```
+**Default**: If omitted, defaults to `GameFeatures` (most permissive).
 
-**Why this matters**:
-1. **Load order**: Lower layers load before higher layers, ensuring dependencies are available
-2. **Constructor injection**: Services can safely inject clients from lower layers
-3. **Dependency validation**: Runtime validation can catch hierarchy violations
-
-**Default**: If `x-service-layer` is omitted, defaults to `GameFeatures` (most permissive).
+**Generated**: `[BannouService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]`
 
 ### x-service-configuration (Configuration Properties)
 
-Defined in `{service}-configuration.yaml`, defines service configuration.
+Defined in `{service}-configuration.yaml`. See [Configuration Schema Rules](#configuration-schema-rules) for detailed requirements.
 
 ```yaml
 x-service-configuration:
@@ -265,117 +206,70 @@ x-service-configuration:
       description: Maximum concurrent connections
 ```
 
-See [Configuration Schema Rules](#configuration-schema-rules) for detailed requirements.
-
 ### x-references (Resource Reference Tracking)
 
-Defined in consumer service API schemas (`*-api.yaml`), declares references to foundational resources for lifecycle management via lib-resource. This enables automatic reference tracking without violating the service hierarchy.
-
-**Purpose**: Higher-layer services (L3/L4) declare their references to foundational resources (L2) in their schemas. The code generator produces helper methods for publishing reference events and registering cleanup callbacks.
+Defined in consumer service API schemas (`*-api.yaml`), declares references to foundational resources for lifecycle management via lib-resource. Higher-layer services (L3/L4) declare their references to foundational resources (L2); the code generator produces helper methods for publishing reference events and registering cleanup callbacks.
 
 ```yaml
-# actor-api.yaml - Consumer service (L4) declares references
 info:
-  title: Actor Service API
-  version: 1.0.0
   x-references:
-    - target: character                         # Resource type being referenced (L2 service entity)
-      sourceType: actor                         # This service's entity type (opaque string identifier)
-      field: characterId                        # Field holding the reference (for documentation)
-      onDelete: cascade                         # cascade | restrict | detach (documentation/intent)
+    - target: character                         # Resource type being referenced (opaque string)
+      sourceType: actor                         # This service's entity type (opaque string)
+      field: characterId                        # Field holding the reference (documentation)
+      onDelete: cascade                         # cascade | restrict | detach (intent)
       cleanup:
         endpoint: /actor/cleanup-by-character   # Cleanup callback endpoint
-        payloadTemplate: '{"characterId": "{{resourceId}}"}'  # JSON template with {{resourceId}}
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
 ```
 
 **Field definitions**:
-- `target`: Type of resource being referenced (opaque string, e.g., "character", "realm")
-- `sourceType`: This service's entity type (opaque string, e.g., "actor", "scene")
-- `field`: Field name holding the reference (informational, for documentation)
-- `onDelete`: Intended behavior when resource is deleted (documentation only, enforced by cleanup implementation)
-  - `cascade`: Delete dependent entities when resource is deleted
-  - `restrict`: Block resource deletion if references exist (not yet supported)
-  - `detach`: Set reference to null when resource is deleted (not yet supported)
-- `cleanup`: Cleanup callback configuration
-  - `endpoint`: Service endpoint to call during cleanup (e.g., `/actor/cleanup-by-character`)
-  - `payloadTemplate`: JSON template with `{{resourceId}}` placeholder
+- `target`: Resource type (must match `resourceType` in the foundational service's `x-resource-lifecycle`)
+- `sourceType`: This service's entity type (opaque string)
+- `field`: Field name holding the reference (informational)
+- `onDelete`: `cascade` (delete dependents), `restrict` (block deletion, not yet supported), `detach` (nullify, not yet supported)
+- `cleanup.endpoint`: Service endpoint called during cleanup
+- `cleanup.payloadTemplate`: JSON template with `{{resourceId}}` placeholder
 
 **Generated output** (`lib-{service}/Generated/{Service}ReferenceTracking.Generated.cs`):
 - Helper methods: `Register{Target}ReferenceAsync()`, `Unregister{Target}ReferenceAsync()`
 - Cleanup callback registration via `IStartupTask`
 
-**Example usage in service code**:
-```csharp
-// After creating an actor that references a character
-await RegisterCharacterReferenceAsync(actor.ActorId, actor.CharacterId, cancellationToken);
-
-// Before deleting an actor
-await UnregisterCharacterReferenceAsync(actor.ActorId, actor.CharacterId, cancellationToken);
-```
-
 ### x-resource-lifecycle (Resource Cleanup Configuration)
 
-Defined in foundational service API schemas (`*-api.yaml`), declares grace period and cleanup policy for resources that can be tracked by lib-resource.
-
-**Purpose**: Foundational services (L2) declare the cleanup behavior for their resources. This configuration is used by lib-resource when determining cleanup eligibility.
+Defined in foundational service API schemas (`*-api.yaml`), declares grace period and cleanup policy for resources tracked by lib-resource.
 
 ```yaml
-# character-api.yaml - Foundational service (L2) declares lifecycle
 info:
-  title: Character Service API
-  version: 1.0.0
   x-resource-lifecycle:
-    resourceType: character                     # Resource type identifier (must match x-references target)
-    gracePeriodSeconds: 604800                  # Grace period in seconds (7 days) before cleanup eligible
-    cleanupPolicy: BEST_EFFORT                  # BEST_EFFORT | ALL_REQUIRED
+    resourceType: character            # Must match x-references target
+    gracePeriodSeconds: 604800         # 7 days before cleanup eligible
+    cleanupPolicy: BEST_EFFORT        # BEST_EFFORT | ALL_REQUIRED
 ```
 
-**Field definitions**:
-- `resourceType`: Resource type identifier (must match `target` in consumer x-references)
-- `gracePeriodSeconds`: Time in seconds after refcount reaches zero before cleanup is allowed (default: 604800 = 7 days)
-- `cleanupPolicy`: How to handle cleanup callback failures
-  - `BEST_EFFORT`: Proceed with deletion even if some callbacks fail
-  - `ALL_REQUIRED`: Abort deletion if any callback fails
+- `BEST_EFFORT`: Proceed with deletion even if some callbacks fail
+- `ALL_REQUIRED`: Abort deletion if any callback fails
 
-**Note**: This extension is documentation/configuration only - it does not generate code. The values are used when the foundational service calls `/resource/cleanup/execute` with `gracePeriodSeconds` and `cleanupPolicy` parameters.
+**Note**: Documentation/configuration only - does not generate code. Values are used when calling `/resource/cleanup/execute`.
 
 ### x-compression-callback (Compression Callback Registration)
 
-Defined at the **info level** of `{service}-api.yaml`, declares compression callback registration for hierarchical resource archival via lib-resource. This enables automatic compression callback registration at service startup.
-
-**Purpose**: Services with compression endpoints declare their callbacks in their schemas. The code generator produces helper classes for registering compression callbacks during `OnRunningAsync`.
+Defined at the **info level** of `{service}-api.yaml`, declares compression callback registration for hierarchical resource archival via lib-resource.
 
 ```yaml
-# character-personality-api.yaml - Service with compression endpoint
 info:
-  title: Character Personality Service API
-  version: 1.0.0
   x-compression-callback:
-    resourceType: character                                          # Required: Type of resource being compressed
-    sourceType: character-personality                                # Required: This service's data type identifier
-    compressEndpoint: /character-personality/get-compress-data       # Required: Endpoint to gather data for archival
-    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'     # Required: JSON template with {{resourceId}}
-    priority: 10                                                     # Required: Execution order (lower = earlier)
-    templateNamespace: personality                                   # Optional: Short namespace for ABML expressions
-    description: Personality traits and combat preferences           # Optional: Human-readable description
-    decompressEndpoint: /character-personality/restore-from-archive  # Optional: Endpoint to restore from archive
-    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}' # Optional: Decompress template
+    resourceType: character                                          # Required
+    sourceType: character-personality                                # Required
+    compressEndpoint: /character-personality/get-compress-data       # Required (must exist in paths)
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'     # Required
+    priority: 10                                                     # Required (lower = earlier)
+    templateNamespace: personality                                   # Optional (defaults to sourceType)
+    description: Personality traits and combat preferences           # Optional
+    decompressEndpoint: /character-personality/restore-from-archive  # Optional
+    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}' # Optional
 ```
 
-**Field definitions**:
-- `resourceType`: Type of resource being compressed (e.g., "character", "realm")
-- `sourceType`: This service's data type identifier (e.g., "character-personality")
-- `compressEndpoint`: Service endpoint called during compression (must exist in schema paths)
-- `compressPayloadTemplate`: JSON template with `{{resourceId}}` placeholder
-- `priority`: Execution order during compression (lower numbers execute earlier)
-- `templateNamespace`: Short namespace for ABML expression paths (e.g., "personality" for `${candidate.personality.archetypeHint}`). If omitted, defaults to `sourceType`. Used by `IResourceTemplateRegistry` to resolve templates from expression prefixes. (optional)
-- `description`: Human-readable description for documentation (optional)
-- `decompressEndpoint`: Endpoint for restoration from archive (optional)
-- `decompressPayloadTemplate`: JSON template with `{{resourceId}}` and `{{data}}` placeholders (optional)
-
-**Generated output** (`lib-{service}/Generated/{Service}CompressionCallbacks.cs`):
-- Static class with `RegisterAsync(IResourceClient, CancellationToken)` method
-- Called from plugin's `OnRunningAsync` to register callback with lib-resource
+**Generated output** (`lib-{service}/Generated/{Service}CompressionCallbacks.cs`): Static class with `RegisterAsync()` method, called from plugin's `OnRunningAsync`.
 
 **Priority Guidelines**:
 
@@ -385,99 +279,48 @@ info:
 | 10-30 | Extension data (personality, history, encounters) |
 | 50-100 | Optional/derived data (quests, storylines) |
 
-**Validation**: The generator validates that `compressEndpoint` and `decompressEndpoint` (if specified) exist in the schema's paths section.
+**Validation**: Generator validates that `compressEndpoint` and `decompressEndpoint` (if specified) exist in the schema's paths.
 
 ### x-archive-type (Resource Template Generation)
 
-Defined on **compression response schemas** (the return type of `/get-compress-data` endpoints), this extension marks a schema as an archive type. When combined with `x-compression-callback`, it triggers generation of `IResourceTemplate` implementations for compile-time ABML path validation.
+Defined on **compression response schemas** (return type of `/get-compress-data` endpoints), marks a schema as an archive type. When combined with `x-compression-callback`, triggers generation of `IResourceTemplate` implementations for compile-time ABML path validation.
 
 ```yaml
-# In character-personality-api.yaml
-components:
-  schemas:
-    CharacterPersonalityArchive:
-      type: object
-      x-archive-type: true  # Triggers template generation
-      allOf:
-        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
-      properties:
-        characterId:
-          type: string
-          format: uuid
-        personality:
-          $ref: '#/components/schemas/PersonalityResponse'
-        # ... other properties
+CharacterPersonalityArchive:
+  type: object
+  x-archive-type: true
+  allOf:
+    - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+  properties:
+    characterId: { type: string, format: uuid }
+    personality: { $ref: '#/components/schemas/PersonalityResponse' }
 ```
 
 **How template generation works**:
 1. Generator scans for schemas with `x-archive-type: true`
-2. Matches to `x-compression-callback` at API schema root to get `sourceType` and `templateNamespace`
-3. Traverses the schema to build `ValidPaths` dictionary (property names → C# types)
+2. Matches to `x-compression-callback` to get `sourceType` and `templateNamespace`
+3. Traverses schema to build `ValidPaths` dictionary (property names → C# types)
 4. Generates template class to `bannou-service/Generated/ResourceTemplates/{SourceType}Template.cs`
 
-**Generated output** (`bannou-service/Generated/ResourceTemplates/{Name}Template.cs`):
-- Extends `ResourceTemplateBase` from `bannou-service/ResourceTemplates/`
-- Implements `IResourceTemplate` interface from `behavior-compiler` SDK
-- Contains `SourceType`, `Namespace`, and `ValidPaths` properties
-
-**Template registration**:
-Plugins register templates during `OnRunningAsync`:
-```csharp
-using BeyondImmersion.BannouService.Generated.ResourceTemplates;
-
-// In OnRunningAsync:
-var templateRegistry = serviceProvider.GetRequiredService<IResourceTemplateRegistry>();
-templateRegistry.Register(new CharacterPersonalityTemplate());
-```
-
-**Usage in ABML**:
-Templates enable compile-time validation of snapshot access expressions:
-```yaml
-metadata:
-  resource_templates:
-    - character-personality  # Declares this behavior uses personality data
-
-# Valid - path exists in CharacterPersonalityTemplate.ValidPaths
-condition: "${candidate.personality.archetypeHint} != null"
-
-# Compile error - path not in template
-condition: "${candidate.personality.nonexistent_field}"
-```
+Templates enable compile-time validation of ABML snapshot access expressions (e.g., `${candidate.personality.archetypeHint}`). Register in `OnRunningAsync` via `IResourceTemplateRegistry.Register()`.
 
 ### x-event-template (Event Template Generation)
 
-Defined on **individual event schema definitions** in `{service}-events.yaml`, this extension declares that the event should have an auto-generated template for use with `emit_event:` ABML actions. This replaces manual `EventTemplate` registration in plugin code.
+Defined on **individual event schema definitions** in `{service}-events.yaml`, declares that the event should have an auto-generated template for use with `emit_event:` ABML actions.
 
 ```yaml
-# In character-encounter-events.yaml
-components:
-  schemas:
-    EncounterRecordedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when a new encounter is recorded
-      x-event-template:
-        name: encounter_recorded    # Template name for ABML emit_event
-        topic: encounter.recorded   # Event topic (RabbitMQ routing key)
-      required:
-        - eventId
-        - encounterId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-        encounterId:
-          type: string
-          format: uuid
-        # ... more properties
+EncounterRecordedEvent:
+  type: object
+  additionalProperties: false
+  description: Published when a new encounter is recorded
+  x-event-template:
+    name: encounter_recorded    # Template name for ABML emit_event
+    topic: encounter.recorded   # Event topic (RabbitMQ routing key)
+  required: [eventId, encounterId]
+  properties:
+    eventId: { type: string, format: uuid }
+    encounterId: { type: string, format: uuid }
 ```
-
-**Field definitions**:
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `name` | Yes | Template identifier used in ABML `emit_event:` actions (e.g., `encounter_recorded`) |
-| `topic` | Yes | RabbitMQ topic to publish to (e.g., `encounter.recorded`) |
 
 **PayloadTemplate generation rules**:
 - `type: string` (non-nullable) → `"{{propertyName}}"` (quoted)
@@ -485,43 +328,7 @@ components:
 - `type: integer`, `type: number`, `type: boolean` → `{{propertyName}}` (unquoted)
 - `type: array`, `type: object` → `{{propertyName}}` (unquoted, pre-serialized JSON)
 
-**Generated output** (`lib-{service}/Generated/{Service}EventTemplates.cs`):
-```csharp
-public static class CharacterEncounterEventTemplates
-{
-    public static readonly EventTemplate EncounterRecorded = new(
-        Name: "encounter_recorded",
-        Topic: "encounter.recorded",
-        EventType: typeof(EncounterRecordedEvent),
-        PayloadTemplate: @"{
-            ""eventId"": ""{{eventId}}"",
-            ""encounterId"": ""{{encounterId}}""
-        }",
-        Description: "Published when a new encounter is recorded");
-
-    public static void RegisterAll(IEventTemplateRegistry registry)
-    {
-        registry.Register(EncounterRecorded);
-    }
-}
-```
-
-**Plugin usage**:
-```csharp
-// In OnRunningAsync - one line replaces manual template definitions
-CharacterEncounterEventTemplates.RegisterAll(eventTemplateRegistry);
-```
-
-**ABML usage**:
-```yaml
-- emit_event:
-    template: encounter_recorded
-    eventId: ${new_guid()}
-    encounterId: ${encounter.id}
-    encounterTypeCode: "COMBAT"
-    outcome: ${outcome}
-    # ... other properties
-```
+**Generated output** (`lib-{service}/Generated/{Service}EventTemplates.cs`): Static class with `EventTemplate` fields and `RegisterAll(IEventTemplateRegistry)` method. Call from `OnRunningAsync`.
 
 ### Service Hierarchy Compliance
 
@@ -551,126 +358,65 @@ The x-references pattern ensures compliance with the service hierarchy:
 
 ## NRT (Nullable Reference Types) Rules
 
-All Bannou projects have `<Nullable>enable</Nullable>`. NSwag generates C# code with `/generateNullableReferenceTypes:true`. This means **schema definitions DIRECTLY control C# nullability**.
+All Bannou projects have `<Nullable>enable</Nullable>`. NSwag generates with `/generateNullableReferenceTypes:true`. **Schema definitions DIRECTLY control C# nullability.**
 
-Incorrect schema definitions cause:
-- `string = default!;` for optional properties (hides null at runtime)
-- Missing `[Required]` attributes on properties the server always sets
-- NRT violations that only surface at runtime as NullReferenceExceptions
+Incorrect schemas cause `string = default!;` for optional properties (hides null at runtime), missing `[Required]` attributes, and NRT violations that surface only at runtime.
 
-### API Schema Rules (`*-api.yaml`)
+These rules apply to ALL schema types (API, events, configuration):
 
-#### Rule 1: Required Properties → `required` Array
+### Rule 1: Required Properties → `required` Array
 
-Properties the caller MUST provide go in the `required` array at the schema level.
+Properties that MUST be present go in the `required` array. For requests, this means the caller must provide them. For responses/events, this means the server always sets them.
 
 ```yaml
 CreateAccountRequest:
   type: object
-  required:        # Properties caller MUST provide
-    - email
-    - password
+  required: [email, password]  # Caller MUST provide
   properties:
     email:
       type: string
       description: User's email address
 ```
 
-**NSwag generates**: `[Required] [JsonRequired] public string Email { get; set; } = default!;`
+**Generates**: `[Required] [JsonRequired] public string Email { get; set; } = default!;`
 
-The `[JsonRequired]` attribute ensures deserialization fails if the property is missing.
+### Rule 2: Optional Reference Types → `nullable: true`
 
-#### Rule 2: Optional Reference Types → `nullable: true`
-
-Properties the caller MAY omit (strings, objects, arrays) MUST have `nullable: true`.
+Properties that MAY be absent (strings, objects, arrays) MUST have `nullable: true`.
 
 ```yaml
-properties:
-  displayName:
-    type: string
-    nullable: true  # Caller can omit this
-    description: Optional display name
+displayName:
+  type: string
+  nullable: true
+  description: Optional display name
 ```
 
-**NSwag generates**: `public string? DisplayName { get; set; }`
+**Generates**: `public string? DisplayName { get; set; }`
 
-**WITHOUT `nullable: true`**, NSwag generates `public string DisplayName { get; set; } = default!;` which **HIDES** the fact that the value can be null at runtime!
+**WITHOUT `nullable: true`**, NSwag generates `string DisplayName = default!;` which **HIDES** null at runtime.
 
-#### Rule 3: Value Types with Defaults → `default: value`
+### Rule 3: Value Types with Defaults → `default: value`
 
 Boolean/integer properties with sensible defaults just need `default: value`.
 
 ```yaml
-properties:
-  pageSize:
-    type: integer
-    default: 20
-    description: Number of items per page
+pageSize:
+  type: integer
+  default: 20
+  description: Number of items per page
 ```
 
-**NSwag generates**: `public int PageSize { get; set; } = 20;`
+**Generates**: `public int PageSize { get; set; } = 20;`
 
-#### Rule 4: Response Properties Server Always Sets → `required` Array
+### Rule 4: Value Types → Never Nullable Unless Semantically Optional
 
-For response objects, if the service implementation ALWAYS sets a property, add it to `required` so NSwag generates non-nullable types with proper validation.
-
-```yaml
-AccountResponse:
-  type: object
-  required:        # Server ALWAYS sets these
-    - accountId
-    - email
-    - createdAt
-  properties:
-    accountId:
-      type: string
-      format: uuid
-      description: Unique account identifier
-```
-
-### Event Schema Rules (`*-events.yaml`)
-
-#### Rule 1: Required Event Properties → `required` Array
-
-Properties the event MUST have go in the `required` array.
-
-```yaml
-AccountCreatedEvent:
-  type: object
-  required:
-    - eventId
-    - timestamp
-    - accountId
-  properties:
-    eventId:
-      type: string
-      format: uuid
-      description: Unique event identifier
-```
-
-#### Rule 2: Optional Event Properties → `nullable: true`
-
-Properties that MAY be absent MUST have `nullable: true`.
-
-```yaml
-properties:
-  deletedReason:
-    type: string
-    nullable: true
-    description: Optional reason for deletion
-```
-
-#### Rule 3: Value Types → Never Nullable Unless Semantically Optional
-
-Boolean/integer properties are value types. Only mark `nullable: true` if the absence of a value is semantically meaningful (rare for events).
+Only mark value types `nullable: true` if the absence of a value is semantically meaningful.
 
 ---
 
 ## Schema Reference Hierarchy ($ref)
 
 NSwag processes each schema file independently. When multiple schemas define the same type, duplicate C# classes are generated, causing compilation errors. Follow this hierarchy:
-
-### The Hierarchy
 
 ```
                          ┌─────────────────┐
@@ -708,21 +454,17 @@ All `$ref` paths are sibling-relative (same directory). Never use `../` prefixes
 - **`common-events.yaml`** - Base event schemas like `BaseServiceEvent`. Used by `*-events.yaml` files.
 - **`common-client-events.yaml`** - Base client event schemas like `BaseClientEvent`. Used by client-facing events.
 
-### Example: Configuration Referencing API Enum
+### $ref Examples
 
 ```yaml
-# In save-load-configuration.yaml
+# Configuration referencing API enum (save-load-configuration.yaml)
 DefaultCompressionType:
   $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
   env: SAVE_LOAD_DEFAULT_COMPRESSION_TYPE
   default: GZIP
   description: Default compression algorithm
-```
 
-### Example: Events Referencing API Type
-
-```yaml
-# In actor-events.yaml
+# Events referencing API type (actor-events.yaml)
 properties:
   status:
     $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
@@ -732,142 +474,18 @@ properties:
 
 ## Validation Keywords
 
-OpenAPI 3.0.3 provides validation keywords that generate `[ConfigX]` attributes in C#. These are validated at service startup.
+OpenAPI 3.0.3 validation keywords generate `[ConfigX]` attributes in C#, validated at service startup.
 
-### Numeric Range Validation
-
-```yaml
-# Schema
-Port:
-  type: integer
-  minimum: 1
-  maximum: 65535
-  default: 8080
-  description: Server port number
-
-# With exclusive bounds (value must be > 0, not >= 0)
-PositiveValue:
-  type: number
-  minimum: 0
-  exclusiveMinimum: true
-  description: Must be strictly positive
-```
-
-**Generated C#:**
-```csharp
-[ConfigRange(Minimum = 1, Maximum = 65535)]
-public int Port { get; set; } = 8080;
-
-[ConfigRange(Minimum = 0, ExclusiveMinimum = true)]
-public double PositiveValue { get; set; }
-```
-
-### String Length Validation
-
-```yaml
-# Schema
-JwtSecret:
-  type: string
-  minLength: 32
-  maxLength: 512
-  default: "default-dev-secret-key-32-chars!"
-  description: JWT signing secret (minimum 32 characters for security)
-
-ApiKey:
-  type: string
-  minLength: 16
-  description: API key for external service
-```
-
-**Generated C#:**
-```csharp
-[ConfigStringLength(MinLength = 32, MaxLength = 512)]
-public string JwtSecret { get; set; } = "default-dev-secret-key-32-chars!";
-
-[ConfigStringLength(MinLength = 16)]
-public string ApiKey { get; set; } = "...";
-```
-
-**Use Cases:**
-- JWT secrets (minimum 32 characters)
-- Salt values (minimum length for cryptographic strength)
-- Connection strings (sanity check maximum)
-- Names and codes (maximum length for database constraints)
-
-### Pattern Validation (Regex)
-
-```yaml
-# Schema
-ServiceUrl:
-  type: string
-  pattern: "^https?://"
-  default: "https://api.example.com"
-  description: Service URL (must start with http:// or https://)
-
-ServiceName:
-  type: string
-  pattern: "^[a-z][a-z0-9-]*$"
-  default: "my-service"
-  description: Service name (lowercase alphanumeric with hyphens)
-```
-
-**Generated C#:**
-```csharp
-[ConfigPattern(@"^https?://")]
-public string ServiceUrl { get; set; } = "https://api.example.com";
-
-[ConfigPattern(@"^[a-z][a-z0-9-]*$")]
-public string ServiceName { get; set; } = "my-service";
-```
-
-**Use Cases:**
-- URL formats (`^https?://`)
-- Domain names
-- Version strings (`^v\d+\.\d+\.\d+$`)
-- Naming conventions
-
-### MultipleOf Validation (Numeric Precision)
-
-```yaml
-# Schema
-TimeoutMs:
-  type: integer
-  multipleOf: 1000
-  default: 5000
-  description: Timeout in whole seconds (milliseconds, multiple of 1000)
-
-BufferSizeKb:
-  type: integer
-  multipleOf: 1024
-  default: 4096
-  description: Buffer size in KB boundaries
-
-Price:
-  type: number
-  multipleOf: 0.01
-  default: 9.99
-  description: Price with cent precision
-```
-
-**Generated C#:**
-```csharp
-[ConfigMultipleOf(1000)]
-public int TimeoutMs { get; set; } = 5000;
-
-[ConfigMultipleOf(1024)]
-public int BufferSizeKb { get; set; } = 4096;
-
-[ConfigMultipleOf(0.01)]
-public double Price { get; set; } = 9.99;
-```
-
-**Use Cases:**
-- Timeouts in whole seconds (multiple of 1000ms)
-- Buffer sizes on KB/MB boundaries (multiple of 1024)
-- Currency precision (multiple of 0.01)
-- Percentage steps (multiple of 5 for 0%, 5%, 10%, etc.)
-
-### Combining Validation Keywords
+| Keyword | Applies To | Schema Example | Generated Attribute |
+|---------|------------|----------------|---------------------|
+| `minimum` | number/integer | `minimum: 1` | `[ConfigRange(Minimum = 1)]` |
+| `maximum` | number/integer | `maximum: 100` | `[ConfigRange(Maximum = 100)]` |
+| `exclusiveMinimum` | boolean | `exclusiveMinimum: true` | `[ConfigRange(..., ExclusiveMinimum = true)]` |
+| `exclusiveMaximum` | boolean | `exclusiveMaximum: true` | `[ConfigRange(..., ExclusiveMaximum = true)]` |
+| `minLength` | string | `minLength: 32` | `[ConfigStringLength(MinLength = 32)]` |
+| `maxLength` | string | `maxLength: 256` | `[ConfigStringLength(MaxLength = 256)]` |
+| `pattern` | string (regex) | `pattern: "^https?://"` | `[ConfigPattern(@"^https?://")]` |
+| `multipleOf` | number/integer | `multipleOf: 1000` | `[ConfigMultipleOf(1000)]` |
 
 Keywords can be combined on a single property:
 
@@ -881,112 +499,35 @@ TimeoutMs:
   description: Timeout between 1-60 seconds, in whole seconds
 ```
 
-**Generated C#:**
-```csharp
-[ConfigRange(Minimum = 1000, Maximum = 60000)]
-[ConfigMultipleOf(1000)]
-public int TimeoutMs { get; set; } = 5000;
-```
+**Generates**: `[ConfigRange(Minimum = 1000, Maximum = 60000)] [ConfigMultipleOf(1000)] public int TimeoutMs { get; set; } = 5000;`
 
 ---
 
 ## Configuration Schema Rules
 
-Configuration schemas (`*-configuration.yaml`) have unique requirements.
+Configuration schemas (`*-configuration.yaml`) have unique requirements beyond the standard NRT rules.
 
 ### Rule 1: Always Include `env` Property
 
-Every configuration property MUST have an `env` property specifying the environment variable name.
-
-```yaml
-# GOOD
-MaxConnections:
-  type: integer
-  env: MY_SERVICE_MAX_CONNECTIONS  # Required!
-  default: 100
-  description: Maximum concurrent connections
-
-# BAD - missing env
-MaxConnections:
-  type: integer
-  default: 100
-  description: Maximum concurrent connections
-```
+Every property MUST have `env` specifying the environment variable name.
 
 ### Rule 2: Use Proper Service Prefix in `env`
 
-Environment variable names should follow the pattern `{SERVICE}_{PROPERTY}`.
+Pattern: `{SERVICE}_{PROPERTY}`. Use underscores, never hyphens (e.g., `SAVE_LOAD_MAX_SIZE`, not `SAVE-LOAD_MAX_SIZE`).
+
+### Rule 3: Defaults and Optionality
+
+Use `default: value` for properties with sensible defaults. Use `nullable: true` for truly optional properties (feature disabled when absent). Same NRT rules as API schemas apply.
+
+### Rule 4: Never Use `type: object`
+
+The generator falls back to `string` for `type: object`. Use `type: string` with a documented format instead.
+
+### Rule 5: Enums via $ref to API Schema
+
+Reference enum types from the service's API schema:
 
 ```yaml
-# GOOD
-env: SAVE_LOAD_MAX_SAVE_SIZE_BYTES
-
-# BAD - missing service prefix
-env: MAX_SAVE_SIZE_BYTES
-
-# BAD - hyphen in prefix (use underscore)
-env: SAVE-LOAD_MAX_SAVE_SIZE_BYTES
-```
-
-### Rule 3: Properties WITH Defaults → Use `default: value`
-
-Most configuration has sensible defaults.
-
-```yaml
-MaxConnections:
-  type: integer
-  env: MY_SERVICE_MAX_CONNECTIONS
-  default: 100
-  description: Maximum concurrent connections
-```
-
-**Generated C#**: `public int MaxConnections { get; set; } = 100;`
-
-### Rule 4: OPTIONAL Configuration → `nullable: true`
-
-Configuration that is truly optional (feature disabled when absent) MUST be `nullable: true`.
-
-```yaml
-ProxyUrl:
-  type: string
-  nullable: true  # NRT: Optional config MUST be nullable
-  env: MY_SERVICE_PROXY_URL
-  description: Optional HTTP proxy URL (feature disabled when not set)
-```
-
-**Generated C#**: `public string? ProxyUrl { get; set; }`
-
-### Rule 5: Never Use `type: object`
-
-Configuration properties cannot be complex objects. The generator falls back to `string` for `type: object`, which causes problems.
-
-```yaml
-# BAD - type: object not supported
-DefaultsByCategory:
-  type: object
-  description: Defaults per category
-
-# GOOD - use string with documented format
-DefaultsByCategory:
-  type: string
-  nullable: true
-  env: MY_SERVICE_DEFAULTS_BY_CATEGORY
-  description: Defaults per category as KEY=VALUE,KEY=VALUE format
-```
-
-### Rule 6: Enums via $ref to API Schema
-
-When configuration needs enum types, reference them from the API schema.
-
-```yaml
-# In my-service-api.yaml - define the enum
-components:
-  schemas:
-    CompressionType:
-      type: string
-      enum: [NONE, GZIP, BROTLI]
-
-# In my-service-configuration.yaml - reference it
 DefaultCompression:
   $ref: 'my-service-api.yaml#/components/schemas/CompressionType'
   env: MY_SERVICE_DEFAULT_COMPRESSION
@@ -994,29 +535,23 @@ DefaultCompression:
   description: Default compression algorithm
 ```
 
-### Rule 7: Single-Line Descriptions Only
+### Rule 6: Single-Line Descriptions Only
 
-Configuration property descriptions MUST be single-line. Multi-line YAML literal blocks (`|`) or folded blocks (`>`) break the C# comment generation.
+Descriptions MUST be single-line. Multi-line YAML blocks (`|` or `>`) produce malformed C# XML documentation comments that cause compile errors.
+
+### Well-Formed Configuration Property
 
 ```yaml
-# BAD: Multi-line description breaks generated C# comments
-DefaultMode:
-  type: string
-  env: MY_SERVICE_DEFAULT_MODE
-  default: automatic
-  description: |
-    Controls the default operating mode.
-    Values: automatic, manual, hybrid
-
-# GOOD: Single-line description
-DefaultMode:
-  type: string
-  env: MY_SERVICE_DEFAULT_MODE
-  default: automatic
-  description: Default operating mode (automatic/manual/hybrid)
+x-service-configuration:
+  properties:
+    MaxConnections:
+      type: integer
+      env: MY_SERVICE_MAX_CONNECTIONS
+      minimum: 1
+      maximum: 10000
+      default: 100
+      description: Maximum concurrent connections allowed
 ```
-
-**Why this matters**: The configuration generator creates C# XML documentation comments from descriptions. Multi-line descriptions produce malformed `<summary>` blocks that cause compile errors.
 
 ---
 
@@ -1024,61 +559,25 @@ DefaultMode:
 
 ### POST-Only Pattern (MANDATORY)
 
-All internal service APIs use POST requests exclusively. This enables zero-copy WebSocket message routing.
+All internal service APIs use POST requests exclusively. WebSocket binary routing uses static 16-byte GUIDs per endpoint. Path parameters would break zero-copy routing.
 
 ```yaml
-# CORRECT: POST-only with body parameters
-paths:
-  /account/get:
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetAccountRequest'
-
-# WRONG: Path parameters prevent static GUID mapping
-paths:
-  /account/{accountId}:
-    get:  # NO!
+# CORRECT                           # WRONG
+paths:                               paths:
+  /account/get:                        /account/{accountId}:
+    post:                                get:  # NO!
+      requestBody: ...
 ```
 
-**Why POST-only?** WebSocket binary routing uses static 16-byte GUIDs per endpoint. Path parameters (e.g., `/account/{id}`) would require different GUIDs per parameter value, breaking zero-copy routing.
-
-**Exceptions** (browser-facing only):
-- Website service (`/website/*`) - SEO, bookmarkable URLs
-- OAuth callbacks (`/auth/oauth/{provider}/callback`)
-- WebSocket upgrade (`/connect` GET)
+**Exceptions** (browser-facing only): Website service, OAuth callbacks, WebSocket upgrade GET.
 
 ### Property Description Requirement (MANDATORY)
 
-**ALL schema properties MUST have `description` fields.** NSwag generates XML documentation from these. Missing descriptions cause CS1591 compiler warnings.
-
-```yaml
-# CORRECT: Property has description
-properties:
-  accountId:
-    type: string
-    format: uuid
-    description: Unique identifier for the account
-
-# WRONG: Missing description causes CS1591 warning
-properties:
-  accountId:
-    type: string
-    format: uuid
-```
+**ALL schema properties MUST have `description` fields.** Missing descriptions cause CS1591 compiler warnings.
 
 ### Servers URL (MANDATORY)
 
-All API schemas MUST use the base endpoint format:
-
-```yaml
-servers:
-  - url: http://localhost:5012
-```
-
-NSwag generates controller route prefixes from this URL.
+All API schemas MUST use `servers: [{ url: http://localhost:5012 }]`. NSwag generates controller route prefixes from this URL.
 
 ---
 
@@ -1086,45 +585,18 @@ NSwag generates controller route prefixes from this URL.
 
 ### Canonical Definitions Only
 
-Each `{service}-events.yaml` file MUST contain ONLY canonical definitions for events that service PUBLISHES. **No `$ref` references to other service event files.**
-
-```yaml
-# CORRECT: Canonical definition
-components:
-  schemas:
-    SessionInvalidatedEvent:
-      type: object
-      required: [sessionIds, reason]
-      properties:
-        sessionIds:
-          type: array
-          items: { type: string }
-
-# WRONG: $ref to another service's events (causes duplicate types)
-components:
-  schemas:
-    AccountDeletedEvent:
-      $ref: './account-events.yaml#/components/schemas/AccountDeletedEvent'
-```
+Each `{service}-events.yaml` MUST contain ONLY canonical definitions for events that service PUBLISHES. **No `$ref` references to other service event files** (causes duplicate types).
 
 ### Topic Naming Convention
 
-**Pattern**: `{entity}.{action}` (kebab-case entity, lowercase action)
-
-| Topic | Description |
-|-------|-------------|
-| `account.created` | Account lifecycle event |
-| `session.invalidated` | Session state change |
-| `game-session.player-joined` | Game session event |
-
-**Infrastructure events** use `bannou-` prefix: `bannou.full-service-mappings`
+**Pattern**: `{entity}.{action}` (kebab-case entity, lowercase action). Examples: `account.created`, `game-session.player-joined`. Infrastructure events use `bannou-` prefix.
 
 ### Client Events vs Service Events
 
-| Type | File | Purpose | Publishing |
-|------|------|---------|------------|
-| Service Events | `{service}-events.yaml` | Service-to-service | `IMessageBus.PublishAsync` |
-| Client Events | `{service}-client-events.yaml` | Server→WebSocket client | `IClientEventPublisher.PublishToSessionAsync` |
+| Type | File | Publishing |
+|------|------|------------|
+| Service Events | `{service}-events.yaml` | `IMessageBus.PublishAsync` |
+| Client Events | `{service}-client-events.yaml` | `IClientEventPublisher.PublishToSessionAsync` |
 
 **Never use `IMessageBus` for client events** - it uses the wrong RabbitMQ exchange.
 
@@ -1132,114 +604,75 @@ components:
 
 ## Mandatory Type Reuse via $ref (CRITICAL)
 
-**ALL complex types (enums, objects with nested properties, arrays of objects) MUST be defined once in the service's `-api.yaml` schema and referenced via `$ref` from events, configuration, and lifecycle schemas.**
+**ALL complex types (enums, objects with nested properties, arrays of objects) MUST be defined once in the service's `-api.yaml` and referenced via `$ref` from events, configuration, and lifecycle schemas.**
 
-This rule is **inviolable**. Violating it causes:
-- Duplicate C# classes with different names (e.g., `AuthMethods`, `AuthMethods2`, `AuthMethods3`)
-- Duplicate enums that are incompatible with each other
-- Type mismatches across service boundaries
-- Serialization failures when event consumers expect the API type
+Violating this causes duplicate C# classes (`AuthMethods`, `AuthMethods2`, `AuthMethods3`), incompatible enums, type mismatches, and serialization failures.
 
 ### The Principle
 
-**Events should contain the same complex data types as `Get*Response` from the API.**
-
-If your `GetAccountResponse` returns an `AuthMethodInfo` object, then `AccountCreatedEvent` should use the SAME `AuthMethodInfo` type via `$ref`, not a duplicate inline definition.
+**Events should contain the same complex data types as `Get*Response` from the API.** If `GetAccountResponse` returns `AuthMethodInfo`, then `AccountCreatedEvent` must use the SAME type via `$ref`.
 
 ### What MUST Use $ref
 
-| Type Category | MUST Use $ref? | Reason |
-|---------------|----------------|--------|
-| Enums | **YES** | Avoid duplicate incompatible enum types |
-| Objects with nested properties | **YES** | Complex types generate duplicate classes |
-| Objects with `$ref` to other types | **YES** | Nested refs break NSwag resolution |
-| Simple objects (flat properties, no refs) | Recommended | Consistency, easier maintenance |
-| Primitive types (string, integer, boolean) | No | Inline is fine |
-| Arrays of primitives | No | Inline is fine |
-| Arrays of objects | **YES** | The object type must be shared |
+| Type Category | MUST Use $ref? |
+|---------------|----------------|
+| Enums | **YES** |
+| Objects with nested properties or `$ref` | **YES** |
+| Arrays of objects | **YES** |
+| Simple flat objects (no refs) | Recommended |
+| Primitives and arrays of primitives | No |
 
 ### When NOT to Create Enums (Service Hierarchy Consideration)
 
-**Rule**: Do NOT define enums that enumerate services, resources, or entity types from other layers of the service hierarchy.
-
-A service should not "know about" services in higher layers (see [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md)). Creating an enum that lists higher-layer services or their entity types creates implicit coupling that defeats the purpose of layer isolation.
-
-**Examples of FORBIDDEN enums**:
+Do NOT define enums that enumerate services, resources, or entity types from other layers. This creates implicit coupling that defeats layer isolation.
 
 ```yaml
 # WRONG: L1 service enumerating L3/L4 services
 ResourceSourceType:
   type: string
   enum: [ACTOR, CHARACTER_ENCOUNTER, CONTRACT, SCENE, SAVE_DATA]
-  # This enum means lib-resource (L1) "knows about" Actor (L4), Scene (L4), etc.
 
-# WRONG: Foundation service enumerating all possible entity types
-EntityType:
+# CORRECT: Opaque string identifiers
+resourceType:
   type: string
-  enum: [CHARACTER, ACTOR, SCENE, INVENTORY, CONTRACT]
-  # If this is in an L1/L2 service, it couples to L3/L4 entity types
+  description: Type of resource being referenced (caller provides)
 ```
 
-**Correct approach**: Use **opaque string identifiers** when the service is intentionally generic and shouldn't have knowledge of its consumers:
+**When enums ARE appropriate**: Values are within the service's own layer or lower, the enum represents a closed set the service owns, or it's in `common-api.yaml` for system-wide concepts.
 
-```yaml
-# CORRECT: Generic reference tracking without layer coupling
-RegisterReferenceRequest:
-  properties:
-    resourceType:
-      type: string
-      description: Type of resource being referenced (caller provides, e.g., "character")
-    sourceType:
-      type: string
-      description: Type of entity holding the reference (caller provides, e.g., "actor")
-```
-
-**When enums ARE appropriate**:
-- The enum values are all within the service's own layer or lower
-- The enum represents a closed set that the service owns (e.g., `AuthProvider` in Auth service)
-- The enum is defined in `common-api.yaml` for system-wide concepts that ALL layers share
-
-**Test**: Before creating an enum, ask: "Would adding a new service/entity type in a higher layer require modifying this enum?" If yes, use a string instead.
+**Test**: "Would adding a new service/entity type in a higher layer require modifying this enum?" If yes, use a string.
 
 ### Correct Pattern
 
 ```yaml
-# In account-api.yaml - DEFINE the type once
-components:
-  schemas:
-    AuthMethodInfo:
-      type: object
-      properties:
-        provider:
-          $ref: '#/components/schemas/AuthProvider'  # Nested ref
-        linkedAt:
-          type: string
-          format: date-time
-
-    AuthProvider:
+# In account-api.yaml - DEFINE once
+AuthMethodInfo:
+  type: object
+  properties:
+    provider:
+      $ref: '#/components/schemas/AuthProvider'
+    linkedAt:
       type: string
-      enum: [email, google, discord, twitch, steam]
+      format: date-time
 
-# In account-events.yaml x-lifecycle - REFERENCE the type
+AuthProvider:
+  type: string
+  enum: [email, google, discord, twitch, steam]
+
+# In account-events.yaml x-lifecycle - REFERENCE via $ref
 x-lifecycle:
   Account:
     model:
       authMethods:
         type: array
         items:
-          $ref: 'account-api.yaml#/components/schemas/AuthMethodInfo'  # Use $ref!
-
-# In account-configuration.yaml - REFERENCE enums
-DefaultProvider:
-  $ref: 'account-api.yaml#/components/schemas/AuthProvider'
-  env: ACCOUNT_DEFAULT_PROVIDER
-  default: email
+          $ref: 'account-api.yaml#/components/schemas/AuthMethodInfo'
 ```
 
 ### Wrong Pattern
 
 ```yaml
-# WRONG: Inline definition in events (causes duplicate types)
+# WRONG: Inline definition in events (creates duplicate type per event)
 x-lifecycle:
   Account:
     model:
@@ -1251,158 +684,11 @@ x-lifecycle:
             provider:
               type: string
               enum: [email, google, discord]  # Duplicates AuthProvider!
-            linkedAt:
-              type: string
-              format: date-time
-
-# WRONG: Enum defined in events schema (should be in -api.yaml)
-# In account-events.yaml components/schemas:
-AuthProvider:  # This duplicates the API definition!
-  type: string
-  enum: [email, google, discord]
-```
-
-### When Inline is Acceptable
-
-Only use inline type definitions when:
-1. The type is **truly unique to this schema** (not used anywhere else)
-2. The type has **no nested `$ref`** references
-3. The type is a **simple flat object** with only primitive properties
-
-Even in these cases, consider defining in `-api.yaml` for consistency.
-
-### Generation Pipeline Support
-
-The code generation pipeline fully supports cross-file `$ref`:
-
-| Schema Type | Refs Supported | How It Works |
-|-------------|----------------|--------------|
-| `*-api.yaml` | `common-api.yaml` | NSwag resolves directly |
-| `*-events.yaml` | `*-api.yaml`, `common-api.yaml`, `common-events.yaml` | `resolve-event-refs.py` inlines complex types, excludes from generation |
-| `*-lifecycle-events.yaml` | `*-api.yaml`, `common-api.yaml`, `common-events.yaml` | `resolve-event-refs.py` processes lifecycle events, inlines complex types |
-| `*-configuration.yaml` | `*-api.yaml`, `common-api.yaml` | `generate-config.sh` extracts type names |
-
----
-
-## Common Anti-Patterns
-
-### Optional String Without Nullable
-
-```yaml
-# BAD: Generates string = default! (hides null at runtime)
-optionalProp:
-  type: string
-  description: This can be omitted
-
-# GOOD: Generates string? (NRT-compliant)
-optionalProp:
-  type: string
-  nullable: true
-  description: This can be omitted
-```
-
-### Empty String as Default
-
-```yaml
-# BAD: Empty string hides missing data
-name:
-  type: string
-  default: ""
-
-# GOOD: Use nullable for optional, required for mandatory
-name:
-  type: string
-  nullable: true  # If optional
-# OR
-required: [name]  # If mandatory
-```
-
-### Response Properties Without Required
-
-```yaml
-# BAD: No required array - all properties generate as optional
-UserResponse:
-  type: object
-  properties:
-    userId: { type: string, format: uuid }
-    email: { type: string }
-
-# GOOD: Server always sets these, so declare them required
-UserResponse:
-  type: object
-  required: [userId, email]
-  properties:
-    userId: { type: string, format: uuid }
-    email: { type: string }
-```
-
-### Configuration Without env Property
-
-```yaml
-# BAD: No env property - can't be configured via environment
-TimeoutSeconds:
-  type: integer
-  default: 30
-
-# GOOD: Explicit env property
-TimeoutSeconds:
-  type: integer
-  env: MY_SERVICE_TIMEOUT_SECONDS
-  default: 30
-```
-
-### Duplicate Types Across Schemas (CRITICAL)
-
-**See [Mandatory Type Reuse via $ref](#mandatory-type-reuse-via-ref-critical) for complete guidance.**
-
-```yaml
-# BAD: Same enum defined in both API and events
-# In my-service-api.yaml
-Status:
-  type: string
-  enum: [PENDING, ACTIVE, COMPLETED]
-
-# In my-service-events.yaml (DUPLICATE!)
-Status:
-  type: string
-  enum: [PENDING, ACTIVE, COMPLETED]
-
-# GOOD: Define in API, reference in events
-# In my-service-events.yaml
-properties:
-  status:
-    $ref: 'my-service-api.yaml#/components/schemas/Status'
-```
-
-**Also bad: Inline complex types in x-lifecycle**
-
-```yaml
-# BAD: Inline object definition in lifecycle (generates AuthMethods, AuthMethods2, AuthMethods3!)
-x-lifecycle:
-  Account:
-    model:
-      authMethods:
-        type: array
-        items:
-          type: object  # WRONG - creates duplicate type per event!
-          properties:
-            provider: { type: string }
-
-# GOOD: Reference API type in lifecycle
-x-lifecycle:
-  Account:
-    model:
-      authMethods:
-        type: array
-        items:
-          $ref: 'account-api.yaml#/components/schemas/AuthMethodInfo'  # Correct!
 ```
 
 ---
 
-## Quick Reference Tables
-
-### NRT Quick Reference
+## NRT Quick Reference
 
 | Scenario | Schema Pattern | Generated C# |
 |----------|---------------|--------------|
@@ -1414,127 +700,35 @@ x-lifecycle:
 | Response field always set | `required: [field]` | `[Required] string Field = default!;` |
 | Response field sometimes null | `nullable: true` | `string? Field` |
 
-### Validation Keywords Quick Reference
-
-| Keyword | Type | Schema Example | Generated Attribute |
-|---------|------|----------------|---------------------|
-| `minimum` | number | `minimum: 1` | `[ConfigRange(Minimum = 1)]` |
-| `maximum` | number | `maximum: 100` | `[ConfigRange(Maximum = 100)]` |
-| `exclusiveMinimum` | boolean | `exclusiveMinimum: true` | `[ConfigRange(..., ExclusiveMinimum = true)]` |
-| `exclusiveMaximum` | boolean | `exclusiveMaximum: true` | `[ConfigRange(..., ExclusiveMaximum = true)]` |
-| `minLength` | integer | `minLength: 32` | `[ConfigStringLength(MinLength = 32)]` |
-| `maxLength` | integer | `maxLength: 256` | `[ConfigStringLength(MaxLength = 256)]` |
-| `pattern` | regex | `pattern: "^https?://"` | `[ConfigPattern(@"^https?://")]` |
-| `multipleOf` | number | `multipleOf: 1000` | `[ConfigMultipleOf(1000)]` |
-
-### $ref Path Quick Reference
-
-All paths are sibling-relative (same directory). Never use `../` prefixes.
-
-| From Schema | To Schema | Path Format |
-|-------------|-----------|-------------|
-| `*-api.yaml` | `common-api.yaml` | `common-api.yaml#/...` |
-| `*-events.yaml` | `*-api.yaml` | `{service}-api.yaml#/...` |
-| `*-events.yaml` | `common-events.yaml` | `common-events.yaml#/...` |
-| `*-configuration.yaml` | `*-api.yaml` | `{service}-api.yaml#/...` |
-
 ---
 
 ## Validation Checklist
 
 Before submitting schema changes, verify:
 
-### API Schemas
-- [ ] All endpoints use POST method (except documented browser-facing exceptions)
-- [ ] All endpoints have `x-permissions` (even if empty array)
-- [ ] All properties have `description` fields
-- [ ] `servers` URL uses base endpoint format (`http://localhost:5012`)
-- [ ] `x-service-layer` is set to the correct layer per SERVICE-HIERARCHY.md
+**API Schemas**: All endpoints POST (except browser exceptions). All endpoints have `x-permissions`. All properties have `description`. `servers` URL is `http://localhost:5012`. `x-service-layer` set correctly.
 
-### NRT Compliance
-- [ ] All optional reference types (string, object, array) have `nullable: true`
-- [ ] All properties the server always sets are in the `required` array
-- [ ] No empty string defaults (`default: ""`)
+**NRT Compliance**: Optional reference types have `nullable: true`. Server-always-set properties in `required` array. No `default: ""`.
 
-### Configuration Schemas
-- [ ] Every property has an `env` property with proper `{SERVICE}_{PROPERTY}` naming
-- [ ] No `type: object` properties (use string with documented format)
-- [ ] Optional properties have `nullable: true`
-- [ ] Enum types use `$ref` to API schema
-- [ ] All descriptions are single-line (no `|` or `>` YAML blocks)
+**Configuration**: Every property has `env` with `{SERVICE}_{PROPERTY}` naming. No `type: object`. Enums via `$ref`. Single-line descriptions only.
 
-### Event Schemas
-- [ ] Only canonical event definitions (no `$ref` to other service events)
-- [ ] Lifecycle events use `x-lifecycle`, not manual definitions
-- [ ] Event subscriptions use `x-event-subscriptions` in `info` section
+**Events**: Only canonical definitions (no cross-service `$ref`). Lifecycle events via `x-lifecycle`. Subscriptions via `x-event-subscriptions`.
 
-### Validation Keywords
-- [ ] Numeric bounds use `minimum`/`maximum` (with `exclusive*` if needed)
-- [ ] String length constraints use `minLength`/`maxLength`
-- [ ] Format patterns use `pattern` with valid regex
-- [ ] Precision requirements use `multipleOf`
+**Type References**: ALL enums/complex objects use `$ref` to `-api.yaml`. x-lifecycle model fields use `$ref` for objects/enums. All `$ref` paths sibling-relative (no `../`).
 
-### Type References (CRITICAL)
-- [ ] **ALL enums** use `$ref` to `-api.yaml` definitions (never inline in events/config/lifecycle)
-- [ ] **ALL complex objects** (with nested properties or refs) use `$ref` to `-api.yaml`
-- [ ] **x-lifecycle model fields** use `$ref` for objects/enums, not inline definitions
-- [ ] Event properties matching API response types use the **same type** via `$ref`
-- [ ] Shared types defined in `*-api.yaml`, not duplicated across schemas
-- [ ] All `$ref` paths are sibling-relative (no `../` prefix in source schemas)
+**x-references**: Consumer services declare `x-references` with `target`, `sourceType`, `field`, `cleanup`. `cleanup.endpoint` matches an actual endpoint. `target` matches foundational service's `x-resource-lifecycle.resourceType`.
 
-### Resource References (x-references)
-- [ ] Consumer services (L3/L4) with foundational dependencies declare `x-references` in their API schema
-- [ ] Each reference has `target`, `sourceType`, `field`, and `cleanup` configuration
-- [ ] `cleanup.endpoint` matches an actual endpoint in the service
-- [ ] `cleanup.payloadTemplate` is valid JSON with `{{resourceId}}` placeholder
-- [ ] `target` value matches the `resourceType` in the foundational service's `x-resource-lifecycle`
+**x-resource-lifecycle**: Foundational services with deletable resources declare it. `cleanupPolicy` is `BEST_EFFORT` or `ALL_REQUIRED`.
 
-### Resource Lifecycle (x-resource-lifecycle)
-- [ ] Foundational services (L2) with deletable resources declare `x-resource-lifecycle`
-- [ ] `gracePeriodSeconds` is a positive integer (use 0 only for immediate cleanup)
-- [ ] `cleanupPolicy` is either `BEST_EFFORT` or `ALL_REQUIRED`
+**x-compression-callback**: `compressEndpoint` exists in paths. `priority` set appropriately (0 base, 10-30 extension, 50-100 optional). Plugin calls generated `*CompressionCallbacks.RegisterAsync()`.
 
-### Compression Callbacks (x-compression-callback)
-- [ ] Services with `/get-compress-data` endpoints declare `x-compression-callback` in their API schema
-- [ ] `resourceType` matches the foundational resource type (e.g., "character", "realm")
-- [ ] `sourceType` is unique per service (e.g., "character-personality", "quest")
-- [ ] `compressEndpoint` exists in the schema's paths section
-- [ ] `compressPayloadTemplate` is valid JSON with `{{resourceId}}` placeholder
-- [ ] `priority` is set appropriately (0 for base data, 10-30 for extensions, 50-100 for optional)
-- [ ] `decompressEndpoint` (if specified) exists in the schema's paths section
-- [ ] Plugin's `OnRunningAsync` calls the generated `*CompressionCallbacks.RegisterAsync()` method
+**x-event-template**: `name` is unique across services. Plugin calls generated `*EventTemplates.RegisterAll()`. No manual `EventTemplate` definitions remain.
 
-### Event Templates (x-event-template)
-- [ ] Events used with `emit_event:` ABML action declare `x-event-template` in their event schema
-- [ ] `name` is unique across all services (template name used in ABML)
-- [ ] `topic` matches the topic in `x-event-publications` (if applicable)
-- [ ] All properties that behaviors need to provide have corresponding `{{property}}` in the generated template
-- [ ] Plugin's `OnRunningAsync` calls the generated `*EventTemplates.RegisterAll()` method
-- [ ] No manual `EventTemplate` definitions remain in plugin code (replaced by generated)
+**Resource Cleanup Contract (Producer Side)**: When your service is the `target` of `x-references`, your delete flow MUST: inject `IResourceClient`, call `/resource/check` before deletion, call `/resource/cleanup/execute` if references exist, handle cleanup failure (return `Conflict`), only delete after cleanup succeeds. **FORBIDDEN**: Adding event handlers that duplicate cleanup callbacks, deleting without `ExecuteCleanupAsync`, assuming event-based cleanup is equivalent.
 
-### Resource Cleanup Contract (CRITICAL - Producer Side)
-
-**When your service is the `target` of `x-references` declarations**, your delete flow MUST:
-
-- [ ] Inject `IResourceClient` in service constructor
-- [ ] Call `/resource/check` before deletion to detect references
-- [ ] Call `/resource/cleanup/execute` if references exist to invoke registered callbacks
-- [ ] Handle cleanup failure (typically return `Conflict` status)
-- [ ] Only proceed with deletion after cleanup succeeds
-
-**FORBIDDEN** (violates schema-first cleanup contract):
-- [ ] Adding event handlers that duplicate cleanup callback logic when `x-references` callbacks exist
-- [ ] Deleting without calling `ExecuteCleanupAsync` when consumers have registered `x-references`
-- [ ] Assuming event-based cleanup is "equivalent" to Resource cleanup pattern
-
-**Why this matters**: `x-references` is a schema-first declaration. Cleanup chains can be validated by inspecting schemas. Event handlers bypass this validation and create hidden, undocumented dependencies.
-
-**Validation**: To find services that should call `ExecuteCleanupAsync`:
 ```bash
-# Find all x-references targets (these services MUST call ExecuteCleanupAsync)
+# Find all x-references targets (services that MUST call ExecuteCleanupAsync)
 grep -h "target:" schemas/*-api.yaml | grep -v "^#" | sort -u
 ```
 
-### Final Steps
-- [ ] Run `scripts/generate-all-services.sh` and verify build passes
-- [ ] Check generated C# files for expected attributes and nullability
+**Final**: Run `scripts/generate-all-services.sh` and verify build passes. Check generated C# for expected attributes and nullability.

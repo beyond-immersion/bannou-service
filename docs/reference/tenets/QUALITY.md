@@ -2,7 +2,7 @@
 
 > **Category**: Standards & Verification
 > **When to Reference**: During code review or before PR submission
-> **Tenets**: T10, T11, T12, T16, T19
+> **Tenets**: T10, T11, T12, T16, T19, T22
 
 These tenets define quality standards to verify before merging code. Use them as a review checklist.
 
@@ -30,46 +30,14 @@ These tenets define quality standards to verify before merging code. Use them as
 _logger.LogDebug("Getting account {AccountId}", body.AccountId);
 
 // WRONG: String interpolation loses structure
-_logger.LogDebug($"Getting account {body.AccountId}");  // NO!
+_logger.LogDebug($"Getting account {body.AccountId}");
 ```
 
-### Forbidden Log Formatting
+**Forbidden formatting**: No bracket tag prefixes (`[AUTH-EVENT]`, `[PERMISSIONS]`) - the logger already includes service/class context. No emojis in log messages (acceptable only in `/scripts/` console output).
 
-**No bracket tag prefixes** - the logger already includes service/class context:
+### Retry Logging
 
-```csharp
-// WRONG: Manual tag prefixes
-_logger.LogInformation("[AUTH-EVENT] Processing account.deleted");  // NO!
-_logger.LogDebug("[PERMISSIONS] Checking capabilities");  // NO!
-
-// CORRECT: Let structured logging handle context
-_logger.LogInformation("Processing account.deleted event for {AccountId}", evt.AccountId);
-_logger.LogDebug("Checking capabilities for session {SessionId}", sessionId);
-```
-
-**No emojis in log messages** - emojis are acceptable only in `/scripts/` console output:
-
-```csharp
-// WRONG: Emojis in service logs
-_logger.LogInformation("Service starting up");  // NO!
-_logger.LogError("Failed to connect");  // NO!
-
-// CORRECT: Plain text
-_logger.LogInformation("Service starting up");
-_logger.LogError("Failed to connect to {Endpoint}", endpoint);
-```
-
-### Retry Mechanism Logging
-
-Use **Debug** for individual retry attempts (expected during transient failures), **Error** only when all retries exhausted:
-
-```csharp
-_logger.LogDebug(ex, "Attempt {Attempt}/{MaxRetries} failed, retrying", attempt, maxRetries);
-// ... only after all retries exhausted:
-_logger.LogError(ex, "All {MaxRetries} attempts exhausted", maxRetries);
-```
-
-### Forbidden Logging
+Use **Debug** for individual retry attempts, **Error** only when all retries exhausted.
 
 **NEVER log**: Passwords, JWT tokens (log length only), API keys, secrets, PII.
 
@@ -79,7 +47,7 @@ _logger.LogError(ex, "All {MaxRetries} attempts exhausted", maxRetries);
 
 **Rule**: All services MUST have tests at appropriate tiers.
 
-**For detailed testing architecture and plugin isolation boundaries, see [TESTING.md](../TESTING.md).**
+**For detailed testing architecture and plugin isolation boundaries, see [TESTING.md](../../guides/TESTING.md).**
 
 ### Testing Philosophy
 
@@ -90,113 +58,42 @@ _logger.LogError(ex, "All {MaxRetries} attempts exhausted", maxRetries);
 
 ### Test Naming Convention
 
-Follow the Osherove naming standard: `UnitOfWork_StateUnderTest_ExpectedBehavior`
-
-Examples:
-- `GetAccount_WhenAccountExists_ReturnsAccount`
-- `CreateSession_WhenTokenExpired_ReturnsUnauthorized`
+Osherove standard: `UnitOfWork_StateUnderTest_ExpectedBehavior` (e.g., `GetAccount_WhenAccountExists_ReturnsAccount`).
 
 ### Test Data Guidelines
 
-- **Create new resources** for each test - don't rely on pre-existing state
-- **Don't assert specific counts** - only verify expected items are present
-- **Tests should be independent** - previous test failures shouldn't impact current test
-
-### Tier 1 - Unit Tests (`lib-{service}.tests/`)
-
-Test business logic with mocked dependencies.
-
-### Tier 2 - HTTP Integration Tests (`http-tester/Tests/`)
-
-Test actual service-to-service calls via lib-mesh, verify generated code works.
-
-### Tier 3 - Edge/WebSocket Tests (`edge-tester/Tests/`)
-
-Test client perspective through Connect service and binary protocol.
+- Create new resources for each test - don't rely on pre-existing state
+- Don't assert specific counts - only verify expected items are present
+- Tests should be independent - previous failures shouldn't impact current test
 
 ---
 
 ## Tenet 12: Test Integrity (ABSOLUTE)
 
-**Rule**: Tests MUST validate the intended behavior path and assert CORRECT expected behavior.
+**Rule**: Tests MUST validate the intended behavior path and assert CORRECT expected behavior. A failing test with correct assertions = implementation bug that needs fixing.
 
-### The Golden Rule
+**NEVER**: Change `Times.Never` to `Times.AtLeastOnce` to pass, remove "inconvenient" assertions, weaken conditions, add fallbacks to bypass issues, or claim success when tests fail.
 
-**A failing test with correct assertions = implementation bug that needs fixing.**
-
-**NEVER**:
-- Change `Times.Never` to `Times.AtLeastOnce` to make tests pass
-- Remove assertions that "inconveniently" fail
-- Weaken test conditions to accommodate wrong behavior
-- Add HTTP fallbacks to bypass pub/sub issues
-- Claim success when tests fail
-
-### Retries vs Fallbacks
-
-**Retries are acceptable** - retrying the same operation for transient failures.
-
-**Fallbacks are forbidden** - switching to a different mechanism when the intended one fails masks real issues.
-
-```csharp
-// BAD: Fallback to different mechanism
-try {
-    await _messageBus.PublishAsync("entity.action", evt);
-}
-catch {
-    await httpClient.PostAsync("http://rabbitmq/...");  // MASKS THE REAL ISSUE
-}
-```
+**Retries are acceptable** (retrying same operation for transient failures). **Fallbacks are forbidden** (switching mechanisms when the intended one fails masks real issues).
 
 ### When a Test Fails
 
-1. **Verify the test is correct** - Does it assert the expected behavior?
-2. **If test is correct**: The IMPLEMENTATION is wrong - fix the implementation
-3. **If test is wrong**: Fix the test, then ensure implementation passes
-4. **NEVER**: Change a correct test to pass with buggy implementation
+1. Verify the test is correct (does it assert expected behavior?)
+2. If test is correct → fix the implementation
+3. If test is wrong → fix the test
+4. NEVER change a correct test to pass with buggy implementation
 
-### Nullable Reference Types and Invalid Null Tests
+### Nullable Reference Types and null! Tests
 
-**Rule**: Tests MUST NOT use null-forgiving operators (`null!`) to bypass compile-time null safety.
-
-Bannou uses Nullable Reference Types (NRTs) for compile-time null safety. When a parameter is declared as non-nullable (e.g., `AccountResponse account` not `AccountResponse? account`), the type system guarantees callers cannot pass null without explicit bypassing.
-
-**Tests that use `null!` to test null handling on non-nullable parameters are invalid**:
+Tests MUST NOT use `null!` to bypass compile-time null safety on non-nullable parameters. When a parameter is non-nullable, the type system guarantees callers cannot pass null. Tests using `null!` validate an impossible code path.
 
 ```csharp
-// INVALID TEST - tests impossible scenario
-[Fact]
-public async Task GetAccount_WithNullId_ShouldThrow()
-{
-    // The type system prevents this - this test is meaningless
-    await Assert.ThrowsAsync<ArgumentNullException>(() =>
-        _service.GetAccountAsync(null!));  // null! bypasses NRT - BAD
-}
-```
+// INVALID: Tests impossible scenario - remove the test, don't add null checks
+await Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetAccountAsync(null!));
 
-**Why these tests are invalid**:
-1. The NRT system provides compile-time guarantees - null cannot be passed without `null!`
-2. Using `null!` explicitly defeats the type system's purpose
-3. Adding runtime null checks to "fix" these tests adds unnecessary defensive code
-4. The test validates a code path that properly-typed code can never reach
-
-**What to do when you find such tests**:
-1. **Remove the test** - it tests an impossible scenario
-2. **Do NOT** add runtime null checks to make the test pass
-3. If null is a valid input, make the parameter nullable (`Type?`) and test appropriately
-
-**Valid null testing** - when the parameter IS nullable:
-
-```csharp
-// VALID TEST - parameter accepts null by design
+// VALID: Parameter is explicitly nullable by design
 public async Task<Response> GetAccountAsync(string? optionalFilter)
-
-[Fact]
-public async Task GetAccount_WithNullFilter_ReturnsAllAccounts()
-{
-    // null is explicitly allowed by the type signature
-    var result = await _service.GetAccountAsync(null);
-    Assert.NotEmpty(result.Accounts);
-}
+var result = await _service.GetAccountAsync(null);  // null is allowed by type signature
 ```
 
 ---
@@ -204,8 +101,6 @@ public async Task GetAccount_WithNullFilter_ReturnsAllAccounts()
 ## Tenet 16: Naming Conventions (CONSOLIDATED)
 
 **Rule**: All identifiers MUST follow consistent naming patterns.
-
-### Quick Reference
 
 | Category | Pattern | Example |
 |----------|---------|---------|
@@ -218,44 +113,68 @@ public async Task GetAccount_WithNullFilter_ReturnsAllAccounts()
 | Config properties | PascalCase + units | `TimeoutSeconds` |
 | Test methods | `UnitOfWork_State_Result` | `GetAccount_WhenExists_Returns` |
 
-### Configuration Property Requirements
-
-- PascalCase for all property names
-- Include units in time-based names: `TimeoutSeconds`, `HeartbeatIntervalSeconds`
-- Document environment variable in XML comment
+Configuration properties: PascalCase, include units in time-based names (`HeartbeatIntervalSeconds`), document environment variable in XML comment.
 
 ---
 
 ## Tenet 19: XML Documentation Standards (REQUIRED)
 
-**Rule**: All public classes, interfaces, methods, and properties MUST have XML documentation comments.
+**Rule**: All public classes, interfaces, methods, and properties MUST have XML documentation.
 
-### Minimum Requirements
+**Minimum**: `<summary>` on all public types/members, `<param>` for parameters, `<returns>` for return values, `<exception>` for explicitly thrown exceptions.
 
-- `<summary>` on all public types and members
-- `<param>` for all method parameters
-- `<returns>` for methods with return values
-- `<exception>` for explicitly thrown exceptions
+Configuration properties MUST document their environment variable in the summary. Use `<inheritdoc/>` when the base interface documentation is sufficient; don't use it when the implementation has important differences.
 
-### Configuration Properties
+Generated files get XML docs from OpenAPI schema `description` fields (NSwag converts to `<summary>`). Therefore **all schema properties MUST have `description` fields** - see T1.
 
-Configuration properties MUST document their environment variable:
+---
+
+## Tenet 22: Warning Suppression (FORBIDDEN)
+
+**Rule**: Warning suppressions (`#pragma warning disable`, `[SuppressMessage]`, `NoWarn`) are FORBIDDEN except for specific documented exceptions.
+
+**When warnings appear**: (1) understand what it's telling you, (2) fix the underlying issue, (3) ONLY suppress if it's from generated code you cannot control AND is in the allowed exceptions.
+
+If generated code has fixable issues, add post-processing to generation scripts rather than suppressing.
+
+### Allowed Exceptions
+
+**Moq Generic Inference (Tests Only)**:
+- CS8620, CS8619 - Unavoidable nullability mismatches from Moq generics. Suppress per-file or in test `Directory.Build.props` only.
+
+**NSwag Generated Files Only**:
+- CS8618, CS8625 - NSwag's `= default!` pattern. Configure in `.editorconfig` for `**/Generated/*.cs` paths only.
+
+**Enum Member Documentation (Generated Code Only)**:
+- CS1591 for enum members auto-suppressed via post-processing in generation scripts. NOT manual suppression. All other CS1591 warnings MUST be fixed by adding `description` fields to schemas.
+
+**Intentional Obsolete Testing**:
+- CS0618 - Testing obsolete API detection. Scoped `#pragma warning disable/restore` only.
+
+**Ownership Transfer Pattern (CA2000)**:
+- When passing a disposable to a constructor/method that takes ownership, use try-finally with null assignment instead of suppressing CA2000:
 
 ```csharp
-/// <summary>
-/// JWT signing secret for token generation and validation.
-/// Environment variable: AUTH_JWT_SECRET
-/// </summary>
-public string JwtSecret { get; set; } = "default-dev-secret";
+SocketsHttpHandler? handler = null;
+try
+{
+    handler = new SocketsHttpHandler { ... };
+    _httpClient = new HttpMessageInvoker(handler);
+    handler = null; // Ownership transferred - prevents dispose in finally
+}
+finally
+{
+    handler?.Dispose(); // Only executes if transfer failed
+}
 ```
 
-### When to Use `<inheritdoc/>`
+For `IAsyncDisposable`, same pattern with `await` in finally. `#pragma warning disable CA2000` is NOT allowed.
 
-Use when implementing an interface where the base documentation is sufficient. Do NOT use when the implementation has important differences.
+**Legacy Binding Redirect Warnings**:
+- CS1701, CS1702 - .NET Framework assumptions that don't apply to .NET Core/.NET 5+. Suppress via `<NoWarn>` in project files.
 
-### Generated Code
-
-Generated files in `*/Generated/` directories get their XML documentation from OpenAPI schema `description` fields. NSwag automatically converts schema descriptions to `<summary>` tags. Therefore, **all schema properties MUST have `description` fields** - see T1 (Schema-First Development).
+**Reflection-Based Test Fixtures**:
+- CA1822, IDE0051, IDE0052 - Members accessed via reflection that analyzers can't track. Inline `#pragma warning disable/restore` with comment explaining reflection access. Assembly-level suppressions NOT allowed.
 
 ---
 
@@ -277,120 +196,6 @@ Generated files in `*/Generated/` directories get their XML documentation from O
 | `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
 | Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
 | Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
-
----
-
-## Tenet 22: Warning Suppression (FORBIDDEN)
-
-**Rule**: Warning suppressions (`#pragma warning disable`, `[SuppressMessage]`, `NoWarn`) are FORBIDDEN except for specific documented exceptions.
-
-### The Problem
-
-Suppressing warnings hides real issues until they manifest as runtime bugs. The `session.connected` deserialization failure was caused by CS0108 (member hiding) being suppressed - the warning would have caught the bug at compile time.
-
-### Forbidden Patterns
-
-**NEVER**:
-- Add blanket suppressions to hide warnings instead of fixing them
-- Suppress nullability warnings (CS8602, CS8603, CS8604) in non-generated code
-- Suppress member hiding warnings (CS0108, CS0114) without proper `override` or `new`
-- Create GlobalSuppressions.cs files with assembly-wide suppressions for convenience
-- Add warnings to `NoWarn` in Directory.Build.props to "make builds cleaner"
-
-### Allowed Exceptions
-
-**Moq Generic Inference (Tests Only)**:
-- CS8620, CS8619 - Moq's generic type inference causes unavoidable nullability mismatches
-- Suppress per-file or in test Directory.Build.props only
-
-**NSwag Generated Files Only**:
-- CS8618, CS8625 - NSwag uses `= default!` pattern we can't control
-- Configure in `.editorconfig` for `**/Generated/*.cs` paths only
-
-**Enum Member Documentation (Generated Code Only)**:
-- CS1591 warnings for enum members are automatically suppressed via post-processing in generation scripts
-- The pragma `#pragma warning disable CS1591` wraps each enum declaration with matching restore
-- This is NOT manual suppression - it's scripted as part of the generation pipeline
-- **Important**: This exception applies ONLY to enum members. All other CS1591 warnings (from schema properties, classes, methods, etc.) MUST be fixed by adding `description` fields to the OpenAPI schema - see T1
-
-**Intentional Obsolete Testing**:
-- CS0618 - When testing obsolete API detection, must use obsolete members
-- Suppress with scoped `#pragma warning disable/restore`
-
-**Ownership Transfer Pattern (CA2000)**:
-- CA2000 - When passing a disposable to a constructor/method that takes ownership
-- Use the **try-finally pattern with null assignment** to signal ownership transfer to the analyzer
-- Declare the nullable variable BEFORE the try block, dispose unconditionally in finally
-- Set the local variable to `null` immediately after ownership transfer to prevent double dispose
-- Example:
-  ```csharp
-  SocketsHttpHandler? handler = null;
-  try
-  {
-      handler = new SocketsHttpHandler { ... };
-      _httpClient = new HttpMessageInvoker(handler);
-      handler = null; // Ownership transferred - prevents dispose in finally
-  }
-  finally
-  {
-      handler?.Dispose(); // Only executes if transfer failed
-  }
-  ```
-- For IAsyncDisposable, use the same pattern with `await` in finally:
-  ```csharp
-  IAsyncDisposable? subscription = null;
-  try
-  {
-      subscription = await CreateSubscriptionAsync(...);
-      var owner = new OwnerClass(subscription);
-      subscription = null; // Ownership transferred
-      return owner;
-  }
-  finally
-  {
-      if (subscription != null)
-      {
-          await subscription.DisposeAsync();
-      }
-  }
-  ```
-- **NOT allowed**: `#pragma warning disable CA2000` - use try-finally pattern instead
-- **NOT allowed**: File-level, class-level, or project-level CA2000 suppression
-- **NOT allowed**: Suppressing CA2000 for actual leaks
-
-**Legacy Binding Redirect Warnings**:
-- CS1701, CS1702 - Assembly version binding redirect warnings
-- These warnings assume .NET Framework behavior that doesn't apply to .NET Core/.NET 5+
-- Suppress via `<NoWarn>1701;1702</NoWarn>` in project files (common pattern across .NET ecosystem)
-- See: [dotnet/roslyn#19640](https://github.com/dotnet/roslyn/issues/19640)
-
-**Reflection-Based Test Fixtures**:
-- CA1822, IDE0051, IDE0052 - When test helper classes/members are accessed via reflection
-- The analyzer cannot track reflection-based access
-- Suppress with **inline** `#pragma warning disable/restore` around the test fixture region only
-- Must include a comment explaining the reflection access pattern
-- Example:
-  ```csharp
-  // These test helper classes are accessed via reflection (IServiceAttribute.GetMethodsWithAttribute)
-  #pragma warning disable CA1822 // Mark members as static - testing instance member discovery
-  #pragma warning disable IDE0051 // Remove unused private members - accessed via reflection
-  #pragma warning disable IDE0052 // Remove unread private members - accessed via reflection
-  private class TestHelperClass { ... }
-  #pragma warning restore IDE0052
-  #pragma warning restore IDE0051
-  #pragma warning restore CA1822
-  ```
-- **NOT allowed**: Assembly-level suppressions in GlobalSuppressions.cs
-
-### When Warnings Appear
-
-1. **FIRST**: Understand what the warning is telling you
-2. **THEN**: Fix the underlying issue
-3. **ONLY IF**: The warning is from generated code you cannot control AND is in the allowed exceptions list, suppress it
-
-### Post-Processing Over Suppression
-
-If generated code has fixable issues, add post-processing to generation scripts rather than suppressing warnings. Example: adding `override` keyword to fix CS0108 in generated events.
 
 ---
 
