@@ -112,7 +112,6 @@ public partial class ConnectService : IConnectService, IDisposable
         _sessionManager = sessionManager;
         _manifestBuilder = manifestBuilder;
 
-        _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager(
             configuration.ConnectionShutdownTimeoutSeconds,
             configuration.ConnectionCleanupIntervalSeconds,
@@ -167,16 +166,21 @@ public partial class ConnectService : IConnectService, IDisposable
             _logger.LogInformation("Processing internal proxy request to {TargetService}/{Method} {Endpoint}",
                 body.TargetService, body.Method, body.TargetEndpoint);
 
-            // Validate session has access to this API via local capability mappings
-            // Session capabilities are pushed via SessionCapabilitiesEvent from Permission service
+            // Validate session has access to this API via connection state capability mappings
+            // Capabilities are pushed via SessionCapabilitiesEvent from Permission service
+            // and stored in ConnectionState.ServiceMappings (the active source of truth)
             // Key format: "serviceName:/path" (no HTTP method in key - all WebSocket endpoints are POST)
             var endpointKey = $"{body.TargetService}:{body.TargetEndpoint}";
-            var hasAccess = false;
+            var connection = _connectionManager.GetConnection(body.SessionId.ToString());
 
-            if (_sessionServiceMappings.TryGetValue(body.SessionId.ToString(), out var sessionMappings))
+            if (connection == null)
             {
-                hasAccess = sessionMappings.ContainsKey(endpointKey);
+                _logger.LogWarning("Session {SessionId} not found for internal proxy request to {Service}/{Method}",
+                    body.SessionId, body.TargetService, body.Method);
+                return (StatusCodes.NotFound, null);
             }
+
+            var hasAccess = connection.ConnectionState.ServiceMappings.ContainsKey(endpointKey);
 
             if (!hasAccess)
             {
@@ -659,26 +663,13 @@ public partial class ConnectService : IConnectService, IDisposable
 
         // EXTERNAL/RELAYED MODE: Full capability initialization
 
-        // Transfer service mappings from session discovery to connection state
-        // Try to get mappings from Redis first
-        var sessionMappings = await _sessionManager.GetSessionServiceMappingsAsync(sessionId);
-
-        if (sessionMappings == null && _sessionServiceMappings.TryGetValue(sessionId, out var fallbackMappings))
-        {
-            // Fallback to in-memory mappings (thread-safe copy)
-            sessionMappings = new Dictionary<string, Guid>(fallbackMappings);
-        }
-
-        // If no mappings exist, initialize capabilities from Permission service
-        if (sessionMappings == null || sessionMappings.Count == 0)
-        {
-            // Determine the highest-priority role for capability initialization
-            // Priority: admin > user > anonymous
-            var role = DetermineHighestPriorityRole(userRoles);
-            _logger.LogInformation("No existing mappings for session {SessionId}, initializing capabilities for role {Role} with {AuthCount} authorizations",
-                sessionId, role, authorizations?.Count ?? 0);
-            sessionMappings = await InitializeSessionCapabilitiesAsync(sessionId, role, authorizations, cancellationToken);
-        }
+        // Initialize capabilities from Permission service
+        // Service mappings are populated via SessionCapabilitiesEvent from Permission service
+        // and stored in ConnectionState.ServiceMappings (the active source of truth)
+        var role = DetermineHighestPriorityRole(userRoles);
+        _logger.LogInformation("Initializing capabilities for session {SessionId}, role {Role} with {AuthCount} authorizations",
+            sessionId, role, authorizations?.Count ?? 0);
+        var sessionMappings = await InitializeSessionCapabilitiesAsync(sessionId, role, authorizations, cancellationToken);
 
         if (sessionMappings != null)
         {

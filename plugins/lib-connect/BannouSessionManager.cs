@@ -21,7 +21,6 @@ public class BannouSessionManager : ISessionManager
     // Key prefixes - MUST be unique across all services to avoid key collisions
     // (mesh prefixes keys with app-id, not component name, so all components share key namespace)
     private const string SESSION_KEY_PREFIX = "ws-session:";
-    private const string SESSION_MAPPINGS_KEY_PREFIX = "ws-mappings:";
     private const string SESSION_HEARTBEAT_KEY_PREFIX = "heartbeat:";
     private const string RECONNECTION_TOKEN_KEY_PREFIX = "reconnect:";
     private const string ACCOUNT_SESSIONS_KEY_PREFIX = "account-sessions:";
@@ -42,71 +41,6 @@ public class BannouSessionManager : ISessionManager
         _configuration = configuration;
         _logger = logger;
     }
-
-    #region Service Mappings
-
-    /// <inheritdoc />
-    public async Task SetSessionServiceMappingsAsync(
-        string sessionId,
-        Dictionary<string, Guid> serviceMappings,
-        TimeSpan? ttl = null)
-    {
-        try
-        {
-            var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(_configuration.SessionTtlSeconds);
-
-            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(StateStoreDefinitions.Connect);
-            await store.SaveAsync(key, serviceMappings, new StateOptions { Ttl = (int)ttlTimeSpan.TotalSeconds });
-
-            _logger.LogDebug("Stored service mappings for session {SessionId}", sessionId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to store session service mappings for {SessionId}", sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "connect",
-                "SetSessionServiceMappings",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "state",
-                stack: ex.StackTrace);
-            throw;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<Dictionary<string, Guid>?> GetSessionServiceMappingsAsync(string sessionId)
-    {
-        try
-        {
-            var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(StateStoreDefinitions.Connect);
-            var mappings = await store.GetAsync(key);
-
-            if (mappings == null)
-            {
-                return null;
-            }
-
-            _logger.LogDebug("Retrieved service mappings for session {SessionId}", sessionId);
-            return mappings;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve session service mappings for {SessionId}", sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "connect",
-                "GetSessionServiceMappings",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "state",
-                stack: ex.StackTrace);
-            throw; // Don't mask state store failures - null should mean "not found", not "error"
-        }
-    }
-
-    #endregion
 
     #region Connection State
 
@@ -417,18 +351,15 @@ public class BannouSessionManager : ISessionManager
         {
             // Remove all session-related keys in parallel
             var sessionKey = SESSION_KEY_PREFIX + sessionId;
-            var mappingsKey = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
             var heartbeatKey = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
 
             // Get stores for each type
             var connectionStore = _stateStoreFactory.GetStore<ConnectionStateData>(StateStoreDefinitions.Connect);
-            var mappingsStore = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(StateStoreDefinitions.Connect);
             var heartbeatStore = _stateStoreFactory.GetStore<SessionHeartbeat>(StateStoreDefinitions.Connect);
 
             var deleteTasks = new[]
             {
                 connectionStore.DeleteAsync(sessionKey),
-                mappingsStore.DeleteAsync(mappingsKey),
                 heartbeatStore.DeleteAsync(heartbeatKey)
             };
 

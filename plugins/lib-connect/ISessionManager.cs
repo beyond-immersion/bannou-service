@@ -6,24 +6,6 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </summary>
 public interface ISessionManager
 {
-    #region Service Mappings
-
-    /// <summary>
-    /// Stores session service mappings with TTL.
-    /// Maps service names to client-salted GUIDs for this session.
-    /// </summary>
-    Task SetSessionServiceMappingsAsync(
-        string sessionId,
-        Dictionary<string, Guid> serviceMappings,
-        TimeSpan? ttl = null);
-
-    /// <summary>
-    /// Retrieves session service mappings.
-    /// </summary>
-    Task<Dictionary<string, Guid>?> GetSessionServiceMappingsAsync(string sessionId);
-
-    #endregion
-
     #region Connection State
 
     /// <summary>

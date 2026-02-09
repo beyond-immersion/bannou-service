@@ -21,7 +21,6 @@ public class BannouSessionManagerTests
     private readonly BannouSessionManager _sessionManager;
 
     // Mock stores for different data types
-    private readonly Mock<IStateStore<Dictionary<string, Guid>>> _mockMappingsStore;
     private readonly Mock<IStateStore<ConnectionStateData>> _mockConnectionStore;
     private readonly Mock<IStateStore<SessionHeartbeat>> _mockHeartbeatStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
@@ -34,15 +33,11 @@ public class BannouSessionManagerTests
         _configuration = new ConnectServiceConfiguration();
 
         // Set up type-specific stores
-        _mockMappingsStore = new Mock<IStateStore<Dictionary<string, Guid>>>();
         _mockConnectionStore = new Mock<IStateStore<ConnectionStateData>>();
         _mockHeartbeatStore = new Mock<IStateStore<SessionHeartbeat>>();
         _mockStringStore = new Mock<IStateStore<string>>();
 
         // Default store behaviors
-        _mockMappingsStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
         _mockConnectionStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ConnectionStateData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
@@ -53,16 +48,11 @@ public class BannouSessionManagerTests
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockMappingsStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _mockConnectionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _mockHeartbeatStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Configure state store factory to return appropriate stores
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<Dictionary<string, Guid>>(It.IsAny<string>()))
-            .Returns(_mockMappingsStore.Object);
-
         _mockStateStoreFactory
             .Setup(f => f.GetStore<ConnectionStateData>(It.IsAny<string>()))
             .Returns(_mockConnectionStore.Object);
@@ -94,128 +84,6 @@ public class BannouSessionManagerTests
     {
         ServiceConstructorValidator.ValidateServiceConstructor<BannouSessionManager>();
         Assert.NotNull(_sessionManager);
-    }
-
-    #endregion
-
-    #region SetSessionServiceMappingsAsync Tests
-
-    [Fact]
-    public async Task SetSessionServiceMappingsAsync_WithValidParameters_ShouldSaveToStore()
-    {
-        // Arrange
-        var sessionId = Guid.NewGuid().ToString();
-        var mappings = new Dictionary<string, Guid>
-        {
-            { "account", Guid.NewGuid() },
-            { "auth", Guid.NewGuid() }
-        };
-
-        // Act
-        await _sessionManager.SetSessionServiceMappingsAsync(sessionId, mappings);
-
-        // Assert
-        _mockMappingsStore.Verify(s => s.SaveAsync(
-            It.Is<string>(k => k.Contains(sessionId)),
-            mappings,
-            It.IsAny<StateOptions?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task SetSessionServiceMappingsAsync_WithCustomTtl_ShouldUseProvidedTtl()
-    {
-        // Arrange
-        var sessionId = Guid.NewGuid().ToString();
-        var mappings = new Dictionary<string, Guid>();
-        var customTtl = TimeSpan.FromMinutes(30);
-
-        StateOptions? capturedOptions = null;
-        _mockMappingsStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, Dictionary<string, Guid>, StateOptions?, CancellationToken>((k, v, o, ct) => capturedOptions = o)
-            .ReturnsAsync("etag-1");
-
-        // Act
-        await _sessionManager.SetSessionServiceMappingsAsync(sessionId, mappings, customTtl);
-
-        // Assert
-        Assert.NotNull(capturedOptions);
-        Assert.Equal((int)customTtl.TotalSeconds, capturedOptions.Ttl);
-    }
-
-    [Fact]
-    public async Task SetSessionServiceMappingsAsync_WhenStoreThrows_ShouldPropagateException()
-    {
-        // Arrange
-        var sessionId = Guid.NewGuid().ToString();
-        var mappings = new Dictionary<string, Guid>();
-
-        _mockMappingsStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Store error"));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sessionManager.SetSessionServiceMappingsAsync(sessionId, mappings));
-    }
-
-    #endregion
-
-    #region GetSessionServiceMappingsAsync Tests
-
-    [Fact]
-    public async Task GetSessionServiceMappingsAsync_WithExistingSession_ShouldReturnMappings()
-    {
-        // Arrange
-        var sessionId = Guid.NewGuid().ToString();
-        var expectedMappings = new Dictionary<string, Guid>
-        {
-            { "account", Guid.NewGuid() }
-        };
-
-        _mockMappingsStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(sessionId)), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedMappings);
-
-        // Act
-        var result = await _sessionManager.GetSessionServiceMappingsAsync(sessionId);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(expectedMappings, result);
-    }
-
-    [Fact]
-    public async Task GetSessionServiceMappingsAsync_WithNonExistingSession_ShouldReturnNull()
-    {
-        // Arrange
-        var sessionId = Guid.NewGuid().ToString();
-
-        _mockMappingsStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Dictionary<string, Guid>?)null);
-
-        // Act
-        var result = await _sessionManager.GetSessionServiceMappingsAsync(sessionId);
-
-        // Assert
-        Assert.Null(result);
-    }
-
-    [Fact]
-    public async Task GetSessionServiceMappingsAsync_WhenStoreThrows_ShouldPropagateException()
-    {
-        // Arrange
-        var sessionId = Guid.NewGuid().ToString();
-
-        _mockMappingsStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Store error"));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sessionManager.GetSessionServiceMappingsAsync(sessionId));
     }
 
     #endregion
