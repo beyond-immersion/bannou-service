@@ -248,6 +248,7 @@ Unlock License Flow (under distributed lock)
 ## Stubs & Unimplemented Features
 
 - **`license-board.updated` event**: Declared in `license-events.yaml` as a lifecycle event with `LicenseBoardUpdatedEvent` model generated, but never published anywhere in the service code. No board update endpoint exists either -- boards are immutable after creation (only licenses within them change).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/355 -->
 
 ---
 
@@ -291,6 +292,7 @@ No known bugs at this time.
 - **No rollback on partial unlock failure**: The unlock flow performs multiple external calls sequentially (contract creation, contract propose/consent/complete, item creation, cache update). If item creation fails after the contract has been completed, the contract is orphaned in a completed state with no corresponding item. Similarly, if cache update fails after item creation, the item exists but the cache doesn't reflect it (mitigated by cache rebuild on next access). A compensation/saga pattern would be needed for full transactional guarantees.
 
 - **`license-board.updated` event declared but never published**: The events schema declares a `license-board.updated` lifecycle event and the `LicenseBoardUpdatedEvent` model is generated, but no code path publishes it. Decision needed: should unlock operations publish board-updated events (since unlocking changes board state), or should this event be removed from the schema?
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/355 -->
 
 ---
 
