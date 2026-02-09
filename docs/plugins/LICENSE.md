@@ -72,7 +72,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `board:{boardId}` | Distributed lock | Board-level mutex for unlock and delete operations |
-| `tpl:{boardTemplateId}` | Distributed lock | Template-level mutex for template and definition mutations |
+| `tpl:{boardTemplateId}` | Distributed lock | Template-level mutex for template updates/deletes and all definition mutations (add, update, remove, seed) |
 
 ---
 
@@ -142,7 +142,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 ### Board Template Management (6 endpoints, developer role)
 
-Standard CRUD on board templates with `CreateBoardTemplateAsync` validating game service existence and defaulting adjacency mode from config. `UpdateBoardTemplateAsync` acquires a template-level distributed lock before mutation and publishes a lifecycle event. `DeleteBoardTemplateAsync` also acquires a template lock, checks for active board instances, and performs a hard delete.
+Standard CRUD on board templates with `CreateBoardTemplateAsync` validating game service existence, contract template existence, starting nodes within grid bounds, and defaulting adjacency mode from config. `UpdateBoardTemplateAsync` acquires a template-level distributed lock before mutation and publishes a lifecycle event. `DeleteBoardTemplateAsync` also acquires a template lock, checks for active board instances, and performs a hard delete.
 
 `ListBoardTemplatesAsync` supports paginated listing filtered by `GameServiceId` using `QueryAsync` with configurable page size.
 
@@ -150,11 +150,11 @@ Standard CRUD on board templates with `CreateBoardTemplateAsync` validating game
 
 ### License Definition Management (5 endpoints, developer role)
 
-Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLicenseDefinitionAsync` validates: template exists, definition code is unique within template, position is within grid bounds, and total definitions don't exceed `MaxDefinitionsPerBoard`. Uses a template-level lock.
+Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLicenseDefinitionAsync` acquires a template-level lock, then validates: template exists, definition code is unique within template, position is unique within template, position is within grid bounds, item template exists, and total definitions don't exceed `MaxDefinitionsPerBoard`.
 
-`UpdateLicenseDefinitionAsync` acquires a template lock before updating. Position changes are allowed.
+`UpdateLicenseDefinitionAsync` acquires a template lock before updating. Mutable fields: `LpCost`, `Prerequisites`, `Description`, `Metadata`. Position is immutable after creation.
 
-`RemoveLicenseDefinitionAsync` checks all board instances for the template and uses `LoadOrRebuildBoardCacheAsync` to verify no boards have the definition unlocked before allowing removal. On cache miss (TTL expiry), the cache is rebuilt from inventory (authoritative source) before checking.
+`RemoveLicenseDefinitionAsync` acquires a template lock, then checks all board instances for the template and uses `LoadOrRebuildBoardCacheAsync` to verify no boards have the definition unlocked before allowing removal. On cache miss (TTL expiry), the cache is rebuilt from inventory (authoritative source) before checking.
 
 ### Board Instance Management (4 endpoints, mixed roles)
 
@@ -262,13 +262,23 @@ Unlock License Flow (under distributed lock)
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+No known bugs at this time.
+
+~~**`AddLicenseDefinitionAsync` missing distributed lock**~~ FIXED: Template-level lock now acquired, matching `UpdateLicenseDefinitionAsync` and `SeedBoardTemplateAsync` patterns.
+
+~~**`RemoveLicenseDefinitionAsync` missing distributed lock**~~ FIXED: Template-level lock now acquired before cache checks and definition deletion.
+
+~~**`SeedBoardTemplateAsync` skips item template validation**~~ FIXED: Each definition's `ItemTemplateId` is now validated via `_itemClient.GetItemTemplateAsync`. Invalid item templates are skipped (consistent with the seed method's skip-on-invalid pattern for bounds and duplicates).
+
 ### Intentional Quirks (Documented Behavior)
 
 - **Board cache is non-authoritative**: The Redis cache is a read-through cache with TTL. Inventory is the authoritative source of truth. On cache miss, `LoadOrRebuildBoardCacheAsync` rebuilds from inventory container contents by matching item template IDs to definitions. The `UnlockedAt` timestamp is approximated as `board.CreatedAt` during rebuild since actual unlock times are not stored in inventory.
 
 - **Cache rebuild matching is first-match**: When multiple definitions share the same `ItemTemplateId`, the cache rebuild uses `FirstOrDefault` against unmatched definitions. This means if two definitions use the same item template and both are unlocked, the rebuild assigns them in definition-iteration order, which may not match the original unlock order. This only affects display metadata (timestamps), not correctness.
 
-- **CheckUnlockable LP check is advisory**: The LP balance check sums ALL wallet balances across all currencies as an approximation. The actual LP deduction is handled by the contract template's prebound API execution (which knows the specific currency). The advisory check can give false positives (sufficient total balance but wrong currency) or false negatives (sufficient in one currency but low total).
+- **CheckUnlockable LP check is advisory**: The LP balance check sums all wallet balances as an approximation. The actual LP deduction is handled by the contract template's prebound API execution (which knows the specific currency). The advisory check can give false positives (sufficient total balance but wrong currency) or false negatives (sufficient in one currency but low total). On currency service failure, `LpSufficient` defaults to `false` (conservative) rather than `null`, which may mislead callers into thinking the character definitely lacks LP.
 
 - **Contract flow is synchronous and auto-consented**: The unlock flow creates a contract instance, auto-proposes it, auto-consents both parties, and completes the milestone in a single synchronous sequence. This is intentional -- the contract is used for its prebound API execution (LP deduction, etc.), not for multi-party negotiation. The "licensor" party is the game service entity ID.
 

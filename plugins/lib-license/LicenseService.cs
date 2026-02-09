@@ -623,6 +623,20 @@ public partial class LicenseService : ILicenseService
             _logger.LogInformation("Adding license definition {Code} to board template {BoardTemplateId}",
                 body.Code, body.BoardTemplateId);
 
+            // Acquire template lock for multi-instance safety (IMPLEMENTATION TENETS)
+            await using var lockHandle = await _lockProvider.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                BuildTemplateLockKey(body.BoardTemplateId),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for board template {BoardTemplateId}", body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Validate board template exists
             var template = await BoardTemplateStore.GetAsync(
                 BuildTemplateKey(body.BoardTemplateId),
@@ -847,6 +861,20 @@ public partial class LicenseService : ILicenseService
     {
         try
         {
+            // Acquire template lock for multi-instance safety (IMPLEMENTATION TENETS)
+            await using var lockHandle = await _lockProvider.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                BuildTemplateLockKey(body.BoardTemplateId),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for board template {BoardTemplateId}", body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var definition = await DefinitionStore.GetAsync(
                 BuildDefinitionKey(body.BoardTemplateId, body.Code),
                 cancellationToken);
@@ -1857,6 +1885,21 @@ public partial class LicenseService : ILicenseService
                     _logger.LogWarning(
                         "Seed: duplicate position ({X}, {Y}) for definition {Code} on board template {BoardTemplateId}",
                         defRequest.Position.X, defRequest.Position.Y, defRequest.Code, body.BoardTemplateId);
+                    skipped.Add(defRequest.Code);
+                    continue;
+                }
+
+                // Validate item template exists
+                try
+                {
+                    await _itemClient.GetItemTemplateAsync(
+                        new GetItemTemplateRequest { TemplateId = defRequest.ItemTemplateId },
+                        cancellationToken);
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    _logger.LogWarning("Seed: item template {ItemTemplateId} not found for definition {Code}",
+                        defRequest.ItemTemplateId, defRequest.Code);
                     skipped.Add(defRequest.Code);
                     continue;
                 }

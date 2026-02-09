@@ -146,6 +146,7 @@ These services provide the core game infrastructure - worlds, characters, specie
 | **game-session** | Active game session management |
 | **actor** | NPC brains, behavior execution runtime |
 | **quest** | Objective-based progression system |
+| **seed** | Generic progressive growth primitives |
 
 **Rules**:
 - May depend on Layer 0, Layer 1, and other L2 services
@@ -212,6 +213,8 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 | **character-history** | Historical events, backstory |
 | **character-encounter** | Memorable interactions tracking |
 | **realm-history** | Realm historical events, lore |
+| **license** | Grid-based progression boards via itemized contracts |
+| **storyline** | Seeded narrative generation from compressed archives |
 
 **Analytics Note**: Analytics is classified as L4 not because it *depends* on game services, but because it *observes* them via event subscriptions. It subscribes to events from L2 services (game-session) and L4 services (character-history, realm-history) for aggregation. Unlike typical L4 services:
 - Analytics does NOT invoke L2/L4 service APIs (it only consumes events)
@@ -864,9 +867,9 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 |-------|----------|
 | **L0** | state, messaging, mesh (required); telemetry (optional)† |
 | **L1** | account, auth, connect, permission, contract, resource |
-| **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest |
+| **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest, seed |
 | **L3** | asset, orchestrator, documentation, website |
-| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
+| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history, license, storyline |
 | **L5** | (reserved for third-party plugins and internal meta-services) |
 
 † Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.

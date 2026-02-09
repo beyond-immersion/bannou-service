@@ -1747,6 +1747,154 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
     #endregion
 
+    #region Lock Behavior Tests
+
+    [Fact]
+    public async Task AddLicenseDefinition_LockFailure_ReturnsConflict()
+    {
+        // Arrange - lock acquisition fails
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        failedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                $"tpl:{TestBoardTemplateId}",
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var service = CreateService();
+        var request = new AddLicenseDefinitionRequest
+        {
+            BoardTemplateId = TestBoardTemplateId,
+            Code = "test_skill",
+            Position = new GridPosition { X = 1, Y = 1 },
+            LpCost = 10,
+            ItemTemplateId = TestItemTemplateId
+        };
+
+        // Act
+        var (status, response) = await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify no save was attempted
+        _mockDefinitionStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<LicenseDefinitionModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task AddLicenseDefinition_AcquiresTemplateLock()
+    {
+        // Arrange
+        var template = CreateTestTemplate();
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{TestBoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemTemplateResponse { TemplateId = TestItemTemplateId });
+
+        var service = CreateService();
+        var request = new AddLicenseDefinitionRequest
+        {
+            BoardTemplateId = TestBoardTemplateId,
+            Code = "test_skill",
+            Position = new GridPosition { X = 1, Y = 1 },
+            LpCost = 10,
+            ItemTemplateId = TestItemTemplateId
+        };
+
+        // Act
+        await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+
+        // Assert - verify lock was acquired on the correct key
+        _mockLockProvider.Verify(
+            l => l.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                $"tpl:{TestBoardTemplateId}",
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveLicenseDefinition_LockFailure_ReturnsConflict()
+    {
+        // Arrange - lock acquisition fails
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        failedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                $"tpl:{TestBoardTemplateId}",
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.RemoveLicenseDefinitionAsync(
+            new RemoveLicenseDefinitionRequest
+            {
+                BoardTemplateId = TestBoardTemplateId,
+                Code = "test_skill"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify no delete was attempted
+        _mockDefinitionStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task RemoveLicenseDefinition_AcquiresTemplateLock()
+    {
+        // Arrange
+        var definition = CreateTestDefinition(code: "removable_skill", positionX: 1, positionY: 1);
+        _mockDefinitionStore
+            .Setup(s => s.GetAsync($"lic-def:{TestBoardTemplateId}:removable_skill", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(definition);
+
+        var service = CreateService();
+
+        // Act
+        await service.RemoveLicenseDefinitionAsync(
+            new RemoveLicenseDefinitionRequest
+            {
+                BoardTemplateId = TestBoardTemplateId,
+                Code = "removable_skill"
+            },
+            CancellationToken.None);
+
+        // Assert - verify lock was acquired on the correct key
+        _mockLockProvider.Verify(
+            l => l.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                $"tpl:{TestBoardTemplateId}",
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
     #region Seed Tests
 
     [Fact]
@@ -1842,6 +1990,62 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         Assert.NotNull(advancedDef.Prerequisites);
         Assert.Single(advancedDef.Prerequisites);
         Assert.Equal("basic_fire", advancedDef.Prerequisites[0]);
+    }
+
+    [Fact]
+    public async Task SeedBoardTemplate_InvalidItemTemplate_SkipsDefinition()
+    {
+        // Arrange
+        var template = CreateTestTemplate(gridWidth: 5, gridHeight: 5);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{TestBoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var validItemTemplateId = Guid.NewGuid();
+        var invalidItemTemplateId = Guid.NewGuid();
+
+        // Valid item template returns successfully
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(
+                It.Is<GetItemTemplateRequest>(r => r.TemplateId == validItemTemplateId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemTemplateResponse { TemplateId = validItemTemplateId });
+
+        // Invalid item template throws 404
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(
+                It.Is<GetItemTemplateRequest>(r => r.TemplateId == invalidItemTemplateId),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        var savedDefinitions = new List<LicenseDefinitionModel>();
+        _mockDefinitionStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<LicenseDefinitionModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, LicenseDefinitionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedDefinitions.Add(m))
+            .ReturnsAsync("etag");
+
+        var service = CreateService();
+        var request = new SeedBoardTemplateRequest
+        {
+            BoardTemplateId = TestBoardTemplateId,
+            Definitions = new List<AddLicenseDefinitionRequest>
+            {
+                new AddLicenseDefinitionRequest { Code = "valid_skill", Position = new GridPosition { X = 0, Y = 0 }, LpCost = 5, ItemTemplateId = validItemTemplateId },
+                new AddLicenseDefinitionRequest { Code = "invalid_skill", Position = new GridPosition { X = 1, Y = 0 }, LpCost = 10, ItemTemplateId = invalidItemTemplateId },
+                new AddLicenseDefinitionRequest { Code = "another_valid", Position = new GridPosition { X = 2, Y = 0 }, LpCost = 15, ItemTemplateId = validItemTemplateId }
+            }
+        };
+
+        // Act
+        var (status, response) = await service.SeedBoardTemplateAsync(request, CancellationToken.None);
+
+        // Assert - invalid_skill should be skipped, others created
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.DefinitionsCreated);
+        Assert.Equal(2, savedDefinitions.Count);
+        Assert.Equal("valid_skill", savedDefinitions[0].Code);
+        Assert.Equal("another_valid", savedDefinitions[1].Code);
     }
 
     #endregion
