@@ -90,6 +90,8 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Configuration.CapabilityRecomputeDebounceMs = 5000;
         Configuration.GrowthDecayEnabled = false;
         Configuration.GrowthDecayRatePerDay = 0.01;
+        Configuration.BondStrengthGrowthRate = 0.1;
+        Configuration.DefaultQueryPageSize = 100;
     }
 
     private SeedService CreateService() => new SeedService(

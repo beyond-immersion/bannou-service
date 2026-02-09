@@ -46,3 +46,14 @@ x-service-configuration:
       env: SEED_DEFAULT_MAX_SEEDS_PER_OWNER
       default: 3
       description: Default maximum seeds of any single type per owner when not specified in type definition
+    bondStrengthGrowthRate:
+      type: number
+      format: float
+      env: SEED_BOND_STRENGTH_GROWTH_RATE
+      default: 0.1
+      description: Rate at which bond strength increases per unit of shared growth recorded
+    defaultQueryPageSize:
+      type: integer
+      env: SEED_DEFAULT_QUERY_PAGE_SIZE
+      default: 100
+      description: Default page size for queries that do not expose pagination parameters

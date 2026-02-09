@@ -21,7 +21,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | lib-state (`IDistributedLockProvider`) | Distributed locks for growth recording, seed activation, and seed updates |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle and growth events; error event publication |
 | lib-messaging (`IEventConsumer`) | Consuming `seed.growth.contributed` events from external services |
-| lib-game-service (`IGameServiceClient`) | Injected but **not currently called** -- see Known Quirks |
+| lib-game-service (`IGameServiceClient`) | Validates game service existence during seed creation and type registration (L2 hard dependency) |
 
 ---
 

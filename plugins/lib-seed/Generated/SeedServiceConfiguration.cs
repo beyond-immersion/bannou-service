@@ -89,4 +89,16 @@ public class SeedServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int DefaultMaxSeedsPerOwner { get; set; } = 3;
 
+    /// <summary>
+    /// Rate at which bond strength increases per unit of shared growth recorded
+    /// Environment variable: SEED_BOND_STRENGTH_GROWTH_RATE
+    /// </summary>
+    public double BondStrengthGrowthRate { get; set; } = 0.1;
+
+    /// <summary>
+    /// Default page size for queries that do not expose pagination parameters
+    /// Environment variable: SEED_DEFAULT_QUERY_PAGE_SIZE
+    /// </summary>
+    public int DefaultQueryPageSize { get; set; } = 100;
+
 }

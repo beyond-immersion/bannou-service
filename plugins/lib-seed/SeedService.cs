@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -64,6 +65,18 @@ public partial class SeedService : ISeedService
 
         try
         {
+            // Validate game service exists (L2 hard dependency)
+            try
+            {
+                await _gameServiceClient.GetServiceAsync(
+                    new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
+                return (StatusCodes.NotFound, null);
+            }
+
             var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
             var typeKey = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
             var seedType = await typeStore.GetAsync(typeKey, cancellationToken);
@@ -82,7 +95,7 @@ public partial class SeedService : ISeedService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Check per-owner limit
+            // Check per-owner limit (archived seeds excluded per schema contract)
             var maxPerOwner = seedType.MaxPerOwner > 0 ? seedType.MaxPerOwner : _configuration.DefaultMaxSeedsPerOwner;
             var seedStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
             var ownerConditions = new List<QueryCondition>
@@ -91,6 +104,7 @@ public partial class SeedService : ISeedService
                 new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType },
                 new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode },
                 new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.ToString() },
+                new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() },
                 new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
             };
             var existing = await seedStore.JsonQueryPagedAsync(ownerConditions, 0, 1, null, cancellationToken);
@@ -102,9 +116,9 @@ public partial class SeedService : ISeedService
                 return (StatusCodes.Conflict, null);
             }
 
-            // Determine initial phase (first phase in the type definition)
+            // Determine initial phase (lowest MinTotalGrowth threshold)
             var initialPhase = seedType.GrowthPhases.Count > 0
-                ? seedType.GrowthPhases[0].PhaseCode
+                ? ComputePhaseInfo(seedType.GrowthPhases, 0f).Current.PhaseCode
                 : "initial";
 
             var seed = new SeedModel
@@ -212,7 +226,7 @@ public partial class SeedService : ISeedService
                 conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() });
             }
 
-            var result = await store.JsonQueryPagedAsync(conditions, 0, 100, null, cancellationToken);
+            var result = await store.JsonQueryPagedAsync(conditions, 0, _configuration.DefaultQueryPageSize, null, cancellationToken);
             var seeds = result.Items.Select(r => MapToResponse(r.Value)).ToList();
 
             return (StatusCodes.OK, new ListSeedsResponse
@@ -682,6 +696,18 @@ public partial class SeedService : ISeedService
 
         try
         {
+            // Validate game service exists (L2 hard dependency)
+            try
+            {
+                await _gameServiceClient.GetServiceAsync(
+                    new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
+                return (StatusCodes.NotFound, null);
+            }
+
             var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
             var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
 
@@ -778,7 +804,7 @@ public partial class SeedService : ISeedService
                 new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Exists, Value = true }
             };
 
-            var result = await store.JsonQueryPagedAsync(conditions, 0, 100, null, cancellationToken);
+            var result = await store.JsonQueryPagedAsync(conditions, 0, _configuration.DefaultQueryPageSize, null, cancellationToken);
             var types = result.Items.Select(r => MapTypeToResponse(r.Value)).ToList();
 
             return (StatusCodes.OK, new ListSeedTypesResponse { SeedTypes = types });
@@ -794,12 +820,23 @@ public partial class SeedService : ISeedService
     }
 
     /// <summary>
-    /// Updates an existing seed type definition.
+    /// Updates an existing seed type definition. Changes to phase thresholds or capability
+    /// rules trigger recomputation for all seeds of this type.
     /// </summary>
     public async Task<(StatusCodes, SeedTypeResponse?)> UpdateSeedTypeAsync(UpdateSeedTypeRequest body, CancellationToken cancellationToken)
     {
         try
         {
+            var lockOwner = $"update-type-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
+                lockOwner, 30, cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
             var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
             var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
             var seedType = await store.GetAsync(key, cancellationToken);
@@ -808,6 +845,9 @@ public partial class SeedService : ISeedService
             {
                 return (StatusCodes.NotFound, null);
             }
+
+            var phasesChanged = body.GrowthPhases != null;
+            var capabilityRulesChanged = body.CapabilityRules != null;
 
             if (body.DisplayName != null)
                 seedType.DisplayName = body.DisplayName;
@@ -821,6 +861,12 @@ public partial class SeedService : ISeedService
                 seedType.CapabilityRules = body.CapabilityRules.ToList();
 
             await store.SaveAsync(key, seedType, cancellationToken: cancellationToken);
+
+            // Recompute affected seeds when phase thresholds or capability rules change
+            if (phasesChanged || capabilityRulesChanged)
+            {
+                await RecomputeSeedsForTypeAsync(seedType, phasesChanged, cancellationToken);
+            }
 
             return (StatusCodes.OK, MapTypeToResponse(seedType));
         }
@@ -848,6 +894,24 @@ public partial class SeedService : ISeedService
 
         try
         {
+            // Lock both seeds in deterministic order to prevent deadlocks and race conditions
+            var orderedIds = new[] { body.InitiatorSeedId, body.TargetSeedId }.OrderBy(id => id).ToArray();
+            var lockOwner = $"bond-{Guid.NewGuid():N}";
+
+            await using var lockFirst = await _lockProvider.LockAsync(
+                StateStoreDefinitions.SeedLock, orderedIds[0].ToString(), lockOwner, 10, cancellationToken);
+            if (!lockFirst.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            await using var lockSecond = await _lockProvider.LockAsync(
+                StateStoreDefinitions.SeedLock, orderedIds[1].ToString(), lockOwner, 10, cancellationToken);
+            if (!lockSecond.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
             var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
             var initiator = await seedStore.GetAsync($"seed:{body.InitiatorSeedId}", cancellationToken);
             var target = await seedStore.GetAsync($"seed:{body.TargetSeedId}", cancellationToken);
@@ -1172,7 +1236,7 @@ public partial class SeedService : ISeedService
             {
                 var totalAmount = entries.Sum(e => e.Amount);
                 bond.SharedGrowth += totalAmount;
-                bond.BondStrength += totalAmount * 0.1f;
+                bond.BondStrength += totalAmount * (float)_configuration.BondStrengthGrowthRate;
                 await bondStore.SaveAsync($"bond:{bond.BondId}", bond, cancellationToken: cancellationToken);
             }
         }
@@ -1244,6 +1308,61 @@ public partial class SeedService : ISeedService
             TotalGrowth = newTotalGrowth,
             Domains = new Dictionary<string, float>(growth.Domains)
         });
+    }
+
+    /// <summary>
+    /// Recomputes phase assignments and capability caches for all seeds of a given type
+    /// after a type definition update.
+    /// </summary>
+    private async Task RecomputeSeedsForTypeAsync(
+        SeedTypeDefinitionModel seedType, bool phasesChanged, CancellationToken cancellationToken)
+    {
+        var queryStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
+        var conditions = new List<QueryCondition>
+        {
+            new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = seedType.GameServiceId.ToString() },
+            new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = seedType.SeedTypeCode },
+            new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
+        };
+
+        var result = await queryStore.JsonQueryPagedAsync(conditions, 0, _configuration.DefaultQueryPageSize, null, cancellationToken);
+        var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var cacheStore = _stateStoreFactory.GetStore<CapabilityManifestModel>(StateStoreDefinitions.SeedCapabilitiesCache);
+
+        foreach (var item in result.Items)
+        {
+            var seed = item.Value;
+
+            // Re-evaluate phase if thresholds changed
+            if (phasesChanged)
+            {
+                var previousPhase = seed.GrowthPhase;
+                var (currentPhase, _) = ComputePhaseInfo(seedType.GrowthPhases, seed.TotalGrowth);
+                seed.GrowthPhase = currentPhase.PhaseCode;
+
+                if (previousPhase != seed.GrowthPhase)
+                {
+                    await seedStore.SaveAsync($"seed:{seed.SeedId}", seed, cancellationToken: cancellationToken);
+
+                    await _messageBus.TryPublishAsync("seed.phase.changed", new SeedPhaseChangedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        SeedId = seed.SeedId,
+                        SeedTypeCode = seed.SeedTypeCode,
+                        PreviousPhase = previousPhase,
+                        NewPhase = seed.GrowthPhase,
+                        TotalGrowth = seed.TotalGrowth
+                    }, cancellationToken: cancellationToken);
+                }
+            }
+
+            // Invalidate capability cache so next read recomputes with new rules
+            await cacheStore.DeleteAsync($"cap:{seed.SeedId}", cancellationToken);
+        }
+
+        _logger.LogInformation("Recomputed {Count} seeds for type {SeedTypeCode} after type definition update",
+            result.Items.Count, seedType.SeedTypeCode);
     }
 
     /// <summary>
