@@ -87,11 +87,11 @@ public partial class SeedService : ISeedService
             var seedStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
             var ownerConditions = new List<QueryCondition>
             {
-                new("$.OwnerId", QueryOperator.Equal, body.OwnerId.ToString()),
-                new("$.OwnerType", QueryOperator.Equal, body.OwnerType),
-                new("$.SeedTypeCode", QueryOperator.Equal, body.SeedTypeCode),
-                new("$.GameServiceId", QueryOperator.Equal, body.GameServiceId.ToString()),
-                new("$.SeedId", QueryOperator.Exists, "true")
+                new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = body.OwnerId.ToString() },
+                new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType },
+                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode },
+                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.ToString() },
+                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
             };
             var existing = await seedStore.JsonQueryPagedAsync(ownerConditions, 0, 1, null, cancellationToken);
 
@@ -148,7 +148,7 @@ public partial class SeedService : ISeedService
                 BondId = seed.BondId
             }, cancellationToken: cancellationToken);
 
-            return (StatusCodes.Created, MapToResponse(seed));
+            return (StatusCodes.OK, MapToResponse(seed));
         }
         catch (Exception ex)
         {
@@ -197,23 +197,23 @@ public partial class SeedService : ISeedService
             var store = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
             var conditions = new List<QueryCondition>
             {
-                new("$.OwnerId", QueryOperator.Equal, body.OwnerId.ToString()),
-                new("$.OwnerType", QueryOperator.Equal, body.OwnerType),
-                new("$.SeedId", QueryOperator.Exists, "true")
+                new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = body.OwnerId.ToString() },
+                new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType },
+                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
             };
 
             if (!string.IsNullOrEmpty(body.SeedTypeCode))
             {
-                conditions.Add(new("$.SeedTypeCode", QueryOperator.Equal, body.SeedTypeCode));
+                conditions.Add(new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode });
             }
 
             if (!body.IncludeArchived)
             {
-                conditions.Add(new("$.Status", QueryOperator.NotEqual, SeedStatus.Archived.ToString()));
+                conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() });
             }
 
             var result = await store.JsonQueryPagedAsync(conditions, 0, 100, null, cancellationToken);
-            var seeds = result.Results.Select(r => MapToResponse(r.Value)).ToList();
+            var seeds = result.Items.Select(r => MapToResponse(r.Value)).ToList();
 
             return (StatusCodes.OK, new ListSeedsResponse
             {
@@ -241,23 +241,23 @@ public partial class SeedService : ISeedService
             var store = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
             var conditions = new List<QueryCondition>
             {
-                new("$.SeedId", QueryOperator.Exists, "true")
+                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
             };
 
             if (!string.IsNullOrEmpty(body.SeedTypeCode))
-                conditions.Add(new("$.SeedTypeCode", QueryOperator.Equal, body.SeedTypeCode));
+                conditions.Add(new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode });
             if (!string.IsNullOrEmpty(body.OwnerType))
-                conditions.Add(new("$.OwnerType", QueryOperator.Equal, body.OwnerType));
+                conditions.Add(new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType });
             if (body.GameServiceId.HasValue)
-                conditions.Add(new("$.GameServiceId", QueryOperator.Equal, body.GameServiceId.Value.ToString()));
+                conditions.Add(new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.Value.ToString() });
             if (!string.IsNullOrEmpty(body.GrowthPhase))
-                conditions.Add(new("$.GrowthPhase", QueryOperator.Equal, body.GrowthPhase));
+                conditions.Add(new QueryCondition { Path = "$.GrowthPhase", Operator = QueryOperator.Equals, Value = body.GrowthPhase });
             if (body.Status.HasValue)
-                conditions.Add(new("$.Status", QueryOperator.Equal, body.Status.Value.ToString()));
+                conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
 
             var offset = (body.Page - 1) * body.PageSize;
             var result = await store.JsonQueryPagedAsync(conditions, offset, body.PageSize, null, cancellationToken);
-            var seeds = result.Results.Select(r => MapToResponse(r.Value)).ToList();
+            var seeds = result.Items.Select(r => MapToResponse(r.Value)).ToList();
 
             return (StatusCodes.OK, new ListSeedsResponse
             {
@@ -387,16 +387,16 @@ public partial class SeedService : ISeedService
             var queryStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
             var conditions = new List<QueryCondition>
             {
-                new("$.OwnerId", QueryOperator.Equal, seed.OwnerId.ToString()),
-                new("$.OwnerType", QueryOperator.Equal, seed.OwnerType),
-                new("$.SeedTypeCode", QueryOperator.Equal, seed.SeedTypeCode),
-                new("$.GameServiceId", QueryOperator.Equal, seed.GameServiceId.ToString()),
-                new("$.Status", QueryOperator.Equal, SeedStatus.Active.ToString()),
-                new("$.SeedId", QueryOperator.Exists, "true")
+                new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = seed.OwnerId.ToString() },
+                new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = seed.OwnerType },
+                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = seed.SeedTypeCode },
+                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = seed.GameServiceId.ToString() },
+                new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = SeedStatus.Active.ToString() },
+                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
             };
             var activeSeeds = await queryStore.JsonQueryPagedAsync(conditions, 0, 10, null, cancellationToken);
 
-            foreach (var activeSeed in activeSeeds.Results)
+            foreach (var activeSeed in activeSeeds.Items)
             {
                 if (activeSeed.Value.SeedId != seed.SeedId)
                 {
@@ -678,8 +678,8 @@ public partial class SeedService : ISeedService
             var queryStore = _stateStoreFactory.GetJsonQueryableStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
             var conditions = new List<QueryCondition>
             {
-                new("$.GameServiceId", QueryOperator.Equal, body.GameServiceId.ToString()),
-                new("$.SeedTypeCode", QueryOperator.Exists, "true")
+                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.ToString() },
+                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Exists, Value = true }
             };
             var typeCount = await queryStore.JsonQueryPagedAsync(conditions, 0, 1, null, cancellationToken);
 
@@ -706,7 +706,7 @@ public partial class SeedService : ISeedService
 
             await store.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-            return (StatusCodes.Created, MapTypeToResponse(model));
+            return (StatusCodes.OK, MapTypeToResponse(model));
         }
         catch (Exception ex)
         {
@@ -755,12 +755,12 @@ public partial class SeedService : ISeedService
             var store = _stateStoreFactory.GetJsonQueryableStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
             var conditions = new List<QueryCondition>
             {
-                new("$.GameServiceId", QueryOperator.Equal, body.GameServiceId.ToString()),
-                new("$.SeedTypeCode", QueryOperator.Exists, "true")
+                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.ToString() },
+                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Exists, Value = true }
             };
 
             var result = await store.JsonQueryPagedAsync(conditions, 0, 100, null, cancellationToken);
-            var types = result.Results.Select(r => MapTypeToResponse(r.Value)).ToList();
+            var types = result.Items.Select(r => MapTypeToResponse(r.Value)).ToList();
 
             return (StatusCodes.OK, new ListSeedTypesResponse { SeedTypes = types });
         }
@@ -895,7 +895,7 @@ public partial class SeedService : ISeedService
             var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
             await bondStore.SaveAsync($"bond:{bond.BondId}", bond, cancellationToken: cancellationToken);
 
-            return (StatusCodes.Created, MapBondToResponse(bond));
+            return (StatusCodes.OK, MapBondToResponse(bond));
         }
         catch (Exception ex)
         {
