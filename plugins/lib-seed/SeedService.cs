@@ -218,7 +218,7 @@ public partial class SeedService : ISeedService
             return (StatusCodes.OK, new ListSeedsResponse
             {
                 Seeds = seeds,
-                TotalCount = result.TotalCount
+                TotalCount = (int)result.TotalCount
             });
         }
         catch (Exception ex)
@@ -262,7 +262,7 @@ public partial class SeedService : ISeedService
             return (StatusCodes.OK, new ListSeedsResponse
             {
                 Seeds = seeds,
-                TotalCount = result.TotalCount
+                TotalCount = (int)result.TotalCount
             });
         }
         catch (Exception ex)
@@ -504,11 +504,29 @@ public partial class SeedService : ISeedService
                 return (StatusCodes.NotFound, null);
             }
 
+            var domains = new Dictionary<string, float>(growth.Domains);
+
+            // Apply decay if enabled (deferred feature #352 - config wires up the knobs)
+            if (_configuration.GrowthDecayEnabled)
+            {
+                var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+                var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
+                if (seed != null)
+                {
+                    var daysSinceCreation = (DateTimeOffset.UtcNow - seed.CreatedAt).TotalDays;
+                    var decayFactor = Math.Max(0f, 1f - (float)(daysSinceCreation * _configuration.GrowthDecayRatePerDay));
+                    foreach (var key in domains.Keys.ToList())
+                    {
+                        domains[key] *= decayFactor;
+                    }
+                }
+            }
+
             return (StatusCodes.OK, new GrowthResponse
             {
                 SeedId = growth.SeedId,
-                TotalGrowth = growth.Domains.Values.Sum(),
-                Domains = new Dictionary<string, float>(growth.Domains)
+                TotalGrowth = domains.Values.Sum(),
+                Domains = domains
             });
         }
         catch (Exception ex)
@@ -618,11 +636,12 @@ public partial class SeedService : ISeedService
     {
         try
         {
-            // Check cache first
+            // Check cache first; honor debounce window from configuration
             var cacheStore = _stateStoreFactory.GetStore<CapabilityManifestModel>(StateStoreDefinitions.SeedCapabilitiesCache);
             var cached = await cacheStore.GetAsync($"cap:{body.SeedId}", cancellationToken);
+            var debounceWindow = TimeSpan.FromMilliseconds(_configuration.CapabilityRecomputeDebounceMs);
 
-            if (cached != null)
+            if (cached != null && (DateTimeOffset.UtcNow - cached.ComputedAt) < debounceWindow)
             {
                 return (StatusCodes.OK, MapManifestToResponse(cached));
             }

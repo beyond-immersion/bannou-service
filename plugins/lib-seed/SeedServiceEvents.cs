@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Seed;
@@ -23,14 +25,33 @@ public partial class SeedService
     }
 
     /// <summary>
-    /// Handles seed.growth.contributed events.
-    /// TODO: Implement event handling logic.
+    /// Handles seed.growth.contributed events by recording growth to the specified domain.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleGrowthContributedAsync(SeedGrowthContributedEvent evt)
+    public async Task HandleGrowthContributedAsync(SeedGrowthContributedEvent evt)
     {
-        // TODO: Implement seed.growth.contributed event handling
-        _logger.LogInformation("Received seed.growth.contributed event");
-        return Task.CompletedTask;
+        _logger.LogInformation("Processing growth contribution for seed {SeedId}, domain {Domain}, amount {Amount}",
+            evt.SeedId, evt.Domain, evt.Amount);
+
+        try
+        {
+            var (status, _) = await RecordGrowthInternalAsync(
+                evt.SeedId,
+                new[] { (evt.Domain, evt.Amount) },
+                evt.Source,
+                CancellationToken.None);
+
+            if (status != StatusCodes.OK)
+            {
+                _logger.LogWarning("Growth contribution for seed {SeedId} returned {Status}", evt.SeedId, status);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process growth contribution for seed {SeedId}", evt.SeedId);
+            await _messageBus.TryPublishErrorAsync("seed", "HandleGrowthContributed", "event_processing_failed",
+                ex.Message, dependency: null, endpoint: "event:seed.growth.contributed",
+                details: null, stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
     }
 }
