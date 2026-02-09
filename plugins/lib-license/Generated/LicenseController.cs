@@ -102,7 +102,7 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     /// </summary>
 
     /// <remarks>
-    /// Soft-delete a board template. Blocked if active board instances exist
+    /// Delete a board template. Blocked if active board instances exist
     /// <br/>that reference this template.
     /// </remarks>
 
@@ -404,7 +404,7 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Delete a board template
     /// </summary>
     /// <remarks>
-    /// Soft-delete a board template. Blocked if active board instances exist
+    /// Delete a board template. Blocked if active board instances exist
     /// <br/>that reference this template.
     /// </remarks>
     /// <returns>Board template deleted successfully</returns>

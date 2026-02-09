@@ -538,6 +538,19 @@ public partial class LicenseService : ILicenseService
     {
         try
         {
+            await using var lockHandle = await _lockProvider.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                BuildTemplateLockKey(body.BoardTemplateId),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for board template {BoardTemplateId}", body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var template = await BoardTemplateStore.GetAsync(
                 BuildTemplateKey(body.BoardTemplateId),
                 cancellationToken);
@@ -848,13 +861,16 @@ public partial class LicenseService : ILicenseService
                 b => b.BoardTemplateId == body.BoardTemplateId,
                 cancellationToken: cancellationToken);
 
+            // Load all definitions for cache rebuild support (authoritative inventory fallback)
+            var allDefinitions = await DefinitionStore.QueryAsync(
+                d => d.BoardTemplateId == body.BoardTemplateId,
+                cancellationToken: cancellationToken);
+
             foreach (var board in boardInstances)
             {
-                var cache = await BoardCache.GetAsync(
-                    BuildBoardCacheKey(board.BoardId),
-                    cancellationToken);
+                var cache = await LoadOrRebuildBoardCacheAsync(board, allDefinitions, cancellationToken);
 
-                if (cache?.UnlockedPositions.Any(u => u.Code == body.Code) == true)
+                if (cache.UnlockedPositions.Any(u => u.Code == body.Code))
                 {
                     _logger.LogWarning(
                         "Cannot remove definition {Code}: unlocked on board {BoardId}",
@@ -1335,12 +1351,16 @@ public partial class LicenseService : ILicenseService
                     ["gameServiceId"] = board.GameServiceId.ToString()
                 };
 
-                // Add definition metadata values as template values
+                // Add definition metadata values as template values (skip null values)
                 if (definition.Metadata != null)
                 {
                     foreach (var kvp in definition.Metadata)
                     {
-                        templateValues[kvp.Key] = kvp.Value?.ToString() ?? string.Empty;
+                        var value = kvp.Value?.ToString();
+                        if (value != null)
+                        {
+                            templateValues[kvp.Key] = value;
+                        }
                     }
                 }
 
@@ -1762,6 +1782,20 @@ public partial class LicenseService : ILicenseService
                 "Seeding board template {BoardTemplateId} with {Count} definitions",
                 body.BoardTemplateId, body.Definitions.Count);
 
+            // Acquire template lock for multi-instance safety (IMPLEMENTATION TENETS)
+            await using var lockHandle = await _lockProvider.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                BuildTemplateLockKey(body.BoardTemplateId),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for board template {BoardTemplateId}", body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Validate board template exists
             var template = await BoardTemplateStore.GetAsync(
                 BuildTemplateKey(body.BoardTemplateId), cancellationToken);
@@ -1770,9 +1804,30 @@ public partial class LicenseService : ILicenseService
                 return (StatusCodes.NotFound, null);
             }
 
-            var created = new List<LicenseDefinitionResponse>();
+            // Load existing definitions for duplicate and limit checks
+            var existingDefs = await DefinitionStore.QueryAsync(
+                d => d.BoardTemplateId == body.BoardTemplateId,
+                cancellationToken: cancellationToken);
 
-            // Pass 1: Create all definitions without prerequisites
+            var existingCodes = new HashSet<string>(existingDefs.Select(d => d.Code));
+            var existingPositions = new HashSet<(int, int)>(existingDefs.Select(d => (d.PositionX, d.PositionY)));
+
+            // Check MaxDefinitionsPerBoard against total (existing + new)
+            if (existingDefs.Count + body.Definitions.Count > _configuration.MaxDefinitionsPerBoard)
+            {
+                _logger.LogWarning(
+                    "Seed would exceed max definitions limit of {Max}: {Existing} existing + {New} new for template {BoardTemplateId}",
+                    _configuration.MaxDefinitionsPerBoard, existingDefs.Count, body.Definitions.Count, body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Track codes and positions within the seed batch for intra-batch duplicate detection
+            var batchCodes = new HashSet<string>();
+            var batchPositions = new HashSet<(int, int)>();
+
+            var created = new List<LicenseDefinitionResponse>();
+            var skipped = new List<string>();
+
             foreach (var defRequest in body.Definitions)
             {
                 // Validate position within grid bounds
@@ -1782,6 +1837,27 @@ public partial class LicenseService : ILicenseService
                     _logger.LogWarning(
                         "Seed: position ({X}, {Y}) out of bounds for definition {Code}",
                         defRequest.Position.X, defRequest.Position.Y, defRequest.Code);
+                    skipped.Add(defRequest.Code);
+                    continue;
+                }
+
+                // Check for duplicate code against existing definitions and current batch
+                if (existingCodes.Contains(defRequest.Code) || !batchCodes.Add(defRequest.Code))
+                {
+                    _logger.LogWarning("Seed: duplicate code {Code} on board template {BoardTemplateId}",
+                        defRequest.Code, body.BoardTemplateId);
+                    skipped.Add(defRequest.Code);
+                    continue;
+                }
+
+                // Check for duplicate position against existing definitions and current batch
+                var position = (defRequest.Position.X, defRequest.Position.Y);
+                if (existingPositions.Contains(position) || !batchPositions.Add(position))
+                {
+                    _logger.LogWarning(
+                        "Seed: duplicate position ({X}, {Y}) for definition {Code} on board template {BoardTemplateId}",
+                        defRequest.Position.X, defRequest.Position.Y, defRequest.Code, body.BoardTemplateId);
+                    skipped.Add(defRequest.Code);
                     continue;
                 }
 
@@ -1807,6 +1883,13 @@ public partial class LicenseService : ILicenseService
                     cancellationToken: cancellationToken);
 
                 created.Add(MapDefinitionToResponse(definition));
+            }
+
+            if (skipped.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Seed skipped {SkippedCount} definitions for template {BoardTemplateId}: {SkippedCodes}",
+                    skipped.Count, body.BoardTemplateId, string.Join(", ", skipped));
             }
 
             _logger.LogInformation(

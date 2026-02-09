@@ -785,6 +785,58 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         Assert.Null(response);
     }
 
+    [Fact]
+    public async Task RemoveLicenseDefinition_CacheExpiredButUnlocked_ReturnsConflict()
+    {
+        // Arrange - cache returns null (TTL expired) but inventory has the item
+        var definition = CreateTestDefinition(code: "unlocked_skill", positionX: 1, positionY: 1);
+        _mockDefinitionStore
+            .Setup(s => s.GetAsync($"lic-def:{TestBoardTemplateId}:unlocked_skill", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(definition);
+
+        var board = CreateTestBoard();
+        _mockBoardStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<BoardInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<BoardInstanceModel> { board });
+
+        // All definitions for this template (needed by LoadOrRebuildBoardCacheAsync)
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<LicenseDefinitionModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<LicenseDefinitionModel> { definition });
+
+        // Cache returns null (simulating TTL expiry)
+        _mockBoardCache
+            .Setup(s => s.GetAsync($"cache:{TestBoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BoardCacheModel?)null);
+
+        // Inventory shows the item exists (authoritative source confirms unlock)
+        var itemInstanceId = Guid.NewGuid();
+        _mockInventoryClient
+            .Setup(c => c.GetContainerAsync(It.IsAny<GetContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerWithContentsResponse
+            {
+                Items = new List<ContainerItem>
+                {
+                    new ContainerItem { InstanceId = itemInstanceId, TemplateId = TestItemTemplateId }
+                }
+            });
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.RemoveLicenseDefinitionAsync(
+            new RemoveLicenseDefinitionRequest
+            {
+                BoardTemplateId = TestBoardTemplateId,
+                Code = "unlocked_skill"
+            },
+            CancellationToken.None);
+
+        // Assert - should detect the unlock via inventory rebuild, not miss it due to expired cache
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
     #endregion
 
     #region Board Instance Tests

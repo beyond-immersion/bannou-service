@@ -111,7 +111,7 @@ public partial interface ILicenseClient
     /// Delete a board template
     /// </summary>
     /// <remarks>
-    /// Soft-delete a board template. Blocked if active board instances exist
+    /// Delete a board template. Blocked if active board instances exist
     /// <br/>that reference this template.
     /// </remarks>
     /// <returns>Board template deleted successfully</returns>
@@ -812,7 +812,7 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
     /// Delete a board template
     /// </summary>
     /// <remarks>
-    /// Soft-delete a board template. Blocked if active board instances exist
+    /// Delete a board template. Blocked if active board instances exist
     /// <br/>that reference this template.
     /// </remarks>
     /// <returns>Board template deleted successfully</returns>

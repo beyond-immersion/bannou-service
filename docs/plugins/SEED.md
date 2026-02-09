@@ -71,8 +71,9 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 | Key Pattern | Purpose |
 |-------------|---------|
-| `{seedId}` | Distributed lock for growth recording and seed updates |
+| `{seedId}` | Distributed lock for growth recording, seed updates, and bond initiation (ordered dual-lock for bonds) |
 | `owner:{ownerId}:{seedTypeCode}` | Distributed lock for seed activation (prevents concurrent activation races) |
+| `type:{gameServiceId}:{seedTypeCode}` | Distributed lock for seed type updates (prevents concurrent type mutations) |
 
 ---
 
@@ -109,6 +110,8 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `BondSharedGrowthMultiplier` | `SEED_BOND_SHARED_GROWTH_MULTIPLIER` | `1.5` | Growth amount multiplier applied when recording growth for a bonded seed with an active bond |
 | `MaxSeedTypesPerGameService` | `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | `50` | Maximum number of seed type definitions per game service |
 | `DefaultMaxSeedsPerOwner` | `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | `3` | Default per-owner seed limit when seed type's `MaxPerOwner` is 0 |
+| `BondStrengthGrowthRate` | `SEED_BOND_STRENGTH_GROWTH_RATE` | `0.1` | Rate at which bond strength increases per unit of shared growth recorded |
+| `DefaultQueryPageSize` | `SEED_DEFAULT_QUERY_PAGE_SIZE` | `100` | Default page size for queries that do not expose pagination parameters (`GetSeedsByOwnerAsync`, `ListSeedTypesAsync`) |
 
 ---
 
@@ -122,7 +125,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `IMessageBus` | Event publishing and error event publication |
 | `IDistributedLockProvider` | Distributed locks for mutation operations |
 | `IEventConsumer` | Event subscription registration for `seed.growth.contributed` |
-| `IGameServiceClient` | Injected but unused -- intended for game service existence validation |
+| `IGameServiceClient` | Validates game service existence during seed creation and type registration |
 
 ---
 
@@ -130,13 +133,13 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 ### Seed CRUD (7 endpoints)
 
-Standard CRUD operations on seed entities. `CreateSeedAsync` validates the seed type exists, checks the owner type is in the type's `AllowedOwnerTypes`, and enforces the per-owner limit via JSON query counting. Initial phase is determined from the first entry in the type's `GrowthPhases` list (falls back to `"initial"` if no phases defined). Seeds are always created with `Active` status.
+Standard CRUD operations on seed entities. `CreateSeedAsync` validates the game service exists via `IGameServiceClient`, validates the seed type exists, checks the owner type is in the type's `AllowedOwnerTypes`, and enforces the per-owner limit via JSON query counting (excluding archived seeds). Initial phase is determined using `ComputePhaseInfo` against the type's sorted `GrowthPhases` at 0 total growth (falls back to `"initial"` if no phases defined). Seeds are always created with `Active` status.
 
 `ActivateSeedAsync` implements exclusive activation -- only one seed of a given type can be active per owner. When activating a seed, all other active seeds of the same type for the same owner are set to `Dormant`. Uses a distributed lock scoped to `owner:{ownerId}:{seedTypeCode}` to prevent concurrent activation races.
 
 `ArchiveSeedAsync` requires the seed to be `Dormant` first; active seeds cannot be archived directly.
 
-`ListSeedsAsync` supports server-side pagination via `Page` and `PageSize` request fields. `GetSeedsByOwnerAsync` does not support pagination -- see Known Quirks.
+`ListSeedsAsync` supports server-side pagination via `Page` and `PageSize` request fields. `GetSeedsByOwnerAsync` uses `DefaultQueryPageSize` configuration for its query limit.
 
 ### Growth (4 endpoints)
 
@@ -158,15 +161,15 @@ Manifest version is monotonically incremented from the previous cached version.
 
 ### Seed Type Definitions (4 endpoints)
 
-`RegisterSeedTypeAsync` checks for duplicate type codes per game service and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), and allowed owner types.
+`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), and allowed owner types.
 
-`UpdateSeedTypeAsync` supports partial updates -- only non-null fields are applied. No validation that growth phase changes are compatible with existing seeds.
+`UpdateSeedTypeAsync` acquires a distributed lock on the type key, supports partial updates (only non-null fields applied), and triggers recomputation of all existing seeds' phases and capability caches when growth phases or capability rules change.
 
 No delete endpoint exists for seed types -- see Known Quirks.
 
 ### Bonds (5 endpoints)
 
-`InitiateBondAsync` validates both seeds exist, are the same type, and the type supports bonding (`BondCardinality >= 1`). Checks neither seed is already bonded. Creates a bond with the initiator auto-confirmed and the target pending confirmation. Does not acquire a distributed lock -- see Known Quirks.
+`InitiateBondAsync` acquires ordered distributed locks on both seed IDs (sorted to prevent deadlock), validates both seeds exist, are the same type, and the type supports bonding (`BondCardinality >= 1`). Checks neither seed is already bonded. Creates a bond with the initiator auto-confirmed and the target pending confirmation.
 
 `ConfirmBondAsync` sets the confirming participant's `Confirmed` flag. When all participants are confirmed, transitions bond to `Active`, updates all participant seeds with the `BondId`, and publishes `seed.bond.formed`.
 
@@ -214,8 +217,10 @@ No delete endpoint exists for seed types -- see Known Quirks.
 │   └──────────────────────┘                                          │
 │                                                                     │
 │   seed-lock (Redis)                                                 │
-│   ├── {seedId}                    -- Growth recording, updates      │
-│   └── owner:{ownerId}:{typeCode}  -- Activation exclusivity        │
+│   ├── {seedId}                    -- Growth recording, updates,     │
+│   │                                  bond initiation (ordered)      │
+│   ├── owner:{ownerId}:{typeCode}  -- Activation exclusivity        │
+│   └── type:{gsId}:{typeCode}      -- Type definition updates       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -224,8 +229,6 @@ No delete endpoint exists for seed types -- see Known Quirks.
 ## Stubs & Unimplemented Features
 
 - **Growth decay**: Configuration properties (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) are wired up and the read-time decay logic exists in `GetGrowthAsync`, but the feature is disabled by default and the decay formula uses time since seed creation rather than per-domain last activity time. The code comment references "deferred feature #352". The decay is read-only (presentation layer) -- stored domain values are never modified by decay.
-
-- **IGameServiceClient**: Injected into the constructor but never called. Intended for validating that the `GameServiceId` in seed creation requests refers to a real game service. Currently, any GUID is accepted as a game service ID without verification.
 
 ---
 
@@ -244,16 +247,6 @@ No delete endpoint exists for seed types -- see Known Quirks.
 ---
 
 ## Known Quirks & Caveats
-
-### Bugs (Fix Immediately)
-
-- **BondStrength uses hardcoded 0.1f multiplier** (`SeedService.cs:1175`): Bond strength increment is `totalAmount * 0.1f`, a hardcoded magic number. Per IMPLEMENTATION TENETS (no hardcoded tunables), this should be a configuration property. The `BondSharedGrowthMultiplier` config controls the growth multiplier but there is no config for the strength-to-growth ratio.
-
-- **InitiateBond missing distributed lock** (`SeedService.cs:844-927`): `InitiateBondAsync` reads both seeds, checks their bond status, and creates the bond without acquiring a distributed lock. Two concurrent `InitiateBond` calls could both pass the "not already bonded" check and create duplicate bonds for the same seeds. Should lock on both seed IDs (ordered to prevent deadlock).
-
-- **GetSeedsByOwnerAsync hardcodes page size 100** (`SeedService.cs:215`): Uses `JsonQueryPagedAsync` with hardcoded `pageSize: 100` and `offset: 0`. Owners with more than 100 seeds will silently lose results. Unlike `ListSeedsAsync`, which accepts `Page`/`PageSize` from the request, this endpoint has no pagination support.
-
-- **ListSeedTypesAsync hardcodes page size 100** (`SeedService.cs:781`): Same issue -- `JsonQueryPagedAsync` with hardcoded `pageSize: 100`. Game services with more than 50 types are prevented by config, but the max config (`MaxSeedTypesPerGameService`) defaults to 50 and could be raised to exceed the query limit.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -274,10 +267,6 @@ No delete endpoint exists for seed types -- see Known Quirks.
 - **No cleanup of associated data on archive**: `ArchiveSeedAsync` sets the seed's status to `Archived` but does not clean up growth data (`growth:{seedId}`), capability cache (`cap:{seedId}`), or bond data (`bond:{bondId}`). Archived seeds retain all associated state indefinitely. A cleanup strategy is needed -- either immediate deletion, a background retention worker, or integration with lib-resource for compression.
 
 - **Bond shared growth applied regardless of partner activity**: When a bonded seed records growth, the `BondSharedGrowthMultiplier` is applied unconditionally if the bond exists and is active. The partner seed does not need to be simultaneously active or growing. This means a bonded seed always gets boosted growth even if the partner is dormant or archived. Whether this is the intended semantic needs clarification.
-
-- **UpdateSeedType allows changing phases for existing seeds**: `UpdateSeedTypeAsync` accepts new `GrowthPhases` definitions without checking whether existing seeds would be affected by threshold changes. A seed that was in phase "Mature" at threshold 50 could suddenly be reclassified to an earlier phase if thresholds are raised. No migration or recomputation of existing seed phases is triggered.
-
-- **No GameServiceId cross-validation**: `IGameServiceClient` is injected but never called. Seeds can be created referencing any GUID as a game service ID, including non-existent ones. Should validate via `IGameServiceClient.GetGameServiceAsync()` during `CreateSeedAsync` and `RegisterSeedTypeAsync`.
 
 ---
 

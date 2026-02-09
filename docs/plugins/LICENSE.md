@@ -103,7 +103,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `MaxBoardsPerCharacter` | `LICENSE_MAX_BOARDS_PER_CHARACTER` | 10 | Maximum active boards a single character can have; enforced in `CreateBoardAsync` by counting existing boards |
-| `MaxDefinitionsPerBoard` | `LICENSE_MAX_DEFINITIONS_PER_BOARD` | 200 | Maximum license definitions per board template; enforced in `AddLicenseDefinitionAsync` |
+| `MaxDefinitionsPerBoard` | `LICENSE_MAX_DEFINITIONS_PER_BOARD` | 200 | Maximum license definitions per board template; enforced in `AddLicenseDefinitionAsync` and `SeedBoardTemplateAsync` |
 | `LockTimeoutSeconds` | `LICENSE_LOCK_TIMEOUT_SECONDS` | 30 | Distributed lock TTL for board and template mutations |
 | `BoardCacheTtlSeconds` | `LICENSE_BOARD_CACHE_TTL_SECONDS` | 300 | Redis TTL for board state cache; cache is rebuilt from inventory on miss |
 | `DefaultPageSize` | `LICENSE_DEFAULT_PAGE_SIZE` | 20 | Default page size for `ListBoardTemplatesAsync` paginated queries |
@@ -142,11 +142,11 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 ### Board Template Management (6 endpoints, developer role)
 
-Standard CRUD on board templates with `CreateBoardTemplateAsync` validating game service existence and defaulting adjacency mode from config. `UpdateBoardTemplateAsync` acquires a template-level distributed lock before mutation and publishes a lifecycle event. `DeleteBoardTemplateAsync` also acquires a template lock and performs a hard delete (despite schema description saying "soft-delete").
+Standard CRUD on board templates with `CreateBoardTemplateAsync` validating game service existence and defaulting adjacency mode from config. `UpdateBoardTemplateAsync` acquires a template-level distributed lock before mutation and publishes a lifecycle event. `DeleteBoardTemplateAsync` also acquires a template lock, checks for active board instances, and performs a hard delete.
 
 `ListBoardTemplatesAsync` supports paginated listing filtered by `GameServiceId` using `QueryAsync` with configurable page size.
 
-`SeedBoardTemplateAsync` (developer-only) bulk-creates definitions for a template in a single pass. Validates grid bounds but does not check for duplicate codes, duplicate positions, or `MaxDefinitionsPerBoard` limits. Out-of-bounds definitions are silently skipped with a warning log.
+`SeedBoardTemplateAsync` (developer-only) bulk-creates definitions for a template under a template-level distributed lock. Validates grid bounds, duplicate codes (against existing definitions and within the batch), duplicate positions (against existing definitions and within the batch), and `MaxDefinitionsPerBoard` limits (existing + new). Out-of-bounds and duplicate definitions are skipped with warning logs.
 
 ### License Definition Management (5 endpoints, developer role)
 
@@ -154,7 +154,7 @@ Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLi
 
 `UpdateLicenseDefinitionAsync` acquires a template lock before updating. Position changes are allowed.
 
-`RemoveLicenseDefinitionAsync` checks all board instances for the template and inspects their Redis caches to verify no boards have the definition unlocked before allowing removal. This check is cache-dependent (see Design Considerations).
+`RemoveLicenseDefinitionAsync` checks all board instances for the template and uses `LoadOrRebuildBoardCacheAsync` to verify no boards have the definition unlocked before allowing removal. On cache miss (TTL expiry), the cache is rebuilt from inventory (authoritative source) before checking.
 
 ### Board Instance Management (4 endpoints, mixed roles)
 
@@ -262,12 +262,6 @@ Unlock License Flow (under distributed lock)
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-- **Seed endpoint bypasses `MaxDefinitionsPerBoard` limit**: `SeedBoardTemplateAsync` does not check the current definition count before creating definitions. A seed request can exceed the configured `MaxDefinitionsPerBoard` limit because it only validates grid bounds, unlike `AddLicenseDefinitionAsync` which enforces the limit. The seed endpoint also does not check for duplicate codes or duplicate positions within the seed request or against existing definitions, potentially creating conflicting entries.
-
-- **Seed endpoint doesn't acquire template lock**: `SeedBoardTemplateAsync` does not acquire a template-level distributed lock before creating definitions. Concurrent seed requests or seed-while-add operations could create inconsistent state. `AddLicenseDefinitionAsync` and `UpdateLicenseDefinitionAsync` both use `BuildTemplateLockKey` -- seed should too.
-
 ### Intentional Quirks (Documented Behavior)
 
 - **Board cache is non-authoritative**: The Redis cache is a read-through cache with TTL. Inventory is the authoritative source of truth. On cache miss, `LoadOrRebuildBoardCacheAsync` rebuilds from inventory container contents by matching item template IDs to definitions. The `UnlockedAt` timestamp is approximated as `board.CreatedAt` during rebuild since actual unlock times are not stored in inventory.
@@ -278,13 +272,11 @@ Unlock License Flow (under distributed lock)
 
 - **Contract flow is synchronous and auto-consented**: The unlock flow creates a contract instance, auto-proposes it, auto-consents both parties, and completes the milestone in a single synchronous sequence. This is intentional -- the contract is used for its prebound API execution (LP deduction, etc.), not for multi-party negotiation. The "licensor" party is the game service entity ID.
 
-- **Delete is hard delete despite schema language**: `DeleteBoardTemplateAsync` performs `BoardTemplateStore.DeleteAsync()` (hard delete) despite the schema description mentioning "soft-delete". The `IsActive` flag on `BoardTemplateModel` exists for preventing new board creation from inactive templates, not for soft-delete semantics.
+- **Delete is hard delete**: `DeleteBoardTemplateAsync` performs `BoardTemplateStore.DeleteAsync()` (hard delete), blocked by active board instances. The `IsActive` flag on `BoardTemplateModel` exists for preventing new board creation from inactive templates, not for soft-delete semantics.
 
 - **One board per template per character**: Enforced via the `board-char:{characterId}:{boardTemplateId}` uniqueness key. A character cannot have two instances of the same board template. This is stored as a full `BoardInstanceModel` duplicate in the same MySQL store.
 
 ### Design Considerations (Requires Planning)
-
-- **`RemoveLicenseDefinition` relies on cache for unlock check**: The removal check inspects `BoardCache.GetAsync()` (Redis with TTL) to determine if any board has the definition unlocked. If the cache has expired, the check will miss unlocked licenses and allow removal of an in-use definition. The fix should either rebuild the cache (using `LoadOrRebuildBoardCacheAsync`) or query inventory directly. This requires deciding whether removal should be allowed when boards exist at all, or only when the specific definition is provably unused.
 
 - **No rollback on partial unlock failure**: The unlock flow performs multiple external calls sequentially (contract creation, contract propose/consent/complete, item creation, cache update). If item creation fails after the contract has been completed, the contract is orphaned in a completed state with no corresponding item. Similarly, if cache update fails after item creation, the item exists but the cache doesn't reflect it (mitigated by cache rebuild on next access). A compensation/saga pattern would be needed for full transactional guarantees.
 

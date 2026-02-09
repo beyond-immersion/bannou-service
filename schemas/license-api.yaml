@@ -176,7 +176,7 @@ paths:
       - BoardTemplate
       summary: Delete a board template
       description: |
-        Soft-delete a board template. Blocked if active board instances exist
+        Delete a board template. Blocked if active board instances exist
         that reference this template.
       x-permissions:
       - role: developer
