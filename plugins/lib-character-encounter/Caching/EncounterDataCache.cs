@@ -37,7 +37,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
-        _cacheTtl = TimeSpan.FromMinutes(configuration.Encounter_cacheTtlMinutes);
+        _cacheTtl = TimeSpan.FromMinutes(configuration.EncounterCacheTtlMinutes);
         _maxEncounterResultsPerQuery = configuration.EncounterCacheMaxResultsPerQuery;
     }
 

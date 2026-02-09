@@ -1083,8 +1083,10 @@ public partial class CharacterService : ICharacterService
             }
             catch (ApiException ex)
             {
-                // lib-resource is unavailable - log but don't fail the entire check
-                // This is graceful degradation: we still return L2 reference info
+                // Graceful degradation: lib-resource unavailable means L4 references may be missing,
+                // but we still return L2 reference info (relationships, contracts). No error event
+                // emitted because this is a read-only advisory check, not a fail-closed mutation --
+                // contrast with the delete flow which MUST fail if lib-resource is unavailable.
                 _logger.LogWarning(ex, "lib-resource unavailable when checking references for character {CharacterId}, L4 references may be missing", body.CharacterId);
             }
 
@@ -1565,11 +1567,11 @@ public partial class CharacterService : ICharacterService
         {
             return (false, false);
         }
-        catch (Exception ex)
+        // Let ApiException propagate naturally so callers classify it as ServiceUnavailable (IMPLEMENTATION TENETS)
+        catch (Exception ex) when (ex is not ApiException)
         {
             _logger.LogError(ex, "Could not validate realm {RealmId} - failing operation (fail closed)", realmId);
-            // If RealmService is unavailable, fail the operation - don't assume realm is valid
-            throw new InvalidOperationException($"Cannot validate realm {realmId}: RealmService unavailable", ex);
+            throw;
         }
     }
 
@@ -1597,11 +1599,11 @@ public partial class CharacterService : ICharacterService
         {
             return (false, false);
         }
-        catch (Exception ex)
+        // Let ApiException propagate naturally so callers classify it as ServiceUnavailable (IMPLEMENTATION TENETS)
+        catch (Exception ex) when (ex is not ApiException)
         {
             _logger.LogError(ex, "Could not validate species {SpeciesId} - failing operation (fail closed)", speciesId);
-            // If SpeciesService is unavailable, fail the operation - don't assume species is valid
-            throw new InvalidOperationException($"Cannot validate species {speciesId}: SpeciesService unavailable", ex);
+            throw;
         }
     }
 

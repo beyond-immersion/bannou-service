@@ -101,6 +101,8 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 | `SentimentShiftMemorable` | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_MEMORABLE` | `0.1` | Default shift for MEMORABLE outcome |
 | `SentimentShiftTransformative` | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE` | `0.3` | Default shift for TRANSFORMATIVE outcome |
 | `SeedBuiltInTypesOnStartup` | `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | `true` | Auto-seed built-in types on startup |
+| `EncounterCacheTtlMinutes` | `CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES` | `5` | TTL in minutes for the in-memory encounter data cache |
+| `EncounterCacheMaxResultsPerQuery` | `CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY` | `50` | Max encounter results loaded per cache query |
 | `DuplicateTimestampToleranceMinutes` | `CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES` | `5` | Time window in minutes for duplicate encounter detection |
 
 ---
@@ -110,17 +112,17 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CharacterEncounterService>` | Scoped | Structured logging |
-| `CharacterEncounterServiceConfiguration` | Singleton | All 20 config properties |
+| `CharacterEncounterServiceConfiguration` | Singleton | All 22 config properties |
 | `IStateStoreFactory` | Singleton | MySQL state store access for all data types |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event subscription registration |
 | `ICharacterClient` | Scoped | Cross-service character validation |
 | `IResourceClient` | *(plugin startup)* | Cleanup/compression callback registration via generated `CharacterEncounterCompressionCallbacks` and `CharacterEncounterReferenceTracking` (not injected into service constructor) |
-| `IEncounterDataCache` | Singleton | In-memory cache for encounter queries (hardcoded 5-minute TTL), used by Actor's EncountersProvider |
+| `IEncounterDataCache` | Singleton | In-memory cache for encounter queries (configurable TTL via `EncounterCacheTtlMinutes`), used by Actor's EncountersProvider |
 | `EncountersProviderFactory` | Singleton | `IVariableProviderFactory` implementation for Actor's `${encounters.*}` ABML variables |
 | `MemoryDecaySchedulerService` | Hosted | Background service for scheduled memory decay (only active when MemoryDecayMode is 'scheduled') |
 
-Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). Three singleton helpers: configuration, encounter cache, and variable provider factory. No distributed locks used. Cache invalidation is TTL-based only (no explicit invalidation on writes).
+Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). Three singleton helpers: configuration, encounter cache (reads TTL and max results from configuration), and variable provider factory. No distributed locks used. Cache invalidation is TTL-based only (no explicit invalidation on writes).
 
 ---
 
@@ -369,7 +371,7 @@ No stubs or unimplemented features remain.
 
 1. ~~**Dead configuration: `ServerSalt` defined but never used (IMPLEMENTATION TENETS - T21)**~~: **FIXED** (2026-02-09) - Removed `ServerSalt` from `character-encounter-configuration.yaml` and regenerated. The service uses `Guid.NewGuid()` for all GUID generation and relies on timestamp-based duplicate detection via `DuplicateTimestampToleranceMinutes`, making salted GUIDs unnecessary.
 
-2. **Hardcoded cache TTL in EncounterDataCache (IMPLEMENTATION TENETS - T21)**: `EncounterDataCache` uses `TimeSpan.FromMinutes(5)` as a hardcoded constant with a `// TODO` comment acknowledging it should be configurable. All tunables must be configuration properties per IMPLEMENTATION TENETS. Fix: Add `EncounterCacheTtlMinutes` property to the configuration schema.
+2. ~~**Hardcoded cache TTL in EncounterDataCache (IMPLEMENTATION TENETS - T21)**~~: **FIXED** (2026-02-09) - Added `EncounterCacheTtlMinutes` (default 5) and `EncounterCacheMaxResultsPerQuery` (default 50) to configuration schema. `EncounterDataCache` now reads both from injected `CharacterEncounterServiceConfiguration` instead of hardcoded constants.
 
 3. **EncounterDataCache never explicitly invalidated**: The `EncounterDataCache` has an `InvalidateAll()` method but it is never called from the service. Writes to encounters/perspectives (RecordEncounter, UpdatePerspective, RefreshMemory, DeleteEncounter, DeleteByCharacter) do not invalidate cached data, meaning Actor behavior sees stale encounter data for up to the cache TTL (5 minutes). This is particularly impactful for `UpdatePerspective` and `RefreshMemory` where the caller expects immediate effect on NPC behavior.
 
@@ -408,3 +410,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **Bug #1 - Dead `ServerSalt` config**: Removed from schema (2026-02-09). Service uses random GUIDs, not salted.
+- **Bug #2 - Hardcoded cache TTL and max results**: Added `EncounterCacheTtlMinutes` and `EncounterCacheMaxResultsPerQuery` config properties (2026-02-09). Cache now reads from configuration.

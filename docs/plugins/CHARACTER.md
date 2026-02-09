@@ -268,7 +268,7 @@ None currently tracked.
 
 ### Bugs (Fix Immediately)
 
-None currently tracked.
+1. ~~**ApiException wrapped in InvalidOperationException in validation helpers**~~: **FIXED** (2026-02-09) - `ValidateRealmAsync` and `ValidateSpeciesAsync` were catching all non-404 exceptions (including `ApiException`) and wrapping them in `InvalidOperationException`. This caused dependency failures (e.g., RealmService returning 500) to be misclassified as internal errors, emitting unnecessary error events and returning 500 instead of 503 (ServiceUnavailable). Fixed by using `catch (Exception ex) when (ex is not ApiException)` to let `ApiException` propagate naturally to the caller's `catch (ApiException)` block.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -297,6 +297,7 @@ No active work items.
 ### Historical
 
 See git history for full changelog. Key milestones:
+- **2026-02-09**: Fixed ApiException wrapping in validation helpers (T7 compliance)
 - **2026-02-07**: Server-side MySQL JSON queries, plural `spouses`, removed dead config, schema extensions
 - **2026-02-03**: Centralized compression via Resource service (L1), delete flow with `ExecuteCleanupAsync`
 - **2026-02-02**: Parallel family tree lookups, quirk categorization audit, dead config removal

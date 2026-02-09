@@ -209,11 +209,9 @@ None identified.
 
 4. **Secondary index is intentionally NOT locked**: DualIndexHelper locks the primary index (realm→participations) but NOT the secondary index (event→participations). Locking the secondary would serialize all writes across unrelated realms referencing the same event (global bottleneck). Reads bypass indexes entirely via `JsonQueryPagedAsync`, so a stale secondary index entry only affects deletion cleanup. Worst-case race produces a stale entry that self-heals on next write/delete for that event.
 
-5. ~~**Archive summaries use hardcoded Take(10)**~~: **FIXED** (2026-02-09) - Added `ArchiveSummaryMaxLorePoints` and `ArchiveSummaryMaxHistoricalEvents` configuration properties (both default 10, range 1-50). `GenerateSummariesForArchive` now reads from `_configuration` instead of hardcoding.
+5. **Duplicate event summary helper methods**: `GenerateEventSummary(RealmParticipationData)` and `GenerateEventSummaryFromModel(RealmHistoricalParticipation)` contain identical role-to-verb switch logic but operate on different types (internal storage model vs API response model). This duplication exists because `SummarizeRealmHistoryAsync` works with `RealmParticipationData` from the helper, while `GenerateSummariesForArchive` works with `RealmHistoricalParticipation` from the already-mapped response. If role verb mappings change, both methods must be updated.
 
-6. **Duplicate event summary helper methods**: `GenerateEventSummary(RealmParticipationData)` and `GenerateEventSummaryFromModel(RealmHistoricalParticipation)` contain identical role-to-verb switch logic but operate on different types (internal storage model vs API response model). This duplication exists because `SummarizeRealmHistoryAsync` works with `RealmParticipationData` from the helper, while `GenerateSummariesForArchive` works with `RealmHistoricalParticipation` from the already-mapped response. If role verb mappings change, both methods must be updated.
-
-7. **Realm reference registered once per lore document, not per element**: `RegisterRealmReferenceAsync` is called only when the lore document is first created (`isNew=true`), not on each subsequent element addition. The reference count tracks the existence of lore for a realm, not the number of individual lore elements. Unregistration happens when the entire lore document is deleted.
+6. **Realm reference registered once per lore document, not per element**: `RegisterRealmReferenceAsync` is called only when the lore document is first created (`isNew=true`), not on each subsequent element addition. The reference count tracks the existence of lore for a realm, not the number of individual lore elements. Unregistration happens when the entire lore document is deleted.
 
 ### Design Considerations (Requires Planning)
 
@@ -236,4 +234,4 @@ None identified.
 - **2026-02-02**: [#270](https://github.com/beyond-immersion/bannou-service/issues/270) - Timeline visualization (may already be satisfied by existing `GetRealmParticipation` endpoint which returns chronologically-sorted data)
 
 ### Completed
-- **2026-02-09**: Hardcoded `Take(10)` in `GenerateSummariesForArchive` replaced with `ArchiveSummaryMaxLorePoints` and `ArchiveSummaryMaxHistoricalEvents` configuration properties (T21 compliance)
+(None pending)
