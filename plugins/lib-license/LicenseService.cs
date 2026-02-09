@@ -1,17 +1,40 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("lib-license.tests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace BeyondImmersion.BannouService.License;
 
 /// <summary>
+/// Topic constants for license board events.
+/// </summary>
+public static class LicenseTopics
+{
+    /// <summary>License unlocked event topic.</summary>
+    public const string LicenseUnlocked = "license.unlocked";
+    /// <summary>License unlock failed event topic.</summary>
+    public const string LicenseUnlockFailed = "license.unlock-failed";
+}
+
+/// <summary>
 /// Implementation of the License service.
-/// This class contains the business logic for all License operations.
+/// Provides grid-based progression boards (skill trees, license boards, tech trees)
+/// by combining Inventory (containers), Items (license nodes), and Contracts (unlock behavior).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -19,25 +42,9 @@ namespace BeyondImmersion.BannouService.License;
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
 /// </para>
 /// <para>
-/// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
+/// <b>SERVICE HIERARCHY (L4 Game Features):</b>
 /// <list type="bullet">
-///   <item><b>Type Safety:</b> Internal POCOs MUST use proper C# types (enums, Guids, DateTimeOffset) - never string representations. No Enum.Parse in business logic.</item>
-///   <item><b>Configuration:</b> ALL config properties in LicenseServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
-///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
-///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
-///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
-/// </list>
-/// </para>
-/// <para>
-/// <b>RELATED FILES:</b>
-/// <list type="bullet">
-///   <item>Internal data models: LicenseServiceModels.cs (storage models, cache entries, internal DTOs)</item>
-///   <item>Event handlers: LicenseServiceEvents.cs (event consumer registration and handlers)</item>
-///   <item>Request/Response models: bannou-service/Generated/Models/LicenseModels.cs</item>
-///   <item>Event models: bannou-service/Generated/Events/LicenseEventsModels.cs</item>
-///   <item>Lifecycle events: bannou-service/Generated/Events/LicenseLifecycleEvents.cs</item>
-///   <item>Configuration: Generated/LicenseServiceConfiguration.cs</item>
-///   <item>State stores: bannou-service/Generated/StateStoreDefinitions.cs</item>
+///   <item>Hard dependencies (constructor injection): IContractClient (L1), ICharacterClient (L2), IInventoryClient (L2), IItemClient (L2), ICurrencyClient (L2), IGameServiceClient (L2), IDistributedLockProvider (L0)</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -48,1207 +55,1569 @@ public partial class LicenseService : ILicenseService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<LicenseService> _logger;
     private readonly LicenseServiceConfiguration _configuration;
+    private readonly IContractClient _contractClient;
+    private readonly ICharacterClient _characterClient;
+    private readonly IInventoryClient _inventoryClient;
+    private readonly IItemClient _itemClient;
+    private readonly ICurrencyClient _currencyClient;
+    private readonly IGameServiceClient _gameServiceClient;
+    private readonly IDistributedLockProvider _lockProvider;
 
-    private const string STATE_STORE = "license-statestore";
+    #region State Store Accessors
 
+    private IQueryableStateStore<BoardTemplateModel>? _boardTemplateStore;
+    private IQueryableStateStore<BoardTemplateModel> BoardTemplateStore =>
+        _boardTemplateStore ??= _stateStoreFactory.GetQueryableStore<BoardTemplateModel>(StateStoreDefinitions.LicenseBoardTemplates);
+
+    private IQueryableStateStore<LicenseDefinitionModel>? _definitionStore;
+    private IQueryableStateStore<LicenseDefinitionModel> DefinitionStore =>
+        _definitionStore ??= _stateStoreFactory.GetQueryableStore<LicenseDefinitionModel>(StateStoreDefinitions.LicenseDefinitions);
+
+    private IQueryableStateStore<BoardInstanceModel>? _boardStore;
+    private IQueryableStateStore<BoardInstanceModel> BoardStore =>
+        _boardStore ??= _stateStoreFactory.GetQueryableStore<BoardInstanceModel>(StateStoreDefinitions.LicenseBoards);
+
+    private IStateStore<BoardCacheModel>? _boardCache;
+    private IStateStore<BoardCacheModel> BoardCache =>
+        _boardCache ??= _stateStoreFactory.GetStore<BoardCacheModel>(StateStoreDefinitions.LicenseBoardCache);
+
+    #endregion
+
+    #region Key Building
+
+    private static string BuildTemplateKey(Guid boardTemplateId) => $"board-tpl:{boardTemplateId}";
+    private static string BuildDefinitionKey(Guid boardTemplateId, string code) => $"lic-def:{boardTemplateId}:{code}";
+    private static string BuildBoardKey(Guid boardId) => $"board:{boardId}";
+    private static string BuildBoardByCharacterKey(Guid characterId, Guid boardTemplateId) => $"board-char:{characterId}:{boardTemplateId}";
+    private static string BuildBoardCacheKey(Guid boardId) => $"cache:{boardId}";
+    private static string BuildBoardLockKey(Guid boardId) => $"board:{boardId}";
+    private static string BuildTemplateLockKey(Guid boardTemplateId) => $"tpl:{boardTemplateId}";
+
+    #endregion
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LicenseService"/> class.
+    /// </summary>
+    /// <param name="messageBus">Message bus for event publishing.</param>
+    /// <param name="stateStoreFactory">State store factory for persistence.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Service configuration.</param>
+    /// <param name="contractClient">Contract client for unlock execution (L1 hard dependency).</param>
+    /// <param name="characterClient">Character client for validation (L2 hard dependency).</param>
+    /// <param name="inventoryClient">Inventory client for board containers (L2 hard dependency).</param>
+    /// <param name="itemClient">Item client for license item instances (L2 hard dependency).</param>
+    /// <param name="currencyClient">Currency client for LP balance checks (L2 hard dependency).</param>
+    /// <param name="gameServiceClient">Game service client for validation (L2 hard dependency).</param>
+    /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
+    /// <param name="eventConsumer">Event consumer for subscription registration.</param>
     public LicenseService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<LicenseService> logger,
-        LicenseServiceConfiguration configuration)
+        LicenseServiceConfiguration configuration,
+        IContractClient contractClient,
+        ICharacterClient characterClient,
+        IInventoryClient inventoryClient,
+        IItemClient itemClient,
+        ICurrencyClient currencyClient,
+        IGameServiceClient gameServiceClient,
+        IDistributedLockProvider lockProvider,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _contractClient = contractClient;
+        _characterClient = characterClient;
+        _inventoryClient = inventoryClient;
+        _itemClient = itemClient;
+        _currencyClient = currencyClient;
+        _gameServiceClient = gameServiceClient;
+        _lockProvider = lockProvider;
+
+        RegisterEventConsumers(eventConsumer);
     }
 
-    /// <summary>
-    /// Implementation of CreateBoardTemplate operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, BoardTemplateResponse?)> CreateBoardTemplateAsync(CreateBoardTemplateRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing CreateBoardTemplate operation");
+    #region Adjacency Helper
 
+    /// <summary>
+    /// Checks if two grid positions are adjacent under the given adjacency mode.
+    /// </summary>
+    private static bool IsAdjacent(int x1, int y1, int x2, int y2, AdjacencyMode mode)
+    {
+        var dx = Math.Abs(x1 - x2);
+        var dy = Math.Abs(y1 - y2);
+
+        if (dx == 0 && dy == 0) return false; // Same position
+
+        return mode switch
+        {
+            AdjacencyMode.FourWay => dx + dy == 1,
+            AdjacencyMode.EightWay => dx <= 1 && dy <= 1,
+            _ => dx <= 1 && dy <= 1 // Default to eight-way
+        };
+    }
+
+    #endregion
+
+    #region Model Mapping Helpers
+
+    private static BoardTemplateResponse MapTemplateToResponse(BoardTemplateModel model)
+    {
+        return new BoardTemplateResponse
+        {
+            BoardTemplateId = model.BoardTemplateId,
+            GameServiceId = model.GameServiceId,
+            Name = model.Name,
+            Description = model.Description,
+            GridWidth = model.GridWidth,
+            GridHeight = model.GridHeight,
+            StartingNodes = model.StartingNodes.Select(sn => new GridPosition { X = sn.X, Y = sn.Y }).ToList(),
+            BoardContractTemplateId = model.BoardContractTemplateId,
+            AdjacencyMode = model.AdjacencyMode,
+            IsActive = model.IsActive,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt
+        };
+    }
+
+    private static LicenseDefinitionResponse MapDefinitionToResponse(LicenseDefinitionModel model)
+    {
+        return new LicenseDefinitionResponse
+        {
+            LicenseDefinitionId = model.LicenseDefinitionId,
+            BoardTemplateId = model.BoardTemplateId,
+            Code = model.Code,
+            Position = new GridPosition { X = model.PositionX, Y = model.PositionY },
+            LpCost = model.LpCost,
+            ItemTemplateId = model.ItemTemplateId,
+            Prerequisites = model.Prerequisites?.ToList(),
+            Description = model.Description,
+            Metadata = model.Metadata,
+            CreatedAt = model.CreatedAt
+        };
+    }
+
+    private static BoardResponse MapBoardToResponse(BoardInstanceModel model)
+    {
+        return new BoardResponse
+        {
+            BoardId = model.BoardId,
+            CharacterId = model.CharacterId,
+            BoardTemplateId = model.BoardTemplateId,
+            GameServiceId = model.GameServiceId,
+            ContainerId = model.ContainerId,
+            CreatedAt = model.CreatedAt
+        };
+    }
+
+    #endregion
+
+    #region Board Template Management
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BoardTemplateResponse?)> CreateBoardTemplateAsync(
+        CreateBoardTemplateRequest body,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CreateBoardTemplate not yet implemented");
+            _logger.LogInformation("Creating board template {Name} for game service {GameServiceId}",
+                body.Name, body.GameServiceId);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Validate game service exists
+            try
+            {
+                await _gameServiceClient.GetServiceAsync(
+                    new GetServiceRequest { ServiceId = body.GameServiceId },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Validate starting nodes within grid bounds
+            foreach (var node in body.StartingNodes)
+            {
+                if (node.X < 0 || node.X >= body.GridWidth || node.Y < 0 || node.Y >= body.GridHeight)
+                {
+                    _logger.LogWarning(
+                        "Starting node ({X}, {Y}) is out of bounds for grid {Width}x{Height}",
+                        node.X, node.Y, body.GridWidth, body.GridHeight);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+
+            // Validate contract template exists
+            try
+            {
+                await _contractClient.GetContractTemplateAsync(
+                    new GetContractTemplateRequest { TemplateId = body.BoardContractTemplateId },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Contract template {ContractTemplateId} not found", body.BoardContractTemplateId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var template = new BoardTemplateModel
+            {
+                BoardTemplateId = Guid.NewGuid(),
+                GameServiceId = body.GameServiceId,
+                Name = body.Name,
+                Description = body.Description,
+                GridWidth = body.GridWidth,
+                GridHeight = body.GridHeight,
+                StartingNodes = body.StartingNodes.Select(sn => new GridPositionEntry { X = sn.X, Y = sn.Y }).ToList(),
+                BoardContractTemplateId = body.BoardContractTemplateId,
+                AdjacencyMode = body.AdjacencyMode ?? _configuration.DefaultAdjacencyMode,
+                IsActive = true,
+                CreatedAt = now
+            };
+
+            await BoardTemplateStore.SaveAsync(
+                BuildTemplateKey(template.BoardTemplateId),
+                template,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Created board template {BoardTemplateId}", template.BoardTemplateId);
+
+            await _messageBus.TryPublishAsync(
+                "license-board-template.created",
+                new LicenseBoardTemplateCreatedEvent
+                {
+                    BoardTemplateId = template.BoardTemplateId,
+                    GameServiceId = template.GameServiceId,
+                    Name = template.Name,
+                    GridWidth = template.GridWidth,
+                    GridHeight = template.GridHeight,
+                    BoardContractTemplateId = template.BoardContractTemplateId,
+                    AdjacencyMode = template.AdjacencyMode,
+                    IsActive = template.IsActive,
+                    CreatedAt = template.CreatedAt,
+                    UpdatedAt = template.UpdatedAt
+                },
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.OK, MapTemplateToResponse(template));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing CreateBoardTemplate operation");
+            _logger.LogError(ex, "Error creating board template");
             await _messageBus.TryPublishErrorAsync(
-                "license",
-                "CreateBoardTemplate",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board-template/create",
-                details: null,
-                stack: ex.StackTrace,
+                "license", "CreateBoardTemplate", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board-template/create",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BoardTemplateResponse?)> GetBoardTemplateAsync(
+        GetBoardTemplateRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(body.BoardTemplateId),
+                cancellationToken);
+
+            if (template == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            return (StatusCodes.OK, MapTemplateToResponse(template));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting board template {BoardTemplateId}", body.BoardTemplateId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "GetBoardTemplate", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board-template/get",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListBoardTemplatesResponse?)> ListBoardTemplatesAsync(
+        ListBoardTemplatesRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
+
+            var results = await BoardTemplateStore.QueryAsync(
+                t => t.GameServiceId == body.GameServiceId,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+
+            // Simple cursor-based pagination using index offset
+            var startIndex = 0;
+            if (!string.IsNullOrEmpty(body.Cursor) && int.TryParse(body.Cursor, out var cursorIndex))
+            {
+                startIndex = cursorIndex;
+            }
+
+            var paged = results.Skip(startIndex).Take(pageSize + 1).ToList();
+            var hasMore = paged.Count > pageSize;
+            var items = paged.Take(pageSize).ToList();
+
+            return (StatusCodes.OK, new ListBoardTemplatesResponse
+            {
+                Templates = items.Select(MapTemplateToResponse).ToList(),
+                NextCursor = hasMore ? (startIndex + pageSize).ToString() : null,
+                HasMore = hasMore
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing board templates for game service {GameServiceId}", body.GameServiceId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "ListBoardTemplates", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board-template/list",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BoardTemplateResponse?)> UpdateBoardTemplateAsync(
+        UpdateBoardTemplateRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var lockHandle = await _lockProvider.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                BuildTemplateLockKey(body.BoardTemplateId),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for board template {BoardTemplateId}", body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(body.BoardTemplateId),
+                cancellationToken);
+
+            if (template == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Update mutable fields
+            if (body.Name != null) template.Name = body.Name;
+            if (body.Description != null) template.Description = body.Description;
+            if (body.IsActive.HasValue) template.IsActive = body.IsActive.Value;
+            template.UpdatedAt = DateTimeOffset.UtcNow;
+
+            await BoardTemplateStore.SaveAsync(
+                BuildTemplateKey(template.BoardTemplateId),
+                template,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Updated board template {BoardTemplateId}", template.BoardTemplateId);
+
+            await _messageBus.TryPublishAsync(
+                "license-board-template.updated",
+                new LicenseBoardTemplateUpdatedEvent
+                {
+                    BoardTemplateId = template.BoardTemplateId,
+                    GameServiceId = template.GameServiceId,
+                    Name = template.Name,
+                    GridWidth = template.GridWidth,
+                    GridHeight = template.GridHeight,
+                    BoardContractTemplateId = template.BoardContractTemplateId,
+                    AdjacencyMode = template.AdjacencyMode,
+                    IsActive = template.IsActive,
+                    CreatedAt = template.CreatedAt,
+                    UpdatedAt = template.UpdatedAt,
+                    ChangedFields = new List<string>()
+                },
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.OK, MapTemplateToResponse(template));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating board template {BoardTemplateId}", body.BoardTemplateId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "UpdateBoardTemplate", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board-template/update",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BoardTemplateResponse?)> DeleteBoardTemplateAsync(
+        DeleteBoardTemplateRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(body.BoardTemplateId),
+                cancellationToken);
+
+            if (template == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check for active board instances
+            var activeBoards = await BoardStore.QueryAsync(
+                b => b.BoardTemplateId == body.BoardTemplateId,
+                cancellationToken: cancellationToken);
+
+            if (activeBoards.Count > 0)
+            {
+                _logger.LogWarning(
+                    "Cannot delete board template {BoardTemplateId} with {ActiveCount} active board instances",
+                    body.BoardTemplateId, activeBoards.Count);
+                return (StatusCodes.Conflict, null);
+            }
+
+            await BoardTemplateStore.DeleteAsync(
+                BuildTemplateKey(body.BoardTemplateId),
+                cancellationToken);
+
+            _logger.LogInformation("Deleted board template {BoardTemplateId}", body.BoardTemplateId);
+
+            await _messageBus.TryPublishAsync(
+                "license-board-template.deleted",
+                new LicenseBoardTemplateDeletedEvent
+                {
+                    BoardTemplateId = template.BoardTemplateId,
+                    GameServiceId = template.GameServiceId,
+                    Name = template.Name,
+                    GridWidth = template.GridWidth,
+                    GridHeight = template.GridHeight,
+                    BoardContractTemplateId = template.BoardContractTemplateId,
+                    AdjacencyMode = template.AdjacencyMode,
+                    IsActive = template.IsActive,
+                    CreatedAt = template.CreatedAt,
+                    UpdatedAt = template.UpdatedAt
+                },
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.OK, MapTemplateToResponse(template));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting board template {BoardTemplateId}", body.BoardTemplateId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "DeleteBoardTemplate", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board-template/delete",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region License Definition Management
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, LicenseDefinitionResponse?)> AddLicenseDefinitionAsync(
+        AddLicenseDefinitionRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Adding license definition {Code} to board template {BoardTemplateId}",
+                body.Code, body.BoardTemplateId);
+
+            // Validate board template exists
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(body.BoardTemplateId),
+                cancellationToken);
+
+            if (template == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Validate position within grid bounds
+            if (body.Position.X < 0 || body.Position.X >= template.GridWidth ||
+                body.Position.Y < 0 || body.Position.Y >= template.GridHeight)
+            {
+                _logger.LogWarning(
+                    "Position ({X}, {Y}) is out of bounds for grid {Width}x{Height}",
+                    body.Position.X, body.Position.Y, template.GridWidth, template.GridHeight);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Check max definitions per board
+            var existingDefs = await DefinitionStore.QueryAsync(
+                d => d.BoardTemplateId == body.BoardTemplateId,
+                cancellationToken: cancellationToken);
+
+            if (existingDefs.Count >= _configuration.MaxDefinitionsPerBoard)
+            {
+                _logger.LogWarning(
+                    "Board template {BoardTemplateId} has reached max definitions limit of {Max}",
+                    body.BoardTemplateId, _configuration.MaxDefinitionsPerBoard);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check for duplicate code
+            var existingByCode = existingDefs.FirstOrDefault(d => d.Code == body.Code);
+            if (existingByCode != null)
+            {
+                _logger.LogWarning("Duplicate license code {Code} on board template {BoardTemplateId}",
+                    body.Code, body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check for duplicate position
+            var existingByPos = existingDefs.FirstOrDefault(
+                d => d.PositionX == body.Position.X && d.PositionY == body.Position.Y);
+            if (existingByPos != null)
+            {
+                _logger.LogWarning(
+                    "Duplicate position ({X}, {Y}) on board template {BoardTemplateId}",
+                    body.Position.X, body.Position.Y, body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Validate item template exists
+            try
+            {
+                await _itemClient.GetItemTemplateAsync(
+                    new GetItemTemplateRequest { TemplateId = body.ItemTemplateId },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Item template {ItemTemplateId} not found", body.ItemTemplateId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var definition = new LicenseDefinitionModel
+            {
+                LicenseDefinitionId = Guid.NewGuid(),
+                BoardTemplateId = body.BoardTemplateId,
+                Code = body.Code,
+                PositionX = body.Position.X,
+                PositionY = body.Position.Y,
+                LpCost = body.LpCost,
+                ItemTemplateId = body.ItemTemplateId,
+                Prerequisites = body.Prerequisites?.ToList(),
+                Description = body.Description,
+                Metadata = body.Metadata as Dictionary<string, object>,
+                CreatedAt = now
+            };
+
+            await DefinitionStore.SaveAsync(
+                BuildDefinitionKey(body.BoardTemplateId, body.Code),
+                definition,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Added license definition {Code} at ({X}, {Y}) to board template {BoardTemplateId}",
+                body.Code, body.Position.X, body.Position.Y, body.BoardTemplateId);
+
+            return (StatusCodes.OK, MapDefinitionToResponse(definition));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding license definition {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "AddLicenseDefinition", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/definition/add",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, LicenseDefinitionResponse?)> GetLicenseDefinitionAsync(
+        GetLicenseDefinitionRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var definition = await DefinitionStore.GetAsync(
+                BuildDefinitionKey(body.BoardTemplateId, body.Code),
+                cancellationToken);
+
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            return (StatusCodes.OK, MapDefinitionToResponse(definition));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting license definition {Code} for template {BoardTemplateId}",
+                body.Code, body.BoardTemplateId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "GetLicenseDefinition", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/definition/get",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListLicenseDefinitionsResponse?)> ListLicenseDefinitionsAsync(
+        ListLicenseDefinitionsRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var definitions = await DefinitionStore.QueryAsync(
+                d => d.BoardTemplateId == body.BoardTemplateId,
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.OK, new ListLicenseDefinitionsResponse
+            {
+                BoardTemplateId = body.BoardTemplateId,
+                Definitions = definitions.Select(MapDefinitionToResponse).ToList()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing license definitions for template {BoardTemplateId}", body.BoardTemplateId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "ListLicenseDefinitions", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/definition/list",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, LicenseDefinitionResponse?)> UpdateLicenseDefinitionAsync(
+        UpdateLicenseDefinitionRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var lockHandle = await _lockProvider.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                BuildTemplateLockKey(body.BoardTemplateId),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for template {BoardTemplateId}", body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var definition = await DefinitionStore.GetAsync(
+                BuildDefinitionKey(body.BoardTemplateId, body.Code),
+                cancellationToken);
+
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Update mutable fields
+            if (body.LpCost.HasValue) definition.LpCost = body.LpCost.Value;
+            if (body.Prerequisites != null) definition.Prerequisites = body.Prerequisites.ToList();
+            if (body.Description != null) definition.Description = body.Description;
+            if (body.Metadata != null) definition.Metadata = body.Metadata as Dictionary<string, object>;
+
+            await DefinitionStore.SaveAsync(
+                BuildDefinitionKey(body.BoardTemplateId, body.Code),
+                definition,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Updated license definition {Code} on template {BoardTemplateId}",
+                body.Code, body.BoardTemplateId);
+
+            return (StatusCodes.OK, MapDefinitionToResponse(definition));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating license definition {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "UpdateLicenseDefinition", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/definition/update",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, LicenseDefinitionResponse?)> RemoveLicenseDefinitionAsync(
+        RemoveLicenseDefinitionRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var definition = await DefinitionStore.GetAsync(
+                BuildDefinitionKey(body.BoardTemplateId, body.Code),
+                cancellationToken);
+
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if any board instances have this license unlocked
+            var boardInstances = await BoardStore.QueryAsync(
+                b => b.BoardTemplateId == body.BoardTemplateId,
+                cancellationToken: cancellationToken);
+
+            foreach (var board in boardInstances)
+            {
+                var cache = await BoardCache.GetAsync(
+                    BuildBoardCacheKey(board.BoardId),
+                    cancellationToken);
+
+                if (cache?.UnlockedPositions.Any(u => u.Code == body.Code) == true)
+                {
+                    _logger.LogWarning(
+                        "Cannot remove definition {Code}: unlocked on board {BoardId}",
+                        body.Code, board.BoardId);
+                    return (StatusCodes.Conflict, null);
+                }
+            }
+
+            await DefinitionStore.DeleteAsync(
+                BuildDefinitionKey(body.BoardTemplateId, body.Code),
+                cancellationToken);
+
+            _logger.LogInformation("Removed license definition {Code} from template {BoardTemplateId}",
+                body.Code, body.BoardTemplateId);
+
+            return (StatusCodes.OK, MapDefinitionToResponse(definition));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing license definition {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "RemoveLicenseDefinition", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/definition/remove",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region Board Instance Management
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BoardResponse?)> CreateBoardAsync(
+        CreateBoardRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Creating board for character {CharacterId} from template {BoardTemplateId}",
+                body.CharacterId, body.BoardTemplateId);
+
+            // Validate character exists
+            try
+            {
+                await _characterClient.GetCharacterAsync(
+                    new GetCharacterRequest { CharacterId = body.CharacterId },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Character {CharacterId} not found", body.CharacterId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Validate board template exists and is active
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(body.BoardTemplateId),
+                cancellationToken);
+
+            if (template == null)
+            {
+                _logger.LogWarning("Board template {BoardTemplateId} not found", body.BoardTemplateId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (!template.IsActive)
+            {
+                _logger.LogWarning("Board template {BoardTemplateId} is not active", body.BoardTemplateId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate game service matches
+            if (template.GameServiceId != body.GameServiceId)
+            {
+                _logger.LogWarning(
+                    "Game service mismatch: template belongs to {TemplateGameServiceId} but request specified {RequestGameServiceId}",
+                    template.GameServiceId, body.GameServiceId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Enforce one board per template per character
+            var existingBoard = await BoardStore.GetAsync(
+                BuildBoardByCharacterKey(body.CharacterId, body.BoardTemplateId),
+                cancellationToken);
+
+            if (existingBoard != null)
+            {
+                _logger.LogWarning(
+                    "Character {CharacterId} already has a board for template {BoardTemplateId}",
+                    body.CharacterId, body.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Enforce MaxBoardsPerCharacter
+            var characterBoards = await BoardStore.QueryAsync(
+                b => b.CharacterId == body.CharacterId,
+                cancellationToken: cancellationToken);
+
+            if (characterBoards.Count >= _configuration.MaxBoardsPerCharacter)
+            {
+                _logger.LogWarning(
+                    "Character {CharacterId} has reached max boards limit of {Max}",
+                    body.CharacterId, _configuration.MaxBoardsPerCharacter);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Create inventory container (slot_only, maxSlots = gridWidth * gridHeight)
+            var containerResponse = await _inventoryClient.CreateContainerAsync(
+                new CreateContainerRequest
+                {
+                    OwnerId = body.CharacterId,
+                    OwnerType = ContainerOwnerType.Character,
+                    ContainerType = "license_board",
+                    ConstraintModel = ContainerConstraintModel.SlotOnly,
+                    MaxSlots = template.GridWidth * template.GridHeight
+                },
+                cancellationToken);
+
+            var now = DateTimeOffset.UtcNow;
+            var board = new BoardInstanceModel
+            {
+                BoardId = Guid.NewGuid(),
+                CharacterId = body.CharacterId,
+                BoardTemplateId = body.BoardTemplateId,
+                GameServiceId = body.GameServiceId,
+                ContainerId = containerResponse.ContainerId,
+                CreatedAt = now
+            };
+
+            // Save board instance
+            await BoardStore.SaveAsync(BuildBoardKey(board.BoardId), board, cancellationToken: cancellationToken);
+
+            // Save uniqueness key (character + template)
+            await BoardStore.SaveAsync(
+                BuildBoardByCharacterKey(board.CharacterId, board.BoardTemplateId),
+                board,
+                cancellationToken: cancellationToken);
+
+            // Initialize empty board cache
+            await BoardCache.SaveAsync(
+                BuildBoardCacheKey(board.BoardId),
+                new BoardCacheModel
+                {
+                    BoardId = board.BoardId,
+                    UnlockedPositions = new List<UnlockedLicenseEntry>(),
+                    LastUpdated = now
+                },
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation(
+                "Created board {BoardId} for character {CharacterId} with container {ContainerId}",
+                board.BoardId, board.CharacterId, board.ContainerId);
+
+            await _messageBus.TryPublishAsync(
+                "license-board.created",
+                new LicenseBoardCreatedEvent
+                {
+                    BoardId = board.BoardId,
+                    CharacterId = board.CharacterId,
+                    BoardTemplateId = board.BoardTemplateId,
+                    GameServiceId = board.GameServiceId,
+                    ContainerId = board.ContainerId,
+                    CreatedAt = board.CreatedAt
+                },
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.OK, MapBoardToResponse(board));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating board for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "CreateBoard", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board/create",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BoardResponse?)> GetBoardAsync(
+        GetBoardRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+
+            if (board == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            return (StatusCodes.OK, MapBoardToResponse(board));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting board {BoardId}", body.BoardId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "GetBoard", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board/get",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListBoardsByCharacterResponse?)> ListBoardsByCharacterAsync(
+        ListBoardsByCharacterRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            IReadOnlyList<BoardInstanceModel> boards;
+
+            if (body.GameServiceId.HasValue)
+            {
+                boards = await BoardStore.QueryAsync(
+                    b => b.CharacterId == body.CharacterId && b.GameServiceId == body.GameServiceId.Value,
+                    cancellationToken: cancellationToken);
+            }
+            else
+            {
+                boards = await BoardStore.QueryAsync(
+                    b => b.CharacterId == body.CharacterId,
+                    cancellationToken: cancellationToken);
+            }
+
+            return (StatusCodes.OK, new ListBoardsByCharacterResponse
+            {
+                Boards = boards.Select(MapBoardToResponse).ToList()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing boards for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "ListBoardsByCharacter", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board/list-by-character",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BoardResponse?)> DeleteBoardAsync(
+        DeleteBoardRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var lockHandle = await _lockProvider.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                BuildBoardLockKey(body.BoardId),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for board {BoardId}", body.BoardId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+
+            if (board == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Delete inventory container (destroys all contained items)
+            try
+            {
+                await _inventoryClient.DeleteContainerAsync(
+                    new DeleteContainerRequest { ContainerId = board.ContainerId },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Container {ContainerId} already deleted", board.ContainerId);
+            }
+
+            // Delete board records
+            await BoardStore.DeleteAsync(BuildBoardKey(board.BoardId), cancellationToken);
+            await BoardStore.DeleteAsync(
+                BuildBoardByCharacterKey(board.CharacterId, board.BoardTemplateId),
+                cancellationToken);
+
+            // Invalidate cache
+            await BoardCache.DeleteAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
+
+            _logger.LogInformation("Deleted board {BoardId} for character {CharacterId}",
+                board.BoardId, board.CharacterId);
+
+            await _messageBus.TryPublishAsync(
+                "license-board.deleted",
+                new LicenseBoardDeletedEvent
+                {
+                    BoardId = board.BoardId,
+                    CharacterId = board.CharacterId,
+                    BoardTemplateId = board.BoardTemplateId,
+                    GameServiceId = board.GameServiceId,
+                    ContainerId = board.ContainerId,
+                    CreatedAt = board.CreatedAt
+                },
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.OK, MapBoardToResponse(board));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting board {BoardId}", body.BoardId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "DeleteBoard", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board/delete",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region Gameplay Operations
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, UnlockLicenseResponse?)> UnlockLicenseAsync(
+        UnlockLicenseRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // 1. Acquire distributed lock on board
+            await using var lockHandle = await _lockProvider.LockAsync(
+                StateStoreDefinitions.LicenseLock,
+                BuildBoardLockKey(body.BoardId),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockHandle.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for board {BoardId}", body.BoardId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // 2. Load board instance
+            var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+            if (board == null)
+            {
+                await PublishUnlockFailedAsync(body.BoardId, Guid.Empty, body.LicenseCode,
+                    UnlockFailureReason.BoardNotFound, cancellationToken);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // 3. Load board template
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(board.BoardTemplateId), cancellationToken);
+            if (template == null)
+            {
+                _logger.LogError("Board template {BoardTemplateId} missing for board {BoardId} - data integrity error",
+                    board.BoardTemplateId, body.BoardId);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // 4. Load license definition
+            var definition = await DefinitionStore.GetAsync(
+                BuildDefinitionKey(board.BoardTemplateId, body.LicenseCode), cancellationToken);
+            if (definition == null)
+            {
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.LicenseNotFound, cancellationToken);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // 5-6. Load board cache to check already unlocked
+            var cache = await BoardCache.GetAsync(BuildBoardCacheKey(body.BoardId), cancellationToken)
+                ?? new BoardCacheModel { BoardId = body.BoardId, UnlockedPositions = new List<UnlockedLicenseEntry>() };
+
+            var alreadyUnlocked = cache.UnlockedPositions.Any(u => u.Code == body.LicenseCode);
+            if (alreadyUnlocked)
+            {
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.AlreadyUnlocked, cancellationToken);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // 7. Validate adjacency
+            var isStartingNode = template.StartingNodes.Any(
+                sn => sn.X == definition.PositionX && sn.Y == definition.PositionY);
+
+            if (!isStartingNode)
+            {
+                var hasAdjacentUnlocked = cache.UnlockedPositions.Any(u =>
+                    IsAdjacent(u.PositionX, u.PositionY, definition.PositionX, definition.PositionY, template.AdjacencyMode));
+
+                if (!hasAdjacentUnlocked)
+                {
+                    await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                        UnlockFailureReason.NotAdjacent, cancellationToken);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+
+            // 8. Validate non-adjacent prerequisites
+            if (definition.Prerequisites is { Count: > 0 })
+            {
+                var unlockedCodes = new HashSet<string>(cache.UnlockedPositions.Select(u => u.Code));
+                var missingPrereqs = definition.Prerequisites.Where(p => !unlockedCodes.Contains(p)).ToList();
+
+                if (missingPrereqs.Count > 0)
+                {
+                    _logger.LogInformation(
+                        "Prerequisites not met for {Code} on board {BoardId}: missing {Missing}",
+                        body.LicenseCode, body.BoardId, string.Join(", ", missingPrereqs));
+                    await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                        UnlockFailureReason.PrerequisitesNotMet, cancellationToken);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+
+            // 9. Create contract instance and execute unlock milestone
+            Guid contractInstanceId;
+            try
+            {
+                var contractInstance = await _contractClient.CreateContractInstanceAsync(
+                    new CreateContractInstanceRequest
+                    {
+                        TemplateId = template.BoardContractTemplateId,
+                        Parties = new List<ContractPartyInput>
+                        {
+                            new ContractPartyInput
+                            {
+                                EntityId = board.CharacterId,
+                                EntityType = EntityType.Character,
+                                Role = "licensee"
+                            },
+                            new ContractPartyInput
+                            {
+                                EntityId = board.GameServiceId,
+                                EntityType = EntityType.System,
+                                Role = "licensor"
+                            }
+                        }
+                    },
+                    cancellationToken);
+                contractInstanceId = contractInstance.ContractId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Contract creation failed for unlock of {Code} on board {BoardId}",
+                    body.LicenseCode, body.BoardId);
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.ContractFailed, cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // 10. Load character to get realm context for item creation
+            var character = await _characterClient.GetCharacterAsync(
+                new GetCharacterRequest { CharacterId = board.CharacterId },
+                cancellationToken);
+
+            // 11. Create item instance
+            ItemInstanceResponse itemInstance;
+            try
+            {
+                itemInstance = await _itemClient.CreateItemInstanceAsync(
+                    new CreateItemInstanceRequest
+                    {
+                        TemplateId = definition.ItemTemplateId,
+                        ContainerId = board.ContainerId,
+                        RealmId = character.RealmId,
+                        Quantity = 1
+                    },
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Item creation failed for unlock of {Code} on board {BoardId}",
+                    body.LicenseCode, body.BoardId);
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.ContractFailed, cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // 13. Update board cache
+            cache.UnlockedPositions.Add(new UnlockedLicenseEntry
+            {
+                Code = body.LicenseCode,
+                PositionX = definition.PositionX,
+                PositionY = definition.PositionY,
+                ItemInstanceId = itemInstance.InstanceId,
+                UnlockedAt = DateTimeOffset.UtcNow
+            });
+            cache.LastUpdated = DateTimeOffset.UtcNow;
+
+            await BoardCache.SaveAsync(BuildBoardCacheKey(body.BoardId), cache, cancellationToken: cancellationToken);
+
+            // 14. Publish license.unlocked event
+            await _messageBus.TryPublishAsync(
+                LicenseTopics.LicenseUnlocked,
+                new LicenseUnlockedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    BoardId = body.BoardId,
+                    CharacterId = board.CharacterId,
+                    GameServiceId = board.GameServiceId,
+                    LicenseCode = body.LicenseCode,
+                    Position = new GridPosition { X = definition.PositionX, Y = definition.PositionY },
+                    ItemInstanceId = itemInstance.InstanceId,
+                    ContractInstanceId = contractInstanceId,
+                    LpCost = definition.LpCost
+                },
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation(
+                "Unlocked license {Code} at ({X}, {Y}) on board {BoardId} for character {CharacterId}",
+                body.LicenseCode, definition.PositionX, definition.PositionY, body.BoardId, board.CharacterId);
+
+            // 15. Return success
+            return (StatusCodes.OK, new UnlockLicenseResponse
+            {
+                BoardId = body.BoardId,
+                LicenseCode = body.LicenseCode,
+                Position = new GridPosition { X = definition.PositionX, Y = definition.PositionY },
+                ItemInstanceId = itemInstance.InstanceId,
+                ContractInstanceId = contractInstanceId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unlocking license {LicenseCode} on board {BoardId}",
+                body.LicenseCode, body.BoardId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "UnlockLicense", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/unlock",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
-    /// Implementation of GetBoardTemplate operation.
-    /// TODO: Implement business logic for this method.
+    /// Publishes a license.unlock-failed event.
     /// </summary>
-    public async Task<(StatusCodes, BoardTemplateResponse?)> GetBoardTemplateAsync(GetBoardTemplateRequest body, CancellationToken cancellationToken)
+    private async Task PublishUnlockFailedAsync(
+        Guid boardId, Guid characterId, string licenseCode,
+        UnlockFailureReason reason, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetBoardTemplate operation");
+        await _messageBus.TryPublishAsync(
+            LicenseTopics.LicenseUnlockFailed,
+            new LicenseUnlockFailedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                BoardId = boardId,
+                CharacterId = characterId,
+                LicenseCode = licenseCode,
+                Reason = reason
+            },
+            cancellationToken: cancellationToken);
+    }
 
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CheckUnlockableResponse?)> CheckUnlockableAsync(
+        CheckUnlockableRequest body,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetBoardTemplate not yet implemented");
+            // Load board instance
+            var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+            if (board == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Load template
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(board.BoardTemplateId), cancellationToken);
+            if (template == null)
+            {
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Load definition
+            var definition = await DefinitionStore.GetAsync(
+                BuildDefinitionKey(board.BoardTemplateId, body.LicenseCode), cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Load board cache
+            var cache = await BoardCache.GetAsync(BuildBoardCacheKey(body.BoardId), cancellationToken)
+                ?? new BoardCacheModel { BoardId = body.BoardId, UnlockedPositions = new List<UnlockedLicenseEntry>() };
+
+            // Check adjacency
+            var isStartingNode = template.StartingNodes.Any(
+                sn => sn.X == definition.PositionX && sn.Y == definition.PositionY);
+            var adjacencyMet = isStartingNode || cache.UnlockedPositions.Any(u =>
+                IsAdjacent(u.PositionX, u.PositionY, definition.PositionX, definition.PositionY, template.AdjacencyMode));
+
+            // Check prerequisites
+            var prerequisitesMet = true;
+            if (definition.Prerequisites is { Count: > 0 })
+            {
+                var unlockedCodes = new HashSet<string>(cache.UnlockedPositions.Select(u => u.Code));
+                prerequisitesMet = definition.Prerequisites.All(p => unlockedCodes.Contains(p));
+            }
+
+            // Check LP balance via currency client
+            double? currentLp = null;
+            var lpSufficient = true;
+
+            // LP check is best-effort and advisory only.
+            // Actual LP deduction happens in the contract milestone execution (not here).
+            try
+            {
+                var walletResponse = await _currencyClient.GetOrCreateWalletAsync(
+                    new GetOrCreateWalletRequest
+                    {
+                        OwnerId = board.CharacterId,
+                        OwnerType = WalletOwnerType.Character
+                    },
+                    cancellationToken);
+
+                // Sum all balances as a simple LP approximation
+                // The contract template defines which specific currency to deduct
+                var totalBalance = walletResponse.Balances.Sum(b => b.Amount);
+                currentLp = totalBalance;
+                lpSufficient = totalBalance >= definition.LpCost;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to check LP balance for character {CharacterId}", board.CharacterId);
+                lpSufficient = false;
+            }
+
+            return (StatusCodes.OK, new CheckUnlockableResponse
+            {
+                Unlockable = adjacencyMet && prerequisitesMet && lpSufficient,
+                AdjacencyMet = adjacencyMet,
+                PrerequisitesMet = prerequisitesMet,
+                LpSufficient = lpSufficient,
+                CurrentLp = currentLp,
+                RequiredLp = definition.LpCost
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetBoardTemplate operation");
+            _logger.LogError(ex, "Error checking unlockable for {LicenseCode} on board {BoardId}",
+                body.LicenseCode, body.BoardId);
             await _messageBus.TryPublishErrorAsync(
-                "license",
-                "GetBoardTemplate",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board-template/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+                "license", "CheckUnlockable", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/check-unlockable",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of ListBoardTemplates operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListBoardTemplatesResponse?)> ListBoardTemplatesAsync(ListBoardTemplatesRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BoardStateResponse?)> GetBoardStateAsync(
+        BoardStateRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ListBoardTemplates operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListBoardTemplates not yet implemented");
+            // Load board instance
+            var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+            if (board == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Load template
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(board.BoardTemplateId), cancellationToken);
+            if (template == null)
+            {
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Load all definitions for this template
+            var definitions = await DefinitionStore.QueryAsync(
+                d => d.BoardTemplateId == board.BoardTemplateId,
+                cancellationToken: cancellationToken);
+
+            // Load board cache
+            var cache = await BoardCache.GetAsync(BuildBoardCacheKey(body.BoardId), cancellationToken)
+                ?? new BoardCacheModel { BoardId = body.BoardId, UnlockedPositions = new List<UnlockedLicenseEntry>() };
+
+            var unlockedLookup = cache.UnlockedPositions.ToDictionary(u => u.Code);
+
+            // Compute status for each node
+            var nodes = new List<BoardNodeState>();
+            foreach (var def in definitions)
+            {
+                LicenseStatus status;
+                Guid? itemInstanceId = null;
+
+                if (unlockedLookup.TryGetValue(def.Code, out var unlockedEntry))
+                {
+                    status = LicenseStatus.Unlocked;
+                    itemInstanceId = unlockedEntry.ItemInstanceId;
+                }
+                else
+                {
+                    // Check if unlockable (adjacent or starting node)
+                    var isStartingNode = template.StartingNodes.Any(
+                        sn => sn.X == def.PositionX && sn.Y == def.PositionY);
+                    var hasAdjacentUnlocked = cache.UnlockedPositions.Any(u =>
+                        IsAdjacent(u.PositionX, u.PositionY, def.PositionX, def.PositionY, template.AdjacencyMode));
+
+                    status = (isStartingNode || hasAdjacentUnlocked) ? LicenseStatus.Unlockable : LicenseStatus.Locked;
+                }
+
+                nodes.Add(new BoardNodeState
+                {
+                    Code = def.Code,
+                    Position = new GridPosition { X = def.PositionX, Y = def.PositionY },
+                    LpCost = def.LpCost,
+                    Status = status,
+                    ItemTemplateId = def.ItemTemplateId,
+                    ItemInstanceId = itemInstanceId,
+                    Prerequisites = def.Prerequisites?.ToList(),
+                    Description = def.Description,
+                    Metadata = def.Metadata
+                });
+            }
+
+            return (StatusCodes.OK, new BoardStateResponse
+            {
+                BoardId = body.BoardId,
+                CharacterId = board.CharacterId,
+                BoardTemplateId = board.BoardTemplateId,
+                GridWidth = template.GridWidth,
+                GridHeight = template.GridHeight,
+                Nodes = nodes
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing ListBoardTemplates operation");
+            _logger.LogError(ex, "Error getting board state for {BoardId}", body.BoardId);
             await _messageBus.TryPublishErrorAsync(
-                "license",
-                "ListBoardTemplates",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board-template/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+                "license", "GetBoardState", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board-state",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of UpdateBoardTemplate operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, BoardTemplateResponse?)> UpdateBoardTemplateAsync(UpdateBoardTemplateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, SeedBoardTemplateResponse?)> SeedBoardTemplateAsync(
+        SeedBoardTemplateRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing UpdateBoardTemplate operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UpdateBoardTemplate not yet implemented");
+            _logger.LogInformation(
+                "Seeding board template {BoardTemplateId} with {Count} definitions",
+                body.BoardTemplateId, body.Definitions.Count);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Validate board template exists
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(body.BoardTemplateId), cancellationToken);
+            if (template == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var created = new List<LicenseDefinitionResponse>();
+
+            // Pass 1: Create all definitions without prerequisites
+            foreach (var defRequest in body.Definitions)
+            {
+                // Validate position within grid bounds
+                if (defRequest.Position.X < 0 || defRequest.Position.X >= template.GridWidth ||
+                    defRequest.Position.Y < 0 || defRequest.Position.Y >= template.GridHeight)
+                {
+                    _logger.LogWarning(
+                        "Seed: position ({X}, {Y}) out of bounds for definition {Code}",
+                        defRequest.Position.X, defRequest.Position.Y, defRequest.Code);
+                    continue;
+                }
+
+                var now = DateTimeOffset.UtcNow;
+                var definition = new LicenseDefinitionModel
+                {
+                    LicenseDefinitionId = Guid.NewGuid(),
+                    BoardTemplateId = body.BoardTemplateId,
+                    Code = defRequest.Code,
+                    PositionX = defRequest.Position.X,
+                    PositionY = defRequest.Position.Y,
+                    LpCost = defRequest.LpCost,
+                    ItemTemplateId = defRequest.ItemTemplateId,
+                    Prerequisites = defRequest.Prerequisites?.ToList(),
+                    Description = defRequest.Description,
+                    Metadata = defRequest.Metadata as Dictionary<string, object>,
+                    CreatedAt = now
+                };
+
+                await DefinitionStore.SaveAsync(
+                    BuildDefinitionKey(body.BoardTemplateId, defRequest.Code),
+                    definition,
+                    cancellationToken: cancellationToken);
+
+                created.Add(MapDefinitionToResponse(definition));
+            }
+
+            _logger.LogInformation(
+                "Seeded {Count} definitions for board template {BoardTemplateId}",
+                created.Count, body.BoardTemplateId);
+
+            return (StatusCodes.OK, new SeedBoardTemplateResponse
+            {
+                BoardTemplateId = body.BoardTemplateId,
+                DefinitionsCreated = created.Count,
+                Definitions = created
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing UpdateBoardTemplate operation");
+            _logger.LogError(ex, "Error seeding board template {BoardTemplateId}", body.BoardTemplateId);
             await _messageBus.TryPublishErrorAsync(
-                "license",
-                "UpdateBoardTemplate",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board-template/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+                "license", "SeedBoardTemplate", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board-template/seed",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of DeleteBoardTemplate operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, BoardTemplateResponse?)> DeleteBoardTemplateAsync(DeleteBoardTemplateRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing DeleteBoardTemplate operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeleteBoardTemplate not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing DeleteBoardTemplate operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "DeleteBoardTemplate",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board-template/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of AddLicenseDefinition operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, LicenseDefinitionResponse?)> AddLicenseDefinitionAsync(AddLicenseDefinitionRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing AddLicenseDefinition operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method AddLicenseDefinition not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing AddLicenseDefinition operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "AddLicenseDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/definition/add",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of GetLicenseDefinition operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, LicenseDefinitionResponse?)> GetLicenseDefinitionAsync(GetLicenseDefinitionRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing GetLicenseDefinition operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetLicenseDefinition not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetLicenseDefinition operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "GetLicenseDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/definition/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of ListLicenseDefinitions operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListLicenseDefinitionsResponse?)> ListLicenseDefinitionsAsync(ListLicenseDefinitionsRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing ListLicenseDefinitions operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListLicenseDefinitions not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ListLicenseDefinitions operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "ListLicenseDefinitions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/definition/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of UpdateLicenseDefinition operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, LicenseDefinitionResponse?)> UpdateLicenseDefinitionAsync(UpdateLicenseDefinitionRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing UpdateLicenseDefinition operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UpdateLicenseDefinition not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing UpdateLicenseDefinition operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "UpdateLicenseDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/definition/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of RemoveLicenseDefinition operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, LicenseDefinitionResponse?)> RemoveLicenseDefinitionAsync(RemoveLicenseDefinitionRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing RemoveLicenseDefinition operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method RemoveLicenseDefinition not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing RemoveLicenseDefinition operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "RemoveLicenseDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/definition/remove",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of CreateBoard operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, BoardResponse?)> CreateBoardAsync(CreateBoardRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing CreateBoard operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CreateBoard not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing CreateBoard operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "CreateBoard",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of GetBoard operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, BoardResponse?)> GetBoardAsync(GetBoardRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing GetBoard operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetBoard not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetBoard operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "GetBoard",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of ListBoardsByCharacter operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListBoardsByCharacterResponse?)> ListBoardsByCharacterAsync(ListBoardsByCharacterRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing ListBoardsByCharacter operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListBoardsByCharacter not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ListBoardsByCharacter operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "ListBoardsByCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board/list-by-character",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of DeleteBoard operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, BoardResponse?)> DeleteBoardAsync(DeleteBoardRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing DeleteBoard operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeleteBoard not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing DeleteBoard operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "DeleteBoard",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of UnlockLicense operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, UnlockLicenseResponse?)> UnlockLicenseAsync(UnlockLicenseRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing UnlockLicense operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UnlockLicense not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing UnlockLicense operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "UnlockLicense",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/unlock",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of CheckUnlockable operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, CheckUnlockableResponse?)> CheckUnlockableAsync(CheckUnlockableRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing CheckUnlockable operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CheckUnlockable not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing CheckUnlockable operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "CheckUnlockable",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/check-unlockable",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of GetBoardState operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, BoardStateResponse?)> GetBoardStateAsync(BoardStateRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing GetBoardState operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetBoardState not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetBoardState operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "GetBoardState",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board-state",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of SeedBoardTemplate operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, SeedBoardTemplateResponse?)> SeedBoardTemplateAsync(SeedBoardTemplateRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing SeedBoardTemplate operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method SeedBoardTemplate not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing SeedBoardTemplate operation");
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "SeedBoardTemplate",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/board-template/seed",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
+    #endregion
 }
