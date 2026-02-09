@@ -183,6 +183,17 @@ public class ConnectionState
     }
 
     /// <summary>
+    /// Checks if a service mapping key exists (thread-safe).
+    /// </summary>
+    public bool HasServiceMapping(string endpointKey)
+    {
+        lock (_mappingsLock)
+        {
+            return ServiceMappings.ContainsKey(endpointKey);
+        }
+    }
+
+    /// <summary>
     /// Tries to get a service name from a GUID (thread-safe).
     /// </summary>
     public bool TryGetServiceName(Guid guid, out string? serviceName)

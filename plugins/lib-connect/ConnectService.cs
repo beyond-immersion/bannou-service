@@ -180,7 +180,7 @@ public partial class ConnectService : IConnectService, IDisposable
                 return (StatusCodes.NotFound, null);
             }
 
-            var hasAccess = connection.ConnectionState.ServiceMappings.ContainsKey(endpointKey);
+            var hasAccess = connection.ConnectionState.HasServiceMapping(endpointKey);
 
             if (!hasAccess)
             {
