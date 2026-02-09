@@ -169,6 +169,24 @@ public sealed class RealmProxy
     }
 
     /// <summary>
+    /// Merge a deprecated realm into another realm
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing MergeRealmsResponse on success.</returns>
+    public Task<ApiResponse<MergeRealmsResponse>> MergeRealmsAsync(
+        MergeRealmsRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<MergeRealmsRequest, MergeRealmsResponse>(
+            "/realm/merge", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Check if realm exists and is active
     /// </summary>
     /// <param name="request">The request payload.</param>

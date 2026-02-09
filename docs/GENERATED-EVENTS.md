@@ -378,6 +378,12 @@ This document lists all events defined in Bannou's event schemas.
 | `QuestFailedEvent` | Custom | `quest-failed` | Published when quest fails |
 | `QuestObjectiveProgressedEvent` | Custom | `quest-objective-progressed` | Published when objective progress changes |
 
+### Realm
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `RealmMergedEvent` | Custom | `realm-merged` | Published when a deprecated realm is merged into a... |
+
 ### Realm History
 
 | Event | Type | Likely Topic | Description |

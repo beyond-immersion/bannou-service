@@ -277,6 +277,24 @@ public sealed class LocationProxy
     }
 
     /// <summary>
+    /// Transfer a location to a different realm
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing LocationResponse on success.</returns>
+    public Task<ApiResponse<LocationResponse>> TransferLocationToRealmAsync(
+        TransferLocationToRealmRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<TransferLocationToRealmRequest, LocationResponse>(
+            "/location/transfer-realm", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Deprecate a location
     /// </summary>
     /// <param name="request">The request payload.</param>

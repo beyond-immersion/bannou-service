@@ -44,6 +44,7 @@ info:
     compressEndpoint: /character-encounter/get-compress-data
     compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
     priority: 30
+    templateNamespace: encounters
     description: Memorable interactions and relationship impacts
     decompressEndpoint: /character-encounter/restore-from-archive
     decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'

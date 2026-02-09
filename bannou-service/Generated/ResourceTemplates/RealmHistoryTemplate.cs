@@ -20,7 +20,7 @@ public sealed class RealmHistoryTemplate : ResourceTemplateBase
     public override string SourceType => "realm-history";
 
     /// <inheritdoc />
-    public override string Namespace => "realm-history";
+    public override string Namespace => "lore";
 
     /// <inheritdoc />
     public override IReadOnlyDictionary<string, Type> ValidPaths { get; } = new Dictionary<string, Type>

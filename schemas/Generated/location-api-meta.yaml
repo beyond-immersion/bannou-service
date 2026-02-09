@@ -1236,6 +1236,91 @@ paths:
         by other entities\\nFor safe removal, first deprecate the location, remove all children,\\nthen delete.\\n\",\n  \
         \  \"tags\": [\n        \"Location Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteLocation\"\
         \n}"
+  /location/transfer-realm:
+    post:
+      summary: Transfer a location to a different realm
+      description: |
+        Moves a location from its current realm to a target realm.
+        Updates all realm-scoped indexes (code-index, realm-index, parent/root indexes).
+        The transferred location becomes a root location in the target realm (parent cleared).
+        Returns Conflict if the target realm already has a location with the same code.
+        Does NOT move children — caller is responsible for tree ordering.
+      operationId: transferLocationToRealm
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferLocationToRealmRequest'
+      responses:
+        '200':
+          description: Location transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location or target realm not found
+        '409':
+          description: Target realm already has a location with the same code
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferLocationToRealmRequest\"\
+        ,\n    \"$defs\": {\n        \"TransferLocationToRealmRequest\": {\n            \"description\": \"Request to transfer
+        a location from its current realm to a different realm\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"locationId\",\n                \"targetRealmId\"\n      \
+        \      ],\n            \"properties\": {\n                \"locationId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the location to transfer\"\
+        \n                },\n                \"targetRealmId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"ID of the target realm to transfer the location
+        to\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationResponse\"\
+        ,\n    \"$defs\": {\n        \"LocationResponse\": {\n            \"description\": \"Complete location data returned
+        from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"locationId\",\n                \"realmId\",\n                \"code\",\n \
+        \               \"name\",\n                \"locationType\",\n                \"depth\",\n                \"isDeprecated\"\
+        ,\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n\
+        \                \"locationId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for the location\"\n                },\n       \
+        \         \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
+        \                   \"description\": \"Realm this location belongs to\"\n                },\n                \"code\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for the location
+        within its realm\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n \
+        \                   \"description\": \"Display name of the location\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional description of the location\"\n                },\n                \"locationType\": {\n            \
+        \        \"$ref\": \"#/$defs/LocationType\",\n                    \"description\": \"Type classification of the location\"\
+        \n                },\n                \"parentLocationId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Parent location ID (null for root locations)\"\n                },\n                \"depth\": {\n           \
+        \         \"type\": \"integer\",\n                    \"description\": \"Depth in hierarchy (0 for root locations)\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether this location is deprecated and cannot be used\"\n                },\n     \
+        \           \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
+        deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
+        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
+        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
+        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        \   }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Transfer a location to a different realm\",\n    \"description\": \"Moves
+        a location from its current realm to a target realm.\\nUpdates all realm-scoped indexes (code-index, realm-index,
+        parent/root indexes).\\nThe transferred location becomes a root location in the target realm (parent cleared).\\nReturns
+        Conflict if the target realm already has a location with the same code.\\nDoes NOT move children \\u2014 caller is
+        responsible for tree ordering.\\n\",\n    \"tags\": [\n        \"Location Admin\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"transferLocationToRealm\"\n}"
   /location/deprecate:
     post:
       summary: Deprecate a location
@@ -1900,6 +1985,22 @@ components:
           type: string
           format: uuid
           description: ID of the location to delete
+    TransferLocationToRealmRequest:
+      description: Request to transfer a location from its current realm to a different realm
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      - targetRealmId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to transfer
+        targetRealmId:
+          type: string
+          format: uuid
+          description: ID of the target realm to transfer the location to
     DeprecateLocationRequest:
       description: Request to soft-delete a location by marking it as deprecated
       type: object

@@ -4490,7 +4490,8 @@ public partial class ItemController
             "additionalProperties": false,
             "required": [
                 "items",
-                "totalCount"
+                "totalCount",
+                "wasTruncated"
             ],
             "properties": {
                 "items": {
@@ -4502,7 +4503,12 @@ public partial class ItemController
                 },
                 "totalCount": {
                     "type": "integer",
-                    "description": "Total number of matching items"
+                    "description": "Total number of matching items (actual count, may exceed items returned)"
+                },
+                "wasTruncated": {
+                    "type": "boolean",
+                    "description": "True if the result was truncated due to MaxInstancesPerQuery limit",
+                    "default": false
                 }
             }
         },
@@ -4765,7 +4771,8 @@ public partial class ItemController
             "additionalProperties": false,
             "required": [
                 "items",
-                "totalCount"
+                "totalCount",
+                "wasTruncated"
             ],
             "properties": {
                 "items": {
@@ -4777,7 +4784,12 @@ public partial class ItemController
                 },
                 "totalCount": {
                     "type": "integer",
-                    "description": "Total number of matching items"
+                    "description": "Total number of matching items (actual count, may exceed items returned)"
+                },
+                "wasTruncated": {
+                    "type": "boolean",
+                    "description": "True if the result was truncated due to MaxInstancesPerQuery limit",
+                    "default": false
                 }
             }
         },

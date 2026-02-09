@@ -32,7 +32,7 @@ Des... |
 | [Inventory](#inventory) | 1.0.0 | 16 | Container and inventory management service for games. |
 | [Item](#item) | 1.0.0 | 16 | Item template and instance management service. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [Location](#location) | 1.0.0 | 18 | Location management service for game worlds. |
+| [Location](#location) | 1.0.0 | 19 | Location management service for game worlds. |
 | [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for game worlds. |
 | [Matchmaking](#matchmaking) | 1.0.0 | 11 | Matchmaking service for competitive and casual game matching... |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
@@ -42,7 +42,7 @@ Des... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Puppetmaster](#puppetmaster) | 1.0.0 | 6 | Orchestration service for dynamic behaviors, regional watche... |
 | [Quest](#quest) | 1.0.0 | 17 | Quest system providing objective-based gameplay progression ... |
-| [Realm](#realm) | 1.0.0 | 11 | Realm management service for game worlds. |
+| [Realm](#realm) | 1.0.0 | 12 | Realm management service for game worlds. |
 | [Realm History](#realm-history) | 1.0.0 | 12 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 2.0.0 | 21 | Relationship and relationship type management service for en... |
 | [Resource](#resource) | 1.0.0 | 17 | Resource reference tracking and lifecycle management. |
@@ -425,7 +425,7 @@ Public-facing website service (L3 AppFeatures) for browser-based access to news,
 ## Summary
 
 - **Total services**: 45
-- **Total endpoints**: 625
+- **Total endpoints**: 627
 
 ---
 

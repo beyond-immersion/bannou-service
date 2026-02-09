@@ -1808,66 +1808,69 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListItemsResponse\"\
         ,\n    \"$defs\": {\n        \"ListItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"List of item instances\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
-        \         \"items\",\n                \"totalCount\"\n            ],\n            \"properties\": {\n            \
-        \    \"items\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
-        \      \"$ref\": \"#/$defs/ItemInstanceResponse\"\n                    },\n                    \"description\": \"\
-        List of items\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of matching items\"\n                }\n            }\n   \
-        \     },\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\": \"\
-        Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
-        \    \"instanceId\",\n                \"templateId\",\n                \"containerId\",\n                \"realmId\"\
-        ,\n                \"quantity\",\n                \"originType\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"instanceId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"description\": \"Unique instance identifier\"\n   \
-        \             },\n                \"templateId\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"uuid\",\n                    \"description\": \"Reference to the item template\"\n             \
-        \   },\n                \"containerId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Container holding this item\"\n                },\n          \
-        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
-        \                \"description\": \"Realm this instance exists in\"\n                },\n                \"quantity\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        description\": \"Item quantity\"\n                },\n                \"slotIndex\": {\n                    \"type\"\
-        : \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Slot position in slot-based
-        containers\"\n                },\n                \"slotX\": {\n                    \"type\": \"integer\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"X position in grid-based containers\"\n\
-        \                },\n                \"slotY\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Y position in grid-based containers\"\n           \
-        \     },\n                \"rotated\": {\n                    \"type\": \"boolean\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Whether item is rotated in grid\"\n                },\n          \
-        \      \"currentDurability\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Current durability\"\n                },\n                \"boundToId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Character ID this item is bound to\"\n                },\n       \
-        \         \"boundAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When item was bound\"\n       \
-        \         },\n                \"customStats\": {\n                    \"type\": \"object\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Instance-specific stat modifications\"\n               \
-        \ },\n                \"customName\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Player-assigned custom name\"\n                },\n              \
-        \  \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Other instance-specific data\"\n                },\n                \"originType\"\
-        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
-        instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source entity ID\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Bound contract instance ID. For persistent item-contract bindings or active\\nmulti-step
-        use sessions, this references the controlling contract.\\n\"\n                },\n                \"contractBindingType\"\
-        : {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Type of contract binding. 'session' for multi-step use in progress,\\n'lifecycle'
-        for external orchestrator-managed bindings, null/none otherwise.\\n\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
-        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
-        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        },\n        \"ContractBindingType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type of contract binding on an item instance.\\n- none: No contract
-        bound\\n- session: Temporary binding for multi-step use (managed by Item service)\\n- lifecycle: Persistent binding
-        for status effects, licenses, etc. (managed by external orchestrators)\\n\",\n            \"enum\": [\n          \
-        \      \"none\",\n                \"session\",\n                \"lifecycle\"\n            ]\n        }\n    }\n}"
+        \         \"items\",\n                \"totalCount\",\n                \"wasTruncated\"\n            ],\n        \
+        \    \"properties\": {\n                \"items\": {\n                    \"type\": \"array\",\n                 \
+        \   \"items\": {\n                        \"$ref\": \"#/$defs/ItemInstanceResponse\"\n                    },\n   \
+        \                 \"description\": \"List of items\"\n                },\n                \"totalCount\": {\n    \
+        \                \"type\": \"integer\",\n                    \"description\": \"Total number of matching items (actual
+        count, may exceed items returned)\"\n                },\n                \"wasTruncated\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"description\": \"True if the result was truncated due to MaxInstancesPerQuery
+        limit\",\n                    \"default\": false\n                }\n            }\n        },\n        \"ItemInstanceResponse\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Item instance details\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"instanceId\",\n                \"templateId\",\n        \
+        \        \"containerId\",\n                \"realmId\",\n                \"quantity\",\n                \"originType\"\
+        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"instanceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique instance identifier\"\n                },\n                \"templateId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Reference to the
+        item template\"\n                },\n                \"containerId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Container holding this item\"\
+        \n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Realm this instance exists in\"\n             \
+        \   },\n                \"quantity\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Item quantity\"\n                },\n                \"slotIndex\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Slot position in slot-based containers\"\n                },\n                \"slotX\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"X position
+        in grid-based containers\"\n                },\n                \"slotY\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Y position in grid-based containers\"\
+        \n                },\n                \"rotated\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Whether item is rotated in grid\"\n            \
+        \    },\n                \"currentDurability\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Current durability\"\n                },\n        \
+        \        \"boundToId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Character ID this item is bound to\"\
+        \n                },\n                \"boundAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        When item was bound\"\n                },\n                \"customStats\": {\n                    \"type\": \"object\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Instance-specific stat modifications\"\
+        \n                },\n                \"customName\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Player-assigned custom name\"\n              \
+        \  },\n                \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Other instance-specific data\"\n                },\n   \
+        \             \"originType\": {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"\
+        description\": \"How this item instance was created\"\n                },\n                \"originId\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"contractInstanceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Bound contract instance ID. For persistent item-contract
+        bindings or active\\nmulti-step use sessions, this references the controlling contract.\\n\"\n                },\n\
+        \                \"contractBindingType\": {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Type of contract binding. 'session' for
+        multi-step use in progress,\\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\\n\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\n         \
+        \       },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
+        timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
+        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
+        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
+        on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
+        service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
+        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List items in a container\",\n    \"description\": \"Returns all item instances
         in the specified container.\",\n    \"tags\": [\n        \"Item Query\"\n    ],\n    \"deprecated\": false,\n    \"\
         operationId\": \"listItemsByContainer\"\n}"
@@ -1911,66 +1914,69 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListItemsResponse\"\
         ,\n    \"$defs\": {\n        \"ListItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"List of item instances\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
-        \         \"items\",\n                \"totalCount\"\n            ],\n            \"properties\": {\n            \
-        \    \"items\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
-        \      \"$ref\": \"#/$defs/ItemInstanceResponse\"\n                    },\n                    \"description\": \"\
-        List of items\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of matching items\"\n                }\n            }\n   \
-        \     },\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\": \"\
-        Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
-        \    \"instanceId\",\n                \"templateId\",\n                \"containerId\",\n                \"realmId\"\
-        ,\n                \"quantity\",\n                \"originType\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"instanceId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"description\": \"Unique instance identifier\"\n   \
-        \             },\n                \"templateId\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"uuid\",\n                    \"description\": \"Reference to the item template\"\n             \
-        \   },\n                \"containerId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Container holding this item\"\n                },\n          \
-        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
-        \                \"description\": \"Realm this instance exists in\"\n                },\n                \"quantity\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        description\": \"Item quantity\"\n                },\n                \"slotIndex\": {\n                    \"type\"\
-        : \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Slot position in slot-based
-        containers\"\n                },\n                \"slotX\": {\n                    \"type\": \"integer\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"X position in grid-based containers\"\n\
-        \                },\n                \"slotY\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Y position in grid-based containers\"\n           \
-        \     },\n                \"rotated\": {\n                    \"type\": \"boolean\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Whether item is rotated in grid\"\n                },\n          \
-        \      \"currentDurability\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Current durability\"\n                },\n                \"boundToId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Character ID this item is bound to\"\n                },\n       \
-        \         \"boundAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When item was bound\"\n       \
-        \         },\n                \"customStats\": {\n                    \"type\": \"object\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Instance-specific stat modifications\"\n               \
-        \ },\n                \"customName\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Player-assigned custom name\"\n                },\n              \
-        \  \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Other instance-specific data\"\n                },\n                \"originType\"\
-        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
-        instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source entity ID\"\n                },\n                \"contractInstanceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Bound contract instance ID. For persistent item-contract bindings or active\\nmulti-step
-        use sessions, this references the controlling contract.\\n\"\n                },\n                \"contractBindingType\"\
-        : {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Type of contract binding. 'session' for multi-step use in progress,\\n'lifecycle'
-        for external orchestrator-managed bindings, null/none otherwise.\\n\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
-        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
-        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        },\n        \"ContractBindingType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type of contract binding on an item instance.\\n- none: No contract
-        bound\\n- session: Temporary binding for multi-step use (managed by Item service)\\n- lifecycle: Persistent binding
-        for status effects, licenses, etc. (managed by external orchestrators)\\n\",\n            \"enum\": [\n          \
-        \      \"none\",\n                \"session\",\n                \"lifecycle\"\n            ]\n        }\n    }\n}"
+        \         \"items\",\n                \"totalCount\",\n                \"wasTruncated\"\n            ],\n        \
+        \    \"properties\": {\n                \"items\": {\n                    \"type\": \"array\",\n                 \
+        \   \"items\": {\n                        \"$ref\": \"#/$defs/ItemInstanceResponse\"\n                    },\n   \
+        \                 \"description\": \"List of items\"\n                },\n                \"totalCount\": {\n    \
+        \                \"type\": \"integer\",\n                    \"description\": \"Total number of matching items (actual
+        count, may exceed items returned)\"\n                },\n                \"wasTruncated\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"description\": \"True if the result was truncated due to MaxInstancesPerQuery
+        limit\",\n                    \"default\": false\n                }\n            }\n        },\n        \"ItemInstanceResponse\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Item instance details\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"instanceId\",\n                \"templateId\",\n        \
+        \        \"containerId\",\n                \"realmId\",\n                \"quantity\",\n                \"originType\"\
+        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"instanceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique instance identifier\"\n                },\n                \"templateId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Reference to the
+        item template\"\n                },\n                \"containerId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Container holding this item\"\
+        \n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Realm this instance exists in\"\n             \
+        \   },\n                \"quantity\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Item quantity\"\n                },\n                \"slotIndex\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Slot position in slot-based containers\"\n                },\n                \"slotX\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"X position
+        in grid-based containers\"\n                },\n                \"slotY\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Y position in grid-based containers\"\
+        \n                },\n                \"rotated\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Whether item is rotated in grid\"\n            \
+        \    },\n                \"currentDurability\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Current durability\"\n                },\n        \
+        \        \"boundToId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Character ID this item is bound to\"\
+        \n                },\n                \"boundAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        When item was bound\"\n                },\n                \"customStats\": {\n                    \"type\": \"object\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Instance-specific stat modifications\"\
+        \n                },\n                \"customName\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Player-assigned custom name\"\n              \
+        \  },\n                \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Other instance-specific data\"\n                },\n   \
+        \             \"originType\": {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"\
+        description\": \"How this item instance was created\"\n                },\n                \"originId\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"contractInstanceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Bound contract instance ID. For persistent item-contract
+        bindings or active\\nmulti-step use sessions, this references the controlling contract.\\n\"\n                },\n\
+        \                \"contractBindingType\": {\n                    \"$ref\": \"#/$defs/ContractBindingType\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Type of contract binding. 'session' for
+        multi-step use in progress,\\n'lifecycle' for external orchestrator-managed bindings, null/none otherwise.\\n\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\n         \
+        \       },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
+        timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
+        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
+        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
+        on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
+        service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
+        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List instances of a template\",\n    \"description\": \"Returns item instances
         of the specified template, optionally filtered by realm.\\nUseful for admin queries and analytics.\\n\",\n    \"tags\"\
         : [\n        \"Item Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listItemsByTemplate\"\n}"
@@ -3136,6 +3142,7 @@ components:
       required:
       - items
       - totalCount
+      - wasTruncated
       properties:
         items:
           type: array
@@ -3144,7 +3151,11 @@ components:
           description: List of items
         totalCount:
           type: integer
-          description: Total number of matching items
+          description: Total number of matching items (actual count, may exceed items returned)
+        wasTruncated:
+          type: boolean
+          description: True if the result was truncated due to MaxInstancesPerQuery limit
+          default: false
     BatchGetItemInstancesRequest:
       type: object
       description: Request to get multiple item instances

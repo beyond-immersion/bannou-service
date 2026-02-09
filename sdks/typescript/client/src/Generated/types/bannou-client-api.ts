@@ -17217,8 +17217,13 @@ export interface components {
     ListItemsResponse: {
       /** @description List of items */
       items: components['schemas']['ItemInstanceResponse'][];
-      /** @description Total number of matching items */
+      /** @description Total number of matching items (actual count, may exceed items returned) */
       totalCount: number;
+      /**
+       * @description True if the result was truncated due to MaxInstancesPerQuery limit
+       * @default false
+       */
+      wasTruncated: boolean;
     };
     /** @description Request to list all child locations of a specified parent location */
     ListLocationsByParentRequest: {

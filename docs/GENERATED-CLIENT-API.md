@@ -30,7 +30,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [Bannou Location Service API](#location) | `client.Location` | 18 | Location management service for game worlds. |
+| [Bannou Location Service API](#location) | `client.Location` | 19 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
@@ -40,7 +40,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 6 | Orchestration service for dynamic behaviors, regional watche... |
 | [Bannou Quest Service API](#quest) | `client.Quest` | 17 | Quest system providing objective-based gameplay progression ... |
-| [Bannou Realm Service API](#realm) | `client.Realm` | 11 | Realm management service for game worlds. |
+| [Bannou Realm Service API](#realm) | `client.Realm` | 12 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 21 | Relationship and relationship type management service for en... |
 | [Resource Lifecycle API](#resource) | `client.Resource` | 17 | Resource reference tracking and lifecycle management. |
@@ -1070,6 +1070,7 @@ Location management service for game worlds.
 | `SetlocationparentAsync` | `SetLocationParentRequest` | `LocationResponse` | Set or change the parent of a location |
 | `RemovelocationparentAsync` | `RemoveLocationParentRequest` | `LocationResponse` | Remove parent from a location (make it a root location) |
 | `DeleteLocationEventAsync` | `DeleteLocationRequest` | *(fire-and-forget)* | Delete location |
+| `TransferlocationtorealmAsync` | `TransferLocationToRealmRequest` | `LocationResponse` | Transfer a location to a different realm |
 | `DeprecatelocationAsync` | `DeprecateLocationRequest` | `LocationResponse` | Deprecate a location |
 | `UndeprecatelocationAsync` | `UndeprecateLocationRequest` | `LocationResponse` | Restore a deprecated location |
 | `SeedlocationsAsync` | `SeedLocationsRequest` | `SeedLocationsResponse` | Seed locations from configuration |
@@ -1430,6 +1431,7 @@ Realm management service for game worlds.
 | `DeleteRealmEventAsync` | `DeleteRealmRequest` | *(fire-and-forget)* | Delete realm |
 | `DeprecaterealmAsync` | `DeprecateRealmRequest` | `RealmResponse` | Deprecate a realm |
 | `UndeprecaterealmAsync` | `UndeprecateRealmRequest` | `RealmResponse` | Restore a deprecated realm |
+| `MergerealmsAsync` | `MergeRealmsRequest` | `MergeRealmsResponse` | Merge a deprecated realm into another realm |
 | `SeedrealmsAsync` | `SeedRealmsRequest` | `SeedRealmsResponse` | Seed realms from configuration |
 
 ---
@@ -1913,7 +1915,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 44
-- **Total methods**: 619
+- **Total methods**: 621
 
 ---
 

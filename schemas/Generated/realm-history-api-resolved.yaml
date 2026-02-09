@@ -51,6 +51,7 @@ info:
     compressEndpoint: /realm-history/get-compress-data
     compressPayloadTemplate: '{"realmId": "{{resourceId}}"}'
     priority: 0
+    templateNamespace: lore
     description: Realm historical events and lore elements
     decompressEndpoint: /realm-history/restore-from-archive
     decompressPayloadTemplate: '{"realmId": "{{resourceId}}", "data": "{{data}}"}'

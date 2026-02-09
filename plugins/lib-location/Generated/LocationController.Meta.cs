@@ -3105,6 +3105,203 @@ public partial class LocationController
 
     #endregion
 
+    #region Meta Endpoints for TransferLocationToRealm
+
+    private static readonly string _TransferLocationToRealm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TransferLocationToRealmRequest",
+    "$defs": {
+        "TransferLocationToRealmRequest": {
+            "description": "Request to transfer a location from its current realm to a different realm",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "targetRealmId"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the location to transfer"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the target realm to transfer the location to"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferLocationToRealm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LocationResponse",
+    "$defs": {
+        "LocationResponse": {
+            "description": "Complete location data returned from API operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "realmId",
+                "code",
+                "name",
+                "locationType",
+                "depth",
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the location"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this location belongs to"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the location within its realm"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the location"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional description of the location"
+                },
+                "locationType": {
+                    "$ref": "#/$defs/LocationType",
+                    "description": "Type classification of the location"
+                },
+                "parentLocationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Parent location ID (null for root locations)"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in hierarchy (0 for root locations)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this location is deprecated and cannot be used"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this location was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional metadata for the location (JSON)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the location was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the location was last updated"
+                }
+            }
+        },
+        "LocationType": {
+            "type": "string",
+            "description": "Type classification for locations",
+            "enum": [
+                "CONTINENT",
+                "REGION",
+                "CITY",
+                "DISTRICT",
+                "BUILDING",
+                "ROOM",
+                "LANDMARK",
+                "WILDERNESS",
+                "DUNGEON",
+                "OTHER"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferLocationToRealm_Info = """
+{
+    "summary": "Transfer a location to a different realm",
+    "description": "Moves a location from its current realm to a target realm.\nUpdates all realm-scoped indexes (code-index, realm-index, parent/root indexes).\nThe transferred location becomes a root location in the target realm (parent cleared).\nReturns Conflict if the target realm already has a location with the same code.\nDoes NOT move children \u2014 caller is responsible for tree ordering.\n",
+    "tags": [
+        "Location Admin"
+    ],
+    "deprecated": false,
+    "operationId": "transferLocationToRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for TransferLocationToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/transfer-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferLocationToRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/transfer-realm",
+            _TransferLocationToRealm_Info));
+
+    /// <summary>Returns request schema for TransferLocationToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/transfer-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferLocationToRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/transfer-realm",
+            "request-schema",
+            _TransferLocationToRealm_RequestSchema));
+
+    /// <summary>Returns response schema for TransferLocationToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/transfer-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferLocationToRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/transfer-realm",
+            "response-schema",
+            _TransferLocationToRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for TransferLocationToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/transfer-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferLocationToRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/transfer-realm",
+            _TransferLocationToRealm_Info,
+            _TransferLocationToRealm_RequestSchema,
+            _TransferLocationToRealm_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for DeprecateLocation
 
     private static readonly string _DeprecateLocation_RequestSchema = """

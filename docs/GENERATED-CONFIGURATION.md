@@ -322,6 +322,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS` | int | `600` | TTL in seconds for backstory cache entries. Backstory data i... |
+| `CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for distributed locks during index and ba... |
+| `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | int | `100` | Maximum number of backstory elements allowed per character. ... |
 
 ### Character Personality
 
@@ -550,6 +552,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MAPPING_EVENT_AGGREGATION_WINDOW_MS` | int | `100` | Window in milliseconds for batching rapid updates into singl... |
 | `MAPPING_INLINE_PAYLOAD_MAX_BYTES` | int | `65536` | Payloads larger than this are stored via lib-asset reference |
 | `MAPPING_MAX_AFFORDANCE_CANDIDATES` | int | `1000` | Maximum candidate points to evaluate in affordance queries |
+| `MAPPING_MAX_BUFFER_FLUSH_RETRIES` | int | `3` | Maximum retry attempts for flushing spatial change buffers b... |
 | `MAPPING_MAX_CHECKOUT_DURATION_SECONDS` | int | `1800` | Maximum duration for authoring checkout locks |
 | `MAPPING_MAX_OBJECTS_PER_QUERY` | int | `5000` | Maximum objects returned in a single query |
 | `MAPPING_MAX_PAYLOADS_PER_PUBLISH` | int | `100` | Maximum payloads in single publish or ingest event |
@@ -722,7 +725,9 @@ Final ... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `PERMISSION_CACHE_TTL_SECONDS` | int | `0` | In-memory permission cache TTL in seconds. Cached capabiliti... |
 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | int | `50` | Maximum number of concurrent session recompilations during s... |
+| `PERMISSION_SESSION_DATA_TTL_SECONDS` | int | `86400` | Redis TTL in seconds for session permission data keys (state... |
 
 ### Puppetmaster
 
@@ -749,6 +754,19 @@ Final ... |
 | `QUEST_PREREQUISITE_VALIDATION_MODE` | string | `CHECK_ALL` | Controls prerequisite validation behavior.
 CHECK_ALL (defaul... |
 | `QUEST_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL for objective progress cache |
+
+### Realm
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `REALM_MERGE_PAGE_SIZE` | int | `50` | Page size for paginated entity migration during realm merge ... |
+
+### Realm History
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for distributed locks during index and lo... |
+| `REALM_HISTORY_MAX_LORE_ELEMENTS` | int | `100` | Maximum number of lore elements allowed per realm. Prevents ... |
 
 ### Relationship
 
@@ -947,9 +965,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 720
+- **Total properties**: 728
 - **Required (no default)**: 51
-- **Optional (has default)**: 669
+- **Optional (has default)**: 677
 
 ## Environment Variable Naming Convention
 

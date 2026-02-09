@@ -1424,6 +1424,162 @@ public partial class RealmController
 
     #endregion
 
+    #region Meta Endpoints for MergeRealms
+
+    private static readonly string _MergeRealms_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MergeRealmsRequest",
+    "$defs": {
+        "MergeRealmsRequest": {
+            "description": "Request to migrate all entities from a deprecated realm into a target realm",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sourceRealmId",
+                "targetRealmId"
+            ],
+            "properties": {
+                "sourceRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the deprecated realm to merge from (must be deprecated)"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm to merge into (must exist)"
+                },
+                "deleteAfterMerge": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, hard-delete the source realm after successful merge (skipped if any failures)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MergeRealms_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MergeRealmsResponse",
+    "$defs": {
+        "MergeRealmsResponse": {
+            "description": "Result of a realm merge operation including per-entity-type migration statistics",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sourceRealmId",
+                "targetRealmId",
+                "speciesMigrated",
+                "speciesFailed",
+                "locationsMigrated",
+                "locationsFailed",
+                "charactersMigrated",
+                "charactersFailed",
+                "sourceDeleted"
+            ],
+            "properties": {
+                "sourceRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the source realm that was merged from"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the target realm that entities were merged into"
+                },
+                "speciesMigrated": {
+                    "type": "integer",
+                    "description": "Number of species successfully added to target realm and removed from source"
+                },
+                "speciesFailed": {
+                    "type": "integer",
+                    "description": "Number of species that failed to migrate"
+                },
+                "locationsMigrated": {
+                    "type": "integer",
+                    "description": "Number of locations successfully transferred to target realm"
+                },
+                "locationsFailed": {
+                    "type": "integer",
+                    "description": "Number of locations that failed to transfer"
+                },
+                "charactersMigrated": {
+                    "type": "integer",
+                    "description": "Number of characters successfully transferred to target realm"
+                },
+                "charactersFailed": {
+                    "type": "integer",
+                    "description": "Number of characters that failed to transfer"
+                },
+                "sourceDeleted": {
+                    "type": "boolean",
+                    "description": "Whether the source realm was hard-deleted after merge"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MergeRealms_Info = """
+{
+    "summary": "Merge a deprecated realm into another realm",
+    "description": "Migrates all entities (species, locations, characters) from a deprecated\nsource realm into a target realm. Migration order: species first (add target\nrealm association), then locations (root-first tree moves), then characters\n(bulk transfer). Continues on individual failures, reporting per-entity-type\ncounts. Optionally deletes the source realm after successful migration\n(skipped if any failures occurred).\n\nMerge from VOID realm is blocked (VOID is system infrastructure).\nMerge into VOID realm is allowed (intentionally orphaning entities).\n",
+    "tags": [
+        "Realm Admin"
+    ],
+    "deprecated": false,
+    "operationId": "mergeRealms"
+}
+""";
+
+    /// <summary>Returns endpoint information for MergeRealms</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/merge/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRealms_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Realm",
+            "POST",
+            "/realm/merge",
+            _MergeRealms_Info));
+
+    /// <summary>Returns request schema for MergeRealms</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/merge/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRealms_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/merge",
+            "request-schema",
+            _MergeRealms_RequestSchema));
+
+    /// <summary>Returns response schema for MergeRealms</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/merge/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRealms_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/merge",
+            "response-schema",
+            _MergeRealms_ResponseSchema));
+
+    /// <summary>Returns full schema for MergeRealms</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/merge/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRealms_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/merge",
+            _MergeRealms_Info,
+            _MergeRealms_RequestSchema,
+            _MergeRealms_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for RealmExists
 
     private static readonly string _RealmExists_RequestSchema = """

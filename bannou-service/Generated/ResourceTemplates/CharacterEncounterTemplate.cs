@@ -20,7 +20,7 @@ public sealed class CharacterEncounterTemplate : ResourceTemplateBase
     public override string SourceType => "character-encounter";
 
     /// <inheritdoc />
-    public override string Namespace => "character-encounter";
+    public override string Namespace => "encounters";
 
     /// <inheritdoc />
     public override IReadOnlyDictionary<string, Type> ValidPaths { get; } = new Dictionary<string, Type>
