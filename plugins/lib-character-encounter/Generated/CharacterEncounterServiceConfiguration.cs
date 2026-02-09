@@ -66,12 +66,6 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Server salt for GUID generation. Must be shared across all instances for encounter GUIDs to work correctly. Change in production.
-    /// Environment variable: CHARACTER_ENCOUNTER_SERVER_SALT
-    /// </summary>
-    public string ServerSalt { get; set; } = "bannou-dev-encounter-salt-change-in-production";
-
-    /// <summary>
     /// Enable time-based memory decay for encounter perspectives
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED
     /// </summary>
@@ -186,6 +180,20 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     /// Environment variable: CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP
     /// </summary>
     public bool SeedBuiltInTypesOnStartup { get; set; } = true;
+
+    /// <summary>
+    /// TTL in minutes for the in-memory encounter data cache used by Actor behavior execution
+    /// Environment variable: CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int EncounterCacheTtlMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum encounter results loaded per cache query for Actor behavior execution
+    /// Environment variable: CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 500)]
+    public int EncounterCacheMaxResultsPerQuery { get; set; } = 50;
 
     /// <summary>
     /// Time window in minutes for duplicate encounter detection. Encounters with the same participants, type, and timestamp within this window are considered duplicates.

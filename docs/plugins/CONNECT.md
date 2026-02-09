@@ -102,7 +102,6 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `SessionTtlSeconds` | `CONNECT_SESSION_TTL_SECONDS` | `86400` | Session TTL in Redis (24 hours) |
 | `HeartbeatTtlSeconds` | `CONNECT_HEARTBEAT_TTL_SECONDS` | `300` | Heartbeat data TTL (5 minutes) |
 | `ReconnectionWindowSeconds` | `CONNECT_RECONNECTION_WINDOW_SECONDS` | `300` | Reconnection grace period (5 minutes) |
-| `HttpClientTimeoutSeconds` | `CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS` | `120` | HTTP client timeout for backend service calls |
 | `RpcCleanupIntervalSeconds` | `CONNECT_RPC_CLEANUP_INTERVAL_SECONDS` | `30` | Interval between pending RPC cleanup runs |
 | `DefaultRpcTimeoutSeconds` | `CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS` | `30` | Default timeout for RPC calls when not specified |
 | `ConnectionCleanupIntervalSeconds` | `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | `30` | Interval between connection cleanup runs |
@@ -400,17 +399,13 @@ Connection Mode Behavior Matrix
 
 ## Stubs & Unimplemented Features
 
-1. **Encrypted flag (0x02)**: The `MessageFlags.Encrypted` bit is defined but no encryption/decryption logic exists. Messages with this flag are processed as-is without any payload transformation.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/171 -->
+1. ~~**Encrypted flag (0x02)**~~: **RESOLVED** (2026-02-08) - Closed as not planned ([#171](https://github.com/beyond-immersion/bannou-service/issues/171)). Implementing encryption at the protocol layer violates zero-copy routing. TLS handles transport encryption; E2E encryption is a client SDK concern.
 
-2. **Compressed flag (0x04)**: The `MessageFlags.Compressed` bit is defined but no gzip decompression is performed. Compressed payloads are forwarded raw to backend services.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/172 -->
+2. ~~**Compressed flag (0x04)**~~: **RESOLVED** (2026-02-08) - Closed as not planned ([#172](https://github.com/beyond-immersion/bannou-service/issues/172)). Implementing compression at the protocol layer violates zero-copy routing. WSS permessage-deflate handles transport compression.
 
-3. **Heartbeat sending**: No server-to-client WebSocket ping/pong heartbeat is implemented. `HeartbeatIntervalSeconds` controls how often the server records liveness to Redis (via `UpdateSessionHeartbeatAsync` in the message receive loop), but no periodic ping frames are sent to detect dead client connections.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/175 -->
+3. ~~**Heartbeat sending**~~: **RESOLVED** (2026-02-08) - Closed as completed ([#175](https://github.com/beyond-immersion/bannou-service/issues/175)). Already handled by `KeepAliveInterval` (30s RFC 6455 pings) configured in Program.cs. `HeartbeatIntervalSeconds` correctly controls Redis liveness tracking only.
 
-4. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/178 -->
+4. ~~**HighPriority flag (0x08)**~~: **RESOLVED** (2026-02-08) - Closed as not planned ([#178](https://github.com/beyond-immersion/bannou-service/issues/178)). Dead code with no queue, no consumers, no use case. Speculative flag that was never needed.
 
 ---
 
@@ -427,7 +422,7 @@ Connection Mode Behavior Matrix
 
 1. ~~**Admin error forwarding broken for non-reconnected sessions**~~: FIXED - Added `connectionState.UserRoles = userRoles` after `ConnectionState` creation in `HandleWebSocketCommunicationAsync`.
 
-2. ~~**`IHttpClientFactory` injected but `CreateClient` never called**~~: FIXED - Removed dead `_httpClientFactory` field, constructor parameter, `HttpClientName` constant, static header fields, and named client registration from plugin. `HttpClientTimeoutSeconds` config property remains in schema (dead config - separate cleanup).
+2. ~~**`IHttpClientFactory` injected but `CreateClient` never called**~~: FIXED - Removed dead `_httpClientFactory` field, constructor parameter, `HttpClientName` constant, static header fields, named client registration from plugin, and `HttpClientTimeoutSeconds` config property from schema.
 
 ### Intentional Quirks
 
@@ -467,7 +462,6 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Pending Design Review
 - **Multi-instance broadcast** - [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181) - Requires design decisions on message deduplication, acknowledgment semantics, mode enforcement, and performance trade-offs (2026-01-31)
-- **Trace context propagation** - [Issue #184](https://github.com/beyond-immersion/bannou-service/issues/184) - Both proposed options (header extension, JSON injection) break protocol or zero-copy; server-side tracing sufficient for launch (2026-01-31)
 - **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact; no production consumers yet (2026-02-08)
 
 ### Closed (Not Planned)
@@ -475,6 +469,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Compressed flag (0x04)** - [Issue #172](https://github.com/beyond-immersion/bannou-service/issues/172) - CLOSED: violates zero-copy routing; WSS has permessage-deflate for transport compression (2026-02-08)
 - **Heartbeat sending** - [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) - CLOSED: already handled by KeepAliveInterval (30s RFC 6455 pings) configured in Program.cs (2026-02-08)
 - **HighPriority flag (0x08)** - [Issue #178](https://github.com/beyond-immersion/bannou-service/issues/178) - CLOSED: dead code with no queue, no consumers, no use case; speculative flag (2026-02-08)
+- **Trace context propagation** - [Issue #184](https://github.com/beyond-immersion/bannou-service/issues/184) - CLOSED: SessionID already serves as correlation key; returned via CapabilityManifestEvent, propagated through mesh via X-Bannou-Session-Id header; no protocol change needed (2026-02-09)
 
 ### Completed
 

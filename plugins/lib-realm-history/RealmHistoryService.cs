@@ -1149,7 +1149,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         {
             var topElements = loreData.Elements
                 .OrderByDescending(e => e.Strength)
-                .Take(10);
+                .Take(_configuration.ArchiveSummaryMaxLorePoints);
 
             foreach (var element in topElements)
             {
@@ -1166,7 +1166,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         {
             var topParticipations = participations
                 .OrderByDescending(p => p.Impact)
-                .Take(10);
+                .Take(_configuration.ArchiveSummaryMaxHistoricalEvents);
 
             foreach (var participation in topParticipations)
             {

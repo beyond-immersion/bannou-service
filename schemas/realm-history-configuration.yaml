@@ -20,6 +20,21 @@ x-service-configuration:
       description: Maximum number of lore elements allowed per realm. Prevents unbounded growth from repeated AddLoreElement or SetLore calls. Returns BadRequest when limit would be exceeded.
       default: 100
       env: REALM_HISTORY_MAX_LORE_ELEMENTS
+    # Archive Summary Limits
+    ArchiveSummaryMaxLorePoints:
+      type: integer
+      description: Maximum number of key lore points to include in archive text summaries generated during realm compression. Higher values produce more detailed archives.
+      minimum: 1
+      maximum: 50
+      default: 10
+      env: REALM_HISTORY_ARCHIVE_SUMMARY_MAX_LORE_POINTS
+    ArchiveSummaryMaxHistoricalEvents:
+      type: integer
+      description: Maximum number of major historical events to include in archive text summaries generated during realm compression. Higher values produce more detailed archives.
+      minimum: 1
+      maximum: 50
+      default: 10
+      env: REALM_HISTORY_ARCHIVE_SUMMARY_MAX_HISTORICAL_EVENTS
     # Concurrency Control
     IndexLockTimeoutSeconds:
       type: integer

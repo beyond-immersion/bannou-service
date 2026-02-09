@@ -157,12 +157,6 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public int ReconnectionWindowSeconds { get; set; } = 300;
 
     /// <summary>
-    /// Timeout in seconds for HTTP client requests to backend services
-    /// Environment variable: CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS
-    /// </summary>
-    public int HttpClientTimeoutSeconds { get; set; } = 120;
-
-    /// <summary>
     /// Interval in seconds between pending RPC cleanup runs
     /// Environment variable: CONNECT_RPC_CLEANUP_INTERVAL_SECONDS
     /// </summary>

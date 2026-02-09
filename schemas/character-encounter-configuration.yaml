@@ -14,11 +14,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    ServerSalt:
-      type: string
-      description: Server salt for GUID generation. Must be shared across all instances for encounter GUIDs to work correctly. Change in production.
-      env: CHARACTER_ENCOUNTER_SERVER_SALT
-      default: "bannou-dev-encounter-salt-change-in-production"
     MemoryDecayEnabled:
       type: boolean
       description: Enable time-based memory decay for encounter perspectives
@@ -119,6 +114,20 @@ x-service-configuration:
       description: Automatically seed built-in encounter types on service startup
       env: CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP
       default: true
+    EncounterCacheTtlMinutes:
+      type: integer
+      description: TTL in minutes for the in-memory encounter data cache used by Actor behavior execution
+      env: CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES
+      default: 5
+      minimum: 1
+      maximum: 60
+    EncounterCacheMaxResultsPerQuery:
+      type: integer
+      description: Maximum encounter results loaded per cache query for Actor behavior execution
+      env: CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY
+      default: 50
+      minimum: 10
+      maximum: 500
     DuplicateTimestampToleranceMinutes:
       type: integer
       description: Time window in minutes for duplicate encounter detection. Encounters with the same participants, type, and timestamp within this window are considered duplicates.

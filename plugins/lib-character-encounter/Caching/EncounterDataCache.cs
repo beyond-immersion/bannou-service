@@ -24,22 +24,21 @@ public sealed class EncounterDataCache : IEncounterDataCache
     private readonly ConcurrentDictionary<string, CachedHasMet> _hasMetCache = new();
     private readonly ConcurrentDictionary<string, CachedEncounterList> _pairEncounterCache = new();
 
-    // Default 5 minute TTL
-    // TODO: Add configuration property to CharacterEncounterServiceConfiguration schema
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
-
-    // Max results per query
-    private const int MaxEncounterResultsPerQuery = 50;
+    private readonly TimeSpan _cacheTtl;
+    private readonly int _maxEncounterResultsPerQuery;
 
     /// <summary>
     /// Creates a new encounter data cache.
     /// </summary>
     public EncounterDataCache(
         IServiceScopeFactory scopeFactory,
-        ILogger<EncounterDataCache> logger)
+        ILogger<EncounterDataCache> logger,
+        CharacterEncounterServiceConfiguration configuration)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _cacheTtl = TimeSpan.FromMinutes(configuration.Encounter_cacheTtlMinutes);
+        _maxEncounterResultsPerQuery = configuration.EncounterCacheMaxResultsPerQuery;
     }
 
     /// <inheritdoc/>
@@ -64,13 +63,13 @@ public sealed class EncounterDataCache : IEncounterDataCache
                 new QueryByCharacterRequest
                 {
                     CharacterId = characterId,
-                    PageSize = MaxEncounterResultsPerQuery
+                    PageSize = _maxEncounterResultsPerQuery
                 },
                 ct);
 
             if (response != null)
             {
-                var newCached = new CachedEncounterList(response, DateTimeOffset.UtcNow.Add(CacheTtl));
+                var newCached = new CachedEncounterList(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
                 _encounterListCache[characterId] = newCached;
                 _logger.LogDebug("Cached {Count} encounters for character {CharacterId}",
                     response.TotalCount, characterId);
@@ -121,7 +120,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
 
             if (response != null)
             {
-                var newCached = new CachedSentiment(response, DateTimeOffset.UtcNow.Add(CacheTtl));
+                var newCached = new CachedSentiment(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
                 _sentimentCache[cacheKey] = newCached;
                 _logger.LogDebug("Cached sentiment {Sentiment} for {CharacterId} toward {TargetId}",
                     response.Sentiment, characterId, targetCharacterId);
@@ -174,7 +173,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
 
             if (response != null)
             {
-                var newCached = new CachedHasMet(response, DateTimeOffset.UtcNow.Add(CacheTtl));
+                var newCached = new CachedHasMet(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
                 _hasMetCache[cacheKey] = newCached;
                 _logger.LogDebug("Cached HasMet={HasMet} for {CharacterId} and {TargetId}",
                     response.HasMet, characterId, targetCharacterId);
@@ -222,13 +221,13 @@ public sealed class EncounterDataCache : IEncounterDataCache
                 {
                     CharacterIdA = characterIdA,
                     CharacterIdB = characterIdB,
-                    PageSize = MaxEncounterResultsPerQuery
+                    PageSize = _maxEncounterResultsPerQuery
                 },
                 ct);
 
             if (response != null)
             {
-                var newCached = new CachedEncounterList(response, DateTimeOffset.UtcNow.Add(CacheTtl));
+                var newCached = new CachedEncounterList(response, DateTimeOffset.UtcNow.Add(_cacheTtl));
                 _pairEncounterCache[cacheKey] = newCached;
                 _logger.LogDebug("Cached {Count} encounters between {CharA} and {CharB}",
                     response.TotalCount, characterIdA, characterIdB);

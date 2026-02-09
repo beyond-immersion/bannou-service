@@ -60,6 +60,20 @@ public class RealmHistoryServiceConfiguration : IServiceConfiguration
     public int MaxLoreElements { get; set; } = 100;
 
     /// <summary>
+    /// Maximum number of key lore points to include in archive text summaries generated during realm compression. Higher values produce more detailed archives.
+    /// Environment variable: REALM_HISTORY_ARCHIVE_SUMMARY_MAX_LORE_POINTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
+    public int ArchiveSummaryMaxLorePoints { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum number of major historical events to include in archive text summaries generated during realm compression. Higher values produce more detailed archives.
+    /// Environment variable: REALM_HISTORY_ARCHIVE_SUMMARY_MAX_HISTORICAL_EVENTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
+    public int ArchiveSummaryMaxHistoricalEvents { get; set; } = 10;
+
+    /// <summary>
     /// Timeout in seconds for distributed locks during index and lore write operations. Matches established patterns in Currency, Inventory, and Contract services.
     /// Environment variable: REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS
     /// </summary>

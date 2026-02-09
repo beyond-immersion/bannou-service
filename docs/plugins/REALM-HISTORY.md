@@ -79,6 +79,8 @@ This plugin does not consume external events.
 |----------|---------|---------|---------|
 | `ForceServiceId` | `REALM_HISTORY_FORCE_SERVICE_ID` | null | Framework-level override for service ID |
 | `MaxLoreElements` | `REALM_HISTORY_MAX_LORE_ELEMENTS` | 100 | Maximum lore elements per realm. Returns BadRequest when exceeded. |
+| `ArchiveSummaryMaxLorePoints` | `REALM_HISTORY_ARCHIVE_SUMMARY_MAX_LORE_POINTS` | 10 | Maximum key lore points in archive text summaries during realm compression |
+| `ArchiveSummaryMaxHistoricalEvents` | `REALM_HISTORY_ARCHIVE_SUMMARY_MAX_HISTORICAL_EVENTS` | 10 | Maximum major historical events in archive text summaries during realm compression |
 | `IndexLockTimeoutSeconds` | `REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | 15 | Distributed lock timeout for DualIndexHelper and BackstoryStorageHelper write operations |
 
 ---
@@ -88,10 +90,10 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<RealmHistoryService>` | Scoped | Structured logging |
-| `RealmHistoryServiceConfiguration` | Singleton | Service config (MaxLoreElements limit, IndexLockTimeoutSeconds, ForceServiceId) |
+| `RealmHistoryServiceConfiguration` | Singleton | Service config (MaxLoreElements limit, ArchiveSummaryMaxLorePoints, ArchiveSummaryMaxHistoricalEvents, IndexLockTimeoutSeconds, ForceServiceId) |
 | `IStateStoreFactory` | Singleton | State store access (passed to helpers) |
 | `IMessageBus` | Scoped | Event publishing |
-| `IEventConsumer` | Scoped | Event registration (no handlers currently) |
+| `IEventConsumer` | Singleton | Event registration (no handlers currently; `x-event-subscriptions` is empty) |
 | `IDistributedLockProvider` | Singleton | Distributed locking for helper write operations |
 | `DualIndexHelper<RealmParticipationData>` | Instance | Participation dual-index storage (instantiated in constructor) |
 | `BackstoryStorageHelper<RealmLoreData, RealmLoreElementData>` | Instance | Lore element storage (instantiated in constructor) |
@@ -123,7 +125,7 @@ Service lifetime is **Scoped** (per-request). The helper classes are instantiate
 
 ### Compression Operations (2 endpoints)
 
-- **GetCompressData** (`/realm-history/get-compress-data`): Returns complete realm history data (participations + lore) for archive storage. Called by Resource service during realm compression. Returns 404 only if BOTH participations and lore are missing. Includes generated text summaries in the archive.
+- **GetCompressData** (`/realm-history/get-compress-data`): Returns complete realm history data (participations + lore) for archive storage. Called by Resource service during realm compression. Returns 404 only if BOTH participations and lore are missing. Includes generated text summaries in the archive using configurable `ArchiveSummaryMaxLorePoints` and `ArchiveSummaryMaxHistoricalEvents` limits.
 - **RestoreFromArchive** (`/realm-history/restore-from-archive`): Restores realm history data from a Base64-encoded gzipped JSON archive. Re-registers realm references for restored participations and lore. Called by Resource service during realm decompression.
 
 ---
@@ -207,7 +209,11 @@ None identified.
 
 4. **Secondary index is intentionally NOT locked**: DualIndexHelper locks the primary index (realm→participations) but NOT the secondary index (event→participations). Locking the secondary would serialize all writes across unrelated realms referencing the same event (global bottleneck). Reads bypass indexes entirely via `JsonQueryPagedAsync`, so a stale secondary index entry only affects deletion cleanup. Worst-case race produces a stale entry that self-heals on next write/delete for that event.
 
-5. **Archive summaries use hardcoded Take(10)**: `GenerateSummariesForArchive` always takes the top 10 lore elements and top 10 participations for text summaries in the archive, unlike `SummarizeRealmHistoryAsync` which accepts configurable `maxLorePoints` and `maxHistoricalEvents` parameters from the request.
+5. ~~**Archive summaries use hardcoded Take(10)**~~: **FIXED** (2026-02-09) - Added `ArchiveSummaryMaxLorePoints` and `ArchiveSummaryMaxHistoricalEvents` configuration properties (both default 10, range 1-50). `GenerateSummariesForArchive` now reads from `_configuration` instead of hardcoding.
+
+6. **Duplicate event summary helper methods**: `GenerateEventSummary(RealmParticipationData)` and `GenerateEventSummaryFromModel(RealmHistoricalParticipation)` contain identical role-to-verb switch logic but operate on different types (internal storage model vs API response model). This duplication exists because `SummarizeRealmHistoryAsync` works with `RealmParticipationData` from the helper, while `GenerateSummariesForArchive` works with `RealmHistoricalParticipation` from the already-mapped response. If role verb mappings change, both methods must be updated.
+
+7. **Realm reference registered once per lore document, not per element**: `RegisterRealmReferenceAsync` is called only when the lore document is first created (`isNew=true`), not on each subsequent element addition. The reference count tracks the existence of lore for a realm, not the number of individual lore elements. Unregistration happens when the entire lore document is deleted.
 
 ### Design Considerations (Requires Planning)
 
@@ -228,3 +234,6 @@ None identified.
 - **2026-02-02**: [#268](https://github.com/beyond-immersion/bannou-service/issues/268) - Lore inheritance (BLOCKED: requires realm hierarchy which contradicts current Realm service design of "peer worlds with no hierarchical relationships")
 - **2026-02-02**: [#269](https://github.com/beyond-immersion/bannou-service/issues/269) - AI-powered summarization (BLOCKED on character-history #230 which tracks shared LLM infrastructure work)
 - **2026-02-02**: [#270](https://github.com/beyond-immersion/bannou-service/issues/270) - Timeline visualization (may already be satisfied by existing `GetRealmParticipation` endpoint which returns chronologically-sorted data)
+
+### Completed
+- **2026-02-09**: Hardcoded `Take(10)` in `GenerateSummariesForArchive` replaced with `ArchiveSummaryMaxLorePoints` and `ArchiveSummaryMaxHistoricalEvents` configuration properties (T21 compliance)
