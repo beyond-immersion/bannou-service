@@ -255,7 +255,9 @@ Unlock License Flow (under distributed lock)
 ## Potential Extensions
 
 - **Board reset/respec**: Allow characters to reset all unlocked licenses on a board, returning LP and removing items. Would require a new endpoint, contract template for refund execution, and inventory bulk-delete.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/356 -->
 - **Board sharing/copying**: Allow copying a board state from one character to another, e.g., for cloning NPC progression.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/357 -->
 - **Resource reference integration**: Register boards as references to characters via lib-resource for proper cleanup coordination instead of direct event handling.
 - **Achievement integration**: Publish events when specific board completion thresholds are reached (e.g., "50% unlocked", "full board clear") for the Achievement service to consume.
 

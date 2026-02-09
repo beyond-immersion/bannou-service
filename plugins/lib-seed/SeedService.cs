@@ -1223,17 +1223,16 @@ public partial class SeedService : ISeedService
         var growth = await growthStore.GetAsync($"growth:{seedId}", cancellationToken);
         growth ??= new SeedGrowthModel { SeedId = seedId, Domains = new() };
 
-        // Apply bond shared growth multiplier if bonded
+        // Apply bond shared growth multiplier only when bond is active
         var multiplier = 1.0f;
         if (seed.BondId.HasValue)
         {
-            multiplier = (float)_configuration.BondSharedGrowthMultiplier;
-
-            // Update bond shared growth
             var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
             var bond = await bondStore.GetAsync($"bond:{seed.BondId.Value}", cancellationToken);
             if (bond is { Status: BondStatus.Active })
             {
+                multiplier = (float)_configuration.BondSharedGrowthMultiplier;
+
                 var totalAmount = entries.Sum(e => e.Amount);
                 bond.SharedGrowth += totalAmount;
                 bond.BondStrength += totalAmount * (float)_configuration.BondStrengthGrowthRate;
@@ -1325,44 +1324,59 @@ public partial class SeedService : ISeedService
             new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
         };
 
-        var result = await queryStore.JsonQueryPagedAsync(conditions, 0, _configuration.DefaultQueryPageSize, null, cancellationToken);
         var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
         var cacheStore = _stateStoreFactory.GetStore<CapabilityManifestModel>(StateStoreDefinitions.SeedCapabilitiesCache);
+        var pageSize = _configuration.DefaultQueryPageSize;
+        var offset = 0;
+        var totalProcessed = 0;
 
-        foreach (var item in result.Items)
+        while (true)
         {
-            var seed = item.Value;
+            var result = await queryStore.JsonQueryPagedAsync(conditions, offset, pageSize, null, cancellationToken);
 
-            // Re-evaluate phase if thresholds changed
-            if (phasesChanged)
+            foreach (var item in result.Items)
             {
-                var previousPhase = seed.GrowthPhase;
-                var (currentPhase, _) = ComputePhaseInfo(seedType.GrowthPhases, seed.TotalGrowth);
-                seed.GrowthPhase = currentPhase.PhaseCode;
+                var seed = item.Value;
 
-                if (previousPhase != seed.GrowthPhase)
+                // Re-evaluate phase if thresholds changed
+                if (phasesChanged)
                 {
-                    await seedStore.SaveAsync($"seed:{seed.SeedId}", seed, cancellationToken: cancellationToken);
+                    var previousPhase = seed.GrowthPhase;
+                    var (currentPhase, _) = ComputePhaseInfo(seedType.GrowthPhases, seed.TotalGrowth);
+                    seed.GrowthPhase = currentPhase.PhaseCode;
 
-                    await _messageBus.TryPublishAsync("seed.phase.changed", new SeedPhaseChangedEvent
+                    if (previousPhase != seed.GrowthPhase)
                     {
-                        EventId = Guid.NewGuid(),
-                        Timestamp = DateTimeOffset.UtcNow,
-                        SeedId = seed.SeedId,
-                        SeedTypeCode = seed.SeedTypeCode,
-                        PreviousPhase = previousPhase,
-                        NewPhase = seed.GrowthPhase,
-                        TotalGrowth = seed.TotalGrowth
-                    }, cancellationToken: cancellationToken);
+                        await seedStore.SaveAsync($"seed:{seed.SeedId}", seed, cancellationToken: cancellationToken);
+
+                        await _messageBus.TryPublishAsync("seed.phase.changed", new SeedPhaseChangedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            SeedId = seed.SeedId,
+                            SeedTypeCode = seed.SeedTypeCode,
+                            PreviousPhase = previousPhase,
+                            NewPhase = seed.GrowthPhase,
+                            TotalGrowth = seed.TotalGrowth
+                        }, cancellationToken: cancellationToken);
+                    }
                 }
+
+                // Invalidate capability cache so next read recomputes with new rules
+                await cacheStore.DeleteAsync($"cap:{seed.SeedId}", cancellationToken);
             }
 
-            // Invalidate capability cache so next read recomputes with new rules
-            await cacheStore.DeleteAsync($"cap:{seed.SeedId}", cancellationToken);
+            totalProcessed += result.Items.Count;
+            offset += pageSize;
+
+            if (result.Items.Count < pageSize || totalProcessed >= result.TotalCount)
+            {
+                break;
+            }
         }
 
         _logger.LogInformation("Recomputed {Count} seeds for type {SeedTypeCode} after type definition update",
-            result.Items.Count, seedType.SeedTypeCode);
+            totalProcessed, seedType.SeedTypeCode);
     }
 
     /// <summary>

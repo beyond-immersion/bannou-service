@@ -107,7 +107,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `CapabilityRecomputeDebounceMs` | `SEED_CAPABILITY_RECOMPUTE_DEBOUNCE_MS` | `5000` | Debounce window (ms) for capability cache; reads within this window return cached manifest without recomputing |
 | `GrowthDecayEnabled` | `SEED_GROWTH_DECAY_ENABLED` | `false` | Whether growth domains decay over time on read |
 | `GrowthDecayRatePerDay` | `SEED_GROWTH_DECAY_RATE_PER_DAY` | `0.01` | Daily decay rate applied to all domain values when decay is enabled |
-| `BondSharedGrowthMultiplier` | `SEED_BOND_SHARED_GROWTH_MULTIPLIER` | `1.5` | Growth amount multiplier applied when recording growth for a seed with any bond (regardless of bond status -- see Bugs) |
+| `BondSharedGrowthMultiplier` | `SEED_BOND_SHARED_GROWTH_MULTIPLIER` | `1.5` | Growth amount multiplier applied when recording growth for a seed with an active bond |
 | `MaxSeedTypesPerGameService` | `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | `50` | Maximum number of seed type definitions per game service |
 | `DefaultMaxSeedsPerOwner` | `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | `3` | Default per-owner seed limit when seed type's `MaxPerOwner` is 0 |
 | `BondStrengthGrowthRate` | `SEED_BOND_STRENGTH_GROWTH_RATE` | `0.1` | Rate at which bond strength increases per unit of shared growth recorded |
@@ -143,7 +143,7 @@ Standard CRUD operations on seed entities. `CreateSeedAsync` validates the game 
 
 ### Growth (4 endpoints)
 
-`RecordGrowthAsync` and `RecordGrowthBatchAsync` both delegate to `RecordGrowthInternalAsync`, which acquires a distributed lock on the seed, verifies Active status, applies the bond shared growth multiplier if the seed has a BondId (regardless of bond status -- see Bugs), updates domain depths, checks for phase transitions against the seed type definition, and invalidates the capability cache by deleting it from Redis. Publishes `seed.growth.updated` per domain and `seed.phase.changed` if a phase boundary was crossed.
+`RecordGrowthAsync` and `RecordGrowthBatchAsync` both delegate to `RecordGrowthInternalAsync`, which acquires a distributed lock on the seed, verifies Active status, applies the bond shared growth multiplier if the seed has an active bond, updates domain depths, checks for phase transitions against the seed type definition, and invalidates the capability cache by deleting it from Redis. Publishes `seed.growth.updated` per domain and `seed.phase.changed` if a phase boundary was crossed.
 
 `GetGrowthAsync` returns domain depths. When `GrowthDecayEnabled` is true, applies a linear decay factor based on time since seed creation (not per-domain last activity). The decay is read-time only -- stored values are not modified.
 
@@ -250,9 +250,9 @@ No delete endpoint exists for seed types -- see Known Quirks.
 
 ### Bugs (Fix Immediately)
 
-- **Bond growth multiplier applied regardless of bond status**: In `RecordGrowthInternalAsync`, the `BondSharedGrowthMultiplier` is applied whenever `seed.BondId.HasValue` (line ~1228) without checking whether the bond is `Active`. A seed with a `PendingConfirmation` bond gets the multiplied growth rate. Only the SharedGrowth/BondStrength update on the bond record is gated by `bond.Status == Active` (line ~1235). Fix: move the multiplier assignment inside the active bond check, or load and check the bond status before applying the multiplier.
+- ~~**Bond growth multiplier applied regardless of bond status**~~: **FIXED** (2026-02-09) - Moved the `BondSharedGrowthMultiplier` assignment inside the `bond is { Status: BondStatus.Active }` check in `RecordGrowthInternalAsync`. Seeds with `PendingConfirmation` bonds no longer receive the boosted growth rate.
 
-- **`RecomputeSeedsForTypeAsync` only processes first page of seeds**: When a seed type definition is updated (phases or capability rules change), the recomputation queries seeds with `JsonQueryPagedAsync` using `DefaultQueryPageSize` (100) at offset 0, but never paginates to subsequent pages (line ~1328). If more than 100 seeds of a given type exist, seeds beyond the first page will retain stale phase assignments and capability caches. Fix: loop until all pages are processed.
+- ~~**`RecomputeSeedsForTypeAsync` only processes first page of seeds**~~: **FIXED** (2026-02-09) - Added pagination loop in `RecomputeSeedsForTypeAsync` that iterates through all pages of seeds using `DefaultQueryPageSize` until all seeds of the type are recomputed. Previously only processed offset 0.
 
 - **`ConfirmBondAsync` has no distributed lock**: `ConfirmBondAsync` (line ~996) reads and mutates the bond record without acquiring a distributed lock. If two participants confirm concurrently, both read the bond with their own `Confirmed` still false, each sets their own flag, and the second save overwrites the first — losing one participant's confirmation. `InitiateBondAsync` correctly uses ordered dual-locks; `ConfirmBondAsync` should acquire a lock on the bond ID.
 
@@ -274,10 +274,13 @@ No delete endpoint exists for seed types -- see Known Quirks.
 
 - **No cleanup of associated data on archive**: `ArchiveSeedAsync` sets the seed's status to `Archived` but does not clean up growth data (`growth:{seedId}`), capability cache (`cap:{seedId}`), or bond data (`bond:{bondId}`). Archived seeds retain all associated state indefinitely. A cleanup strategy is needed -- either immediate deletion, a background retention worker, or integration with lib-resource for compression.
 
-- **Bond shared growth applied regardless of partner activity**: When a bonded seed records growth, the `BondSharedGrowthMultiplier` is applied if the bond exists (and currently, regardless of bond status -- see Bugs above). The partner seed does not need to be simultaneously active or growing. This means a bonded seed always gets boosted growth even if the partner is dormant or archived. Whether this is the intended semantic needs clarification.
+- **Bond shared growth applied regardless of partner activity**: When a bonded seed records growth, the `BondSharedGrowthMultiplier` is applied if the bond is active. The partner seed does not need to be simultaneously active or growing. This means a bonded seed always gets boosted growth even if the partner is dormant or archived. Whether this is the intended semantic needs clarification.
 
 ---
 
 ## Work Tracking
 
-No active work items.
+### Completed
+
+- **Bond growth multiplier bug fix** (2026-02-09): Moved `BondSharedGrowthMultiplier` inside the active bond status check in `RecordGrowthInternalAsync`. Seeds with `PendingConfirmation` bonds no longer receive boosted growth.
+- **RecomputeSeedsForTypeAsync pagination fix** (2026-02-09): Added pagination loop so all seeds of a type are recomputed when the type definition changes, not just the first page.
