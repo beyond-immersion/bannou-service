@@ -64,6 +64,11 @@ This document lists all state store components used in Bannou.
 | `leaderboard-definition` | Redis | Leaderboard | Leaderboard definitions and metadata |
 | `leaderboard-ranking` | Redis | Leaderboard | Real-time ranking data (sorted sets) |
 | `leaderboard-season` | MySQL | Leaderboard | Season history and archives |
+| `license-board-cache` | Redis | License | Board state cache (unlocked license positions per board) |
+| `license-board-templates` | MySQL | License | Board template definitions with grid layout and contract references |
+| `license-boards` | MySQL | License | Character board instances linking characters to board templates |
+| `license-definitions` | MySQL | License | License definitions (nodes) per board template with grid positions |
+| `license-lock` | Redis | License | Distributed locks for board mutations and unlock operations |
 | `location-cache` | Redis | Location | Location lookup cache for frequently-accessed locations |
 | `location-lock` | Redis | Location | Distributed locks for concurrent index modifications |
 | `location-statestore` | MySQL | Location | Location hierarchy and metadata |
@@ -124,7 +129,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 114 stores (73 Redis, 41 MySQL)
+**Total**: 119 stores (75 Redis, 44 MySQL)
 
 ## Naming Conventions
 

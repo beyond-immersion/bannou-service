@@ -777,3 +777,34 @@ x-state-stores:
     prefix: "seed:lock"
     service: Seed
     purpose: Distributed locks for seed modifications
+
+  # ============================================================================
+  # License Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  license-board-templates:
+    backend: mysql
+    service: License
+    purpose: Board template definitions with grid layout and contract references
+
+  license-definitions:
+    backend: mysql
+    service: License
+    purpose: License definitions (nodes) per board template with grid positions
+
+  license-boards:
+    backend: mysql
+    service: License
+    purpose: Character board instances linking characters to board templates
+
+  license-board-cache:
+    backend: redis
+    prefix: "license:board"
+    service: License
+    purpose: Board state cache (unlocked license positions per board)
+
+  license-lock:
+    backend: redis
+    prefix: "license:lock"
+    service: License
+    purpose: Distributed locks for board mutations and unlock operations

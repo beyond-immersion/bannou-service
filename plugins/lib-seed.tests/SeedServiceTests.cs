@@ -745,6 +745,98 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Assert.Equal(1, savedManifest.Version);
     }
 
+    [Fact]
+    public async Task GetCapabilityManifest_LinearFidelity_CorrectCalculation()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId);
+        // Linear formula: threshold=5, depth=7.5 → normalized=1.5 → fidelity=(1.5-1.0)/1.0=0.5
+        var seedType = CreateTestSeedType();
+        var growth = new SeedGrowthModel
+        {
+            SeedId = seedId,
+            Domains = new Dictionary<string, float> { { "combat.melee", 7.5f } }
+        };
+
+        _mockCapabilitiesStore
+            .Setup(s => s.GetAsync($"cap:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CapabilityManifestModel?)null);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(growth);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+        _mockCapabilitiesStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CapabilityManifestModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, response) = await service.GetCapabilityManifestAsync(
+            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        var cap = Assert.Single(response.Capabilities);
+        Assert.True(cap.Unlocked);
+        Assert.Equal(0.5f, cap.Fidelity, precision: 3);
+    }
+
+    [Fact]
+    public async Task GetCapabilityManifest_LogarithmicFidelity_CorrectCalculation()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId);
+        // Logarithmic formula: threshold=5, depth=5 → normalized=1.0 → log(2)/log(2)=1.0
+        var seedType = CreateTestSeedType();
+        seedType.CapabilityRules = new List<CapabilityRule>
+        {
+            new CapabilityRule { CapabilityCode = "combat.stance", Domain = "combat.melee", UnlockThreshold = 5f, FidelityFormula = "logarithmic" }
+        };
+        var growth = new SeedGrowthModel
+        {
+            SeedId = seedId,
+            Domains = new Dictionary<string, float> { { "combat.melee", 5f } }
+        };
+
+        _mockCapabilitiesStore
+            .Setup(s => s.GetAsync($"cap:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CapabilityManifestModel?)null);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(growth);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+        _mockCapabilitiesStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CapabilityManifestModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, response) = await service.GetCapabilityManifestAsync(
+            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+
+        // Assert - log(1 + 1.0) / log(2) = log(2)/log(2) = 1.0
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        var cap = Assert.Single(response.Capabilities);
+        Assert.True(cap.Unlocked);
+        Assert.Equal(1.0f, cap.Fidelity, precision: 3);
+    }
+
     #endregion
 
     #region Type Definition Tests
@@ -1100,6 +1192,38 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             It.Is<SeedGrowthModel>(g => g.Domains.ContainsKey("combat.melee")),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleGrowthContributed_SeedNotFound_LogsWarning()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedModel?)null);
+
+        var evt = new SeedGrowthContributedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedId = seedId,
+            Domain = "combat.melee",
+            Amount = 5f,
+            Source = "character-encounter"
+        };
+
+        // Act
+        await service.HandleGrowthContributedAsync(evt);
+
+        // Assert - no growth saved (seed not found)
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion

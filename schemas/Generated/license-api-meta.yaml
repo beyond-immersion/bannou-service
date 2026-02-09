@@ -1,0 +1,2316 @@
+openapi: 3.0.0
+info:
+  title: License Service API
+  version: 1.0.0
+  description: |
+    Grid-based progression boards via itemized contracts.
+
+    lib-license provides skill trees, license boards, and tech trees by combining
+    Inventory (containers), Items (license nodes), and Contracts (unlock behavior).
+    It is a thin orchestration layer that handles adjacency validation, board state
+    management, and unlock coordination — delegating business logic to contracts.
+
+    **Key Design Principle**: The contract is the brain, the license board is the grid.
+    Board templates define the spatial layout and reference a contract template that
+    controls unlock behavior (LP deduction, ability grants). lib-license validates
+    adjacency and prerequisites, then delegates to lib-contract for execution.
+
+    **Per-Board Infrastructure**: Each board instance creates an inventory container
+    (slot_only, maxSlots = gridWidth * gridHeight) to hold unlocked license items.
+    Licenses are items placed at grid positions within this container.
+
+    **Adjacency Modes**: Boards support 4-way (orthogonal only) and 8-way (orthogonal
+    + diagonal) adjacency for grid traversal. Starting nodes bypass adjacency checks.
+
+    **Atomic Unlocks**: If contract execution fails (LP deduction, ability grant), no
+    license is placed. The unlock rolls back cleanly.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: GameFeatures
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+paths:
+  /license/board-template/create:
+    post:
+      operationId: createBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Create a new board template
+      description: |
+        Create a board template with grid dimensions, starting nodes, adjacency mode,
+        and a reference to the contract template that controls unlock behavior.
+        Board templates are scoped to a game service.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardTemplateResponse'
+        '400':
+          description: Invalid request (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Referenced game service or contract template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBoardTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateBoardTemplateRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to create a new board template\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"gameServiceId\",\n                \"name\",\n                \"gridWidth\"\
+        ,\n                \"gridHeight\",\n                \"startingNodes\",\n                \"boardContractTemplateId\"\
+        \n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this
+        board template belongs to\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Display name for the board template\"\n                },\n            \
+        \    \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Human-readable description of this board template\"\n                },\n    \
+        \            \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n \
+        \                   \"maximum\": 50,\n                    \"description\": \"Width of the board grid (columns)\"\n\
+        \                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n             \
+        \       \"minimum\": 1,\n                    \"maximum\": 50,\n                    \"description\": \"Height of the
+        board grid (rows)\"\n                },\n                \"startingNodes\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GridPosition\"\n                \
+        \    },\n                    \"minItems\": 1,\n                    \"description\": \"Grid positions where unlocking
+        can begin without adjacency\"\n                },\n                \"boardContractTemplateId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract
+        template that controls unlock behavior (LP deduction, ability grants)\"\n                },\n                \"adjacencyMode\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AdjacencyMode\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Grid traversal mode. Defaults to eight_way if not specified.\"\n                }\n         \
+        \   }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
+        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
+        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"name\",\n           \
+        \     \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n                \"boardContractTemplateId\"\
+        ,\n                \"adjacencyMode\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
+        \            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique board template identifier\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this template belongs to\"\n\
+        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Display name\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description\"\
+        \n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n             \
+        \       \"description\": \"Width of the board grid (columns)\"\n                },\n                \"gridHeight\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Height of the board grid (rows)\"\
+        \n                },\n                \"startingNodes\": {\n                    \"type\": \"array\",\n           \
+        \         \"items\": {\n                        \"$ref\": \"#/$defs/GridPosition\"\n                    },\n     \
+        \               \"description\": \"Grid positions where unlocking can begin without adjacency\"\n                },\n\
+        \                \"boardContractTemplateId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Contract template that controls unlock behavior\"\n  \
+        \              },\n                \"adjacencyMode\": {\n                    \"$ref\": \"#/$defs/AdjacencyMode\",\n\
+        \                    \"description\": \"Grid traversal mode for this template\"\n                },\n            \
+        \    \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        template is active (can create new board instances)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"When the template was last updated\"\n                }\n            }\n    \
+        \    },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
+        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
+        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create a new board template\",\n    \"description\": \"Create a board template
+        with grid dimensions, starting nodes, adjacency mode,\\nand a reference to the contract template that controls unlock
+        behavior.\\nBoard templates are scoped to a game service.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n\
+        \    \"deprecated\": false,\n    \"operationId\": \"createBoardTemplate\"\n}"
+  /license/board-template/get:
+    post:
+      operationId: getBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Get a board template by ID
+      description: Retrieves a board template by its unique identifier.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardTemplateResponse'
+        '404':
+          description: Board template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetBoardTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"GetBoardTemplateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get a board template by ID\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"boardTemplateId\"\n            ],\n            \"properties\": {\n                \"boardTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Board template identifier\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"name\",\n           \
+        \     \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n                \"boardContractTemplateId\"\
+        ,\n                \"adjacencyMode\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
+        \            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique board template identifier\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this template belongs to\"\n\
+        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Display name\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description\"\
+        \n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n             \
+        \       \"description\": \"Width of the board grid (columns)\"\n                },\n                \"gridHeight\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Height of the board grid (rows)\"\
+        \n                },\n                \"startingNodes\": {\n                    \"type\": \"array\",\n           \
+        \         \"items\": {\n                        \"$ref\": \"#/$defs/GridPosition\"\n                    },\n     \
+        \               \"description\": \"Grid positions where unlocking can begin without adjacency\"\n                },\n\
+        \                \"boardContractTemplateId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Contract template that controls unlock behavior\"\n  \
+        \              },\n                \"adjacencyMode\": {\n                    \"$ref\": \"#/$defs/AdjacencyMode\",\n\
+        \                    \"description\": \"Grid traversal mode for this template\"\n                },\n            \
+        \    \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        template is active (can create new board instances)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"When the template was last updated\"\n                }\n            }\n    \
+        \    },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
+        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
+        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get a board template by ID\",\n    \"description\": \"Retrieves a board
+        template by its unique identifier.\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"getBoardTemplate\"\n}"
+  /license/board-template/list:
+    post:
+      operationId: listBoardTemplates
+      tags:
+      - BoardTemplate
+      summary: List board templates for a game service
+      description: Paginated list of board templates filtered by game service ID.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBoardTemplatesRequest'
+      responses:
+        '200':
+          description: Board templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBoardTemplatesResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListBoardTemplatesRequest\"\
+        ,\n    \"$defs\": {\n        \"ListBoardTemplatesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to list board templates with cursor-based pagination\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n \
+        \               \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Filter by game service\"\n                },\n                \"cursor\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Opaque cursor from previous response. Null for first page.\"\n                },\n                \"pageSize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
+        : 100,\n                    \"nullable\": true,\n                    \"description\": \"Number of items per page.
+        Uses service default if not specified.\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListBoardTemplatesResponse\"\
+        ,\n    \"$defs\": {\n        \"ListBoardTemplatesResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Paginated list of board templates\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"templates\",\n                \"hasMore\"\n            ],\n            \"properties\"\
+        : {\n                \"templates\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/BoardTemplateResponse\"\n                    },\n                   \
+        \ \"description\": \"Board templates in this page\"\n                },\n                \"nextCursor\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Cursor for next page. Null if no more results.\"\n                },\n                \"hasMore\": {\n       \
+        \             \"type\": \"boolean\",\n                    \"description\": \"Whether more results exist beyond this
+        page\"\n                }\n            }\n        },\n        \"BoardTemplateResponse\": {\n            \"type\":
+        \"object\",\n            \"description\": \"Board template with all fields\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"boardTemplateId\",\n                \"gameServiceId\",\n\
+        \                \"name\",\n                \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\"\
+        ,\n                \"boardContractTemplateId\",\n                \"adjacencyMode\",\n                \"isActive\"\
+        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"boardTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique board template identifier\"\n                },\n                \"gameServiceId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service this template belongs to\"\n                },\n                \"name\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Display name\"\n                },\n             \
+        \   \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Human-readable description\"\n                },\n                \"gridWidth\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Width of the board grid (columns)\"\
+        \n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Height of the board grid (rows)\"\n                },\n                \"startingNodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/GridPosition\"\n                    },\n                    \"description\": \"Grid positions where unlocking
+        can begin without adjacency\"\n                },\n                \"boardContractTemplateId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract
+        template that controls unlock behavior\"\n                },\n                \"adjacencyMode\": {\n             \
+        \       \"$ref\": \"#/$defs/AdjacencyMode\",\n                    \"description\": \"Grid traversal mode for this
+        template\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether the template is active (can create new board instances)\"\n          \
+        \      },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When the template was created\"\n                },\n   \
+        \             \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When the template was last updated\"\
+        \n                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n \
+        \           \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
+        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
+        \n                }\n            }\n        },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Grid traversal adjacency mode for a board template.\\n- four_way: Orthogonal only
+        (up, down, left, right)\\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\"\
+        : [\n                \"four_way\",\n                \"eight_way\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List board templates for a game service\",\n    \"description\": \"Paginated
+        list of board templates filtered by game service ID.\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"\
+        deprecated\": false,\n    \"operationId\": \"listBoardTemplates\"\n}"
+  /license/board-template/update:
+    post:
+      operationId: updateBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Update a board template
+      description: |
+        Update mutable fields of a board template. Grid dimensions, starting nodes,
+        and contract template are immutable after creation.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardTemplateResponse'
+        '404':
+          description: Board template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateBoardTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateBoardTemplateRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to update mutable fields of a board template\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"boardTemplateId\"\n            ],\n            \"properties\": {\n\
+        \                \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Board template to update\"\n                },\n             \
+        \   \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Updated display name\"\n                },\n                \"description\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Updated description\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether the template is active
+        (can create new board instances)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"name\",\n           \
+        \     \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n                \"boardContractTemplateId\"\
+        ,\n                \"adjacencyMode\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
+        \            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique board template identifier\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this template belongs to\"\n\
+        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Display name\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description\"\
+        \n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n             \
+        \       \"description\": \"Width of the board grid (columns)\"\n                },\n                \"gridHeight\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Height of the board grid (rows)\"\
+        \n                },\n                \"startingNodes\": {\n                    \"type\": \"array\",\n           \
+        \         \"items\": {\n                        \"$ref\": \"#/$defs/GridPosition\"\n                    },\n     \
+        \               \"description\": \"Grid positions where unlocking can begin without adjacency\"\n                },\n\
+        \                \"boardContractTemplateId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Contract template that controls unlock behavior\"\n  \
+        \              },\n                \"adjacencyMode\": {\n                    \"$ref\": \"#/$defs/AdjacencyMode\",\n\
+        \                    \"description\": \"Grid traversal mode for this template\"\n                },\n            \
+        \    \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        template is active (can create new board instances)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"When the template was last updated\"\n                }\n            }\n    \
+        \    },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
+        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
+        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update a board template\",\n    \"description\": \"Update mutable fields
+        of a board template. Grid dimensions, starting nodes,\\nand contract template are immutable after creation.\\n\",\n\
+        \    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateBoardTemplate\"\
+        \n}"
+  /license/board-template/delete:
+    post:
+      operationId: deleteBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Delete a board template
+      description: |
+        Soft-delete a board template. Blocked if active board instances exist
+        that reference this template.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardTemplateResponse'
+        '404':
+          description: Board template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Active board instances exist for this template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteBoardTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteBoardTemplateRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to delete a board template\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"boardTemplateId\"\n            ],\n            \"properties\": {\n          \
+        \      \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Board template to delete\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"name\",\n           \
+        \     \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n                \"boardContractTemplateId\"\
+        ,\n                \"adjacencyMode\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
+        \            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique board template identifier\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this template belongs to\"\n\
+        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Display name\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description\"\
+        \n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n             \
+        \       \"description\": \"Width of the board grid (columns)\"\n                },\n                \"gridHeight\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Height of the board grid (rows)\"\
+        \n                },\n                \"startingNodes\": {\n                    \"type\": \"array\",\n           \
+        \         \"items\": {\n                        \"$ref\": \"#/$defs/GridPosition\"\n                    },\n     \
+        \               \"description\": \"Grid positions where unlocking can begin without adjacency\"\n                },\n\
+        \                \"boardContractTemplateId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Contract template that controls unlock behavior\"\n  \
+        \              },\n                \"adjacencyMode\": {\n                    \"$ref\": \"#/$defs/AdjacencyMode\",\n\
+        \                    \"description\": \"Grid traversal mode for this template\"\n                },\n            \
+        \    \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        template is active (can create new board instances)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"When the template was last updated\"\n                }\n            }\n    \
+        \    },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
+        adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
+        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a board template\",\n    \"description\": \"Soft-delete a board
+        template. Blocked if active board instances exist\\nthat reference this template.\\n\",\n    \"tags\": [\n       \
+        \ \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteBoardTemplate\"\n}"
+  /license/definition/add:
+    post:
+      operationId: addLicenseDefinition
+      tags:
+      - Definition
+      summary: Add a license definition to a board template
+      description: |
+        Add a license definition (node) to a board template at a specific grid position.
+        Each definition has a unique code within the template, a grid position, an LP cost,
+        and a reference to the item template that is created when the license is unlocked.
+        Optional non-adjacent prerequisites can reference other license codes on the board.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddLicenseDefinitionRequest'
+      responses:
+        '200':
+          description: License definition added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDefinitionResponse'
+        '400':
+          description: Invalid request (position out of bounds, invalid item template)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Board template or item template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate code or position, or max definitions exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AddLicenseDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"AddLicenseDefinitionRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to add a license definition to a board template\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"boardTemplateId\",\n                \"code\",\n         \
+        \       \"position\",\n                \"lpCost\",\n                \"itemTemplateId\"\n            ],\n         \
+        \   \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Board template to add this definition
+        to\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n               \
+        \     \"maxLength\": 64,\n                    \"description\": \"Unique license code within this board template\"\n\
+        \                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\",\n  \
+        \                  \"description\": \"Grid position for this license node\"\n                },\n                \"\
+        lpCost\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                   \
+        \ \"description\": \"License Point cost to unlock this node\"\n                },\n                \"itemTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Item template created when this license is unlocked\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        License codes that must be unlocked before this one (non-adjacent requirements)\"\n                },\n          \
+        \      \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Human-readable description of what this license grants\"\n                },\n\
+        \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific metadata
+        for this license node\"\n                }\n            }\n        },\n        \"GridPosition\": {\n            \"\
+        type\": \"object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"\
+        additionalProperties\": false,\n            \"required\": [\n                \"x\",\n                \"y\"\n     \
+        \       ],\n            \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n        \
+        \        \"y\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Vertical grid
+        coordinate (zero-indexed)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LicenseDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"LicenseDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"License definition with all fields\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"licenseDefinitionId\",\n                \"boardTemplateId\",\n                \"code\",\n \
+        \               \"position\",\n                \"lpCost\",\n                \"itemTemplateId\",\n                \"\
+        createdAt\"\n            ],\n            \"properties\": {\n                \"licenseDefinitionId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique license definition identifier\"\n                },\n                \"boardTemplateId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Board template this definition belongs to\"\n                },\n                \"code\": {\n               \
+        \     \"type\": \"string\",\n                    \"description\": \"Unique license code within this board template\"\
+        \n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\",\n \
+        \                   \"description\": \"Grid position of this license node\"\n                },\n                \"\
+        lpCost\": {\n                    \"type\": \"integer\",\n                    \"description\": \"License Point cost
+        to unlock this node\"\n                },\n                \"itemTemplateId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Item template created
+        when this license is unlocked\"\n                },\n                \"prerequisites\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"description\": \"License codes that must
+        be unlocked before this one\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
+        of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
+        \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
+        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
+        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Add a license definition to a board template\",\n    \"description\": \"\
+        Add a license definition (node) to a board template at a specific grid position.\\nEach definition has a unique code
+        within the template, a grid position, an LP cost,\\nand a reference to the item template that is created when the
+        license is unlocked.\\nOptional non-adjacent prerequisites can reference other license codes on the board.\\n\",\n\
+        \    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"addLicenseDefinition\"\
+        \n}"
+  /license/definition/get:
+    post:
+      operationId: getLicenseDefinition
+      tags:
+      - Definition
+      summary: Get a license definition
+      description: Get a license definition by board template ID and license code.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLicenseDefinitionRequest'
+      responses:
+        '200':
+          description: License definition retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDefinitionResponse'
+        '404':
+          description: Board template or license definition not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetLicenseDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"GetLicenseDefinitionRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to get a license definition by board template ID and code\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"boardTemplateId\",\n                \"code\"\n          \
+        \  ],\n            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Board template containing the
+        definition\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n       \
+        \             \"description\": \"License code to look up\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LicenseDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"LicenseDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"License definition with all fields\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"licenseDefinitionId\",\n                \"boardTemplateId\",\n                \"code\",\n \
+        \               \"position\",\n                \"lpCost\",\n                \"itemTemplateId\",\n                \"\
+        createdAt\"\n            ],\n            \"properties\": {\n                \"licenseDefinitionId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique license definition identifier\"\n                },\n                \"boardTemplateId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Board template this definition belongs to\"\n                },\n                \"code\": {\n               \
+        \     \"type\": \"string\",\n                    \"description\": \"Unique license code within this board template\"\
+        \n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\",\n \
+        \                   \"description\": \"Grid position of this license node\"\n                },\n                \"\
+        lpCost\": {\n                    \"type\": \"integer\",\n                    \"description\": \"License Point cost
+        to unlock this node\"\n                },\n                \"itemTemplateId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Item template created
+        when this license is unlocked\"\n                },\n                \"prerequisites\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"description\": \"License codes that must
+        be unlocked before this one\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
+        of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
+        \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
+        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
+        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get a license definition\",\n    \"description\": \"Get a license definition
+        by board template ID and license code.\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"getLicenseDefinition\"\n}"
+  /license/definition/list:
+    post:
+      operationId: listLicenseDefinitions
+      tags:
+      - Definition
+      summary: List all license definitions for a board template
+      description: Returns the full grid layout of all license definitions for a board template.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListLicenseDefinitionsRequest'
+      responses:
+        '200':
+          description: License definitions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLicenseDefinitionsResponse'
+        '404':
+          description: Board template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListLicenseDefinitionsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListLicenseDefinitionsRequest\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Request to list all license definitions for a board template\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"boardTemplateId\"\n            ],\n            \"properties\"\
+        : {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Board template to list definitions for\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListLicenseDefinitionsResponse\"\
+        ,\n    \"$defs\": {\n        \"ListLicenseDefinitionsResponse\": {\n            \"type\": \"object\",\n          \
+        \  \"description\": \"All license definitions for a board template\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"boardTemplateId\",\n                \"definitions\"\n            ],\n\
+        \            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Board template these definitions
+        belong to\"\n                },\n                \"definitions\": {\n                    \"type\": \"array\",\n  \
+        \                  \"items\": {\n                        \"$ref\": \"#/$defs/LicenseDefinitionResponse\"\n       \
+        \             },\n                    \"description\": \"All license definitions for this board template\"\n     \
+        \           }\n            }\n        },\n        \"LicenseDefinitionResponse\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"License definition with all fields\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"licenseDefinitionId\",\n                \"boardTemplateId\",\n   \
+        \             \"code\",\n                \"position\",\n                \"lpCost\",\n                \"itemTemplateId\"\
+        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"licenseDefinitionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique license definition identifier\"\n                },\n                \"boardTemplateId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Board template this definition belongs to\"\n                },\n                \"code\": {\n               \
+        \     \"type\": \"string\",\n                    \"description\": \"Unique license code within this board template\"\
+        \n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\",\n \
+        \                   \"description\": \"Grid position of this license node\"\n                },\n                \"\
+        lpCost\": {\n                    \"type\": \"integer\",\n                    \"description\": \"License Point cost
+        to unlock this node\"\n                },\n                \"itemTemplateId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Item template created
+        when this license is unlocked\"\n                },\n                \"prerequisites\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"description\": \"License codes that must
+        be unlocked before this one\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
+        of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
+        \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
+        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
+        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List all license definitions for a board template\",\n    \"description\"\
+        : \"Returns the full grid layout of all license definitions for a board template.\",\n    \"tags\": [\n        \"\
+        Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listLicenseDefinitions\"\n}"
+  /license/definition/update:
+    post:
+      operationId: updateLicenseDefinition
+      tags:
+      - Definition
+      summary: Update a license definition
+      description: |
+        Update mutable fields of a license definition. Position and code are immutable
+        after creation.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLicenseDefinitionRequest'
+      responses:
+        '200':
+          description: License definition updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDefinitionResponse'
+        '404':
+          description: Board template or license definition not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateLicenseDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateLicenseDefinitionRequest\": {\n            \"type\": \"object\",\n          \
+        \  \"description\": \"Request to update mutable fields of a license definition\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"boardTemplateId\",\n                \"code\"\n          \
+        \  ],\n            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Board template containing the
+        definition\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n       \
+        \             \"description\": \"License code to update\"\n                },\n                \"lpCost\": {\n   \
+        \                 \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Updated LP cost\"\n                },\n                \"prerequisites\":
+        {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Updated prerequisite license codes\"\n                },\n                \"description\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Updated description\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
+        : \"Updated game-specific metadata\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LicenseDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"LicenseDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"License definition with all fields\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"licenseDefinitionId\",\n                \"boardTemplateId\",\n                \"code\",\n \
+        \               \"position\",\n                \"lpCost\",\n                \"itemTemplateId\",\n                \"\
+        createdAt\"\n            ],\n            \"properties\": {\n                \"licenseDefinitionId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique license definition identifier\"\n                },\n                \"boardTemplateId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Board template this definition belongs to\"\n                },\n                \"code\": {\n               \
+        \     \"type\": \"string\",\n                    \"description\": \"Unique license code within this board template\"\
+        \n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\",\n \
+        \                   \"description\": \"Grid position of this license node\"\n                },\n                \"\
+        lpCost\": {\n                    \"type\": \"integer\",\n                    \"description\": \"License Point cost
+        to unlock this node\"\n                },\n                \"itemTemplateId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Item template created
+        when this license is unlocked\"\n                },\n                \"prerequisites\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"description\": \"License codes that must
+        be unlocked before this one\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
+        of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
+        \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
+        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
+        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update a license definition\",\n    \"description\": \"Update mutable fields
+        of a license definition. Position and code are immutable\\nafter creation.\\n\",\n    \"tags\": [\n        \"Definition\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateLicenseDefinition\"\n}"
+  /license/definition/remove:
+    post:
+      operationId: removeLicenseDefinition
+      tags:
+      - Definition
+      summary: Remove a license definition from a board template
+      description: |
+        Remove a license definition from a board template. Blocked if any board
+        instances have this license unlocked.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveLicenseDefinitionRequest'
+      responses:
+        '200':
+          description: License definition removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDefinitionResponse'
+        '404':
+          description: Board template or license definition not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: License is unlocked by active board instances
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveLicenseDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"RemoveLicenseDefinitionRequest\": {\n            \"type\": \"object\",\n          \
+        \  \"description\": \"Request to remove a license definition from a board template\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"boardTemplateId\",\n                \"code\"\n          \
+        \  ],\n            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Board template containing the
+        definition\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n       \
+        \             \"description\": \"License code to remove\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LicenseDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"LicenseDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"License definition with all fields\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"licenseDefinitionId\",\n                \"boardTemplateId\",\n                \"code\",\n \
+        \               \"position\",\n                \"lpCost\",\n                \"itemTemplateId\",\n                \"\
+        createdAt\"\n            ],\n            \"properties\": {\n                \"licenseDefinitionId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique license definition identifier\"\n                },\n                \"boardTemplateId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Board template this definition belongs to\"\n                },\n                \"code\": {\n               \
+        \     \"type\": \"string\",\n                    \"description\": \"Unique license code within this board template\"\
+        \n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\",\n \
+        \                   \"description\": \"Grid position of this license node\"\n                },\n                \"\
+        lpCost\": {\n                    \"type\": \"integer\",\n                    \"description\": \"License Point cost
+        to unlock this node\"\n                },\n                \"itemTemplateId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Item template created
+        when this license is unlocked\"\n                },\n                \"prerequisites\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"description\": \"License codes that must
+        be unlocked before this one\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
+        of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
+        \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
+        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
+        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Remove a license definition from a board template\",\n    \"description\"\
+        : \"Remove a license definition from a board template. Blocked if any board\\ninstances have this license unlocked.\\\
+        n\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"removeLicenseDefinition\"\
+        \n}"
+  /license/board/create:
+    post:
+      operationId: createBoard
+      tags:
+      - Board
+      summary: Create a board instance for a character
+      description: |
+        Create a board instance for a character from a board template. Validates character
+        exists, game service matches, and no duplicate board exists (one board per template
+        per character). Creates an inventory container (slot_only, maxSlots = gridWidth *
+        gridHeight) to hold unlocked license items.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBoardRequest'
+      responses:
+        '200':
+          description: Board created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+        '400':
+          description: Invalid request (inactive template)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Character, game service, or board template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate board or max boards per character exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBoardRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateBoardRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to create a board instance for a character\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"characterId\",\n                \"boardTemplateId\",\n                \"gameServiceId\"\
+        \n            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character to create
+        the board for\"\n                },\n                \"boardTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Board template to instantiate\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"Game service context for validation\"\n \
+        \               }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardResponse\"\
+        ,\n    \"$defs\": {\n        \"BoardResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Board instance with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"boardId\",\n                \"characterId\",\n                \"boardTemplateId\",\n          \
+        \      \"gameServiceId\",\n                \"containerId\",\n                \"createdAt\"\n            ],\n     \
+        \       \"properties\": {\n                \"boardId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Unique board instance identifier\"\n     \
+        \           },\n                \"characterId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"uuid\",\n                    \"description\": \"Character this board belongs to\"\n             \
+        \   },\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Board template this instance was created from\"\n    \
+        \            },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"description\": \"Game service this board belongs to\"\n       \
+        \         },\n                \"containerId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Inventory container holding unlocked license items\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When this board instance was created\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create a board instance for a character\",\n    \"description\": \"Create
+        a board instance for a character from a board template. Validates character\\nexists, game service matches, and no
+        duplicate board exists (one board per template\\nper character). Creates an inventory container (slot_only, maxSlots
+        = gridWidth *\\ngridHeight) to hold unlocked license items.\\n\",\n    \"tags\": [\n        \"Board\"\n    ],\n  \
+        \  \"deprecated\": false,\n    \"operationId\": \"createBoard\"\n}"
+  /license/board/get:
+    post:
+      operationId: getBoard
+      tags:
+      - Board
+      summary: Get a board instance by ID
+      description: Retrieves a board instance by its unique identifier.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBoardRequest'
+      responses:
+        '200':
+          description: Board retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+        '404':
+          description: Board not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetBoardRequest\"\
+        ,\n    \"$defs\": {\n        \"GetBoardRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get a board instance by ID\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"boardId\"\n            ],\n            \"properties\": {\n                \"boardId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Board instance identifier\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardResponse\"\
+        ,\n    \"$defs\": {\n        \"BoardResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Board instance with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"boardId\",\n                \"characterId\",\n                \"boardTemplateId\",\n          \
+        \      \"gameServiceId\",\n                \"containerId\",\n                \"createdAt\"\n            ],\n     \
+        \       \"properties\": {\n                \"boardId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Unique board instance identifier\"\n     \
+        \           },\n                \"characterId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"uuid\",\n                    \"description\": \"Character this board belongs to\"\n             \
+        \   },\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Board template this instance was created from\"\n    \
+        \            },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"description\": \"Game service this board belongs to\"\n       \
+        \         },\n                \"containerId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Inventory container holding unlocked license items\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When this board instance was created\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get a board instance by ID\",\n    \"description\": \"Retrieves a board
+        instance by its unique identifier.\",\n    \"tags\": [\n        \"Board\"\n    ],\n    \"deprecated\": false,\n  \
+        \  \"operationId\": \"getBoard\"\n}"
+  /license/board/list-by-character:
+    post:
+      operationId: listBoardsByCharacter
+      tags:
+      - Board
+      summary: List boards for a character
+      description: List all board instances for a character, with optional game service filter.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBoardsByCharacterRequest'
+      responses:
+        '200':
+          description: Boards retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBoardsByCharacterResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListBoardsByCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"ListBoardsByCharacterRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to list board instances for a character\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
+        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Character to list boards for\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Optional filter by game service\"\n                }\n \
+        \           }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListBoardsByCharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"ListBoardsByCharacterResponse\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"List of board instances for a character\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"boards\"\n            ],\n            \"properties\": {\n          \
+        \      \"boards\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
+        \         \"$ref\": \"#/$defs/BoardResponse\"\n                    },\n                    \"description\": \"Board
+        instances for this character\"\n                }\n            }\n        },\n        \"BoardResponse\": {\n     \
+        \       \"type\": \"object\",\n            \"description\": \"Board instance with all fields\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"boardId\",\n                \"characterId\",\n          \
+        \      \"boardTemplateId\",\n                \"gameServiceId\",\n                \"containerId\",\n              \
+        \  \"createdAt\"\n            ],\n            \"properties\": {\n                \"boardId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
+        board instance identifier\"\n                },\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character this board
+        belongs to\"\n                },\n                \"boardTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Board template this instance
+        was created from\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this board belongs
+        to\"\n                },\n                \"containerId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"Inventory container holding unlocked license
+        items\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"date-time\",\n                    \"description\": \"When this board instance was created\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List boards for a character\",\n    \"description\": \"List all board instances
+        for a character, with optional game service filter.\",\n    \"tags\": [\n        \"Board\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"listBoardsByCharacter\"\n}"
+  /license/board/delete:
+    post:
+      operationId: deleteBoard
+      tags:
+      - Board
+      summary: Delete a board instance
+      description: |
+        Delete a board instance. Destroys the inventory container and all license
+        items within it.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteBoardRequest'
+      responses:
+        '200':
+          description: Board deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+        '404':
+          description: Board not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteBoardRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteBoardRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to delete a board instance\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"boardId\"\n            ],\n            \"properties\": {\n                \"boardId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Board instance to delete\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardResponse\"\
+        ,\n    \"$defs\": {\n        \"BoardResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Board instance with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"boardId\",\n                \"characterId\",\n                \"boardTemplateId\",\n          \
+        \      \"gameServiceId\",\n                \"containerId\",\n                \"createdAt\"\n            ],\n     \
+        \       \"properties\": {\n                \"boardId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Unique board instance identifier\"\n     \
+        \           },\n                \"characterId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"uuid\",\n                    \"description\": \"Character this board belongs to\"\n             \
+        \   },\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Board template this instance was created from\"\n    \
+        \            },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"description\": \"Game service this board belongs to\"\n       \
+        \         },\n                \"containerId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Inventory container holding unlocked license items\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When this board instance was created\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a board instance\",\n    \"description\": \"Delete a board instance.
+        Destroys the inventory container and all license\\nitems within it.\\n\",\n    \"tags\": [\n        \"Board\"\n  \
+        \  ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteBoard\"\n}"
+  /license/unlock:
+    post:
+      operationId: unlockLicense
+      tags:
+      - Gameplay
+      summary: Unlock a license on a board
+      description: |
+        The core operation. Validates adjacency and prerequisites, creates a contract
+        instance from the board template's contract template, executes the unlock
+        milestone (LP deduction, ability grants via prebound APIs), then creates an
+        item instance and places it in the board container. Atomic: if contract
+        execution fails, no license is placed.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockLicenseRequest'
+      responses:
+        '200':
+          description: License unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlockLicenseResponse'
+        '400':
+          description: Not adjacent, prerequisites not met, or insufficient LP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Board or license definition not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: License already unlocked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Contract execution failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnlockLicenseRequest\"\
+        ,\n    \"$defs\": {\n        \"UnlockLicenseRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to unlock a license on a board\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"boardId\",\n                \"licenseCode\"\n            ],\n            \"properties\": {\n\
+        \                \"boardId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Board instance to unlock on\"\n                },\n                \"licenseCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"License code to unlock\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnlockLicenseResponse\"\
+        ,\n    \"$defs\": {\n        \"UnlockLicenseResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Result of a successful license unlock\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"boardId\",\n                \"licenseCode\",\n                \"position\",\n             \
+        \   \"itemInstanceId\",\n                \"contractInstanceId\"\n            ],\n            \"properties\": {\n \
+        \               \"boardId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Board the license was unlocked on\"\n                },\n              \
+        \  \"licenseCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"License code
+        that was unlocked\"\n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\"\
+        ,\n                    \"description\": \"Grid position of the unlocked license\"\n                },\n          \
+        \      \"itemInstanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Item instance created for this license\"\n                },\n         \
+        \       \"contractInstanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Contract instance created for this unlock\"\n                }\n       \
+        \     }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\":
+        \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Unlock a license on a board\",\n    \"description\": \"The core operation.
+        Validates adjacency and prerequisites, creates a contract\\ninstance from the board template's contract template,
+        executes the unlock\\nmilestone (LP deduction, ability grants via prebound APIs), then creates an\\nitem instance
+        and places it in the board container. Atomic: if contract\\nexecution fails, no license is placed.\\n\",\n    \"tags\"\
+        : [\n        \"Gameplay\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"unlockLicense\"\n}"
+  /license/check-unlockable:
+    post:
+      operationId: checkUnlockable
+      tags:
+      - Gameplay
+      summary: Check if a license can be unlocked
+      description: |
+        Check if a license can be unlocked without performing the unlock. Returns
+        adjacency status, prerequisite status, and whether the character has
+        sufficient LP.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckUnlockableRequest'
+      responses:
+        '200':
+          description: Unlockability check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckUnlockableResponse'
+        '404':
+          description: Board or license definition not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CheckUnlockableRequest\"\
+        ,\n    \"$defs\": {\n        \"CheckUnlockableRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to check if a license can be unlocked\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"boardId\",\n                \"licenseCode\"\n            ],\n            \"properties\"\
+        : {\n                \"boardId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Board instance to check on\"\n                },\n               \
+        \ \"licenseCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"License code
+        to check\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CheckUnlockableResponse\"\
+        ,\n    \"$defs\": {\n        \"CheckUnlockableResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Result of unlockability check\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"unlockable\",\n                \"adjacencyMet\",\n                \"prerequisitesMet\",\n     \
+        \           \"lpSufficient\",\n                \"requiredLp\"\n            ],\n            \"properties\": {\n   \
+        \             \"unlockable\": {\n                    \"type\": \"boolean\",\n                    \"description\":
+        \"Whether the license can be unlocked (all conditions met)\"\n                },\n                \"adjacencyMet\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether adjacency requirement
+        is satisfied\"\n                },\n                \"prerequisitesMet\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether all non-adjacent prerequisites are unlocked\"\n                },\n\
+        \                \"lpSufficient\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether the character has enough LP\"\n                },\n                \"currentLp\": {\n                \
+        \    \"type\": \"number\",\n                    \"nullable\": true,\n                    \"description\": \"Current
+        LP balance of the character (null if balance check failed)\"\n                },\n                \"requiredLp\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"LP cost for this license\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Check if a license can be unlocked\",\n    \"description\": \"Check if
+        a license can be unlocked without performing the unlock. Returns\\nadjacency status, prerequisite status, and whether
+        the character has\\nsufficient LP.\\n\",\n    \"tags\": [\n        \"Gameplay\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"checkUnlockable\"\n}"
+  /license/board-state:
+    post:
+      operationId: getBoardState
+      tags:
+      - Gameplay
+      summary: Get full board state
+      description: |
+        Get the full board state: all defined license positions with unlock status
+        (unlocked, locked, unlockable) and adjacency info. Primary endpoint for
+        client UI rendering.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardStateRequest'
+      responses:
+        '200':
+          description: Board state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardStateResponse'
+        '404':
+          description: Board not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardStateRequest\"\
+        ,\n    \"$defs\": {\n        \"BoardStateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get the full board state\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"boardId\"\n            ],\n            \"properties\": {\n                \"boardId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Board instance to get state for\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardStateResponse\"\
+        ,\n    \"$defs\": {\n        \"BoardStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Full board state with all node statuses for client UI rendering\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"boardId\",\n                \"characterId\",\n                \"boardTemplateId\"\
+        ,\n                \"gridWidth\",\n                \"gridHeight\",\n                \"nodes\"\n            ],\n  \
+        \          \"properties\": {\n                \"boardId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"Board instance identifier\"\n         \
+        \       },\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Character this board belongs to\"\n                },\n\
+        \                \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Board template this instance was created from\"\n            \
+        \    },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Width of the board grid (columns)\"\n                },\n                \"gridHeight\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"description\": \"Height of the board grid (rows)\"\n           \
+        \     },\n                \"nodes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/BoardNodeState\"\n                    },\n                    \"description\"\
+        : \"All license nodes with their current status\"\n                }\n            }\n        },\n        \"BoardNodeState\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"State of a single license node on a board,
+        including unlock status\",\n            \"additionalProperties\": false,\n            \"required\": [\n          \
+        \      \"code\",\n                \"position\",\n                \"lpCost\",\n                \"status\",\n      \
+        \          \"itemTemplateId\"\n            ],\n            \"properties\": {\n                \"code\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Unique license code within this board
+        template\"\n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\"\
+        ,\n                    \"description\": \"Grid position of this license node\"\n                },\n             \
+        \   \"lpCost\": {\n                    \"type\": \"integer\",\n                    \"description\": \"License Point
+        cost to unlock this node\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/LicenseStatus\"\
+        ,\n                    \"description\": \"Current unlock status of this node\"\n                },\n             \
+        \   \"itemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Item template that is created when this license is unlocked\"\n          \
+        \      },\n                \"itemInstanceId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Item instance
+        ID if this license has been unlocked\"\n                },\n                \"prerequisites\": {\n               \
+        \     \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n          \
+        \              \"type\": \"string\"\n                    },\n                    \"description\": \"License codes
+        that must be unlocked before this one (non-adjacent)\"\n                },\n                \"description\": {\n \
+        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description of what this license grants\"\n                },\n                \"metadata\": {\n\
+        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Game-specific metadata for this license node\"\n                }\n\
+        \            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       },\n        \"LicenseStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Unlock
+        status of a license node on a board.\\n- locked: Not adjacent to any unlocked node (cannot be unlocked)\\n- unlockable:
+        Adjacent to an unlocked node or is a starting node (can be unlocked)\\n- unlocked: Already unlocked (item placed at
+        this position)\\n\",\n            \"enum\": [\n                \"locked\",\n                \"unlockable\",\n    \
+        \            \"unlocked\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get full board state\",\n    \"description\": \"Get the full board state:
+        all defined license positions with unlock status\\n(unlocked, locked, unlockable) and adjacency info. Primary endpoint
+        for\\nclient UI rendering.\\n\",\n    \"tags\": [\n        \"Gameplay\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"getBoardState\"\n}"
+  /license/board-template/seed:
+    post:
+      operationId: seedBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Bulk seed a board template with license definitions
+      description: |
+        Bulk seed a board template with license definitions from a JSON payload.
+        Two-pass: creates definitions, then resolves prerequisite references.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template seeded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedBoardTemplateResponse'
+        '400':
+          description: Invalid definitions (out of bounds, duplicates)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Board template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedBoardTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"SeedBoardTemplateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to bulk seed a board template with license definitions\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"boardTemplateId\",\n                \"definitions\"\n            ],\n\
+        \            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Board template to seed with definitions\"\
+        \n                },\n                \"definitions\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"$ref\": \"#/$defs/AddLicenseDefinitionRequest\"\n                \
+        \    },\n                    \"description\": \"License definitions to add (boardTemplateId in each is ignored, uses
+        top-level)\"\n                }\n            }\n        },\n        \"AddLicenseDefinitionRequest\": {\n         \
+        \   \"type\": \"object\",\n            \"description\": \"Request to add a license definition to a board template\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"boardTemplateId\"\
+        ,\n                \"code\",\n                \"position\",\n                \"lpCost\",\n                \"itemTemplateId\"\
+        \n            ],\n            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Board template to
+        add this definition to\"\n                },\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"maxLength\": 64,\n                    \"description\": \"Unique license code within this
+        board template\"\n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/GridPosition\"\
+        ,\n                    \"description\": \"Grid position for this license node\"\n                },\n            \
+        \    \"lpCost\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n            \
+        \        \"description\": \"License Point cost to unlock this node\"\n                },\n                \"itemTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Item template created when this license is unlocked\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        License codes that must be unlocked before this one (non-adjacent requirements)\"\n                },\n          \
+        \      \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Human-readable description of what this license grants\"\n                },\n\
+        \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific metadata
+        for this license node\"\n                }\n            }\n        },\n        \"GridPosition\": {\n            \"\
+        type\": \"object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"\
+        additionalProperties\": false,\n            \"required\": [\n                \"x\",\n                \"y\"\n     \
+        \       ],\n            \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n        \
+        \        \"y\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Vertical grid
+        coordinate (zero-indexed)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedBoardTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"SeedBoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Result of bulk seeding a board template\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"boardTemplateId\",\n                \"definitionsCreated\",\n                \"definitions\"\
+        \n            ],\n            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Board template that
+        was seeded\"\n                },\n                \"definitionsCreated\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Number of definitions created\"\n                },\n                \"\
+        definitions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
+        \     \"$ref\": \"#/$defs/LicenseDefinitionResponse\"\n                    },\n                    \"description\"\
+        : \"All created license definitions\"\n                }\n            }\n        },\n        \"LicenseDefinitionResponse\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"License definition with all fields\",\n   \
+        \         \"additionalProperties\": false,\n            \"required\": [\n                \"licenseDefinitionId\",\n\
+        \                \"boardTemplateId\",\n                \"code\",\n                \"position\",\n                \"\
+        lpCost\",\n                \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\"\
+        : {\n                \"licenseDefinitionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Unique license definition identifier\"\n             \
+        \   },\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Board template this definition belongs to\"\n        \
+        \        },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique license code within this board template\"\n                },\n                \"position\": {\n      \
+        \              \"$ref\": \"#/$defs/GridPosition\",\n                    \"description\": \"Grid position of this license
+        node\"\n                },\n                \"lpCost\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"License Point cost to unlock this node\"\n                },\n                \"itemTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Item template created when this license is unlocked\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        License codes that must be unlocked before this one\"\n                },\n                \"description\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description of what this license grants\"\n                },\n                \"metadata\": {\n\
+        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Game-specific metadata for this license node\"\n                },\n\
+        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When this definition was created\"\n                }\n            }\n \
+        \       },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
+        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Bulk seed a board template with license definitions\",\n    \"description\"\
+        : \"Bulk seed a board template with license definitions from a JSON payload.\\nTwo-pass: creates definitions, then
+        resolves prerequisite references.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"seedBoardTemplate\"\n}"
+components:
+  schemas:
+    AdjacencyMode:
+      type: string
+      description: |
+        Grid traversal adjacency mode for a board template.
+        - four_way: Orthogonal only (up, down, left, right)
+        - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
+      enum:
+      - four_way
+      - eight_way
+    LicenseStatus:
+      type: string
+      description: |
+        Unlock status of a license node on a board.
+        - locked: Not adjacent to any unlocked node (cannot be unlocked)
+        - unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
+        - unlocked: Already unlocked (item placed at this position)
+      enum:
+      - locked
+      - unlockable
+      - unlocked
+    UnlockFailureReason:
+      type: string
+      description: |
+        Reason why a license unlock attempt failed.
+        - not_adjacent: No adjacent unlocked license and not a starting node
+        - insufficient_lp: Character does not have enough LP for the cost
+        - prerequisites_not_met: Required non-adjacent licenses are not unlocked
+        - contract_failed: Contract execution failed during unlock milestone
+        - already_unlocked: License is already unlocked on this board
+        - board_not_found: Board instance does not exist
+        - license_not_found: License definition does not exist on this board template
+      enum:
+      - not_adjacent
+      - insufficient_lp
+      - prerequisites_not_met
+      - contract_failed
+      - already_unlocked
+      - board_not_found
+      - license_not_found
+    GridPosition:
+      type: object
+      description: A position on the board grid (zero-indexed)
+      additionalProperties: false
+      required:
+      - x
+      - y
+      properties:
+        x:
+          type: integer
+          description: Horizontal grid coordinate (zero-indexed)
+        y:
+          type: integer
+          description: Vertical grid coordinate (zero-indexed)
+    BoardNodeState:
+      type: object
+      description: State of a single license node on a board, including unlock status
+      additionalProperties: false
+      required:
+      - code
+      - position
+      - lpCost
+      - status
+      - itemTemplateId
+      properties:
+        code:
+          type: string
+          description: Unique license code within this board template
+        position:
+          $ref: '#/components/schemas/GridPosition'
+          description: Grid position of this license node
+        lpCost:
+          type: integer
+          description: License Point cost to unlock this node
+        status:
+          $ref: '#/components/schemas/LicenseStatus'
+          description: Current unlock status of this node
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template that is created when this license is unlocked
+        itemInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Item instance ID if this license has been unlocked
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: License codes that must be unlocked before this one (non-adjacent)
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what this license grants
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Game-specific metadata for this license node
+    CreateBoardTemplateRequest:
+      type: object
+      description: Request to create a new board template
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - name
+      - gridWidth
+      - gridHeight
+      - startingNodes
+      - boardContractTemplateId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this board template belongs to
+        name:
+          type: string
+          description: Display name for the board template
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of this board template
+        gridWidth:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Width of the board grid (columns)
+        gridHeight:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Height of the board grid (rows)
+        startingNodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GridPosition'
+          minItems: 1
+          description: Grid positions where unlocking can begin without adjacency
+        boardContractTemplateId:
+          type: string
+          format: uuid
+          description: Contract template that controls unlock behavior (LP deduction, ability grants)
+        adjacencyMode:
+          allOf:
+          - $ref: '#/components/schemas/AdjacencyMode'
+          nullable: true
+          description: Grid traversal mode. Defaults to eight_way if not specified.
+    GetBoardTemplateRequest:
+      type: object
+      description: Request to get a board template by ID
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template identifier
+    UpdateBoardTemplateRequest:
+      type: object
+      description: Request to update mutable fields of a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to update
+        name:
+          type: string
+          nullable: true
+          description: Updated display name
+        description:
+          type: string
+          nullable: true
+          description: Updated description
+        isActive:
+          type: boolean
+          nullable: true
+          description: Whether the template is active (can create new board instances)
+    DeleteBoardTemplateRequest:
+      type: object
+      description: Request to delete a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to delete
+    ListBoardTemplatesRequest:
+      type: object
+      description: Request to list board templates with cursor-based pagination
+      additionalProperties: false
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Filter by game service
+        cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor from previous response. Null for first page.
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          nullable: true
+          description: Number of items per page. Uses service default if not specified.
+    BoardTemplateResponse:
+      type: object
+      description: Board template with all fields
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - gameServiceId
+      - name
+      - gridWidth
+      - gridHeight
+      - startingNodes
+      - boardContractTemplateId
+      - adjacencyMode
+      - isActive
+      - createdAt
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Unique board template identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template belongs to
+        name:
+          type: string
+          description: Display name
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+        gridWidth:
+          type: integer
+          description: Width of the board grid (columns)
+        gridHeight:
+          type: integer
+          description: Height of the board grid (rows)
+        startingNodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GridPosition'
+          description: Grid positions where unlocking can begin without adjacency
+        boardContractTemplateId:
+          type: string
+          format: uuid
+          description: Contract template that controls unlock behavior
+        adjacencyMode:
+          $ref: '#/components/schemas/AdjacencyMode'
+          description: Grid traversal mode for this template
+        isActive:
+          type: boolean
+          description: Whether the template is active (can create new board instances)
+        createdAt:
+          type: string
+          format: date-time
+          description: When the template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was last updated
+    ListBoardTemplatesResponse:
+      type: object
+      description: Paginated list of board templates
+      additionalProperties: false
+      required:
+      - templates
+      - hasMore
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardTemplateResponse'
+          description: Board templates in this page
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page. Null if no more results.
+        hasMore:
+          type: boolean
+          description: Whether more results exist beyond this page
+    SeedBoardTemplateRequest:
+      type: object
+      description: Request to bulk seed a board template with license definitions
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - definitions
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to seed with definitions
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddLicenseDefinitionRequest'
+          description: License definitions to add (boardTemplateId in each is ignored, uses top-level)
+    SeedBoardTemplateResponse:
+      type: object
+      description: Result of bulk seeding a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - definitionsCreated
+      - definitions
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template that was seeded
+        definitionsCreated:
+          type: integer
+          description: Number of definitions created
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseDefinitionResponse'
+          description: All created license definitions
+    AddLicenseDefinitionRequest:
+      type: object
+      description: Request to add a license definition to a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - code
+      - position
+      - lpCost
+      - itemTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to add this definition to
+        code:
+          type: string
+          maxLength: 64
+          description: Unique license code within this board template
+        position:
+          $ref: '#/components/schemas/GridPosition'
+          description: Grid position for this license node
+        lpCost:
+          type: integer
+          minimum: 0
+          description: License Point cost to unlock this node
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template created when this license is unlocked
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: License codes that must be unlocked before this one (non-adjacent requirements)
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what this license grants
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Game-specific metadata for this license node
+    GetLicenseDefinitionRequest:
+      type: object
+      description: Request to get a license definition by board template ID and code
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - code
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template containing the definition
+        code:
+          type: string
+          description: License code to look up
+    UpdateLicenseDefinitionRequest:
+      type: object
+      description: Request to update mutable fields of a license definition
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - code
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template containing the definition
+        code:
+          type: string
+          description: License code to update
+        lpCost:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Updated LP cost
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Updated prerequisite license codes
+        description:
+          type: string
+          nullable: true
+          description: Updated description
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Updated game-specific metadata
+    RemoveLicenseDefinitionRequest:
+      type: object
+      description: Request to remove a license definition from a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - code
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template containing the definition
+        code:
+          type: string
+          description: License code to remove
+    ListLicenseDefinitionsRequest:
+      type: object
+      description: Request to list all license definitions for a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to list definitions for
+    LicenseDefinitionResponse:
+      type: object
+      description: License definition with all fields
+      additionalProperties: false
+      required:
+      - licenseDefinitionId
+      - boardTemplateId
+      - code
+      - position
+      - lpCost
+      - itemTemplateId
+      - createdAt
+      properties:
+        licenseDefinitionId:
+          type: string
+          format: uuid
+          description: Unique license definition identifier
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template this definition belongs to
+        code:
+          type: string
+          description: Unique license code within this board template
+        position:
+          $ref: '#/components/schemas/GridPosition'
+          description: Grid position of this license node
+        lpCost:
+          type: integer
+          description: License Point cost to unlock this node
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template created when this license is unlocked
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: License codes that must be unlocked before this one
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what this license grants
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Game-specific metadata for this license node
+        createdAt:
+          type: string
+          format: date-time
+          description: When this definition was created
+    ListLicenseDefinitionsResponse:
+      type: object
+      description: All license definitions for a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - definitions
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template these definitions belong to
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseDefinitionResponse'
+          description: All license definitions for this board template
+    CreateBoardRequest:
+      type: object
+      description: Request to create a board instance for a character
+      additionalProperties: false
+      required:
+      - characterId
+      - boardTemplateId
+      - gameServiceId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to create the board for
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to instantiate
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service context for validation
+    GetBoardRequest:
+      type: object
+      description: Request to get a board instance by ID
+      additionalProperties: false
+      required:
+      - boardId
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance identifier
+    DeleteBoardRequest:
+      type: object
+      description: Request to delete a board instance
+      additionalProperties: false
+      required:
+      - boardId
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance to delete
+    ListBoardsByCharacterRequest:
+      type: object
+      description: Request to list board instances for a character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to list boards for
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional filter by game service
+    BoardResponse:
+      type: object
+      description: Board instance with all fields
+      additionalProperties: false
+      required:
+      - boardId
+      - characterId
+      - boardTemplateId
+      - gameServiceId
+      - containerId
+      - createdAt
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Unique board instance identifier
+        characterId:
+          type: string
+          format: uuid
+          description: Character this board belongs to
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template this instance was created from
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this board belongs to
+        containerId:
+          type: string
+          format: uuid
+          description: Inventory container holding unlocked license items
+        createdAt:
+          type: string
+          format: date-time
+          description: When this board instance was created
+    ListBoardsByCharacterResponse:
+      type: object
+      description: List of board instances for a character
+      additionalProperties: false
+      required:
+      - boards
+      properties:
+        boards:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardResponse'
+          description: Board instances for this character
+    UnlockLicenseRequest:
+      type: object
+      description: Request to unlock a license on a board
+      additionalProperties: false
+      required:
+      - boardId
+      - licenseCode
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance to unlock on
+        licenseCode:
+          type: string
+          description: License code to unlock
+    UnlockLicenseResponse:
+      type: object
+      description: Result of a successful license unlock
+      additionalProperties: false
+      required:
+      - boardId
+      - licenseCode
+      - position
+      - itemInstanceId
+      - contractInstanceId
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board the license was unlocked on
+        licenseCode:
+          type: string
+          description: License code that was unlocked
+        position:
+          $ref: '#/components/schemas/GridPosition'
+          description: Grid position of the unlocked license
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance created for this license
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance created for this unlock
+    CheckUnlockableRequest:
+      type: object
+      description: Request to check if a license can be unlocked
+      additionalProperties: false
+      required:
+      - boardId
+      - licenseCode
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance to check on
+        licenseCode:
+          type: string
+          description: License code to check
+    CheckUnlockableResponse:
+      type: object
+      description: Result of unlockability check
+      additionalProperties: false
+      required:
+      - unlockable
+      - adjacencyMet
+      - prerequisitesMet
+      - lpSufficient
+      - requiredLp
+      properties:
+        unlockable:
+          type: boolean
+          description: Whether the license can be unlocked (all conditions met)
+        adjacencyMet:
+          type: boolean
+          description: Whether adjacency requirement is satisfied
+        prerequisitesMet:
+          type: boolean
+          description: Whether all non-adjacent prerequisites are unlocked
+        lpSufficient:
+          type: boolean
+          description: Whether the character has enough LP
+        currentLp:
+          type: number
+          nullable: true
+          description: Current LP balance of the character (null if balance check failed)
+        requiredLp:
+          type: integer
+          description: LP cost for this license
+    BoardStateRequest:
+      type: object
+      description: Request to get the full board state
+      additionalProperties: false
+      required:
+      - boardId
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance to get state for
+    BoardStateResponse:
+      type: object
+      description: Full board state with all node statuses for client UI rendering
+      additionalProperties: false
+      required:
+      - boardId
+      - characterId
+      - boardTemplateId
+      - gridWidth
+      - gridHeight
+      - nodes
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance identifier
+        characterId:
+          type: string
+          format: uuid
+          description: Character this board belongs to
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template this instance was created from
+        gridWidth:
+          type: integer
+          description: Width of the board grid (columns)
+        gridHeight:
+          type: integer
+          description: Height of the board grid (rows)
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardNodeState'
+          description: All license nodes with their current status
+    ErrorResponse:
+      type: object
+      description: Standard error response format
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Additional error context

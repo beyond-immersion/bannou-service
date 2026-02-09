@@ -173,6 +173,18 @@ public static class StateStoreDefinitions
     /// <summary>Season history and archives</summary>
     public const string LeaderboardSeason = "leaderboard-season";
 
+    // License Service
+    /// <summary>Board state cache (unlocked license positions per board)</summary>
+    public const string LicenseBoardCache = "license-board-cache";
+    /// <summary>Board template definitions with grid layout and contract references</summary>
+    public const string LicenseBoardTemplates = "license-board-templates";
+    /// <summary>Character board instances linking characters to board templates</summary>
+    public const string LicenseBoards = "license-boards";
+    /// <summary>License definitions (nodes) per board template with grid positions</summary>
+    public const string LicenseDefinitions = "license-definitions";
+    /// <summary>Distributed locks for board mutations and unlock operations</summary>
+    public const string LicenseLock = "license-lock";
+
     // Location Service
     /// <summary>Location lookup cache for frequently-accessed locations</summary>
     public const string LocationCache = "location-cache";
@@ -399,6 +411,11 @@ public static class StateStoreDefinitions
             [LeaderboardDefinition] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "lb:def" },
             [LeaderboardRanking] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "lb:rank" },
             [LeaderboardSeason] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "leaderboard_season" },
+            [LicenseBoardCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "license:board" },
+            [LicenseBoardTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "license_board_templates" },
+            [LicenseBoards] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "license_boards" },
+            [LicenseDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "license_definitions" },
+            [LicenseLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "license:lock" },
             [LocationCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location" },
             [LocationLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:lock" },
             [Location] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "location_statestore" },
@@ -525,6 +542,11 @@ public static class StateStoreDefinitions
             [LeaderboardDefinition] = new StoreMetadata("Leaderboard", "Leaderboard definitions and metadata", "redis"),
             [LeaderboardRanking] = new StoreMetadata("Leaderboard", "Real-time ranking data (sorted sets)", "redis"),
             [LeaderboardSeason] = new StoreMetadata("Leaderboard", "Season history and archives", "mysql"),
+            [LicenseBoardCache] = new StoreMetadata("License", "Board state cache (unlocked license positions per board)", "redis"),
+            [LicenseBoardTemplates] = new StoreMetadata("License", "Board template definitions with grid layout and contract references", "mysql"),
+            [LicenseBoards] = new StoreMetadata("License", "Character board instances linking characters to board templates", "mysql"),
+            [LicenseDefinitions] = new StoreMetadata("License", "License definitions (nodes) per board template with grid positions", "mysql"),
+            [LicenseLock] = new StoreMetadata("License", "Distributed locks for board mutations and unlock operations", "redis"),
             [LocationCache] = new StoreMetadata("Location", "Location lookup cache for frequently-accessed locations", "redis"),
             [LocationLock] = new StoreMetadata("Location", "Distributed locks for concurrent index modifications", "redis"),
             [Location] = new StoreMetadata("Location", "Location hierarchy and metadata", "mysql"),
