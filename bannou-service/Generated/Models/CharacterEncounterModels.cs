@@ -571,12 +571,13 @@ public partial class RecordEncounterRequest
     public EncounterOutcome Outcome { get; set; } = default!;
 
     /// <summary>
-    /// Character IDs involved (minimum 2)
+    /// Character IDs involved (minimum 2, server enforces MaxParticipantsPerEncounter config limit)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participantIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(2)]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<System.Guid> ParticipantIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>

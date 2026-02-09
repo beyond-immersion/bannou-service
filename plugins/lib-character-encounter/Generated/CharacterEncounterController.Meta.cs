@@ -1019,7 +1019,8 @@ public partial class CharacterEncounterController
                         "format": "uuid"
                     },
                     "minItems": 2,
-                    "description": "Character IDs involved (minimum 2)"
+                    "maxItems": 100,
+                    "description": "Character IDs involved (minimum 2, server enforces MaxParticipantsPerEncounter config limit)"
                 },
                 "perspectives": {
                     "type": "array",

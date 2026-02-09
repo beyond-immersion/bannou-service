@@ -33,6 +33,14 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  x-references:
+  - target: character
+    sourceType: license-board
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /license/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
 x-service-layer: GameFeatures
 servers:
 - url: http://localhost:5012
@@ -408,7 +416,7 @@ paths:
       - BoardTemplate
       summary: Delete a board template
       description: |
-        Soft-delete a board template. Blocked if active board instances exist
+        Delete a board template. Blocked if active board instances exist
         that reference this template.
       x-permissions:
       - role: developer
@@ -484,9 +492,9 @@ paths:
         adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
         + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
         \   \"eight_way\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete a board template\",\n    \"description\": \"Soft-delete a board
-        template. Blocked if active board instances exist\\nthat reference this template.\\n\",\n    \"tags\": [\n       \
-        \ \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteBoardTemplate\"\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a board template\",\n    \"description\": \"Delete a board template.
+        Blocked if active board instances exist\\nthat reference this template.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteBoardTemplate\"\n}"
   /license/definition/add:
     post:
       operationId: addLicenseDefinition
@@ -1528,6 +1536,54 @@ paths:
         : \"Bulk seed a board template with license definitions from a JSON payload.\\nTwo-pass: creates definitions, then
         resolves prerequisite references.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"seedBoardTemplate\"\n}"
+  /license/cleanup-by-character:
+    post:
+      operationId: cleanupByCharacter
+      tags:
+      - Cleanup
+      summary: Cleanup boards referencing a deleted character
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Deletes all board instances for the specified character, destroying their
+        inventory containers and all contained license items.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to cleanup all boards for a deleted character\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n        \
+        \        \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Character whose boards should be cleaned up\"\n                }\n       \
+        \     }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Result of character board cleanup\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"characterId\",\n                \"boardsDeleted\"\n            ],\n            \"\
+        properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"description\": \"Character that was cleaned up\"\n              \
+        \  },\n                \"boardsDeleted\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of boards deleted during cleanup\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Cleanup boards referencing a deleted character\",\n    \"description\"\
+        : \"Called by lib-resource cleanup coordination when a character is deleted.\\nDeletes all board instances for the
+        specified character, destroying their\\ninventory containers and all contained license items.\\nThis endpoint is designed
+        for internal service-to-service calls during\\ncascading resource cleanup.\\n\",\n    \"tags\": [\n        \"Cleanup\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"cleanupByCharacter\"\n}"
 components:
   schemas:
     AdjacencyMode:
@@ -2296,6 +2352,32 @@ components:
           items:
             $ref: '#/components/schemas/BoardNodeState'
           description: All license nodes with their current status
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to cleanup all boards for a deleted character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose boards should be cleaned up
+    CleanupByCharacterResponse:
+      type: object
+      description: Result of character board cleanup
+      additionalProperties: false
+      required:
+      - characterId
+      - boardsDeleted
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character that was cleaned up
+        boardsDeleted:
+          type: integer
+          description: Number of boards deleted during cleanup
     ErrorResponse:
       type: object
       description: Standard error response format

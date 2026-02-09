@@ -30,6 +30,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
+| [License Service API](#license) | `client.License` | 19 | Grid-based progression boards via itemized contracts. |
 | [Bannou Location Service API](#location) | `client.Location` | 19 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
@@ -46,6 +47,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Resource Lifecycle API](#resource) | `client.Resource` | 17 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
+| [Seed Service API](#seed) | `client.Seed` | 21 | Generic progressive growth entity service (L2 GameFoundation... |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
 | [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
@@ -1040,6 +1042,58 @@ Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
 
 ---
 
+## License Service API {#license}
+
+**Proxy**: `client.License` | **Version**: 1.0.0
+
+Grid-based progression boards via itemized contracts.
+
+### Board
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateBoardAsync` | `CreateBoardRequest` | `BoardResponse` | Create a board instance for a character |
+| `GetBoardAsync` | `GetBoardRequest` | `BoardResponse` | Get a board instance by ID |
+| `ListBoardsbycharacterAsync` | `ListBoardsByCharacterRequest` | `ListBoardsByCharacterResponse` | List boards for a character |
+| `DeleteBoardAsync` | `DeleteBoardRequest` | `BoardResponse` | Delete a board instance |
+
+### BoardTemplate
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateBoardtemplateAsync` | `CreateBoardTemplateRequest` | `BoardTemplateResponse` | Create a new board template |
+| `GetBoardtemplateAsync` | `GetBoardTemplateRequest` | `BoardTemplateResponse` | Get a board template by ID |
+| `ListBoardtemplatesAsync` | `ListBoardTemplatesRequest` | `ListBoardTemplatesResponse` | List board templates for a game service |
+| `UpdateBoardtemplateAsync` | `UpdateBoardTemplateRequest` | `BoardTemplateResponse` | Update a board template |
+| `DeleteBoardtemplateAsync` | `DeleteBoardTemplateRequest` | `BoardTemplateResponse` | Delete a board template |
+| `SeedboardtemplateAsync` | `SeedBoardTemplateRequest` | `SeedBoardTemplateResponse` | Bulk seed a board template with license definitions |
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup boards referencing a deleted character |
+
+### Definition
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AddlicensedefinitionAsync` | `AddLicenseDefinitionRequest` | `LicenseDefinitionResponse` | Add a license definition to a board template |
+| `GetLicensedefinitionAsync` | `GetLicenseDefinitionRequest` | `LicenseDefinitionResponse` | Get a license definition |
+| `ListLicensedefinitionsAsync` | `ListLicenseDefinitionsRequest` | `ListLicenseDefinitionsResponse` | List all license definitions for a board template |
+| `UpdateLicensedefinitionAsync` | `UpdateLicenseDefinitionRequest` | `LicenseDefinitionResponse` | Update a license definition |
+| `RemovelicensedefinitionAsync` | `RemoveLicenseDefinitionRequest` | `LicenseDefinitionResponse` | Remove a license definition from a board template |
+
+### Gameplay
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `UnlocklicenseAsync` | `UnlockLicenseRequest` | `UnlockLicenseResponse` | Unlock a license on a board |
+| `CheckunlockableAsync` | `CheckUnlockableRequest` | `CheckUnlockableResponse` | Check if a license can be unlocked |
+| `GetBoardstateAsync` | `BoardStateRequest` | `BoardStateResponse` | Get full board state |
+
+---
+
 ## Bannou Location Service API {#location}
 
 **Proxy**: `client.Location` | **Version**: 1.0.0
@@ -1696,6 +1750,40 @@ Hierarchical composition storage for game worlds.
 
 ---
 
+## Seed Service API {#seed}
+
+**Proxy**: `client.Seed` | **Version**: 1.0.0
+
+Generic progressive growth entity service (L2 GameFoundation). Seeds are entities that start empty and grow by accumulating metadata from external ...
+
+### Other
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateSeedAsync` | `CreateSeedRequest` | `SeedResponse` | Create a new seed |
+| `GetSeedAsync` | `GetSeedRequest` | `SeedResponse` | Get seed by ID |
+| `GetSeedsbyownerAsync` | `GetSeedsByOwnerRequest` | `ListSeedsResponse` | Get seeds by owner ID and type |
+| `ListSeedsAsync` | `ListSeedsRequest` | `ListSeedsResponse` | List seeds with filtering |
+| `UpdateSeedAsync` | `UpdateSeedRequest` | `SeedResponse` | Update seed metadata or display name |
+| `ActivateseedAsync` | `ActivateSeedRequest` | `SeedResponse` | Set a seed as active |
+| `ArchiveseedAsync` | `ArchiveSeedRequest` | `SeedResponse` | Archive a seed |
+| `GetGrowthAsync` | `GetGrowthRequest` | `GrowthResponse` | Get full growth domain map |
+| `RecordgrowthAsync` | `RecordGrowthRequest` | `GrowthResponse` | Record growth in a domain |
+| `RecordgrowthbatchAsync` | `RecordGrowthBatchRequest` | `GrowthResponse` | Record growth across multiple domains atomically |
+| `GetGrowthphaseAsync` | `GetGrowthPhaseRequest` | `GrowthPhaseResponse` | Get current growth phase |
+| `GetCapabilitymanifestAsync` | `GetCapabilityManifestRequest` | `CapabilityManifestResponse` | Get current capability manifest |
+| `RegisterSeedtypeAsync` | `RegisterSeedTypeRequest` | `SeedTypeResponse` | Register a new seed type definition |
+| `GetSeedtypeAsync` | `GetSeedTypeRequest` | `SeedTypeResponse` | Get seed type definition |
+| `ListSeedtypesAsync` | `ListSeedTypesRequest` | `ListSeedTypesResponse` | List registered seed types |
+| `UpdateSeedtypeAsync` | `UpdateSeedTypeRequest` | `SeedTypeResponse` | Update seed type definition |
+| `InitiatebondAsync` | `InitiateBondRequest` | `BondResponse` | Begin bond process between seeds |
+| `ConfirmbondAsync` | `ConfirmBondRequest` | `BondResponse` | Confirm a pending bond |
+| `GetBondAsync` | `GetBondRequest` | `BondResponse` | Get bond by ID |
+| `GetBondforseedAsync` | `GetBondForSeedRequest` | `BondResponse` | Get bond for a specific seed |
+| `GetBondpartnersAsync` | `GetBondPartnersRequest` | `BondPartnersResponse` | Get partner seed(s) public info |
+
+---
+
 ## Bannou Species Service API {#species}
 
 **Proxy**: `client.Species` | **Version**: 2.0.0
@@ -1914,8 +2002,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 44
-- **Total methods**: 621
+- **Total services**: 46
+- **Total methods**: 661
 
 ---
 

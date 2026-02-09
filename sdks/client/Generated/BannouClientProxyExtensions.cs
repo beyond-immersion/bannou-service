@@ -35,6 +35,7 @@ public partial class BannouClient
     private InventoryProxy? _inventory;
     private ItemProxy? _item;
     private LeaderboardProxy? _leaderboard;
+    private LicenseProxy? _license;
     private LocationProxy? _location;
     private MappingProxy? _mapping;
     private MatchmakingProxy? _matchmaking;
@@ -51,6 +52,7 @@ public partial class BannouClient
     private ResourceProxy? _resource;
     private SaveLoadProxy? _saveLoad;
     private SceneProxy? _scene;
+    private SeedProxy? _seed;
     private SpeciesProxy? _species;
     private StateProxy? _state;
     private StorylineProxy? _storyline;
@@ -186,6 +188,12 @@ public partial class BannouClient
         _leaderboard ??= new LeaderboardProxy(this);
 
     /// <summary>
+    /// Gets the typed proxy for License Service API operations.
+    /// </summary>
+    public LicenseProxy License =>
+        _license ??= new LicenseProxy(this);
+
+    /// <summary>
     /// Gets the typed proxy for Bannou Location Service API operations.
     /// </summary>
     public LocationProxy Location =>
@@ -280,6 +288,12 @@ public partial class BannouClient
     /// </summary>
     public SceneProxy Scene =>
         _scene ??= new SceneProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Seed Service API operations.
+    /// </summary>
+    public SeedProxy Seed =>
+        _seed ??= new SeedProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Species Service API operations.

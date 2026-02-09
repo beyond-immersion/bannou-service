@@ -8744,6 +8744,998 @@
         }
       }
     },
+    "/license/board-template/create": {
+      "post": {
+        "operationId": "createBoardTemplate",
+        "tags": [
+          "BoardTemplate"
+        ],
+        "summary": "Create a new board template",
+        "description": "Create a board template with grid dimensions, starting nodes, adjacency mode,\nand a reference to the contract template that controls unlock behavior.\nBoard templates are scoped to a game service.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBoardTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardTemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (validation error)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced game service or contract template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board-template/get": {
+      "post": {
+        "operationId": "getBoardTemplate",
+        "tags": [
+          "BoardTemplate"
+        ],
+        "summary": "Get a board template by ID",
+        "description": "Retrieves a board template by its unique identifier.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetBoardTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board template retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board-template/list": {
+      "post": {
+        "operationId": "listBoardTemplates",
+        "tags": [
+          "BoardTemplate"
+        ],
+        "summary": "List board templates for a game service",
+        "description": "Paginated list of board templates filtered by game service ID.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListBoardTemplatesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board templates retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListBoardTemplatesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board-template/update": {
+      "post": {
+        "operationId": "updateBoardTemplate",
+        "tags": [
+          "BoardTemplate"
+        ],
+        "summary": "Update a board template",
+        "description": "Update mutable fields of a board template. Grid dimensions, starting nodes,\nand contract template are immutable after creation.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBoardTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board template updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board-template/delete": {
+      "post": {
+        "operationId": "deleteBoardTemplate",
+        "tags": [
+          "BoardTemplate"
+        ],
+        "summary": "Delete a board template",
+        "description": "Delete a board template. Blocked if active board instances exist\nthat reference this template.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteBoardTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board template deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Active board instances exist for this template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/definition/add": {
+      "post": {
+        "operationId": "addLicenseDefinition",
+        "tags": [
+          "Definition"
+        ],
+        "summary": "Add a license definition to a board template",
+        "description": "Add a license definition (node) to a board template at a specific grid position.\nEach definition has a unique code within the template, a grid position, an LP cost,\nand a reference to the item template that is created when the license is unlocked.\nOptional non-adjacent prerequisites can reference other license codes on the board.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddLicenseDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "License definition added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseDefinitionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (position out of bounds, invalid item template)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board template or item template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Duplicate code or position, or max definitions exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/definition/get": {
+      "post": {
+        "operationId": "getLicenseDefinition",
+        "tags": [
+          "Definition"
+        ],
+        "summary": "Get a license definition",
+        "description": "Get a license definition by board template ID and license code.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetLicenseDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "License definition retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseDefinitionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board template or license definition not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/definition/list": {
+      "post": {
+        "operationId": "listLicenseDefinitions",
+        "tags": [
+          "Definition"
+        ],
+        "summary": "List all license definitions for a board template",
+        "description": "Returns the full grid layout of all license definitions for a board template.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListLicenseDefinitionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "License definitions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListLicenseDefinitionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/definition/update": {
+      "post": {
+        "operationId": "updateLicenseDefinition",
+        "tags": [
+          "Definition"
+        ],
+        "summary": "Update a license definition",
+        "description": "Update mutable fields of a license definition. Position and code are immutable\nafter creation.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLicenseDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "License definition updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseDefinitionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board template or license definition not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/definition/remove": {
+      "post": {
+        "operationId": "removeLicenseDefinition",
+        "tags": [
+          "Definition"
+        ],
+        "summary": "Remove a license definition from a board template",
+        "description": "Remove a license definition from a board template. Blocked if any board\ninstances have this license unlocked.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveLicenseDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "License definition removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseDefinitionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board template or license definition not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "License is unlocked by active board instances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board/create": {
+      "post": {
+        "operationId": "createBoard",
+        "tags": [
+          "Board"
+        ],
+        "summary": "Create a board instance for a character",
+        "description": "Create a board instance for a character from a board template. Validates character\nexists, game service matches, and no duplicate board exists (one board per template\nper character). Creates an inventory container (slot_only, maxSlots = gridWidth *\ngridHeight) to hold unlocked license items.\n",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBoardRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (inactive template)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Character, game service, or board template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Duplicate board or max boards per character exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board/get": {
+      "post": {
+        "operationId": "getBoard",
+        "tags": [
+          "Board"
+        ],
+        "summary": "Get a board instance by ID",
+        "description": "Retrieves a board instance by its unique identifier.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetBoardRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board/list-by-character": {
+      "post": {
+        "operationId": "listBoardsByCharacter",
+        "tags": [
+          "Board"
+        ],
+        "summary": "List boards for a character",
+        "description": "List all board instances for a character, with optional game service filter.",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListBoardsByCharacterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Boards retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListBoardsByCharacterResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board/delete": {
+      "post": {
+        "operationId": "deleteBoard",
+        "tags": [
+          "Board"
+        ],
+        "summary": "Delete a board instance",
+        "description": "Delete a board instance. Destroys the inventory container and all license\nitems within it.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteBoardRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/unlock": {
+      "post": {
+        "operationId": "unlockLicense",
+        "tags": [
+          "Gameplay"
+        ],
+        "summary": "Unlock a license on a board",
+        "description": "The core operation. Validates adjacency and prerequisites, creates a contract\ninstance from the board template's contract template, executes the unlock\nmilestone (LP deduction, ability grants via prebound APIs), then creates an\nitem instance and places it in the board container. Atomic: if contract\nexecution fails, no license is placed.\n",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnlockLicenseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "License unlocked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnlockLicenseResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not adjacent, prerequisites not met, or insufficient LP",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board or license definition not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "License already unlocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Contract execution failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/check-unlockable": {
+      "post": {
+        "operationId": "checkUnlockable",
+        "tags": [
+          "Gameplay"
+        ],
+        "summary": "Check if a license can be unlocked",
+        "description": "Check if a license can be unlocked without performing the unlock. Returns\nadjacency status, prerequisite status, and whether the character has\nsufficient LP.\n",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckUnlockableRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unlockability check completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckUnlockableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board or license definition not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board-state": {
+      "post": {
+        "operationId": "getBoardState",
+        "tags": [
+          "Gameplay"
+        ],
+        "summary": "Get full board state",
+        "description": "Get the full board state: all defined license positions with unlock status\n(unlocked, locked, unlockable) and adjacency info. Primary endpoint for\nclient UI rendering.\n",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoardStateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board state retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardStateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/board-template/seed": {
+      "post": {
+        "operationId": "seedBoardTemplate",
+        "tags": [
+          "BoardTemplate"
+        ],
+        "summary": "Bulk seed a board template with license definitions",
+        "description": "Bulk seed a board template with license definitions from a JSON payload.\nTwo-pass: creates definitions, then resolves prerequisite references.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedBoardTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board template seeded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedBoardTemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid definitions (out of bounds, duplicates)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/license/cleanup-by-character": {
+      "post": {
+        "operationId": "cleanupByCharacter",
+        "tags": [
+          "Cleanup"
+        ],
+        "summary": "Cleanup boards referencing a deleted character",
+        "description": "Called by lib-resource cleanup coordination when a character is deleted.\nDeletes all board instances for the specified character, destroying their\ninventory containers and all contained license items.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanupByCharacterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cleanup completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupByCharacterResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/location/get": {
       "post": {
         "summary": "Get location by ID",
@@ -13606,6 +14598,720 @@
         }
       }
     },
+    "/seed/create": {
+      "post": {
+        "operationId": "CreateSeed",
+        "summary": "Create a new seed",
+        "description": "Creates a new seed bound to the specified owner. The seed type must be registered and the owner type must be allowed by the seed type definition. Returns conflict if creating this seed would exceed the type's MaxPerOwner limit.\n",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSeedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/get": {
+      "post": {
+        "operationId": "GetSeed",
+        "summary": "Get seed by ID",
+        "description": "Returns the seed entity with current growth phase and summary data.",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetSeedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/get-by-owner": {
+      "post": {
+        "operationId": "GetSeedsByOwner",
+        "summary": "Get seeds by owner ID and type",
+        "description": "Returns all seeds owned by the specified entity. Optionally filter by seed type code and status.\n",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetSeedsByOwnerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seeds found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSeedsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/list": {
+      "post": {
+        "operationId": "ListSeeds",
+        "summary": "List seeds with filtering",
+        "description": "Returns seeds matching the specified filters. Supports filtering by seed type, owner type, growth phase, status, and game service.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListSeedsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seeds returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSeedsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/update": {
+      "post": {
+        "operationId": "UpdateSeed",
+        "summary": "Update seed metadata or display name",
+        "description": "Updates mutable fields of a seed. Cannot change owner or seed type.",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSeedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/activate": {
+      "post": {
+        "operationId": "ActivateSeed",
+        "summary": "Set a seed as active",
+        "description": "Activates the specified seed. Only one seed of a given type can be active per owner at a time. Deactivates any previously active seed of the same type.\n",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivateSeedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/archive": {
+      "post": {
+        "operationId": "ArchiveSeed",
+        "summary": "Archive a seed",
+        "description": "Soft-deletes a seed, preserving its data but removing it from active rotation. Archived seeds do not count toward the MaxPerOwner limit. Cannot archive an active seed.\n",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveSeedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/growth/get": {
+      "post": {
+        "operationId": "GetGrowth",
+        "summary": "Get full growth domain map",
+        "description": "Returns the complete growth domain map for a seed, including all top-level and sub-domain entries with their current depth values.\n",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetGrowthRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Growth data returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrowthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/growth/record": {
+      "post": {
+        "operationId": "RecordGrowth",
+        "summary": "Record growth in a domain",
+        "description": "Records growth in a specific domain for a seed. Primarily called internally by consuming services after processing game events. Triggers capability manifest recomputation if thresholds are crossed.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordGrowthRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Growth recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrowthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/growth/record-batch": {
+      "post": {
+        "operationId": "RecordGrowthBatch",
+        "summary": "Record growth across multiple domains atomically",
+        "description": "Records growth across multiple domains in a single atomic operation. Useful when a single game event contributes to multiple domains simultaneously.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordGrowthBatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Growth recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrowthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/growth/get-phase": {
+      "post": {
+        "operationId": "GetGrowthPhase",
+        "summary": "Get current growth phase",
+        "description": "Returns the current computed growth phase for the seed, based on the seed type's configured phase thresholds.\n",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetGrowthPhaseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Phase returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrowthPhaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/capability/get-manifest": {
+      "post": {
+        "operationId": "GetCapabilityManifest",
+        "summary": "Get current capability manifest",
+        "description": "Returns the most recently computed capability manifest for the seed. Consumers interpret what capabilities mean (UX modules, spawning permissions, faction actions, etc.).\n",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCapabilityManifestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Manifest returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilityManifestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/type/register": {
+      "post": {
+        "operationId": "RegisterSeedType",
+        "summary": "Register a new seed type definition",
+        "description": "Registers a seed type with its growth phase definitions, capability rules, bond cardinality, and owner type restrictions. Seed types are scoped to game services.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterSeedTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed type registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedTypeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/type/get": {
+      "post": {
+        "operationId": "GetSeedType",
+        "summary": "Get seed type definition",
+        "description": "Returns the full seed type definition including phases and capability rules.",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetSeedTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed type found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedTypeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/type/list": {
+      "post": {
+        "operationId": "ListSeedTypes",
+        "summary": "List registered seed types",
+        "description": "Returns all seed types registered for the specified game service.",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListSeedTypesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed types returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSeedTypesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/type/update": {
+      "post": {
+        "operationId": "UpdateSeedType",
+        "summary": "Update seed type definition",
+        "description": "Updates a seed type definition. Changes to phase thresholds or capability rules trigger recomputation for all seeds of this type.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSeedTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed type updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedTypeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/bond/initiate": {
+      "post": {
+        "operationId": "InitiateBond",
+        "summary": "Begin bond process between seeds",
+        "description": "Initiates a bond between seeds of the same type. All participants must confirm for the bond to become active. Returns conflict if any participant already has a bond and the type's cardinality is 1.\n",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateBondRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bond initiated, awaiting confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BondResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/bond/confirm": {
+      "post": {
+        "operationId": "ConfirmBond",
+        "summary": "Confirm a pending bond",
+        "description": "Confirms a pending bond. When all participants have confirmed, the bond becomes active. Bond permanence is determined by the seed type.\n",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmBondRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bond confirmed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BondResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/bond/get": {
+      "post": {
+        "operationId": "GetBond",
+        "summary": "Get bond by ID",
+        "description": "Returns the bond record with all participants and status.",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetBondRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bond found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BondResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/bond/get-for-seed": {
+      "post": {
+        "operationId": "GetBondForSeed",
+        "summary": "Get bond for a specific seed",
+        "description": "Returns the bond that the specified seed participates in, if any.",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetBondForSeedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bond found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BondResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/bond/get-partners": {
+      "post": {
+        "operationId": "GetBondPartners",
+        "summary": "Get partner seed(s) public info",
+        "description": "Returns public information about the other seeds in the bond.",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetBondPartnersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partners returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BondPartnersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/species/get": {
       "post": {
         "summary": "Get species by ID",
@@ -15429,6 +17135,20 @@
           }
         }
       },
+      "ActivateSeedRequest": {
+        "type": "object",
+        "description": "Request to activate a seed.",
+        "required": [
+          "seedId"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed to activate."
+          }
+        }
+      },
       "ActiveQuestSummary": {
         "type": "object",
         "description": "Summary of an active quest for archive purposes",
@@ -15768,6 +17488,71 @@
             "description": "Instance merged into if stacked"
           }
         }
+      },
+      "AddLicenseDefinitionRequest": {
+        "type": "object",
+        "description": "Request to add a license definition to a board template",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId",
+          "code",
+          "position",
+          "lpCost",
+          "itemTemplateId"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template to add this definition to"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Unique license code within this board template"
+          },
+          "position": {
+            "$ref": "#/components/schemas/GridPosition",
+            "description": "Grid position for this license node"
+          },
+          "lpCost": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "License Point cost to unlock this node"
+          },
+          "itemTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item template created when this license is unlocked"
+          },
+          "prerequisites": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "License codes that must be unlocked before this one (non-adjacent requirements)"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable description of what this license grants"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Game-specific metadata for this license node"
+          }
+        }
+      },
+      "AdjacencyMode": {
+        "type": "string",
+        "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
+        "enum": [
+          "four_way",
+          "eight_way"
+        ]
       },
       "Affordance": {
         "type": "object",
@@ -16127,6 +17912,20 @@
           "owner": {
             "type": "string",
             "description": "Owner of this archive. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated archives\nor a service name for service-initiated archives.\n"
+          }
+        }
+      },
+      "ArchiveSeedRequest": {
+        "type": "object",
+        "description": "Request to archive a seed.",
+        "required": [
+          "seedId"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed to archive."
           }
         }
       },
@@ -17514,6 +19313,353 @@
         ],
         "description": "Status of a repository binding"
       },
+      "BoardNodeState": {
+        "type": "object",
+        "description": "State of a single license node on a board, including unlock status",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "position",
+          "lpCost",
+          "status",
+          "itemTemplateId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Unique license code within this board template"
+          },
+          "position": {
+            "$ref": "#/components/schemas/GridPosition",
+            "description": "Grid position of this license node"
+          },
+          "lpCost": {
+            "type": "integer",
+            "description": "License Point cost to unlock this node"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LicenseStatus",
+            "description": "Current unlock status of this node"
+          },
+          "itemTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item template that is created when this license is unlocked"
+          },
+          "itemInstanceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Item instance ID if this license has been unlocked"
+          },
+          "prerequisites": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "License codes that must be unlocked before this one (non-adjacent)"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable description of what this license grants"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Game-specific metadata for this license node"
+          }
+        }
+      },
+      "BoardResponse": {
+        "type": "object",
+        "description": "Board instance with all fields",
+        "additionalProperties": false,
+        "required": [
+          "boardId",
+          "characterId",
+          "boardTemplateId",
+          "gameServiceId",
+          "containerId",
+          "createdAt"
+        ],
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique board instance identifier"
+          },
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character this board belongs to"
+          },
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template this instance was created from"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this board belongs to"
+          },
+          "containerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Inventory container holding unlocked license items"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this board instance was created"
+          }
+        }
+      },
+      "BoardStateRequest": {
+        "type": "object",
+        "description": "Request to get the full board state",
+        "additionalProperties": false,
+        "required": [
+          "boardId"
+        ],
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board instance to get state for"
+          }
+        }
+      },
+      "BoardStateResponse": {
+        "type": "object",
+        "description": "Full board state with all node statuses for client UI rendering",
+        "additionalProperties": false,
+        "required": [
+          "boardId",
+          "characterId",
+          "boardTemplateId",
+          "gridWidth",
+          "gridHeight",
+          "nodes"
+        ],
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board instance identifier"
+          },
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character this board belongs to"
+          },
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template this instance was created from"
+          },
+          "gridWidth": {
+            "type": "integer",
+            "description": "Width of the board grid (columns)"
+          },
+          "gridHeight": {
+            "type": "integer",
+            "description": "Height of the board grid (rows)"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardNodeState"
+            },
+            "description": "All license nodes with their current status"
+          }
+        }
+      },
+      "BoardTemplateResponse": {
+        "type": "object",
+        "description": "Board template with all fields",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId",
+          "gameServiceId",
+          "name",
+          "gridWidth",
+          "gridHeight",
+          "startingNodes",
+          "boardContractTemplateId",
+          "adjacencyMode",
+          "isActive",
+          "createdAt"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique board template identifier"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this template belongs to"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable description"
+          },
+          "gridWidth": {
+            "type": "integer",
+            "description": "Width of the board grid (columns)"
+          },
+          "gridHeight": {
+            "type": "integer",
+            "description": "Height of the board grid (rows)"
+          },
+          "startingNodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GridPosition"
+            },
+            "description": "Grid positions where unlocking can begin without adjacency"
+          },
+          "boardContractTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract template that controls unlock behavior"
+          },
+          "adjacencyMode": {
+            "$ref": "#/components/schemas/AdjacencyMode",
+            "description": "Grid traversal mode for this template"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the template is active (can create new board instances)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the template was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the template was last updated"
+          }
+        }
+      },
+      "BondParticipant": {
+        "type": "object",
+        "description": "A participant in a seed bond.",
+        "required": [
+          "seedId",
+          "joinedAt"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Participant seed ID."
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this seed joined the bond."
+          },
+          "role": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional role within the bond."
+          }
+        }
+      },
+      "BondPartnersResponse": {
+        "type": "object",
+        "description": "Partner seed summaries for a bond.",
+        "required": [
+          "bondId",
+          "partners"
+        ],
+        "properties": {
+          "bondId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The bond."
+          },
+          "partners": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerSummary"
+            },
+            "description": "Partner seed summaries."
+          }
+        }
+      },
+      "BondResponse": {
+        "type": "object",
+        "description": "Full bond record response.",
+        "required": [
+          "bondId",
+          "seedTypeCode",
+          "participants",
+          "createdAt",
+          "status",
+          "bondStrength",
+          "sharedGrowth"
+        ],
+        "properties": {
+          "bondId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique bond identifier."
+          },
+          "seedTypeCode": {
+            "type": "string",
+            "description": "Seed type this bond connects."
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BondParticipant"
+            },
+            "description": "Seeds participating in this bond."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the bond was formed."
+          },
+          "status": {
+            "$ref": "#/components/schemas/BondStatus",
+            "description": "Current bond lifecycle status."
+          },
+          "bondStrength": {
+            "type": "number",
+            "format": "float",
+            "description": "Grows with shared growth. Consumer-interpreted."
+          },
+          "sharedGrowth": {
+            "type": "number",
+            "format": "float",
+            "description": "Total accumulated shared growth."
+          }
+        }
+      },
+      "BondStatus": {
+        "type": "string",
+        "description": "Lifecycle status of a seed bond.",
+        "enum": [
+          "PendingConfirmation",
+          "Active"
+        ]
+      },
       "Bounds": {
         "type": "object",
         "description": "An axis-aligned bounding box in 3D space",
@@ -18280,6 +20426,102 @@
           "cap_and_lose",
           "cap_and_return"
         ]
+      },
+      "Capability": {
+        "type": "object",
+        "description": "A single capability entry in the manifest.",
+        "required": [
+          "capabilityCode",
+          "domain",
+          "fidelity",
+          "unlocked"
+        ],
+        "properties": {
+          "capabilityCode": {
+            "type": "string",
+            "description": "Unique capability identifier. Consumer-interpreted (e.g., UX module ID, spawning permission, faction action).\n"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Growth domain this capability maps to."
+          },
+          "fidelity": {
+            "type": "number",
+            "format": "float",
+            "description": "Capability fidelity from 0.0 to 1.0. Higher values mean the seed has more developed capability in this area.\n"
+          },
+          "unlocked": {
+            "type": "boolean",
+            "description": "Whether this capability is available at all."
+          }
+        }
+      },
+      "CapabilityManifestResponse": {
+        "type": "object",
+        "description": "Computed capability manifest for a seed.",
+        "required": [
+          "seedId",
+          "seedTypeCode",
+          "computedAt",
+          "version",
+          "capabilities"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed this manifest belongs to."
+          },
+          "seedTypeCode": {
+            "type": "string",
+            "description": "The seed type for consumer interpretation."
+          },
+          "computedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this manifest was last computed."
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonically increasing version number."
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Capability"
+            },
+            "description": "List of capabilities with availability and fidelity."
+          }
+        }
+      },
+      "CapabilityRule": {
+        "type": "object",
+        "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
+        "required": [
+          "capabilityCode",
+          "domain",
+          "unlockThreshold",
+          "fidelityFormula"
+        ],
+        "properties": {
+          "capabilityCode": {
+            "type": "string",
+            "description": "Unique capability identifier (e.g., \"combat.stance\")."
+          },
+          "domain": {
+            "type": "string",
+            "description": "Which growth domain this capability maps to."
+          },
+          "unlockThreshold": {
+            "type": "number",
+            "format": "float",
+            "description": "Minimum domain depth to unlock this capability."
+          },
+          "fidelityFormula": {
+            "type": "string",
+            "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+          }
+        }
       },
       "CaptureHoldRequest": {
         "type": "object",
@@ -19048,6 +21290,65 @@
             "format": "date-time",
             "nullable": true,
             "description": "When refCount last became zero"
+          }
+        }
+      },
+      "CheckUnlockableRequest": {
+        "type": "object",
+        "description": "Request to check if a license can be unlocked",
+        "additionalProperties": false,
+        "required": [
+          "boardId",
+          "licenseCode"
+        ],
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board instance to check on"
+          },
+          "licenseCode": {
+            "type": "string",
+            "description": "License code to check"
+          }
+        }
+      },
+      "CheckUnlockableResponse": {
+        "type": "object",
+        "description": "Result of unlockability check",
+        "additionalProperties": false,
+        "required": [
+          "unlockable",
+          "adjacencyMet",
+          "prerequisitesMet",
+          "lpSufficient",
+          "requiredLp"
+        ],
+        "properties": {
+          "unlockable": {
+            "type": "boolean",
+            "description": "Whether the license can be unlocked (all conditions met)"
+          },
+          "adjacencyMet": {
+            "type": "boolean",
+            "description": "Whether adjacency requirement is satisfied"
+          },
+          "prerequisitesMet": {
+            "type": "boolean",
+            "description": "Whether all non-adjacent prerequisites are unlocked"
+          },
+          "lpSufficient": {
+            "type": "boolean",
+            "description": "Whether the character has enough LP"
+          },
+          "currentLp": {
+            "type": "number",
+            "nullable": true,
+            "description": "Current LP balance of the character (null if balance check failed)"
+          },
+          "requiredLp": {
+            "type": "integer",
+            "description": "LP cost for this license"
           }
         }
       },
@@ -20472,6 +22773,26 @@
             "type": "string",
             "nullable": true,
             "description": "Additional details"
+          }
+        }
+      },
+      "ConfirmBondRequest": {
+        "type": "object",
+        "description": "Request to confirm a pending bond.",
+        "required": [
+          "bondId",
+          "confirmingSeedId"
+        ],
+        "properties": {
+          "bondId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The bond to confirm."
+          },
+          "confirmingSeedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed confirming the bond."
           }
         }
       },
@@ -21969,6 +24290,96 @@
           }
         }
       },
+      "CreateBoardRequest": {
+        "type": "object",
+        "description": "Request to create a board instance for a character",
+        "additionalProperties": false,
+        "required": [
+          "characterId",
+          "boardTemplateId",
+          "gameServiceId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to create the board for"
+          },
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template to instantiate"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service context for validation"
+          }
+        }
+      },
+      "CreateBoardTemplateRequest": {
+        "type": "object",
+        "description": "Request to create a new board template",
+        "additionalProperties": false,
+        "required": [
+          "gameServiceId",
+          "name",
+          "gridWidth",
+          "gridHeight",
+          "startingNodes",
+          "boardContractTemplateId"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this board template belongs to"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name for the board template"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable description of this board template"
+          },
+          "gridWidth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Width of the board grid (columns)"
+          },
+          "gridHeight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Height of the board grid (rows)"
+          },
+          "startingNodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GridPosition"
+            },
+            "minItems": 1,
+            "description": "Grid positions where unlocking can begin without adjacency"
+          },
+          "boardContractTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract template that controls unlock behavior (LP deduction, ability grants)"
+          },
+          "adjacencyMode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdjacencyMode"
+              }
+            ],
+            "nullable": true,
+            "description": "Grid traversal mode. Defaults to eight_way if not specified."
+          }
+        }
+      },
       "CreateBundleRequest": {
         "description": "Request to create a new asset bundle from multiple assets",
         "type": "object",
@@ -23263,6 +25674,47 @@
           }
         }
       },
+      "CreateSeedRequest": {
+        "type": "object",
+        "description": "Request to create a new seed.",
+        "required": [
+          "ownerId",
+          "ownerType",
+          "seedTypeCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The entity that owns this seed."
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Entity type discriminator (e.g., \"account\", \"actor\", \"realm\", \"character\", \"relationship\").\n"
+          },
+          "seedTypeCode": {
+            "type": "string",
+            "description": "Registered seed type code (e.g., \"guardian\", \"dungeon_core\")."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this seed is scoped to."
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable name. Auto-generated if omitted."
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Seed-type-specific initial metadata."
+          }
+        }
+      },
       "CreateSlotRequest": {
         "description": "Request to create a new save slot for an entity.",
         "type": "object",
@@ -24059,6 +26511,36 @@
           "stoppedActorCount": {
             "type": "integer",
             "description": "Number of running actors that were stopped"
+          }
+        }
+      },
+      "DeleteBoardRequest": {
+        "type": "object",
+        "description": "Request to delete a board instance",
+        "additionalProperties": false,
+        "required": [
+          "boardId"
+        ],
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board instance to delete"
+          }
+        }
+      },
+      "DeleteBoardTemplateRequest": {
+        "type": "object",
+        "description": "Request to delete a board template",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template to delete"
           }
         }
       },
@@ -28136,6 +30618,78 @@
           }
         }
       },
+      "GetBoardRequest": {
+        "type": "object",
+        "description": "Request to get a board instance by ID",
+        "additionalProperties": false,
+        "required": [
+          "boardId"
+        ],
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board instance identifier"
+          }
+        }
+      },
+      "GetBoardTemplateRequest": {
+        "type": "object",
+        "description": "Request to get a board template by ID",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template identifier"
+          }
+        }
+      },
+      "GetBondForSeedRequest": {
+        "type": "object",
+        "description": "Request to get the bond for a specific seed.",
+        "required": [
+          "seedId"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed whose bond to retrieve."
+          }
+        }
+      },
+      "GetBondPartnersRequest": {
+        "type": "object",
+        "description": "Request to get partner seed information.",
+        "required": [
+          "seedId"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The requesting seed (returns partner info)."
+          }
+        }
+      },
+      "GetBondRequest": {
+        "type": "object",
+        "description": "Request to get a bond by ID.",
+        "required": [
+          "bondId"
+        ],
+        "properties": {
+          "bondId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The bond to retrieve."
+          }
+        }
+      },
       "GetBreachRequest": {
         "type": "object",
         "description": "Request to get breach details",
@@ -28180,6 +30734,20 @@
           "behaviorId": {
             "type": "string",
             "description": "Unique identifier for the cached behavior"
+          }
+        }
+      },
+      "GetCapabilityManifestRequest": {
+        "type": "object",
+        "description": "Request to get the capability manifest.",
+        "required": [
+          "seedId"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed whose manifest to retrieve."
           }
         }
       },
@@ -28920,6 +31488,34 @@
           }
         }
       },
+      "GetGrowthPhaseRequest": {
+        "type": "object",
+        "description": "Request to get the current growth phase.",
+        "required": [
+          "seedId"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed whose phase to retrieve."
+          }
+        }
+      },
+      "GetGrowthRequest": {
+        "type": "object",
+        "description": "Request to get growth data for a seed.",
+        "required": [
+          "seedId"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed whose growth to retrieve."
+          }
+        }
+      },
       "GetHoldRequest": {
         "type": "object",
         "description": "Request to get hold details",
@@ -29082,6 +31678,26 @@
             "format": "int64",
             "nullable": true,
             "description": "Total processing time in milliseconds (when complete)"
+          }
+        }
+      },
+      "GetLicenseDefinitionRequest": {
+        "type": "object",
+        "description": "Request to get a license definition by board template ID and code",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId",
+          "code"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template containing the definition"
+          },
+          "code": {
+            "type": "string",
+            "description": "License code to look up"
           }
         }
       },
@@ -30016,6 +32632,68 @@
           }
         }
       },
+      "GetSeedRequest": {
+        "type": "object",
+        "description": "Request to get a seed by ID.",
+        "required": [
+          "seedId"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed to retrieve."
+          }
+        }
+      },
+      "GetSeedTypeRequest": {
+        "type": "object",
+        "description": "Request to get a seed type definition.",
+        "required": [
+          "seedTypeCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "seedTypeCode": {
+            "type": "string",
+            "description": "The seed type code."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The game service scope."
+          }
+        }
+      },
+      "GetSeedsByOwnerRequest": {
+        "type": "object",
+        "description": "Request to get seeds by owner.",
+        "required": [
+          "ownerId",
+          "ownerType"
+        ],
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The owner entity ID."
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "The owner entity type."
+          },
+          "seedTypeCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by seed type."
+          },
+          "includeArchived": {
+            "type": "boolean",
+            "description": "Whether to include archived seeds.",
+            "default": false
+          }
+        }
+      },
       "GetSentimentRequest": {
         "type": "object",
         "description": "Request to get aggregate sentiment toward another character",
@@ -30594,6 +33272,25 @@
           }
         }
       },
+      "GridPosition": {
+        "type": "object",
+        "description": "A position on the board grid (zero-indexed)",
+        "additionalProperties": false,
+        "required": [
+          "x",
+          "y"
+        ],
+        "properties": {
+          "x": {
+            "type": "integer",
+            "description": "Horizontal grid coordinate (zero-indexed)"
+          },
+          "y": {
+            "type": "integer",
+            "description": "Vertical grid coordinate (zero-indexed)"
+          }
+        }
+      },
       "GroupRole": {
         "type": "string",
         "description": "Preferred role when fighting in groups. Affects positioning,\ntarget priority, and coordination behavior.\n",
@@ -30604,6 +33301,119 @@
           "LEADER",
           "SOLO"
         ]
+      },
+      "GrowthEntry": {
+        "type": "object",
+        "description": "A single domain-amount pair for batch growth recording.",
+        "required": [
+          "domain",
+          "amount"
+        ],
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "Dot-separated domain path."
+          },
+          "amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Growth amount to add."
+          }
+        }
+      },
+      "GrowthPhaseDefinition": {
+        "type": "object",
+        "description": "Defines a growth phase with its threshold.",
+        "required": [
+          "phaseCode",
+          "displayName",
+          "minTotalGrowth"
+        ],
+        "properties": {
+          "phaseCode": {
+            "type": "string",
+            "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable phase label."
+          },
+          "minTotalGrowth": {
+            "type": "number",
+            "format": "float",
+            "description": "Minimum total growth to enter this phase."
+          }
+        }
+      },
+      "GrowthPhaseResponse": {
+        "type": "object",
+        "description": "Current growth phase information for a seed.",
+        "required": [
+          "seedId",
+          "phaseCode",
+          "displayName",
+          "totalGrowth"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed."
+          },
+          "phaseCode": {
+            "type": "string",
+            "description": "Current phase code."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Current phase display name."
+          },
+          "totalGrowth": {
+            "type": "number",
+            "format": "float",
+            "description": "Current total growth."
+          },
+          "nextPhaseCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Next phase code, null if at maximum."
+          },
+          "nextPhaseThreshold": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Growth needed for next phase, null if at maximum."
+          }
+        }
+      },
+      "GrowthResponse": {
+        "type": "object",
+        "description": "Growth domain data for a seed.",
+        "required": [
+          "seedId",
+          "totalGrowth",
+          "domains"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed this growth belongs to."
+          },
+          "totalGrowth": {
+            "type": "number",
+            "format": "float",
+            "description": "Aggregate growth across all domains."
+          },
+          "domains": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "float"
+            },
+            "description": "Map of domain path to depth value. Keys are dot-separated (e.g., \"combat.melee.sword\"). Values are floating-point depth scores.\n"
+          }
+        }
       },
       "HarmonyStyle": {
         "description": "Harmonic progression style preferences",
@@ -31087,6 +33897,26 @@
           "released",
           "expired"
         ]
+      },
+      "InitiateBondRequest": {
+        "type": "object",
+        "description": "Request to initiate a bond between seeds.",
+        "required": [
+          "initiatorSeedId",
+          "targetSeedId"
+        ],
+        "properties": {
+          "initiatorSeedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed initiating the bond."
+          },
+          "targetSeedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed being invited to bond."
+          }
+        }
       },
       "InjectPerceptionRequest": {
         "type": "object",
@@ -32084,6 +34914,82 @@
           }
         }
       },
+      "LicenseDefinitionResponse": {
+        "type": "object",
+        "description": "License definition with all fields",
+        "additionalProperties": false,
+        "required": [
+          "licenseDefinitionId",
+          "boardTemplateId",
+          "code",
+          "position",
+          "lpCost",
+          "itemTemplateId",
+          "createdAt"
+        ],
+        "properties": {
+          "licenseDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique license definition identifier"
+          },
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template this definition belongs to"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique license code within this board template"
+          },
+          "position": {
+            "$ref": "#/components/schemas/GridPosition",
+            "description": "Grid position of this license node"
+          },
+          "lpCost": {
+            "type": "integer",
+            "description": "License Point cost to unlock this node"
+          },
+          "itemTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item template created when this license is unlocked"
+          },
+          "prerequisites": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "License codes that must be unlocked before this one"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable description of what this license grants"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Game-specific metadata for this license node"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this definition was created"
+          }
+        }
+      },
+      "LicenseStatus": {
+        "type": "string",
+        "description": "Unlock status of a license node on a board.\n- locked: Not adjacent to any unlocked node (cannot be unlocked)\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\n- unlocked: Already unlocked (item placed at this position)\n",
+        "enum": [
+          "locked",
+          "unlockable",
+          "unlocked"
+        ]
+      },
       "ListAchievementDefinitionsRequest": {
         "type": "object",
         "description": "Request to list achievement definitions",
@@ -32228,6 +35134,98 @@
               "$ref": "#/components/schemas/QuestDefinitionResponse"
             },
             "description": "Available quest definitions"
+          }
+        }
+      },
+      "ListBoardTemplatesRequest": {
+        "type": "object",
+        "description": "Request to list board templates with cursor-based pagination",
+        "additionalProperties": false,
+        "required": [
+          "gameServiceId"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Filter by game service"
+          },
+          "cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor from previous response. Null for first page."
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Number of items per page. Uses service default if not specified."
+          }
+        }
+      },
+      "ListBoardTemplatesResponse": {
+        "type": "object",
+        "description": "Paginated list of board templates",
+        "additionalProperties": false,
+        "required": [
+          "templates",
+          "hasMore"
+        ],
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardTemplateResponse"
+            },
+            "description": "Board templates in this page"
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor for next page. Null if no more results."
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether more results exist beyond this page"
+          }
+        }
+      },
+      "ListBoardsByCharacterRequest": {
+        "type": "object",
+        "description": "Request to list board instances for a character",
+        "additionalProperties": false,
+        "required": [
+          "characterId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to list boards for"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional filter by game service"
+          }
+        }
+      },
+      "ListBoardsByCharacterResponse": {
+        "type": "object",
+        "description": "List of board instances for a character",
+        "additionalProperties": false,
+        "required": [
+          "boards"
+        ],
+        "properties": {
+          "boards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardResponse"
+            },
+            "description": "Board instances for this character"
           }
         }
       },
@@ -33014,6 +36012,44 @@
             "type": "boolean",
             "description": "True if the result was truncated due to MaxInstancesPerQuery limit",
             "default": false
+          }
+        }
+      },
+      "ListLicenseDefinitionsRequest": {
+        "type": "object",
+        "description": "Request to list all license definitions for a board template",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template to list definitions for"
+          }
+        }
+      },
+      "ListLicenseDefinitionsResponse": {
+        "type": "object",
+        "description": "All license definitions for a board template",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId",
+          "definitions"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template these definitions belong to"
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LicenseDefinitionResponse"
+            },
+            "description": "All license definitions for this board template"
           }
         }
       },
@@ -33833,6 +36869,99 @@
             "type": "string",
             "nullable": true,
             "description": "Latest schema version"
+          }
+        }
+      },
+      "ListSeedTypesRequest": {
+        "type": "object",
+        "description": "Request to list seed types for a game service.",
+        "required": [
+          "gameServiceId"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service to list seed types for."
+          }
+        }
+      },
+      "ListSeedTypesResponse": {
+        "type": "object",
+        "description": "List of registered seed types.",
+        "required": [
+          "seedTypes"
+        ],
+        "properties": {
+          "seedTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeedTypeResponse"
+            },
+            "description": "Registered seed types."
+          }
+        }
+      },
+      "ListSeedsRequest": {
+        "type": "object",
+        "description": "Request to list seeds with optional filters.",
+        "properties": {
+          "seedTypeCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by seed type."
+          },
+          "ownerType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by owner type."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Filter by game service."
+          },
+          "growthPhase": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by current growth phase code."
+          },
+          "status": {
+            "$ref": "#/components/schemas/SeedStatus",
+            "nullable": true,
+            "description": "Filter by seed status."
+          },
+          "page": {
+            "type": "integer",
+            "description": "Page number (1-based).",
+            "default": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Number of results per page.",
+            "default": 50
+          }
+        }
+      },
+      "ListSeedsResponse": {
+        "type": "object",
+        "description": "Paginated list of seeds.",
+        "required": [
+          "seeds",
+          "totalCount"
+        ],
+        "properties": {
+          "seeds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeedResponse"
+            },
+            "description": "Seeds matching the query."
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total matching seeds across all pages."
           }
         }
       },
@@ -36550,6 +39679,41 @@
           "HERO",
           "SURVIVOR"
         ]
+      },
+      "PartnerSummary": {
+        "type": "object",
+        "description": "Public summary of a bond partner's seed.",
+        "required": [
+          "seedId",
+          "ownerId",
+          "ownerType",
+          "growthPhase",
+          "status"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Partner seed ID."
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Partner's owner entity ID."
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Partner's owner entity type."
+          },
+          "growthPhase": {
+            "type": "string",
+            "description": "Partner's current growth phase."
+          },
+          "status": {
+            "$ref": "#/components/schemas/SeedStatus",
+            "description": "Partner's seed status."
+          }
+        }
       },
       "PartyAssetRequirementStatus": {
         "type": "object",
@@ -39690,6 +42854,69 @@
           }
         }
       },
+      "RecordGrowthBatchRequest": {
+        "type": "object",
+        "description": "Request to record growth across multiple domains atomically.",
+        "required": [
+          "seedId",
+          "entries",
+          "source"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed to record growth for."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrowthEntry"
+            },
+            "description": "Domain-amount pairs to record."
+          },
+          "source": {
+            "type": "string",
+            "description": "Identifier of the contributing service."
+          }
+        }
+      },
+      "RecordGrowthRequest": {
+        "type": "object",
+        "description": "Request to record growth in a specific domain.",
+        "required": [
+          "seedId",
+          "domain",
+          "amount",
+          "source"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed to record growth for."
+          },
+          "domain": {
+            "type": "string",
+            "description": "Dot-separated domain path (e.g., \"combat.melee.sword\"). New domains are created automatically on first contribution.\n"
+          },
+          "amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount of growth to add."
+          },
+          "source": {
+            "type": "string",
+            "description": "Identifier of the contributing service (e.g., \"character-encounter\")."
+          },
+          "sourceEventId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional reference to the originating event."
+          }
+        }
+      },
       "ReferenceInfo": {
         "type": "object",
         "description": "Information about a reference",
@@ -39985,6 +43212,75 @@
               "$ref": "#/components/schemas/JsonPatchOperation"
             },
             "description": "JSON Patch (RFC 6902) operations to migrate from previousVersion.\nUses JsonPatch.Net library (MIT licensed).\n"
+          }
+        }
+      },
+      "RegisterSeedTypeRequest": {
+        "type": "object",
+        "description": "Request to register a new seed type definition.",
+        "required": [
+          "seedTypeCode",
+          "gameServiceId",
+          "displayName",
+          "description",
+          "maxPerOwner",
+          "allowedOwnerTypes",
+          "growthPhases",
+          "bondCardinality",
+          "bondPermanent"
+        ],
+        "properties": {
+          "seedTypeCode": {
+            "type": "string",
+            "description": "Unique code for this seed type (e.g., \"guardian\", \"dungeon_core\")."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this type is scoped to."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of what this seed type represents."
+          },
+          "maxPerOwner": {
+            "type": "integer",
+            "description": "Maximum seeds of this type per owner entity."
+          },
+          "allowedOwnerTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Entity types that can own seeds of this type."
+          },
+          "growthPhases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrowthPhaseDefinition"
+            },
+            "description": "Ordered growth phase definitions with thresholds."
+          },
+          "bondCardinality": {
+            "type": "integer",
+            "description": "Max bond participants. 0 = no bonding, 1 = pair bonds, N = group bonds of up to N+1 participants.\n"
+          },
+          "bondPermanent": {
+            "type": "boolean",
+            "description": "Whether bonds of this type are permanent (cannot be dissolved). True for guardian spirit pair bonds, false for dungeon-master bonds that can end when the contract dissolves.\n",
+            "default": false
+          },
+          "capabilityRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapabilityRule"
+            },
+            "nullable": true,
+            "description": "Rules for computing capabilities from growth domains."
           }
         }
       },
@@ -40487,6 +43783,26 @@
             "type": "string",
             "format": "uuid",
             "description": "Container removed from"
+          }
+        }
+      },
+      "RemoveLicenseDefinitionRequest": {
+        "type": "object",
+        "description": "Request to remove a license definition from a board template",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId",
+          "code"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template containing the definition"
+          },
+          "code": {
+            "type": "string",
+            "description": "License code to remove"
           }
         }
       },
@@ -42636,6 +45952,126 @@
           }
         }
       },
+      "SeedBoardTemplateRequest": {
+        "type": "object",
+        "description": "Request to bulk seed a board template with license definitions",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId",
+          "definitions"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template to seed with definitions"
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddLicenseDefinitionRequest"
+            },
+            "description": "License definitions to add (boardTemplateId in each is ignored, uses top-level)"
+          }
+        }
+      },
+      "SeedBoardTemplateResponse": {
+        "type": "object",
+        "description": "Result of bulk seeding a board template",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId",
+          "definitionsCreated",
+          "definitions"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template that was seeded"
+          },
+          "definitionsCreated": {
+            "type": "integer",
+            "description": "Number of definitions created"
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LicenseDefinitionResponse"
+            },
+            "description": "All created license definitions"
+          }
+        }
+      },
+      "SeedResponse": {
+        "type": "object",
+        "description": "Full seed entity response.",
+        "required": [
+          "seedId",
+          "ownerId",
+          "ownerType",
+          "seedTypeCode",
+          "gameServiceId",
+          "createdAt",
+          "growthPhase",
+          "totalGrowth",
+          "displayName",
+          "status"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for this seed."
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The entity that owns this seed."
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Owner entity type discriminator."
+          },
+          "seedTypeCode": {
+            "type": "string",
+            "description": "Registered seed type code."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this seed is scoped to."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the seed was created."
+          },
+          "growthPhase": {
+            "type": "string",
+            "description": "Current computed growth phase code."
+          },
+          "totalGrowth": {
+            "type": "number",
+            "format": "float",
+            "description": "Aggregate growth across all domains."
+          },
+          "bondId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Bond ID if this seed is bonded, null otherwise."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name."
+          },
+          "status": {
+            "$ref": "#/components/schemas/SeedStatus",
+            "description": "Current lifecycle status."
+          }
+        }
+      },
       "SeedSource": {
         "type": "object",
         "additionalProperties": false,
@@ -42657,6 +46093,83 @@
             "type": "string",
             "nullable": true,
             "description": "Optional actant role hint (e.g., \"protagonist\", \"antagonist\", \"helper\").\nUsed for Greimas actant assignment if provided.\n"
+          }
+        }
+      },
+      "SeedStatus": {
+        "type": "string",
+        "description": "Lifecycle status of a seed.",
+        "enum": [
+          "Active",
+          "Dormant",
+          "Archived"
+        ]
+      },
+      "SeedTypeResponse": {
+        "type": "object",
+        "description": "Full seed type definition response.",
+        "required": [
+          "seedTypeCode",
+          "gameServiceId",
+          "displayName",
+          "description",
+          "maxPerOwner",
+          "allowedOwnerTypes",
+          "growthPhases",
+          "bondCardinality",
+          "bondPermanent"
+        ],
+        "properties": {
+          "seedTypeCode": {
+            "type": "string",
+            "description": "Unique type code."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name."
+          },
+          "description": {
+            "type": "string",
+            "description": "Type description."
+          },
+          "maxPerOwner": {
+            "type": "integer",
+            "description": "Maximum seeds of this type per owner."
+          },
+          "allowedOwnerTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Allowed owner entity types."
+          },
+          "growthPhases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrowthPhaseDefinition"
+            },
+            "description": "Phase definitions with thresholds."
+          },
+          "bondCardinality": {
+            "type": "integer",
+            "description": "Bond participant limit."
+          },
+          "bondPermanent": {
+            "type": "boolean",
+            "description": "Whether bonds of this type are permanent."
+          },
+          "capabilityRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapabilityRule"
+            },
+            "nullable": true,
+            "description": "Capability computation rules."
           }
         }
       },
@@ -45331,6 +48844,63 @@
           }
         }
       },
+      "UnlockLicenseRequest": {
+        "type": "object",
+        "description": "Request to unlock a license on a board",
+        "additionalProperties": false,
+        "required": [
+          "boardId",
+          "licenseCode"
+        ],
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board instance to unlock on"
+          },
+          "licenseCode": {
+            "type": "string",
+            "description": "License code to unlock"
+          }
+        }
+      },
+      "UnlockLicenseResponse": {
+        "type": "object",
+        "description": "Result of a successful license unlock",
+        "additionalProperties": false,
+        "required": [
+          "boardId",
+          "licenseCode",
+          "position",
+          "itemInstanceId",
+          "contractInstanceId"
+        ],
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board the license was unlocked on"
+          },
+          "licenseCode": {
+            "type": "string",
+            "description": "License code that was unlocked"
+          },
+          "position": {
+            "$ref": "#/components/schemas/GridPosition",
+            "description": "Grid position of the unlocked license"
+          },
+          "itemInstanceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item instance created for this license"
+          },
+          "contractInstanceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance created for this unlock"
+          }
+        }
+      },
       "UnlockedAchievement": {
         "type": "object",
         "description": "An unlocked achievement instance",
@@ -45597,6 +49167,36 @@
             "type": "integer",
             "nullable": true,
             "description": "Updated auto-save interval in seconds"
+          }
+        }
+      },
+      "UpdateBoardTemplateRequest": {
+        "type": "object",
+        "description": "Request to update mutable fields of a board template",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template to update"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated display name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated description"
+          },
+          "isActive": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the template is active (can create new board instances)"
           }
         }
       },
@@ -46078,6 +49678,51 @@
           }
         }
       },
+      "UpdateLicenseDefinitionRequest": {
+        "type": "object",
+        "description": "Request to update mutable fields of a license definition",
+        "additionalProperties": false,
+        "required": [
+          "boardTemplateId",
+          "code"
+        ],
+        "properties": {
+          "boardTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Board template containing the definition"
+          },
+          "code": {
+            "type": "string",
+            "description": "License code to update"
+          },
+          "lpCost": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Updated LP cost"
+          },
+          "prerequisites": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Updated prerequisite license codes"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated description"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Updated game-specific metadata"
+          }
+        }
+      },
       "UpdateMfaRequest": {
         "type": "object",
         "description": "Request to update MFA settings for an account",
@@ -46404,6 +50049,81 @@
             "type": "string",
             "nullable": true,
             "description": "Checkout token if updating via checkout workflow"
+          }
+        }
+      },
+      "UpdateSeedRequest": {
+        "type": "object",
+        "description": "Request to update a seed's mutable fields.",
+        "required": [
+          "seedId"
+        ],
+        "properties": {
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seed to update."
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "description": "New display name."
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Metadata fields to merge (set key to null to delete)."
+          }
+        }
+      },
+      "UpdateSeedTypeRequest": {
+        "type": "object",
+        "description": "Request to update a seed type definition.",
+        "required": [
+          "seedTypeCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "seedTypeCode": {
+            "type": "string",
+            "description": "The seed type to update."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The game service scope."
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "description": "New display name."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "New description."
+          },
+          "maxPerOwner": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Updated maximum per owner."
+          },
+          "growthPhases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrowthPhaseDefinition"
+            },
+            "nullable": true,
+            "description": "Updated phase definitions."
+          },
+          "capabilityRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapabilityRule"
+            },
+            "nullable": true,
+            "description": "Updated capability rules."
           }
         }
       },
@@ -48063,6 +51783,10 @@
       "description": "Item template and instance management service."
     },
     {
+      "name": "License",
+      "description": "Grid-based progression boards via itemized contracts."
+    },
+    {
       "name": "Music Theory Engine",
       "description": "Pure computation music generation using formal music theory rules."
     },
@@ -48077,6 +51801,10 @@
     {
       "name": "Save-Load",
       "description": "Generic save/load system for game state persistence."
+    },
+    {
+      "name": "Seed",
+      "description": "Generic progressive growth entity service (L2 GameFoundation). Seeds are entities that start empty and grow by accumulating metadata from external events, progressively gaining capabilities. Polymorphic ownership allows seeds to be bound to any entity type (accounts, actors, realms, characters, relationships). Growth domains are arbitrary key-value maps contributed by any consuming service via events, following the same pattern as Resource reference tracking. Capability manifests are computed from growth domains using configurable rules per seed type. The Seed service is agnostic to what seeds represent -- consumers (lib-gardener for player spirits, lib-actor for dungeon cores, etc.) provide the interpretation."
     },
     {
       "name": "Storyline Composer",

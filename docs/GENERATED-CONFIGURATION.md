@@ -295,11 +295,14 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY` | int | `50` | Maximum encounter results loaded per cache query for Actor b... |
+| `CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for the in-memory encounter data cache used b... |
 | `CHARACTER_ENCOUNTER_DEFAULT_MEMORY_STRENGTH` | double | `1.0` | Default initial memory strength for new perspectives (0.0-1.... |
 | `CHARACTER_ENCOUNTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for query results |
 | `CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES` | int | `5` | Time window in minutes for duplicate encounter detection. En... |
 | `CHARACTER_ENCOUNTER_MAX_BATCH_SIZE` | int | `100` | Maximum items in bulk operations (batch-get, etc.) |
 | `CHARACTER_ENCOUNTER_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for query results |
+| `CHARACTER_ENCOUNTER_MAX_PARTICIPANTS_PER_ENCOUNTER` | int | `20` | Maximum participants allowed per encounter (caps O(N^2) pair... |
 | `CHARACTER_ENCOUNTER_MAX_PER_CHARACTER` | int | `1000` | Maximum encounters stored per character before oldest are pr... |
 | `CHARACTER_ENCOUNTER_MAX_PER_PAIR` | int | `100` | Maximum encounters stored per character pair before oldest a... |
 | `CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED` | bool | `true` | Enable time-based memory decay for encounter perspectives |
@@ -315,7 +318,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_NEGATIVE` | double | `-0.2` | Default sentiment shift for negative encounter outcomes (sho... |
 | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_POSITIVE` | double | `0.2` | Default sentiment shift for positive encounter outcomes |
 | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE` | double | `0.3` | Default sentiment shift for transformative encounter outcome... |
-| `CHARACTER_ENCOUNTER_SERVER_SALT` | string | `bannou-dev-encounter-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 
 ### Character History
 
@@ -356,13 +358,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
 | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
 | `CONNECT_HEARTBEAT_TTL_SECONDS` | int | `300` | Heartbeat data TTL in Redis in seconds (default 5 minutes) |
-| `CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS` | int | `120` | Timeout in seconds for HTTP client requests to backend servi... |
 | `CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES` | int | `30` | Timeout in minutes after which inactive connections are clea... |
 | `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
-| `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
 | `CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for pending messages awaiting acknowledgm... |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES` | int | `1` | Additional minutes added to reconnection window on each exte... |
@@ -529,6 +529,18 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | int | `1000` | Maximum entries returned per rank query |
 | `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | int | `1000` | Maximum scores to process in a single batch |
+
+### License
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `LICENSE_BOARD_CACHE_TTL_SECONDS` | int | `300` | Redis TTL for board state cache in seconds |
+| `LICENSE_DEFAULT_ADJACENCY_MODE` | string | `eight_way` | Default adjacency mode for new board templates |
+| `LICENSE_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries (min 1, max 100) |
+| `LICENSE_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock TTL for board mutations in seconds |
+| `LICENSE_MAX_BOARDS_PER_CHARACTER` | int | `10` | Maximum number of active boards a single character can have |
+| `LICENSE_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
+| `LICENSE_MAX_DEFINITIONS_PER_BOARD` | int | `200` | Maximum license definitions per board template |
 
 ### Location
 
@@ -765,6 +777,8 @@ CHECK_ALL (defaul... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `REALM_HISTORY_ARCHIVE_SUMMARY_MAX_HISTORICAL_EVENTS` | int | `10` | Maximum number of major historical events to include in arch... |
+| `REALM_HISTORY_ARCHIVE_SUMMARY_MAX_LORE_POINTS` | int | `10` | Maximum number of key lore points to include in archive text... |
 | `REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for distributed locks during index and lo... |
 | `REALM_HISTORY_MAX_LORE_ELEMENTS` | int | `100` | Maximum number of lore elements allowed per realm. Prevents ... |
 
@@ -854,6 +868,19 @@ CHECK_ALL (defaul... |
 | `SCENE_MAX_TAGS_PER_NODE` | int | `20` | Maximum tags allowed per node |
 | `SCENE_MAX_TAGS_PER_SCENE` | int | `50` | Maximum tags allowed per scene |
 | `SCENE_MAX_VERSION_RETENTION_COUNT` | int | `100` | Maximum versions that can be retained (configurable per game... |
+
+### Seed
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `SEED_BOND_SHARED_GROWTH_MULTIPLIER` | double | `1.5` | Growth multiplier applied when bonded seeds grow together in... |
+| `SEED_BOND_STRENGTH_GROWTH_RATE` | double | `0.1` | Rate at which bond strength increases per unit of shared gro... |
+| `SEED_CAPABILITY_RECOMPUTE_DEBOUNCE_MS` | int | `5000` | Debounce interval in milliseconds before recomputing capabil... |
+| `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | int | `3` | Default maximum seeds of any single type per owner when not ... |
+| `SEED_DEFAULT_QUERY_PAGE_SIZE` | int | `100` | Default page size for queries that do not expose pagination ... |
+| `SEED_GROWTH_DECAY_ENABLED` | bool | `false` | Whether unused growth domains decay over time (per-type conf... |
+| `SEED_GROWTH_DECAY_RATE_PER_DAY` | double | `0.01` | Daily decay rate applied to unused growth domains when decay... |
+| `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum number of seed types that can be registered per game... |
 
 ### Species
 
@@ -965,9 +992,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 728
+- **Total properties**: 745
 - **Required (no default)**: 51
-- **Optional (has default)**: 677
+- **Optional (has default)**: 694
 
 ## Environment Variable Naming Convention
 

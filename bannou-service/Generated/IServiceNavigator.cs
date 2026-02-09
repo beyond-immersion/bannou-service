@@ -26,6 +26,7 @@ using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
+using BeyondImmersion.BannouService.License;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Matchmaking;
@@ -42,6 +43,7 @@ using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.SaveLoad;
 using BeyondImmersion.BannouService.Scene;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Storyline;
@@ -163,6 +165,11 @@ public partial interface IServiceNavigator
     ILeaderboardClient Leaderboard { get; }
 
     /// <summary>
+    /// Gets the License service client.
+    /// </summary>
+    ILicenseClient License { get; }
+
+    /// <summary>
     /// Gets the Location service client.
     /// </summary>
     ILocationClient Location { get; }
@@ -241,6 +248,11 @@ public partial interface IServiceNavigator
     /// Gets the Scene service client.
     /// </summary>
     ISceneClient Scene { get; }
+
+    /// <summary>
+    /// Gets the Seed service client.
+    /// </summary>
+    ISeedClient Seed { get; }
 
     /// <summary>
     /// Gets the Species service client.

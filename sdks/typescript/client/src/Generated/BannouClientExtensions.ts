@@ -34,6 +34,7 @@ import { GoapProxy } from './proxies/GoapProxy.js';
 import { InventoryProxy } from './proxies/InventoryProxy.js';
 import { ItemProxy } from './proxies/ItemProxy.js';
 import { LeaderboardProxy } from './proxies/LeaderboardProxy.js';
+import { LicenseProxy } from './proxies/LicenseProxy.js';
 import { LocationProxy } from './proxies/LocationProxy.js';
 import { MappingProxy } from './proxies/MappingProxy.js';
 import { MatchmakingProxy } from './proxies/MatchmakingProxy.js';
@@ -47,6 +48,7 @@ import { RelationshipTypeProxy } from './proxies/RelationshipTypeProxy.js';
 import { ResourceProxy } from './proxies/ResourceProxy.js';
 import { SaveLoadProxy } from './proxies/SaveLoadProxy.js';
 import { SceneProxy } from './proxies/SceneProxy.js';
+import { SeedProxy } from './proxies/SeedProxy.js';
 import { SessionsProxy } from './proxies/SessionsProxy.js';
 import { SpeciesProxy } from './proxies/SpeciesProxy.js';
 import { StorylineProxy } from './proxies/StorylineProxy.js';
@@ -82,6 +84,7 @@ interface ProxyCache {
   inventory?: InventoryProxy;
   item?: ItemProxy;
   leaderboard?: LeaderboardProxy;
+  license?: LicenseProxy;
   location?: LocationProxy;
   mapping?: MappingProxy;
   matchmaking?: MatchmakingProxy;
@@ -95,6 +98,7 @@ interface ProxyCache {
   resource?: ResourceProxy;
   saveLoad?: SaveLoadProxy;
   scene?: SceneProxy;
+  seed?: SeedProxy;
   sessions?: SessionsProxy;
   species?: SpeciesProxy;
   storyline?: StorylineProxy;
@@ -372,6 +376,18 @@ Object.defineProperty(BannouClient.prototype, 'leaderboard', {
 });
 
 /**
+ * Add lazy-initialized license proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'license', {
+  get(this: BannouClientWithCache): LicenseProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.license ??= new LicenseProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
  * Add lazy-initialized location proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'location', {
@@ -522,6 +538,18 @@ Object.defineProperty(BannouClient.prototype, 'scene', {
   get(this: BannouClientWithCache): SceneProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.scene ??= new SceneProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
+ * Add lazy-initialized seed proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'seed', {
+  get(this: BannouClientWithCache): SeedProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.seed ??= new SeedProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -703,6 +731,10 @@ declare module '../BannouClient.js' {
      */
     readonly leaderboard: LeaderboardProxy;
     /**
+     * Typed proxy for License API endpoints.
+     */
+    readonly license: LicenseProxy;
+    /**
      * Typed proxy for Location API endpoints.
      */
     readonly location: LocationProxy;
@@ -754,6 +786,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Scene API endpoints.
      */
     readonly scene: SceneProxy;
+    /**
+     * Typed proxy for Seed API endpoints.
+     */
+    readonly seed: SeedProxy;
     /**
      * Typed proxy for Sessions API endpoints.
      */

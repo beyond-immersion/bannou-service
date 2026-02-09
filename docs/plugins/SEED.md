@@ -229,6 +229,7 @@ No delete endpoint exists for seed types -- see Known Quirks.
 ## Stubs & Unimplemented Features
 
 - **Growth decay**: Configuration properties (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) are wired up and the read-time decay logic exists in `GetGrowthAsync`, but the feature is disabled by default and the decay formula uses time since seed creation rather than per-domain last activity time. The code comment references "deferred feature #352". The decay is read-only (presentation layer) -- stored domain values are never modified by decay.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:ISSUE_URL_PLACEHOLDER -->
 
 ---
 

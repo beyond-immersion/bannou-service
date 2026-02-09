@@ -467,19 +467,20 @@ paths:
         \n                        }\n                    ],\n                    \"description\": \"Outcome of the encounter
         being recorded\"\n                },\n                \"participantIds\": {\n                    \"type\": \"array\"\
         ,\n                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    },\n                    \"minItems\": 2,\n                    \"description\": \"\
-        Character IDs involved (minimum 2)\"\n                },\n                \"perspectives\": {\n                  \
-        \  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PerspectiveInput\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Optional
-        perspectives (auto-generated if not provided)\"\n                },\n                \"metadata\": {\n           \
-        \         \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional encounter data\"\n                }\n            }\n  \
-        \      },\n        \"EncounterOutcome\": {\n            \"type\": \"string\",\n            \"description\": \"Overall
-        outcome of an encounter\",\n            \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n\
-        \                \"NEUTRAL\",\n                \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n\
-        \        },\n        \"PerspectiveInput\": {\n            \"type\": \"object\",\n            \"description\": \"Input
-        for a single participant's perspective\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"characterId\",\n                \"emotionalImpact\"\n            ],\n            \"properties\"\
+        : \"uuid\"\n                    },\n                    \"minItems\": 2,\n                    \"maxItems\": 100,\n\
+        \                    \"description\": \"Character IDs involved (minimum 2, server enforces MaxParticipantsPerEncounter
+        config limit)\"\n                },\n                \"perspectives\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PerspectiveInput\"\n            \
+        \        },\n                    \"nullable\": true,\n                    \"description\": \"Optional perspectives
+        (auto-generated if not provided)\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Additional encounter data\"\n                }\n            }\n        },\n  \
+        \      \"EncounterOutcome\": {\n            \"type\": \"string\",\n            \"description\": \"Overall outcome
+        of an encounter\",\n            \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n      \
+        \          \"NEUTRAL\",\n                \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n     \
+        \   },\n        \"PerspectiveInput\": {\n            \"type\": \"object\",\n            \"description\": \"Input for
+        a single participant's perspective\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"characterId\",\n                \"emotionalImpact\"\n            ],\n            \"properties\"\
         : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"description\": \"Character this perspective belongs to\"\n                },\n\
         \                \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n           \
@@ -2099,7 +2100,8 @@ components:
             type: string
             format: uuid
           minItems: 2
-          description: Character IDs involved (minimum 2)
+          maxItems: 100
+          description: Character IDs involved (minimum 2, server enforces MaxParticipantsPerEncounter config limit)
         perspectives:
           type: array
           items:

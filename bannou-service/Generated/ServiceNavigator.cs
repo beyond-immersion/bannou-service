@@ -30,6 +30,7 @@ using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
+using BeyondImmersion.BannouService.License;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Matchmaking;
@@ -46,6 +47,7 @@ using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.SaveLoad;
 using BeyondImmersion.BannouService.Scene;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Storyline;
@@ -99,6 +101,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IInventoryClient _inventory;
     private readonly IItemClient _item;
     private readonly ILeaderboardClient _leaderboard;
+    private readonly ILicenseClient _license;
     private readonly ILocationClient _location;
     private readonly IMappingClient _mapping;
     private readonly IMatchmakingClient _matchmaking;
@@ -115,6 +118,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IResourceClient _resource;
     private readonly ISaveLoadClient _saveLoad;
     private readonly ISceneClient _scene;
+    private readonly ISeedClient _seed;
     private readonly ISpeciesClient _species;
     private readonly IStateClient _state;
     private readonly IStorylineClient _storyline;
@@ -153,6 +157,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IInventoryClient inventory,
         IItemClient item,
         ILeaderboardClient leaderboard,
+        ILicenseClient license,
         ILocationClient location,
         IMappingClient mapping,
         IMatchmakingClient matchmaking,
@@ -169,6 +174,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IResourceClient resource,
         ISaveLoadClient saveLoad,
         ISceneClient scene,
+        ISeedClient seed,
         ISpeciesClient species,
         IStateClient state,
         IStorylineClient storyline,
@@ -203,6 +209,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _inventory = inventory;
         _item = item;
         _leaderboard = leaderboard;
+        _license = license;
         _location = location;
         _mapping = mapping;
         _matchmaking = matchmaking;
@@ -219,6 +226,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _resource = resource;
         _saveLoad = saveLoad;
         _scene = scene;
+        _seed = seed;
         _species = species;
         _state = state;
         _storyline = storyline;
@@ -336,6 +344,9 @@ public partial class ServiceNavigator : IServiceNavigator
     public ILeaderboardClient Leaderboard => _leaderboard;
 
     /// <inheritdoc />
+    public ILicenseClient License => _license;
+
+    /// <inheritdoc />
     public ILocationClient Location => _location;
 
     /// <inheritdoc />
@@ -382,6 +393,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public ISceneClient Scene => _scene;
+
+    /// <inheritdoc />
+    public ISeedClient Seed => _seed;
 
     /// <inheritdoc />
     public ISpeciesClient Species => _species;

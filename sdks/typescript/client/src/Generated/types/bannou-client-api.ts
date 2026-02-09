@@ -4350,6 +4350,412 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/license/board-template/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new board template
+     * @description Create a board template with grid dimensions, starting nodes, adjacency mode,
+     *     and a reference to the contract template that controls unlock behavior.
+     *     Board templates are scoped to a game service.
+     */
+    post: operations['createBoardTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board-template/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a board template by ID
+     * @description Retrieves a board template by its unique identifier.
+     */
+    post: operations['getBoardTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board-template/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List board templates for a game service
+     * @description Paginated list of board templates filtered by game service ID.
+     */
+    post: operations['listBoardTemplates'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board-template/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a board template
+     * @description Update mutable fields of a board template. Grid dimensions, starting nodes,
+     *     and contract template are immutable after creation.
+     */
+    post: operations['updateBoardTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board-template/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a board template
+     * @description Delete a board template. Blocked if active board instances exist
+     *     that reference this template.
+     */
+    post: operations['deleteBoardTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/definition/add': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Add a license definition to a board template
+     * @description Add a license definition (node) to a board template at a specific grid position.
+     *     Each definition has a unique code within the template, a grid position, an LP cost,
+     *     and a reference to the item template that is created when the license is unlocked.
+     *     Optional non-adjacent prerequisites can reference other license codes on the board.
+     */
+    post: operations['addLicenseDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/definition/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a license definition
+     * @description Get a license definition by board template ID and license code.
+     */
+    post: operations['getLicenseDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/definition/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List all license definitions for a board template
+     * @description Returns the full grid layout of all license definitions for a board template.
+     */
+    post: operations['listLicenseDefinitions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/definition/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a license definition
+     * @description Update mutable fields of a license definition. Position and code are immutable
+     *     after creation.
+     */
+    post: operations['updateLicenseDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/definition/remove': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Remove a license definition from a board template
+     * @description Remove a license definition from a board template. Blocked if any board
+     *     instances have this license unlocked.
+     */
+    post: operations['removeLicenseDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a board instance for a character
+     * @description Create a board instance for a character from a board template. Validates character
+     *     exists, game service matches, and no duplicate board exists (one board per template
+     *     per character). Creates an inventory container (slot_only, maxSlots = gridWidth *
+     *     gridHeight) to hold unlocked license items.
+     */
+    post: operations['createBoard'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a board instance by ID
+     * @description Retrieves a board instance by its unique identifier.
+     */
+    post: operations['getBoard'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board/list-by-character': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List boards for a character
+     * @description List all board instances for a character, with optional game service filter.
+     */
+    post: operations['listBoardsByCharacter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a board instance
+     * @description Delete a board instance. Destroys the inventory container and all license
+     *     items within it.
+     */
+    post: operations['deleteBoard'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/unlock': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Unlock a license on a board
+     * @description The core operation. Validates adjacency and prerequisites, creates a contract
+     *     instance from the board template's contract template, executes the unlock
+     *     milestone (LP deduction, ability grants via prebound APIs), then creates an
+     *     item instance and places it in the board container. Atomic: if contract
+     *     execution fails, no license is placed.
+     */
+    post: operations['unlockLicense'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/check-unlockable': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check if a license can be unlocked
+     * @description Check if a license can be unlocked without performing the unlock. Returns
+     *     adjacency status, prerequisite status, and whether the character has
+     *     sufficient LP.
+     */
+    post: operations['checkUnlockable'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board-state': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get full board state
+     * @description Get the full board state: all defined license positions with unlock status
+     *     (unlocked, locked, unlockable) and adjacency info. Primary endpoint for
+     *     client UI rendering.
+     */
+    post: operations['getBoardState'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/board-template/seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bulk seed a board template with license definitions
+     * @description Bulk seed a board template with license definitions from a JSON payload.
+     *     Two-pass: creates definitions, then resolves prerequisite references.
+     */
+    post: operations['seedBoardTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/cleanup-by-character': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cleanup boards referencing a deleted character
+     * @description Called by lib-resource cleanup coordination when a character is deleted.
+     *     Deletes all board instances for the specified character, destroying their
+     *     inventory containers and all contained license items.
+     *     This endpoint is designed for internal service-to-service calls during
+     *     cascading resource cleanup.
+     */
+    post: operations['cleanupByCharacter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/location/get': {
     parameters: {
       query?: never;
@@ -6946,6 +7352,426 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/seed/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new seed
+     * @description Creates a new seed bound to the specified owner. The seed type must be registered and the owner type must be allowed by the seed type definition. Returns conflict if creating this seed would exceed the type's MaxPerOwner limit.
+     */
+    post: operations['CreateSeed'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get seed by ID
+     * @description Returns the seed entity with current growth phase and summary data.
+     */
+    post: operations['GetSeed'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/get-by-owner': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get seeds by owner ID and type
+     * @description Returns all seeds owned by the specified entity. Optionally filter by seed type code and status.
+     */
+    post: operations['GetSeedsByOwner'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List seeds with filtering
+     * @description Returns seeds matching the specified filters. Supports filtering by seed type, owner type, growth phase, status, and game service.
+     */
+    post: operations['ListSeeds'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update seed metadata or display name
+     * @description Updates mutable fields of a seed. Cannot change owner or seed type.
+     */
+    post: operations['UpdateSeed'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/activate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Set a seed as active
+     * @description Activates the specified seed. Only one seed of a given type can be active per owner at a time. Deactivates any previously active seed of the same type.
+     */
+    post: operations['ActivateSeed'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/archive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Archive a seed
+     * @description Soft-deletes a seed, preserving its data but removing it from active rotation. Archived seeds do not count toward the MaxPerOwner limit. Cannot archive an active seed.
+     */
+    post: operations['ArchiveSeed'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/growth/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get full growth domain map
+     * @description Returns the complete growth domain map for a seed, including all top-level and sub-domain entries with their current depth values.
+     */
+    post: operations['GetGrowth'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/growth/record': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Record growth in a domain
+     * @description Records growth in a specific domain for a seed. Primarily called internally by consuming services after processing game events. Triggers capability manifest recomputation if thresholds are crossed.
+     */
+    post: operations['RecordGrowth'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/growth/record-batch': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Record growth across multiple domains atomically
+     * @description Records growth across multiple domains in a single atomic operation. Useful when a single game event contributes to multiple domains simultaneously.
+     */
+    post: operations['RecordGrowthBatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/growth/get-phase': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get current growth phase
+     * @description Returns the current computed growth phase for the seed, based on the seed type's configured phase thresholds.
+     */
+    post: operations['GetGrowthPhase'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/capability/get-manifest': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get current capability manifest
+     * @description Returns the most recently computed capability manifest for the seed. Consumers interpret what capabilities mean (UX modules, spawning permissions, faction actions, etc.).
+     */
+    post: operations['GetCapabilityManifest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/type/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Register a new seed type definition
+     * @description Registers a seed type with its growth phase definitions, capability rules, bond cardinality, and owner type restrictions. Seed types are scoped to game services.
+     */
+    post: operations['RegisterSeedType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/type/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get seed type definition
+     * @description Returns the full seed type definition including phases and capability rules.
+     */
+    post: operations['GetSeedType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/type/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List registered seed types
+     * @description Returns all seed types registered for the specified game service.
+     */
+    post: operations['ListSeedTypes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/type/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update seed type definition
+     * @description Updates a seed type definition. Changes to phase thresholds or capability rules trigger recomputation for all seeds of this type.
+     */
+    post: operations['UpdateSeedType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/bond/initiate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Begin bond process between seeds
+     * @description Initiates a bond between seeds of the same type. All participants must confirm for the bond to become active. Returns conflict if any participant already has a bond and the type's cardinality is 1.
+     */
+    post: operations['InitiateBond'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/bond/confirm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Confirm a pending bond
+     * @description Confirms a pending bond. When all participants have confirmed, the bond becomes active. Bond permanence is determined by the seed type.
+     */
+    post: operations['ConfirmBond'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/bond/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get bond by ID
+     * @description Returns the bond record with all participants and status.
+     */
+    post: operations['GetBond'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/bond/get-for-seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get bond for a specific seed
+     * @description Returns the bond that the specified seed participates in, if any.
+     */
+    post: operations['GetBondForSeed'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/bond/get-partners': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get partner seed(s) public info
+     * @description Returns public information about the other seeds in the bond.
+     */
+    post: operations['GetBondPartners'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/species/get': {
     parameters: {
       query?: never;
@@ -7793,6 +8619,14 @@ export interface components {
       /** @description How the effect is applied */
       cardinality?: components['schemas']['EffectCardinality'];
     };
+    /** @description Request to activate a seed. */
+    ActivateSeedRequest: {
+      /**
+       * Format: uuid
+       * @description The seed to activate.
+       */
+      seedId: string;
+    };
     /** @description Summary of an active quest for archive purposes */
     ActiveQuestSummary: {
       /**
@@ -7982,6 +8816,40 @@ export interface components {
        */
       mergedWithInstanceId?: string | null;
     };
+    /** @description Request to add a license definition to a board template */
+    AddLicenseDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Board template to add this definition to
+       */
+      boardTemplateId: string;
+      /** @description Unique license code within this board template */
+      code: string;
+      /** @description Grid position for this license node */
+      position: components['schemas']['GridPosition'];
+      /** @description License Point cost to unlock this node */
+      lpCost: number;
+      /**
+       * Format: uuid
+       * @description Item template created when this license is unlocked
+       */
+      itemTemplateId: string;
+      /** @description License codes that must be unlocked before this one (non-adjacent requirements) */
+      prerequisites?: string[] | null;
+      /** @description Human-readable description of what this license grants */
+      description?: string | null;
+      /** @description Game-specific metadata for this license node */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * @description Grid traversal adjacency mode for a board template.
+     *     - four_way: Orthogonal only (up, down, left, right)
+     *     - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
+     * @enum {string}
+     */
+    AdjacencyMode: 'four_way' | 'eight_way';
     /**
      * @description Describes a capability or interaction mode for a node.
      *     Used by AI systems to understand what actions are possible and by
@@ -8189,6 +9057,14 @@ export interface components {
        *     or a service name for service-initiated archives.
        */
       owner?: string;
+    };
+    /** @description Request to archive a seed. */
+    ArchiveSeedRequest: {
+      /**
+       * Format: uuid
+       * @description The seed to archive.
+       */
+      seedId: string;
     };
     /** @description Describes a conflict when the same asset ID has different content hashes */
     AssetConflict: {
@@ -8920,6 +9796,201 @@ export interface components {
      * @enum {string}
      */
     BindingStatus: 'pending' | 'syncing' | 'synced' | 'error' | 'disabled';
+    /** @description State of a single license node on a board, including unlock status */
+    BoardNodeState: {
+      /** @description Unique license code within this board template */
+      code: string;
+      /** @description Grid position of this license node */
+      position: components['schemas']['GridPosition'];
+      /** @description License Point cost to unlock this node */
+      lpCost: number;
+      /** @description Current unlock status of this node */
+      status: components['schemas']['LicenseStatus'];
+      /**
+       * Format: uuid
+       * @description Item template that is created when this license is unlocked
+       */
+      itemTemplateId: string;
+      /**
+       * Format: uuid
+       * @description Item instance ID if this license has been unlocked
+       */
+      itemInstanceId?: string | null;
+      /** @description License codes that must be unlocked before this one (non-adjacent) */
+      prerequisites?: string[] | null;
+      /** @description Human-readable description of what this license grants */
+      description?: string | null;
+      /** @description Game-specific metadata for this license node */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Board instance with all fields */
+    BoardResponse: {
+      /**
+       * Format: uuid
+       * @description Unique board instance identifier
+       */
+      boardId: string;
+      /**
+       * Format: uuid
+       * @description Character this board belongs to
+       */
+      characterId: string;
+      /**
+       * Format: uuid
+       * @description Board template this instance was created from
+       */
+      boardTemplateId: string;
+      /**
+       * Format: uuid
+       * @description Game service this board belongs to
+       */
+      gameServiceId: string;
+      /**
+       * Format: uuid
+       * @description Inventory container holding unlocked license items
+       */
+      containerId: string;
+      /**
+       * Format: date-time
+       * @description When this board instance was created
+       */
+      createdAt: string;
+    };
+    /** @description Request to get the full board state */
+    BoardStateRequest: {
+      /**
+       * Format: uuid
+       * @description Board instance to get state for
+       */
+      boardId: string;
+    };
+    /** @description Full board state with all node statuses for client UI rendering */
+    BoardStateResponse: {
+      /**
+       * Format: uuid
+       * @description Board instance identifier
+       */
+      boardId: string;
+      /**
+       * Format: uuid
+       * @description Character this board belongs to
+       */
+      characterId: string;
+      /**
+       * Format: uuid
+       * @description Board template this instance was created from
+       */
+      boardTemplateId: string;
+      /** @description Width of the board grid (columns) */
+      gridWidth: number;
+      /** @description Height of the board grid (rows) */
+      gridHeight: number;
+      /** @description All license nodes with their current status */
+      nodes: components['schemas']['BoardNodeState'][];
+    };
+    /** @description Board template with all fields */
+    BoardTemplateResponse: {
+      /**
+       * Format: uuid
+       * @description Unique board template identifier
+       */
+      boardTemplateId: string;
+      /**
+       * Format: uuid
+       * @description Game service this template belongs to
+       */
+      gameServiceId: string;
+      /** @description Display name */
+      name: string;
+      /** @description Human-readable description */
+      description?: string | null;
+      /** @description Width of the board grid (columns) */
+      gridWidth: number;
+      /** @description Height of the board grid (rows) */
+      gridHeight: number;
+      /** @description Grid positions where unlocking can begin without adjacency */
+      startingNodes: components['schemas']['GridPosition'][];
+      /**
+       * Format: uuid
+       * @description Contract template that controls unlock behavior
+       */
+      boardContractTemplateId: string;
+      /** @description Grid traversal mode for this template */
+      adjacencyMode: components['schemas']['AdjacencyMode'];
+      /** @description Whether the template is active (can create new board instances) */
+      isActive: boolean;
+      /**
+       * Format: date-time
+       * @description When the template was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When the template was last updated
+       */
+      updatedAt?: string | null;
+    };
+    /** @description A participant in a seed bond. */
+    BondParticipant: {
+      /**
+       * Format: uuid
+       * @description Participant seed ID.
+       */
+      seedId: string;
+      /**
+       * Format: date-time
+       * @description When this seed joined the bond.
+       */
+      joinedAt: string;
+      /** @description Optional role within the bond. */
+      role?: string | null;
+    };
+    /** @description Partner seed summaries for a bond. */
+    BondPartnersResponse: {
+      /**
+       * Format: uuid
+       * @description The bond.
+       */
+      bondId: string;
+      /** @description Partner seed summaries. */
+      partners: components['schemas']['PartnerSummary'][];
+    };
+    /** @description Full bond record response. */
+    BondResponse: {
+      /**
+       * Format: uuid
+       * @description Unique bond identifier.
+       */
+      bondId: string;
+      /** @description Seed type this bond connects. */
+      seedTypeCode: string;
+      /** @description Seeds participating in this bond. */
+      participants: components['schemas']['BondParticipant'][];
+      /**
+       * Format: date-time
+       * @description When the bond was formed.
+       */
+      createdAt: string;
+      /** @description Current bond lifecycle status. */
+      status: components['schemas']['BondStatus'];
+      /**
+       * Format: float
+       * @description Grows with shared growth. Consumer-interpreted.
+       */
+      bondStrength: number;
+      /**
+       * Format: float
+       * @description Total accumulated shared growth.
+       */
+      sharedGrowth: number;
+    };
+    /**
+     * @description Lifecycle status of a seed bond.
+     * @enum {string}
+     */
+    BondStatus: 'PendingConfirmation' | 'Active';
     /** @description An axis-aligned bounding box in 3D space */
     Bounds: {
       /** @description Minimum corner (lowest x, y, z values) */
@@ -9319,6 +10390,53 @@ export interface components {
      * @enum {string}
      */
     CapOverflowBehavior: 'reject' | 'cap_and_lose' | 'cap_and_return';
+    /** @description A single capability entry in the manifest. */
+    Capability: {
+      /** @description Unique capability identifier. Consumer-interpreted (e.g., UX module ID, spawning permission, faction action). */
+      capabilityCode: string;
+      /** @description Growth domain this capability maps to. */
+      domain: string;
+      /**
+       * Format: float
+       * @description Capability fidelity from 0.0 to 1.0. Higher values mean the seed has more developed capability in this area.
+       */
+      fidelity: number;
+      /** @description Whether this capability is available at all. */
+      unlocked: boolean;
+    };
+    /** @description Computed capability manifest for a seed. */
+    CapabilityManifestResponse: {
+      /**
+       * Format: uuid
+       * @description The seed this manifest belongs to.
+       */
+      seedId: string;
+      /** @description The seed type for consumer interpretation. */
+      seedTypeCode: string;
+      /**
+       * Format: date-time
+       * @description When this manifest was last computed.
+       */
+      computedAt: string;
+      /** @description Monotonically increasing version number. */
+      version: number;
+      /** @description List of capabilities with availability and fidelity. */
+      capabilities: components['schemas']['Capability'][];
+    };
+    /** @description Maps a growth domain to a capability with unlock threshold and fidelity formula. */
+    CapabilityRule: {
+      /** @description Unique capability identifier (e.g., "combat.stance"). */
+      capabilityCode: string;
+      /** @description Which growth domain this capability maps to. */
+      domain: string;
+      /**
+       * Format: float
+       * @description Minimum domain depth to unlock this capability.
+       */
+      unlockThreshold: number;
+      /** @description How domain depth maps to fidelity (0.0-1.0). Values: "linear", "logarithmic", "step". Consumers may define additional formulas. */
+      fidelityFormula: string;
+    };
     /** @description Request to capture (finalize) a hold */
     CaptureHoldRequest: {
       /**
@@ -9758,6 +10876,31 @@ export interface components {
        * @description When refCount last became zero
        */
       lastZeroTimestamp?: string | null;
+    };
+    /** @description Request to check if a license can be unlocked */
+    CheckUnlockableRequest: {
+      /**
+       * Format: uuid
+       * @description Board instance to check on
+       */
+      boardId: string;
+      /** @description License code to check */
+      licenseCode: string;
+    };
+    /** @description Result of unlockability check */
+    CheckUnlockableResponse: {
+      /** @description Whether the license can be unlocked (all conditions met) */
+      unlockable: boolean;
+      /** @description Whether adjacency requirement is satisfied */
+      adjacencyMet: boolean;
+      /** @description Whether all non-adjacent prerequisites are unlocked */
+      prerequisitesMet: boolean;
+      /** @description Whether the character has enough LP */
+      lpSufficient: boolean;
+      /** @description Current LP balance of the character (null if balance check failed) */
+      currentLp?: number | null;
+      /** @description LP cost for this license */
+      requiredLp: number;
     };
     /** @description Request to checkout a scene for editing */
     CheckoutRequest: {
@@ -10477,6 +11620,19 @@ export interface components {
       expectedValue?: string | null;
       /** @description Additional details */
       details?: string | null;
+    };
+    /** @description Request to confirm a pending bond. */
+    ConfirmBondRequest: {
+      /**
+       * Format: uuid
+       * @description The bond to confirm.
+       */
+      bondId: string;
+      /**
+       * Format: uuid
+       * @description The seed confirming the bond.
+       */
+      confirmingSeedId: string;
     };
     /** @description Request to confirm receipt of refunded assets */
     ConfirmRefundRequest: {
@@ -11266,6 +12422,49 @@ export interface components {
       /** @description Git commit hash if namespace is bound */
       commitHash?: string | null;
     };
+    /** @description Request to create a board instance for a character */
+    CreateBoardRequest: {
+      /**
+       * Format: uuid
+       * @description Character to create the board for
+       */
+      characterId: string;
+      /**
+       * Format: uuid
+       * @description Board template to instantiate
+       */
+      boardTemplateId: string;
+      /**
+       * Format: uuid
+       * @description Game service context for validation
+       */
+      gameServiceId: string;
+    };
+    /** @description Request to create a new board template */
+    CreateBoardTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Game service this board template belongs to
+       */
+      gameServiceId: string;
+      /** @description Display name for the board template */
+      name: string;
+      /** @description Human-readable description of this board template */
+      description?: string | null;
+      /** @description Width of the board grid (columns) */
+      gridWidth: number;
+      /** @description Height of the board grid (rows) */
+      gridHeight: number;
+      /** @description Grid positions where unlocking can begin without adjacency */
+      startingNodes: components['schemas']['GridPosition'][];
+      /**
+       * Format: uuid
+       * @description Contract template that controls unlock behavior (LP deduction, ability grants)
+       */
+      boardContractTemplateId: string;
+      /** @description Grid traversal mode. Defaults to eight_way if not specified. */
+      adjacencyMode?: components['schemas']['AdjacencyMode'] | null;
+    };
     /** @description Request to create a new asset bundle from multiple assets */
     CreateBundleRequest: {
       /**
@@ -11944,6 +13143,29 @@ export interface components {
       /** @description The scene document to create */
       scene: components['schemas']['Scene'];
     };
+    /** @description Request to create a new seed. */
+    CreateSeedRequest: {
+      /**
+       * Format: uuid
+       * @description The entity that owns this seed.
+       */
+      ownerId: string;
+      /** @description Entity type discriminator (e.g., "account", "actor", "realm", "character", "relationship"). */
+      ownerType: string;
+      /** @description Registered seed type code (e.g., "guardian", "dungeon_core"). */
+      seedTypeCode: string;
+      /**
+       * Format: uuid
+       * @description Game service this seed is scoped to.
+       */
+      gameServiceId: string;
+      /** @description Human-readable name. Auto-generated if omitted. */
+      displayName?: string | null;
+      /** @description Seed-type-specific initial metadata. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
     /** @description Request to create a new save slot for an entity. */
     CreateSlotRequest: {
       /** @description Game identifier for namespace isolation (e.g., "game-1", "game-2") */
@@ -12409,6 +13631,22 @@ export interface components {
       deleted: boolean;
       /** @description Number of running actors that were stopped */
       stoppedActorCount: number;
+    };
+    /** @description Request to delete a board instance */
+    DeleteBoardRequest: {
+      /**
+       * Format: uuid
+       * @description Board instance to delete
+       */
+      boardId: string;
+    };
+    /** @description Request to delete a board template */
+    DeleteBoardTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Board template to delete
+       */
+      boardTemplateId: string;
     };
     /** @description Request to delete a bundle */
     DeleteBundleRequest: {
@@ -14599,6 +15837,46 @@ export interface components {
       /** @description Autogain status (null if autogain not enabled) */
       autogainInfo?: components['schemas']['AutogainInfo'];
     };
+    /** @description Request to get a board instance by ID */
+    GetBoardRequest: {
+      /**
+       * Format: uuid
+       * @description Board instance identifier
+       */
+      boardId: string;
+    };
+    /** @description Request to get a board template by ID */
+    GetBoardTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Board template identifier
+       */
+      boardTemplateId: string;
+    };
+    /** @description Request to get the bond for a specific seed. */
+    GetBondForSeedRequest: {
+      /**
+       * Format: uuid
+       * @description The seed whose bond to retrieve.
+       */
+      seedId: string;
+    };
+    /** @description Request to get partner seed information. */
+    GetBondPartnersRequest: {
+      /**
+       * Format: uuid
+       * @description The requesting seed (returns partner info).
+       */
+      seedId: string;
+    };
+    /** @description Request to get a bond by ID. */
+    GetBondRequest: {
+      /**
+       * Format: uuid
+       * @description The bond to retrieve.
+       */
+      bondId: string;
+    };
     /** @description Request to get breach details */
     GetBreachRequest: {
       /**
@@ -14618,6 +15896,14 @@ export interface components {
     GetCachedBehaviorRequest: {
       /** @description Unique identifier for the cached behavior */
       behaviorId: string;
+    };
+    /** @description Request to get the capability manifest. */
+    GetCapabilityManifestRequest: {
+      /**
+       * Format: uuid
+       * @description The seed whose manifest to retrieve.
+       */
+      seedId: string;
     };
     /** @description Request to retrieve a character's compressed archive */
     GetCharacterArchiveRequest: {
@@ -15040,6 +16326,22 @@ export interface components {
        */
       supplyCapRemaining?: number | null;
     };
+    /** @description Request to get the current growth phase. */
+    GetGrowthPhaseRequest: {
+      /**
+       * Format: uuid
+       * @description The seed whose phase to retrieve.
+       */
+      seedId: string;
+    };
+    /** @description Request to get growth data for a seed. */
+    GetGrowthRequest: {
+      /**
+       * Format: uuid
+       * @description The seed whose growth to retrieve.
+       */
+      seedId: string;
+    };
     /** @description Request to get hold details */
     GetHoldRequest: {
       /**
@@ -15135,6 +16437,16 @@ export interface components {
        * @description Total processing time in milliseconds (when complete)
        */
       processingTimeMs?: number | null;
+    };
+    /** @description Request to get a license definition by board template ID and code */
+    GetLicenseDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Board template containing the definition
+       */
+      boardTemplateId: string;
+      /** @description License code to look up */
+      code: string;
     };
     /** @description Request to retrieve the full ancestry chain of a location up to the root */
     GetLocationAncestorsRequest: {
@@ -15623,6 +16935,41 @@ export interface components {
       /** @description Specific season number (null for current) */
       seasonNumber?: number | null;
     };
+    /** @description Request to get a seed by ID. */
+    GetSeedRequest: {
+      /**
+       * Format: uuid
+       * @description The seed to retrieve.
+       */
+      seedId: string;
+    };
+    /** @description Request to get a seed type definition. */
+    GetSeedTypeRequest: {
+      /** @description The seed type code. */
+      seedTypeCode: string;
+      /**
+       * Format: uuid
+       * @description The game service scope.
+       */
+      gameServiceId: string;
+    };
+    /** @description Request to get seeds by owner. */
+    GetSeedsByOwnerRequest: {
+      /**
+       * Format: uuid
+       * @description The owner entity ID.
+       */
+      ownerId: string;
+      /** @description The owner entity type. */
+      ownerType: string;
+      /** @description Filter by seed type. */
+      seedTypeCode?: string | null;
+      /**
+       * @description Whether to include archived seeds.
+       * @default false
+       */
+      includeArchived: boolean;
+    };
     /** @description Request to get aggregate sentiment toward another character */
     GetSentimentRequest: {
       /**
@@ -15927,12 +17274,82 @@ export interface components {
        */
       timeoutMs: number;
     };
+    /** @description A position on the board grid (zero-indexed) */
+    GridPosition: {
+      /** @description Horizontal grid coordinate (zero-indexed) */
+      x: number;
+      /** @description Vertical grid coordinate (zero-indexed) */
+      y: number;
+    };
     /**
      * @description Preferred role when fighting in groups. Affects positioning,
      *     target priority, and coordination behavior.
      * @enum {string}
      */
     GroupRole: 'FRONTLINE' | 'SUPPORT' | 'FLANKER' | 'LEADER' | 'SOLO';
+    /** @description A single domain-amount pair for batch growth recording. */
+    GrowthEntry: {
+      /** @description Dot-separated domain path. */
+      domain: string;
+      /**
+       * Format: float
+       * @description Growth amount to add.
+       */
+      amount: number;
+    };
+    /** @description Defines a growth phase with its threshold. */
+    GrowthPhaseDefinition: {
+      /** @description Machine-readable phase identifier (e.g., "nascent", "awakening"). */
+      phaseCode: string;
+      /** @description Human-readable phase label. */
+      displayName: string;
+      /**
+       * Format: float
+       * @description Minimum total growth to enter this phase.
+       */
+      minTotalGrowth: number;
+    };
+    /** @description Current growth phase information for a seed. */
+    GrowthPhaseResponse: {
+      /**
+       * Format: uuid
+       * @description The seed.
+       */
+      seedId: string;
+      /** @description Current phase code. */
+      phaseCode: string;
+      /** @description Current phase display name. */
+      displayName: string;
+      /**
+       * Format: float
+       * @description Current total growth.
+       */
+      totalGrowth: number;
+      /** @description Next phase code, null if at maximum. */
+      nextPhaseCode?: string | null;
+      /**
+       * Format: float
+       * @description Growth needed for next phase, null if at maximum.
+       */
+      nextPhaseThreshold?: number | null;
+    };
+    /** @description Growth domain data for a seed. */
+    GrowthResponse: {
+      /**
+       * Format: uuid
+       * @description The seed this growth belongs to.
+       */
+      seedId: string;
+      /**
+       * Format: float
+       * @description Aggregate growth across all domains.
+       */
+      totalGrowth: number;
+      /** @description Map of domain path to depth value. Keys are dot-separated (e.g., "combat.melee.sword"). Values are floating-point depth scores. */
+      domains: {
+        [key: string]: number;
+      };
+    };
     /** @description Harmonic progression style preferences */
     HarmonyStyle: {
       /**
@@ -16212,6 +17629,19 @@ export interface components {
      * @enum {string}
      */
     HoldStatus: 'active' | 'captured' | 'released' | 'expired';
+    /** @description Request to initiate a bond between seeds. */
+    InitiateBondRequest: {
+      /**
+       * Format: uuid
+       * @description The seed initiating the bond.
+       */
+      initiatorSeedId: string;
+      /**
+       * Format: uuid
+       * @description The seed being invited to bond.
+       */
+      targetSeedId: string;
+    };
     /** @description Request to inject a perception event into an actor's queue */
     InjectPerceptionRequest: {
       /** @description Target actor to inject perception into */
@@ -16760,6 +18190,51 @@ export interface components {
        */
       ticketId: string;
     };
+    /** @description License definition with all fields */
+    LicenseDefinitionResponse: {
+      /**
+       * Format: uuid
+       * @description Unique license definition identifier
+       */
+      licenseDefinitionId: string;
+      /**
+       * Format: uuid
+       * @description Board template this definition belongs to
+       */
+      boardTemplateId: string;
+      /** @description Unique license code within this board template */
+      code: string;
+      /** @description Grid position of this license node */
+      position: components['schemas']['GridPosition'];
+      /** @description License Point cost to unlock this node */
+      lpCost: number;
+      /**
+       * Format: uuid
+       * @description Item template created when this license is unlocked
+       */
+      itemTemplateId: string;
+      /** @description License codes that must be unlocked before this one */
+      prerequisites?: string[] | null;
+      /** @description Human-readable description of what this license grants */
+      description?: string | null;
+      /** @description Game-specific metadata for this license node */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+      /**
+       * Format: date-time
+       * @description When this definition was created
+       */
+      createdAt: string;
+    };
+    /**
+     * @description Unlock status of a license node on a board.
+     *     - locked: Not adjacent to any unlocked node (cannot be unlocked)
+     *     - unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
+     *     - unlocked: Already unlocked (item placed at this position)
+     * @enum {string}
+     */
+    LicenseStatus: 'locked' | 'unlockable' | 'unlocked';
     /** @description Request to list achievement definitions */
     ListAchievementDefinitionsRequest: {
       /**
@@ -16828,6 +18303,45 @@ export interface components {
     ListAvailableQuestsResponse: {
       /** @description Available quest definitions */
       available: components['schemas']['QuestDefinitionResponse'][];
+    };
+    /** @description Request to list board templates with cursor-based pagination */
+    ListBoardTemplatesRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by game service
+       */
+      gameServiceId: string;
+      /** @description Opaque cursor from previous response. Null for first page. */
+      cursor?: string | null;
+      /** @description Number of items per page. Uses service default if not specified. */
+      pageSize?: number | null;
+    };
+    /** @description Paginated list of board templates */
+    ListBoardTemplatesResponse: {
+      /** @description Board templates in this page */
+      templates: components['schemas']['BoardTemplateResponse'][];
+      /** @description Cursor for next page. Null if no more results. */
+      nextCursor?: string | null;
+      /** @description Whether more results exist beyond this page */
+      hasMore: boolean;
+    };
+    /** @description Request to list board instances for a character */
+    ListBoardsByCharacterRequest: {
+      /**
+       * Format: uuid
+       * @description Character to list boards for
+       */
+      characterId: string;
+      /**
+       * Format: uuid
+       * @description Optional filter by game service
+       */
+      gameServiceId?: string | null;
+    };
+    /** @description List of board instances for a character */
+    ListBoardsByCharacterResponse: {
+      /** @description Board instances for this character */
+      boards: components['schemas']['BoardResponse'][];
     };
     /** @description Request to list bundle version history */
     ListBundleVersionsRequest: {
@@ -17224,6 +18738,24 @@ export interface components {
        * @default false
        */
       wasTruncated: boolean;
+    };
+    /** @description Request to list all license definitions for a board template */
+    ListLicenseDefinitionsRequest: {
+      /**
+       * Format: uuid
+       * @description Board template to list definitions for
+       */
+      boardTemplateId: string;
+    };
+    /** @description All license definitions for a board template */
+    ListLicenseDefinitionsResponse: {
+      /**
+       * Format: uuid
+       * @description Board template these definitions belong to
+       */
+      boardTemplateId: string;
+      /** @description All license definitions for this board template */
+      definitions: components['schemas']['LicenseDefinitionResponse'][];
     };
     /** @description Request to list all child locations of a specified parent location */
     ListLocationsByParentRequest: {
@@ -17659,6 +19191,52 @@ export interface components {
       schemas: components['schemas']['SchemaResponse'][];
       /** @description Latest schema version */
       latestVersion?: string | null;
+    };
+    /** @description Request to list seed types for a game service. */
+    ListSeedTypesRequest: {
+      /**
+       * Format: uuid
+       * @description Game service to list seed types for.
+       */
+      gameServiceId: string;
+    };
+    /** @description List of registered seed types. */
+    ListSeedTypesResponse: {
+      /** @description Registered seed types. */
+      seedTypes: components['schemas']['SeedTypeResponse'][];
+    };
+    /** @description Request to list seeds with optional filters. */
+    ListSeedsRequest: {
+      /** @description Filter by seed type. */
+      seedTypeCode?: string | null;
+      /** @description Filter by owner type. */
+      ownerType?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter by game service.
+       */
+      gameServiceId?: string | null;
+      /** @description Filter by current growth phase code. */
+      growthPhase?: string | null;
+      /** @description Filter by seed status. */
+      status?: components['schemas']['SeedStatus'];
+      /**
+       * @description Page number (1-based).
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page.
+       * @default 50
+       */
+      pageSize: number;
+    };
+    /** @description Paginated list of seeds. */
+    ListSeedsResponse: {
+      /** @description Seeds matching the query. */
+      seeds: components['schemas']['SeedResponse'][];
+      /** @description Total matching seeds across all pages. */
+      totalCount: number;
     };
     /** @description Request to list all game services with optional pagination */
     ListServicesRequest: {
@@ -19075,6 +20653,25 @@ export interface components {
       | 'CONSPIRATOR'
       | 'HERO'
       | 'SURVIVOR';
+    /** @description Public summary of a bond partner's seed. */
+    PartnerSummary: {
+      /**
+       * Format: uuid
+       * @description Partner seed ID.
+       */
+      seedId: string;
+      /**
+       * Format: uuid
+       * @description Partner's owner entity ID.
+       */
+      ownerId: string;
+      /** @description Partner's owner entity type. */
+      ownerType: string;
+      /** @description Partner's current growth phase. */
+      growthPhase: string;
+      /** @description Partner's seed status. */
+      status: components['schemas']['SeedStatus'];
+    };
     /** @description Asset requirement status for a single party */
     PartyAssetRequirementStatus: {
       /** @description Party role (e.g., party_a, party_b) */
@@ -20672,6 +22269,40 @@ export interface components {
       /** @description List of realm IDs that exist but are deprecated (empty if none deprecated) */
       deprecatedRealmIds?: string[];
     };
+    /** @description Request to record growth across multiple domains atomically. */
+    RecordGrowthBatchRequest: {
+      /**
+       * Format: uuid
+       * @description The seed to record growth for.
+       */
+      seedId: string;
+      /** @description Domain-amount pairs to record. */
+      entries: components['schemas']['GrowthEntry'][];
+      /** @description Identifier of the contributing service. */
+      source: string;
+    };
+    /** @description Request to record growth in a specific domain. */
+    RecordGrowthRequest: {
+      /**
+       * Format: uuid
+       * @description The seed to record growth for.
+       */
+      seedId: string;
+      /** @description Dot-separated domain path (e.g., "combat.melee.sword"). New domains are created automatically on first contribution. */
+      domain: string;
+      /**
+       * Format: float
+       * @description Amount of growth to add.
+       */
+      amount: number;
+      /** @description Identifier of the contributing service (e.g., "character-encounter"). */
+      source: string;
+      /**
+       * Format: uuid
+       * @description Optional reference to the originating event.
+       */
+      sourceEventId?: string | null;
+    };
     /** @description Information about a reference */
     ReferenceInfo: {
       /**
@@ -20823,6 +22454,35 @@ export interface components {
        *     Uses JsonPatch.Net library (MIT licensed).
        */
       migrationPatch?: components['schemas']['JsonPatchOperation'][] | null;
+    };
+    /** @description Request to register a new seed type definition. */
+    RegisterSeedTypeRequest: {
+      /** @description Unique code for this seed type (e.g., "guardian", "dungeon_core"). */
+      seedTypeCode: string;
+      /**
+       * Format: uuid
+       * @description Game service this type is scoped to.
+       */
+      gameServiceId: string;
+      /** @description Human-readable name. */
+      displayName: string;
+      /** @description Description of what this seed type represents. */
+      description: string;
+      /** @description Maximum seeds of this type per owner entity. */
+      maxPerOwner: number;
+      /** @description Entity types that can own seeds of this type. */
+      allowedOwnerTypes: string[];
+      /** @description Ordered growth phase definitions with thresholds. */
+      growthPhases: components['schemas']['GrowthPhaseDefinition'][];
+      /** @description Max bond participants. 0 = no bonding, 1 = pair bonds, N = group bonds of up to N+1 participants. */
+      bondCardinality: number;
+      /**
+       * @description Whether bonds of this type are permanent (cannot be dissolved). True for guardian spirit pair bonds, false for dungeon-master bonds that can end when the contract dissolves.
+       * @default false
+       */
+      bondPermanent: boolean;
+      /** @description Rules for computing capabilities from growth domains. */
+      capabilityRules?: components['schemas']['CapabilityRule'][] | null;
     };
     /**
      * @description How deep to traverse related document links:
@@ -21098,6 +22758,16 @@ export interface components {
        * @description Container removed from
        */
       previousContainerId: string;
+    };
+    /** @description Request to remove a license definition from a board template */
+    RemoveLicenseDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Board template containing the definition
+       */
+      boardTemplateId: string;
+      /** @description License code to remove */
+      code: string;
     };
     /** @description Request to rename an existing save slot */
     RenameSlotRequest: {
@@ -22256,6 +23926,71 @@ export interface components {
        */
       entryCount?: number;
     };
+    /** @description Request to bulk seed a board template with license definitions */
+    SeedBoardTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Board template to seed with definitions
+       */
+      boardTemplateId: string;
+      /** @description License definitions to add (boardTemplateId in each is ignored, uses top-level) */
+      definitions: components['schemas']['AddLicenseDefinitionRequest'][];
+    };
+    /** @description Result of bulk seeding a board template */
+    SeedBoardTemplateResponse: {
+      /**
+       * Format: uuid
+       * @description Board template that was seeded
+       */
+      boardTemplateId: string;
+      /** @description Number of definitions created */
+      definitionsCreated: number;
+      /** @description All created license definitions */
+      definitions: components['schemas']['LicenseDefinitionResponse'][];
+    };
+    /** @description Full seed entity response. */
+    SeedResponse: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this seed.
+       */
+      seedId: string;
+      /**
+       * Format: uuid
+       * @description The entity that owns this seed.
+       */
+      ownerId: string;
+      /** @description Owner entity type discriminator. */
+      ownerType: string;
+      /** @description Registered seed type code. */
+      seedTypeCode: string;
+      /**
+       * Format: uuid
+       * @description Game service this seed is scoped to.
+       */
+      gameServiceId: string;
+      /**
+       * Format: date-time
+       * @description When the seed was created.
+       */
+      createdAt: string;
+      /** @description Current computed growth phase code. */
+      growthPhase: string;
+      /**
+       * Format: float
+       * @description Aggregate growth across all domains.
+       */
+      totalGrowth: number;
+      /**
+       * Format: uuid
+       * @description Bond ID if this seed is bonded, null otherwise.
+       */
+      bondId?: string | null;
+      /** @description Human-readable name. */
+      displayName: string;
+      /** @description Current lifecycle status. */
+      status: components['schemas']['SeedStatus'];
+    };
     /** @description A source of seed data (archive or snapshot) */
     SeedSource: {
       /**
@@ -22273,6 +24008,37 @@ export interface components {
        *     Used for Greimas actant assignment if provided.
        */
       role?: string | null;
+    };
+    /**
+     * @description Lifecycle status of a seed.
+     * @enum {string}
+     */
+    SeedStatus: 'Active' | 'Dormant' | 'Archived';
+    /** @description Full seed type definition response. */
+    SeedTypeResponse: {
+      /** @description Unique type code. */
+      seedTypeCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope.
+       */
+      gameServiceId: string;
+      /** @description Human-readable name. */
+      displayName: string;
+      /** @description Type description. */
+      description: string;
+      /** @description Maximum seeds of this type per owner. */
+      maxPerOwner: number;
+      /** @description Allowed owner entity types. */
+      allowedOwnerTypes: string[];
+      /** @description Phase definitions with thresholds. */
+      growthPhases: components['schemas']['GrowthPhaseDefinition'][];
+      /** @description Bond participant limit. */
+      bondCardinality: number;
+      /** @description Whether bonds of this type are permanent. */
+      bondPermanent: boolean;
+      /** @description Capability computation rules. */
+      capabilityRules?: components['schemas']['CapabilityRule'][] | null;
     };
     /** @description Response containing aggregate sentiment */
     SentimentResponse: {
@@ -23659,6 +25425,38 @@ export interface components {
        */
       contractId: string;
     };
+    /** @description Request to unlock a license on a board */
+    UnlockLicenseRequest: {
+      /**
+       * Format: uuid
+       * @description Board instance to unlock on
+       */
+      boardId: string;
+      /** @description License code to unlock */
+      licenseCode: string;
+    };
+    /** @description Result of a successful license unlock */
+    UnlockLicenseResponse: {
+      /**
+       * Format: uuid
+       * @description Board the license was unlocked on
+       */
+      boardId: string;
+      /** @description License code that was unlocked */
+      licenseCode: string;
+      /** @description Grid position of the unlocked license */
+      position: components['schemas']['GridPosition'];
+      /**
+       * Format: uuid
+       * @description Item instance created for this license
+       */
+      itemInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Contract instance created for this unlock
+       */
+      contractInstanceId: string;
+    };
     /** @description An unlocked achievement instance */
     UnlockedAchievement: {
       /** @description Achievement identifier */
@@ -23791,6 +25589,20 @@ export interface components {
       tickIntervalMs?: number | null;
       /** @description Updated auto-save interval in seconds */
       autoSaveIntervalSeconds?: number | null;
+    };
+    /** @description Request to update mutable fields of a board template */
+    UpdateBoardTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Board template to update
+       */
+      boardTemplateId: string;
+      /** @description Updated display name */
+      name?: string | null;
+      /** @description Updated description */
+      description?: string | null;
+      /** @description Whether the template is active (can create new board instances) */
+      isActive?: boolean | null;
     };
     /** @description Request to update bundle metadata */
     UpdateBundleRequest: {
@@ -24007,6 +25819,26 @@ export interface components {
       /** @description New visibility setting */
       isPublic?: boolean | null;
     };
+    /** @description Request to update mutable fields of a license definition */
+    UpdateLicenseDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Board template containing the definition
+       */
+      boardTemplateId: string;
+      /** @description License code to update */
+      code: string;
+      /** @description Updated LP cost */
+      lpCost?: number | null;
+      /** @description Updated prerequisite license codes */
+      prerequisites?: string[] | null;
+      /** @description Updated description */
+      description?: string | null;
+      /** @description Updated game-specific metadata */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
     /** @description Request to update MFA settings for an account */
     UpdateMfaRequest: {
       /**
@@ -24134,6 +25966,40 @@ export interface components {
       scene: components['schemas']['Scene'];
       /** @description Checkout token if updating via checkout workflow */
       checkoutToken?: string | null;
+    };
+    /** @description Request to update a seed's mutable fields. */
+    UpdateSeedRequest: {
+      /**
+       * Format: uuid
+       * @description The seed to update.
+       */
+      seedId: string;
+      /** @description New display name. */
+      displayName?: string | null;
+      /** @description Metadata fields to merge (set key to null to delete). */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Request to update a seed type definition. */
+    UpdateSeedTypeRequest: {
+      /** @description The seed type to update. */
+      seedTypeCode: string;
+      /**
+       * Format: uuid
+       * @description The game service scope.
+       */
+      gameServiceId: string;
+      /** @description New display name. */
+      displayName?: string | null;
+      /** @description New description. */
+      description?: string | null;
+      /** @description Updated maximum per owner. */
+      maxPerOwner?: number | null;
+      /** @description Updated phase definitions. */
+      growthPhases?: components['schemas']['GrowthPhaseDefinition'][] | null;
+      /** @description Updated capability rules. */
+      capabilityRules?: components['schemas']['CapabilityRule'][] | null;
     };
     /** @description Request to update email verification status */
     UpdateVerificationRequest: {
@@ -31548,6 +33414,705 @@ export interface operations {
       };
     };
   };
+  createBoardTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateBoardTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Board template created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BoardTemplateResponse'];
+        };
+      };
+      /** @description Invalid request (validation error) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Referenced game service or contract template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  getBoardTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetBoardTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Board template retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BoardTemplateResponse'];
+        };
+      };
+      /** @description Board template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  listBoardTemplates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListBoardTemplatesRequest'];
+      };
+    };
+    responses: {
+      /** @description Board templates retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListBoardTemplatesResponse'];
+        };
+      };
+    };
+  };
+  updateBoardTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateBoardTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Board template updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BoardTemplateResponse'];
+        };
+      };
+      /** @description Board template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  deleteBoardTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteBoardTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Board template deleted successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BoardTemplateResponse'];
+        };
+      };
+      /** @description Board template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Active board instances exist for this template */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  addLicenseDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddLicenseDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description License definition added successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LicenseDefinitionResponse'];
+        };
+      };
+      /** @description Invalid request (position out of bounds, invalid item template) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Board template or item template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Duplicate code or position, or max definitions exceeded */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  getLicenseDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetLicenseDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description License definition retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LicenseDefinitionResponse'];
+        };
+      };
+      /** @description Board template or license definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  listLicenseDefinitions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListLicenseDefinitionsRequest'];
+      };
+    };
+    responses: {
+      /** @description License definitions retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListLicenseDefinitionsResponse'];
+        };
+      };
+      /** @description Board template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  updateLicenseDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLicenseDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description License definition updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LicenseDefinitionResponse'];
+        };
+      };
+      /** @description Board template or license definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  removeLicenseDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RemoveLicenseDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description License definition removed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LicenseDefinitionResponse'];
+        };
+      };
+      /** @description Board template or license definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description License is unlocked by active board instances */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  createBoard: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateBoardRequest'];
+      };
+    };
+    responses: {
+      /** @description Board created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BoardResponse'];
+        };
+      };
+      /** @description Invalid request (inactive template) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Character, game service, or board template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Duplicate board or max boards per character exceeded */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  getBoard: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetBoardRequest'];
+      };
+    };
+    responses: {
+      /** @description Board retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BoardResponse'];
+        };
+      };
+      /** @description Board not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  listBoardsByCharacter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListBoardsByCharacterRequest'];
+      };
+    };
+    responses: {
+      /** @description Boards retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListBoardsByCharacterResponse'];
+        };
+      };
+    };
+  };
+  deleteBoard: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteBoardRequest'];
+      };
+    };
+    responses: {
+      /** @description Board deleted successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BoardResponse'];
+        };
+      };
+      /** @description Board not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  unlockLicense: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UnlockLicenseRequest'];
+      };
+    };
+    responses: {
+      /** @description License unlocked successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnlockLicenseResponse'];
+        };
+      };
+      /** @description Not adjacent, prerequisites not met, or insufficient LP */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Board or license definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description License already unlocked */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Contract execution failed */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  checkUnlockable: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckUnlockableRequest'];
+      };
+    };
+    responses: {
+      /** @description Unlockability check completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CheckUnlockableResponse'];
+        };
+      };
+      /** @description Board or license definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  getBoardState: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BoardStateRequest'];
+      };
+    };
+    responses: {
+      /** @description Board state retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BoardStateResponse'];
+        };
+      };
+      /** @description Board not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  seedBoardTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedBoardTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Board template seeded successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedBoardTemplateResponse'];
+        };
+      };
+      /** @description Invalid definitions (out of bounds, duplicates) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Board template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  cleanupByCharacter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CleanupByCharacterRequest'];
+      };
+    };
+    responses: {
+      /** @description Cleanup completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CleanupByCharacterResponse'];
+        };
+      };
+    };
+  };
   getLocation: {
     parameters: {
       query?: never;
@@ -35127,6 +37692,510 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  CreateSeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateSeedRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedResponse'];
+        };
+      };
+    };
+  };
+  GetSeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetSeedRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedResponse'];
+        };
+      };
+    };
+  };
+  GetSeedsByOwner: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetSeedsByOwnerRequest'];
+      };
+    };
+    responses: {
+      /** @description Seeds found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListSeedsResponse'];
+        };
+      };
+    };
+  };
+  ListSeeds: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListSeedsRequest'];
+      };
+    };
+    responses: {
+      /** @description Seeds returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListSeedsResponse'];
+        };
+      };
+    };
+  };
+  UpdateSeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSeedRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedResponse'];
+        };
+      };
+    };
+  };
+  ActivateSeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ActivateSeedRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed activated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedResponse'];
+        };
+      };
+    };
+  };
+  ArchiveSeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ArchiveSeedRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed archived */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedResponse'];
+        };
+      };
+    };
+  };
+  GetGrowth: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetGrowthRequest'];
+      };
+    };
+    responses: {
+      /** @description Growth data returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GrowthResponse'];
+        };
+      };
+    };
+  };
+  RecordGrowth: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RecordGrowthRequest'];
+      };
+    };
+    responses: {
+      /** @description Growth recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GrowthResponse'];
+        };
+      };
+    };
+  };
+  RecordGrowthBatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RecordGrowthBatchRequest'];
+      };
+    };
+    responses: {
+      /** @description Growth recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GrowthResponse'];
+        };
+      };
+    };
+  };
+  GetGrowthPhase: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetGrowthPhaseRequest'];
+      };
+    };
+    responses: {
+      /** @description Phase returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GrowthPhaseResponse'];
+        };
+      };
+    };
+  };
+  GetCapabilityManifest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetCapabilityManifestRequest'];
+      };
+    };
+    responses: {
+      /** @description Manifest returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CapabilityManifestResponse'];
+        };
+      };
+    };
+  };
+  RegisterSeedType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegisterSeedTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed type registered */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedTypeResponse'];
+        };
+      };
+    };
+  };
+  GetSeedType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetSeedTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed type found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedTypeResponse'];
+        };
+      };
+    };
+  };
+  ListSeedTypes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListSeedTypesRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed types returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListSeedTypesResponse'];
+        };
+      };
+    };
+  };
+  UpdateSeedType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSeedTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed type updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedTypeResponse'];
+        };
+      };
+    };
+  };
+  InitiateBond: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InitiateBondRequest'];
+      };
+    };
+    responses: {
+      /** @description Bond initiated, awaiting confirmation */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BondResponse'];
+        };
+      };
+    };
+  };
+  ConfirmBond: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConfirmBondRequest'];
+      };
+    };
+    responses: {
+      /** @description Bond confirmed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BondResponse'];
+        };
+      };
+    };
+  };
+  GetBond: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetBondRequest'];
+      };
+    };
+    responses: {
+      /** @description Bond found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BondResponse'];
+        };
+      };
+    };
+  };
+  GetBondForSeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetBondForSeedRequest'];
+      };
+    };
+    responses: {
+      /** @description Bond found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BondResponse'];
+        };
+      };
+    };
+  };
+  GetBondPartners: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetBondPartnersRequest'];
+      };
+    };
+    responses: {
+      /** @description Partners returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BondPartnersResponse'];
+        };
       };
     };
   };

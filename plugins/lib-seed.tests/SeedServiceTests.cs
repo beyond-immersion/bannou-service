@@ -107,26 +107,26 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         string seedTypeCode = "guardian",
         Guid? gameServiceId = null,
         int maxPerOwner = 3) => new SeedTypeDefinitionModel
-    {
-        SeedTypeCode = seedTypeCode,
-        GameServiceId = gameServiceId ?? _testGameServiceId,
-        DisplayName = "Guardian",
-        Description = "A guardian seed type",
-        MaxPerOwner = maxPerOwner,
-        AllowedOwnerTypes = new List<string> { "account", "character" },
-        GrowthPhases = new List<GrowthPhaseDefinition>
+        {
+            SeedTypeCode = seedTypeCode,
+            GameServiceId = gameServiceId ?? _testGameServiceId,
+            DisplayName = "Guardian",
+            Description = "A guardian seed type",
+            MaxPerOwner = maxPerOwner,
+            AllowedOwnerTypes = new List<string> { "account", "character" },
+            GrowthPhases = new List<GrowthPhaseDefinition>
         {
             new GrowthPhaseDefinition { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 },
             new GrowthPhaseDefinition { PhaseCode = "awakening", DisplayName = "Awakening", MinTotalGrowth = 10 },
             new GrowthPhaseDefinition { PhaseCode = "mature", DisplayName = "Mature", MinTotalGrowth = 50 }
         },
-        BondCardinality = 1,
-        BondPermanent = false,
-        CapabilityRules = new List<CapabilityRule>
+            BondCardinality = 1,
+            BondPermanent = false,
+            CapabilityRules = new List<CapabilityRule>
         {
             new CapabilityRule { CapabilityCode = "combat.stance", Domain = "combat.melee", UnlockThreshold = 5f, FidelityFormula = "linear" }
         }
-    };
+        };
 
     private SeedModel CreateTestSeed(
         Guid? seedId = null,
@@ -135,18 +135,18 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         string seedTypeCode = "guardian",
         Guid? gameServiceId = null,
         SeedStatus status = SeedStatus.Dormant) => new SeedModel
-    {
-        SeedId = seedId ?? Guid.NewGuid(),
-        OwnerId = ownerId ?? _testOwnerId,
-        OwnerType = ownerType,
-        SeedTypeCode = seedTypeCode,
-        GameServiceId = gameServiceId ?? _testGameServiceId,
-        CreatedAt = DateTimeOffset.UtcNow,
-        GrowthPhase = "nascent",
-        TotalGrowth = 0f,
-        DisplayName = "Test Seed",
-        Status = status
-    };
+        {
+            SeedId = seedId ?? Guid.NewGuid(),
+            OwnerId = ownerId ?? _testOwnerId,
+            OwnerType = ownerType,
+            SeedTypeCode = seedTypeCode,
+            GameServiceId = gameServiceId ?? _testGameServiceId,
+            CreatedAt = DateTimeOffset.UtcNow,
+            GrowthPhase = "nascent",
+            TotalGrowth = 0f,
+            DisplayName = "Test Seed",
+            Status = status
+        };
 
     private void SetupSeedQueryPagedAsync(
         List<SeedModel> items, long totalCount, int offset = 0, int limit = 100)

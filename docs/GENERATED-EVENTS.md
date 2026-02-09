@@ -296,6 +296,13 @@ This document lists all events defined in Bannou's event schemas.
 | `LeaderboardRankChangedEvent` | Custom | `leaderboard-rank-changed` | Published when an entity's rank changes on a leade... |
 | `LeaderboardSeasonStartedEvent` | Custom | `leaderboard-season-started` | Published when a new leaderboard season begins |
 
+### License
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `LicenseUnlockFailedEvent` | Custom | `license-unlock-failed` | Published when a license unlock attempt fails |
+| `LicenseUnlockedEvent` | Custom | `license-unlocked` | Published when a license is successfully unlocked ... |
+
 ### Mapping
 
 | Event | Type | Likely Topic | Description |
@@ -445,6 +452,18 @@ This document lists all events defined in Bannou's event schemas.
 | `SceneInstantiatedEvent` | Custom | `scene-instantiated` | Published when a scene is instantiated in the game... |
 | `SceneReferenceBrokenEvent` | Custom | `scene-reference-broken` | Published when a referenced scene becomes unavaila... |
 | `SceneValidationRulesUpdatedEvent` | Lifecycle (Updated) | `scene-validation-rules.updated` | Published when validation rules are registered or ... |
+
+### Seed
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `SeedActivatedEvent` | Custom | `seed-activated` | Published when a seed is set as active for its own... |
+| `SeedArchivedEvent` | Custom | `seed-archived` | Published when a seed is archived |
+| `SeedBondFormedEvent` | Custom | `seed-bond-formed` | Published when a bond between seeds becomes active... |
+| `SeedCapabilityUpdatedEvent` | Lifecycle (Updated) | `seed-capability.updated` | Published when a seed's capability manifest is rec... |
+| `SeedGrowthContributedEvent` | Custom | `seed-growth-contributed` | Published by any consuming service to contribute g... |
+| `SeedGrowthUpdatedEvent` | Lifecycle (Updated) | `seed-growth.updated` | Published when growth domain values change for a s... |
+| `SeedPhaseChangedEvent` | Custom | `seed-phase-changed` | Published when a seed transitions to a new growth ... |
 
 ### Species
 

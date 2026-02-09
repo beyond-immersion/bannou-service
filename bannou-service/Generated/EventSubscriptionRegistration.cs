@@ -110,5 +110,8 @@ public static class EventSubscriptionRegistration
         // From resource-events.yaml
         EventSubscriptionRegistry.Register<ResourceReferenceRegisteredEvent>("resource.reference.registered");
         EventSubscriptionRegistry.Register<ResourceReferenceUnregisteredEvent>("resource.reference.unregistered");
+
+        // From seed-events.yaml
+        EventSubscriptionRegistry.Register<SeedGrowthContributedEvent>("seed.growth.contributed");
     }
 }

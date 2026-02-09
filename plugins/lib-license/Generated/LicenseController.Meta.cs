@@ -1058,7 +1058,7 @@ public partial class LicenseController
     private static readonly string _DeleteBoardTemplate_Info = """
 {
     "summary": "Delete a board template",
-    "description": "Soft-delete a board template. Blocked if active board instances exist\nthat reference this template.\n",
+    "description": "Delete a board template. Blocked if active board instances exist\nthat reference this template.\n",
     "tags": [
         "BoardTemplate"
     ],
@@ -3468,6 +3468,115 @@ public partial class LicenseController
             _SeedBoardTemplate_Info,
             _SeedBoardTemplate_RequestSchema,
             _SeedBoardTemplate_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanupByCharacter
+
+    private static readonly string _CleanupByCharacter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterRequest",
+    "$defs": {
+        "CleanupByCharacterRequest": {
+            "type": "object",
+            "description": "Request to cleanup all boards for a deleted character",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character whose boards should be cleaned up"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterResponse",
+    "$defs": {
+        "CleanupByCharacterResponse": {
+            "type": "object",
+            "description": "Result of character board cleanup",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "boardsDeleted"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character that was cleaned up"
+                },
+                "boardsDeleted": {
+                    "type": "integer",
+                    "description": "Number of boards deleted during cleanup"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_Info = """
+{
+    "summary": "Cleanup boards referencing a deleted character",
+    "description": "Called by lib-resource cleanup coordination when a character is deleted.\nDeletes all board instances for the specified character, destroying their\ninventory containers and all contained license items.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+    "tags": [
+        "Cleanup"
+    ],
+    "deprecated": false,
+    "operationId": "cleanupByCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-character/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "License",
+            "POST",
+            "/license/cleanup-by-character",
+            _CleanupByCharacter_Info));
+
+    /// <summary>Returns request schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-character/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "License",
+            "POST",
+            "/license/cleanup-by-character",
+            "request-schema",
+            _CleanupByCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-character/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "License",
+            "POST",
+            "/license/cleanup-by-character",
+            "response-schema",
+            _CleanupByCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-character/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "License",
+            "POST",
+            "/license/cleanup-by-character",
+            _CleanupByCharacter_Info,
+            _CleanupByCharacter_RequestSchema,
+            _CleanupByCharacter_ResponseSchema));
 
     #endregion
 }
