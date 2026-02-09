@@ -25,7 +25,6 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<ILogger<LicenseService>> _mockLogger;
-    private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     // Store mocks
@@ -61,7 +60,6 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         _mockMessageBus = new Mock<IMessageBus>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockLogger = new Mock<ILogger<LicenseService>>();
-        _mockEventConsumer = new Mock<IEventConsumer>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
 
         // Initialize store mocks
@@ -161,8 +159,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         _mockItemClient.Object,
         _mockCurrencyClient.Object,
         _mockGameServiceClient.Object,
-        _mockLockProvider.Object,
-        _mockEventConsumer.Object);
+        _mockLockProvider.Object);
 
     private static BoardTemplateModel CreateTestTemplate(
         Guid? boardTemplateId = null,
@@ -1701,10 +1698,10 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
     #endregion
 
-    #region Event Handler Tests
+    #region Cleanup Operations Tests
 
     [Fact]
-    public async Task HandleCharacterDeleted_CleansUpAllBoards()
+    public async Task CleanupByCharacter_CleansUpAllBoards()
     {
         // Arrange
         var board1 = CreateTestBoard(boardId: Guid.NewGuid(), containerId: Guid.NewGuid());
@@ -1715,12 +1712,18 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .ReturnsAsync(new List<BoardInstanceModel> { board1, board2 });
 
         var service = CreateService();
-        var evt = new CharacterDeletedEvent { CharacterId = TestCharacterId };
+        var request = new CleanupByCharacterRequest { CharacterId = TestCharacterId };
 
         // Act
-        await service.HandleCharacterDeletedAsync(evt);
+        var (status, response) = await service.CleanupByCharacterAsync(request, CancellationToken.None);
 
-        // Assert - verify container cleanup for both boards
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(TestCharacterId, response.CharacterId);
+        Assert.Equal(2, response.BoardsDeleted);
+
+        // Verify container cleanup for both boards
         _mockInventoryClient.Verify(
             c => c.DeleteContainerAsync(It.Is<DeleteContainerRequest>(r => r.ContainerId == board1.ContainerId), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -1743,6 +1746,26 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         _mockBoardCache.Verify(
             s => s.DeleteAsync($"cache:{board2.BoardId}", It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task CleanupByCharacter_NoBoards_ReturnsZeroDeleted()
+    {
+        // Arrange
+        _mockBoardStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<BoardInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<BoardInstanceModel>());
+
+        var service = CreateService();
+        var request = new CleanupByCharacterRequest { CharacterId = TestCharacterId };
+
+        // Act
+        var (status, response) = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.BoardsDeleted);
     }
 
     #endregion

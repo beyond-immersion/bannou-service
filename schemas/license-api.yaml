@@ -33,6 +33,15 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+    - target: character
+      sourceType: license-board
+      field: characterId
+      onDelete: cascade
+      cleanup:
+        endpoint: /license/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
 x-service-layer: GameFeatures
 
 servers:
@@ -683,6 +692,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  # ===========================================================================
+  # Resource Cleanup (1 endpoint)
+  # ===========================================================================
+
+  /license/cleanup-by-character:
+    post:
+      operationId: cleanupByCharacter
+      tags:
+      - Cleanup
+      summary: Cleanup boards referencing a deleted character
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Deletes all board instances for the specified character, destroying their
+        inventory containers and all contained license items.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
 
 components:
   schemas:
@@ -1508,6 +1550,38 @@ components:
           items:
             $ref: '#/components/schemas/BoardNodeState'
           description: All license nodes with their current status
+
+    # ==========================================================================
+    # Request/Response Models - Resource Cleanup
+    # ==========================================================================
+
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to cleanup all boards for a deleted character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose boards should be cleaned up
+
+    CleanupByCharacterResponse:
+      type: object
+      description: Result of character board cleanup
+      additionalProperties: false
+      required:
+      - characterId
+      - boardsDeleted
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character that was cleaned up
+        boardsDeleted:
+          type: integer
+          description: Number of boards deleted during cleanup
 
     # ==========================================================================
     # Shared Models

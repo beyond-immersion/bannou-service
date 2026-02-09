@@ -254,7 +254,7 @@ No delete endpoint exists for seed types -- see Known Quirks.
 
 - ~~**`RecomputeSeedsForTypeAsync` only processes first page of seeds**~~: **FIXED** (2026-02-09) - Added pagination loop in `RecomputeSeedsForTypeAsync` that iterates through all pages of seeds using `DefaultQueryPageSize` until all seeds of the type are recomputed. Previously only processed offset 0.
 
-- **`ConfirmBondAsync` has no distributed lock**: `ConfirmBondAsync` (line ~996) reads and mutates the bond record without acquiring a distributed lock. If two participants confirm concurrently, both read the bond with their own `Confirmed` still false, each sets their own flag, and the second save overwrites the first — losing one participant's confirmation. `InitiateBondAsync` correctly uses ordered dual-locks; `ConfirmBondAsync` should acquire a lock on the bond ID.
+- ~~**`ConfirmBondAsync` has no distributed lock**~~: **FIXED** (2026-02-09) - Added distributed lock on `bond:{bondId}` in `ConfirmBondAsync` before reading/mutating the bond record. Concurrent confirmations from multiple participants now serialize correctly, preventing lost confirmations from last-write-wins.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -284,3 +284,4 @@ No delete endpoint exists for seed types -- see Known Quirks.
 
 - **Bond growth multiplier bug fix** (2026-02-09): Moved `BondSharedGrowthMultiplier` inside the active bond status check in `RecordGrowthInternalAsync`. Seeds with `PendingConfirmation` bonds no longer receive boosted growth.
 - **RecomputeSeedsForTypeAsync pagination fix** (2026-02-09): Added pagination loop so all seeds of a type are recomputed when the type definition changes, not just the first page.
+- **ConfirmBondAsync distributed lock fix** (2026-02-09): Added distributed lock on `bond:{bondId}` before read-mutate-write in `ConfirmBondAsync` to prevent concurrent confirmation races.

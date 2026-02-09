@@ -105,7 +105,6 @@ public partial class LicenseService : ILicenseService
     /// <param name="currencyClient">Currency client for LP balance checks (L2 hard dependency).</param>
     /// <param name="gameServiceClient">Game service client for validation (L2 hard dependency).</param>
     /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
-    /// <param name="eventConsumer">Event consumer for subscription registration.</param>
     public LicenseService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -117,8 +116,7 @@ public partial class LicenseService : ILicenseService
         IItemClient itemClient,
         ICurrencyClient currencyClient,
         IGameServiceClient gameServiceClient,
-        IDistributedLockProvider lockProvider,
-        IEventConsumer eventConsumer)
+        IDistributedLockProvider lockProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -131,8 +129,6 @@ public partial class LicenseService : ILicenseService
         _currencyClient = currencyClient;
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
-
-        RegisterEventConsumers(eventConsumer);
     }
 
     #region Adjacency Helper
@@ -1065,6 +1061,12 @@ public partial class LicenseService : ILicenseService
                 new StateOptions { Ttl = _configuration.BoardCacheTtlSeconds },
                 cancellationToken);
 
+            // Register character reference with lib-resource for cleanup coordination
+            await RegisterCharacterReferenceAsync(
+                board.BoardId.ToString(),
+                board.CharacterId,
+                cancellationToken);
+
             _logger.LogInformation(
                 "Created board {BoardId} for character {CharacterId} with container {ContainerId}",
                 board.BoardId, board.CharacterId, board.ContainerId);
@@ -1186,6 +1188,12 @@ public partial class LicenseService : ILicenseService
             {
                 return (StatusCodes.NotFound, null);
             }
+
+            // Unregister character reference before deletion
+            await UnregisterCharacterReferenceAsync(
+                board.BoardId.ToString(),
+                board.CharacterId,
+                cancellationToken);
 
             // Delete inventory container (destroys all contained items)
             try
@@ -1953,6 +1961,102 @@ public partial class LicenseService : ILicenseService
                 "license", "SeedBoardTemplate", "unexpected_exception", ex.Message,
                 dependency: null, endpoint: "post:/license/board-template/seed",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region Cleanup Operations
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(
+        CleanupByCharacterRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Cleaning up license boards for deleted character {CharacterId}", body.CharacterId);
+
+        var boardsDeleted = 0;
+
+        try
+        {
+            var boards = await BoardStore.QueryAsync(
+                b => b.CharacterId == body.CharacterId,
+                cancellationToken: cancellationToken);
+
+            if (boards.Count == 0)
+            {
+                _logger.LogDebug("No license boards found for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.OK, new CleanupByCharacterResponse
+                {
+                    CharacterId = body.CharacterId,
+                    BoardsDeleted = 0
+                });
+            }
+
+            _logger.LogInformation(
+                "Found {BoardCount} license boards to clean up for character {CharacterId}",
+                boards.Count, body.CharacterId);
+
+            foreach (var board in boards)
+            {
+                try
+                {
+                    // Delete the inventory container (destroys all contained license items)
+                    await _inventoryClient.DeleteContainerAsync(
+                        new DeleteContainerRequest { ContainerId = board.ContainerId },
+                        cancellationToken);
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    _logger.LogWarning("Container {ContainerId} already deleted for board {BoardId}",
+                        board.ContainerId, board.BoardId);
+                }
+
+                // Delete the board instance record
+                await BoardStore.DeleteAsync(
+                    BuildBoardKey(board.BoardId),
+                    cancellationToken);
+
+                // Delete the character-template uniqueness key
+                await BoardStore.DeleteAsync(
+                    BuildBoardByCharacterKey(board.CharacterId, board.BoardTemplateId),
+                    cancellationToken);
+
+                // Invalidate board cache
+                await BoardCache.DeleteAsync(
+                    BuildBoardCacheKey(board.BoardId),
+                    cancellationToken);
+
+                boardsDeleted++;
+
+                _logger.LogDebug("Deleted board {BoardId} for character {CharacterId}",
+                    board.BoardId, body.CharacterId);
+            }
+
+            _logger.LogInformation(
+                "Completed cleanup of {BoardsDeleted} license boards for character {CharacterId}",
+                boardsDeleted, body.CharacterId);
+
+            return (StatusCodes.OK, new CleanupByCharacterResponse
+            {
+                CharacterId = body.CharacterId,
+                BoardsDeleted = boardsDeleted
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up license boards for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "license",
+                "CleanupByCharacter",
+                "cleanup_failed",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/license/cleanup-by-character",
+                details: $"CharacterId: {body.CharacterId}, BoardsDeletedSoFar: {boardsDeleted}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
     }

@@ -335,6 +335,21 @@ public static class LicensePermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/license/cleanup-by-character",
+            Method = ServiceEndpointMethod.POST,
+            Description = "cleanupByCharacter",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

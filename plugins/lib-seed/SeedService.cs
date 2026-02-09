@@ -997,6 +997,15 @@ public partial class SeedService : ISeedService
     {
         try
         {
+            var lockOwner = $"confirm-bond-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.SeedLock, $"bond:{body.BondId}", lockOwner, 10, cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
             var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
             var bondKey = $"bond:{body.BondId}";
             var bond = await bondStore.GetAsync(bondKey, cancellationToken);

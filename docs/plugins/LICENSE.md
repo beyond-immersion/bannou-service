@@ -258,7 +258,7 @@ Unlock License Flow (under distributed lock)
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/356 -->
 - **Board sharing/copying**: Allow copying a board state from one character to another, e.g., for cloning NPC progression.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/357 -->
-- **Resource reference integration**: Register boards as references to characters via lib-resource for proper cleanup coordination instead of direct event handling.
+- ~~**Resource reference integration**: Register boards as references to characters via lib-resource for proper cleanup coordination instead of direct event handling.~~ FIXED: Added `x-references` to schema, generated reference tracking helpers, implemented `CleanupByCharacterAsync` endpoint, registered cleanup callbacks in plugin startup, removed direct `character.deleted` event subscription.
 - **Achievement integration**: Publish events when specific board completion thresholds are reached (e.g., "50% unlocked", "full board clear") for the Achievement service to consume.
 
 ---

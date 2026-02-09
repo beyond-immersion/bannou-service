@@ -119,4 +119,9 @@ public partial interface ILicenseService : IBannouService
         /// </summary>
         Task<(StatusCodes, SeedBoardTemplateResponse?)> SeedBoardTemplateAsync(SeedBoardTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// CleanupByCharacter operation
+        /// </summary>
+        Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

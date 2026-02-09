@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -100,6 +101,8 @@ public class LicenseServicePlugin : BaseBannouPlugin
 
         Logger?.LogDebug("License service running");
 
+        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
+
         try
         {
             // Call existing IBannouService.OnRunningAsync if the service implements it
@@ -112,6 +115,21 @@ public class LicenseServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during License service running phase");
+        }
+
+        // Register cleanup callbacks with lib-resource for character reference tracking.
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
+        using var scope = serviceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+
+        var success = await LicenseService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+        if (success)
+        {
+            Logger?.LogInformation("Registered character cleanup callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
         }
     }
 

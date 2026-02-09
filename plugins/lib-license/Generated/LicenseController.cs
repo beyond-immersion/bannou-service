@@ -284,6 +284,22 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedBoardTemplateResponse>> SeedBoardTemplateAsync(SeedBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Cleanup boards referencing a deleted character
+    /// </summary>
+
+    /// <remarks>
+    /// Called by lib-resource cleanup coordination when a character is deleted.
+    /// <br/>Deletes all board instances for the specified character, destroying their
+    /// <br/>inventory containers and all contained license items.
+    /// <br/>This endpoint is designed for internal service-to-service calls during
+    /// <br/>cascading resource cleanup.
+    /// </remarks>
+
+    /// <returns>Cleanup completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -640,6 +656,26 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.SeedBoardTemplateAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Cleanup boards referencing a deleted character
+    /// </summary>
+    /// <remarks>
+    /// Called by lib-resource cleanup coordination when a character is deleted.
+    /// <br/>Deletes all board instances for the specified character, destroying their
+    /// <br/>inventory containers and all contained license items.
+    /// <br/>This endpoint is designed for internal service-to-service calls during
+    /// <br/>cascading resource cleanup.
+    /// </remarks>
+    /// <returns>Cleanup completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("license/cleanup-by-character")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

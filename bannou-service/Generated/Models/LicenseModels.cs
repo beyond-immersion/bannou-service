@@ -1240,6 +1240,46 @@ public partial class BoardStateResponse
 }
 
 /// <summary>
+/// Request to cleanup all boards for a deleted character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterRequest
+{
+
+    /// <summary>
+    /// Character whose boards should be cleaned up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of character board cleanup
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterResponse
+{
+
+    /// <summary>
+    /// Character that was cleaned up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of boards deleted during cleanup
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boardsDeleted")]
+    public int BoardsDeleted { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Standard error response format
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
