@@ -92,6 +92,11 @@ x-service-configuration:
       description: Window in milliseconds for batching rapid updates into single event (0 = disabled)
       default: 100
       env: MAPPING_EVENT_AGGREGATION_WINDOW_MS
+    MaxBufferFlushRetries:
+      type: integer
+      description: Maximum retry attempts for flushing spatial change buffers before discarding changes
+      default: 3
+      env: MAPPING_MAX_BUFFER_FLUSH_RETRIES
 
     # Per-Kind TTL Settings (in seconds, 0 = use default, -1 = no TTL)
     TtlTerrain:

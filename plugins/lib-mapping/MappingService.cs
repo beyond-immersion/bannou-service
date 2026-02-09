@@ -2336,11 +2336,13 @@ public partial class MappingService : IMappingService
         }
 
         // Aggregation enabled - buffer the changes
+        var maxRetries = _configuration.MaxBufferFlushRetries;
         var buffer = EventAggregationBuffers.GetOrAdd(
             channel.ChannelId,
             _ => new EventAggregationBuffer(
                 channel.ChannelId,
                 windowMs,
+                maxRetries,
                 async (channelId, bufferedChanges, bufferedVersion, bufferedSourceAppId, ct) =>
                 {
                     // Retrieve channel record for publishing (may have been updated)
@@ -2353,7 +2355,17 @@ public partial class MappingService : IMappingService
                         await PublishMapObjectsChangedEventDirectAsync(currentChannel, bufferedVersion, bufferedChanges, bufferedSourceAppId, ct);
                     }
                 },
-                cId => { EventAggregationBuffers.TryRemove(cId, out EventAggregationBuffer? _); }));
+                cId => { EventAggregationBuffers.TryRemove(cId, out EventAggregationBuffer? _); },
+                async (channelId, discardedCount, ex) =>
+                {
+                    _logger.LogError(ex, "Failed to flush {DiscardedCount} spatial changes for channel {ChannelId} after {MaxRetries} retries, changes discarded",
+                        discardedCount, channelId, maxRetries);
+                    await _messageBus.TryPublishErrorAsync(
+                        "mapping", "EventAggregationBuffer", "flush_failed", ex.Message,
+                        dependency: "messaging", endpoint: "internal:buffer-flush",
+                        details: $"ChannelId={channelId}, DiscardedChanges={discardedCount}, MaxRetries={maxRetries}",
+                        stack: ex.StackTrace);
+                }));
 
         buffer.AddChanges(changes, version, sourceAppId);
     }
@@ -2755,6 +2767,7 @@ public partial class MappingService : IMappingService
     /// <summary>
     /// Buffer for aggregating events within a time window before publishing.
     /// Uses a timer to flush events after the configured window expires.
+    /// Retries on flush failure with exponential backoff before discarding changes.
     /// </summary>
     internal sealed class EventAggregationBuffer : IDisposable
     {
@@ -2763,23 +2776,41 @@ public partial class MappingService : IMappingService
         private readonly Guid _channelId;
         private readonly Func<Guid, List<ObjectChangeEvent>, long, string?, CancellationToken, Task> _flushCallback;
         private readonly Action<Guid> _removeCallback;
+        private readonly Func<Guid, int, Exception, Task> _errorCallback;
+        private readonly int _maxRetries;
         private List<ObjectChangeEvent> _pendingChanges = new();
         private long _latestVersion;
         private string? _sourceAppId;
         private bool _disposed;
 
+        /// <summary>
+        /// Creates a new EventAggregationBuffer with retry support.
+        /// </summary>
+        /// <param name="channelId">Channel ID for this buffer.</param>
+        /// <param name="windowMs">Aggregation window in milliseconds before flushing.</param>
+        /// <param name="maxRetries">Maximum flush retry attempts before discarding changes.</param>
+        /// <param name="flushCallback">Callback to publish aggregated changes.</param>
+        /// <param name="removeCallback">Callback to remove this buffer from the global dictionary.</param>
+        /// <param name="errorCallback">Callback to report flush failures (channelId, discardedChangeCount, exception).</param>
         public EventAggregationBuffer(
             Guid channelId,
             int windowMs,
+            int maxRetries,
             Func<Guid, List<ObjectChangeEvent>, long, string?, CancellationToken, Task> flushCallback,
-            Action<Guid> removeCallback)
+            Action<Guid> removeCallback,
+            Func<Guid, int, Exception, Task> errorCallback)
         {
             _channelId = channelId;
+            _maxRetries = maxRetries;
             _flushCallback = flushCallback;
             _removeCallback = removeCallback;
+            _errorCallback = errorCallback;
             _flushTimer = new Timer(OnTimerElapsed, null, windowMs, Timeout.Infinite);
         }
 
+        /// <summary>
+        /// Adds changes to the pending buffer for aggregation.
+        /// </summary>
         public void AddChanges(List<ObjectChangeEvent> changes, long version, string? sourceAppId)
         {
             lock (_lock)
@@ -2806,21 +2837,50 @@ public partial class MappingService : IMappingService
                 sourceAppId = _sourceAppId;
             }
 
-            // Fire and forget - we're in a timer callback, can't await
+            // Fire and forget with retry — timer callback cannot await directly
             _ = Task.Run(async () =>
             {
-                try
+                var attempts = 0;
+                while (attempts <= _maxRetries)
                 {
-                    await _flushCallback(_channelId, changesToPublish, version, sourceAppId, CancellationToken.None);
-                }
-                finally
-                {
-                    _removeCallback(_channelId);
-                    Dispose();
+                    try
+                    {
+                        await _flushCallback(_channelId, changesToPublish, version, sourceAppId, CancellationToken.None);
+                        _removeCallback(_channelId);
+                        Dispose();
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        attempts++;
+                        if (attempts > _maxRetries)
+                        {
+                            // All retries exhausted — report error and discard changes
+                            try
+                            {
+                                await _errorCallback(_channelId, changesToPublish.Count, ex);
+                            }
+                            catch
+                            {
+                                // Error callback itself failed (e.g., message bus down) — nothing more we can do
+                            }
+
+                            _removeCallback(_channelId);
+                            Dispose();
+                            return;
+                        }
+
+                        // Exponential backoff: 100ms, 200ms, 400ms, ...
+                        var delayMs = 100 * (1 << (attempts - 1));
+                        await Task.Delay(delayMs);
+                    }
                 }
             });
         }
 
+        /// <summary>
+        /// Disposes the buffer and its flush timer.
+        /// </summary>
         public void Dispose()
         {
             lock (_lock)

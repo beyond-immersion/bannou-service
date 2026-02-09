@@ -439,7 +439,7 @@ public class RealmHistoryServiceTests
     #region Lore Tests
 
     [Fact]
-    public async Task GetRealmLoreAsync_NoLore_ReturnsEmptyList()
+    public async Task GetRealmLoreAsync_NoLore_ReturnsNotFound()
     {
         // Arrange
         var service = CreateService();
@@ -453,10 +453,9 @@ public class RealmHistoryServiceTests
         // Act
         var (status, result) = await service.GetRealmLoreAsync(request, CancellationToken.None);
 
-        // Assert - RealmHistory returns OK with empty list (differs from CharacterHistory which returns NotFound)
-        Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(result);
-        Assert.Empty(result.Elements);
+        // Assert - Consistent with CharacterHistory's GetBackstory: NotFound when no document exists
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
     }
 
     [Fact]

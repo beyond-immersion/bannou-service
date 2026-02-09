@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in MappingService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Mapping;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -124,6 +124,12 @@ public class MappingServiceConfiguration : IServiceConfiguration
     /// Environment variable: MAPPING_EVENT_AGGREGATION_WINDOW_MS
     /// </summary>
     public int EventAggregationWindowMs { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum retry attempts for flushing spatial change buffers before discarding changes
+    /// Environment variable: MAPPING_MAX_BUFFER_FLUSH_RETRIES
+    /// </summary>
+    public int MaxBufferFlushRetries { get; set; } = 3;
 
     /// <summary>
     /// TTL for terrain layer data (-1 = no TTL, durable)

@@ -399,14 +399,8 @@ public partial class RealmHistoryService : IRealmHistoryService
 
             if (loreData == null)
             {
-                // Return OK with empty list (intentional quirk: GetLore is lenient, DeleteLore is strict)
-                return (StatusCodes.OK, new RealmLoreResponse
-                {
-                    RealmId = body.RealmId,
-                    Elements = new List<RealmLoreElement>(),
-                    CreatedAt = null,
-                    UpdatedAt = null
-                });
+                _logger.LogDebug("No lore found for realm {RealmId}", body.RealmId);
+                return (StatusCodes.NotFound, null);
             }
 
             var elements = loreData.Elements
