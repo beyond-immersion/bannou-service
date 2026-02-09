@@ -76,8 +76,6 @@ public partial class ConnectService : IConnectService, IDisposable
     // Reconnection window now comes from configuration (ReconnectionWindowSeconds)
     // During this time after disconnect, session state is preserved and client can reconnect
 
-    // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
     private readonly Guid _instanceId;
 
@@ -851,54 +849,56 @@ public partial class ConnectService : IConnectService, IDisposable
             var connection = _connectionManager.GetConnection(sessionId);
             var isForcedDisconnect = connection?.Metadata?.ContainsKey("forced_disconnect") == true;
 
-            // CRITICAL: Publish session.disconnected event BEFORE unsubscribing from RabbitMQ
-            // This ensures Permission removes session from activeConnections before the exchange is torn down
-            // Without this, services could still try to publish to the session during the brief cleanup window
-            try
-            {
-                var sessionDisconnectedEvent = new SessionDisconnectedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = Guid.Parse(sessionId),
-                    AccountId = accountId ?? Guid.Empty,
-                    Reconnectable = !isForcedDisconnect,
-                    Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
-                };
-                await _messageBus.TryPublishAsync("session.disconnected", sessionDisconnectedEvent);
-                _logger.LogInformation("Published session.disconnected event for session {SessionId}, reconnectable: {Reconnectable}",
-                    sessionId, !isForcedDisconnect);
-
-                // Remove from account session index
-                if (accountId.HasValue && accountId.Value != Guid.Empty)
-                {
-                    await _sessionManager.RemoveSessionFromAccountAsync(accountId.Value, sessionId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to publish session.disconnected event for session {SessionId}", sessionId);
-                // Fire-and-forget error event - we're in finally cleanup
-                _ = PublishErrorEventAsync("PublishSessionDisconnected", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { SessionId = sessionId });
-            }
-
-            // Remove from connection manager - use instance-matching removal to prevent
-            // race condition during session subsume where old connection's cleanup could
-            // accidentally remove a new connection that replaced it (FOUNDATION TENETS compliance)
+            // CRITICAL: Check subsume BEFORE publishing any events or cleaning up state.
+            // RemoveConnectionIfMatch uses WebSocket reference equality: if the stored WebSocket
+            // doesn't match ours, a new connection replaced us (subsume). In that case we must NOT
+            // publish session.disconnected or remove indexes — the session is still active on the
+            // new connection, and false disconnect events cause state churn across all consumers
+            // (Permission, GameSession, Actor, Matchmaking) that immediately rebuild on session.connected
             var wasRemoved = _connectionManager.RemoveConnectionIfMatch(sessionId, webSocket);
 
-            // CRITICAL: If wasRemoved is false, this connection was SUBSUMED by a new connection
-            // with the same session ID. In this case, we must NOT:
-            // - Unsubscribe from RabbitMQ (new connection is using the subscription)
-            // - Initiate reconnection window (session is still active)
-            // - Publish disconnect events (session is not actually disconnecting)
             if (!wasRemoved)
             {
-                _logger.LogDebug("Session {SessionId} was subsumed by new connection - skipping cleanup", sessionId);
-                // Skip all cleanup - new connection owns this session now
+                // Connection was subsumed — session is NOT disconnecting, just transferred.
+                // Do NOT publish session.disconnected (session is still active).
+                // Do NOT remove from account index (new connection needs it).
+                // Do NOT unsubscribe from RabbitMQ (new connection is using the subscription).
+                // Do NOT initiate reconnection window (session is still connected).
+                _logger.LogInformation("Session {SessionId} was subsumed by new connection - skipping disconnect and cleanup", sessionId);
             }
             else
             {
+                // Real disconnect — publish event BEFORE unsubscribing from RabbitMQ.
+                // This ensures Permission removes session from activeConnections before the exchange
+                // is torn down. Without this ordering, services could still try to publish to the
+                // session during the brief cleanup window.
+                try
+                {
+                    var sessionDisconnectedEvent = new SessionDisconnectedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        SessionId = Guid.Parse(sessionId),
+                        AccountId = accountId ?? Guid.Empty,
+                        Reconnectable = !isForcedDisconnect,
+                        Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
+                    };
+                    await _messageBus.TryPublishAsync("session.disconnected", sessionDisconnectedEvent);
+                    _logger.LogInformation("Published session.disconnected event for session {SessionId}, reconnectable: {Reconnectable}",
+                        sessionId, !isForcedDisconnect);
+
+                    // Remove from account session index
+                    if (accountId.HasValue && accountId.Value != Guid.Empty)
+                    {
+                        await _sessionManager.RemoveSessionFromAccountAsync(accountId.Value, sessionId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to publish session.disconnected event for session {SessionId}", sessionId);
+                    // Fire-and-forget error event - we're in finally cleanup
+                    _ = PublishErrorEventAsync("PublishSessionDisconnected", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { SessionId = sessionId });
+                }
                 // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
                 if (isForcedDisconnect)
                 {

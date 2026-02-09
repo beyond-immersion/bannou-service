@@ -462,8 +462,7 @@ No bugs identified.
 3. **No backpressure on message queue**: The `MessageQueueSize` config exists but there is no explicit backpressure mechanism. If a client is slow to consume messages, the WebSocket send buffer grows unbounded.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/348 -->
 
-4. **Session subsumed skips cleanup but disconnect event still published**: When a session is "subsumed" by a new connection (same session ID), the subsumed connection's finally block still publishes `session.disconnected` and removes from the account index before checking the subsume condition. Only RabbitMQ unsubscription and reconnection window logic are skipped for subsumed connections.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/349 -->
+4. ~~**Session subsumed publishes spurious disconnect event**~~: **FIXED** (2026-02-08) - Moved `RemoveConnectionIfMatch` (subsume check) before disconnect event publication. When subsumed, the entire disconnect path is skipped: no `session.disconnected` event, no account index removal, no RabbitMQ unsubscription, no reconnection window. Previously, the subsume check happened after the disconnect event, causing unnecessary state churn across all consumers (Permission, GameSession, Actor, Matchmaking).
 
 ---
 
@@ -472,16 +471,17 @@ No bugs identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
 ### Pending Design Review
-- **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - Requires design decisions on key exchange protocol, algorithm selection, and client SDK coordination (2026-01-31)
-- **Compressed flag (0x04)** - [Issue #172](https://github.com/beyond-immersion/bannou-service/issues/172) - Requires design decisions on bidirectionality, algorithm flexibility, and client capability negotiation (2026-01-31)
-- **Heartbeat sending** - [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) - Requires design decisions on ping mechanism type, pong tracking, timer architecture, and client SDK coordination (2026-01-31)
-- **HighPriority flag (0x08)** - [Issue #178](https://github.com/beyond-immersion/bannou-service/issues/178) - Requires design decisions on queue architecture, concurrency model changes, and whether this feature is even needed (2026-01-31)
 - **Multi-instance broadcast** - [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181) - Requires design decisions on message deduplication, acknowledgment semantics, mode enforcement, and performance trade-offs (2026-01-31)
-- **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact (2026-02-08)
-- **Session mappings dead code** - [Issue #347](https://github.com/beyond-immersion/bannou-service/issues/347) - `_sessionServiceMappings` is dead code (never written to), `SetSessionServiceMappingsAsync` never called, internal proxy authorization may be broken (2026-02-08)
-- **Message queue backpressure** - [Issue #348](https://github.com/beyond-immersion/bannou-service/issues/348) - `MessageQueueSize` is dead config (T21 violation); decide whether to remove or implement application-level queueing (2026-02-08)
-- **Session subsumed spurious disconnect** - [Issue #349](https://github.com/beyond-immersion/bannou-service/issues/349) - Subsumed connection publishes `session.disconnected` before checking subsume condition, causing state churn in Permission, GameSession, Actor, Matchmaking (2026-02-08)
+- **Trace context propagation** - [Issue #184](https://github.com/beyond-immersion/bannou-service/issues/184) - Both proposed options (header extension, JSON injection) break protocol or zero-copy; server-side tracing sufficient for launch (2026-01-31)
+- **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact; no production consumers yet (2026-02-08)
+- **Session mappings dead code** - [Issue #347](https://github.com/beyond-immersion/bannou-service/issues/347) - `_sessionServiceMappings` is dead code (never written to), `SetSessionServiceMappingsAsync` never called; remove both (2026-02-08)
+- **Dead MessageQueueSize config** - [Issue #348](https://github.com/beyond-immersion/bannou-service/issues/348) - `MessageQueueSize` is dead config (T21 violation); remove from schema, RabbitMQ is the backpressure mechanism (2026-02-08)
+
+### Closed (Not Planned)
+- **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - CLOSED: violates zero-copy routing; TLS handles transport; E2E encryption is client SDK concern (2026-02-08)
+- **Compressed flag (0x04)** - [Issue #172](https://github.com/beyond-immersion/bannou-service/issues/172) - CLOSED: violates zero-copy routing; WSS has permessage-deflate for transport compression (2026-02-08)
+- **Heartbeat sending** - [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) - CLOSED: already handled by KeepAliveInterval (30s RFC 6455 pings) configured in Program.cs (2026-02-08)
+- **HighPriority flag (0x08)** - [Issue #178](https://github.com/beyond-immersion/bannou-service/issues/178) - CLOSED: dead code with no queue, no consumers, no use case; speculative flag (2026-02-08)
 
 ### Completed
-
-(No completed items — all processed strikethrough items have been cleaned up.)
+- **Session subsumed spurious disconnect** (Bugs #4) - [Issue #349](https://github.com/beyond-immersion/bannou-service/issues/349) - FIXED (2026-02-08): Moved subsume check before disconnect event publication
