@@ -741,3 +741,39 @@ x-state-stores:
     prefix: "storyline:scenario:idemp"
     service: Storyline
     purpose: Scenario trigger idempotency keys for deduplication
+
+  # ============================================================================
+  # Seed Stores - Progressive Growth Entities
+  # ============================================================================
+
+  seed-statestore:
+    backend: mysql
+    service: Seed
+    purpose: Seed entity records (durable, queryable by owner/type)
+
+  seed-growth-statestore:
+    backend: mysql
+    service: Seed
+    purpose: Growth domain records per seed (durable, queryable)
+
+  seed-capabilities-cache:
+    backend: redis
+    prefix: "seed:cap"
+    service: Seed
+    purpose: Computed capability manifests (cached, frequently read)
+
+  seed-bonds-statestore:
+    backend: mysql
+    service: Seed
+    purpose: Bond records between seeds (durable)
+
+  seed-type-definitions-statestore:
+    backend: mysql
+    service: Seed
+    purpose: Registered seed type definitions (durable, admin-managed)
+
+  seed-lock:
+    backend: redis
+    prefix: "seed:lock"
+    service: Seed
+    purpose: Distributed locks for seed modifications

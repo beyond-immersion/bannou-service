@@ -285,6 +285,20 @@ public static class StateStoreDefinitions
     /// <summary>Hierarchical scene composition storage</summary>
     public const string Scene = "scene-statestore";
 
+    // Seed Service
+    /// <summary>Bond records between seeds (durable)</summary>
+    public const string SeedBonds = "seed-bonds-statestore";
+    /// <summary>Computed capability manifests (cached, frequently read)</summary>
+    public const string SeedCapabilitiesCache = "seed-capabilities-cache";
+    /// <summary>Growth domain records per seed (durable, queryable)</summary>
+    public const string SeedGrowth = "seed-growth-statestore";
+    /// <summary>Distributed locks for seed modifications</summary>
+    public const string SeedLock = "seed-lock";
+    /// <summary>Seed entity records (durable, queryable by owner/type)</summary>
+    public const string Seed = "seed-statestore";
+    /// <summary>Registered seed type definitions (durable, admin-managed)</summary>
+    public const string SeedTypeDefinitions = "seed-type-definitions-statestore";
+
     // Species Service
     /// <summary>Species definitions</summary>
     public const string Species = "species-statestore";
@@ -426,6 +440,12 @@ public static class StateStoreDefinitions
             [SaveLoadSlots] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_slots" },
             [SaveLoadVersions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_versions" },
             [Scene] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "scene_statestore" },
+            [SeedBonds] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_bonds_statestore" },
+            [SeedCapabilitiesCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "seed:cap" },
+            [SeedGrowth] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_growth_statestore" },
+            [SeedLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "seed:lock" },
+            [Seed] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_statestore" },
+            [SeedTypeDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_type_definitions_statestore" },
             [Species] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "species_statestore" },
             [StorylinePlanIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:idx" },
             [StorylinePlans] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:plan" },
@@ -546,6 +566,12 @@ public static class StateStoreDefinitions
             [SaveLoadSlots] = new StoreMetadata("SaveLoad", "Save slot metadata and ownership", "mysql"),
             [SaveLoadVersions] = new StoreMetadata("SaveLoad", "Save version history", "mysql"),
             [Scene] = new StoreMetadata("Scene", "Hierarchical scene composition storage", "mysql"),
+            [SeedBonds] = new StoreMetadata("Seed", "Bond records between seeds (durable)", "mysql"),
+            [SeedCapabilitiesCache] = new StoreMetadata("Seed", "Computed capability manifests (cached, frequently read)", "redis"),
+            [SeedGrowth] = new StoreMetadata("Seed", "Growth domain records per seed (durable, queryable)", "mysql"),
+            [SeedLock] = new StoreMetadata("Seed", "Distributed locks for seed modifications", "redis"),
+            [Seed] = new StoreMetadata("Seed", "Seed entity records (durable, queryable by owner/type)", "mysql"),
+            [SeedTypeDefinitions] = new StoreMetadata("Seed", "Registered seed type definitions (durable, admin-managed)", "mysql"),
             [Species] = new StoreMetadata("Species", "Species definitions", "mysql"),
             [StorylinePlanIndex] = new StoreMetadata("Storyline", "Plan index by realm for list queries", "redis"),
             [StorylinePlans] = new StoreMetadata("Storyline", "Cached composed storyline plans (ephemeral, TTL from config)", "redis"),

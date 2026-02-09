@@ -1,0 +1,372 @@
+openapi: 3.0.3
+info:
+  title: Seed Service Events
+  description: |
+    Event subscription and publication declarations for Seed service.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
+    Custom events cover growth, phase transitions, capabilities, and bonds.
+
+    **Event Categories**:
+    - Seed lifecycle: created, updated, deleted (auto-generated)
+    - Growth: domain values changed, phase transitions
+    - Capability: manifest recomputed
+    - Status: activated, archived
+    - Bond: formed between seeds
+
+    **Consumed Events**:
+    - seed.growth.contributed: External services report growth gains
+
+    **Topic Naming**: Uses dot-separated format (seed.phase.changed).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    - topic: seed.growth.contributed
+      event: SeedGrowthContributedEvent
+      handler: HandleGrowthContributed
+  x-event-publications:
+    # Seed lifecycle events (auto-generated from x-lifecycle)
+    - topic: seed.created
+      event: SeedCreatedEvent
+      description: Published when a new seed is created
+    - topic: seed.updated
+      event: SeedUpdatedEvent
+      description: Published when a seed is updated
+    - topic: seed.deleted
+      event: SeedDeletedEvent
+      description: Published when a seed is deleted
+
+    # Growth events
+    - topic: seed.growth.updated
+      event: SeedGrowthUpdatedEvent
+      description: Published when growth domain values change for a seed
+    - topic: seed.phase.changed
+      event: SeedPhaseChangedEvent
+      description: Published when a seed transitions to a new growth phase
+
+    # Capability events
+    - topic: seed.capability.updated
+      event: SeedCapabilityUpdatedEvent
+      description: Published when a seed's capability manifest is recomputed
+
+    # Status events
+    - topic: seed.activated
+      event: SeedActivatedEvent
+      description: Published when a seed is set as active for its owner
+    - topic: seed.archived
+      event: SeedArchivedEvent
+      description: Published when a seed is archived
+
+    # Bond events
+    - topic: seed.bond.formed
+      event: SeedBondFormedEvent
+      description: Published when a bond between seeds becomes active
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/seed-lifecycle-events.yaml
+x-lifecycle:
+  Seed:
+    model:
+      seedId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the seed" }
+      ownerId: { type: string, format: uuid, required: true, description: "Entity that owns this seed" }
+      ownerType: { type: string, required: true, description: "Owner entity type discriminator" }
+      seedTypeCode: { type: string, required: true, description: "Registered seed type code" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this seed is scoped to" }
+      growthPhase: { type: string, required: true, description: "Current computed growth phase code" }
+      totalGrowth: { type: number, format: float, required: true, description: "Aggregate growth across all domains" }
+      displayName: { type: string, required: true, description: "Human-readable seed name" }
+      status: { $ref: 'seed-api.yaml#/components/schemas/SeedStatus', required: true, description: "Current lifecycle status" }
+      bondId: { type: string, format: uuid, nullable: true, description: "Bond ID if bonded, null otherwise" }
+    sensitive: [metadata]
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: SeedCreatedEvent, SeedUpdatedEvent, SeedDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/seed-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Consumed Event (published by external services, consumed by Seed)
+    # =========================================================================
+    SeedGrowthContributedEvent:
+      type: object
+      additionalProperties: false
+      description: >
+        Published by any consuming service to contribute growth to a seed.
+        Follows the same pattern as Resource reference tracking -- Seed defines
+        the event schema, any service publishes to it.
+      required:
+        - eventId
+        - timestamp
+        - seedId
+        - domain
+        - amount
+        - source
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the growth contribution occurred
+        seedId:
+          type: string
+          format: uuid
+          description: The seed to contribute growth to
+        domain:
+          type: string
+          description: Dot-separated domain path (e.g., "combat.melee.sword")
+        amount:
+          type: number
+          format: float
+          description: Amount of growth to add
+        source:
+          type: string
+          description: Identifier of the contributing service (e.g., "character-encounter")
+        sourceEventId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional reference to the originating event
+        context:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Additional context for auditing (key-value string pairs)
+
+    # =========================================================================
+    # Custom Published Events (non-lifecycle)
+    # =========================================================================
+    SeedGrowthUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when growth domain values change for a seed
+      required:
+        - eventId
+        - timestamp
+        - seedId
+        - seedTypeCode
+        - domain
+        - previousDepth
+        - newDepth
+        - totalGrowth
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the growth was recorded
+        seedId:
+          type: string
+          format: uuid
+          description: The seed that grew
+        seedTypeCode:
+          type: string
+          description: Seed type code for consumer filtering
+        domain:
+          type: string
+          description: The domain that changed
+        previousDepth:
+          type: number
+          format: float
+          description: Domain depth before this change
+        newDepth:
+          type: number
+          format: float
+          description: Domain depth after this change
+        totalGrowth:
+          type: number
+          format: float
+          description: Updated aggregate growth across all domains
+
+    SeedPhaseChangedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a seed transitions to a new growth phase
+      required:
+        - eventId
+        - timestamp
+        - seedId
+        - seedTypeCode
+        - previousPhase
+        - newPhase
+        - totalGrowth
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the phase transition occurred
+        seedId:
+          type: string
+          format: uuid
+          description: The seed that transitioned
+        seedTypeCode:
+          type: string
+          description: Seed type code for consumer filtering
+        previousPhase:
+          type: string
+          description: Phase code before transition
+        newPhase:
+          type: string
+          description: Phase code after transition
+        totalGrowth:
+          type: number
+          format: float
+          description: Total growth at time of transition
+
+    SeedCapabilityUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a seed's capability manifest is recomputed
+      required:
+        - eventId
+        - timestamp
+        - seedId
+        - seedTypeCode
+        - version
+        - capabilityCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the manifest was recomputed
+        seedId:
+          type: string
+          format: uuid
+          description: The seed whose manifest changed
+        seedTypeCode:
+          type: string
+          description: Seed type code for consumer filtering
+        version:
+          type: integer
+          description: New manifest version number
+        capabilityCount:
+          type: integer
+          description: Number of unlocked capabilities in the new manifest
+
+    SeedActivatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a seed is set as active for its owner
+      required:
+        - eventId
+        - timestamp
+        - seedId
+        - ownerId
+        - ownerType
+        - seedTypeCode
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the activation occurred
+        seedId:
+          type: string
+          format: uuid
+          description: The newly activated seed
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          type: string
+          description: Owner entity type
+        seedTypeCode:
+          type: string
+          description: Seed type code
+        previousActiveSeedId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The previously active seed that was deactivated, if any
+
+    SeedArchivedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a seed is archived
+      required:
+        - eventId
+        - timestamp
+        - seedId
+        - ownerId
+        - ownerType
+        - seedTypeCode
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the archive occurred
+        seedId:
+          type: string
+          format: uuid
+          description: The archived seed
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          type: string
+          description: Owner entity type
+        seedTypeCode:
+          type: string
+          description: Seed type code
+
+    SeedBondFormedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a bond between seeds becomes active (all participants confirmed)
+      required:
+        - eventId
+        - timestamp
+        - bondId
+        - seedTypeCode
+        - participantSeedIds
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the bond became active
+        bondId:
+          type: string
+          format: uuid
+          description: The newly formed bond
+        seedTypeCode:
+          type: string
+          description: Seed type the bond connects
+        participantSeedIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: All seed IDs participating in the bond

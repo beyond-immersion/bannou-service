@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: Seed Service Configuration
+  description: |
+    Configuration schema for Seed service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    capabilityRecomputeDebounceMs:
+      type: integer
+      env: SEED_CAPABILITY_RECOMPUTE_DEBOUNCE_MS
+      default: 5000
+      description: Debounce interval in milliseconds before recomputing capability manifest after growth changes
+    growthDecayEnabled:
+      type: boolean
+      env: SEED_GROWTH_DECAY_ENABLED
+      default: false
+      description: Whether unused growth domains decay over time (per-type configuration deferred to GH issue 352)
+    growthDecayRatePerDay:
+      type: number
+      format: float
+      env: SEED_GROWTH_DECAY_RATE_PER_DAY
+      default: 0.01
+      description: Daily decay rate applied to unused growth domains when decay is enabled
+    bondSharedGrowthMultiplier:
+      type: number
+      format: float
+      env: SEED_BOND_SHARED_GROWTH_MULTIPLIER
+      default: 1.5
+      description: Growth multiplier applied when bonded seeds grow together in the same context
+    maxSeedTypesPerGameService:
+      type: integer
+      env: SEED_MAX_SEED_TYPES_PER_GAME_SERVICE
+      default: 50
+      description: Maximum number of seed types that can be registered per game service
+    defaultMaxSeedsPerOwner:
+      type: integer
+      env: SEED_DEFAULT_MAX_SEEDS_PER_OWNER
+      default: 3
+      description: Default maximum seeds of any single type per owner when not specified in type definition

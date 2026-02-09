@@ -105,6 +105,12 @@ This document lists all state store components used in Bannou.
 | `save-load-slots` | MySQL | SaveLoad | Save slot metadata and ownership |
 | `save-load-versions` | MySQL | SaveLoad | Save version history |
 | `scene-statestore` | MySQL | Scene | Hierarchical scene composition storage |
+| `seed-bonds-statestore` | MySQL | Seed | Bond records between seeds (durable) |
+| `seed-capabilities-cache` | Redis | Seed | Computed capability manifests (cached, frequently read) |
+| `seed-growth-statestore` | MySQL | Seed | Growth domain records per seed (durable, queryable) |
+| `seed-lock` | Redis | Seed | Distributed locks for seed modifications |
+| `seed-statestore` | MySQL | Seed | Seed entity records (durable, queryable by owner/type) |
+| `seed-type-definitions-statestore` | MySQL | Seed | Registered seed type definitions (durable, admin-managed) |
 | `species-statestore` | MySQL | Species | Species definitions |
 | `storyline-plan-index` | Redis | Storyline | Plan index by realm for list queries |
 | `storyline-plans` | Redis | Storyline | Cached composed storyline plans (ephemeral, TTL from config) |
@@ -118,7 +124,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 108 stores (71 Redis, 37 MySQL)
+**Total**: 114 stores (73 Redis, 41 MySQL)
 
 ## Naming Conventions
 
