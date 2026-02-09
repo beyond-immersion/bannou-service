@@ -25,7 +25,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | Permission service (via events) | Receives `SessionCapabilitiesEvent` containing permissions; no direct API call |
 | Auth service (via events) | Receives `session.invalidated` events to force-disconnect sessions |
 | `IServiceAppMappingResolver` | Dynamic app-id resolution for distributed service routing |
-| `IHttpClientFactory` | Named HTTP client ("ConnectMeshProxy") registered in plugin with configurable timeout; injected but `CreateClient` never called in service code |
+| ~~`IHttpClientFactory`~~ | REMOVED - was dead code; `CreateClient` never called in service code |
 | `IServiceScopeFactory` | Creates scoped DI containers for per-request ServiceNavigator resolution |
 | `ICapabilityManifestBuilder` | Builds capability manifest JSON from service mappings for client delivery |
 
@@ -121,10 +121,10 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `IMeshInvocationClient` | Singleton | HTTP request creation and service invocation |
 | `IMessageBus` | Scoped | Event publishing (session lifecycle, error, permission recompile) |
 | `IMessageSubscriber` | Singleton | Per-session dynamic RabbitMQ subscription management |
-| `IHttpClientFactory` | Singleton | Injected but `CreateClient` never called; named client registered in plugin with configurable timeout |
+| ~~`IHttpClientFactory`~~ | ~~Singleton~~ | REMOVED - was dead code; all HTTP routing uses `IMeshInvocationClient` |
 | `IServiceAppMappingResolver` | Singleton | Dynamic app-id resolution for distributed routing |
 | `IServiceScopeFactory` | Singleton | Creates scoped DI containers for ServiceNavigator |
-| `ConnectServiceConfiguration` | Singleton | All 21 configuration properties |
+| `ConnectServiceConfiguration` | Singleton | All configuration properties (21 + ForceServiceId) |
 | `ILogger<ConnectService>` | Singleton | Structured logging |
 | `ILoggerFactory` | Singleton | Logger creation for child components |
 | `IEventConsumer` | Singleton | Event consumer registration for pub/sub handlers |
@@ -425,7 +425,9 @@ Connection Mode Behavior Matrix
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. ~~**Admin error forwarding broken for non-reconnected sessions**~~: FIXED - Added `connectionState.UserRoles = userRoles` after `ConnectionState` creation in `HandleWebSocketCommunicationAsync`.
+
+2. ~~**`IHttpClientFactory` injected but `CreateClient` never called**~~: FIXED - Removed dead `_httpClientFactory` field, constructor parameter, `HttpClientName` constant, static header fields, and named client registration from plugin. `HttpClientTimeoutSeconds` config property remains in schema (dead config - separate cleanup).
 
 ### Intentional Quirks
 
@@ -449,16 +451,13 @@ No bugs identified.
 
 10. **Internal mode minimal initialization**: Internal mode connections skip service mapping, capability manifest, RabbitMQ subscription, session state persistence, heartbeat tracking, and reconnection windows. They receive only a minimal response (sessionId + peerGuid) and enter a simplified binary-only message loop (`HandleInternalModeMessageLoopAsync`). This is intentional design for server-to-server WebSocket communication using specialized authentication (ServiceToken or NetworkTrust).
 
+11. **Subsume-safe disconnect**: When a new connection replaces an existing one for the same session (subsume), the old connection's finally block uses `RemoveConnectionIfMatch` (WebSocket reference equality) to detect the subsume. If subsumed, the entire disconnect path is skipped: no `session.disconnected` event, no account index removal, no RabbitMQ unsubscription, no reconnection window. This prevents state churn across all consumers (Permission, GameSession, Actor, Matchmaking) that would otherwise rebuild on a false disconnect/reconnect cycle.
+
 ### Design Considerations (Requires Planning)
 
 1. **Single-instance limitation for P2P**: Peer-to-peer routing (`RouteToClientAsync`) only works when both clients are connected to the same Connect instance. The `_connectionManager.TryGetSessionIdByPeerGuid()` lookup is in-memory only. Distributed P2P requires cross-instance peer registry.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/346 -->
 
-2. ~~**Session mappings dual storage**~~: **FIXED** (2026-02-09) - Removed dead `_sessionServiceMappings` field and unused `Set/GetSessionServiceMappingsAsync` methods. `ProxyInternalRequestAsync` now validates against `ConnectionState.ServiceMappings` (the active source of truth, populated by Permission service). Removed stale `ws-mappings:*` Redis cleanup.
-
-3. ~~**No backpressure on message queue**~~: **FIXED** (2026-02-09) - Removed dead `MessageQueueSize` config property (T21 violation). RabbitMQ per-session queues provide backpressure: when `WebSocket.SendAsync` blocks (slow client), the RabbitMQ consumer callback blocks, causing RabbitMQ to buffer messages in the session queue. No application-level queue needed.
-
-4. ~~**Session subsumed publishes spurious disconnect event**~~: **FIXED** (2026-02-08) - Moved `RemoveConnectionIfMatch` (subsume check) before disconnect event publication. When subsumed, the entire disconnect path is skipped: no `session.disconnected` event, no account index removal, no RabbitMQ unsubscription, no reconnection window. Previously, the subsume check happened after the disconnect event, causing unnecessary state churn across all consumers (Permission, GameSession, Actor, Matchmaking).
 
 ---
 
@@ -470,8 +469,6 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Multi-instance broadcast** - [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181) - Requires design decisions on message deduplication, acknowledgment semantics, mode enforcement, and performance trade-offs (2026-01-31)
 - **Trace context propagation** - [Issue #184](https://github.com/beyond-immersion/bannou-service/issues/184) - Both proposed options (header extension, JSON injection) break protocol or zero-copy; server-side tracing sufficient for launch (2026-01-31)
 - **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact; no production consumers yet (2026-02-08)
-- ~~**Session mappings dead code**~~ - [Issue #347](https://github.com/beyond-immersion/bannou-service/issues/347) - FIXED (2026-02-09): Removed dead `_sessionServiceMappings`, unused `Set/GetSessionServiceMappingsAsync`, and stale `ws-mappings:*` cleanup; fixed `ProxyInternalRequestAsync` to use `ConnectionState.ServiceMappings`
-- ~~**Dead MessageQueueSize config**~~ - [Issue #348](https://github.com/beyond-immersion/bannou-service/issues/348) - FIXED (2026-02-09): Removed dead `MessageQueueSize` from schema; RabbitMQ is the backpressure mechanism
 
 ### Closed (Not Planned)
 - **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - CLOSED: violates zero-copy routing; TLS handles transport; E2E encryption is client SDK concern (2026-02-08)
@@ -480,4 +477,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **HighPriority flag (0x08)** - [Issue #178](https://github.com/beyond-immersion/bannou-service/issues/178) - CLOSED: dead code with no queue, no consumers, no use case; speculative flag (2026-02-08)
 
 ### Completed
-- **Session subsumed spurious disconnect** (Bugs #4) - [Issue #349](https://github.com/beyond-immersion/bannou-service/issues/349) - FIXED (2026-02-08): Moved subsume check before disconnect event publication
+
+(No pending completed items)

@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
@@ -36,7 +35,6 @@ public class ConnectServiceTests
     private readonly Mock<IServiceScopeFactory> _mockServiceScopeFactory;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
-    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<ISessionManager> _mockSessionManager;
     private readonly Mock<ICapabilityManifestBuilder> _mockManifestBuilder;
@@ -59,7 +57,6 @@ public class ConnectServiceTests
         _mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockMessageSubscriber = new Mock<IMessageSubscriber>();
-        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockSessionManager = new Mock<ISessionManager>();
         _mockManifestBuilder = new Mock<ICapabilityManifestBuilder>();
@@ -94,7 +91,7 @@ public class ConnectServiceTests
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _mockServiceScopeFactory.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object, _mockManifestBuilder.Object));
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockAppMappingResolver.Object, _mockServiceScopeFactory.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object, _mockManifestBuilder.Object));
     }
 
     #endregion
@@ -566,7 +563,6 @@ public class ConnectServiceTests
             _mockMeshClient.Object,
             _mockMessageBus.Object,
             _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object,
             _mockAppMappingResolver.Object,
             _mockServiceScopeFactory.Object,
             _configuration,
@@ -653,7 +649,6 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,
@@ -687,7 +682,6 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,
@@ -721,7 +715,6 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,
@@ -754,7 +747,6 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,
@@ -787,7 +779,6 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,

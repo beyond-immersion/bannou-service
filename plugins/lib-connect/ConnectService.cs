@@ -15,7 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -31,19 +30,9 @@ namespace BeyondImmersion.BannouService.Connect;
 [BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.AppFoundation)]
 public partial class ConnectService : IConnectService, IDisposable
 {
-    /// <summary>
-    /// Named HttpClient for mesh proxying. Configured via IHttpClientFactory.
-    /// </summary>
-    internal const string HttpClientName = "ConnectMeshProxy";
-
-    // Static cached header values to avoid per-request allocations
-    private static readonly MediaTypeWithQualityHeaderValue s_jsonAcceptHeader = new("application/json");
-    private static readonly MediaTypeHeaderValue s_jsonContentType = new("application/json") { CharSet = "utf-8" };
-
     private readonly IAuthClient _authClient;
     private readonly IMeshInvocationClient _meshClient;
     private readonly IMessageBus _messageBus;
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<ConnectService> _logger;
@@ -89,7 +78,6 @@ public partial class ConnectService : IConnectService, IDisposable
         IMeshInvocationClient meshClient,
         IMessageBus messageBus,
         IMessageSubscriber messageSubscriber,
-        IHttpClientFactory httpClientFactory,
         IServiceAppMappingResolver appMappingResolver,
         IServiceScopeFactory serviceScopeFactory,
         ConnectServiceConfiguration configuration,
@@ -103,7 +91,6 @@ public partial class ConnectService : IConnectService, IDisposable
         _meshClient = meshClient;
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
-        _httpClientFactory = httpClientFactory;
         _appMappingResolver = appMappingResolver;
         _serviceScopeFactory = serviceScopeFactory;
         _configuration = configuration;
@@ -631,6 +618,7 @@ public partial class ConnectService : IConnectService, IDisposable
 
         // Create connection state with service mappings from discovery
         var connectionState = new ConnectionState(sessionId);
+        connectionState.UserRoles = userRoles;
 
         // INTERNAL MODE: Skip all capability initialization - just peer routing
         if (_connectionMode == ConnectionMode.Internal)

@@ -211,15 +211,7 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-1. **AI-powered summarization**: Replace template-based text with LLM-generated narrative prose.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/230 -->
-2. ~~**Backstory element limits**~~: FIXED (2026-02-08) - Added `MaxBackstoryElements` config property (default 100). Validation at service level in SetBackstory and AddBackstoryElement; returns BadRequest when limit exceeded. See [#207](https://github.com/beyond-immersion/bannou-service/issues/207).
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/207 -->
-3. ~~**Participation pagination at store level**~~: FIXED - Implemented server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. See [#200](https://github.com/beyond-immersion/bannou-service/issues/200).
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/200 -->
-4. **Cross-character event correlation**: Query which characters participated together in the same events.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/231 -->
-5. **Batch reference unregistration in DeleteAll**: `DeleteAllHistoryAsync` publishes N individual `resource.reference.unregistered` events before bulk deletion. The DualIndexHelper bulk path is already optimized (~7 bulk operations regardless of N), but the reference unregistration loop remains O(N) messages. Blocked on lib-resource batch unregister support.
+1. **Batch reference unregistration in DeleteAll**: `DeleteAllHistoryAsync` publishes N individual `resource.reference.unregistered` events before bulk deletion. The DualIndexHelper bulk path is already optimized (~7 bulk operations regardless of N), but the reference unregistration loop remains O(N) messages. Blocked on lib-resource batch unregister support.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/351 -->
 
 ---
@@ -232,44 +224,30 @@ None.
 
 ### Intentional Quirks
 
-1. ~~**Backstory returns NotFound vs empty list**~~: **FIXED** (2026-02-09) - Realm-history updated to return NotFound for missing lore, matching character-history's behavior. Both parallel services are now consistent. See [#309](https://github.com/beyond-immersion/bannou-service/issues/309).
+1. **UpdatedAt null semantics**: `GetBackstory` returns `UpdatedAt = null` when backstory has never been modified after initial creation (CreatedAtUnix == UpdatedAtUnix).
 
-2. **UpdatedAt null semantics**: `GetBackstory` returns `UpdatedAt = null` when backstory has never been modified after initial creation (CreatedAtUnix == UpdatedAtUnix).
+2. **Helper abstractions constructed inline**: `DualIndexHelper` and `BackstoryStorageHelper` are instantiated directly in the constructor rather than registered in DI. This is intentional: helpers require service-specific configuration (key prefixes, data access lambdas) that can't be generalized. Both helpers accept `IDistributedLockProvider` and `IndexLockTimeoutSeconds` for multi-instance safe write operations. Lock failure returns `StatusCodes.Conflict` to callers. Testing works via `IStateStoreFactory` and `IDistributedLockProvider` mocking.
 
-3. **Helper abstractions constructed inline**: `DualIndexHelper` and `BackstoryStorageHelper` are instantiated directly in the constructor rather than registered in DI. This is intentional: helpers require service-specific configuration (key prefixes, data access lambdas) that can't be generalized. Both helpers accept `IDistributedLockProvider` and `IndexLockTimeoutSeconds` for multi-instance safe write operations. Lock failure returns `StatusCodes.Conflict` to callers. Testing works via `IStateStoreFactory` and `IDistributedLockProvider` mocking.
+3. **Summarize is a read-only operation (no event)**: `SummarizeHistoryAsync` does not publish any event because it's a pure read operation that doesn't modify state. Per FOUNDATION TENETS (Event-Driven Architecture), events notify about state changes - read operations don't trigger events. This is consistent with other read operations like `GetBackstory` and `GetParticipation`.
 
-4. **Summarize is a read-only operation (no event)**: `SummarizeHistoryAsync` does not publish any event because it's a pure read operation that doesn't modify state. Per FOUNDATION TENETS (Event-Driven Architecture), events notify about state changes - read operations don't trigger events. This is consistent with other read operations like `GetBackstory` and `GetParticipation`.
+4. **Summarization switch expressions have unreachable defaults**: `GenerateBackstorySummary` and `GenerateParticipationSummary` both use switch expressions with `_ =>` defaults that are unreachable at runtime. The defaults (`"{element.Key}: {element.Value}"` and `"participated in"`) exist because: (1) C# requires exhaustive switches, and (2) they provide graceful degradation if enum values are added to the schema but the switch isn't updated. This is defensive programming, not a bug.
 
-5. **Summarization switch expressions have unreachable defaults**: `GenerateBackstorySummary` and `GenerateParticipationSummary` both use switch expressions with `_ =>` defaults that are unreachable at runtime. The defaults (`"{element.Key}: {element.Value}"` and `"participated in"`) exist because: (1) C# requires exhaustive switches, and (2) they provide graceful degradation if enum values are added to the schema but the switch isn't updated. This is defensive programming, not a bug.
+5. **FormatValue only handles snake_case**: The `FormatValue` helper (`value.Replace("_", " ").ToLowerInvariant()`) only converts snake_case to readable text. This is intentional: the schema documents snake_case as the convention for machine-readable backstory values (e.g., `knights_guild`, `northlands`). Values using camelCase or PascalCase would render incorrectly, but such values don't follow the documented convention.
 
-6. **FormatValue only handles snake_case**: The `FormatValue` helper (`value.Replace("_", " ").ToLowerInvariant()`) only converts snake_case to readable text. This is intentional: the schema documents snake_case as the convention for machine-readable backstory values (e.g., `knights_guild`, `northlands`). Values using camelCase or PascalCase would render incorrectly, but such values don't follow the documented convention.
+6. **GetBulkAsync silently drops missing records**: `DualIndexHelper.GetRecordsByIdsAsync` returns only records that exist. If an index contains stale record IDs (records deleted without index cleanup), they are silently excluded from results. This is self-healing behavior - throwing would crash callers for rare edge cases. Callers receive valid data; counts may be slightly fewer than expected if data inconsistency exists.
 
-7. **GetBulkAsync silently drops missing records**: `DualIndexHelper.GetRecordsByIdsAsync` returns only records that exist. If an index contains stale record IDs (records deleted without index cleanup), they are silently excluded from results. This is self-healing behavior - throwing would crash callers for rare edge cases. Callers receive valid data; counts may be slightly fewer than expected if data inconsistency exists.
+7. **BackstoryCache returns stale data on load failure**: If loading fresh data from the service fails (any exception except 404), the cache returns previously cached data even if expired. This is deliberate graceful degradation - stale backstory data is better than no data for NPC behavior execution.
 
-8. **BackstoryCache returns stale data on load failure**: If loading fresh data from the service fails (any exception except 404), the cache returns previously cached data even if expired. This is deliberate graceful degradation - stale backstory data is better than no data for NPC behavior execution.
+8. **Case-insensitive ABML variable path resolution**: `BackstoryProvider` stores elements keyed by both original and lowercase type names. This means `${backstory.ORIGIN}`, `${backstory.Origin}`, and `${backstory.origin}` all resolve identically, using `StringComparer.OrdinalIgnoreCase` for dictionary lookups.
 
-9. **Case-insensitive ABML variable path resolution**: `BackstoryProvider` stores elements keyed by both original and lowercase type names. This means `${backstory.ORIGIN}`, `${backstory.Origin}`, and `${backstory.origin}` all resolve identically, using `StringComparer.OrdinalIgnoreCase` for dictionary lookups.
-
-10. **BackstoryCache uses self-mesh call**: `BackstoryCache` loads data by obtaining `ICharacterHistoryClient` from DI and calling `GetBackstoryAsync` - the service calling itself via lib-mesh. This adds mesh overhead but maintains clean separation between cache and service implementation layers.
+9. **BackstoryCache uses self-mesh call**: `BackstoryCache` loads data by obtaining `ICharacterHistoryClient` from DI and calling `GetBackstoryAsync` - the service calling itself via lib-mesh. This adds mesh overhead but maintains clean separation between cache and service implementation layers.
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**In-memory pagination for all list operations**~~: FIXED - `GetParticipationAsync` and `GetEventParticipantsAsync` now use server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`, pushing filters and pagination to the database. See [#200](https://github.com/beyond-immersion/bannou-service/issues/200).
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/200 -->
-
-2. ~~**No backstory element count limit**~~: FIXED (2026-02-08) - Added configurable `MaxBackstoryElements` (default 100) with service-level validation. Returns BadRequest when limit exceeded. Updates to existing type+key pairs are always allowed. See [#207](https://github.com/beyond-immersion/bannou-service/issues/207).
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/207 -->
-
-3. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure. On deserialization from JSON, becomes `JsonElement` or similar untyped object. No schema validation.
+1. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure. On deserialization from JSON, becomes `JsonElement` or similar untyped object. No schema validation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/308 -->
 
-4. ~~**Parallel service pattern with realm-history**~~: FIXED (2026-02-09) - Realm-history updated to return NotFound for missing lore, matching character-history's behavior. Both services now have consistent NotFound semantics for missing documents. See [#309](https://github.com/beyond-immersion/bannou-service/issues/309).
-<!-- AUDIT:FIXED:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/309 -->
-
-5. ~~**Empty string entityId returns silently instead of throwing**~~: FIXED (2026-02-08) - All helper methods now throw `ArgumentNullException` for null or empty string parameters, consistent with `AddRecordAsync`/`SetAsync`/`AddElementAsync` which already threw. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/310 -->
-
-6. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
+2. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/311 -->
 
 ---
@@ -279,16 +257,4 @@ None.
 ### Pending Design Review
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for DeleteAll (blocked on lib-resource infrastructure; O(N) messages for N participations)
 - **2026-02-06**: [#311](https://github.com/beyond-immersion/bannou-service/issues/311) - AddBackstoryElement event does not distinguish element added vs updated (need to survey consumers for actual requirement)
-- ~~**2026-02-06**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - Empty string entityId should throw, not return null silently~~ → **COMPLETED** (see below)
-- ~~**2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history~~ → **COMPLETED** (see below)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
-- **2026-02-01**: [#230](https://github.com/beyond-immersion/bannou-service/issues/230) - AI-powered summarization (requires building new LLM service infrastructure)
-- **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
-
-### Completed
-
-- **2026-02-09**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolved NotFound vs empty-list inconsistency. Realm-history's GetRealmLore updated to return NotFound for missing lore, matching character-history's GetBackstory. Both parallel services now have consistent semantics.
-- **2026-02-08**: [#310](https://github.com/beyond-immersion/bannou-service/issues/310) - All DualIndexHelper and BackstoryStorageHelper methods now throw `ArgumentNullException` for null/empty string parameters. Previously, read and delete methods silently returned null/empty/false, hiding programmer errors. Write methods (`AddRecordAsync`, `SetAsync`, `AddElementAsync`) already threw correctly.
-- **2026-02-08**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Added distributed locking to DualIndexHelper and BackstoryStorageHelper write operations. Lock per primary key (characterId) for index updates, per entityId for backstory. Lock failure returns `StatusCodes.Conflict`. Configurable timeout via `IndexLockTimeoutSeconds` (default 15). Lock owner IDs use key prefix for traceability (e.g., `"character-participation-{guid}"`). Secondary index is intentionally NOT locked: locking would serialize all writes across unrelated entities referencing the same event (global bottleneck), and reads bypass indexes entirely via `JsonQueryPagedAsync`. Worst-case race produces a stale index entry that self-heals on next write/delete.
-- **2026-02-08**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Added configurable `MaxBackstoryElements` limit (default 100). Service-level validation in SetBackstory and AddBackstoryElement; returns BadRequest when exceeded. Updates to existing type+key pairs always allowed.
-- **2026-02-08**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations. Replaced in-memory fetch-all-then-paginate with server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. DualIndexHelper retained for write operations only.

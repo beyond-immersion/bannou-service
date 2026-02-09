@@ -199,49 +199,32 @@ None identified.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. ~~**GetLore returns OK with empty list**~~: **FIXED** (2026-02-09) - GetLore now returns NotFound when no lore document exists, consistent with character-history's GetBackstory and with DeleteLore's own behavior. See [#309](https://github.com/beyond-immersion/bannou-service/issues/309).
-<!-- AUDIT:FIXED:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/309 -->
+1. **Summarize is a read-only operation (no event)**: `SummarizeRealmHistoryAsync` does not publish any event because it's a pure read operation that doesn't modify state. Per FOUNDATION TENETS (Event-Driven Architecture), events notify about state changes - read operations don't trigger events. This is consistent with other read operations like `GetRealmLore` and `GetRealmParticipation`.
 
-2. **Summarize is a read-only operation (no event)**: `SummarizeRealmHistoryAsync` does not publish any event because it's a pure read operation that doesn't modify state. Per FOUNDATION TENETS (Event-Driven Architecture), events notify about state changes - read operations don't trigger events. This is consistent with other read operations like `GetRealmLore` and `GetRealmParticipation`.
+2. **Unknown lore element types display raw enum string**: The `GenerateLoreSummary` method uses `_ => element.ElementType.ToString()` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
 
-3. **Unknown lore element types display raw enum string**: The `GenerateLoreSummary` method uses `_ => element.ElementType.ToString()` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
+3. **Unknown participation roles default to "participated in"**: The `GenerateEventSummary` method uses `_ => "participated in"` for unrecognized roles.
 
-4. **Unknown participation roles default to "participated in"**: The `GenerateEventSummary` method uses `_ => "participated in"` for unrecognized roles.
+4. **Secondary index is intentionally NOT locked**: DualIndexHelper locks the primary index (realm→participations) but NOT the secondary index (event→participations). Locking the secondary would serialize all writes across unrelated realms referencing the same event (global bottleneck). Reads bypass indexes entirely via `JsonQueryPagedAsync`, so a stale secondary index entry only affects deletion cleanup. Worst-case race produces a stale entry that self-heals on next write/delete for that event.
+
+5. **Archive summaries use hardcoded Take(10)**: `GenerateSummariesForArchive` always takes the top 10 lore elements and top 10 participations for text summaries in the archive, unlike `SummarizeRealmHistoryAsync` which accepts configurable `maxLorePoints` and `maxHistoricalEvents` parameters from the request.
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**In-memory filtering and pagination**~~: FIXED - `GetRealmParticipationAsync` and `GetRealmEventParticipantsAsync` now use server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`, pushing filters and pagination to the database. See [#200](https://github.com/beyond-immersion/bannou-service/issues/200).
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/200 -->
-
-2. **Lore stored as single document**: All lore elements for a realm are stored in one `RealmLoreData` object. Very large lore collections (hundreds of elements) would be loaded/saved atomically on every modification.
+1. **Lore stored as single document**: All lore elements for a realm are stored in one `RealmLoreData` object. Very large lore collections (hundreds of elements) would be loaded/saved atomically on every modification.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/306 -->
 
-3. ~~**No concurrency control on indexes**~~: FIXED (2026-02-08) - DualIndexHelper and BackstoryStorageHelper write operations now use distributed locks per primary key. Lock failure returns `StatusCodes.Conflict`. Lock owner IDs use key prefix for traceability (e.g., `"realm-participation-{guid}"`). Secondary index is intentionally NOT locked: locking would serialize all writes across unrelated realms referencing the same event (global bottleneck), and reads bypass indexes entirely via `JsonQueryPagedAsync`. Worst-case race produces a stale index entry that self-heals on next write/delete. See [#307](https://github.com/beyond-immersion/bannou-service/issues/307).
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/307 -->
-
-4. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure with no schema validation. Enables flexibility but sacrifices type safety and queryability.
+2. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure with no schema validation. Enables flexibility but sacrifices type safety and queryability.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/308 -->
-
-5. ~~**Read-modify-write without distributed locks**~~: FIXED (2026-02-08) - See #3 above. Same issue, now resolved.
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/307 -->
 
 ---
 
 ## Work Tracking
 
 ### Pending Design Review
-- ~~**2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency between character-history and realm-history~~ → **COMPLETED** (see below)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
-- ~~**2026-02-06**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Concurrency control for DualIndexHelper index updates~~ → **COMPLETED** (see below)
 - **2026-02-06**: [#306](https://github.com/beyond-immersion/bannou-service/issues/306) - Single-document storage for lore elements (evaluate whether document storage is problematic for large lore collections; shared pattern with character-history via BackstoryStorageHelper)
 - **2026-02-02**: [#266](https://github.com/beyond-immersion/bannou-service/issues/266) - Event-level aggregation (API design decisions needed: metrics, role breakdowns, filtering, new endpoint vs enhancement)
 - **2026-02-02**: [#268](https://github.com/beyond-immersion/bannou-service/issues/268) - Lore inheritance (BLOCKED: requires realm hierarchy which contradicts current Realm service design of "peer worlds with no hierarchical relationships")
 - **2026-02-02**: [#269](https://github.com/beyond-immersion/bannou-service/issues/269) - AI-powered summarization (BLOCKED on character-history #230 which tracks shared LLM infrastructure work)
 - **2026-02-02**: [#270](https://github.com/beyond-immersion/bannou-service/issues/270) - Timeline visualization (may already be satisfied by existing `GetRealmParticipation` endpoint which returns chronologically-sorted data)
-
-### Completed
-
-- **2026-02-08**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Added distributed locking to DualIndexHelper and BackstoryStorageHelper write operations. Lock per primary key (realmId) for index updates, per entityId for lore. Lock failure returns `StatusCodes.Conflict`. Configurable timeout via `IndexLockTimeoutSeconds` (default 15). Lock owner IDs use key prefix for traceability (e.g., `"realm-participation-{guid}"`). Secondary index is intentionally NOT locked: locking would serialize all writes across unrelated realms referencing the same event (global bottleneck), and reads bypass indexes entirely via `JsonQueryPagedAsync`. Worst-case race produces a stale index entry that self-heals on next write/delete.
-- **2026-02-08**: [#350](https://github.com/beyond-immersion/bannou-service/issues/350) - Configurable lore element count limit. Added `MaxLoreElements` config property (default 100) with validation in `SetRealmLoreAsync` and `AddRealmLoreElementAsync`. Follow-up from character-history #207.
-- **2026-02-09**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - GetRealmLore now returns NotFound when no lore document exists, consistent with character-history's GetBackstory. Previously returned OK with empty elements list, collapsing the semantic distinction between "never created" and "exists with zero elements." Breaking change: consumers checking for OK must now handle NotFound.
-- **2026-02-08**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations. Replaced in-memory fetch-all-then-paginate with server-side MySQL JSON queries via `IJsonQueryableStateStore.JsonQueryPagedAsync()`. DualIndexHelper retained for write operations only.
