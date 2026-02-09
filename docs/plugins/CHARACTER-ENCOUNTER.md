@@ -118,11 +118,11 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 | `IEventConsumer` | Scoped | Event subscription registration |
 | `ICharacterClient` | Scoped | Cross-service character validation |
 | `IResourceClient` | *(plugin startup)* | Cleanup/compression callback registration via generated `CharacterEncounterCompressionCallbacks` and `CharacterEncounterReferenceTracking` (not injected into service constructor) |
-| `IEncounterDataCache` | Singleton | In-memory cache for encounter queries (configurable TTL via `EncounterCacheTtlMinutes`), used by Actor's EncountersProvider |
+| `IEncounterDataCache` | Singleton | In-memory cache for encounter queries (configurable TTL via `EncounterCacheTtlMinutes`), used by Actor's EncountersProvider; injected into service for cache invalidation on writes |
 | `EncountersProviderFactory` | Singleton | `IVariableProviderFactory` implementation for Actor's `${encounters.*}` ABML variables |
 | `MemoryDecaySchedulerService` | Hosted | Background service for scheduled memory decay (only active when MemoryDecayMode is 'scheduled') |
 
-Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). Three singleton helpers: configuration, encounter cache (reads TTL and max results from configuration), and variable provider factory. No distributed locks used. Cache invalidation is TTL-based only (no explicit invalidation on writes).
+Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). Three singleton helpers: configuration, encounter cache (reads TTL and max results from configuration), and variable provider factory. No distributed locks used. Cache invalidation is both TTL-based and explicit: the service calls `Invalidate(characterId)` after all write operations (RecordEncounter, UpdatePerspective, RefreshMemory, DeleteEncounter, DeleteByCharacter) to ensure Actor behavior sees fresh data immediately.
 
 ---
 
@@ -373,8 +373,7 @@ No stubs or unimplemented features remain.
 
 2. ~~**Hardcoded cache TTL in EncounterDataCache (IMPLEMENTATION TENETS - T21)**~~: **FIXED** (2026-02-09) - Added `EncounterCacheTtlMinutes` (default 5) and `EncounterCacheMaxResultsPerQuery` (default 50) to configuration schema. `EncounterDataCache` now reads both from injected `CharacterEncounterServiceConfiguration` instead of hardcoded constants.
 
-3. **EncounterDataCache never explicitly invalidated**: The `EncounterDataCache` has an `InvalidateAll()` method but it is never called from the service. Writes to encounters/perspectives (RecordEncounter, UpdatePerspective, RefreshMemory, DeleteEncounter, DeleteByCharacter) do not invalidate cached data, meaning Actor behavior sees stale encounter data for up to the cache TTL (5 minutes). This is particularly impactful for `UpdatePerspective` and `RefreshMemory` where the caller expects immediate effect on NPC behavior.
-<!-- AUDIT:IN_PROGRESS:2026-02-09 -->
+3. ~~**EncounterDataCache never explicitly invalidated**~~: **FIXED** (2026-02-09) - Injected `IEncounterDataCache` into `CharacterEncounterService` constructor and added `Invalidate(characterId)` calls after all write operations: RecordEncounter (all participants), UpdatePerspective, RefreshMemory, DeleteEncounter (all participants), and DeleteByCharacter (all affected characters including other participants of deleted encounters). Cache is now invalidated immediately on writes so Actor behavior sees fresh data.
 
 ### Intentional Quirks
 
@@ -412,3 +411,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **Bug #1 - Dead `ServerSalt` config**: Removed from schema (2026-02-09). Service uses random GUIDs, not salted.
 - **Bug #2 - Hardcoded cache TTL and max results**: Added `EncounterCacheTtlMinutes` and `EncounterCacheMaxResultsPerQuery` config properties (2026-02-09). Cache now reads from configuration.
+- **Bug #3 - EncounterDataCache never explicitly invalidated**: Injected `IEncounterDataCache` into service constructor and added `Invalidate()` calls in all write methods (2026-02-09). Actor behavior now sees fresh data immediately after writes.
