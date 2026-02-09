@@ -31,23 +31,99 @@ public partial class GameSessionService
     // are defined at namespace level as internal classes.
 }
 
-// ============================================================================
-// INTERNAL DATA MODELS
-// ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class GameSessionStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record GameSessionCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+/// <summary>
+/// Internal model for storing game session data in the state store.
+/// Separates storage from API response format.
+/// </summary>
+internal class GameSessionModel
+{
+    public Guid SessionId { get; set; }
+    public string GameType { get; set; } = "generic";
+    public string? SessionName { get; set; }
+    public SessionStatus Status { get; set; }
+    public int MaxPlayers { get; set; }
+    public int CurrentPlayers { get; set; }
+    public bool IsPrivate { get; set; }
+    public Guid Owner { get; set; }
+    public List<GamePlayer> Players { get; set; } = new();
+    public DateTimeOffset CreatedAt { get; set; }
+    public object? GameSettings { get; set; }
+
+    /// <summary>
+    /// Whether voice communication is enabled for this session.
+    /// </summary>
+    public bool VoiceEnabled { get; set; }
+
+    /// <summary>
+    /// The voice room ID if voice is enabled.
+    /// </summary>
+    public Guid? VoiceRoomId { get; set; }
+
+    /// <summary>
+    /// Type of session - lobby (persistent) or matchmade (time-limited with reservations).
+    /// </summary>
+    public SessionType SessionType { get; set; } = SessionType.Lobby;
+
+    /// <summary>
+    /// For matchmade sessions - list of player reservations.
+    /// </summary>
+    public List<ReservationModel> Reservations { get; set; } = new();
+
+    /// <summary>
+    /// For matchmade sessions - when reservations expire.
+    /// </summary>
+    public DateTimeOffset? ReservationExpiresAt { get; set; }
+}
+
+/// <summary>
+/// Internal model for storing reservation data.
+/// </summary>
+internal class ReservationModel
+{
+    /// <summary>
+    /// Account ID this reservation is for.
+    /// </summary>
+    public Guid AccountId { get; set; }
+
+    /// <summary>
+    /// One-time use token for claiming this reservation.
+    /// </summary>
+    public string Token { get; set; } = string.Empty;
+
+    /// <summary>
+    /// When this reservation was created.
+    /// </summary>
+    public DateTimeOffset ReservedAt { get; set; }
+
+    /// <summary>
+    /// Whether this reservation has been claimed.
+    /// </summary>
+    public bool Claimed { get; set; }
+
+    /// <summary>
+    /// When this reservation was claimed.
+    /// </summary>
+    public DateTimeOffset? ClaimedAt { get; set; }
+}
+
+/// <summary>
+/// Model for tracking subscriber sessions in distributed state.
+/// Stores which WebSocket sessions are connected for each subscribed account.
+/// </summary>
+internal class SubscriberSessionsModel
+{
+    /// <summary>
+    /// Account ID for this subscriber.
+    /// </summary>
+    public Guid AccountId { get; set; }
+
+    /// <summary>
+    /// Set of active WebSocket session IDs for this account.
+    /// </summary>
+    public HashSet<Guid> SessionIds { get; set; } = new();
+
+    /// <summary>
+    /// When this record was last updated.
+    /// </summary>
+    public DateTimeOffset UpdatedAt { get; set; }
+}
