@@ -120,7 +120,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         _logger.LogInformation("Recording participation for character {CharacterId} in event {EventId}",
             body.CharacterId, body.EventId);
 
-        try
         {
             // Check for existing participation - schema documents 409 Conflict for duplicates
             var existingRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
@@ -186,21 +185,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             return (StatusCodes.OK, MapToHistoricalParticipation(participationData));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording participation for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "RecordParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/record-participation",
-                details: new { body.CharacterId, body.EventId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -211,7 +195,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Getting participation for character {CharacterId}", body.CharacterId);
 
-        try
         {
             var jsonStore = _stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
                 StateStoreDefinitions.CharacterHistory);
@@ -245,21 +228,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 HasPreviousPage = paginatedResult.HasPreviousPage
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting participation for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "GetParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/get-participation",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -270,7 +238,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Getting participants for event {EventId}", body.EventId);
 
-        try
         {
             var jsonStore = _stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
                 StateStoreDefinitions.CharacterHistory);
@@ -304,21 +271,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 HasPreviousPage = paginatedResult.HasPreviousPage
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting participants for event {EventId}", body.EventId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "GetEventParticipants",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/get-event-participants",
-                details: new { body.EventId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -328,7 +280,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Deleting participation {ParticipationId}", body.ParticipationId);
 
-        try
         {
             // First get the record to know the keys for index cleanup
             var data = await _participationHelper.GetRecordAsync(body.ParticipationId.ToString(), cancellationToken);
@@ -368,21 +319,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             _logger.LogInformation("Deleted participation {ParticipationId}", body.ParticipationId);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting participation {ParticipationId}", body.ParticipationId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "DeleteParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/delete-participation",
-                details: new { body.ParticipationId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     // ============================================================================
@@ -396,7 +332,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Getting backstory for character {CharacterId}", body.CharacterId);
 
-        try
         {
             var data = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
 
@@ -430,21 +365,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting backstory for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "GetBackstory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/get-backstory",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -455,7 +375,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         _logger.LogInformation("Setting backstory for character {CharacterId}, replaceExisting={ReplaceExisting}",
             body.CharacterId, body.ReplaceExisting);
 
-        try
         {
             var elementDataList = body.Elements.Select(MapToBackstoryElementData).ToList();
             var maxElements = _configuration.MaxBackstoryElements;
@@ -560,21 +479,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error setting backstory for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "SetBackstory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/set-backstory",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -585,7 +489,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         _logger.LogInformation("Adding backstory element for character {CharacterId}, type {ElementType}",
             body.CharacterId, body.Element.ElementType);
 
-        try
         {
             var elementData = MapToBackstoryElementData(body.Element);
 
@@ -660,21 +563,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error adding backstory element for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "AddBackstoryElement",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/add-backstory-element",
-                details: new { body.CharacterId, body.Element.ElementType },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -684,7 +572,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Deleting backstory for character {CharacterId}", body.CharacterId);
 
-        try
         {
             // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
             var lockResult = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
@@ -714,21 +601,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             _logger.LogInformation("Backstory deleted for character {CharacterId}", body.CharacterId);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting backstory for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "DeleteBackstory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/delete-backstory",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     // ============================================================================
@@ -743,7 +615,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Deleting all history for character {CharacterId}", body.CharacterId);
 
-        try
         {
             // Get all participations first to unregister their character references
             var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
@@ -810,21 +681,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 BackstoryDeleted = backstoryDeleted
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting all history for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "DeleteAllHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/delete-all",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -834,7 +690,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Summarizing history for character {CharacterId}", body.CharacterId);
 
-        try
         {
             var keyBackstoryPoints = new List<string>();
             var majorLifeEvents = new List<string>();
@@ -892,21 +747,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 body.CharacterId, keyBackstoryPoints.Count, majorLifeEvents.Count);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error summarizing history for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "SummarizeHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/summarize",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -1079,7 +919,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
-        try
         {
             // Get all participations for this character
             var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
@@ -1147,21 +986,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "GetCompressData",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/get-compress-data",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1177,7 +1001,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         var participationsRestored = 0;
         var backstoryRestored = false;
 
-        try
         {
             // Decompress the archive data
             CharacterHistoryArchive archiveData;
@@ -1283,21 +1106,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 BackstoryRestored = backstoryRestored,
                 Success = true
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error restoring archive for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "RestoreFromArchive",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/restore-from-archive",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
