@@ -854,6 +854,32 @@ public partial class SpeciesService : ISpeciesService
                     }
                     else
                     {
+                        // Resolve realm codes to IDs if provided
+                        var resolvedRealmIds = new List<Guid>();
+                        if (seedSpecies.RealmCodes != null && seedSpecies.RealmCodes.Count > 0)
+                        {
+                            foreach (var realmCode in seedSpecies.RealmCodes)
+                            {
+                                try
+                                {
+                                    var realmResponse = await _realmClient.GetRealmByCodeAsync(
+                                        new GetRealmByCodeRequest { Code = realmCode },
+                                        cancellationToken);
+                                    resolvedRealmIds.Add(realmResponse.RealmId);
+                                }
+                                catch (ApiException ex) when (ex.StatusCode == 404)
+                                {
+                                    _logger.LogWarning("Realm code {RealmCode} not found during seed for species {SpeciesCode}, skipping realm assignment",
+                                        realmCode, code);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Failed to resolve realm code {RealmCode} during seed for species {SpeciesCode}, skipping realm assignment",
+                                        realmCode, code);
+                                }
+                            }
+                        }
+
                         // Create new
                         var createRequest = new CreateSpeciesRequest
                         {
@@ -866,7 +892,7 @@ public partial class SpeciesService : ISpeciesService
                             MaturityAge = seedSpecies.MaturityAge,
                             TraitModifiers = seedSpecies.TraitModifiers,
                             Metadata = seedSpecies.Metadata,
-                            RealmIds = new List<Guid>() // Realm codes would need resolution
+                            RealmIds = resolvedRealmIds
                         };
 
                         var (status, _) = await CreateSpeciesAsync(createRequest, cancellationToken);

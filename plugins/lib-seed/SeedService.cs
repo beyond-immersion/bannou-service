@@ -1361,8 +1361,11 @@ public partial class SeedService : ISeedService
                 new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
             };
 
+            var effectiveMaxPerOwner = seedType.MaxPerOwner > 0
+                ? seedType.MaxPerOwner
+                : _configuration.DefaultMaxSeedsPerOwner;
             var siblings = await siblingQueryStore.JsonQueryPagedAsync(
-                siblingConditions, 0, _configuration.DefaultMaxSeedsPerOwner + 1, null, cancellationToken);
+                siblingConditions, 0, effectiveMaxPerOwner + 1, null, cancellationToken);
 
             foreach (var sibling in siblings.Items)
             {
@@ -1372,7 +1375,7 @@ public partial class SeedService : ISeedService
                 try
                 {
                     await ApplyCrossPollination(
-                        sibling.Value.SeedId, crossPollEntries, seed.SeedTypeCode, cancellationToken);
+                        sibling.Value.SeedId, crossPollEntries, seedType, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -1398,7 +1401,7 @@ public partial class SeedService : ISeedService
     private async Task ApplyCrossPollination(
         Guid siblingSeedId,
         (string Domain, float Amount)[] entries,
-        string primarySeedTypeCode,
+        SeedTypeDefinitionModel seedType,
         CancellationToken cancellationToken)
     {
         var lockOwner = $"crosspoll-{Guid.NewGuid():N}";
@@ -1440,7 +1443,7 @@ public partial class SeedService : ISeedService
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 SeedId = siblingSeedId,
-                SeedTypeCode = primarySeedTypeCode,
+                SeedTypeCode = seedType.SeedTypeCode,
                 Domain = domain,
                 PreviousDepth = previousDepth,
                 NewDepth = newDepth,
@@ -1456,14 +1459,8 @@ public partial class SeedService : ISeedService
         var previousPhase = seed.GrowthPhase;
         seed.TotalGrowth = newTotalGrowth;
 
-        var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var seedType = await typeStore.GetAsync($"type:{seed.GameServiceId}:{seed.SeedTypeCode}", cancellationToken);
-
-        if (seedType != null)
-        {
-            var (currentPhase, _) = ComputePhaseInfo(seedType.GrowthPhases, newTotalGrowth);
-            seed.GrowthPhase = currentPhase.PhaseCode;
-        }
+        var (currentPhase, _) = ComputePhaseInfo(seedType.GrowthPhases, newTotalGrowth);
+        seed.GrowthPhase = currentPhase.PhaseCode;
 
         await seedStore.SaveAsync($"seed:{siblingSeedId}", seed, cancellationToken: cancellationToken);
 
@@ -1478,7 +1475,7 @@ public partial class SeedService : ISeedService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SeedId = siblingSeedId,
-                SeedTypeCode = primarySeedTypeCode,
+                SeedTypeCode = seedType.SeedTypeCode,
                 PreviousPhase = previousPhase,
                 NewPhase = seed.GrowthPhase,
                 TotalGrowth = newTotalGrowth,

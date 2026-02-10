@@ -192,16 +192,19 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-1. **Seed doesn't resolve realm codes**: `SeedSpecies` accepts `realmCodes` in the seed data but does NOT resolve them to realm IDs or assign realms. Species are created with empty `RealmIds`. Realm assignment must be done manually via `AddSpeciesToRealm` after seeding.
+1. ~~**Seed doesn't resolve realm codes**~~: **FIXED** (2026-02-10) - `SeedSpeciesAsync` now resolves `realmCodes` to realm IDs via `IRealmClient.GetRealmByCodeAsync` before creating species. Unresolvable codes (not found or service error) are skipped with a warning log per code; the species is still created with whatever realms did resolve.
 2. **No event consumption**: The service registers `IEventConsumer` but has no event handlers. Future: could listen for realm deletion events to cascade species removal.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/369 -->
 
 ---
 
 ## Potential Extensions
 
-1. **Realm code resolution in seed**: Resolve `realmCodes` to IDs during seeding using `IRealmClient.GetRealmByCodeAsync`.
+1. ~~**Realm code resolution in seed**~~: **FIXED** (2026-02-10) - Implemented in `SeedSpeciesAsync`; see Stubs section above.
 2. **Species inheritance**: Parent species with trait modifier inheritance for subspecies.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/370 -->
 3. **Lifecycle stages**: Age-based lifecycle stages (child, adolescent, adult, elder) with trait modifiers per stage.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/371 -->
 4. **Population tracking**: Track active character counts per species per realm for game balance analytics.
 
 ---
@@ -243,3 +246,7 @@ None currently identified.
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+### Completed
+
+- **Seed realm code resolution** (2026-02-10): `SeedSpeciesAsync` now resolves `realmCodes` via `IRealmClient.GetRealmByCodeAsync`. Unresolvable codes are skipped with warning logs.
