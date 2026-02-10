@@ -32,6 +32,14 @@ This document lists all state store components used in Bannou.
 | `character-lock` | Redis | Character | Distributed locks for character update and compression operations |
 | `character-personality-statestore` | MySQL | CharacterPersonality | Character personality traits and combat preferences |
 | `character-statestore` | MySQL | Character | Persistent character data |
+| `chat-bans` | MySQL | Chat | Ban records (durable, queryable by roomId/participant) |
+| `chat-lock` | Redis | Chat | Distributed locks for room and participant modifications |
+| `chat-messages` | MySQL | Chat | Persistent message history for durable rooms |
+| `chat-messages-ephemeral` | Redis | Chat | Ephemeral message buffer for non-persistent rooms (TTL-based) |
+| `chat-participants` | Redis | Chat | Active participant tracking (room membership, mute state, last activity) |
+| `chat-room-types` | MySQL | Chat | Room type definitions (durable, queryable by code/gameServiceId) |
+| `chat-rooms` | MySQL | Chat | Chat room records (durable, queryable by type/session/status) |
+| `chat-rooms-cache` | Redis | Chat | Active room state cache (participant lists, room metadata) |
 | `collection-area-music-configs` | MySQL | Collection | Area-to-theme mappings for dynamic music track selection |
 | `collection-cache` | Redis | Collection | Collection state cache (unlocked entries per collection) |
 | `collection-entry-templates` | MySQL | Collection | Entry template definitions per collection type and game service |
@@ -134,7 +142,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 124 stores (77 Redis, 47 MySQL)
+**Total**: 132 stores (81 Redis, 51 MySQL)
 
 ## Naming Conventions
 

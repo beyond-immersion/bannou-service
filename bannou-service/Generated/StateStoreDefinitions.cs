@@ -91,6 +91,24 @@ public static class StateStoreDefinitions
     /// <summary>Character personality traits and combat preferences</summary>
     public const string CharacterPersonality = "character-personality-statestore";
 
+    // Chat Service
+    /// <summary>Ban records (durable, queryable by roomId/participant)</summary>
+    public const string ChatBans = "chat-bans";
+    /// <summary>Distributed locks for room and participant modifications</summary>
+    public const string ChatLock = "chat-lock";
+    /// <summary>Persistent message history for durable rooms</summary>
+    public const string ChatMessages = "chat-messages";
+    /// <summary>Ephemeral message buffer for non-persistent rooms (TTL-based)</summary>
+    public const string ChatMessagesEphemeral = "chat-messages-ephemeral";
+    /// <summary>Active participant tracking (room membership, mute state, last activity)</summary>
+    public const string ChatParticipants = "chat-participants";
+    /// <summary>Room type definitions (durable, queryable by code/gameServiceId)</summary>
+    public const string ChatRoomTypes = "chat-room-types";
+    /// <summary>Chat room records (durable, queryable by type/session/status)</summary>
+    public const string ChatRooms = "chat-rooms";
+    /// <summary>Active room state cache (participant lists, room metadata)</summary>
+    public const string ChatRoomsCache = "chat-rooms-cache";
+
     // Collection Service
     /// <summary>Area-to-theme mappings for dynamic music track selection</summary>
     public const string CollectionAreaMusicConfigs = "collection-area-music-configs";
@@ -391,6 +409,14 @@ public static class StateStoreDefinitions
             [CharacterLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "character:lock" },
             [CharacterPersonality] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_personality_statestore" },
             [Character] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_statestore" },
+            [ChatBans] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_bans" },
+            [ChatLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "chat:lock" },
+            [ChatMessages] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_messages" },
+            [ChatMessagesEphemeral] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "chat:msg" },
+            [ChatParticipants] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "chat:part" },
+            [ChatRoomTypes] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_room_types" },
+            [ChatRooms] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_rooms" },
+            [ChatRoomsCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "chat:room" },
             [CollectionAreaMusicConfigs] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_area_music_configs" },
             [CollectionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "collection:state" },
             [CollectionEntryTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_entry_templates" },
@@ -527,6 +553,14 @@ public static class StateStoreDefinitions
             [CharacterLock] = new StoreMetadata("Character", "Distributed locks for character update and compression operations", "redis"),
             [CharacterPersonality] = new StoreMetadata("CharacterPersonality", "Character personality traits and combat preferences", "mysql"),
             [Character] = new StoreMetadata("Character", "Persistent character data", "mysql"),
+            [ChatBans] = new StoreMetadata("Chat", "Ban records (durable, queryable by roomId/participant)", "mysql"),
+            [ChatLock] = new StoreMetadata("Chat", "Distributed locks for room and participant modifications", "redis"),
+            [ChatMessages] = new StoreMetadata("Chat", "Persistent message history for durable rooms", "mysql"),
+            [ChatMessagesEphemeral] = new StoreMetadata("Chat", "Ephemeral message buffer for non-persistent rooms (TTL-based)", "redis"),
+            [ChatParticipants] = new StoreMetadata("Chat", "Active participant tracking (room membership, mute state, last activity)", "redis"),
+            [ChatRoomTypes] = new StoreMetadata("Chat", "Room type definitions (durable, queryable by code/gameServiceId)", "mysql"),
+            [ChatRooms] = new StoreMetadata("Chat", "Chat room records (durable, queryable by type/session/status)", "mysql"),
+            [ChatRoomsCache] = new StoreMetadata("Chat", "Active room state cache (participant lists, room metadata)", "redis"),
             [CollectionAreaMusicConfigs] = new StoreMetadata("Collection", "Area-to-theme mappings for dynamic music track selection", "mysql"),
             [CollectionCache] = new StoreMetadata("Collection", "Collection state cache (unlocked entries per collection)", "redis"),
             [CollectionEntryTemplates] = new StoreMetadata("Collection", "Entry template definitions per collection type and game service", "mysql"),

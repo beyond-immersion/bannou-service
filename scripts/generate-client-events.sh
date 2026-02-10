@@ -134,10 +134,8 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
         NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService.${pascal_case}"
     fi
     if [ -n "$COMMON_REFS" ]; then
-        # Ensure BannouService namespace is included for common types
-        if [[ "$NAMESPACE_USAGES" != *"BeyondImmersion.BannouService"* ]]; then
-            NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService"
-        fi
+        # Common types are in BeyondImmersion.BannouService.Common namespace
+        NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService.Common"
     fi
 
     "$NSWAG_EXE" openapi2csclient \

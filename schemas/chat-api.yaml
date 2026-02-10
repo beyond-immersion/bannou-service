@@ -777,6 +777,7 @@ components:
 
     RegisterRoomTypeRequest:
       type: object
+      description: Request to register a new room type definition
       required:
         - code
         - displayName
@@ -801,12 +802,14 @@ components:
           description: Game service scope (null for global types)
         messageFormat:
           $ref: '#/components/schemas/MessageFormat'
+          description: Content format this room type accepts
         validatorConfig:
           $ref: '#/components/schemas/ValidatorConfig'
           nullable: true
           description: Validation rules for messages (null uses format defaults)
         persistenceMode:
           $ref: '#/components/schemas/PersistenceMode'
+          description: Message storage mode (ephemeral or persistent)
         defaultMaxParticipants:
           type: integer
           nullable: true
@@ -834,6 +837,7 @@ components:
 
     GetRoomTypeRequest:
       type: object
+      description: Request to retrieve a room type by code
       required:
         - code
       properties:
@@ -848,6 +852,7 @@ components:
 
     ListRoomTypesRequest:
       type: object
+      description: Request to list room types with optional filters and pagination
       properties:
         gameServiceId:
           type: string
@@ -873,6 +878,7 @@ components:
 
     UpdateRoomTypeRequest:
       type: object
+      description: Request to update room type properties (null fields left unchanged)
       required:
         - code
       properties:
@@ -924,6 +930,7 @@ components:
 
     DeprecateRoomTypeRequest:
       type: object
+      description: Request to deprecate a room type (prevents new room creation)
       required:
         - code
       properties:
@@ -938,6 +945,7 @@ components:
 
     RoomTypeResponse:
       type: object
+      description: Room type definition with current configuration and status
       required:
         - code
         - displayName
@@ -964,12 +972,14 @@ components:
           description: Game service scope (null for global)
         messageFormat:
           $ref: '#/components/schemas/MessageFormat'
+          description: Content format accepted by this room type
         validatorConfig:
           $ref: '#/components/schemas/ValidatorConfig'
           nullable: true
           description: Active validation rules
         persistenceMode:
           $ref: '#/components/schemas/PersistenceMode'
+          description: Message storage mode
         defaultMaxParticipants:
           type: integer
           nullable: true
@@ -996,6 +1006,7 @@ components:
           description: Arbitrary JSON metadata
         status:
           $ref: '#/components/schemas/RoomTypeStatus'
+          description: Current lifecycle status of the room type
         createdAt:
           type: string
           format: date-time
@@ -1008,6 +1019,7 @@ components:
 
     ListRoomTypesResponse:
       type: object
+      description: Paginated list of room type definitions
       required:
         - items
         - totalCount
@@ -1035,6 +1047,7 @@ components:
 
     CreateRoomRequest:
       type: object
+      description: Request to create a new chat room
       required:
         - roomTypeCode
       properties:
@@ -1082,6 +1095,7 @@ components:
 
     GetRoomRequest:
       type: object
+      description: Request to retrieve a room by ID
       required:
         - roomId
       properties:
@@ -1092,6 +1106,7 @@ components:
 
     ListRoomsRequest:
       type: object
+      description: Request to list rooms with optional filters and pagination
       properties:
         roomTypeCode:
           type: string
@@ -1117,6 +1132,7 @@ components:
 
     UpdateRoomRequest:
       type: object
+      description: Request to update room properties (null fields left unchanged)
       required:
         - roomId
       properties:
@@ -1139,6 +1155,7 @@ components:
 
     DeleteRoomRequest:
       type: object
+      description: Request to permanently delete a room and all its messages
       required:
         - roomId
       properties:
@@ -1149,6 +1166,7 @@ components:
 
     ArchiveRoomRequest:
       type: object
+      description: Request to archive a room (makes it read-only)
       required:
         - roomId
       properties:
@@ -1159,6 +1177,7 @@ components:
 
     ChatRoomResponse:
       type: object
+      description: Chat room details including status and participant count
       required:
         - roomId
         - roomTypeCode
@@ -1190,6 +1209,7 @@ components:
           description: Human-readable room name
         status:
           $ref: '#/components/schemas/ChatRoomStatus'
+          description: Current room status
         participantCount:
           type: integer
           description: Current number of participants
@@ -1211,6 +1231,7 @@ components:
 
     ListRoomsResponse:
       type: object
+      description: Paginated list of chat rooms
       required:
         - items
         - totalCount
@@ -1238,6 +1259,7 @@ components:
 
     JoinRoomRequest:
       type: object
+      description: Request to join a chat room as a participant
       required:
         - roomId
       properties:
@@ -1265,6 +1287,7 @@ components:
 
     LeaveRoomRequest:
       type: object
+      description: Request to leave a chat room
       required:
         - roomId
       properties:
@@ -1275,6 +1298,7 @@ components:
 
     ListParticipantsRequest:
       type: object
+      description: Request to list participants in a room
       required:
         - roomId
       properties:
@@ -1285,6 +1309,7 @@ components:
 
     ParticipantInfo:
       type: object
+      description: Details about a chat room participant
       required:
         - sessionId
         - role
@@ -1310,6 +1335,7 @@ components:
           description: Display name
         role:
           $ref: '#/components/schemas/ChatParticipantRole'
+          description: Participant role in the room
         joinedAt:
           type: string
           format: date-time
@@ -1320,6 +1346,7 @@ components:
 
     ParticipantsResponse:
       type: object
+      description: List of participants in a room
       required:
         - roomId
         - participants
@@ -1336,6 +1363,7 @@ components:
 
     KickParticipantRequest:
       type: object
+      description: Request to remove a participant from a room
       required:
         - roomId
         - targetSessionId
@@ -1355,6 +1383,7 @@ components:
 
     BanParticipantRequest:
       type: object
+      description: Request to ban a participant from a room
       required:
         - roomId
         - targetSessionId
@@ -1378,6 +1407,7 @@ components:
 
     UnbanParticipantRequest:
       type: object
+      description: Request to remove a ban for a participant
       required:
         - roomId
         - targetSessionId
@@ -1393,6 +1423,7 @@ components:
 
     MuteParticipantRequest:
       type: object
+      description: Request to mute a participant in a room
       required:
         - roomId
         - targetSessionId
@@ -1449,6 +1480,7 @@ components:
 
     SendMessageRequest:
       type: object
+      description: Request to send a message to a chat room
       required:
         - roomId
         - content
@@ -1459,6 +1491,7 @@ components:
           description: Room ID to send the message to
         content:
           $ref: '#/components/schemas/SendMessageContent'
+          description: Message content matching the room format
         senderType:
           type: string
           nullable: true
@@ -1475,6 +1508,7 @@ components:
 
     SendMessageBatchRequest:
       type: object
+      description: Request to send multiple messages to a room atomically
       required:
         - roomId
         - messages
@@ -1491,11 +1525,13 @@ components:
 
     BatchMessageEntry:
       type: object
+      description: Individual message entry in a batch send operation
       required:
         - content
       properties:
         content:
           $ref: '#/components/schemas/SendMessageContent'
+          description: Message content matching the room format
         senderType:
           type: string
           nullable: true
@@ -1512,6 +1548,7 @@ components:
 
     SendMessageBatchResponse:
       type: object
+      description: Result of a batch message send operation
       required:
         - messageCount
       properties:
@@ -1521,6 +1558,7 @@ components:
 
     ChatMessageResponse:
       type: object
+      description: A chat message with metadata and content
       required:
         - messageId
         - roomId
@@ -1566,6 +1604,7 @@ components:
 
     MessageHistoryRequest:
       type: object
+      description: Request to retrieve message history for a room with cursor pagination
       required:
         - roomId
       properties:
@@ -1584,6 +1623,7 @@ components:
 
     MessageHistoryResponse:
       type: object
+      description: Paginated message history with cursor for next page
       required:
         - messages
         - hasMore
@@ -1603,6 +1643,7 @@ components:
 
     DeleteMessageRequest:
       type: object
+      description: Request to delete a message from a room
       required:
         - roomId
         - messageId
@@ -1618,6 +1659,7 @@ components:
 
     PinMessageRequest:
       type: object
+      description: Request to pin a message in a room
       required:
         - roomId
         - messageId
@@ -1633,6 +1675,7 @@ components:
 
     UnpinMessageRequest:
       type: object
+      description: Request to unpin a message in a room
       required:
         - roomId
         - messageId
@@ -1648,6 +1691,7 @@ components:
 
     SearchMessagesRequest:
       type: object
+      description: Request to full-text search messages in a persistent room
       required:
         - roomId
         - query
@@ -1666,6 +1710,7 @@ components:
 
     SearchMessagesResponse:
       type: object
+      description: Full-text search results with total match count
       required:
         - messages
         - totalMatches
@@ -1685,6 +1730,7 @@ components:
 
     AdminListRoomsRequest:
       type: object
+      description: Admin request to list all rooms with filters and pagination
       properties:
         roomTypeCode:
           type: string
@@ -1710,6 +1756,7 @@ components:
 
     AdminStatsResponse:
       type: object
+      description: System-wide chat statistics for admin monitoring
       required:
         - totalRooms
         - activeRooms
@@ -1744,6 +1791,7 @@ components:
 
     AdminCleanupResponse:
       type: object
+      description: Result of admin-triggered idle room cleanup
       required:
         - cleanedRooms
         - archivedRooms

@@ -1,0 +1,462 @@
+openapi: 3.0.3
+info:
+  title: Chat Client Events API
+  description: |
+    Server-to-client push events for the Chat service.
+    These events notify connected clients of real-time chat activity:
+    messages received, participant changes, and room state updates.
+    Delivered via WebSocket through IClientEventPublisher.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "chat.{event_type}" naming convention.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Message Events
+    # ============================================
+
+    ChatMessageReceivedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when a new message is received.
+        INCLUDES full content (text, sentiment, emoji, custom) because
+        the client needs it for rendering. Unlike the service event
+        (ChatMessageSentEvent), this event is private to the room.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - messageId
+        - messageFormat
+      properties:
+        eventName:
+          type: string
+          default: "chat.message_received"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room the message was sent to
+        messageId:
+          type: string
+          format: uuid
+          description: Unique identifier for the message
+        senderType:
+          type: string
+          nullable: true
+          description: Opaque sender type identifier (e.g., "account", "npc", "system")
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Opaque sender entity ID
+        displayName:
+          type: string
+          nullable: true
+          description: Display name of the message sender
+        messageFormat:
+          $ref: 'chat-api.yaml#/components/schemas/MessageFormat'
+          description: Message format type
+        textContent:
+          type: string
+          nullable: true
+          description: Text content (populated for Text format messages)
+        sentimentCategory:
+          $ref: 'common-api.yaml#/components/schemas/SentimentCategory'
+          nullable: true
+          description: Sentiment category (populated for Sentiment format messages)
+        sentimentIntensity:
+          type: number
+          format: float
+          nullable: true
+          description: Sentiment intensity from 0.0 to 1.0 (populated for Sentiment format messages)
+        emojiCode:
+          type: string
+          nullable: true
+          description: Emoji code string (populated for Emoji format messages)
+        emojiSetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional emoji set identifier (populated for Emoji format messages)
+        customPayload:
+          type: string
+          nullable: true
+          description: Custom JSON payload string (populated for Custom format messages)
+
+    ChatMessageDeletedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when a message is deleted.
+        Clients should remove the message from their local display.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - messageId
+      properties:
+        eventName:
+          type: string
+          default: "chat.message_deleted"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room the message was deleted from
+        messageId:
+          type: string
+          format: uuid
+          description: Unique identifier of the deleted message
+        deletedByDisplayName:
+          type: string
+          nullable: true
+          description: Display name of the user who deleted the message
+
+    ChatMessagePinnedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when a message is pinned or unpinned.
+        Clients should update the pin state of the message in their local display.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - messageId
+        - isPinned
+      properties:
+        eventName:
+          type: string
+          default: "chat.message_pinned"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room containing the message
+        messageId:
+          type: string
+          format: uuid
+          description: Unique identifier of the pinned/unpinned message
+        isPinned:
+          type: boolean
+          description: Whether the message is now pinned (true) or unpinned (false)
+
+    # ============================================
+    # Participant Events
+    # ============================================
+
+    ChatParticipantJoinedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when someone joins the room.
+        Includes participant identity and role for roster updates.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - participantSessionId
+        - role
+        - currentCount
+      properties:
+        eventName:
+          type: string
+          default: "chat.participant_joined"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant joined
+        participantSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the joining participant
+        senderType:
+          type: string
+          nullable: true
+          description: Opaque sender type identifier
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Opaque sender entity ID
+        displayName:
+          type: string
+          nullable: true
+          description: Display name of the joining participant
+        role:
+          $ref: 'chat-api.yaml#/components/schemas/ChatParticipantRole'
+          description: Role assigned to the participant
+        currentCount:
+          type: integer
+          description: Total participant count after this join
+
+    ChatParticipantLeftClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when someone leaves the room.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - participantSessionId
+        - remainingCount
+      properties:
+        eventName:
+          type: string
+          default: "chat.participant_left"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant left
+        participantSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the departing participant
+        displayName:
+          type: string
+          nullable: true
+          description: Display name of the departing participant
+        remainingCount:
+          type: integer
+          description: Remaining participant count after this departure
+
+    ChatParticipantKickedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all room participants when someone is kicked.
+        The kicked participant also receives this event before disconnection.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+      properties:
+        eventName:
+          type: string
+          default: "chat.participant_kicked"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant was kicked from
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the kicked participant
+        targetDisplayName:
+          type: string
+          nullable: true
+          description: Display name of the kicked participant
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason provided for the kick
+
+    ChatParticipantBannedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all room participants when someone is banned.
+        The banned participant also receives this event.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+      properties:
+        eventName:
+          type: string
+          default: "chat.participant_banned"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant was banned from
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the banned participant
+        targetDisplayName:
+          type: string
+          nullable: true
+          description: Display name of the banned participant
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason provided for the ban
+
+    ChatParticipantMutedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all room participants when someone is muted.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+      properties:
+        eventName:
+          type: string
+          default: "chat.participant_muted"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room where the participant was muted
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the muted participant
+        targetDisplayName:
+          type: string
+          nullable: true
+          description: Display name of the muted participant
+        durationMinutes:
+          type: integer
+          nullable: true
+          description: Mute duration in minutes (null for permanent mute)
+
+    ChatParticipantUnmutedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all room participants when someone is unmuted.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+      properties:
+        eventName:
+          type: string
+          default: "chat.participant_unmuted"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room where the participant was unmuted
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the unmuted participant
+        targetDisplayName:
+          type: string
+          nullable: true
+          description: Display name of the unmuted participant
+
+    # ============================================
+    # Room State Events
+    # ============================================
+
+    ChatRoomLockedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when the room is locked.
+        No further messages can be sent. Clients should disable input.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - reason
+      properties:
+        eventName:
+          type: string
+          default: "chat.room_locked"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room that was locked
+        reason:
+          $ref: 'chat-events.yaml#/components/schemas/ChatRoomLockReason'
+          description: Reason the room was locked
+
+    ChatRoomDeletedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when the room is being deleted.
+        Clients should close the chat UI and clean up local state.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+      properties:
+        eventName:
+          type: string
+          default: "chat.room_deleted"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room that is being deleted
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., contract action, idle cleanup, manual)

@@ -72,7 +72,8 @@ if [ -n "$COMMON_API_REFS" ]; then
     echo -e "${BLUE}ℹ️  Found common-api.yaml refs - excluding shared types${NC}"
     echo -e "  📦 Common types: $COMMON_API_REFS"
     EXCLUDED_TYPES="$EXCLUDED_TYPES,$COMMON_API_REFS"
-    # Common types are in BeyondImmersion.BannouService namespace (already included above)
+    # Common types are in BeyondImmersion.BannouService.Common namespace
+    ADDITIONAL_NAMESPACES="$ADDITIONAL_NAMESPACES,BeyondImmersion.BannouService.Common"
 fi
 
 # Extract SDK type mappings from schema (x-sdk-type extensions)
@@ -199,6 +200,10 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     LIFECYCLE_NAMESPACE_USAGES="BeyondImmersion.Bannou.Core,BeyondImmersion.BannouService"
     if [ -n "$LIFECYCLE_API_REFS" ]; then
         LIFECYCLE_NAMESPACE_USAGES="${LIFECYCLE_NAMESPACE_USAGES},BeyondImmersion.BannouService.${SERVICE_PASCAL}"
+    fi
+    if [ -n "$LIFECYCLE_COMMON_REFS" ]; then
+        # Common types are in BeyondImmersion.BannouService.Common namespace
+        LIFECYCLE_NAMESPACE_USAGES="${LIFECYCLE_NAMESPACE_USAGES},BeyondImmersion.BannouService.Common"
     fi
 
     "$NSWAG_EXE" openapi2csclient \

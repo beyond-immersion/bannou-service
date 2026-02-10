@@ -108,7 +108,6 @@ public partial class MatchmakingService : IMatchmakingService
         ListQueuesRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogDebug("Listing matchmaking queues - GameId: {GameId}, IncludeDisabled: {IncludeDisabled}",
                 body.GameId, body.IncludeDisabled);
@@ -147,15 +146,6 @@ public partial class MatchmakingService : IMatchmakingService
 
             return (StatusCodes.OK, new ListQueuesResponse { Queues = queues });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to list matchmaking queues");
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "ListQueues", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/list",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -165,7 +155,6 @@ public partial class MatchmakingService : IMatchmakingService
         GetQueueRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogDebug("Getting queue {QueueId}", body.QueueId);
 
@@ -177,15 +166,6 @@ public partial class MatchmakingService : IMatchmakingService
 
             return (StatusCodes.OK, MapQueueModelToResponse(queue));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "GetQueue", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/get",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -195,7 +175,6 @@ public partial class MatchmakingService : IMatchmakingService
         CreateQueueRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogDebug("Creating queue {QueueId} for game {GameId}", body.QueueId, body.GameId);
 
@@ -264,15 +243,6 @@ public partial class MatchmakingService : IMatchmakingService
             _logger.LogInformation("Queue {QueueId} created successfully", queue.QueueId);
             return (StatusCodes.OK, MapQueueModelToResponse(queue));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "CreateQueue", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/create",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -282,7 +252,6 @@ public partial class MatchmakingService : IMatchmakingService
         UpdateQueueRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogDebug("Updating queue {QueueId}", body.QueueId);
 
@@ -343,15 +312,6 @@ public partial class MatchmakingService : IMatchmakingService
             _logger.LogInformation("Queue {QueueId} updated successfully", queue.QueueId);
             return (StatusCodes.OK, MapQueueModelToResponse(queue));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to update queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "UpdateQueue", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/update",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -361,7 +321,6 @@ public partial class MatchmakingService : IMatchmakingService
         DeleteQueueRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogDebug("Deleting queue {QueueId}", body.QueueId);
 
@@ -402,15 +361,6 @@ public partial class MatchmakingService : IMatchmakingService
             _logger.LogInformation("Queue {QueueId} deleted successfully", body.QueueId);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to delete queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "DeleteQueue", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/delete",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     #endregion
@@ -424,7 +374,6 @@ public partial class MatchmakingService : IMatchmakingService
         JoinMatchmakingRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var sessionId = body.WebSocketSessionId;
             var accountId = body.AccountId;
@@ -616,15 +565,6 @@ public partial class MatchmakingService : IMatchmakingService
                 EstimatedWaitSeconds = queue.AverageWaitSeconds > 0 ? (int?)queue.AverageWaitSeconds : null
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to join queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "JoinMatchmaking", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/join",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -634,7 +574,6 @@ public partial class MatchmakingService : IMatchmakingService
         LeaveMatchmakingRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var ticketId = body.TicketId;
             var accountId = body.AccountId;
@@ -658,15 +597,6 @@ public partial class MatchmakingService : IMatchmakingService
             await CancelTicketInternalAsync(ticketId, CancelReason.CancelledByUser, cancellationToken);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to leave matchmaking with ticket {TicketId}", body.TicketId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "LeaveMatchmaking", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/leave",
-                details: new { TicketId = body.TicketId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
         }
     }
 

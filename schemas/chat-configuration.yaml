@@ -1,0 +1,128 @@
+openapi: 3.0.3
+info:
+  title: Chat Service Configuration
+  description: |
+    Configuration schema for Chat service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    ChatEnabled:
+      type: boolean
+      env: CHAT_ENABLED
+      default: true
+      description: Master enable flag for the chat service
+
+    DefaultRetentionDays:
+      type: integer
+      env: CHAT_DEFAULT_RETENTION_DAYS
+      default: 30
+      minimum: 1
+      maximum: 3650
+      description: Default message retention for persistent rooms when room type does not specify
+
+    MaxRoomTypesPerGameService:
+      type: integer
+      env: CHAT_MAX_ROOM_TYPES_PER_GAME_SERVICE
+      default: 50
+      minimum: 1
+      maximum: 500
+      description: Maximum custom room types per game service
+
+    DefaultMaxParticipantsPerRoom:
+      type: integer
+      env: CHAT_DEFAULT_MAX_PARTICIPANTS_PER_ROOM
+      default: 100
+      minimum: 1
+      maximum: 10000
+      description: Default participant limit when room type does not specify
+
+    DefaultRateLimitPerMinute:
+      type: integer
+      env: CHAT_DEFAULT_RATE_LIMIT_PER_MINUTE
+      default: 60
+      minimum: 1
+      maximum: 600
+      description: Default messages per minute per participant when room type does not specify
+
+    IdleRoomCleanupIntervalMinutes:
+      type: integer
+      env: CHAT_IDLE_ROOM_CLEANUP_INTERVAL_MINUTES
+      default: 60
+      minimum: 5
+      maximum: 1440
+      description: How often the background worker checks for idle rooms
+
+    IdleRoomTimeoutMinutes:
+      type: integer
+      env: CHAT_IDLE_ROOM_TIMEOUT_MINUTES
+      default: 1440
+      minimum: 10
+      maximum: 43200
+      description: Minutes of inactivity before a room is eligible for auto-cleanup
+
+    EphemeralMessageTtlMinutes:
+      type: integer
+      env: CHAT_EPHEMERAL_MESSAGE_TTL_MINUTES
+      default: 60
+      minimum: 5
+      maximum: 1440
+      description: TTL for messages in ephemeral (Redis) rooms
+
+    MaxPinnedMessagesPerRoom:
+      type: integer
+      env: CHAT_MAX_PINNED_MESSAGES_PER_ROOM
+      default: 10
+      minimum: 0
+      maximum: 100
+      description: Maximum pinned messages per room
+
+    DefaultContractFulfilledAction:
+      $ref: 'chat-api.yaml#/components/schemas/ContractRoomAction'
+      env: CHAT_DEFAULT_CONTRACT_FULFILLED_ACTION
+      default: Archive
+      description: Default action when governing contract is fulfilled
+
+    DefaultContractBreachAction:
+      $ref: 'chat-api.yaml#/components/schemas/ContractRoomAction'
+      env: CHAT_DEFAULT_CONTRACT_BREACH_ACTION
+      default: Lock
+      description: Default action when a breach is detected on governing contract
+
+    DefaultContractTerminatedAction:
+      $ref: 'chat-api.yaml#/components/schemas/ContractRoomAction'
+      env: CHAT_DEFAULT_CONTRACT_TERMINATED_ACTION
+      default: Delete
+      description: Default action when governing contract is terminated early
+
+    DefaultContractExpiredAction:
+      $ref: 'chat-api.yaml#/components/schemas/ContractRoomAction'
+      env: CHAT_DEFAULT_CONTRACT_EXPIRED_ACTION
+      default: Archive
+      description: Default action when governing contract expires naturally
+
+    CompanionRoomMode:
+      $ref: 'chat-api.yaml#/components/schemas/CompanionRoomMode'
+      env: CHAT_COMPANION_ROOM_MODE
+      default: Disabled
+      description: >
+        How Connect manages companion chat rooms for WebSocket sessions.
+        Disabled = Connect does not create rooms (game-session handles at L2+).
+        AutoJoinLazy = room GUID in manifest, created on first use.
+        AutoJoin = room created on connection.
+        Manual = room GUID in manifest, client must explicitly join.
+
+    MessageHistoryPageSize:
+      type: integer
+      env: CHAT_MESSAGE_HISTORY_PAGE_SIZE
+      default: 50
+      minimum: 10
+      maximum: 200
+      description: Default page size for message history queries

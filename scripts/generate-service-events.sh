@@ -103,6 +103,8 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
 
     if [ -n "$COMMON_REFS" ]; then
         EXCLUSIONS="${EXCLUSIONS},${COMMON_REFS}"
+        # Common types are in BeyondImmersion.BannouService.Common namespace
+        NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService.Common"
         echo -e "  ${BLUE}Excluding common types: ${COMMON_REFS}${NC}"
     fi
 
