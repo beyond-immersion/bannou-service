@@ -43,10 +43,8 @@ public partial class ContractService
         LockContractRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogInformation("Locking contract: {ContractId} with guardian: {GuardianId}",
-                body.ContractInstanceId, body.GuardianId);
+        _logger.LogInformation("Locking contract: {ContractId} with guardian: {GuardianId}",
+            body.ContractInstanceId, body.GuardianId);
 
             // Check idempotency
             if (!string.IsNullOrEmpty(body.IdempotencyKey))
@@ -123,16 +121,9 @@ public partial class ContractService
             // Publish event
             await PublishContractLockedEventAsync(model, body.GuardianId, body.GuardianType, cancellationToken);
 
-            _logger.LogInformation("Locked contract: {ContractId} under guardian: {GuardianId}",
-                body.ContractInstanceId, body.GuardianId);
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error locking contract: {ContractId}", body.ContractInstanceId);
-            await EmitErrorAsync("LockContract", "post:/contract/lock", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
+        _logger.LogInformation("Locked contract: {ContractId} under guardian: {GuardianId}",
+            body.ContractInstanceId, body.GuardianId);
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -140,9 +131,7 @@ public partial class ContractService
         UnlockContractRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogInformation("Unlocking contract: {ContractId}", body.ContractInstanceId);
+        _logger.LogInformation("Unlocking contract: {ContractId}", body.ContractInstanceId);
 
             // Check idempotency
             if (!string.IsNullOrEmpty(body.IdempotencyKey))
@@ -213,14 +202,7 @@ public partial class ContractService
             await PublishContractUnlockedEventAsync(model, previousGuardianId, previousGuardianType, cancellationToken);
 
             _logger.LogInformation("Unlocked contract: {ContractId}", body.ContractInstanceId);
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error unlocking contract: {ContractId}", body.ContractInstanceId);
-            await EmitErrorAsync("UnlockContract", "post:/contract/unlock", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -228,10 +210,8 @@ public partial class ContractService
         TransferContractPartyRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogInformation("Transferring party in contract: {ContractId} from {FromId} to {ToId}",
-                body.ContractInstanceId, body.FromEntityId, body.ToEntityId);
+        _logger.LogInformation("Transferring party in contract: {ContractId} from {FromId} to {ToId}",
+            body.ContractInstanceId, body.FromEntityId, body.ToEntityId);
 
             // Check idempotency
             if (!string.IsNullOrEmpty(body.IdempotencyKey))
@@ -321,16 +301,9 @@ public partial class ContractService
             await PublishPartyTransferredEventAsync(model, role, body.FromEntityId, body.FromEntityType,
                 body.ToEntityId, body.ToEntityType, cancellationToken);
 
-            _logger.LogInformation("Transferred party in contract: {ContractId}, role: {Role}",
-                body.ContractInstanceId, role);
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error transferring party in contract: {ContractId}", body.ContractInstanceId);
-            await EmitErrorAsync("TransferContractParty", "post:/contract/transfer-party", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
+        _logger.LogInformation("Transferred party in contract: {ContractId}, role: {Role}",
+            body.ContractInstanceId, role);
+        return (StatusCodes.OK, response);
     }
 
     #endregion
@@ -342,9 +315,7 @@ public partial class ContractService
         RegisterClauseTypeRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogInformation("Registering clause type: {TypeCode}", body.TypeCode);
+        _logger.LogInformation("Registering clause type: {TypeCode}", body.TypeCode);
 
             // Check if already exists
             var typeKey = $"{CLAUSE_TYPE_PREFIX}{body.TypeCode}";
@@ -389,18 +360,11 @@ public partial class ContractService
             await PublishClauseTypeRegisteredEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Registered clause type: {TypeCode}", body.TypeCode);
-            return (StatusCodes.OK, new RegisterClauseTypeResponse
-            {
-                Registered = true,
-                TypeCode = body.TypeCode
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new RegisterClauseTypeResponse
         {
-            _logger.LogError(ex, "Error registering clause type: {TypeCode}", body.TypeCode);
-            await EmitErrorAsync("RegisterClauseType", "post:/contract/clause-type/register", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Registered = true,
+            TypeCode = body.TypeCode
+        });
     }
 
     /// <inheritdoc/>
@@ -408,9 +372,7 @@ public partial class ContractService
         ListClauseTypesRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogDebug("Listing clause types");
+        _logger.LogDebug("Listing clause types");
 
             // Ensure built-in types are registered
             await EnsureBuiltInClauseTypesAsync(cancellationToken);
@@ -454,17 +416,10 @@ public partial class ContractService
                 });
             }
 
-            return (StatusCodes.OK, new ListClauseTypesResponse
-            {
-                ClauseTypes = summaries
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new ListClauseTypesResponse
         {
-            _logger.LogError(ex, "Error listing clause types");
-            await EmitErrorAsync("ListClauseTypes", "post:/contract/clause-type/list", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
+            ClauseTypes = summaries
+        });
     }
 
     /// <summary>
@@ -577,9 +532,7 @@ public partial class ContractService
         SetTemplateValuesRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogInformation("Setting template values on contract: {ContractId}", body.ContractInstanceId);
+        _logger.LogInformation("Setting template values on contract: {ContractId}", body.ContractInstanceId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
             var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
@@ -618,19 +571,12 @@ public partial class ContractService
             _logger.LogInformation("Set {Count} template values on contract: {ContractId}",
                 body.TemplateValues.Count, body.ContractInstanceId);
 
-            return (StatusCodes.OK, new SetTemplateValuesResponse
-            {
-                Updated = true,
-                ContractId = body.ContractInstanceId,
-                ValueCount = model.TemplateValues.Count
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new SetTemplateValuesResponse
         {
-            _logger.LogError(ex, "Error setting template values on contract: {ContractId}", body.ContractInstanceId);
-            await EmitErrorAsync("SetContractTemplateValues", "post:/contract/instance/set-template-values", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Updated = true,
+            ContractId = body.ContractInstanceId,
+            ValueCount = model.TemplateValues.Count
+        });
     }
 
     /// <inheritdoc/>
@@ -638,9 +584,7 @@ public partial class ContractService
         CheckAssetRequirementsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogInformation("Checking asset requirements for contract: {ContractId}", body.ContractInstanceId);
+        _logger.LogInformation("Checking asset requirements for contract: {ContractId}", body.ContractInstanceId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
             var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
@@ -680,18 +624,11 @@ public partial class ContractService
 
             var allSatisfied = partyStatuses.All(p => p.Satisfied);
 
-            return (StatusCodes.OK, new CheckAssetRequirementsResponse
-            {
-                AllSatisfied = allSatisfied,
-                ByParty = partyStatuses
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new CheckAssetRequirementsResponse
         {
-            _logger.LogError(ex, "Error checking asset requirements for contract: {ContractId}", body.ContractInstanceId);
-            await EmitErrorAsync("CheckAssetRequirements", "post:/contract/instance/check-asset-requirements", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
+            AllSatisfied = allSatisfied,
+            ByParty = partyStatuses
+        });
     }
 
     /// <summary>
@@ -967,9 +904,7 @@ public partial class ContractService
         ExecuteContractRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogInformation("Executing contract: {ContractId}", body.ContractInstanceId);
+        _logger.LogInformation("Executing contract: {ContractId}", body.ContractInstanceId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
@@ -1090,14 +1025,7 @@ public partial class ContractService
             _logger.LogInformation("Executed contract: {ContractId} with {Count} distributions",
                 body.ContractInstanceId, distributions.Count);
 
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing contract: {ContractId}", body.ContractInstanceId);
-            await EmitErrorAsync("ExecuteContract", "post:/contract/instance/execute", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>

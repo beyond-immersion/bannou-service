@@ -403,65 +403,47 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Listing state stores with filter {BackendFilter}", body?.BackendFilter);
 
-        try
+        IEnumerable<string> storeNames;
+
+        // Get store names, optionally filtered by backend
+        if (body?.BackendFilter != null)
         {
-            IEnumerable<string> storeNames;
-
-            // Get store names, optionally filtered by backend
-            if (body?.BackendFilter != null)
-            {
-                var backend = body.BackendFilter == ListStoresRequestBackendFilter.Redis
-                    ? StateBackend.Redis
-                    : StateBackend.MySql;
-                storeNames = _stateStoreFactory.GetStoreNames(backend);
-            }
-            else
-            {
-                storeNames = _stateStoreFactory.GetStoreNames();
-            }
-
-            // Build store info list
-            var includeStats = body?.IncludeStats ?? false;
-            var stores = new List<StoreInfo>();
-
-            foreach (var name in storeNames)
-            {
-                var backend = _stateStoreFactory.GetBackendType(name);
-                long? keyCount = null;
-
-                if (includeStats)
-                {
-                    keyCount = await _stateStoreFactory.GetKeyCountAsync(name, cancellationToken);
-                }
-
-                stores.Add(new StoreInfo
-                {
-                    Name = name,
-                    Backend = backend == StateBackend.Redis
-                        ? StoreInfoBackend.Redis
-                        : StoreInfoBackend.Mysql,
-                    KeyCount = keyCount.HasValue ? (int)keyCount.Value : null
-                });
-            }
-
-            _logger.LogDebug("Listed {Count} state stores (includeStats={IncludeStats})", stores.Count, includeStats);
-            return (StatusCodes.OK, new ListStoresResponse { Stores = stores });
+            var backend = body.BackendFilter == ListStoresRequestBackendFilter.Redis
+                ? StateBackend.Redis
+                : StateBackend.MySql;
+            storeNames = _stateStoreFactory.GetStoreNames(backend);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Failed to list state stores");
-            await MessageBus.TryPublishErrorAsync(
-                "state",
-                "ListStores",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "state-factory",
-                endpoint: "post:/state/list-stores",
-                details: new { BackendFilter = body?.BackendFilter },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            storeNames = _stateStoreFactory.GetStoreNames();
         }
+
+        // Build store info list
+        var includeStats = body?.IncludeStats ?? false;
+        var stores = new List<StoreInfo>();
+
+        foreach (var name in storeNames)
+        {
+            var backend = _stateStoreFactory.GetBackendType(name);
+            long? keyCount = null;
+
+            if (includeStats)
+            {
+                keyCount = await _stateStoreFactory.GetKeyCountAsync(name, cancellationToken);
+            }
+
+            stores.Add(new StoreInfo
+            {
+                Name = name,
+                Backend = backend == StateBackend.Redis
+                    ? StoreInfoBackend.Redis
+                    : StoreInfoBackend.Mysql,
+                KeyCount = keyCount.HasValue ? (int)keyCount.Value : null
+            });
+        }
+
+        _logger.LogDebug("Listed {Count} state stores (includeStats={IncludeStats})", stores.Count, includeStats);
+        return (StatusCodes.OK, new ListStoresResponse { Stores = stores });
     }
 
     #region Permission Registration
