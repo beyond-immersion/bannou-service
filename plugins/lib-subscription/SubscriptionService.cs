@@ -61,8 +61,6 @@ public partial class SubscriptionService : ISubscriptionService
         _logger.LogDebug("Getting subscriptions for account {AccountId} (includeInactive={IncludeInactive}, includeExpired={IncludeExpired})",
             body.AccountId, body.IncludeInactive, body.IncludeExpired);
 
-        try
-        {
             var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
             var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken);
 
@@ -102,13 +100,6 @@ public partial class SubscriptionService : ISubscriptionService
 
             _logger.LogDebug("Found {Count} subscriptions for account {AccountId}", subscriptions.Count, body.AccountId);
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting subscriptions for account {AccountId}", body.AccountId);
-            await PublishErrorEventAsync("GetSubscriptionsForAccount", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.AccountId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -129,8 +120,6 @@ public partial class SubscriptionService : ISubscriptionService
         _logger.LogDebug("Querying current subscriptions: AccountId={AccountId}, StubName={StubName}",
             body.AccountId, body.StubName);
 
-        try
-        {
             var subscriptions = new List<SubscriptionInfo>();
             var accountIds = new HashSet<Guid>();
             var now = DateTimeOffset.UtcNow;
@@ -210,15 +199,6 @@ public partial class SubscriptionService : ISubscriptionService
 
             _logger.LogDebug("Found {Count} active subscriptions matching query", subscriptions.Count);
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying current subscriptions: AccountId={AccountId}, StubName={StubName}",
-                body.AccountId, body.StubName);
-            await PublishErrorEventAsync("QueryCurrentSubscriptions", ex.GetType().Name, ex.Message,
-                dependency: "state", details: new { body.AccountId, body.StubName });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -229,8 +209,6 @@ public partial class SubscriptionService : ISubscriptionService
     {
         _logger.LogDebug("Getting subscription {SubscriptionId}", body.SubscriptionId);
 
-        try
-        {
             var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
             var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
 
@@ -241,13 +219,6 @@ public partial class SubscriptionService : ISubscriptionService
             }
 
             return (StatusCodes.OK, MapToSubscriptionInfo(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting subscription {SubscriptionId}", body.SubscriptionId);
-            await PublishErrorEventAsync("GetSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -259,8 +230,6 @@ public partial class SubscriptionService : ISubscriptionService
         _logger.LogDebug("Creating subscription for account {AccountId} to service {ServiceId}",
             body.AccountId, body.ServiceId);
 
-        try
-        {
             // Fetch service info from Service service
             ServiceInfo? serviceInfo;
             try
@@ -351,13 +320,6 @@ public partial class SubscriptionService : ISubscriptionService
                 subscriptionId, body.AccountId, serviceInfo.StubName);
 
             return (StatusCodes.OK, MapToSubscriptionInfo(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating subscription for account {AccountId}", body.AccountId);
-            await PublishErrorEventAsync("CreateSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.AccountId, body.ServiceId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -368,8 +330,6 @@ public partial class SubscriptionService : ISubscriptionService
     {
         _logger.LogDebug("Updating subscription {SubscriptionId}", body.SubscriptionId);
 
-        try
-        {
             var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
             var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
 
@@ -402,13 +362,6 @@ public partial class SubscriptionService : ISubscriptionService
 
             _logger.LogInformation("Updated subscription {SubscriptionId}", body.SubscriptionId);
             return (StatusCodes.OK, MapToSubscriptionInfo(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating subscription {SubscriptionId}", body.SubscriptionId);
-            await PublishErrorEventAsync("UpdateSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -419,8 +372,6 @@ public partial class SubscriptionService : ISubscriptionService
     {
         _logger.LogDebug("Cancelling subscription {SubscriptionId}", body.SubscriptionId);
 
-        try
-        {
             var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
             var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
 
@@ -447,13 +398,6 @@ public partial class SubscriptionService : ISubscriptionService
                 body.SubscriptionId, model.AccountId);
 
             return (StatusCodes.OK, MapToSubscriptionInfo(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error cancelling subscription {SubscriptionId}", body.SubscriptionId);
-            await PublishErrorEventAsync("CancelSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -464,8 +408,6 @@ public partial class SubscriptionService : ISubscriptionService
     {
         _logger.LogDebug("Renewing subscription {SubscriptionId}", body.SubscriptionId);
 
-        try
-        {
             var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
             var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
 
@@ -514,13 +456,6 @@ public partial class SubscriptionService : ISubscriptionService
                 body.SubscriptionId, model.AccountId);
 
             return (StatusCodes.OK, MapToSubscriptionInfo(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error renewing subscription {SubscriptionId}", body.SubscriptionId);
-            await PublishErrorEventAsync("RenewSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #region Public Methods for Background Job

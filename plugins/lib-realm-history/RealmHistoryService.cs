@@ -123,8 +123,6 @@ public partial class RealmHistoryService : IRealmHistoryService
         _logger.LogDebug("Recording participation for realm {RealmId} in event {EventId}",
             body.RealmId, body.EventId);
 
-        try
-        {
             var participationId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
@@ -175,22 +173,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 participationId, body.RealmId);
 
             return (StatusCodes.OK, MapToRealmHistoricalParticipation(participationData));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording participation for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "RecordRealmParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/record-participation",
-                details: new { body.RealmId, body.EventId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -202,8 +184,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting participation for realm {RealmId}", body.RealmId);
 
-        try
-        {
             var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
                 StateStoreDefinitions.RealmHistory);
 
@@ -235,22 +215,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 HasNextPage = paginatedResult.HasNextPage,
                 HasPreviousPage = paginatedResult.HasPreviousPage
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting participation for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "GetRealmParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/get-participation",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -263,8 +227,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting participants for event {EventId}", body.EventId);
 
-        try
-        {
             var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
                 StateStoreDefinitions.RealmHistory);
 
@@ -296,22 +258,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 HasNextPage = paginatedResult.HasNextPage,
                 HasPreviousPage = paginatedResult.HasPreviousPage
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting participants for event {EventId}", body.EventId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "GetRealmEventParticipants",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/get-event-participants",
-                details: new { body.EventId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -323,8 +269,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Deleting participation {ParticipationId}", body.ParticipationId);
 
-        try
-        {
             // First get the record to know the keys for index cleanup
             var data = await _participationHelper.GetRecordAsync(body.ParticipationId.ToString(), cancellationToken);
 
@@ -362,22 +306,6 @@ public partial class RealmHistoryService : IRealmHistoryService
 
             _logger.LogDebug("Deleted participation {ParticipationId}", body.ParticipationId);
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting participation {ParticipationId}", body.ParticipationId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "DeleteRealmParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/delete-participation",
-                details: new { body.ParticipationId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     // ============================================================================
@@ -393,8 +321,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting lore for realm {RealmId}", body.RealmId);
 
-        try
-        {
             var loreData = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
 
             if (loreData == null)
@@ -424,22 +350,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 CreatedAt = TimestampHelper.FromUnixSeconds(loreData.CreatedAtUnix),
                 UpdatedAt = TimestampHelper.FromUnixSeconds(loreData.UpdatedAtUnix)
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting lore for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "GetRealmLore",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/get-lore",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -452,8 +362,6 @@ public partial class RealmHistoryService : IRealmHistoryService
         _logger.LogDebug("Setting lore for realm {RealmId}, replaceExisting={ReplaceExisting}",
             body.RealmId, body.ReplaceExisting);
 
-        try
-        {
             var elementDataList = body.Elements.Select(MapToRealmLoreElementData).ToList();
             var maxElements = _configuration.MaxLoreElements;
 
@@ -556,22 +464,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 result.IsNew ? "created" : "updated", body.RealmId, result.Backstory.Elements.Count);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error setting lore for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "SetRealmLore",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/set-lore",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -584,8 +476,6 @@ public partial class RealmHistoryService : IRealmHistoryService
         _logger.LogDebug("Adding lore element for realm {RealmId}, type={ElementType}, key={Key}",
             body.RealmId, body.Element.ElementType, body.Element.Key);
 
-        try
-        {
             var elementData = MapToRealmLoreElementData(body.Element);
 
             // Validate element count limit (only for truly new elements, not updates)
@@ -658,22 +548,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 result.IsNew ? "created" : "added", body.RealmId, result.Backstory.Elements.Count);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error adding lore element for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "AddRealmLoreElement",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/add-lore-element",
-                details: new { body.RealmId, body.Element.ElementType, body.Element.Key },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -685,8 +559,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Deleting lore for realm {RealmId}", body.RealmId);
 
-        try
-        {
             // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
             var lockResult = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);
 
@@ -714,22 +586,6 @@ public partial class RealmHistoryService : IRealmHistoryService
 
             _logger.LogDebug("Deleted lore for realm {RealmId}", body.RealmId);
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting lore for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "DeleteRealmLore",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/delete-lore",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     // ============================================================================
@@ -745,8 +601,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Deleting all history for realm {RealmId}", body.RealmId);
 
-        try
-        {
             // Get all participations first to unregister their realm references
             var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
                 body.RealmId.ToString(),
@@ -812,22 +666,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 ParticipationsDeleted = participationsDeleted,
                 LoreDeleted = loreDeleted
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting all history for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "DeleteAllRealmHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/delete-all",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -839,8 +677,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Summarizing history for realm {RealmId}", body.RealmId);
 
-        try
-        {
             var keyLorePoints = new List<string>();
             var majorHistoricalEvents = new List<string>();
 
@@ -897,22 +733,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 body.RealmId, keyLorePoints.Count, majorHistoricalEvents.Count);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error summarizing history for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "SummarizeRealmHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/summarize",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -929,8 +749,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting compress data for realm {RealmId}", body.RealmId);
 
-        try
-        {
             // Get participations using helper
             var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
                 body.RealmId.ToString(),
@@ -987,22 +805,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 body.RealmId, participations.Count, response.HasLore);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting compress data for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "GetCompressData",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/get-compress-data",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1018,8 +820,6 @@ public partial class RealmHistoryService : IRealmHistoryService
         var participationsRestored = 0;
         var loreRestored = 0;
 
-        try
-        {
             // Decompress the archive data
             RealmHistoryArchive archiveData;
             try
@@ -1118,22 +918,6 @@ public partial class RealmHistoryService : IRealmHistoryService
                 LoreRestored = loreRestored,
                 Success = true
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error restoring history data from archive for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "RestoreFromArchive",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/restore-from-archive",
-                details: new { body.RealmId, participationsRestored, loreRestored },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     private RealmHistorySummaryResponse GenerateSummariesForArchive(

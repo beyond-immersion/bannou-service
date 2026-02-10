@@ -97,63 +97,45 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Creating encounter type with code {Code}", body.Code);
 
-        try
+        // Check if code is reserved (built-in)
+        if (BuiltInTypes.Any(t => t.Code.Equals(body.Code, StringComparison.OrdinalIgnoreCase)))
         {
-            // Check if code is reserved (built-in)
-            if (BuiltInTypes.Any(t => t.Code.Equals(body.Code, StringComparison.OrdinalIgnoreCase)))
-            {
-                _logger.LogWarning("Cannot create encounter type with reserved code {Code}", body.Code);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
-            var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
-
-            // Check if already exists
-            var existing = await store.GetAsync(key, cancellationToken);
-            if (existing != null)
-            {
-                _logger.LogWarning("Encounter type with code {Code} already exists", body.Code);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var typeId = Guid.NewGuid();
-            var data = new EncounterTypeData
-            {
-                TypeId = typeId,
-                Code = body.Code.ToUpperInvariant(),
-                Name = body.Name,
-                Description = body.Description,
-                IsBuiltIn = false,
-                DefaultEmotionalImpact = body.DefaultEmotionalImpact,
-                SortOrder = body.SortOrder,
-                IsActive = true,
-                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-            };
-
-            await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-
-            // Add to custom type index for enumeration
-            await AddToCustomTypeIndexAsync(body.Code.ToUpperInvariant(), cancellationToken);
-
-            _logger.LogInformation("Created encounter type {Code} with ID {TypeId}", body.Code, typeId);
-            return (StatusCodes.OK, MapToEncounterTypeResponse(data));
+            _logger.LogWarning("Cannot create encounter type with reserved code {Code}", body.Code);
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
+
+        // Check if already exists
+        var existing = await store.GetAsync(key, cancellationToken);
+        if (existing != null)
         {
-            _logger.LogError(ex, "Error creating encounter type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "CreateEncounterType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/create",
-                details: new { body.Code },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Encounter type with code {Code} already exists", body.Code);
+            return (StatusCodes.Conflict, null);
         }
+
+        var typeId = Guid.NewGuid();
+        var data = new EncounterTypeData
+        {
+            TypeId = typeId,
+            Code = body.Code.ToUpperInvariant(),
+            Name = body.Name,
+            Description = body.Description,
+            IsBuiltIn = false,
+            DefaultEmotionalImpact = body.DefaultEmotionalImpact,
+            SortOrder = body.SortOrder,
+            IsActive = true,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+
+        // Add to custom type index for enumeration
+        await AddToCustomTypeIndexAsync(body.Code.ToUpperInvariant(), cancellationToken);
+
+        _logger.LogInformation("Created encounter type {Code} with ID {TypeId}", body.Code, typeId);
+        return (StatusCodes.OK, MapToEncounterTypeResponse(data));
     }
 
     /// <summary>
@@ -163,45 +145,27 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Getting encounter type {Code}", body.Code);
 
-        try
+        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
+        var data = await store.GetAsync(key, cancellationToken);
+
+        if (data == null)
         {
-            var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
-            var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
-            var data = await store.GetAsync(key, cancellationToken);
-
-            if (data == null)
+            // Check if it's a built-in type that needs seeding
+            var builtIn = BuiltInTypes.FirstOrDefault(t => t.Code.Equals(body.Code, StringComparison.OrdinalIgnoreCase));
+            if (builtIn != null)
             {
-                // Check if it's a built-in type that needs seeding
-                var builtIn = BuiltInTypes.FirstOrDefault(t => t.Code.Equals(body.Code, StringComparison.OrdinalIgnoreCase));
-                if (builtIn != null)
-                {
-                    // Auto-seed this built-in type
-                    data = await SeedBuiltInTypeAsync(store, builtIn, cancellationToken);
-                }
+                // Auto-seed this built-in type
+                data = await SeedBuiltInTypeAsync(store, builtIn, cancellationToken);
             }
-
-            if (data == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapToEncounterTypeResponse(data));
         }
-        catch (Exception ex)
+
+        if (data == null)
         {
-            _logger.LogError(ex, "Error getting encounter type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "GetEncounterType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/get",
-                details: new { body.Code },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapToEncounterTypeResponse(data));
     }
 
     /// <summary>
@@ -211,53 +175,35 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Listing encounter types");
 
-        try
+        // Ensure built-in types are seeded
+        await EnsureBuiltInTypesSeededAsync(cancellationToken);
+
+        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var types = new List<EncounterTypeResponse>();
+
+        // Query all types with TYPE_KEY_PREFIX
+        var allKeys = await GetAllTypeKeysAsync(store, cancellationToken);
+        foreach (var key in allKeys)
         {
-            // Ensure built-in types are seeded
-            await EnsureBuiltInTypesSeededAsync(cancellationToken);
+            var data = await store.GetAsync(key, cancellationToken);
+            if (data == null) continue;
 
-            var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
-            var types = new List<EncounterTypeResponse>();
+            // Apply filters
+            if (!body.IncludeInactive && !data.IsActive) continue;
+            if (body.BuiltInOnly && !data.IsBuiltIn) continue;
+            if (body.CustomOnly && data.IsBuiltIn) continue;
 
-            // Query all types with TYPE_KEY_PREFIX
-            var allKeys = await GetAllTypeKeysAsync(store, cancellationToken);
-            foreach (var key in allKeys)
-            {
-                var data = await store.GetAsync(key, cancellationToken);
-                if (data == null) continue;
-
-                // Apply filters
-                if (!body.IncludeInactive && !data.IsActive) continue;
-                if (body.BuiltInOnly && !data.IsBuiltIn) continue;
-                if (body.CustomOnly && data.IsBuiltIn) continue;
-
-                types.Add(MapToEncounterTypeResponse(data));
-            }
-
-            // Sort by sort order
-            types = types.OrderBy(t => t.SortOrder).ThenBy(t => t.Code).ToList();
-
-            return (StatusCodes.OK, new EncounterTypeListResponse
-            {
-                Types = types,
-                TotalCount = types.Count
-            });
+            types.Add(MapToEncounterTypeResponse(data));
         }
-        catch (Exception ex)
+
+        // Sort by sort order
+        types = types.OrderBy(t => t.SortOrder).ThenBy(t => t.Code).ToList();
+
+        return (StatusCodes.OK, new EncounterTypeListResponse
         {
-            _logger.LogError(ex, "Error listing encounter types");
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "ListEncounterTypes",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Types = types,
+            TotalCount = types.Count
+        });
     }
 
     /// <summary>
@@ -267,53 +213,35 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Updating encounter type {Code}", body.Code);
 
-        try
+        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
+        var data = await store.GetAsync(key, cancellationToken);
+
+        if (data == null)
         {
-            var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
-            var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
-            var data = await store.GetAsync(key, cancellationToken);
-
-            if (data == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Built-in types can only have description and defaultEmotionalImpact updated
-            if (data.IsBuiltIn)
-            {
-                if (body.Name != null || body.SortOrder != null)
-                {
-                    _logger.LogWarning("Cannot update name or sortOrder for built-in type {Code}", body.Code);
-                    return (StatusCodes.BadRequest, null);
-                }
-            }
-
-            // Apply updates
-            if (body.Name != null) data.Name = body.Name;
-            if (body.Description != null) data.Description = body.Description;
-            if (body.DefaultEmotionalImpact != null) data.DefaultEmotionalImpact = body.DefaultEmotionalImpact.Value;
-            if (body.SortOrder != null) data.SortOrder = body.SortOrder.Value;
-
-            await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Updated encounter type {Code}", body.Code);
-            return (StatusCodes.OK, MapToEncounterTypeResponse(data));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Built-in types can only have description and defaultEmotionalImpact updated
+        if (data.IsBuiltIn)
         {
-            _logger.LogError(ex, "Error updating encounter type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "UpdateEncounterType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/update",
-                details: new { body.Code },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            if (body.Name != null || body.SortOrder != null)
+            {
+                _logger.LogWarning("Cannot update name or sortOrder for built-in type {Code}", body.Code);
+                return (StatusCodes.BadRequest, null);
+            }
         }
+
+        // Apply updates
+        if (body.Name != null) data.Name = body.Name;
+        if (body.Description != null) data.Description = body.Description;
+        if (body.DefaultEmotionalImpact != null) data.DefaultEmotionalImpact = body.DefaultEmotionalImpact.Value;
+        if (body.SortOrder != null) data.SortOrder = body.SortOrder.Value;
+
+        await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Updated encounter type {Code}", body.Code);
+        return (StatusCodes.OK, MapToEncounterTypeResponse(data));
     }
 
     /// <summary>
@@ -323,56 +251,38 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Deleting encounter type {Code}", body.Code);
 
-        try
+        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
+        var data = await store.GetAsync(key, cancellationToken);
+
+        if (data == null)
         {
-            var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
-            var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
-            var data = await store.GetAsync(key, cancellationToken);
-
-            if (data == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            if (data.IsBuiltIn)
-            {
-                _logger.LogWarning("Cannot delete built-in type {Code}", body.Code);
-                return StatusCodes.BadRequest;
-            }
-
-            // Check if type is in use by any encounters
-            var encounterCount = await GetTypeEncounterCountAsync(body.Code.ToUpperInvariant(), cancellationToken);
-            if (encounterCount > 0)
-            {
-                _logger.LogWarning("Cannot delete encounter type {Code}: {Count} encounters using it", body.Code, encounterCount);
-                return StatusCodes.Conflict;
-            }
-
-            // Soft-delete by marking inactive
-            data.IsActive = false;
-            await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-
-            // Remove from custom type index
-            await RemoveFromCustomTypeIndexAsync(body.Code.ToUpperInvariant(), cancellationToken);
-
-            _logger.LogInformation("Deleted (deactivated) encounter type {Code}", body.Code);
-            return StatusCodes.OK;
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
+
+        if (data.IsBuiltIn)
         {
-            _logger.LogError(ex, "Error deleting encounter type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "DeleteEncounterType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/delete",
-                details: new { body.Code },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            _logger.LogWarning("Cannot delete built-in type {Code}", body.Code);
+            return StatusCodes.BadRequest;
         }
+
+        // Check if type is in use by any encounters
+        var encounterCount = await GetTypeEncounterCountAsync(body.Code.ToUpperInvariant(), cancellationToken);
+        if (encounterCount > 0)
+        {
+            _logger.LogWarning("Cannot delete encounter type {Code}: {Count} encounters using it", body.Code, encounterCount);
+            return StatusCodes.Conflict;
+        }
+
+        // Soft-delete by marking inactive
+        data.IsActive = false;
+        await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+
+        // Remove from custom type index
+        await RemoveFromCustomTypeIndexAsync(body.Code.ToUpperInvariant(), cancellationToken);
+
+        _logger.LogInformation("Deleted (deactivated) encounter type {Code}", body.Code);
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -382,65 +292,47 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Seeding encounter types, forceReset={ForceReset}", body.ForceReset);
 
-        try
+        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var created = 0;
+        var updated = 0;
+        var skipped = 0;
+
+        foreach (var builtIn in BuiltInTypes)
         {
-            var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
-            var created = 0;
-            var updated = 0;
-            var skipped = 0;
+            var key = $"{TYPE_KEY_PREFIX}{builtIn.Code}";
+            var existing = await store.GetAsync(key, cancellationToken);
 
-            foreach (var builtIn in BuiltInTypes)
+            if (existing == null)
             {
-                var key = $"{TYPE_KEY_PREFIX}{builtIn.Code}";
-                var existing = await store.GetAsync(key, cancellationToken);
-
-                if (existing == null)
-                {
-                    await SeedBuiltInTypeAsync(store, builtIn, cancellationToken);
-                    created++;
-                }
-                else if (body.ForceReset)
-                {
-                    // Reset to defaults
-                    existing.Name = builtIn.Name;
-                    existing.Description = builtIn.Description;
-                    existing.DefaultEmotionalImpact = builtIn.DefaultEmotionalImpact;
-                    existing.SortOrder = builtIn.SortOrder;
-                    existing.IsActive = true;
-                    await store.SaveAsync(key, existing, cancellationToken: cancellationToken);
-                    updated++;
-                }
-                else
-                {
-                    skipped++;
-                }
+                await SeedBuiltInTypeAsync(store, builtIn, cancellationToken);
+                created++;
             }
-
-            _logger.LogInformation("Seed complete: created={Created}, updated={Updated}, skipped={Skipped}",
-                created, updated, skipped);
-
-            return (StatusCodes.OK, new SeedEncounterTypesResponse
+            else if (body.ForceReset)
             {
-                Created = created,
-                Updated = updated,
-                Skipped = skipped
-            });
+                // Reset to defaults
+                existing.Name = builtIn.Name;
+                existing.Description = builtIn.Description;
+                existing.DefaultEmotionalImpact = builtIn.DefaultEmotionalImpact;
+                existing.SortOrder = builtIn.SortOrder;
+                existing.IsActive = true;
+                await store.SaveAsync(key, existing, cancellationToken: cancellationToken);
+                updated++;
+            }
+            else
+            {
+                skipped++;
+            }
         }
-        catch (Exception ex)
+
+        _logger.LogInformation("Seed complete: created={Created}, updated={Updated}, skipped={Skipped}",
+            created, updated, skipped);
+
+        return (StatusCodes.OK, new SeedEncounterTypesResponse
         {
-            _logger.LogError(ex, "Error seeding encounter types");
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "SeedEncounterTypes",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/seed",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Created = created,
+            Updated = updated,
+            Skipped = skipped
+        });
     }
 
     // ============================================================================
@@ -455,195 +347,177 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogInformation("Recording encounter of type {Type} between {Count} participants",
             body.EncounterTypeCode, body.ParticipantIds.Count);
 
-        try
+        // Validate participant count bounds
+        if (body.ParticipantIds.Count < 2)
         {
-            // Validate participant count bounds
-            if (body.ParticipantIds.Count < 2)
+            _logger.LogWarning("Encounter requires at least 2 participants");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (body.ParticipantIds.Count > _configuration.MaxParticipantsPerEncounter)
+        {
+            _logger.LogWarning("Encounter has {Count} participants, exceeding limit of {Max}",
+                body.ParticipantIds.Count, _configuration.MaxParticipantsPerEncounter);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Validate encounter type exists
+        var typeStore = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var typeKey = $"{TYPE_KEY_PREFIX}{body.EncounterTypeCode.ToUpperInvariant()}";
+        var typeData = await typeStore.GetAsync(typeKey, cancellationToken);
+
+        if (typeData == null)
+        {
+            // Try to auto-seed if it's a built-in type
+            var builtIn = BuiltInTypes.FirstOrDefault(t => t.Code.Equals(body.EncounterTypeCode, StringComparison.OrdinalIgnoreCase));
+            if (builtIn != null)
             {
-                _logger.LogWarning("Encounter requires at least 2 participants");
+                typeData = await SeedBuiltInTypeAsync(typeStore, builtIn, cancellationToken);
+            }
+            else
+            {
+                _logger.LogWarning("Encounter type {Type} not found", body.EncounterTypeCode);
                 return (StatusCodes.BadRequest, null);
             }
+        }
 
-            if (body.ParticipantIds.Count > _configuration.MaxParticipantsPerEncounter)
+        if (!typeData.IsActive)
+        {
+            _logger.LogWarning("Encounter type {Type} is inactive", body.EncounterTypeCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var participantIds = body.ParticipantIds.Distinct().ToList();
+
+        // Check for duplicate encounter (same participants, type, timestamp within tolerance)
+        if (await IsDuplicateEncounterAsync(participantIds, body.EncounterTypeCode.ToUpperInvariant(), body.Timestamp, cancellationToken))
+        {
+            _logger.LogWarning("Duplicate encounter detected for type {Type} with {Count} participants",
+                body.EncounterTypeCode, participantIds.Count);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Validate all participant characters exist
+        if (!await ValidateCharactersExistAsync(participantIds, cancellationToken))
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var encounterId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Create encounter record
+        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var encounterData = new EncounterData
+        {
+            EncounterId = encounterId,
+            Timestamp = body.Timestamp.ToUnixTimeSeconds(),
+            RealmId = body.RealmId,
+            LocationId = body.LocationId,
+            EncounterTypeCode = body.EncounterTypeCode.ToUpperInvariant(),
+            Context = body.Context,
+            Outcome = body.Outcome,
+            ParticipantIds = participantIds,
+            Metadata = body.Metadata,
+            CreatedAtUnix = now.ToUnixTimeSeconds()
+        };
+
+        await encounterStore.SaveAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", encounterData, cancellationToken: cancellationToken);
+
+        // Add to type-encounter index for type-in-use validation
+        await AddToTypeEncounterIndexAsync(body.EncounterTypeCode.ToUpperInvariant(), encounterId, cancellationToken);
+
+        // Create perspectives for each participant
+        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectives = new List<EncounterPerspectiveModel>();
+
+        var providedPerspectives = body.Perspectives?.ToDictionary(p => p.CharacterId) ?? new Dictionary<Guid, PerspectiveInput>();
+        var defaultEmotionalImpact = typeData.DefaultEmotionalImpact
+            ?? GetDefaultEmotionalImpactForOutcome(body.Outcome);
+
+        foreach (var participantId in participantIds)
+        {
+            var perspectiveId = Guid.NewGuid();
+            var hasProvidedPerspective = providedPerspectives.TryGetValue(participantId, out var provided);
+
+            var perspectiveData = new PerspectiveData
             {
-                _logger.LogWarning("Encounter has {Count} participants, exceeding limit of {Max}",
-                    body.ParticipantIds.Count, _configuration.MaxParticipantsPerEncounter);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate encounter type exists
-            var typeStore = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
-            var typeKey = $"{TYPE_KEY_PREFIX}{body.EncounterTypeCode.ToUpperInvariant()}";
-            var typeData = await typeStore.GetAsync(typeKey, cancellationToken);
-
-            if (typeData == null)
-            {
-                // Try to auto-seed if it's a built-in type
-                var builtIn = BuiltInTypes.FirstOrDefault(t => t.Code.Equals(body.EncounterTypeCode, StringComparison.OrdinalIgnoreCase));
-                if (builtIn != null)
-                {
-                    typeData = await SeedBuiltInTypeAsync(typeStore, builtIn, cancellationToken);
-                }
-                else
-                {
-                    _logger.LogWarning("Encounter type {Type} not found", body.EncounterTypeCode);
-                    return (StatusCodes.BadRequest, null);
-                }
-            }
-
-            if (!typeData.IsActive)
-            {
-                _logger.LogWarning("Encounter type {Type} is inactive", body.EncounterTypeCode);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var participantIds = body.ParticipantIds.Distinct().ToList();
-
-            // Check for duplicate encounter (same participants, type, timestamp within tolerance)
-            if (await IsDuplicateEncounterAsync(participantIds, body.EncounterTypeCode.ToUpperInvariant(), body.Timestamp, cancellationToken))
-            {
-                _logger.LogWarning("Duplicate encounter detected for type {Type} with {Count} participants",
-                    body.EncounterTypeCode, participantIds.Count);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Validate all participant characters exist
-            if (!await ValidateCharactersExistAsync(participantIds, cancellationToken))
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var encounterId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            // Create encounter record
-            var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
-            var encounterData = new EncounterData
-            {
+                PerspectiveId = perspectiveId,
                 EncounterId = encounterId,
-                Timestamp = body.Timestamp.ToUnixTimeSeconds(),
-                RealmId = body.RealmId,
-                LocationId = body.LocationId,
-                EncounterTypeCode = body.EncounterTypeCode.ToUpperInvariant(),
-                Context = body.Context,
-                Outcome = body.Outcome,
-                ParticipantIds = participantIds,
-                Metadata = body.Metadata,
-                CreatedAtUnix = now.ToUnixTimeSeconds()
+                CharacterId = participantId,
+                EmotionalImpact = hasProvidedPerspective && provided != null
+                    ? provided.EmotionalImpact
+                    : defaultEmotionalImpact,
+                SentimentShift = hasProvidedPerspective ? provided?.SentimentShift : GetDefaultSentimentShiftForOutcome(body.Outcome),
+                MemoryStrength = (float)(hasProvidedPerspective ? provided?.MemoryStrength ?? _configuration.DefaultMemoryStrength : _configuration.DefaultMemoryStrength),
+                RememberedAs = hasProvidedPerspective ? provided?.RememberedAs : null,
+                LastDecayedAtUnix = null,
+                CreatedAtUnix = now.ToUnixTimeSeconds(),
+                UpdatedAtUnix = null
             };
 
-            await encounterStore.SaveAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", encounterData, cancellationToken: cancellationToken);
+            await perspectiveStore.SaveAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}", perspectiveData, cancellationToken: cancellationToken);
 
-            // Add to type-encounter index for type-in-use validation
-            await AddToTypeEncounterIndexAsync(body.EncounterTypeCode.ToUpperInvariant(), encounterId, cancellationToken);
+            // Update character index
+            await AddToCharacterIndexAsync(participantId, perspectiveId, cancellationToken);
 
-            // Create perspectives for each participant
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-            var perspectives = new List<EncounterPerspectiveModel>();
+            // Update encounter-perspective index for O(1) perspective lookup
+            await AddToEncounterPerspectiveIndexAsync(encounterId, perspectiveId, cancellationToken);
 
-            var providedPerspectives = body.Perspectives?.ToDictionary(p => p.CharacterId) ?? new Dictionary<Guid, PerspectiveInput>();
-            var defaultEmotionalImpact = typeData.DefaultEmotionalImpact
-                ?? GetDefaultEmotionalImpactForOutcome(body.Outcome);
-
-            foreach (var participantId in participantIds)
-            {
-                var perspectiveId = Guid.NewGuid();
-                var hasProvidedPerspective = providedPerspectives.TryGetValue(participantId, out var provided);
-
-                var perspectiveData = new PerspectiveData
-                {
-                    PerspectiveId = perspectiveId,
-                    EncounterId = encounterId,
-                    CharacterId = participantId,
-                    EmotionalImpact = hasProvidedPerspective && provided != null
-                        ? provided.EmotionalImpact
-                        : defaultEmotionalImpact,
-                    SentimentShift = hasProvidedPerspective ? provided?.SentimentShift : GetDefaultSentimentShiftForOutcome(body.Outcome),
-                    MemoryStrength = (float)(hasProvidedPerspective ? provided?.MemoryStrength ?? _configuration.DefaultMemoryStrength : _configuration.DefaultMemoryStrength),
-                    RememberedAs = hasProvidedPerspective ? provided?.RememberedAs : null,
-                    LastDecayedAtUnix = null,
-                    CreatedAtUnix = now.ToUnixTimeSeconds(),
-                    UpdatedAtUnix = null
-                };
-
-                await perspectiveStore.SaveAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}", perspectiveData, cancellationToken: cancellationToken);
-
-                // Update character index
-                await AddToCharacterIndexAsync(participantId, perspectiveId, cancellationToken);
-
-                // Update encounter-perspective index for O(1) perspective lookup
-                await AddToEncounterPerspectiveIndexAsync(encounterId, perspectiveId, cancellationToken);
-
-                perspectives.Add(MapToPerspectiveModel(perspectiveData));
-            }
-
-            // Update pair indexes
-            await UpdatePairIndexesAsync(participantIds, encounterId, cancellationToken);
-
-            // Update location index if location provided
-            if (body.LocationId.HasValue)
-            {
-                await AddToLocationIndexAsync(body.LocationId.Value, encounterId, cancellationToken);
-            }
-
-            // Enforce encounter limits by pruning oldest encounters
-            foreach (var participantId in participantIds)
-            {
-                await PruneCharacterEncountersIfNeededAsync(participantId, cancellationToken);
-            }
-            await PrunePairEncountersIfNeededAsync(participantIds, cancellationToken);
-
-            // Publish event - convert enum to string at API boundary for event schema
-            await _messageBus.TryPublishAsync(ENCOUNTER_RECORDED_TOPIC, new EncounterRecordedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                EncounterId = encounterId,
-                EncounterTypeCode = body.EncounterTypeCode.ToUpperInvariant(),
-                Outcome = body.Outcome.ToString(),
-                RealmId = body.RealmId,
-                LocationId = body.LocationId,
-                ParticipantIds = participantIds,
-                Context = body.Context,
-                EncounterTimestamp = body.Timestamp
-            }, cancellationToken: cancellationToken);
-
-            // Register character references with lib-resource for cleanup coordination
-            foreach (var participantId in participantIds)
-            {
-                await RegisterCharacterReferenceAsync(encounterId.ToString(), participantId, cancellationToken);
-            }
-
-            // Invalidate encounter cache for all participants so Actor sees fresh data
-            foreach (var participantId in participantIds)
-            {
-                _encounterDataCache.Invalidate(participantId);
-            }
-
-            _logger.LogInformation("Recorded encounter {EncounterId} with {Count} perspectives",
-                encounterId, perspectives.Count);
-
-            return (StatusCodes.OK, new EncounterResponse
-            {
-                Encounter = MapToEncounterModel(encounterData),
-                Perspectives = perspectives
-            });
+            perspectives.Add(MapToPerspectiveModel(perspectiveData));
         }
-        catch (Exception ex)
+
+        // Update pair indexes
+        await UpdatePairIndexesAsync(participantIds, encounterId, cancellationToken);
+
+        // Update location index if location provided
+        if (body.LocationId.HasValue)
         {
-            _logger.LogError(ex, "Error recording encounter");
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "RecordEncounter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/record",
-                details: new { body.EncounterTypeCode, ParticipantCount = body.ParticipantIds.Count },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            await AddToLocationIndexAsync(body.LocationId.Value, encounterId, cancellationToken);
         }
+
+        // Enforce encounter limits by pruning oldest encounters
+        foreach (var participantId in participantIds)
+        {
+            await PruneCharacterEncountersIfNeededAsync(participantId, cancellationToken);
+        }
+        await PrunePairEncountersIfNeededAsync(participantIds, cancellationToken);
+
+        // Publish event - convert enum to string at API boundary for event schema
+        await _messageBus.TryPublishAsync(ENCOUNTER_RECORDED_TOPIC, new EncounterRecordedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            EncounterId = encounterId,
+            EncounterTypeCode = body.EncounterTypeCode.ToUpperInvariant(),
+            Outcome = body.Outcome.ToString(),
+            RealmId = body.RealmId,
+            LocationId = body.LocationId,
+            ParticipantIds = participantIds,
+            Context = body.Context,
+            EncounterTimestamp = body.Timestamp
+        }, cancellationToken: cancellationToken);
+
+        // Register character references with lib-resource for cleanup coordination
+        foreach (var participantId in participantIds)
+        {
+            await RegisterCharacterReferenceAsync(encounterId.ToString(), participantId, cancellationToken);
+        }
+
+        // Invalidate encounter cache for all participants so Actor sees fresh data
+        foreach (var participantId in participantIds)
+        {
+            _encounterDataCache.Invalidate(participantId);
+        }
+
+        _logger.LogInformation("Recorded encounter {EncounterId} with {Count} perspectives",
+            encounterId, perspectives.Count);
+
+        return (StatusCodes.OK, new EncounterResponse
+        {
+            Encounter = MapToEncounterModel(encounterData),
+            Perspectives = perspectives
+        });
     }
 
     // ============================================================================
@@ -657,128 +531,110 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Querying encounters for character {CharacterId}", body.CharacterId);
 
-        try
+        var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
+        var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
+
+        if (perspectiveIds.Count == 0)
         {
-            var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
-            var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
-
-            if (perspectiveIds.Count == 0)
-            {
-                return (StatusCodes.OK, new EncounterListResponse
-                {
-                    Encounters = new List<EncounterResponse>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = pageSize,
-                    HasNextPage = false,
-                    HasPreviousPage = body.Page > 1
-                });
-            }
-
-            // Bulk load all perspectives with parallel decay
-            var allPerspectives = await BulkLoadPerspectivesWithDecayAsync(perspectiveIds, cancellationToken);
-
-            // Filter by minimum memory strength
-            var filteredPerspectives = body.MinimumMemoryStrength.HasValue
-                ? allPerspectives.Where(p => p.MemoryStrength >= body.MinimumMemoryStrength.Value).ToList()
-                : allPerspectives;
-
-            if (filteredPerspectives.Count == 0)
-            {
-                return (StatusCodes.OK, new EncounterListResponse
-                {
-                    Encounters = new List<EncounterResponse>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = pageSize,
-                    HasNextPage = false,
-                    HasPreviousPage = body.Page > 1
-                });
-            }
-
-            // Collect unique encounter IDs
-            var encounterIds = filteredPerspectives.Select(p => p.EncounterId).Distinct().ToList();
-
-            // Bulk load all encounters
-            var encountersDict = await BulkLoadEncountersAsync(encounterIds, cancellationToken);
-
-            // Apply encounter-level filters
-            var filteredEncounterIds = new List<Guid>();
-
-            foreach (var encounterId in encounterIds)
-            {
-                if (!encountersDict.TryGetValue(encounterId, out var encounter)) continue;
-
-                // Apply filters
-                if (!string.IsNullOrEmpty(body.EncounterTypeCode) &&
-                    !encounter.EncounterTypeCode.Equals(body.EncounterTypeCode, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (body.Outcome.HasValue && encounter.Outcome != body.Outcome.Value)
-                    continue;
-
-                var encounterTimestamp = DateTimeOffset.FromUnixTimeSeconds(encounter.Timestamp);
-                if (body.FromTimestamp.HasValue && encounterTimestamp < body.FromTimestamp.Value)
-                    continue;
-                if (body.ToTimestamp.HasValue && encounterTimestamp > body.ToTimestamp.Value)
-                    continue;
-
-                filteredEncounterIds.Add(encounterId);
-            }
-
-            // Bulk load all perspectives for filtered encounters (eliminates N+1 pattern)
-            var allPerspectivesDict = await BulkLoadAllEncounterPerspectivesAsync(filteredEncounterIds, cancellationToken);
-
-            // Build response
-            var encounters = new List<EncounterResponse>();
-            foreach (var encounterId in filteredEncounterIds)
-            {
-                if (!encountersDict.TryGetValue(encounterId, out var encounter)) continue;
-
-                var encounterPerspectives = allPerspectivesDict.TryGetValue(encounterId, out var perspectives)
-                    ? perspectives
-                    : new List<EncounterPerspectiveModel>();
-
-                encounters.Add(new EncounterResponse
-                {
-                    Encounter = MapToEncounterModel(encounter),
-                    Perspectives = encounterPerspectives
-                });
-            }
-
-            // Sort by timestamp descending
-            encounters = encounters.OrderByDescending(e => e.Encounter.Timestamp).ToList();
-
-            // Paginate
-            var page = body.Page;
-            var totalCount = encounters.Count;
-            var paged = encounters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
             return (StatusCodes.OK, new EncounterListResponse
             {
-                Encounters = paged,
-                TotalCount = totalCount,
-                Page = page,
+                Encounters = new List<EncounterResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
                 PageSize = pageSize,
-                HasNextPage = page * pageSize < totalCount,
-                HasPreviousPage = page > 1
+                HasNextPage = false,
+                HasPreviousPage = body.Page > 1
             });
         }
-        catch (Exception ex)
+
+        // Bulk load all perspectives with parallel decay
+        var allPerspectives = await BulkLoadPerspectivesWithDecayAsync(perspectiveIds, cancellationToken);
+
+        // Filter by minimum memory strength
+        var filteredPerspectives = body.MinimumMemoryStrength.HasValue
+            ? allPerspectives.Where(p => p.MemoryStrength >= body.MinimumMemoryStrength.Value).ToList()
+            : allPerspectives;
+
+        if (filteredPerspectives.Count == 0)
         {
-            _logger.LogError(ex, "Error querying encounters for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "QueryByCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/query/by-character",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.OK, new EncounterListResponse
+            {
+                Encounters = new List<EncounterResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
+                PageSize = pageSize,
+                HasNextPage = false,
+                HasPreviousPage = body.Page > 1
+            });
         }
+
+        // Collect unique encounter IDs
+        var encounterIds = filteredPerspectives.Select(p => p.EncounterId).Distinct().ToList();
+
+        // Bulk load all encounters
+        var encountersDict = await BulkLoadEncountersAsync(encounterIds, cancellationToken);
+
+        // Apply encounter-level filters
+        var filteredEncounterIds = new List<Guid>();
+
+        foreach (var encounterId in encounterIds)
+        {
+            if (!encountersDict.TryGetValue(encounterId, out var encounter)) continue;
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(body.EncounterTypeCode) &&
+                !encounter.EncounterTypeCode.Equals(body.EncounterTypeCode, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (body.Outcome.HasValue && encounter.Outcome != body.Outcome.Value)
+                continue;
+
+            var encounterTimestamp = DateTimeOffset.FromUnixTimeSeconds(encounter.Timestamp);
+            if (body.FromTimestamp.HasValue && encounterTimestamp < body.FromTimestamp.Value)
+                continue;
+            if (body.ToTimestamp.HasValue && encounterTimestamp > body.ToTimestamp.Value)
+                continue;
+
+            filteredEncounterIds.Add(encounterId);
+        }
+
+        // Bulk load all perspectives for filtered encounters (eliminates N+1 pattern)
+        var allPerspectivesDict = await BulkLoadAllEncounterPerspectivesAsync(filteredEncounterIds, cancellationToken);
+
+        // Build response
+        var encounters = new List<EncounterResponse>();
+        foreach (var encounterId in filteredEncounterIds)
+        {
+            if (!encountersDict.TryGetValue(encounterId, out var encounter)) continue;
+
+            var encounterPerspectives = allPerspectivesDict.TryGetValue(encounterId, out var perspectives)
+                ? perspectives
+                : new List<EncounterPerspectiveModel>();
+
+            encounters.Add(new EncounterResponse
+            {
+                Encounter = MapToEncounterModel(encounter),
+                Perspectives = encounterPerspectives
+            });
+        }
+
+        // Sort by timestamp descending
+        encounters = encounters.OrderByDescending(e => e.Encounter.Timestamp).ToList();
+
+        // Paginate
+        var page = body.Page;
+        var totalCount = encounters.Count;
+        var paged = encounters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+        return (StatusCodes.OK, new EncounterListResponse
+        {
+            Encounters = paged,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = page * pageSize < totalCount,
+            HasPreviousPage = page > 1
+        });
     }
 
     /// <summary>
@@ -788,10 +644,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Querying encounters between {CharA} and {CharB}", body.CharacterIdA, body.CharacterIdB);
 
-        try
-        {
-            var encounterIds = await GetPairEncounterIdsAsync(body.CharacterIdA, body.CharacterIdB, cancellationToken);
-            var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
+        var encounterIds = await GetPairEncounterIdsAsync(body.CharacterIdA, body.CharacterIdB, cancellationToken);
+        var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
 
             if (encounterIds.Count == 0)
             {
@@ -869,22 +723,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 HasNextPage = page * pageSize < totalCount,
                 HasPreviousPage = page > 1
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying encounters between {CharA} and {CharB}", body.CharacterIdA, body.CharacterIdB);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "QueryBetween",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/query/between",
-                details: new { body.CharacterIdA, body.CharacterIdB },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -894,10 +732,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Querying encounters at location {LocationId}", body.LocationId);
 
-        try
-        {
-            var encounterIds = await GetLocationEncounterIdsAsync(body.LocationId, cancellationToken);
-            var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
+        var encounterIds = await GetLocationEncounterIdsAsync(body.LocationId, cancellationToken);
+        var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
 
             if (encounterIds.Count == 0)
             {
@@ -970,22 +806,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 HasNextPage = page * pageSize < totalCount,
                 HasPreviousPage = page > 1
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying encounters at location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "QueryByLocation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/query/by-location",
-                details: new { body.LocationId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -995,31 +815,13 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Checking if {CharA} has met {CharB}", body.CharacterIdA, body.CharacterIdB);
 
-        try
-        {
-            var encounterIds = await GetPairEncounterIdsAsync(body.CharacterIdA, body.CharacterIdB, cancellationToken);
+        var encounterIds = await GetPairEncounterIdsAsync(body.CharacterIdA, body.CharacterIdB, cancellationToken);
 
-            return (StatusCodes.OK, new HasMetResponse
-            {
-                HasMet = encounterIds.Count > 0,
-                EncounterCount = encounterIds.Count
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new HasMetResponse
         {
-            _logger.LogError(ex, "Error checking if {CharA} has met {CharB}", body.CharacterIdA, body.CharacterIdB);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "HasMet",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/has-met",
-                details: new { body.CharacterIdA, body.CharacterIdB },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            HasMet = encounterIds.Count > 0,
+            EncounterCount = encounterIds.Count
+        });
     }
 
     /// <summary>
@@ -1029,11 +831,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Getting sentiment of {CharacterId} toward {TargetId}", body.CharacterId, body.TargetCharacterId);
 
-        try
-        {
-            var encounterIds = await GetPairEncounterIdsAsync(body.CharacterId, body.TargetCharacterId, cancellationToken);
+        var encounterIds = await GetPairEncounterIdsAsync(body.CharacterId, body.TargetCharacterId, cancellationToken);
 
-            if (encounterIds.Count == 0)
+        if (encounterIds.Count == 0)
             {
                 return (StatusCodes.OK, new SentimentResponse
                 {
@@ -1088,23 +888,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 EncounterCount = encounterIds.Count,
                 DominantEmotion = dominantEmotion
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting sentiment for {CharacterId} toward {TargetId}",
-                body.CharacterId, body.TargetCharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "GetSentiment",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/get-sentiment",
-                details: new { body.CharacterId, body.TargetCharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1115,9 +898,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogDebug("Batch getting sentiment for {CharacterId} toward {Count} targets",
             body.CharacterId, body.TargetCharacterIds.Count);
 
-        try
-        {
-            if (body.TargetCharacterIds.Count > _configuration.MaxBatchSize)
+        if (body.TargetCharacterIds.Count > _configuration.MaxBatchSize)
             {
                 _logger.LogWarning("Batch size {Size} exceeds maximum {Max}",
                     body.TargetCharacterIds.Count, _configuration.MaxBatchSize);
@@ -1148,22 +929,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 CharacterId = body.CharacterId,
                 Sentiments = sentiments
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error batch getting sentiments for {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "BatchGetSentiment",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/batch-get",
-                details: new { body.CharacterId, TargetCount = body.TargetCharacterIds.Count },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -1178,39 +943,20 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogDebug("Getting perspective of {CharacterId} on encounter {EncounterId}",
             body.CharacterId, body.EncounterId);
 
-        try
+        var perspective = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
+        if (perspective == null)
         {
-            var perspective = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
-            if (perspective == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Apply lazy decay
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-            perspective = await ApplyLazyDecayAsync(perspectiveStore, perspective, cancellationToken);
-
-            return (StatusCodes.OK, new PerspectiveResponse
-            {
-                Perspective = MapToPerspectiveModel(perspective)
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Apply lazy decay
+        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        perspective = await ApplyLazyDecayAsync(perspectiveStore, perspective, cancellationToken);
+
+        return (StatusCodes.OK, new PerspectiveResponse
         {
-            _logger.LogError(ex, "Error getting perspective for {CharacterId} on {EncounterId}",
-                body.CharacterId, body.EncounterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "GetPerspective",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/get-perspective",
-                details: new { body.CharacterId, body.EncounterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Perspective = MapToPerspectiveModel(perspective)
+        });
     }
 
     /// <summary>
@@ -1221,79 +967,60 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogInformation("Updating perspective of {CharacterId} on encounter {EncounterId}",
             body.CharacterId, body.EncounterId);
 
-        try
+        var found = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
+        if (found == null)
         {
-            var found = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
-            if (found == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Re-load with ETag for concurrency safety
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-            var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{found.PerspectiveId}";
-            var (perspective, etag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
-            if (perspective == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var previousEmotion = perspective.EmotionalImpact;
-            var previousSentiment = perspective.SentimentShift;
-
-            // Apply updates
-            if (body.EmotionalImpact.HasValue) perspective.EmotionalImpact = body.EmotionalImpact.Value;
-            if (body.SentimentShift.HasValue) perspective.SentimentShift = body.SentimentShift.Value;
-            if (body.RememberedAs != null) perspective.RememberedAs = body.RememberedAs;
-            perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-            var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for perspective {PerspectiveId}", found.PerspectiveId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Publish event - convert enum to string at API boundary for event schema
-            await _messageBus.TryPublishAsync(ENCOUNTER_PERSPECTIVE_UPDATED_TOPIC, new EncounterPerspectiveUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                EncounterId = body.EncounterId,
-                CharacterId = body.CharacterId,
-                PerspectiveId = perspective.PerspectiveId,
-                PreviousEmotionalImpact = previousEmotion,
-                NewEmotionalImpact = body.EmotionalImpact,
-                PreviousSentimentShift = previousSentiment,
-                NewSentimentShift = body.SentimentShift
-            }, cancellationToken: cancellationToken);
-
-            // Invalidate encounter cache for the affected character
-            _encounterDataCache.Invalidate(body.CharacterId);
-
-            _logger.LogInformation("Updated perspective {PerspectiveId}", perspective.PerspectiveId);
-
-            return (StatusCodes.OK, new PerspectiveResponse
-            {
-                Perspective = MapToPerspectiveModel(perspective)
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Re-load with ETag for concurrency safety
+        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{found.PerspectiveId}";
+        var (perspective, etag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
+        if (perspective == null)
         {
-            _logger.LogError(ex, "Error updating perspective for {CharacterId} on {EncounterId}",
-                body.CharacterId, body.EncounterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "UpdatePerspective",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/update-perspective",
-                details: new { body.CharacterId, body.EncounterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        var previousEmotion = perspective.EmotionalImpact;
+        var previousSentiment = perspective.SentimentShift;
+
+        // Apply updates
+        if (body.EmotionalImpact.HasValue) perspective.EmotionalImpact = body.EmotionalImpact.Value;
+        if (body.SentimentShift.HasValue) perspective.SentimentShift = body.SentimentShift.Value;
+        if (body.RememberedAs != null) perspective.RememberedAs = body.RememberedAs;
+        perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for perspective {PerspectiveId}", found.PerspectiveId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Publish event - convert enum to string at API boundary for event schema
+        await _messageBus.TryPublishAsync(ENCOUNTER_PERSPECTIVE_UPDATED_TOPIC, new EncounterPerspectiveUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EncounterId = body.EncounterId,
+            CharacterId = body.CharacterId,
+            PerspectiveId = perspective.PerspectiveId,
+            PreviousEmotionalImpact = previousEmotion,
+            NewEmotionalImpact = body.EmotionalImpact,
+            PreviousSentimentShift = previousSentiment,
+            NewSentimentShift = body.SentimentShift
+        }, cancellationToken: cancellationToken);
+
+        // Invalidate encounter cache for the affected character
+        _encounterDataCache.Invalidate(body.CharacterId);
+
+        _logger.LogInformation("Updated perspective {PerspectiveId}", perspective.PerspectiveId);
+
+        return (StatusCodes.OK, new PerspectiveResponse
+        {
+            Perspective = MapToPerspectiveModel(perspective)
+        });
     }
 
     /// <summary>
@@ -1304,74 +1031,55 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogDebug("Refreshing memory of {CharacterId} for encounter {EncounterId}",
             body.CharacterId, body.EncounterId);
 
-        try
+        var found = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
+        if (found == null)
         {
-            var found = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
-            if (found == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Re-load with ETag for concurrency safety
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-            var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{found.PerspectiveId}";
-            var (perspective, etag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
-            if (perspective == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var previousStrength = perspective.MemoryStrength;
-            var boost = body.StrengthBoost ?? (float)_configuration.MemoryRefreshBoost;
-            perspective.MemoryStrength = Math.Clamp(perspective.MemoryStrength + boost, 0f, 1f);
-            perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-            var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for perspective {PerspectiveId}", found.PerspectiveId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Publish event
-            await _messageBus.TryPublishAsync(ENCOUNTER_MEMORY_REFRESHED_TOPIC, new EncounterMemoryRefreshedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                EncounterId = body.EncounterId,
-                CharacterId = body.CharacterId,
-                PerspectiveId = perspective.PerspectiveId,
-                PreviousStrength = previousStrength,
-                NewStrength = perspective.MemoryStrength
-            }, cancellationToken: cancellationToken);
-
-            // Invalidate encounter cache for the affected character
-            _encounterDataCache.Invalidate(body.CharacterId);
-
-            _logger.LogDebug("Refreshed memory {PerspectiveId}: {OldStrength} -> {NewStrength}",
-                perspective.PerspectiveId, previousStrength, perspective.MemoryStrength);
-
-            return (StatusCodes.OK, new PerspectiveResponse
-            {
-                Perspective = MapToPerspectiveModel(perspective)
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Re-load with ETag for concurrency safety
+        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{found.PerspectiveId}";
+        var (perspective, etag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
+        if (perspective == null)
         {
-            _logger.LogError(ex, "Error refreshing memory for {CharacterId} on {EncounterId}",
-                body.CharacterId, body.EncounterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "RefreshMemory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/refresh-memory",
-                details: new { body.CharacterId, body.EncounterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        var previousStrength = perspective.MemoryStrength;
+        var boost = body.StrengthBoost ?? (float)_configuration.MemoryRefreshBoost;
+        perspective.MemoryStrength = Math.Clamp(perspective.MemoryStrength + boost, 0f, 1f);
+        perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for perspective {PerspectiveId}", found.PerspectiveId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Publish event
+        await _messageBus.TryPublishAsync(ENCOUNTER_MEMORY_REFRESHED_TOPIC, new EncounterMemoryRefreshedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EncounterId = body.EncounterId,
+            CharacterId = body.CharacterId,
+            PerspectiveId = perspective.PerspectiveId,
+            PreviousStrength = previousStrength,
+            NewStrength = perspective.MemoryStrength
+        }, cancellationToken: cancellationToken);
+
+        // Invalidate encounter cache for the affected character
+        _encounterDataCache.Invalidate(body.CharacterId);
+
+        _logger.LogDebug("Refreshed memory {PerspectiveId}: {OldStrength} -> {NewStrength}",
+            perspective.PerspectiveId, previousStrength, perspective.MemoryStrength);
+
+        return (StatusCodes.OK, new PerspectiveResponse
+        {
+            Perspective = MapToPerspectiveModel(perspective)
+        });
     }
 
     // ============================================================================
@@ -1385,84 +1093,66 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Deleting encounter {EncounterId}", body.EncounterId);
 
-        try
+        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{body.EncounterId}", cancellationToken);
+
+        if (encounter == null)
         {
-            var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
-            var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{body.EncounterId}", cancellationToken);
-
-            if (encounter == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var participantIds = encounter.ParticipantIds;
-
-            // Delete all perspectives
-            var perspectivesDeleted = await DeleteEncounterPerspectivesAsync(body.EncounterId, cancellationToken);
-
-            // Delete encounter
-            await encounterStore.DeleteAsync($"{ENCOUNTER_KEY_PREFIX}{body.EncounterId}", cancellationToken);
-
-            // Update pair indexes
-            await RemoveFromPairIndexesAsync(participantIds, body.EncounterId, cancellationToken);
-
-            // Update location index
-            if (encounter.LocationId.HasValue)
-            {
-                await RemoveFromLocationIndexAsync(encounter.LocationId.Value, body.EncounterId, cancellationToken);
-            }
-
-            // Remove from type-encounter index
-            await RemoveFromTypeEncounterIndexAsync(encounter.EncounterTypeCode, body.EncounterId, cancellationToken);
-
-            // Publish event
-            await _messageBus.TryPublishAsync(ENCOUNTER_DELETED_TOPIC, new EncounterDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                EncounterId = body.EncounterId,
-                ParticipantIds = participantIds,
-                PerspectivesDeleted = perspectivesDeleted,
-                DeletedByCharacterCleanup = false,
-                CleanupCharacterId = null
-            }, cancellationToken: cancellationToken);
-
-            // Unregister character references with lib-resource
-            foreach (var participantId in participantIds)
-            {
-                await UnregisterCharacterReferenceAsync(body.EncounterId.ToString(), participantId, cancellationToken);
-            }
-
-            // Invalidate encounter cache for all participants
-            foreach (var participantId in participantIds)
-            {
-                _encounterDataCache.Invalidate(participantId);
-            }
-
-            _logger.LogInformation("Deleted encounter {EncounterId} with {Count} perspectives",
-                body.EncounterId, perspectivesDeleted);
-
-            return (StatusCodes.OK, new DeleteEncounterResponse
-            {
-                EncounterId = body.EncounterId,
-                PerspectivesDeleted = perspectivesDeleted
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var participantIds = encounter.ParticipantIds;
+
+        // Delete all perspectives
+        var perspectivesDeleted = await DeleteEncounterPerspectivesAsync(body.EncounterId, cancellationToken);
+
+        // Delete encounter
+        await encounterStore.DeleteAsync($"{ENCOUNTER_KEY_PREFIX}{body.EncounterId}", cancellationToken);
+
+        // Update pair indexes
+        await RemoveFromPairIndexesAsync(participantIds, body.EncounterId, cancellationToken);
+
+        // Update location index
+        if (encounter.LocationId.HasValue)
         {
-            _logger.LogError(ex, "Error deleting encounter {EncounterId}", body.EncounterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "DeleteEncounter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/delete",
-                details: new { body.EncounterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            await RemoveFromLocationIndexAsync(encounter.LocationId.Value, body.EncounterId, cancellationToken);
         }
+
+        // Remove from type-encounter index
+        await RemoveFromTypeEncounterIndexAsync(encounter.EncounterTypeCode, body.EncounterId, cancellationToken);
+
+        // Publish event
+        await _messageBus.TryPublishAsync(ENCOUNTER_DELETED_TOPIC, new EncounterDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EncounterId = body.EncounterId,
+            ParticipantIds = participantIds,
+            PerspectivesDeleted = perspectivesDeleted,
+            DeletedByCharacterCleanup = false,
+            CleanupCharacterId = null
+        }, cancellationToken: cancellationToken);
+
+        // Unregister character references with lib-resource
+        foreach (var participantId in participantIds)
+        {
+            await UnregisterCharacterReferenceAsync(body.EncounterId.ToString(), participantId, cancellationToken);
+        }
+
+        // Invalidate encounter cache for all participants
+        foreach (var participantId in participantIds)
+        {
+            _encounterDataCache.Invalidate(participantId);
+        }
+
+        _logger.LogInformation("Deleted encounter {EncounterId} with {Count} perspectives",
+            body.EncounterId, perspectivesDeleted);
+
+        return (StatusCodes.OK, new DeleteEncounterResponse
+        {
+            EncounterId = body.EncounterId,
+            PerspectivesDeleted = perspectivesDeleted
+        });
     }
 
     /// <summary>
@@ -1472,11 +1162,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Deleting all encounters for character {CharacterId}", body.CharacterId);
 
-        try
-        {
-            var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
-            var encountersDeleted = 0;
-            var perspectivesDeleted = 0;
+        var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
+        var encountersDeleted = 0;
+        var perspectivesDeleted = 0;
 
             var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
             var processedEncounterIds = new HashSet<Guid>();
@@ -1555,22 +1243,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 EncountersDeleted = encountersDeleted,
                 PerspectivesDeleted = perspectivesDeleted
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting encounters for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "DeleteByCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/delete-by-character",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1581,9 +1253,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogInformation("Processing memory decay, characterId={CharacterId}, dryRun={DryRun}",
             body.CharacterId, body.DryRun);
 
-        try
-        {
-            if (!_configuration.MemoryDecayEnabled)
+        if (!_configuration.MemoryDecayEnabled)
             {
                 _logger.LogInformation("Memory decay is disabled");
                 return (StatusCodes.OK, new DecayMemoriesResponse
@@ -1676,22 +1346,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 MemoriesFaded = memoriesFaded,
                 DryRun = dryRun
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing memory decay");
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "DecayMemories",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/decay-memories",
-                details: new { body.CharacterId, body.DryRun },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -1708,10 +1362,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
-        try
-        {
-            // Get all perspective IDs for this character
-            var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
+        // Get all perspective IDs for this character
+        var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
 
             if (perspectiveIds.Count == 0)
             {
@@ -1793,22 +1445,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 body.CharacterId, encounters.Count);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "GetCompressData",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/get-compress-data",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1824,9 +1460,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var encountersRestored = 0;
         var perspectivesRestored = 0;
 
-        try
-        {
-            // Decompress the archive data
+        // Decompress the archive data
             CharacterEncounterArchive archiveData;
             try
             {
@@ -1942,22 +1576,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 PerspectivesRestored = perspectivesRestored,
                 Success = true
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error restoring archive for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "RestoreFromArchive",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/restore-from-archive",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>

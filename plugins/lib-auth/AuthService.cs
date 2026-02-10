@@ -96,8 +96,6 @@ public partial class AuthService : IAuthService
         LoginRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Processing login request for email: {Email}", body.Email);
 
             if (string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
@@ -209,13 +207,6 @@ public partial class AuthService : IAuthService
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
                 ConnectUrl = EffectiveConnectUrl
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during login for email: {Email}", body.Email);
-            await PublishErrorEventAsync("Login", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -223,8 +214,6 @@ public partial class AuthService : IAuthService
         RegisterRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Processing registration request for username: {Username}", body.Username);
 
             if (string.IsNullOrWhiteSpace(body.Username) || string.IsNullOrWhiteSpace(body.Password))
@@ -296,13 +285,6 @@ public partial class AuthService : IAuthService
                 RefreshToken = refreshToken,
                 ConnectUrl = EffectiveConnectUrl
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during registration for username: {Username}", body.Username);
-            await PublishErrorEventAsync("Register", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -311,8 +293,6 @@ public partial class AuthService : IAuthService
         OAuthCallbackRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogInformation("Processing OAuth callback for provider: {Provider}", provider);
 
             if (string.IsNullOrWhiteSpace(body.Code))
@@ -374,13 +354,6 @@ public partial class AuthService : IAuthService
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
                 ConnectUrl = EffectiveConnectUrl
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during OAuth callback for provider: {Provider}", provider);
-            await PublishErrorEventAsync("CompleteOAuth", ex.GetType().Name, ex.Message, details: new { Provider = provider.ToString() });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -388,8 +361,6 @@ public partial class AuthService : IAuthService
         SteamVerifyRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogInformation("Processing Steam Session Ticket verification");
 
             if (string.IsNullOrWhiteSpace(body.Ticket))
@@ -458,13 +429,6 @@ public partial class AuthService : IAuthService
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
                 ConnectUrl = EffectiveConnectUrl
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during Steam authentication verification");
-            await PublishErrorEventAsync("VerifySteamAuth", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -473,8 +437,6 @@ public partial class AuthService : IAuthService
         RefreshRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Processing token refresh request");
 
             if (string.IsNullOrWhiteSpace(body.RefreshToken))
@@ -538,13 +500,6 @@ public partial class AuthService : IAuthService
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
                 ConnectUrl = EffectiveConnectUrl
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during token refresh");
-            await PublishErrorEventAsync("RefreshToken", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
 
@@ -585,8 +540,6 @@ public partial class AuthService : IAuthService
         LogoutRequest? body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogInformation("Processing logout request. AllSessions: {AllSessions}", body?.AllSessions ?? false);
 
             if (string.IsNullOrWhiteSpace(jwt))
@@ -714,13 +667,6 @@ public partial class AuthService : IAuthService
             }
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during logout");
-            await PublishErrorEventAsync("Logout", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -729,8 +675,6 @@ public partial class AuthService : IAuthService
         TerminateSessionRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             var sessionId = body.SessionId;
             _logger.LogInformation("Terminating session: {SessionId}", sessionId);
 
@@ -791,13 +735,6 @@ public partial class AuthService : IAuthService
 
             _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error terminating session: {SessionId}", body.SessionId);
-            await PublishErrorEventAsync("TerminateSession", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -805,8 +742,6 @@ public partial class AuthService : IAuthService
         PasswordResetRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogInformation("Processing password reset request for email: {Email}", body.Email);
 
             if (string.IsNullOrWhiteSpace(body.Email))
@@ -879,13 +814,6 @@ public partial class AuthService : IAuthService
 
             // Always return success to prevent email enumeration attacks
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error requesting password reset for email: {Email}", body.Email);
-            await PublishErrorEventAsync("RequestPasswordReset", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -916,8 +844,6 @@ public partial class AuthService : IAuthService
         PasswordResetConfirmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogInformation("Processing password reset confirmation");
 
             if (string.IsNullOrWhiteSpace(body.Token) || string.IsNullOrWhiteSpace(body.NewPassword))
@@ -964,13 +890,6 @@ public partial class AuthService : IAuthService
             await PublishPasswordResetSuccessfulEventAsync(resetData.AccountId);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error confirming password reset");
-            await PublishErrorEventAsync("ConfirmPasswordReset", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -988,8 +907,6 @@ public partial class AuthService : IAuthService
         string jwt,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Sessions requested");
 
             if (string.IsNullOrWhiteSpace(jwt))
@@ -1018,13 +935,6 @@ public partial class AuthService : IAuthService
             {
                 Sessions = sessions
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting sessions");
-            await PublishErrorEventAsync("GetSessions", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1148,8 +1058,6 @@ public partial class AuthService : IAuthService
         string jwt,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             // Validate JWT and extract account
             var (validateStatus, validation) = await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
             if (validateStatus != StatusCodes.OK || validation == null)
@@ -1199,13 +1107,6 @@ public partial class AuthService : IAuthService
                 TotpUri = totpUri,
                 RecoveryCodes = recoveryCodes
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during MFA setup");
-            await PublishErrorEventAsync("SetupMfa", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1214,8 +1115,6 @@ public partial class AuthService : IAuthService
         MfaEnableRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             // Validate JWT
             var (validateStatus, validation) = await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
             if (validateStatus != StatusCodes.OK || validation == null)
@@ -1259,13 +1158,6 @@ public partial class AuthService : IAuthService
             await PublishMfaEnabledEventAsync(validation.AccountId);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during MFA enable");
-            await PublishErrorEventAsync("EnableMfa", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -1274,8 +1166,6 @@ public partial class AuthService : IAuthService
         MfaDisableRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             // Validate JWT
             var (validateStatus, validation) = await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
             if (validateStatus != StatusCodes.OK || validation == null)
@@ -1343,13 +1233,6 @@ public partial class AuthService : IAuthService
             await PublishMfaDisabledEventAsync(account.AccountId, MfaDisabledBy.Self, null);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during MFA disable");
-            await PublishErrorEventAsync("DisableMfa", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -1357,8 +1240,6 @@ public partial class AuthService : IAuthService
         AdminDisableMfaRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             // Get account
             AccountResponse account;
             try
@@ -1390,13 +1271,6 @@ public partial class AuthService : IAuthService
             await PublishMfaDisabledEventAsync(body.AccountId, MfaDisabledBy.Admin, body.Reason);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during admin MFA disable for account {AccountId}", body.AccountId);
-            await PublishErrorEventAsync("AdminDisableMfa", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -1404,8 +1278,6 @@ public partial class AuthService : IAuthService
         MfaVerifyRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             // Consume challenge token (single-use)
             var accountId = await _mfaService.ConsumeMfaChallengeAsync(body.ChallengeToken, cancellationToken);
             if (accountId == null)
@@ -1521,13 +1393,6 @@ public partial class AuthService : IAuthService
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
                 ConnectUrl = EffectiveConnectUrl
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during MFA verification");
-            await PublishErrorEventAsync("VerifyMfa", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion

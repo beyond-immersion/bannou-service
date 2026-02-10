@@ -81,8 +81,6 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Creating voice room for session {SessionId}", body.SessionId);
 
-        try
-        {
             // Check if room already exists for this session
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
             var existingRoomIdStr = await stringStore.GetAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", cancellationToken);
@@ -129,21 +127,6 @@ public partial class VoiceService : IVoiceService
                 CreatedAt = now,
                 RtpServerUri = null
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating voice room for session {SessionId}", body.SessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "voice",
-                "CreateVoiceRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/voice/room/create",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -153,8 +136,6 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Getting voice room {RoomId}", body.RoomId);
 
-        try
-        {
             var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
             var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
@@ -179,21 +160,6 @@ public partial class VoiceService : IVoiceService
                 CreatedAt = roomData.CreatedAt,
                 RtpServerUri = roomData.RtpServerUri
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting voice room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync(
-                "voice",
-                "GetVoiceRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/voice/room/get",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -204,8 +170,6 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Session {SessionId} joining voice room {RoomId}", body.SessionId, body.RoomId);
 
-        try
-        {
             // Get room data
             var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
             var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
@@ -373,21 +337,6 @@ public partial class VoiceService : IVoiceService
                 StunServers = stunServers,
                 TierUpgradePending = tierUpgradePending
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error joining voice room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync(
-                "voice",
-                "JoinVoiceRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/voice/room/join",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -397,8 +346,6 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Session {SessionId} leaving voice room {RoomId}", body.SessionId, body.RoomId);
 
-        try
-        {
             // Unregister participant
             var removed = await _endpointRegistry.UnregisterAsync(body.RoomId, body.SessionId, cancellationToken);
 
@@ -417,21 +364,6 @@ public partial class VoiceService : IVoiceService
             _logger.LogInformation("Session {SessionId} left voice room {RoomId}", body.SessionId, body.RoomId);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error leaving voice room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync(
-                "voice",
-                "LeaveVoiceRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/voice/room/leave",
-                details: null,
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -442,8 +374,6 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Deleting voice room {RoomId}", body.RoomId);
 
-        try
-        {
             // Get room data
             var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
             var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
@@ -481,21 +411,6 @@ public partial class VoiceService : IVoiceService
             _logger.LogInformation("Deleted voice room {RoomId}, notified {ParticipantCount} participants", body.RoomId, participants.Count);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting voice room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync(
-                "voice",
-                "DeleteVoiceRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/voice/room/delete",
-                details: null,
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -505,8 +420,6 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Heartbeat from {SessionId} in room {RoomId}", body.SessionId, body.RoomId);
 
-        try
-        {
             var updated = await _endpointRegistry.UpdateHeartbeatAsync(body.RoomId, body.SessionId, cancellationToken);
 
             if (!updated)
@@ -516,21 +429,6 @@ public partial class VoiceService : IVoiceService
             }
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing heartbeat for {SessionId} in room {RoomId}", body.SessionId, body.RoomId);
-            await _messageBus.TryPublishErrorAsync(
-                "voice",
-                "PeerHeartbeat",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/voice/peer/heartbeat",
-                details: null,
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -541,8 +439,6 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Processing SDP answer for target {TargetSessionId} in room {RoomId}", body.TargetSessionId, body.RoomId);
 
-        try
-        {
             // Find the target participant to send the answer to
             var targetParticipant = await _endpointRegistry.GetParticipantAsync(body.RoomId, body.TargetSessionId, cancellationToken);
 
@@ -581,21 +477,6 @@ public partial class VoiceService : IVoiceService
             _logger.LogInformation("Sent SDP answer to target {TargetSessionId} in room {RoomId}", body.TargetSessionId, body.RoomId);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing SDP answer for target {TargetSessionId} in room {RoomId}", body.TargetSessionId, body.RoomId);
-            await _messageBus.TryPublishErrorAsync(
-                "voice",
-                "AnswerPeer",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/voice/peer/answer",
-                details: null,
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     #region Client Event Publishing

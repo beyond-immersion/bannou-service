@@ -217,8 +217,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetInfrastructureHealth operation");
 
-        try
-        {
             var components = new List<ComponentHealth>();
             var overallHealthy = true;
 
@@ -302,8 +300,6 @@ public partial class OrchestratorService : IOrchestratorService
 
             var statusCode = overallHealthy ? StatusCodes.OK : StatusCodes.InternalServerError;
             return (statusCode, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetInfrastructureHealth operation");
             await PublishErrorEventAsync("GetInfrastructureHealth", ex.GetType().Name, ex.Message);
@@ -322,12 +318,8 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing GetServicesHealth operation (source: {Source}, filter: {Filter})",
             body.Source, body.ServiceFilter ?? "(none)");
 
-        try
-        {
             var report = await _healthMonitor.GetServiceHealthReportAsync(body.Source, body.ServiceFilter);
             return (StatusCodes.OK, report);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetServicesHealth operation");
             await PublishErrorEventAsync("GetServicesHealth", ex.GetType().Name, ex.Message);
@@ -345,8 +337,6 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing RestartService operation for: {ServiceName} (force: {Force})",
             body.ServiceName, body.Force);
 
-        try
-        {
             var result = await _restartManager.RestartServiceAsync(body);
 
             if (!result.Success)
@@ -362,8 +352,6 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             return (StatusCodes.OK, result);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RestartService operation");
             await PublishErrorEventAsync("RestartService", ex.GetType().Name, ex.Message, details: new { ServiceName = body.ServiceName });
@@ -379,12 +367,8 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing ShouldRestartService operation for: {ServiceName}", body.ServiceName);
 
-        try
-        {
             var recommendation = await _healthMonitor.ShouldRestartServiceAsync(body.ServiceName);
             return (StatusCodes.OK, recommendation);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing ShouldRestartService operation");
             await PublishErrorEventAsync("ShouldRestartService", ex.GetType().Name, ex.Message, details: new { ServiceName = body.ServiceName });
@@ -400,12 +384,8 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetBackends operation");
 
-        try
-        {
             var response = await _backendDetector.DetectBackendsAsync(cancellationToken);
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetBackends operation");
             await PublishErrorEventAsync("GetBackends", ex.GetType().Name, ex.Message);
@@ -421,8 +401,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetPresets operation");
 
-        try
-        {
             var presetMetadata = await _presetLoader.ListPresetsAsync(cancellationToken);
             var presets = new List<DeploymentPreset>();
 
@@ -449,8 +427,6 @@ public partial class OrchestratorService : IOrchestratorService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetPresets operation");
             await PublishErrorEventAsync("GetPresets", ex.GetType().Name, ex.Message);
@@ -485,8 +461,6 @@ public partial class OrchestratorService : IOrchestratorService
             Backend = effectiveBackend
         });
 
-        try
-        {
             // Detect available backends first
             var backends = await _backendDetector.DetectBackendsAsync(cancellationToken);
 
@@ -1037,8 +1011,6 @@ public partial class OrchestratorService : IOrchestratorService
             });
 
             return (success ? StatusCodes.OK : StatusCodes.InternalServerError, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing Deploy operation");
             await PublishErrorEventAsync("Deploy", ex.GetType().Name, ex.Message, details: new { Preset = body.Preset, Backend = body.Backend });
@@ -1068,8 +1040,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetServiceRouting operation");
 
-        try
-        {
             // Ensure we have the last deployment state loaded for DeploymentId
             await EnsureLastDeploymentLoadedAsync();
 
@@ -1113,8 +1083,6 @@ public partial class OrchestratorService : IOrchestratorService
 
             _logger.LogInformation("Returning {Count} service routing mappings from Redis", response.TotalServices);
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving service routing mappings");
             await PublishErrorEventAsync("GetServiceRouting", ex.GetType().Name, ex.Message, dependency: "redis");
@@ -1130,8 +1098,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetStatus operation");
 
-        try
-        {
             var orchestrator = await GetOrchestratorAsync(cancellationToken);
             var containers = await orchestrator.ListContainersAsync(cancellationToken);
 
@@ -1166,8 +1132,6 @@ public partial class OrchestratorService : IOrchestratorService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetStatus operation");
             await PublishErrorEventAsync("GetStatus", ex.GetType().Name, ex.Message);
@@ -1211,8 +1175,6 @@ public partial class OrchestratorService : IOrchestratorService
             });
         }
 
-        try
-        {
             var orchestrator = await GetOrchestratorAsync(cancellationToken);
             var stoppedContainers = new List<string>();
             var removedVolumes = new List<string>();
@@ -1302,8 +1264,6 @@ public partial class OrchestratorService : IOrchestratorService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing Teardown operation");
             await PublishErrorEventAsync("Teardown", ex.GetType().Name, ex.Message);
@@ -1454,8 +1414,6 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing Clean operation: targets={Targets}, force={Force}",
             string.Join(",", targets), force);
 
-        try
-        {
             var orchestrator = await GetOrchestratorAsync(cancellationToken);
 
             // Track cleanup results
@@ -1597,8 +1555,6 @@ public partial class OrchestratorService : IOrchestratorService
                 removedContainers, removedNetworks, removedVolumes);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing Clean operation");
             await PublishErrorEventAsync("Clean", ex.GetType().Name, ex.Message);
@@ -1699,8 +1655,6 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing GetLogs operation: service={Service}, container={Container}, tail={Tail}",
             service, container, tail);
 
-        try
-        {
             var orchestrator = await GetOrchestratorAsync(cancellationToken);
 
             // Parse since timestamp if provided
@@ -1754,8 +1708,6 @@ public partial class OrchestratorService : IOrchestratorService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetLogs operation");
             await PublishErrorEventAsync("GetLogs", ex.GetType().Name, ex.Message, details: new { Service = body.Service });
@@ -1775,8 +1727,6 @@ public partial class OrchestratorService : IOrchestratorService
 
         var startTime = DateTime.UtcNow;
 
-        try
-        {
             var orchestrator = await GetOrchestratorAsync(cancellationToken);
             var changes = body.Changes ?? new List<TopologyChange>();
 
@@ -2075,8 +2025,6 @@ public partial class OrchestratorService : IOrchestratorService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing UpdateTopology operation");
             await PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message);
@@ -2097,8 +2045,6 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing RequestContainerRestart operation: app={AppName}, priority={Priority}",
             appName, body.Priority);
 
-        try
-        {
             var orchestrator = await GetOrchestratorAsync(cancellationToken);
             // Create ContainerRestartRequest from the body for the orchestrator
             var restartRequest = new ContainerRestartRequest
@@ -2114,8 +2060,6 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RequestContainerRestart operation");
             await PublishErrorEventAsync("RequestContainerRestart", ex.GetType().Name, ex.Message, details: new { AppName = body.AppName });
@@ -2132,8 +2076,6 @@ public partial class OrchestratorService : IOrchestratorService
         var appName = body.AppName;
         _logger.LogDebug("Executing GetContainerStatus operation: app={AppName}", appName);
 
-        try
-        {
             var orchestrator = await GetOrchestratorAsync(cancellationToken);
             var status = await orchestrator.GetContainerStatusAsync(appName, cancellationToken);
 
@@ -2144,8 +2086,6 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             return (StatusCodes.OK, status);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetContainerStatus operation");
             await PublishErrorEventAsync("GetContainerStatus", ex.GetType().Name, ex.Message, details: new { AppName = body.AppName });
@@ -2161,8 +2101,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing RollbackConfiguration operation: reason={Reason}", body.Reason);
 
-        try
-        {
             // Get current configuration
             var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
             var currentVersion = await _stateManager.GetConfigVersionAsync();
@@ -2233,8 +2171,6 @@ public partial class OrchestratorService : IOrchestratorService
                 ChangedKeys = changedKeys,
                 Message = $"Successfully rolled back to configuration version {targetVersion}. Reason: {body.Reason}"
             });
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RollbackConfiguration operation");
             await PublishErrorEventAsync("RollbackConfiguration", ex.GetType().Name, ex.Message);
@@ -2250,8 +2186,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetConfigVersion operation");
 
-        try
-        {
             // Get current version and configuration from Redis
             var currentVersion = await _stateManager.GetConfigVersionAsync();
             var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
@@ -2287,8 +2221,6 @@ public partial class OrchestratorService : IOrchestratorService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetConfigVersion operation");
             await PublishErrorEventAsync("GetConfigVersion", ex.GetType().Name, ex.Message, dependency: "redis");
@@ -2527,8 +2459,6 @@ public partial class OrchestratorService : IOrchestratorService
         AcquireProcessorRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
 
             if (string.IsNullOrEmpty(body.PoolType))
             {
@@ -2600,8 +2530,6 @@ public partial class OrchestratorService : IOrchestratorService
                 LeaseId = leaseId,
                 ExpiresAt = expiresAt
             });
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "AcquireProcessor: Error acquiring processor from pool {PoolType}", body?.PoolType);
             return (StatusCodes.InternalServerError, null);
@@ -2618,8 +2546,6 @@ public partial class OrchestratorService : IOrchestratorService
         ReleaseProcessorRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
 
             if (body.LeaseId == Guid.Empty)
             {
@@ -2706,8 +2632,6 @@ public partial class OrchestratorService : IOrchestratorService
                 Released = true,
                 ProcessorId = lease.ProcessorId
             });
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "ReleaseProcessor: Error releasing processor with lease {LeaseId}", body?.LeaseId);
             return (StatusCodes.InternalServerError, null);
@@ -2724,8 +2648,6 @@ public partial class OrchestratorService : IOrchestratorService
         GetPoolStatusRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
 
             if (string.IsNullOrEmpty(body.PoolType))
             {
@@ -2772,8 +2694,6 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "GetPoolStatus: Error getting status for pool {PoolType}", body?.PoolType);
             return (StatusCodes.InternalServerError, null);
@@ -2790,8 +2710,6 @@ public partial class OrchestratorService : IOrchestratorService
         ScalePoolRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
 
             if (string.IsNullOrEmpty(body.PoolType))
             {
@@ -3002,8 +2920,6 @@ public partial class OrchestratorService : IOrchestratorService
                 ScaledUp = scaledUp,
                 ScaledDown = scaledDown
             });
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "ScalePool: Error scaling pool {PoolType}", body?.PoolType);
             return (StatusCodes.InternalServerError, null);
@@ -3020,8 +2936,6 @@ public partial class OrchestratorService : IOrchestratorService
         CleanupPoolRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
 
             if (string.IsNullOrEmpty(body.PoolType))
             {
@@ -3096,8 +3010,6 @@ public partial class OrchestratorService : IOrchestratorService
                 CurrentInstances = currentInstances.Count,
                 Message = $"Cleaned up {removedCount} idle processor(s)"
             });
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "CleanupPool: Error cleaning up pool {PoolType}", body?.PoolType);
             return (StatusCodes.InternalServerError, null);

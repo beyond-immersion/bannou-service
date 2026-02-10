@@ -148,8 +148,6 @@ public partial class ConnectService : IConnectService, IDisposable
         InternalProxyRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogInformation("Processing internal proxy request to {TargetService}/{Method} {Endpoint}",
                 body.TargetService, body.Method, body.TargetEndpoint);
 
@@ -282,13 +280,6 @@ public partial class ConnectService : IConnectService, IDisposable
 
                 return (StatusCodes.ServiceUnavailable, errorResponse);
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing internal proxy request");
-            await PublishErrorEventAsync("ProxyInternalRequest", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // REMOVED: PublishServiceMappingUpdateAsync - Service mapping events belong to Orchestrator
@@ -305,8 +296,6 @@ public partial class ConnectService : IConnectService, IDisposable
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask; // Satisfy async requirement for sync method
-        try
-        {
             _logger.LogDebug("GetClientCapabilitiesAsync called for session {SessionId} with filter: {Filter}",
                 body.SessionId, body.ServiceFilter ?? "(none)");
 
@@ -357,13 +346,6 @@ public partial class ConnectService : IConnectService, IDisposable
                 capabilities.Count, shortcuts.Count, body.SessionId);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving client capabilities for session {SessionId}", body.SessionId);
-            await PublishErrorEventAsync("GetClientCapabilities", ex.GetType().Name, ex.Message, details: new { SessionId = body.SessionId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -374,8 +356,6 @@ public partial class ConnectService : IConnectService, IDisposable
         GetAccountSessionsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("GetAccountSessionsAsync called for account {AccountId}", body.AccountId);
 
             var sessions = await _sessionManager.GetSessionsForAccountAsync(body.AccountId);
@@ -392,13 +372,6 @@ public partial class ConnectService : IConnectService, IDisposable
                 sessions.Count, body.AccountId);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving sessions for account {AccountId}", body.AccountId);
-            await PublishErrorEventAsync("GetAccountSessions", ex.GetType().Name, ex.Message, details: new { AccountId = body.AccountId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>

@@ -140,8 +140,6 @@ public partial class StorylineService : IStorylineService
         _logger.LogDebug("Composing storyline for {SeedCount} seeds, goal {Goal}",
             body.SeedSources.Count, body.Goal);
 
-        try
-        {
             // Validate request
             if (body.SeedSources.Count == 0)
             {
@@ -292,22 +290,6 @@ public partial class StorylineService : IStorylineService
             // Expected API error from inter-service call (e.g., resource not found)
             _logger.LogWarning(ex, "Resource service call failed with status {Status}", ex.StatusCode);
             return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing Compose operation");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "Compose",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/compose",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -317,8 +299,6 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Retrieving plan {PlanId}", body.PlanId);
 
-        try
-        {
             var planKey = body.PlanId.ToString();
             var cached = await _planStore.GetAsync(planKey, cancellationToken);
 
@@ -338,22 +318,6 @@ public partial class StorylineService : IStorylineService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetPlan operation");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "GetPlan",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/plan/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -364,8 +328,6 @@ public partial class StorylineService : IStorylineService
         _logger.LogDebug("Listing plans, realm filter {RealmId}, limit {Limit}, offset {Offset}",
             body.RealmId, body.Limit, body.Offset);
 
-        try
-        {
             var planSummaries = new List<PlanSummary>();
             var totalCount = 0;
 
@@ -419,22 +381,6 @@ public partial class StorylineService : IStorylineService
                 Plans = planSummaries,
                 TotalCount = totalCount
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ListPlans operation");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "ListPlans",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/plan/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -450,8 +396,6 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Creating scenario definition with code {Code}", body.Code);
 
-        try
-        {
             // Validate code format (uppercase with underscores)
             var normalizedCode = body.Code.ToUpperInvariant().Replace('-', '_');
             if (normalizedCode != body.Code)
@@ -511,22 +455,6 @@ public partial class StorylineService : IStorylineService
 
             _logger.LogInformation("Created scenario definition {ScenarioId} with code {Code}", scenarioId, normalizedCode);
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating scenario definition");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "CreateScenarioDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -539,8 +467,6 @@ public partial class StorylineService : IStorylineService
         _logger.LogDebug("Getting scenario definition by ID {ScenarioId} or code {Code}",
             body.ScenarioId, body.Code);
 
-        try
-        {
             ScenarioDefinitionModel? model = null;
 
             if (body.ScenarioId.HasValue)
@@ -569,22 +495,6 @@ public partial class StorylineService : IStorylineService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting scenario definition");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "GetScenarioDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -597,8 +507,6 @@ public partial class StorylineService : IStorylineService
         _logger.LogDebug("Listing scenario definitions with realm {RealmId}, game {GameServiceId}, tags {Tags}",
             body.RealmId, body.GameServiceId, body.Tags);
 
-        try
-        {
             // Query all definitions from MySQL using IQueryableStateStore
             var allDefinitions = await _scenarioDefinitionStore.QueryAsync(d => true, cancellationToken);
 
@@ -657,22 +565,6 @@ public partial class StorylineService : IStorylineService
                 Scenarios = summaries,
                 TotalCount = totalCount
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing scenario definitions");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "ListScenarioDefinitions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -684,8 +576,6 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Updating scenario definition {ScenarioId}", body.ScenarioId);
 
-        try
-        {
             // Get existing definition
             var existing = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
             if (existing is null)
@@ -742,22 +632,6 @@ public partial class StorylineService : IStorylineService
             var response = BuildScenarioDefinitionResponse(existing);
             _logger.LogInformation("Updated scenario definition {ScenarioId}", body.ScenarioId);
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating scenario definition");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "UpdateScenarioDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -769,8 +643,6 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Deprecating scenario definition {ScenarioId}", body.ScenarioId);
 
-        try
-        {
             var existing = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
             if (existing is null)
             {
@@ -787,22 +659,6 @@ public partial class StorylineService : IStorylineService
 
             _logger.LogInformation("Deprecated scenario definition {ScenarioId}", body.ScenarioId);
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deprecating scenario definition");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "DeprecateScenarioDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/deprecate",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -818,8 +674,6 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Finding available scenarios for character {CharacterId}", body.CharacterId);
 
-        try
-        {
             // Get all candidate scenarios using IQueryableStateStore
             var allDefinitions = await _scenarioDefinitionStore.QueryAsync(d => true, cancellationToken);
 
@@ -884,22 +738,6 @@ public partial class StorylineService : IStorylineService
                 .ToList();
 
             return (StatusCodes.OK, new FindAvailableScenariosResponse { Matches = sortedMatches });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error finding available scenarios");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "FindAvailableScenarios",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/find-available",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -912,8 +750,6 @@ public partial class StorylineService : IStorylineService
         _logger.LogDebug("Testing scenario {ScenarioId} for character {CharacterId}",
             body.ScenarioId, body.CharacterId);
 
-        try
-        {
             var definition = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
             if (definition is null)
             {
@@ -1007,22 +843,6 @@ public partial class StorylineService : IStorylineService
                 PredictedMutations = predictedMutations,
                 BlockingReason = blockingReason
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error testing scenario trigger");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "TestScenarioTrigger",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/test",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1034,8 +854,6 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Evaluating fit score for scenario {ScenarioId}", body.ScenarioId);
 
-        try
-        {
             var definition = await GetScenarioDefinitionWithCacheAsync(body.ScenarioId, cancellationToken);
             if (definition is null)
             {
@@ -1054,22 +872,6 @@ public partial class StorylineService : IStorylineService
                 ConditionsMet = conditionsMet,
                 ConditionsTotal = conditions.Count
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error evaluating scenario fit");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "EvaluateScenarioFit",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/evaluate-fit",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1089,8 +891,6 @@ public partial class StorylineService : IStorylineService
         var stopwatch = Stopwatch.StartNew();
         var executionId = Guid.NewGuid();
 
-        try
-        {
             // Check idempotency if key provided
             if (!string.IsNullOrEmpty(body.IdempotencyKey))
             {
@@ -1327,35 +1127,6 @@ public partial class StorylineService : IStorylineService
                 QuestsSpawned = spawnedQuests,
                 FailureReason = null
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error triggering scenario");
-
-            // Publish failed event
-            await _messageBus.TryPublishAsync("storyline.scenario.failed", new ScenarioFailedEvent
-            {
-                ExecutionId = executionId,
-                ScenarioId = body.ScenarioId,
-                ScenarioCode = string.Empty,
-                PrimaryCharacterId = body.CharacterId,
-                OrchestratorId = body.OrchestratorId,
-                FailureReason = ex.Message,
-                FailedAt = DateTimeOffset.UtcNow
-            }, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "TriggerScenario",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/trigger",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1367,8 +1138,6 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Getting active scenarios for character {CharacterId}", body.CharacterId);
 
-        try
-        {
             var activeKey = body.CharacterId.ToString();
             var activeMembers = await _scenarioActiveStore.GetSetAsync<ActiveScenarioEntry>(activeKey, cancellationToken);
 
@@ -1394,22 +1163,6 @@ public partial class StorylineService : IStorylineService
             }
 
             return (StatusCodes.OK, new GetActiveScenariosResponse { Executions = executions });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting active scenarios");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "GetActiveScenarios",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/get-active",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1421,8 +1174,6 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Getting scenario history for character {CharacterId}", body.CharacterId);
 
-        try
-        {
             // Query executions for character using IQueryableStateStore
             var allExecutions = await _scenarioExecutionStore.QueryAsync(e => e.PrimaryCharacterId == body.CharacterId, cancellationToken);
 
@@ -1455,22 +1206,6 @@ public partial class StorylineService : IStorylineService
                 Executions = paginated,
                 TotalCount = totalCount
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting scenario history");
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "GetScenarioHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/storyline/scenario/get-history",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #region Private Helper Methods
@@ -1586,8 +1321,6 @@ public partial class StorylineService : IStorylineService
     {
         foreach (var entry in entries)
         {
-            try
-            {
                 // Decompress and deserialize the entry data
                 var json = DecompressEntry(entry.Data);
 
@@ -2315,8 +2048,6 @@ public partial class StorylineService : IStorylineService
         IDictionary<string, Guid>? additionalParticipants,
         CancellationToken cancellationToken)
     {
-        try
-        {
             switch (mutation.MutationType)
             {
                 case MutationType.PersonalityEvolve:
@@ -2544,8 +2275,6 @@ public partial class StorylineService : IStorylineService
         Guid characterId,
         CancellationToken cancellationToken)
     {
-        try
-        {
             // Soft L4 dependency - graceful degradation
             var client = _serviceProvider.GetService<Quest.IQuestClient>();
             if (client is null)
@@ -2715,19 +2444,6 @@ public partial class StorylineService : IStorylineService
         {
             _logger.LogWarning(ex, "API exception getting compress data for character {CharacterId}", body.CharacterId);
             return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "storyline",
-                "GetCompressData",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion

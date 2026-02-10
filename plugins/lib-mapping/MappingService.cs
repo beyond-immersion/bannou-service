@@ -254,8 +254,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Creating channel for region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
-        try
-        {
             // Generate channel ID from region + kind (deterministic)
             var channelId = GenerateChannelId(body.RegionId, body.Kind);
             var channelKey = BuildChannelKey(channelId);
@@ -372,16 +370,6 @@ public partial class MappingService : IMappingService
                 RegionId = body.RegionId,
                 Kind = body.Kind
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating channel for region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "CreateChannel", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/create-channel",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -389,8 +377,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Releasing authority for channel {ChannelId}", body.ChannelId);
 
-        try
-        {
             var (valid, tokenChannelId, _) = ParseAuthorityToken(body.AuthorityToken);
             if (!valid || tokenChannelId != body.ChannelId)
             {
@@ -434,16 +420,6 @@ public partial class MappingService : IMappingService
 
             _logger.LogInformation("Released authority for channel {ChannelId}", body.ChannelId);
             return (StatusCodes.OK, new ReleaseAuthorityResponse { Released = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error releasing authority for channel {ChannelId}", body.ChannelId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "ReleaseAuthority", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/release-authority",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -451,8 +427,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Processing heartbeat for channel {ChannelId}", body.ChannelId);
 
-        try
-        {
             var (valid, tokenChannelId, _) = ParseAuthorityToken(body.AuthorityToken);
             if (!valid || tokenChannelId != body.ChannelId)
             {
@@ -498,16 +472,6 @@ public partial class MappingService : IMappingService
                 ExpiresAt = newExpiresAt,
                 Warning = warning
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing heartbeat for channel {ChannelId}", body.ChannelId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "AuthorityHeartbeat", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/authority-heartbeat",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -519,8 +483,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Publishing map update to channel {ChannelId}", body.ChannelId);
 
-        try
-        {
             // Check payload size limit (MVP: reject large payloads; full impl would use lib-asset)
             var payloadSize = BannouJson.Serialize(body.Payload).Length;
             if (payloadSize > _configuration.InlinePayloadMaxBytes)
@@ -558,16 +520,6 @@ public partial class MappingService : IMappingService
                 Version = version,
                 Warning = null
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error publishing map update to channel {ChannelId}", body.ChannelId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "PublishMapUpdate", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/publish",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -575,8 +527,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Publishing {Count} object changes to channel {ChannelId}", body.Changes.Count, body.ChannelId);
 
-        try
-        {
             // Validate authority
             var (isValid, channel, authorityAppId, warning) = await ValidateAuthorityAsync(body.ChannelId, body.AuthorityToken, cancellationToken);
 
@@ -594,16 +544,6 @@ public partial class MappingService : IMappingService
 
             // Authority is valid - process changes normally
             return await ProcessAuthorizedObjectChangesAsync(channel, body.Changes, authorityAppId, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error publishing object changes to channel {ChannelId}", body.ChannelId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "PublishObjectChanges", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/publish-objects",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     private async Task<(StatusCodes, PublishObjectChangesResponse?)> ProcessAuthorizedObjectChangesAsync(
@@ -738,8 +678,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Requesting snapshot for region {RegionId}", body.RegionId);
 
-        try
-        {
             var objects = new List<MapObject>();
             var kindsToQuery = body.Kinds ?? Enum.GetValues<MapKind>().ToList();
 
@@ -808,16 +746,6 @@ public partial class MappingService : IMappingService
                 PayloadRef = payloadRef,
                 Version = maxVersion
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error requesting snapshot for region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "RequestSnapshot", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/request-snapshot",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -830,8 +758,6 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Querying point at ({X}, {Y}, {Z}) in region {RegionId}",
             body.Position.X, body.Position.Y, body.Position.Z, body.RegionId);
 
-        try
-        {
             var objects = new List<MapObject>();
             var radius = body.Radius ?? _configuration.DefaultSpatialCellSize;
             var kindsToQuery = body.Kinds ?? Enum.GetValues<MapKind>().ToList();
@@ -890,16 +816,6 @@ public partial class MappingService : IMappingService
                 Position = body.Position,
                 Radius = radius
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying point in region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "QueryPoint", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/query/point",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -907,8 +823,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Querying bounds in region {RegionId}", body.RegionId);
 
-        try
-        {
             var objects = new List<MapObject>();
             var kindsToQuery = body.Kinds ?? Enum.GetValues<MapKind>().ToList();
             var maxObjects = body.MaxObjects;
@@ -938,16 +852,6 @@ public partial class MappingService : IMappingService
                 Bounds = body.Bounds,
                 Truncated = truncated
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying bounds in region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "QueryBounds", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/query/bounds",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -955,8 +859,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Querying objects of type {ObjectType} in region {RegionId}", body.ObjectType, body.RegionId);
 
-        try
-        {
             var typeIndexKey = BuildTypeIndexKey(body.RegionId, body.ObjectType);
             var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
                 .GetAsync(typeIndexKey, cancellationToken) ?? new List<Guid>();
@@ -1000,16 +902,6 @@ public partial class MappingService : IMappingService
                 ObjectType = body.ObjectType,
                 Truncated = truncated
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying objects by type in region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "QueryObjectsByType", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/query/objects-by-type",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -1018,8 +910,6 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Querying affordance {AffordanceType} in region {RegionId}", body.AffordanceType, body.RegionId);
         var stopwatch = Stopwatch.StartNew();
 
-        try
-        {
             // Check cache if freshness allows
             if (body.Freshness != AffordanceFreshness.Fresh)
             {
@@ -1127,16 +1017,6 @@ public partial class MappingService : IMappingService
             }
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying affordance in region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "QueryAffordance", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/query/affordance",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1149,8 +1029,6 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Checkout for authoring - region {RegionId}, kind {Kind}, editor {EditorId}",
             body.RegionId, body.Kind, body.EditorId);
 
-        try
-        {
             var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
             var existingCheckout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
                 .GetAsync(checkoutKey, cancellationToken);
@@ -1196,16 +1074,6 @@ public partial class MappingService : IMappingService
                 LockedBy = null,
                 LockedAt = null
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking out for authoring");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "CheckoutForAuthoring", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/authoring/checkout",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -1213,8 +1081,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Committing authoring changes - region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
-        try
-        {
             var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
             var checkout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
                 .GetAsync(checkoutKey, cancellationToken);
@@ -1240,16 +1106,6 @@ public partial class MappingService : IMappingService
             {
                 Version = version
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error committing authoring changes");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "CommitAuthoring", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/authoring/commit",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -1257,8 +1113,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Releasing authoring checkout - region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
-        try
-        {
             var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
             var checkout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
                 .GetAsync(checkoutKey, cancellationToken);
@@ -1276,16 +1130,6 @@ public partial class MappingService : IMappingService
                 body.RegionId, body.Kind);
 
             return (StatusCodes.OK, new AuthoringReleaseResponse { Released = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error releasing authoring checkout");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "ReleaseAuthoring", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/authoring/release",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1297,8 +1141,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Creating map definition: {Name}", body.Name);
 
-        try
-        {
             // Check for duplicate name by scanning existing definitions
             var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
             var existingIndex = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
@@ -1344,16 +1186,6 @@ public partial class MappingService : IMappingService
             _logger.LogInformation("Created map definition {DefinitionId} ({Name})", definitionId, body.Name);
 
             return (StatusCodes.OK, MapRecordToDefinition(record));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating map definition");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "CreateDefinition", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/create",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -1361,8 +1193,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Getting map definition: {DefinitionId}", body.DefinitionId);
 
-        try
-        {
             var key = BuildDefinitionKey(body.DefinitionId);
             var record = await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
                 .GetAsync(key, cancellationToken);
@@ -1373,16 +1203,6 @@ public partial class MappingService : IMappingService
             }
 
             return (StatusCodes.OK, MapRecordToDefinition(record));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting map definition {DefinitionId}", body.DefinitionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "GetDefinition", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/get",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -1390,8 +1210,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Listing map definitions with filter: {Filter}", body.NameFilter);
 
-        try
-        {
             var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
             var index = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
 
@@ -1437,16 +1255,6 @@ public partial class MappingService : IMappingService
                 Offset = body.Offset,
                 Limit = body.Limit
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing map definitions");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "ListDefinitions", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/list",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -1454,8 +1262,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Updating map definition: {DefinitionId}", body.DefinitionId);
 
-        try
-        {
             var key = BuildDefinitionKey(body.DefinitionId);
             var record = await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
                 .GetAsync(key, cancellationToken);
@@ -1494,16 +1300,6 @@ public partial class MappingService : IMappingService
             _logger.LogInformation("Updated map definition {DefinitionId}", body.DefinitionId);
 
             return (StatusCodes.OK, MapRecordToDefinition(record));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating map definition {DefinitionId}", body.DefinitionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "UpdateDefinition", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/update",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -1511,8 +1307,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Deleting map definition: {DefinitionId}", body.DefinitionId);
 
-        try
-        {
             var key = BuildDefinitionKey(body.DefinitionId);
             var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
             var record = await definitionStore.GetAsync(key, cancellationToken);
@@ -1538,16 +1332,6 @@ public partial class MappingService : IMappingService
             _logger.LogInformation("Deleted map definition {DefinitionId}", body.DefinitionId);
 
             return (StatusCodes.OK, new DeleteDefinitionResponse { Deleted = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting map definition {DefinitionId}", body.DefinitionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "DeleteDefinition", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/delete",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     private static MapDefinition MapRecordToDefinition(DefinitionRecord record)
@@ -1990,8 +1774,6 @@ public partial class MappingService : IMappingService
 
     private async Task<string?> UploadLargePayloadToAssetAsync(byte[] data, string filename, Guid regionId, CancellationToken cancellationToken)
     {
-        try
-        {
             var uploadRequest = new UploadRequest
             {
                 Owner = "mapping",
@@ -2030,18 +1812,6 @@ public partial class MappingService : IMappingService
 
             _logger.LogDebug("Uploaded large payload as asset {AssetId} for region {RegionId}", assetMetadata.AssetId, regionId);
             return assetMetadata.AssetId.ToString();
-        }
-        catch (ApiException apiEx)
-        {
-            _logger.LogError(apiEx, "Asset service error uploading large payload for region {RegionId}: {Status}",
-                regionId, apiEx.StatusCode);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error uploading large payload to lib-asset for region {RegionId}", regionId);
-            return null;
-        }
     }
 
     private async Task ClearRequiresConsumeForAuthorityAsync(Guid regionId, IEnumerable<MapKind> kinds, string authorityToken, CancellationToken cancellationToken)
@@ -2439,8 +2209,6 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Handling ingest event for channel {ChannelId} with {Count} payloads",
             channelId, evt.Payloads.Count);
 
-        try
-        {
             // Get channel info first (needed for NonAuthorityHandling check)
             var channelKey = BuildChannelKey(channelId);
             var channel = await _stateStoreFactory.GetStore<ChannelRecord>(StateStoreDefinitions.Mapping)
@@ -2533,15 +2301,6 @@ public partial class MappingService : IMappingService
 
             _logger.LogDebug("Processed {Count} payloads from ingest event, version {Version}",
                 changes.Count, version);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling ingest event for channel {ChannelId}", channelId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "HandleIngestEvent", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: $"event:map.ingest.{channelId}",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-        }
     }
 
     private async Task HandleNonAuthorityIngestAsync(ChannelRecord channel, MapIngestEvent evt, CancellationToken cancellationToken)

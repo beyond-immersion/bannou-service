@@ -124,8 +124,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     {
         _logger.LogDebug("Publishing event to topic {Topic}", body.Topic);
 
-        try
-        {
             // Wrap payload in GenericMessageEnvelope - MassTransit requires concrete types
             var envelope = new Services.GenericMessageEnvelope(body.Topic, body.Payload);
 
@@ -155,8 +153,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             {
                 MessageId = messageId
             });
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish event to topic {Topic}", body.Topic);
             await _messageBus.TryPublishErrorAsync(
@@ -182,8 +178,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             body.Topic, body.CallbackUrl);
 
         HttpClient? httpClient = null;
-        try
-        {
             var subscriptionId = Guid.NewGuid();
             var queueName = $"bannou-dynamic-{subscriptionId:N}";
 
@@ -232,8 +226,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                 SubscriptionId = subscriptionId,
                 QueueName = queueName
             });
-        }
-        catch (Exception ex)
         {
             // Dispose HttpClient if we failed after creating it
             httpClient?.Dispose();
@@ -260,8 +252,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     {
         _logger.LogDebug("Removing subscription {SubscriptionId}", body.SubscriptionId);
 
-        try
-        {
             if (!_activeSubscriptions.TryRemove(body.SubscriptionId, out var entry))
             {
                 _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
@@ -283,8 +273,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                 body.SubscriptionId, entry.Topic);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to remove subscription {SubscriptionId}", body.SubscriptionId);
             await _messageBus.TryPublishErrorAsync(
@@ -308,8 +296,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     {
         _logger.LogDebug("Listing topics with filter {ExchangeFilter}", body?.ExchangeFilter);
 
-        try
-        {
             // Get topics from active subscriptions we're tracking
             var topics = _activeSubscriptions.Values
                 .Select(entry => entry.Topic)
@@ -325,8 +311,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                 .ToList();
 
             return (StatusCodes.OK, new ListTopicsResponse { Topics = topics });
-        }
-        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list topics");
             await _messageBus.TryPublishErrorAsync(

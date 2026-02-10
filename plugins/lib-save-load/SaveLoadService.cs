@@ -98,8 +98,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Creating save slot for game {GameId}, owner {OwnerType}:{OwnerId}, slot {SlotName}",
             body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
 
-        try
-        {
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var ownerType = body.OwnerType.ToString();
             var ownerId = body.OwnerId.ToString();
@@ -161,22 +159,6 @@ public partial class SaveLoadService : ISaveLoadService
             _logger.LogDebug("Created slot {SlotId} for {OwnerType}:{OwnerId}", slotId, ownerType, ownerId);
 
             return (StatusCodes.OK, ToSlotResponse(slot));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing CreateSlot operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "CreateSlot",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/slot/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -184,8 +166,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> GetSlotAsync(GetSlotRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
 
             var slotKey = SaveSlotMetadata.GetStateKey(
@@ -199,22 +179,6 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             return (StatusCodes.OK, ToSlotResponse(slot));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetSlot operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "GetSlot",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/slot/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -222,8 +186,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, ListSlotsResponse?)> ListSlotsAsync(ListSlotsRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var queryableStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var gameId = body.GameId;
             // SaveSlotMetadata.OwnerId/OwnerType/Category are now Guid/enum types - compare properly
@@ -247,22 +209,6 @@ public partial class SaveLoadService : ISaveLoadService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ListSlots operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "ListSlots",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/slot/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -270,8 +216,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, DeleteSlotResponse?)> DeleteSlotAsync(DeleteSlotRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
@@ -307,22 +251,6 @@ public partial class SaveLoadService : ISaveLoadService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing DeleteSlot operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "DeleteSlot",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/slot/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -330,8 +258,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> RenameSlotAsync(RenameSlotRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
 
             // Get old slot key
@@ -386,22 +312,6 @@ public partial class SaveLoadService : ISaveLoadService
             _logger.LogDebug("Renamed slot from {OldName} to {NewName}", body.SlotName, body.NewSlotName);
 
             return (StatusCodes.OK, ToSlotResponse(slot));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing RenameSlot operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "RenameSlot",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/slot/rename",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -409,8 +319,6 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, BulkDeleteSlotsResponse?)> BulkDeleteSlotsAsync(BulkDeleteSlotsRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var queryableStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
@@ -420,8 +328,6 @@ public partial class SaveLoadService : ISaveLoadService
 
             foreach (var slotId in body.SlotIds)
             {
-                try
-                {
                     // Find slot by ID using queryable store
                     // SaveSlotMetadata.SlotId is now Guid - compare properly
                     var slots = await queryableStore.QueryAsync(
@@ -466,22 +372,6 @@ public partial class SaveLoadService : ISaveLoadService
                 deletedCount, totalBytesFreed);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing BulkDeleteSlots operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "BulkDeleteSlots",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/slot/bulk-delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -494,8 +384,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Saving to slot {SlotName} for {OwnerType}:{OwnerId} in game {GameId}",
             body.SlotName, body.OwnerType, body.OwnerId, body.GameId);
 
-        try
-        {
             // Rate limiting: check saves per minute per owner
             if (_configuration.MaxSavesPerMinute > 0)
             {
@@ -776,22 +664,6 @@ public partial class SaveLoadService : ISaveLoadService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing Save operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "Save",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/save",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -819,8 +691,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Loading from slot {SlotName} for {OwnerType}:{OwnerId} in game {GameId}",
             body.SlotName, body.OwnerType, body.OwnerId, body.GameId);
 
-        try
-        {
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
@@ -975,22 +845,6 @@ public partial class SaveLoadService : ISaveLoadService
                 targetVersion, slot.SlotId, decompressedData.Length);
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing Load operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "Load",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/load",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1003,8 +857,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Saving delta for slot {SlotName} based on version {BaseVersion}",
             body.SlotName, body.BaseVersion);
 
-        try
-        {
             // Check if delta saves are enabled
             if (!_configuration.DeltaSavesEnabled)
             {
@@ -1236,22 +1088,6 @@ public partial class SaveLoadService : ISaveLoadService
                 CompressionSavings = compressionSavings,
                 CreatedAt = manifest.CreatedAt
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing SaveDelta operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "SaveDelta",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/save-delta",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1266,8 +1102,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Loading with delta reconstruction for slot {SlotName} version {Version}",
             body.SlotName, requestedVersion);
 
-        try
-        {
             // Find the slot
             var slot = await FindSlotByOwnerAndNameAsync(
                 body.OwnerId,
@@ -1355,22 +1189,6 @@ public partial class SaveLoadService : ISaveLoadService
                             $"Metadata value became null after filter for key '{kv.Key}'"))
                     ?? new Dictionary<string, string>()
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing LoadWithDeltas operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "LoadWithDeltas",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/load-with-deltas",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1383,8 +1201,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Collapsing deltas for slot {SlotName} to version {Version}",
             body.SlotName, body.VersionNumber ?? -1);
 
-        try
-        {
             // Find the slot
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var ownerType = body.OwnerType.ToString();
@@ -1573,22 +1389,6 @@ public partial class SaveLoadService : ISaveLoadService
                 CreatedAt = targetVersion.CreatedAt,
                 UploadPending = targetVersion.UploadStatus == UploadStatus.PENDING
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing CollapseDeltas operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "CollapseDeltas",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/collapse-deltas",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1601,8 +1401,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Listing versions for slot {SlotName} owner {OwnerId} ({OwnerType})",
             body.SlotName, body.OwnerId, body.OwnerType);
 
-        try
-        {
             // Find the slot by querying slots for this owner
             var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var matchingSlots = await slotQueryStore.QueryAsync(
@@ -1644,22 +1442,6 @@ public partial class SaveLoadService : ISaveLoadService
                 Versions = pagedVersions,
                 TotalCount = totalCount
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing versions");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "ListVersions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/version/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
     }
 
     /// <summary>
@@ -1672,8 +1454,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Pinning version {Version} in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
 
-        try
-        {
             // Find the slot
             var slot = await FindSlotByOwnerAndNameAsync(body.OwnerId, body.OwnerType, body.SlotName, cancellationToken);
             if (slot == null)
@@ -1722,22 +1502,6 @@ public partial class SaveLoadService : ISaveLoadService
                 cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapToVersionResponse(version));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error pinning version");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "PinVersion",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/version/pin",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
     }
 
     /// <summary>
@@ -1750,8 +1514,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Unpinning version {Version} in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
 
-        try
-        {
             // Find the slot
             var slot = await FindSlotByOwnerAndNameAsync(body.OwnerId, body.OwnerType, body.SlotName, cancellationToken);
             if (slot == null)
@@ -1801,22 +1563,6 @@ public partial class SaveLoadService : ISaveLoadService
                 cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapToVersionResponse(version));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error unpinning version");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "UnpinVersion",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/version/unpin",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
     }
 
     /// <summary>
@@ -1829,8 +1575,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Deleting version {Version} in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
 
-        try
-        {
             // Find the slot
             var slot = await FindSlotByOwnerAndNameAsync(body.OwnerId, body.OwnerType, body.SlotName, cancellationToken);
             if (slot == null)
@@ -1871,8 +1615,6 @@ public partial class SaveLoadService : ISaveLoadService
             // Delete the asset if it exists
             if (version.AssetId.HasValue && version.AssetId.Value != Guid.Empty)
             {
-                try
-                {
                     await _assetClient.DeleteAssetAsync(new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() }, cancellationToken);
                 }
                 catch (Exception ex)
@@ -1933,22 +1675,6 @@ public partial class SaveLoadService : ISaveLoadService
                 Deleted = true,
                 BytesFreed = bytesFreed
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting version");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "DeleteVersion",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/version/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
     }
 
     /// <summary>
@@ -1960,8 +1686,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Querying saves for owner {OwnerId} ({OwnerType})",
             body.OwnerId, body.OwnerType);
 
-        try
-        {
             // Query slots for this owner
             var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var slots = await slotQueryStore.QueryAsync(
@@ -2086,22 +1810,6 @@ public partial class SaveLoadService : ISaveLoadService
                 Results = results,
                 TotalCount = totalCount
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing QuerySaves operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "QuerySaves",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/query",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -2114,8 +1822,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Copying save from {SourceSlot} to {TargetSlot}",
             body.SourceSlotName, body.TargetSlotName);
 
-        try
-        {
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
@@ -2292,22 +1998,6 @@ public partial class SaveLoadService : ISaveLoadService
                 CreatedAt = newVersion.CreatedAt,
                 UploadPending = _configuration.AsyncUploadEnabled
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing CopySave operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "CopySave",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/copy",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -2338,8 +2028,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Verifying integrity for slot {SlotName} owner {OwnerId}",
             body.SlotName, body.OwnerId);
 
-        try
-        {
             var ownerIdStr = body.OwnerId.ToString();
             var ownerTypeStr = body.OwnerType.ToString();
 
@@ -2405,22 +2093,6 @@ public partial class SaveLoadService : ISaveLoadService
                 ActualHash = actualHash,
                 ErrorMessage = hashesMatch ? null : "Hash mismatch - data may be corrupted"
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing VerifyIntegrity operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "VerifyIntegrity",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/verify",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -2433,8 +2105,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Promoting version {Version} to latest in slot {SlotName} for owner {OwnerId}",
             body.VersionNumber, body.SlotName, body.OwnerId);
 
-        try
-        {
             // Get the slot
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, body.OwnerType.ToString(), body.OwnerId.ToString(), body.SlotName);
@@ -2605,22 +2275,6 @@ public partial class SaveLoadService : ISaveLoadService
                 CompressedSizeBytes = sourceVersion.CompressedSizeBytes ?? sourceVersion.SizeBytes,
                 UploadPending = _configuration.AsyncUploadEnabled
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error promoting version");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "PromoteVersion",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/version/promote",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
     }
 
     /// <summary>
@@ -2633,8 +2287,6 @@ public partial class SaveLoadService : ISaveLoadService
             "Executing AdminCleanup: dryRun={DryRun}, olderThanDays={Days}, category={Category}",
             body.DryRun, body.OlderThanDays, body.Category);
 
-        try
-        {
             var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
@@ -2680,8 +2332,6 @@ public partial class SaveLoadService : ISaveLoadService
                         // Delete asset if exists
                         if (version.AssetId.HasValue)
                         {
-                            try
-                            {
                                 await _assetClient.DeleteAssetAsync(
                                     new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() },
                                     cancellationToken);
@@ -2727,22 +2377,6 @@ public partial class SaveLoadService : ISaveLoadService
                 BytesFreed = bytesFreed,
                 DryRun = body.DryRun
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing AdminCleanup operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "AdminCleanup",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/admin/cleanup",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
     }
 
     /// <summary>
@@ -2753,8 +2387,6 @@ public partial class SaveLoadService : ISaveLoadService
     {
         _logger.LogDebug("Executing AdminStats with groupBy={GroupBy}", body.GroupBy);
 
-        try
-        {
             var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
@@ -2833,22 +2465,6 @@ public partial class SaveLoadService : ISaveLoadService
                 PinnedVersions = pinnedVersions,
                 Breakdown = breakdown
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing AdminStats operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "AdminStats",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/admin/stats",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
     }
 
     #region Helper Methods

@@ -41,8 +41,6 @@ public partial class TestingService : ITestingService
     /// </summary>
     public async Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Running test: {TestName}", testName);
 
             var response = new TestResponse
@@ -54,22 +52,6 @@ public partial class TestingService : ITestingService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error running test: {TestName}", testName);
-            await _messageBus.TryPublishErrorAsync(
-                "testing",
-                "RunTest",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "testing",
-                endpoint: "post:/testing/run",
-                details: new { TestName = testName },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -77,8 +59,6 @@ public partial class TestingService : ITestingService
     /// </summary>
     public async Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Testing configuration");
 
             var response = new ConfigTestResponse
@@ -89,22 +69,6 @@ public partial class TestingService : ITestingService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error testing configuration");
-            await _messageBus.TryPublishErrorAsync(
-                "testing",
-                "TestConfiguration",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "testing",
-                endpoint: "post:/testing/config",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -113,8 +77,6 @@ public partial class TestingService : ITestingService
     /// </summary>
     public async Task<(StatusCodes, DependencyTestResponse?)> TestDependencyInjectionHealthAsync(CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Testing dependency injection health");
 
             // Since we established null safety in constructor with proper null checks,
@@ -163,22 +125,6 @@ public partial class TestingService : ITestingService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error testing dependency injection health");
-            await _messageBus.TryPublishErrorAsync(
-                "testing",
-                "TestDependencyInjectionHealth",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "testing",
-                endpoint: "post:/testing/dependency-health",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #region Ping / Latency Testing
@@ -196,8 +142,6 @@ public partial class TestingService : ITestingService
     {
         var serverReceiveTime = DateTimeOffset.UtcNow;
 
-        try
-        {
             // Create response with timing data
             var response = new PingResponse
             {
@@ -212,22 +156,6 @@ public partial class TestingService : ITestingService
             response.ServerProcessingTimeMs = processingTime.TotalMilliseconds;
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing ping request");
-            await _messageBus.TryPublishErrorAsync(
-                "testing",
-                "Ping",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "testing",
-                endpoint: "post:/testing/ping",
-                details: new { Sequence = request?.Sequence },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -253,8 +181,6 @@ public partial class TestingService : ITestingService
             return (StatusCodes.BadRequest, null);
         }
 
-        try
-        {
             _logger.LogInformation("Publishing test notification event to session {SessionId}", sessionId);
 
             var testEvent = new SystemNotificationEvent
@@ -285,12 +211,6 @@ public partial class TestingService : ITestingService
                 _logger.LogWarning("Failed to publish test event to session {SessionId}", sessionId);
                 return (StatusCodes.InternalServerError, null);
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error publishing test event to session {SessionId}", sessionId);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion

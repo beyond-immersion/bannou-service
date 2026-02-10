@@ -104,8 +104,6 @@ public partial class AchievementService : IAchievementService
         _logger.LogDebug("Creating achievement {AchievementId} for game service {GameServiceId}",
             body.AchievementId, body.GameServiceId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
@@ -154,22 +152,6 @@ public partial class AchievementService : IAchievementService
             await PublishDefinitionCreatedEventAsync(definition, cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(definition, 0));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating achievement definition");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "CreateAchievementDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -180,8 +162,6 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Getting achievement {AchievementId}", body.AchievementId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
@@ -192,22 +172,6 @@ public partial class AchievementService : IAchievementService
             }
 
             return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting achievement definition");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "GetAchievementDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -218,8 +182,6 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Listing achievements for game service {GameServiceId}", body.GameServiceId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var indexKey = GetDefinitionIndexKey(body.GameServiceId);
             var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
@@ -276,22 +238,6 @@ public partial class AchievementService : IAchievementService
             {
                 Achievements = ordered
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing achievement definitions");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "ListAchievementDefinitions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -302,8 +248,6 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Updating achievement {AchievementId}", body.AchievementId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
@@ -355,22 +299,6 @@ public partial class AchievementService : IAchievementService
             await PublishDefinitionUpdatedEventAsync(definition, changedFields, cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating achievement definition");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "UpdateAchievementDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -381,8 +309,6 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Deleting achievement {AchievementId}", body.AchievementId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
@@ -402,22 +328,6 @@ public partial class AchievementService : IAchievementService
             await PublishDefinitionDeletedEventAsync(definition, cancellationToken);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting achievement definition");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "DeleteAchievementDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -428,8 +338,6 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Getting achievement progress for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        try
-        {
             var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
             var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
 
@@ -491,22 +399,6 @@ public partial class AchievementService : IAchievementService
                 TotalPoints = entityProgress.TotalPoints,
                 UnlockedCount = unlockedCount
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting achievement progress");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "GetAchievementProgress",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/progress/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -518,8 +410,6 @@ public partial class AchievementService : IAchievementService
         _logger.LogDebug("Updating progress for {AchievementId} for {EntityType}:{EntityId}",
             body.AchievementId, body.EntityType, body.EntityId);
 
-        try
-        {
             // Get achievement definition
             var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
@@ -647,22 +537,6 @@ public partial class AchievementService : IAchievementService
                 Unlocked = unlocked,
                 UnlockedAt = unlockedAt
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating achievement progress");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "UpdateAchievementProgress",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/progress/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -674,8 +548,6 @@ public partial class AchievementService : IAchievementService
         _logger.LogDebug("Unlocking achievement {AchievementId} for {EntityType}:{EntityId}",
             body.AchievementId, body.EntityType, body.EntityId);
 
-        try
-        {
             // Get achievement definition
             var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
@@ -786,22 +658,6 @@ public partial class AchievementService : IAchievementService
                 UnlockedAt = now,
                 PlatformSyncStatus = platformSyncStatus.Count > 0 ? platformSyncStatus : null
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error unlocking achievement");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "UnlockAchievement",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/unlock",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -812,8 +668,6 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Listing unlocked achievements for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        try
-        {
             var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
             var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
             var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
@@ -868,22 +722,6 @@ public partial class AchievementService : IAchievementService
                 Achievements = unlockedAchievements,
                 TotalPoints = totalPoints
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing unlocked achievements");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "ListUnlockedAchievements",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/list-unlocked",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -895,8 +733,6 @@ public partial class AchievementService : IAchievementService
         _logger.LogDebug("Syncing achievements to {Platform} for {EntityType}:{EntityId}",
             body.Platform, body.EntityType, body.EntityId);
 
-        try
-        {
             if (body.EntityType != EntityType.Account)
             {
                 _logger.LogWarning("Platform sync requires account entity type, received {EntityType}", body.EntityType);
@@ -1077,22 +913,6 @@ public partial class AchievementService : IAchievementService
                 NotLinked = false,
                 Errors = errors.Count > 0 ? errors : null
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error syncing platform achievements");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "SyncPlatformAchievements",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/platform/sync",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1103,8 +923,6 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Getting platform sync status for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        try
-        {
             if (body.EntityType != EntityType.Account)
             {
                 _logger.LogWarning("Platform sync status requires account entity type, received {EntityType}", body.EntityType);
@@ -1149,22 +967,6 @@ public partial class AchievementService : IAchievementService
                 EntityType = body.EntityType,
                 Platforms = platforms
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting platform sync status");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "GetPlatformSyncStatus",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/platform/status",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #region Helper Methods
@@ -1445,8 +1247,6 @@ public partial class AchievementService : IAchievementService
 
         for (var attempt = 1; attempt <= attempts; attempt++)
         {
-            try
-            {
                 var result = await syncProvider.UnlockAsync(externalId, platformAchievementId, cancellationToken);
                 if (result.Success)
                 {
@@ -1561,8 +1361,6 @@ public partial class AchievementService : IAchievementService
     /// </summary>
     private async Task PublishDefinitionCreatedEventAsync(AchievementDefinitionData definition, CancellationToken cancellationToken)
     {
-        try
-        {
             var eventModel = new AchievementDefinitionCreatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1590,8 +1388,6 @@ public partial class AchievementService : IAchievementService
     /// </summary>
     private async Task PublishDefinitionUpdatedEventAsync(AchievementDefinitionData definition, List<string> changedFields, CancellationToken cancellationToken)
     {
-        try
-        {
             var eventModel = new AchievementDefinitionUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1618,8 +1414,6 @@ public partial class AchievementService : IAchievementService
     /// </summary>
     private async Task PublishDefinitionDeletedEventAsync(AchievementDefinitionData definition, CancellationToken cancellationToken)
     {
-        try
-        {
             var eventModel = new AchievementDefinitionDeletedEvent
             {
                 EventId = Guid.NewGuid(),

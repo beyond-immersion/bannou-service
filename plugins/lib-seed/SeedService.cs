@@ -63,8 +63,6 @@ public partial class SeedService : ISeedService
         _logger.LogInformation("Creating seed of type {SeedTypeCode} for owner {OwnerId} ({OwnerType})",
             body.SeedTypeCode, body.OwnerId, body.OwnerType);
 
-        try
-        {
             // Validate game service exists (L2 hard dependency)
             try
             {
@@ -169,15 +167,6 @@ public partial class SeedService : ISeedService
             }, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(seed));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating seed of type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "CreateSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/create", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -185,8 +174,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedResponse?)> GetSeedAsync(GetSeedRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
             var seed = await store.GetAsync($"seed:{body.SeedId}", cancellationToken);
 
@@ -196,15 +183,6 @@ public partial class SeedService : ISeedService
             }
 
             return (StatusCodes.OK, MapToResponse(seed));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/get", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -212,8 +190,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, ListSeedsResponse?)> GetSeedsByOwnerAsync(GetSeedsByOwnerRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var store = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
             var conditions = new List<QueryCondition>
             {
@@ -240,15 +216,6 @@ public partial class SeedService : ISeedService
                 Seeds = seeds,
                 TotalCount = (int)result.TotalCount
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting seeds for owner {OwnerId}", body.OwnerId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetSeedsByOwner", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/get-by-owner", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -256,8 +223,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, ListSeedsResponse?)> ListSeedsAsync(ListSeedsRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var store = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
             var conditions = new List<QueryCondition>
             {
@@ -284,15 +249,6 @@ public partial class SeedService : ISeedService
                 Seeds = seeds,
                 TotalCount = (int)result.TotalCount
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing seeds");
-            await _messageBus.TryPublishErrorAsync("seed", "ListSeeds", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/list", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -300,8 +256,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedResponse?)> UpdateSeedAsync(UpdateSeedRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var lockOwner = $"update-seed-{Guid.NewGuid():N}";
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.SeedLock, body.SeedId.ToString(), lockOwner, 10, cancellationToken);
@@ -355,15 +309,6 @@ public partial class SeedService : ISeedService
             }, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(seed));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "UpdateSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/update", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -371,8 +316,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedResponse?)> ActivateSeedAsync(ActivateSeedRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
             var key = $"seed:{body.SeedId}";
             var seed = await store.GetAsync(key, cancellationToken);
@@ -442,15 +385,6 @@ public partial class SeedService : ISeedService
             }, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(seed));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error activating seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "ActivateSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/activate", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -458,8 +392,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedResponse?)> ArchiveSeedAsync(ArchiveSeedRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
             var key = $"seed:{body.SeedId}";
             var seed = await store.GetAsync(key, cancellationToken);
@@ -494,15 +426,6 @@ public partial class SeedService : ISeedService
             }, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(seed));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error archiving seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "ArchiveSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/archive", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ========================================================================
@@ -514,8 +437,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, GrowthResponse?)> GetGrowthAsync(GetGrowthRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var growthStore = _stateStoreFactory.GetStore<SeedGrowthModel>(StateStoreDefinitions.SeedGrowth);
             var growth = await growthStore.GetAsync($"growth:{body.SeedId}", cancellationToken);
 
@@ -533,15 +454,6 @@ public partial class SeedService : ISeedService
                 TotalGrowth = domains.Values.Sum(),
                 Domains = domains
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting growth for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetGrowth", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/growth/get", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -549,19 +461,8 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, GrowthResponse?)> RecordGrowthAsync(RecordGrowthRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             return await RecordGrowthInternalAsync(
                 body.SeedId, new[] { (body.Domain, body.Amount) }, body.Source, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording growth for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "RecordGrowth", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/growth/record", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -569,19 +470,8 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, GrowthResponse?)> RecordGrowthBatchAsync(RecordGrowthBatchRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var entries = body.Entries.Select(e => (e.Domain, e.Amount)).ToArray();
             return await RecordGrowthInternalAsync(body.SeedId, entries, body.Source, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording batch growth for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "RecordGrowthBatch", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/growth/record-batch", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -589,8 +479,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, GrowthPhaseResponse?)> GetGrowthPhaseAsync(GetGrowthPhaseRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
             var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
 
@@ -619,15 +507,6 @@ public partial class SeedService : ISeedService
                 NextPhaseCode = nextPhase?.PhaseCode,
                 NextPhaseThreshold = nextPhase?.MinTotalGrowth
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting growth phase for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetGrowthPhase", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/growth/get-phase", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ========================================================================
@@ -639,8 +518,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, CapabilityManifestResponse?)> GetCapabilityManifestAsync(GetCapabilityManifestRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             // Check cache first; honor debounce window from configuration
             var cacheStore = _stateStoreFactory.GetStore<CapabilityManifestModel>(StateStoreDefinitions.SeedCapabilitiesCache);
             var cached = await cacheStore.GetAsync($"cap:{body.SeedId}", cancellationToken);
@@ -662,15 +539,6 @@ public partial class SeedService : ISeedService
 
             var manifest = await ComputeAndCacheManifestAsync(seed, cancellationToken);
             return (StatusCodes.OK, MapManifestToResponse(manifest));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting capability manifest for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetCapabilityManifest", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/capability/get-manifest", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ========================================================================
@@ -685,8 +553,6 @@ public partial class SeedService : ISeedService
         _logger.LogInformation("Registering seed type {SeedTypeCode} for game service {GameServiceId}",
             body.SeedTypeCode, body.GameServiceId);
 
-        try
-        {
             // Validate game service exists (L2 hard dependency)
             try
             {
@@ -763,15 +629,6 @@ public partial class SeedService : ISeedService
             }, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapTypeToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error registering seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "RegisterSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/register", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -779,8 +636,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedTypeResponse?)> GetSeedTypeAsync(GetSeedTypeRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
             var seedType = await store.GetAsync($"type:{body.GameServiceId}:{body.SeedTypeCode}", cancellationToken);
 
@@ -790,15 +645,6 @@ public partial class SeedService : ISeedService
             }
 
             return (StatusCodes.OK, MapTypeToResponse(seedType));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "GetSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/get", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -806,8 +652,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, ListSeedTypesResponse?)> ListSeedTypesAsync(ListSeedTypesRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var store = _stateStoreFactory.GetJsonQueryableStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
             var conditions = new List<QueryCondition>
             {
@@ -827,15 +671,6 @@ public partial class SeedService : ISeedService
             var types = items.Select(MapTypeToResponse).ToList();
 
             return (StatusCodes.OK, new ListSeedTypesResponse { SeedTypes = types });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing seed types for game service {GameServiceId}", body.GameServiceId);
-            await _messageBus.TryPublishErrorAsync("seed", "ListSeedTypes", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/list", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -844,8 +679,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedTypeResponse?)> UpdateSeedTypeAsync(UpdateSeedTypeRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var lockOwner = $"update-type-{Guid.NewGuid():N}";
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
@@ -922,15 +755,6 @@ public partial class SeedService : ISeedService
             }, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapTypeToResponse(seedType));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "UpdateSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/update", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -942,8 +766,6 @@ public partial class SeedService : ISeedService
         _logger.LogDebug("Deprecating seed type {SeedTypeCode} for game service {GameServiceId}",
             body.SeedTypeCode, body.GameServiceId);
 
-        try
-        {
             var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
             var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
             var model = await store.GetAsync(key, cancellationToken);
@@ -986,15 +808,6 @@ public partial class SeedService : ISeedService
 
             _logger.LogInformation("Deprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
             return (StatusCodes.OK, MapTypeToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deprecating seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "DeprecateSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/deprecate", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1005,8 +818,6 @@ public partial class SeedService : ISeedService
         _logger.LogDebug("Undeprecating seed type {SeedTypeCode} for game service {GameServiceId}",
             body.SeedTypeCode, body.GameServiceId);
 
-        try
-        {
             var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
             var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
             var model = await store.GetAsync(key, cancellationToken);
@@ -1049,15 +860,6 @@ public partial class SeedService : ISeedService
 
             _logger.LogInformation("Undeprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
             return (StatusCodes.OK, MapTypeToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error undeprecating seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "UndeprecateSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/undeprecate", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1068,8 +870,6 @@ public partial class SeedService : ISeedService
         _logger.LogDebug("Deleting seed type {SeedTypeCode} for game service {GameServiceId}",
             body.SeedTypeCode, body.GameServiceId);
 
-        try
-        {
             var lockOwner = $"delete-type-{Guid.NewGuid():N}";
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
@@ -1135,15 +935,6 @@ public partial class SeedService : ISeedService
 
             _logger.LogInformation("Deleted seed type: {SeedTypeCode}", body.SeedTypeCode);
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "DeleteSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/delete", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     // ========================================================================
@@ -1158,8 +949,6 @@ public partial class SeedService : ISeedService
         _logger.LogInformation("Initiating bond between seeds {InitiatorId} and {TargetId}",
             body.InitiatorSeedId, body.TargetSeedId);
 
-        try
-        {
             // Lock both seeds in deterministic order to prevent deadlocks and race conditions
             var orderedIds = new[] { body.InitiatorSeedId, body.TargetSeedId }.OrderBy(id => id).ToArray();
             var lockOwner = $"bond-{Guid.NewGuid():N}";
@@ -1245,15 +1034,6 @@ public partial class SeedService : ISeedService
             await bondStore.SaveAsync($"bond:{bond.BondId}", bond, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapBondToResponse(bond));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error initiating bond");
-            await _messageBus.TryPublishErrorAsync("seed", "InitiateBond", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/initiate", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1261,8 +1041,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, BondResponse?)> ConfirmBondAsync(ConfirmBondRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var lockOwner = $"confirm-bond-{Guid.NewGuid():N}";
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.SeedLock, $"bond:{body.BondId}", lockOwner, 10, cancellationToken);
@@ -1325,15 +1103,6 @@ public partial class SeedService : ISeedService
             await bondStore.SaveAsync(bondKey, bond, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapBondToResponse(bond));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error confirming bond {BondId}", body.BondId);
-            await _messageBus.TryPublishErrorAsync("seed", "ConfirmBond", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/confirm", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1341,8 +1110,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, BondResponse?)> GetBondAsync(GetBondRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var store = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
             var bond = await store.GetAsync($"bond:{body.BondId}", cancellationToken);
 
@@ -1352,15 +1119,6 @@ public partial class SeedService : ISeedService
             }
 
             return (StatusCodes.OK, MapBondToResponse(bond));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting bond {BondId}", body.BondId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetBond", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/get", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1368,8 +1126,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, BondResponse?)> GetBondForSeedAsync(GetBondForSeedRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
             var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
 
@@ -1392,15 +1148,6 @@ public partial class SeedService : ISeedService
             }
 
             return (StatusCodes.OK, MapBondToResponse(bond));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting bond for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetBondForSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/get-for-seed", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1408,8 +1155,6 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, BondPartnersResponse?)> GetBondPartnersAsync(GetBondPartnersRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
             var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
             var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
 
@@ -1448,15 +1193,6 @@ public partial class SeedService : ISeedService
                 BondId = bond.BondId,
                 Partners = partners
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting bond partners for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetBondPartners", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/get-partners", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ========================================================================

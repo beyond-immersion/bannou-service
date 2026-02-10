@@ -117,8 +117,6 @@ public partial class LeaderboardService : ILeaderboardService
         _logger.LogDebug("Creating leaderboard {LeaderboardId} for game service {GameServiceId}",
             body.LeaderboardId, body.GameServiceId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
@@ -162,22 +160,6 @@ public partial class LeaderboardService : ILeaderboardService
             }
 
             return (StatusCodes.OK, MapToResponse(definition, 0));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating leaderboard definition");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "CreateLeaderboardDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/definition/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -188,8 +170,6 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Getting leaderboard {LeaderboardId}", body.LeaderboardId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
@@ -205,22 +185,6 @@ public partial class LeaderboardService : ILeaderboardService
             var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(definition, entryCount));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting leaderboard definition");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "GetLeaderboardDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/definition/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -231,8 +195,6 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Listing leaderboards for game service {GameServiceId}", body.GameServiceId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var indexKey = GetDefinitionIndexKey(body.GameServiceId);
             var leaderboardIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
@@ -277,22 +239,6 @@ public partial class LeaderboardService : ILeaderboardService
             {
                 Leaderboards = ordered
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing leaderboard definitions");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "ListLeaderboardDefinitions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/definition/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -303,8 +249,6 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Updating leaderboard {LeaderboardId}", body.LeaderboardId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
@@ -342,22 +286,6 @@ public partial class LeaderboardService : ILeaderboardService
             var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(definition, entryCount));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating leaderboard definition");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "UpdateLeaderboardDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/definition/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -368,8 +296,6 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Deleting leaderboard {LeaderboardId}", body.LeaderboardId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
@@ -414,22 +340,6 @@ public partial class LeaderboardService : ILeaderboardService
                 cancellationToken);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting leaderboard definition");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "DeleteLeaderboardDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/definition/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -441,8 +351,6 @@ public partial class LeaderboardService : ILeaderboardService
         _logger.LogDebug("Submitting score for {EntityType}:{EntityId} to {LeaderboardId}",
             body.EntityType, body.EntityId, body.LeaderboardId);
 
-        try
-        {
             // Get leaderboard definition
             var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
@@ -532,22 +440,6 @@ public partial class LeaderboardService : ILeaderboardService
                 CurrentRank = currentRank,
                 RankChange = rankChange
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error submitting score");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "SubmitScore",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/score/submit",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -559,8 +451,6 @@ public partial class LeaderboardService : ILeaderboardService
         _logger.LogDebug("Submitting batch of {Count} scores to {LeaderboardId}",
             body.Scores.Count, body.LeaderboardId);
 
-        try
-        {
             if (body.Scores.Count == 0 || body.Scores.Count > _configuration.ScoreUpdateBatchSize)
             {
                 _logger.LogWarning(
@@ -614,22 +504,6 @@ public partial class LeaderboardService : ILeaderboardService
                 Accepted = accepted,
                 Rejected = rejected
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error submitting batch scores");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "SubmitScoreBatch",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/score/submit-batch",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -641,8 +515,6 @@ public partial class LeaderboardService : ILeaderboardService
         _logger.LogDebug("Getting rank for {EntityType}:{EntityId} on {LeaderboardId}",
             body.EntityType, body.EntityId, body.LeaderboardId);
 
-        try
-        {
             // Get leaderboard definition
             var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
@@ -688,22 +560,6 @@ public partial class LeaderboardService : ILeaderboardService
                 TotalEntries = totalEntries,
                 Percentile = Math.Round(percentile, 2)
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting entity rank");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "GetEntityRank",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/rank/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -714,8 +570,6 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Getting top {Count} for {LeaderboardId}", body.Count, body.LeaderboardId);
 
-        try
-        {
             if (body.Count <= 0 || body.Count > _configuration.MaxEntriesPerQuery)
             {
                 _logger.LogWarning("Invalid count {Count} for leaderboard {LeaderboardId}; max is {MaxEntries}",
@@ -770,22 +624,6 @@ public partial class LeaderboardService : ILeaderboardService
                 Entries = responseEntries,
                 TotalEntries = totalEntries
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting top ranks");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "GetTopRanks",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/rank/top",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -797,8 +635,6 @@ public partial class LeaderboardService : ILeaderboardService
         _logger.LogDebug("Getting ranks around {EntityType}:{EntityId} on {LeaderboardId}",
             body.EntityType, body.EntityId, body.LeaderboardId);
 
-        try
-        {
             if (body.CountBefore < 0 || body.CountAfter < 0)
             {
                 _logger.LogWarning(
@@ -866,22 +702,6 @@ public partial class LeaderboardService : ILeaderboardService
                 Entries = responseEntries,
                 TotalEntries = totalEntries
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting ranks around entity");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "GetRanksAround",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/rank/around",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -892,8 +712,6 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Creating new season for {LeaderboardId}", body.LeaderboardId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
             var (definition, defEtag) = await definitionStore.GetWithETagAsync(defKey, cancellationToken);
@@ -961,22 +779,6 @@ public partial class LeaderboardService : ILeaderboardService
                 IsActive = true,
                 EntryCount = 0
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating season");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "CreateSeason",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/season/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -987,8 +789,6 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Getting season info for {LeaderboardId}", body.LeaderboardId);
 
-        try
-        {
             var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
@@ -1027,22 +827,6 @@ public partial class LeaderboardService : ILeaderboardService
                 IsActive = isActive,
                 EntryCount = entryCount
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting season");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "GetSeason",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/season/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #region Helper Methods

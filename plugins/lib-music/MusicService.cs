@@ -59,8 +59,6 @@ public partial class MusicService : IMusicService
         _logger.LogDebug("Generating composition with style {StyleId}", body.StyleId);
         var stopwatch = Stopwatch.StartNew();
 
-        try
-        {
             // Get the style definition
             var style = GetStyleDefinition(body.StyleId);
             if (style == null)
@@ -192,22 +190,6 @@ public partial class MusicService : IMusicService
             }
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating composition");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "GenerateComposition",
-                "generation_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/generate",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -219,8 +201,6 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Validating MIDI-JSON structure");
 
-        try
-        {
             var errors = new List<ValidationError>();
             var warnings = new List<string>();
 
@@ -319,22 +299,6 @@ public partial class MusicService : IMusicService
 
             await Task.CompletedTask;
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error validating MIDI-JSON");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "ValidateMidiJson",
-                "validation_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/validate",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -346,8 +310,6 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Getting style {StyleId} / {StyleName}", body.StyleId, body.StyleName);
 
-        try
-        {
             StyleDefinition? style = null;
 
             if (!string.IsNullOrEmpty(body.StyleId))
@@ -368,22 +330,6 @@ public partial class MusicService : IMusicService
             var response = ConvertToStyleResponse(style);
             await Task.CompletedTask;
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting style");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "GetStyle",
-                "style_lookup_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/style/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -395,8 +341,6 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Listing styles with category filter {Category}", body.Category);
 
-        try
-        {
             var styles = BuiltInStyles.All.AsEnumerable();
 
             // Filter by category if specified
@@ -430,22 +374,6 @@ public partial class MusicService : IMusicService
 
             await Task.CompletedTask;
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing styles");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "ListStyles",
-                "list_styles_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/style/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -457,8 +385,6 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Creating style {Name}", body.Name);
 
-        try
-        {
             // For now, return the style definition as if it was created
             // In production, this would persist to state store
             var response = new StyleDefinitionResponse
@@ -477,22 +403,6 @@ public partial class MusicService : IMusicService
 
             await Task.CompletedTask;
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating style");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "CreateStyle",
-                "create_style_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/style/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -504,8 +414,6 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Generating progression in {Tonic} {Mode}", body.Key.Tonic, body.Key.Mode);
 
-        try
-        {
             var seed = body.Seed ?? Environment.TickCount;
             var scale = new Scale(body.Key.Tonic, ToModeType(body.Key.Mode));
             var generator = new ProgressionGenerator(seed);
@@ -552,22 +460,6 @@ public partial class MusicService : IMusicService
 
             await Task.CompletedTask;
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating progression");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "GenerateProgression",
-                "progression_generation_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/theory/progression",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -579,8 +471,6 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Generating melody over {ChordCount} chords", body.Harmony?.Count ?? 0);
 
-        try
-        {
             var seed = body.Seed ?? Environment.TickCount;
 
             // Infer key from first chord (or default to C major)
@@ -657,22 +547,6 @@ public partial class MusicService : IMusicService
 
             await Task.CompletedTask;
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating melody");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "GenerateMelody",
-                "melody_generation_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/theory/melody",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -684,8 +558,6 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Applying voice leading to {ChordCount} chords", body.Chords?.Count ?? 0);
 
-        try
-        {
             // Convert API chords to SDK chords (PitchClass has x-sdk-type, no conversion needed)
             var chords = body.Chords?.Select(cs =>
                 new Chord(cs.Root, ToChordQuality(cs.Quality), cs.Bass)
@@ -730,22 +602,6 @@ public partial class MusicService : IMusicService
 
             await Task.CompletedTask;
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error applying voice leading");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "ApplyVoiceLeading",
-                "voice_leading_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/theory/voice-lead",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #region Private Helpers

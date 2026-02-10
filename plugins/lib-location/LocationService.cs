@@ -70,8 +70,6 @@ public partial class LocationService : ILocationService
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> GetLocationAsync(GetLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Getting location by ID: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -83,23 +81,11 @@ public partial class LocationService : ILocationService
             }
 
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "GetLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/get",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> GetLocationByCodeAsync(GetLocationByCodeRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Getting location by code: {Code} in realm {RealmId}", body.Code, body.RealmId);
 
             var code = body.Code.ToUpperInvariant();
@@ -126,23 +112,11 @@ public partial class LocationService : ILocationService
             }
 
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting location by code {Code} in realm {RealmId}", body.Code, body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "GetLocationByCode", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/get-by-code",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> ListLocationsAsync(ListLocationsRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Listing locations with filters - RealmId: {RealmId}, LocationType: {LocationType}, IncludeDeprecated: {IncludeDeprecated}",
                 body.RealmId, body.LocationType, body.IncludeDeprecated);
 
@@ -184,23 +158,11 @@ public partial class LocationService : ILocationService
                 HasNextPage = page * pageSize < totalCount,
                 HasPreviousPage = page > 1
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing locations");
-            await _messageBus.TryPublishErrorAsync(
-                "location", "ListLocations", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/list",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> ListLocationsByRealmAsync(ListLocationsByRealmRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Listing locations by realm: {RealmId}", body.RealmId);
 
             var realmIndexKey = BuildRealmIndexKey(body.RealmId);
@@ -253,23 +215,11 @@ public partial class LocationService : ILocationService
                 HasNextPage = page * pageSize < totalCount,
                 HasPreviousPage = page > 1
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing locations for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "ListLocationsByRealm", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/list-by-realm",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> ListLocationsByParentAsync(ListLocationsByParentRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Listing locations by parent: {ParentLocationId}", body.ParentLocationId);
 
             // First get the parent location to determine the realm
@@ -331,23 +281,11 @@ public partial class LocationService : ILocationService
                 HasNextPage = page * pageSize < totalCount,
                 HasPreviousPage = page > 1
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing locations by parent {ParentLocationId}", body.ParentLocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "ListLocationsByParent", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/list-by-parent",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> ListRootLocationsAsync(ListRootLocationsRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Listing root locations for realm: {RealmId}", body.RealmId);
 
             var rootKey = BuildRootLocationsKey(body.RealmId);
@@ -400,23 +338,11 @@ public partial class LocationService : ILocationService
                 HasNextPage = page * pageSize < totalCount,
                 HasPreviousPage = page > 1
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing root locations for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "ListRootLocations", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/list-root",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> GetLocationAncestorsAsync(GetLocationAncestorsRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Getting ancestors for location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -456,16 +382,6 @@ public partial class LocationService : ILocationService
                 Page = 1,
                 PageSize = ancestors.Count
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting ancestors for location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "GetLocationAncestors", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/get-ancestors",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -479,8 +395,6 @@ public partial class LocationService : ILocationService
         ValidateTerritoryRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Validating territory for location {LocationId} against {TerritoryCount} territories, mode: {Mode}",
                 body.LocationId, body.TerritoryLocationIds?.Count ?? 0, body.TerritoryMode);
 
@@ -561,23 +475,11 @@ public partial class LocationService : ILocationService
                 ViolationReason = null,
                 MatchedTerritoryId = hasOverlap ? matchedTerritory : null
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error validating territory for location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "ValidateTerritory", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/validate-territory",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> GetLocationDescendantsAsync(GetLocationDescendantsRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Getting descendants for location: {LocationId}, maxDepth: {MaxDepth}", body.LocationId, body.MaxDepth);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -626,23 +528,11 @@ public partial class LocationService : ILocationService
                 HasNextPage = page * pageSize < totalCount,
                 HasPreviousPage = page > 1
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting descendants for location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "GetLocationDescendants", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/get-descendants",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationExistsResponse?)> LocationExistsAsync(LocationExistsRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Checking if location exists: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -666,16 +556,6 @@ public partial class LocationService : ILocationService
                 LocationId = model.LocationId,
                 RealmId = model.RealmId
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking if location exists {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "LocationExists", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/exists",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -685,8 +565,6 @@ public partial class LocationService : ILocationService
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> CreateLocationAsync(CreateLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Creating location with code: {Code} in realm {RealmId}", body.Code, body.RealmId);
 
             // Validate realm exists and is active
@@ -779,32 +657,11 @@ public partial class LocationService : ILocationService
 
             _logger.LogDebug("Created location {LocationId} with code {Code} in realm {RealmId}", locationId, body.Code, body.RealmId);
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "Realm service error creating location {Code}: {StatusCode}", body.Code, ex.StatusCode);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "CreateLocation", "realm_service_error", ex.Message,
-                dependency: "realm", endpoint: "post:/location/create",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating location {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "CreateLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/create",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> UpdateLocationAsync(UpdateLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Updating location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -858,23 +715,11 @@ public partial class LocationService : ILocationService
 
             _logger.LogDebug("Updated location {LocationId}, changed fields: {ChangedFields}", body.LocationId, changedFields);
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "UpdateLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/update",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> SetLocationParentAsync(SetLocationParentRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Setting parent for location: {LocationId} to {ParentLocationId}", body.LocationId, body.ParentLocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -953,23 +798,11 @@ public partial class LocationService : ILocationService
 
             _logger.LogDebug("Set parent of location {LocationId} to {ParentLocationId}", body.LocationId, body.ParentLocationId);
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error setting parent for location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "SetLocationParent", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/set-parent",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> RemoveLocationParentAsync(RemoveLocationParentRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Removing parent from location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -1015,23 +848,11 @@ public partial class LocationService : ILocationService
 
             _logger.LogDebug("Removed parent from location {LocationId}", body.LocationId);
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error removing parent from location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "RemoveLocationParent", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/remove-parent",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<StatusCodes> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Deleting location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -1137,23 +958,11 @@ public partial class LocationService : ILocationService
 
             _logger.LogDebug("Deleted location {LocationId}", body.LocationId);
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "DeleteLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/delete",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> DeprecateLocationAsync(DeprecateLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Deprecating location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -1185,23 +994,11 @@ public partial class LocationService : ILocationService
 
             _logger.LogDebug("Deprecated location {LocationId}", body.LocationId);
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deprecating location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "DeprecateLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/deprecate",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> UndeprecateLocationAsync(UndeprecateLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Undeprecating location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
@@ -1233,16 +1030,6 @@ public partial class LocationService : ILocationService
 
             _logger.LogDebug("Undeprecated location {LocationId}", body.LocationId);
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error undeprecating location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "UndeprecateLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/undeprecate",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -1256,8 +1043,6 @@ public partial class LocationService : ILocationService
         var skipped = 0;
         var errors = new List<string>();
 
-        try
-        {
             // Build a map of realm codes to realm IDs
             var realmCodeToId = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
             var failedRealmCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1396,27 +1181,6 @@ public partial class LocationService : ILocationService
                 Skipped = skipped,
                 Errors = errors
             });
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "Realm service error seeding locations (created={Created}, updated={Updated}, skipped={Skipped}): {StatusCode}",
-                created, updated, skipped, ex.StatusCode);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "SeedLocations", "realm_service_error", ex.Message,
-                dependency: "realm", endpoint: "post:/location/seed",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error seeding locations (created={Created}, updated={Updated}, skipped={Skipped})",
-                created, updated, skipped);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "SeedLocations", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/seed",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1428,8 +1192,6 @@ public partial class LocationService : ILocationService
         TransferLocationToRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
             _logger.LogDebug("Transferring location {LocationId} to realm {TargetRealmId}",
                 body.LocationId, body.TargetRealmId);
 
@@ -1519,27 +1281,6 @@ public partial class LocationService : ILocationService
                 body.LocationId, model.Code, oldRealmId, body.TargetRealmId);
 
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "Realm service error transferring location {LocationId}: {StatusCode}",
-                body.LocationId, ex.StatusCode);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "TransferLocationToRealm", "realm_service_error", ex.Message,
-                dependency: "realm", endpoint: "post:/location/transfer-realm",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error transferring location {LocationId} to realm {TargetRealmId}",
-                body.LocationId, body.TargetRealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "TransferLocationToRealm", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/transfer-realm",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
