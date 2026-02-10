@@ -90,7 +90,6 @@ public partial class CharacterService : ICharacterService
         CreateCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Creating character: {Name} in realm: {RealmId}", body.Name, body.RealmId);
 
@@ -162,32 +161,12 @@ public partial class CharacterService : ICharacterService
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error creating character: {Name}", body.Name);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating character: {Name}", body.Name);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "CreateCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/create",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     public async Task<(StatusCodes, CharacterResponse?)> GetCharacterAsync(
         GetCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Getting character: {CharacterId}", body.CharacterId);
 
@@ -203,32 +182,12 @@ public partial class CharacterService : ICharacterService
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error getting character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "GetCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/get",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     public async Task<(StatusCodes, CharacterResponse?)> UpdateCharacterAsync(
         UpdateCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Updating character: {CharacterId}", body.CharacterId);
 
@@ -318,32 +277,12 @@ public partial class CharacterService : ICharacterService
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error updating character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "UpdateCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/update",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     public async Task<StatusCodes> DeleteCharacterAsync(
         DeleteCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Deleting character: {CharacterId}", body.CharacterId);
 
@@ -440,32 +379,12 @@ public partial class CharacterService : ICharacterService
 
             return StatusCodes.OK;
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error deleting character: {CharacterId}", body.CharacterId);
-            return StatusCodes.ServiceUnavailable;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "DeleteCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/delete",
-                details: null,
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     public async Task<(StatusCodes, CharacterListResponse?)> ListCharactersAsync(
         ListCharactersRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var page = body.Page > 0 ? body.Page : 1;
             var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
@@ -484,32 +403,12 @@ public partial class CharacterService : ICharacterService
                 pageSize,
                 cancellationToken);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error listing characters");
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing characters");
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "ListCharacters",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/list",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     public async Task<(StatusCodes, CharacterListResponse?)> GetCharactersByRealmAsync(
         GetCharactersByRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var page = body.Page > 0 ? body.Page : 1;
             var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
@@ -525,25 +424,6 @@ public partial class CharacterService : ICharacterService
                 pageSize,
                 cancellationToken);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error getting characters by realm: {RealmId}", body.RealmId);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting characters by realm: {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "GetCharactersByRealm",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/by-realm",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -554,7 +434,6 @@ public partial class CharacterService : ICharacterService
         TransferCharacterToRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Transferring character {CharacterId} to realm {TargetRealmId}",
                 body.CharacterId, body.TargetRealmId);
@@ -644,25 +523,6 @@ public partial class CharacterService : ICharacterService
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error transferring character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error transferring character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "TransferCharacterToRealm",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/transfer-realm",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -680,7 +540,6 @@ public partial class CharacterService : ICharacterService
         GetEnrichedCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Getting enriched character: {CharacterId}", body.CharacterId);
 
@@ -726,25 +585,6 @@ public partial class CharacterService : ICharacterService
 
             return (StatusCodes.OK, response);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error getting enriched character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting enriched character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "GetEnrichedCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/get-enriched",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -758,7 +598,6 @@ public partial class CharacterService : ICharacterService
         CompressCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Compressing character: {CharacterId}", body.CharacterId);
 
@@ -841,25 +680,6 @@ public partial class CharacterService : ICharacterService
             _logger.LogInformation("Character compressed: {CharacterId}", body.CharacterId);
             return (StatusCodes.OK, archive);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error compressing character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error compressing character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "CompressCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/compress",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -869,7 +689,6 @@ public partial class CharacterService : ICharacterService
         GetCharacterArchiveRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Getting archive for character: {CharacterId}", body.CharacterId);
 
@@ -886,25 +705,6 @@ public partial class CharacterService : ICharacterService
             var archive = MapFromArchiveModel(archiveModel);
             return (StatusCodes.OK, archive);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error getting archive for character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting archive for character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "GetCharacterArchive",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/get-archive",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -918,7 +718,6 @@ public partial class CharacterService : ICharacterService
         GetCompressDataRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Getting compress data for character: {CharacterId}", body.CharacterId);
 
@@ -964,25 +763,6 @@ public partial class CharacterService : ICharacterService
             _logger.LogDebug("Generated compress data for character: {CharacterId}", body.CharacterId);
             return (StatusCodes.OK, compressData);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error getting compress data for character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting compress data for character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "GetCompressData",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/get-compress-data",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -997,7 +777,6 @@ public partial class CharacterService : ICharacterService
         CheckReferencesRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Checking references for character: {CharacterId}", body.CharacterId);
 
@@ -1182,25 +961,6 @@ public partial class CharacterService : ICharacterService
             };
 
             return (StatusCodes.OK, response);
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error checking references for character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking references for character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character",
-                "CheckCharacterReferences",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/character/check-references",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
