@@ -47,9 +47,6 @@ info:
     - topic: collection.created
       event: CollectionCreatedEvent
       description: Published when a collection instance is created for an owner
-    - topic: collection.updated
-      event: CollectionUpdatedEvent
-      description: Published when a collection instance is updated
     - topic: collection.deleted
       event: CollectionDeletedEvent
       description: Published when a collection instance is deleted
@@ -99,7 +96,7 @@ x-lifecycle:
 paths: {}  # Events don't have HTTP paths
 
 # Note: CollectionEntryTemplateCreatedEvent, CollectionEntryTemplateUpdatedEvent, CollectionEntryTemplateDeletedEvent,
-# CollectionCreatedEvent, CollectionUpdatedEvent, CollectionDeletedEvent
+# CollectionCreatedEvent, CollectionDeletedEvent
 # are auto-generated from x-lifecycle. See: schemas/Generated/collection-lifecycle-events.yaml
 
 components:

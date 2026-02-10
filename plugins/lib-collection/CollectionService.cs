@@ -285,9 +285,28 @@ public partial class CollectionService : ICollectionService
         _logger.LogInformation("Collection cache miss for collection {CollectionId}, rebuilding from inventory",
             collection.CollectionId);
 
-        var containerContents = await _inventoryClient.GetContainerAsync(
-            new GetContainerRequest { ContainerId = collection.ContainerId, IncludeContents = true },
-            cancellationToken);
+        ContainerWithContentsResponse containerContents;
+        try
+        {
+            containerContents = await _inventoryClient.GetContainerAsync(
+                new GetContainerRequest { ContainerId = collection.ContainerId, IncludeContents = true },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex,
+                "Failed to load container {ContainerId} for cache rebuild of collection {CollectionId}",
+                collection.ContainerId, collection.CollectionId);
+
+            // Graceful degradation: return empty cache on inventory failure.
+            // The cache will attempt to rebuild on the next access.
+            return new CollectionCacheModel
+            {
+                CollectionId = collection.CollectionId,
+                UnlockedEntries = new List<UnlockedEntryRecord>(),
+                LastUpdated = DateTimeOffset.UtcNow
+            };
+        }
 
         // Load all entry templates for this collection type + game service to match items
         var templates = await EntryTemplateStore.QueryAsync(
@@ -358,15 +377,26 @@ public partial class CollectionService : ICollectionService
                 $"Owner type '{ownerType}' cannot be mapped to a ContainerOwnerType for inventory operations");
         }
 
-        var containerResponse = await _inventoryClient.CreateContainerAsync(
-            new CreateContainerRequest
-            {
-                OwnerId = ownerId,
-                OwnerType = containerOwnerType.Value,
-                ContainerType = $"collection_{collectionType.ToString().ToLowerInvariant()}",
-                ConstraintModel = ContainerConstraintModel.Unlimited
-            },
-            cancellationToken);
+        ContainerResponse containerResponse;
+        try
+        {
+            containerResponse = await _inventoryClient.CreateContainerAsync(
+                new CreateContainerRequest
+                {
+                    OwnerId = ownerId,
+                    OwnerType = containerOwnerType.Value,
+                    ContainerType = $"collection_{collectionType.ToString().ToLowerInvariant()}",
+                    ConstraintModel = ContainerConstraintModel.Unlimited
+                },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex,
+                "Failed to create inventory container for {CollectionType} collection for {OwnerType} {OwnerId}",
+                collectionType, ownerType, ownerId);
+            throw;
+        }
 
         var now = DateTimeOffset.UtcNow;
         var instance = new CollectionInstanceModel
@@ -777,6 +807,22 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.NotFound, null);
         }
 
+        // Check if any collection instances reference this template (warn if so)
+        var collectionsOfType = await CollectionStore.QueryAsync(
+            c => c.CollectionType == template.CollectionType && c.GameServiceId == template.GameServiceId,
+            cancellationToken: cancellationToken);
+
+        foreach (var collection in collectionsOfType)
+        {
+            var cache = await CollectionCache.GetAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
+            if (cache?.UnlockedEntries.Any(e => e.Code == template.Code) == true)
+            {
+                _logger.LogWarning(
+                    "Deleting entry template {EntryTemplateId} ({Code}) which is referenced by collection {CollectionId} for {OwnerType} {OwnerId}",
+                    template.EntryTemplateId, template.Code, collection.CollectionId, collection.OwnerType, collection.OwnerId);
+            }
+        }
+
         await EntryTemplateStore.DeleteAsync(
             BuildTemplateKey(template.EntryTemplateId),
             cancellationToken);
@@ -814,6 +860,26 @@ public partial class CollectionService : ICollectionService
     {
         _logger.LogInformation("Seeding {Count} entry templates", body.Templates.Count);
 
+        // Validate itemTemplateIds upfront by collecting unique IDs and checking each
+        var uniqueItemTemplateIds = body.Templates.Select(t => t.ItemTemplateId).Distinct().ToList();
+        var validItemTemplateIds = new HashSet<Guid>();
+
+        foreach (var itemTemplateId in uniqueItemTemplateIds)
+        {
+            try
+            {
+                await _itemClient.GetItemTemplateAsync(
+                    new GetItemTemplateRequest { TemplateId = itemTemplateId },
+                    cancellationToken);
+                validItemTemplateIds.Add(itemTemplateId);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Item template {ItemTemplateId} not found, skipping templates that reference it",
+                    itemTemplateId);
+            }
+        }
+
         var created = 0;
         var skipped = 0;
 
@@ -825,6 +891,14 @@ public partial class CollectionService : ICollectionService
 
             if (existingByCode != null)
             {
+                skipped++;
+                continue;
+            }
+
+            if (!validItemTemplateIds.Contains(templateRequest.ItemTemplateId))
+            {
+                _logger.LogWarning("Skipping entry template {Code}: invalid item template {ItemTemplateId}",
+                    templateRequest.Code, templateRequest.ItemTemplateId);
                 skipped++;
                 continue;
             }
