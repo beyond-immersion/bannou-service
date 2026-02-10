@@ -1225,6 +1225,15 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .Setup(c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ContainerResponse { ContainerId = TestContainerId });
 
+        // Empty container for cache rebuild (newly created collection has no items yet)
+        _mockInventoryClient
+            .Setup(c => c.GetContainerAsync(It.IsAny<GetContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerWithContentsResponse
+            {
+                Container = new ContainerResponse { ContainerId = TestContainerId },
+                Items = new List<ContainerItem>()
+            });
+
         // Item creation succeeds
         var itemInstanceId = Guid.NewGuid();
         _mockItemClient

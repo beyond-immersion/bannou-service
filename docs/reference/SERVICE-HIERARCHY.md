@@ -214,6 +214,7 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 | **character-encounter** | Memorable interactions tracking |
 | **realm-history** | Realm historical events, lore |
 | **license** | Grid-based progression boards via itemized contracts |
+| **collection** | Universal content unlock and archive system (bestiaries, music galleries, scene archives) |
 | **storyline** | Seeded narrative generation from compressed archives |
 
 **Analytics Note**: Analytics is classified as L4 not because it *depends* on game services, but because it *observes* them via event subscriptions. It subscribes to events from L2 services (game-session) and L4 services (character-history, realm-history) for aggregation. Unlike typical L4 services:
@@ -869,7 +870,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | **L1** | account, auth, connect, permission, contract, resource |
 | **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest, seed |
 | **L3** | asset, orchestrator, documentation, website |
-| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history, license, storyline |
+| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history, license, collection, storyline |
 | **L5** | (reserved for third-party plugins and internal meta-services) |
 
 † Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.
