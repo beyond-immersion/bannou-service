@@ -342,7 +342,6 @@ public partial class LicenseService : ILicenseService
         CreateBoardTemplateRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogInformation("Creating board template {Name} for game service {GameServiceId}",
                 body.Name, body.GameServiceId);
@@ -438,15 +437,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapTemplateToResponse(template));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating board template");
-            await _messageBus.TryPublishErrorAsync(
-                "license", "CreateBoardTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board-template/create",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -454,7 +444,6 @@ public partial class LicenseService : ILicenseService
         GetBoardTemplateRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var template = await BoardTemplateStore.GetAsync(
                 BuildTemplateKey(body.BoardTemplateId),
@@ -467,15 +456,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapTemplateToResponse(template));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting board template {BoardTemplateId}", body.BoardTemplateId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "GetBoardTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board-template/get",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -483,7 +463,6 @@ public partial class LicenseService : ILicenseService
         ListBoardTemplatesRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
 
@@ -509,15 +488,6 @@ public partial class LicenseService : ILicenseService
                 HasMore = hasMore
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing board templates for game service {GameServiceId}", body.GameServiceId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "ListBoardTemplates", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board-template/list",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -525,7 +495,6 @@ public partial class LicenseService : ILicenseService
         UpdateBoardTemplateRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             await using var lockHandle = await _lockProvider.LockAsync(
                 StateStoreDefinitions.LicenseLock,
@@ -597,15 +566,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapTemplateToResponse(template));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating board template {BoardTemplateId}", body.BoardTemplateId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "UpdateBoardTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board-template/update",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -613,7 +573,6 @@ public partial class LicenseService : ILicenseService
         DeleteBoardTemplateRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             await using var lockHandle = await _lockProvider.LockAsync(
                 StateStoreDefinitions.LicenseLock,
@@ -675,15 +634,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapTemplateToResponse(template));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting board template {BoardTemplateId}", body.BoardTemplateId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "DeleteBoardTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board-template/delete",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -695,7 +645,6 @@ public partial class LicenseService : ILicenseService
         AddLicenseDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogInformation("Adding license definition {Code} to board template {BoardTemplateId}",
                 body.Code, body.BoardTemplateId);
@@ -806,15 +755,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapDefinitionToResponse(definition));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error adding license definition {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "AddLicenseDefinition", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/definition/add",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -822,7 +762,6 @@ public partial class LicenseService : ILicenseService
         GetLicenseDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var definition = await DefinitionStore.GetAsync(
                 BuildDefinitionKey(body.BoardTemplateId, body.Code),
@@ -835,16 +774,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapDefinitionToResponse(definition));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting license definition {Code} for template {BoardTemplateId}",
-                body.Code, body.BoardTemplateId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "GetLicenseDefinition", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/definition/get",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -852,7 +781,6 @@ public partial class LicenseService : ILicenseService
         ListLicenseDefinitionsRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var definitions = await DefinitionStore.QueryAsync(
                 d => d.BoardTemplateId == body.BoardTemplateId,
@@ -864,15 +792,6 @@ public partial class LicenseService : ILicenseService
                 Definitions = definitions.Select(MapDefinitionToResponse).ToList()
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing license definitions for template {BoardTemplateId}", body.BoardTemplateId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "ListLicenseDefinitions", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/definition/list",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -880,7 +799,6 @@ public partial class LicenseService : ILicenseService
         UpdateLicenseDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             await using var lockHandle = await _lockProvider.LockAsync(
                 StateStoreDefinitions.LicenseLock,
@@ -920,15 +838,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapDefinitionToResponse(definition));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating license definition {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "UpdateLicenseDefinition", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/definition/update",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -936,7 +845,6 @@ public partial class LicenseService : ILicenseService
         RemoveLicenseDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             // Acquire template lock for multi-instance safety (IMPLEMENTATION TENETS)
             await using var lockHandle = await _lockProvider.LockAsync(
@@ -993,15 +901,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapDefinitionToResponse(definition));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error removing license definition {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "RemoveLicenseDefinition", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/definition/remove",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1013,7 +912,6 @@ public partial class LicenseService : ILicenseService
         CreateBoardRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogInformation(
                 "Creating board for owner {OwnerType}:{OwnerId} from template {BoardTemplateId}",
@@ -1212,15 +1110,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapBoardToResponse(board));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating board for owner {OwnerType}:{OwnerId}", body.OwnerType, body.OwnerId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "CreateBoard", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board/create",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1228,7 +1117,6 @@ public partial class LicenseService : ILicenseService
         GetBoardRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
 
@@ -1239,15 +1127,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapBoardToResponse(board));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting board {BoardId}", body.BoardId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "GetBoard", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board/get",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1255,7 +1134,6 @@ public partial class LicenseService : ILicenseService
         ListBoardsByOwnerRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             IReadOnlyList<BoardInstanceModel> boards;
 
@@ -1277,15 +1155,6 @@ public partial class LicenseService : ILicenseService
                 Boards = boards.Select(MapBoardToResponse).ToList()
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing boards for owner {OwnerType}:{OwnerId}", body.OwnerType, body.OwnerId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "ListBoardsByOwner", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board/list-by-owner",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1293,7 +1162,6 @@ public partial class LicenseService : ILicenseService
         DeleteBoardRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             await using var lockHandle = await _lockProvider.LockAsync(
                 StateStoreDefinitions.LicenseLock,
@@ -1365,15 +1233,6 @@ public partial class LicenseService : ILicenseService
 
             return (StatusCodes.OK, MapBoardToResponse(board));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting board {BoardId}", body.BoardId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "DeleteBoard", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board/delete",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1385,7 +1244,6 @@ public partial class LicenseService : ILicenseService
         UnlockLicenseRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             // 1. Acquire distributed lock on board
             await using var lockHandle = await _lockProvider.LockAsync(
@@ -1715,16 +1573,6 @@ public partial class LicenseService : ILicenseService
                 ContractInstanceId = contractInstanceId
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error unlocking license {LicenseCode} on board {BoardId}",
-                body.LicenseCode, body.BoardId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "UnlockLicense", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/unlock",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1734,7 +1582,6 @@ public partial class LicenseService : ILicenseService
     private async Task CompensateItemCreationAsync(
         Guid itemInstanceId, Guid boardId, string licenseCode, CancellationToken cancellationToken)
     {
-        try
         {
             await _itemClient.DestroyItemInstanceAsync(
                 new DestroyItemInstanceRequest { InstanceId = itemInstanceId },
@@ -1785,7 +1632,6 @@ public partial class LicenseService : ILicenseService
         CheckUnlockableRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             // Load board instance
             var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
@@ -1874,16 +1720,6 @@ public partial class LicenseService : ILicenseService
                 RequiredLp = definition.LpCost
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking unlockable for {LicenseCode} on board {BoardId}",
-                body.LicenseCode, body.BoardId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "CheckUnlockable", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/check-unlockable",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1891,7 +1727,6 @@ public partial class LicenseService : ILicenseService
         BoardStateRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             // Load board instance
             var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
@@ -1966,15 +1801,6 @@ public partial class LicenseService : ILicenseService
                 Nodes = nodes
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting board state for {BoardId}", body.BoardId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "GetBoardState", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board-state",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1982,7 +1808,6 @@ public partial class LicenseService : ILicenseService
         SeedBoardTemplateRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogInformation(
                 "Seeding board template {BoardTemplateId} with {Count} definitions",
@@ -2123,15 +1948,6 @@ public partial class LicenseService : ILicenseService
                 DefinitionsCreated = created.Count,
                 Definitions = created
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error seeding board template {BoardTemplateId}", body.BoardTemplateId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "SeedBoardTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board-template/seed",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -2496,17 +2312,6 @@ public partial class LicenseService : ILicenseService
                 LicensesCloned = clonedEntries.Count
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Error cloning board {SourceBoardId} to owner {TargetOwnerType}:{TargetOwnerId}",
-                body.SourceBoardId, body.TargetOwnerType, body.TargetOwnerId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "CloneBoard", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board/clone",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -2522,7 +2327,6 @@ public partial class LicenseService : ILicenseService
 
         var boardsDeleted = 0;
 
-        try
         {
             var boards = await BoardStore.QueryAsync(
                 b => b.OwnerType == body.OwnerType && b.OwnerId == body.OwnerId,
@@ -2589,21 +2393,6 @@ public partial class LicenseService : ILicenseService
                 OwnerId = body.OwnerId,
                 BoardsDeleted = boardsDeleted
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error cleaning up license boards for owner {OwnerType}:{OwnerId}", body.OwnerType, body.OwnerId);
-            await _messageBus.TryPublishErrorAsync(
-                "license",
-                "CleanupByOwner",
-                "cleanup_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/license/cleanup-by-owner",
-                details: $"OwnerType: {body.OwnerType}, OwnerId: {body.OwnerId}, BoardsDeletedSoFar: {boardsDeleted}",
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 

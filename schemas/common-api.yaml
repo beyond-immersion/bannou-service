@@ -44,6 +44,23 @@ components:
         - custom
         - other
 
+    SentimentCategory:
+      type: string
+      description: >
+        Standardized sentiment categories for anonymous audience and reaction data.
+        Used by lib-chat for sentiment room messages and lib-stream for platform
+        audience processing. Designed for privacy-safe communication where text
+        content is inappropriate or unnecessary.
+      enum:
+        - Excited
+        - Supportive
+        - Critical
+        - Curious
+        - Surprised
+        - Amused
+        - Bored
+        - Hostile
+
     # ==========================================================================
     # Archive Base Types
     # ==========================================================================

@@ -30,7 +30,7 @@ The Chat service is a new L1 App Foundation plugin that provides typed message c
 - Sender identity is **opaque polymorphic** (senderType string + senderId Guid + displayName string) -- no enum coupling to higher layers
 - Message content is **polymorphic by room type** -- TextContent, SentimentContent, EmojiContent, or CustomContent (validated against room type's validator config)
 - Moderation primitives (kick, ban, mute) exist as first-class endpoints; contracts can invoke them via prebound APIs but they work independently
-- Connect creates companion text chat rooms for P2P sessions automatically
+- Connect companion room behavior is configurable: Disabled (game-session handles at L2+), AutoJoinLazy (room created on first use), AutoJoin (room created on connection), or Manual (client explicitly joins). In all non-disabled modes, the capability manifest includes the pre-allocated room GUID so the client always knows the room ID from connection time.
 
 ---
 
@@ -194,16 +194,16 @@ Rooms optionally reference a governing Contract. This creates a powerful lifecyc
 1. **Room creation**: Creator optionally provides a `contractId`. Chat validates the contract exists and is active via `IContractClient`.
 2. **Contract governs lifecycle**: Chat subscribes to contract lifecycle events. When the governing contract changes state, Chat executes the configured action on the room.
 3. **Prebound API moderation**: The contract's milestones/terms can include prebound APIs targeting chat endpoints (`/chat/room/participant/kick`, `/chat/message/send`, `/chat/room/delete`). The contract FSM triggers these automatically.
-4. **Room-level overrides**: Each room can override the default contract actions via `contractBreachAction` and `contractCompletionAction` fields (set at room creation, defaulting to service config).
+4. **Room-level overrides**: Each room can override the default contract actions via per-event action fields (`contractFulfilledAction`, `contractBreachAction`, `contractTerminatedAction`, `contractExpiredAction`) set at room creation, defaulting to service config.
 
 ### Contract State → Room Action
 
-| Contract State | Default Room Action | Configurable? |
+| Contract Event | Default Room Action | Configurable? |
 |---------------|---------------------|---------------|
-| Completed | Archive | Yes (Continue, Lock, Archive, Delete) |
-| Breached | Lock | Yes (Continue, Lock, Archive, Delete) |
-| Expired | Archive | Yes (Continue, Lock, Archive, Delete) |
-| Cancelled | Delete | Yes (Continue, Lock, Archive, Delete) |
+| `contract.fulfilled` | Archive | Yes (Continue, Lock, Archive, Delete) |
+| `contract.breach.detected` | Lock | Yes (Continue, Lock, Archive, Delete) |
+| `contract.terminated` | Delete | Yes (Continue, Lock, Archive, Delete) |
+| `contract.expired` | Archive | Yes (Continue, Lock, Archive, Delete) |
 
 ### Example: Guild Board Governed by Guild Charter
 
@@ -212,22 +212,34 @@ Rooms optionally reference a governing Contract. This creates a powerful lifecyc
 2. Guild creates a Chat room: type="guild_board", contractId=charterContractId
 3. Charter has a "member expelled" clause with prebound API:
    → POST /chat/room/participant/kick { roomId, sessionId }
-4. Charter breach (guild disbanded):
-   → Chat receives contract.breached event
+4. Charter breach detected (guild rule violation):
+   → Chat receives contract.breach.detected event
    → Room locked (default breach action)
-   → System message sent: "Guild disbanded. Board locked."
-5. Charter completed (guild objective met):
-   → Chat receives contract.completed event
+   → System message sent: "Guild charter breached. Board locked."
+5. Charter fulfilled (guild objective met):
+   → Chat receives contract.fulfilled event
    → Room archived via Resource
+6. Charter terminated (guild disbanded):
+   → Chat receives contract.terminated event
+   → Room deleted (default terminated action)
 ```
 
 ---
 
 ## Connect Integration
 
-Connect (L1) creates companion text chat rooms for P2P sessions automatically.
+Connect (L1) manages companion text chat rooms for sessions via a configurable `CompanionRoomMode`:
 
-### Flow
+| Mode | Room Created | Client in Room | Manifest Has GUID |
+|------|-------------|----------------|-------------------|
+| **Disabled** | Never (by Connect) | N/A | No |
+| **AutoJoinLazy** | On first use (send/join) | Auto-joined on creation | Yes |
+| **AutoJoin** | On WebSocket upgrade | Immediately | Yes |
+| **Manual** | On explicit `/chat/room/join` | After client joins | Yes |
+
+**Default**: `Disabled` -- game-session (L2) handles chat rooms for most game deployments at a higher level. The companion room mode is for non-game deployments or simple P2P text chat scenarios.
+
+### Flow (non-Disabled modes)
 
 ```
 Client connects via WebSocket
@@ -236,23 +248,28 @@ Client connects via WebSocket
 Connect establishes session (existing flow)
     │
     ▼
-Connect calls IChatClient.CreateRoomAsync
-    type: "text", sessionId: connectSessionId
+Connect pre-allocates a companion room GUID (deterministic from sessionId)
     │
     ▼
-Chat creates ephemeral room, returns roomId
+Connect includes companionChatRoomId in capability manifest
+    │
+    ├── AutoJoin: Connect calls IChatClient.CreateRoomAsync immediately
+    │   type: "text", roomId: pre-allocated GUID, sessionId: connectSessionId
+    │   Client is auto-joined. Room is ready.
+    │
+    ├── AutoJoinLazy: Room does NOT exist yet.
+    │   Client sends a message or join → Chat creates room on-the-fly,
+    │   auto-joins the sender, then processes the message.
+    │
+    └── Manual: Room does NOT exist yet.
+        Client must call /chat/room/join with the GUID.
+        Chat creates the room on join, client is now a participant.
     │
     ▼
-Connect stores roomId in session metadata
-    │
-    ▼
-Connect includes chatRoomId in session info / capability manifest
-    │
-    ▼
-Client disconnects → Connect calls IChatClient.DeleteRoomAsync
+Client disconnects → Connect calls IChatClient.DeleteRoomAsync (if room was created)
 ```
 
-This means every connected client has a chat channel available by default. Higher layers can create additional rooms for specific purposes, but the P2P companion room exists as a baseline.
+The pre-allocated GUID in the manifest means the client always knows the room ID from connection time, even if the room doesn't physically exist yet. Chat handles the "room doesn't exist but should" case transparently for lazy/manual modes.
 
 ---
 
@@ -422,6 +439,11 @@ ContractRoomAction:
   type: string
   enum: [Continue, Lock, Archive, Delete]
   description: Action to take on a contract-governed room when contract state changes
+
+CompanionRoomMode:
+  type: string
+  enum: [Disabled, AutoJoinLazy, AutoJoin, Manual]
+  description: How Connect manages companion chat rooms for WebSocket sessions
 ```
 
 **28 POST endpoints** across 5 groups:
@@ -470,7 +492,7 @@ Admin/Debug (3):
 - `RoomTypeResponse`: all definition fields
 - `ListRoomTypesRequest`: gameServiceId?, messageFormat?, status?, page, pageSize
 - `ListRoomTypesResponse`: items[], totalCount, page, pageSize
-- `CreateRoomRequest`: roomTypeCode, sessionId? (Connect session), contractId?, displayName?, maxParticipants?, contractBreachAction?, contractCompletionAction?, metadata?
+- `CreateRoomRequest`: roomTypeCode, sessionId? (Connect session), contractId?, displayName?, maxParticipants?, contractFulfilledAction?, contractBreachAction?, contractTerminatedAction?, contractExpiredAction?, metadata?
 - `ChatRoomResponse`: roomId, roomTypeCode, sessionId?, contractId?, displayName, status, participantCount, maxParticipants, isArchived, createdAt, metadata?
 - `ListRoomsRequest`: roomTypeCode?, sessionId?, status?, page, pageSize
 - `JoinRoomRequest`: roomId, senderType?, senderId?, displayName?, role? (defaults to Member)
@@ -498,8 +520,10 @@ Admin/Debug (3):
 - Sensitive: validatorConfig, metadata (exclude)
 
 **x-event-subscriptions**:
-- `contract.completed` → `ContractCompletedEvent` → HandleContractCompleted
-- `contract.breached` → `ContractBreachedEvent` → HandleContractBreached
+- `contract.fulfilled` → `ContractFulfilledEvent` → HandleContractFulfilled
+- `contract.breach.detected` → `ContractBreachDetectedEvent` → HandleContractBreachDetected
+- `contract.terminated` → `ContractTerminatedEvent` → HandleContractTerminated
+- `contract.expired` → `ContractExpiredEvent` → HandleContractExpired
 
 **x-event-publications** (lifecycle + custom):
 - Lifecycle events (auto-generated): chat-room.created, chat-room.updated, chat-room.deleted, chat-room-type.created, chat-room-type.updated, chat-room-type.deleted
@@ -532,7 +556,7 @@ ChatMessageSentEvent: eventId, timestamp, roomId, roomTypeCode, messageId, sende
 
 ChatMessageDeletedEvent: eventId, timestamp, roomId, messageId, deletedBySessionId
 
-ChatRoomLockedEvent: eventId, timestamp, roomId, reason (ContractBreached, ContractExpired, Manual)
+ChatRoomLockedEvent: eventId, timestamp, roomId, reason (ContractBreachDetected, ContractTerminated, ContractExpired, Manual)
 
 ChatRoomArchivedEvent: eventId, timestamp, roomId, archiveId (from Resource)
 
@@ -629,23 +653,35 @@ x-service-configuration:
       maximum: 100
       description: Maximum pinned messages per room
 
+    DefaultContractFulfilledAction:
+      $ref: 'chat-api.yaml#/components/schemas/ContractRoomAction'
+      env: CHAT_DEFAULT_CONTRACT_FULFILLED_ACTION
+      default: Archive
+      description: Default action when governing contract is fulfilled
+
     DefaultContractBreachAction:
       $ref: 'chat-api.yaml#/components/schemas/ContractRoomAction'
       env: CHAT_DEFAULT_CONTRACT_BREACH_ACTION
       default: Lock
-      description: Default action when governing contract is breached
+      description: Default action when a breach is detected on governing contract
 
-    DefaultContractCompletionAction:
+    DefaultContractTerminatedAction:
       $ref: 'chat-api.yaml#/components/schemas/ContractRoomAction'
-      env: CHAT_DEFAULT_CONTRACT_COMPLETION_ACTION
-      default: Archive
-      description: Default action when governing contract completes
+      env: CHAT_DEFAULT_CONTRACT_TERMINATED_ACTION
+      default: Delete
+      description: Default action when governing contract is terminated early
 
-    AutoCreateP2pCompanionRooms:
-      type: boolean
-      env: CHAT_AUTO_CREATE_P2P_COMPANION_ROOMS
-      default: true
-      description: Whether Connect automatically creates text rooms for P2P sessions
+    DefaultContractExpiredAction:
+      $ref: 'chat-api.yaml#/components/schemas/ContractRoomAction'
+      env: CHAT_DEFAULT_CONTRACT_EXPIRED_ACTION
+      default: Archive
+      description: Default action when governing contract expires naturally
+
+    CompanionRoomMode:
+      $ref: 'chat-api.yaml#/components/schemas/CompanionRoomMode'
+      env: CHAT_COMPANION_ROOM_MODE
+      default: Disabled
+      description: How Connect manages companion chat rooms for WebSocket sessions. Disabled = Connect does not create rooms (game-session handles at L2+). AutoJoinLazy = room GUID in manifest, created on first use. AutoJoin = room created on connection. Manual = room GUID in manifest, client must explicitly join.
 
     MessageHistoryPageSize:
       type: integer
@@ -740,7 +776,7 @@ Internal storage models (not API-facing):
 
 - **`ValidatorConfigModel`**: maxMessageLength (int?), allowedPattern (string?), allowedValues (List<string>?), requiredFields (List<string>?), jsonSchema (string?)
 
-- **`ChatRoomModel`**: roomId (Guid), roomTypeCode (string), sessionId (Guid?), contractId (Guid?), displayName (string?), status (ChatRoomStatus), maxParticipants (int?), contractBreachAction (ContractRoomAction?), contractCompletionAction (ContractRoomAction?), isArchived (bool), metadata (Dictionary<string, object>?), createdAt (DateTimeOffset), lastActivityAt (DateTimeOffset)
+- **`ChatRoomModel`**: roomId (Guid), roomTypeCode (string), sessionId (Guid?), contractId (Guid?), displayName (string?), status (ChatRoomStatus), maxParticipants (int?), contractFulfilledAction (ContractRoomAction?), contractBreachAction (ContractRoomAction?), contractTerminatedAction (ContractRoomAction?), contractExpiredAction (ContractRoomAction?), isArchived (bool), metadata (Dictionary<string, object>?), createdAt (DateTimeOffset), lastActivityAt (DateTimeOffset)
 
 - **`ChatParticipantModel`**: roomId (Guid), sessionId (Guid), senderType (string?), senderId (Guid?), displayName (string?), role (ChatParticipantRole), joinedAt (DateTimeOffset), lastActivityAt (DateTimeOffset), isMuted (bool), mutedUntil (DateTimeOffset?)
 
@@ -755,16 +791,20 @@ All models use proper types per IMPLEMENTATION TENETS (T25 enums, T26 nullable f
 #### 6a. `plugins/lib-chat/ChatServiceEvents.cs` (manual - not auto-generated)
 
 Partial class of ChatService:
-- `RegisterEventConsumers(IEventConsumer eventConsumer)` - registers handlers for contract events
-- `HandleContractCompletedAsync(ContractCompletedEvent evt)`:
+- `RegisterEventConsumers(IEventConsumer eventConsumer)` - registers handlers for all four contract terminal events
+- `HandleContractFulfilledAsync(ContractFulfilledEvent evt)`:
   1. Query rooms with this contractId
-  2. For each room: execute the room's `contractCompletionAction` (or service default)
+  2. For each room: execute the room's `contractFulfilledAction` (or service default from config)
   3. Lock → set status to Locked, publish ChatRoomLockedEvent + client event
   4. Archive → call archive flow, publish ChatRoomArchivedEvent
   5. Delete → call delete flow, publish lifecycle deleted event
   6. Continue → no-op
-- `HandleContractBreachedAsync(ContractBreachedEvent evt)`:
+- `HandleContractBreachDetectedAsync(ContractBreachDetectedEvent evt)`:
   1. Same pattern but uses `contractBreachAction`
+- `HandleContractTerminatedAsync(ContractTerminatedEvent evt)`:
+  1. Same pattern but uses `contractTerminatedAction`
+- `HandleContractExpiredAsync(ContractExpiredEvent evt)`:
+  1. Same pattern but uses `contractExpiredAction`
 
 ### Step 7: Implement Service Business Logic
 
@@ -808,14 +848,14 @@ Partial class with `[BannouService("chat", typeof(IChatService), lifetime: Servi
 | `UpdateRoomAsync` | Lock, validate caller is Owner, update mutable fields, publish lifecycle event |
 | `DeleteRoomAsync` | Lock, validate caller is Owner or room is empty, notify all participants (client event), cleanup participants/messages, publish lifecycle event |
 | `ArchiveRoomAsync` | Validate room is persistent, call IResourceClient to create archive, mark isArchived, publish ChatRoomArchivedEvent |
-| `JoinRoomAsync` | Lock room, validate not full/not banned, add participant, set chat:in_room permission state, publish event + client event |
+| `JoinRoomAsync` | Lock room (or create-on-join for companion rooms: if roomId matches a pre-allocated companion GUID and room doesn't exist, create it first), validate not full/not banned, add participant, set chat:in_room permission state, publish event + client event |
 | `LeaveRoomAsync` | Lock room, remove participant, clear permission state, publish event + client event. If Owner leaves, promote next Moderator or oldest Member. |
 | `ListParticipantsAsync` | Read participant store for room |
 | `KickParticipantAsync` | Validate caller is Owner or Moderator with higher role than target, remove participant, clear permission state, publish events |
 | `BanParticipantAsync` | Validate caller role, kick if present, save ban record, publish events |
 | `UnbanParticipantAsync` | Validate caller role, remove ban record, publish event |
 | `MuteParticipantAsync` | Validate caller role, set isMuted + mutedUntil on participant, publish events |
-| `SendMessageAsync` | Validate participant is in room and not muted, validate message content against room type, check rate limit, save message (ephemeral or persistent based on room type), publish service event + client event |
+| `SendMessageAsync` | For AutoJoinLazy companion rooms: if room doesn't exist but roomId matches a pre-allocated companion GUID, create room and auto-join sender first. Then: validate participant is in room and not muted, validate message content against room type, check rate limit, save message (ephemeral or persistent based on room type), publish service event + client event |
 | `SendMessageBatchAsync` | Same as send but for multiple messages atomically (for bulk sentiment pushes from lib-stream) |
 | `GetMessageHistoryAsync` | Query messages by roomId, cursor-based pagination, ordered by timestamp desc |
 | `DeleteMessageAsync` | Validate caller is Owner/Moderator or message sender, remove message, publish events |
@@ -944,15 +984,18 @@ The test project and template `ChatServiceTests.cs` were auto-created in Step 3.
 - `DeleteMessage_ByModerator_DeletesMessage`
 
 **Contract integration tests**:
-- `HandleContractCompleted_ArchiveAction_ArchivesRoom`
-- `HandleContractCompleted_LockAction_LocksRoom`
-- `HandleContractCompleted_DeleteAction_DeletesRoom`
-- `HandleContractCompleted_ContinueAction_NoOp`
-- `HandleContractBreached_DefaultAction_LocksRoom`
+- `HandleContractFulfilled_ArchiveAction_ArchivesRoom`
+- `HandleContractFulfilled_LockAction_LocksRoom`
+- `HandleContractFulfilled_DeleteAction_DeletesRoom`
+- `HandleContractFulfilled_ContinueAction_NoOp`
+- `HandleContractBreachDetected_DefaultAction_LocksRoom`
+- `HandleContractTerminated_DefaultAction_DeletesRoom`
+- `HandleContractExpired_DefaultAction_ArchivesRoom`
 
 **Event handler tests**:
-- `HandleContractCompleted_NoRoomsWithContract_NoOp`
-- `HandleContractBreached_MultipleRooms_HandlesAll`
+- `HandleContractFulfilled_NoRoomsWithContract_NoOp`
+- `HandleContractBreachDetected_MultipleRooms_HandlesAll`
+- `HandleContractTerminated_MultipleRooms_HandlesAll`
 
 All tests use the capture pattern (Callback on mock setups) to verify saved state and published events.
 
@@ -972,7 +1015,7 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | `schemas/chat-api.yaml` | Create (28 endpoints, all models, 6 enums) |
 | `schemas/chat-events.yaml` | Create (2 lifecycle entities, 2 subscriptions, 12+ custom events) |
 | `schemas/chat-client-events.yaml` | Create (11 client push events) |
-| `schemas/chat-configuration.yaml` | Create (13 config properties) |
+| `schemas/chat-configuration.yaml` | Create (15 config properties) |
 | `schemas/state-stores.yaml` | Modify (add 8 chat stores) |
 | `plugins/lib-chat/ChatService.cs` | Fill in (auto-generated template) |
 | `plugins/lib-chat/ChatServiceModels.cs` | Fill in (auto-generated template) |
@@ -1002,19 +1045,19 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 
 ---
 
-## Open Design Questions
+## Decided Design Questions
 
-1. **Connect companion room timing**: Should Connect create the companion room on WebSocket upgrade (immediate) or lazily on first chat message? Immediate means every connection has a room; lazy reduces resource usage for clients that never chat. **Recommendation**: Lazy creation with `AutoCreateP2pCompanionRooms` config controlling the behavior. Connect stores a flag "chat available" in session metadata; the room is created on first `/chat/room/create` call with the session's ID. This avoids creating rooms for every health check or short-lived connection.
+1. **Connect companion room mode**: **Decided**: Four-mode `CompanionRoomMode` enum (Disabled, AutoJoinLazy, AutoJoin, Manual). Default is `Disabled` -- game-session handles room creation at L2+ for most game deployments. In all non-disabled modes, the capability manifest includes the pre-allocated room GUID so the client always knows the room ID from connection time, even if the room doesn't physically exist yet. Chat handles create-on-first-use for AutoJoinLazy and create-on-join for Manual.
 
-2. **Contract event granularity**: The plan subscribes to `contract.completed` and `contract.breached`. Contract may also publish `contract.expired`, `contract.cancelled`, or other terminal state events. Need to verify Contract's actual event catalog and subscribe to all terminal states. **Recommendation**: Subscribe to all terminal contract states; treat them all as configurable actions.
+2. **Contract event granularity**: **Decided**: Subscribe to all four contract terminal/breach events: `contract.fulfilled`, `contract.breach.detected`, `contract.terminated`, `contract.expired`. Each maps to a configurable `ContractRoomAction` (Continue, Lock, Archive, Delete) with per-event service-level defaults and per-room overrides. The plan's original event names (`contract.completed`, `contract.breached`) were incorrect and have been corrected throughout.
 
-3. **Message search in ephemeral rooms**: The plan includes `/chat/message/search` but only for persistent rooms (MySQL full-text). Should ephemeral rooms support search? **Recommendation**: No. Ephemeral rooms are TTL-managed Redis data -- search is not a primitive Redis supports well, and ephemeral rooms are meant to be transient. If search is needed, use a persistent room.
+3. **Message search in ephemeral rooms**: **Decided**: No. Ephemeral rooms are TTL-managed Redis data; search is a MySQL primitive. If search is needed, use a persistent room.
 
-4. **Cross-room messaging**: Should a sender be able to post to multiple rooms simultaneously (broadcast)? **Recommendation**: Not in v1. Callers that need broadcast (like lib-stream pushing sentiments) can use `send-batch` per room or publish events that Chat consumes. Add cross-room broadcast as a v2 feature if needed.
+4. **Cross-room messaging (broadcast)**: **Decided**: Not in v1. Callers that need broadcast (like lib-stream pushing sentiments) can use `send-batch` per room or publish events that Chat consumes. Cross-room broadcast is a potential v2 feature.
 
-5. **Room type inheritance**: Should custom room types be able to "extend" built-in types (e.g., "guild_board extends text with maxLength=200")? **Recommendation**: Not explicitly. Custom types set their own `messageFormat` (which determines validation base) and `validatorConfig` (which adds constraints). This achieves the same result without a formal inheritance mechanism.
+5. **Room type inheritance**: **Decided**: No formal inheritance. Custom types set their own `messageFormat` (which determines validation base) and `validatorConfig` (which adds constraints). This achieves the same result without inheritance machinery.
 
-6. **Participant identity stability**: When a participant's session reconnects (new sessionId via Connect), how do they rejoin their rooms? **Recommendation**: Higher layers handle this. Connect publishes reconnection events; the orchestrating service (lib-streaming, or the game service) calls `/chat/room/join` with the new sessionId. Chat doesn't need to understand reconnection semantics.
+6. **Participant identity stability**: **Decided**: Chat doesn't handle reconnection. Connect publishes reconnection events; the orchestrating service (lib-streaming, or the game service) calls `/chat/room/join` with the new sessionId. Chat doesn't need to understand reconnection semantics.
 
 ---
 
