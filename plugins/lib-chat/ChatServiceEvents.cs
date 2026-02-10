@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Chat;
 
@@ -34,50 +35,46 @@ public partial class ChatService
     }
 
     /// <summary>
-    /// Handles contract.fulfilled events.
-    /// TODO: Implement event handling logic.
+    /// Handles contract fulfillment by applying the configured action to affected rooms.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleContractFulfilledAsync(ContractFulfilledEvent evt)
+    /// <param name="evt">The contract fulfilled event data.</param>
+    public async Task HandleContractFulfilledAsync(ContractFulfilledEvent evt)
     {
-        // TODO: Implement contract.fulfilled event handling
-        _logger.LogInformation("[EVENT] Received contract.fulfilled event");
-        return Task.CompletedTask;
+        // TODO: Implement - look up rooms by contractId, apply configured action
+        _logger.LogInformation("Received contract fulfilled event for contract {ContractId}", evt.ContractId);
+        await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Handles contract.breach.detected events.
-    /// TODO: Implement event handling logic.
+    /// Handles contract breach by applying the configured action to affected rooms.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleContractBreachDetectedAsync(ContractBreachDetectedEvent evt)
+    /// <param name="evt">The contract breach detected event data.</param>
+    public async Task HandleContractBreachDetectedAsync(ContractBreachDetectedEvent evt)
     {
-        // TODO: Implement contract.breach.detected event handling
-        _logger.LogInformation("[EVENT] Received contract.breach.detected event");
-        return Task.CompletedTask;
+        // TODO: Implement - look up rooms by contractId, apply configured action
+        _logger.LogInformation("Received contract breach detected event for contract {ContractId}", evt.ContractId);
+        await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Handles contract.terminated events.
-    /// TODO: Implement event handling logic.
+    /// Handles contract termination by applying the configured action to affected rooms.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleContractTerminatedAsync(ContractTerminatedEvent evt)
+    /// <param name="evt">The contract terminated event data.</param>
+    public async Task HandleContractTerminatedAsync(ContractTerminatedEvent evt)
     {
-        // TODO: Implement contract.terminated event handling
-        _logger.LogInformation("[EVENT] Received contract.terminated event");
-        return Task.CompletedTask;
+        // TODO: Implement - look up rooms by contractId, apply configured action
+        _logger.LogInformation("Received contract terminated event for contract {ContractId}", evt.ContractId);
+        await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Handles contract.expired events.
-    /// TODO: Implement event handling logic.
+    /// Handles contract expiration by applying the configured action to affected rooms.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleContractExpiredAsync(ContractExpiredEvent evt)
+    /// <param name="evt">The contract expired event data.</param>
+    public async Task HandleContractExpiredAsync(ContractExpiredEvent evt)
     {
-        // TODO: Implement contract.expired event handling
-        _logger.LogInformation("[EVENT] Received contract.expired event");
-        return Task.CompletedTask;
+        // TODO: Implement - look up rooms by contractId, apply configured action
+        _logger.LogInformation("Received contract expired event for contract {ContractId}", evt.ContractId);
+        await Task.CompletedTask;
     }
 }

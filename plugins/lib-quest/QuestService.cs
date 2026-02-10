@@ -177,7 +177,6 @@ public partial class QuestService : IQuestService
         CreateQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogDebug("Creating quest definition with code {Code}", body.Code);
 
@@ -260,26 +259,6 @@ public partial class QuestService : IQuestService
             var response = MapToDefinitionResponse(definition);
             return (StatusCodes.OK, response);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error creating quest definition: {Code}", body.Code);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating quest definition: {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "CreateQuestDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/definition/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -287,7 +266,6 @@ public partial class QuestService : IQuestService
         GetQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             QuestDefinitionModel? definition = null;
 
@@ -338,21 +316,6 @@ public partial class QuestService : IQuestService
             var response = MapToDefinitionResponse(definition);
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting quest definition");
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "GetQuestDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/definition/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -360,7 +323,6 @@ public partial class QuestService : IQuestService
         ListQuestDefinitionsRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var results = await DefinitionStore.QueryAsync(
                 d => (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
@@ -389,21 +351,6 @@ public partial class QuestService : IQuestService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing quest definitions");
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "ListQuestDefinitions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/definition/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -411,7 +358,6 @@ public partial class QuestService : IQuestService
         UpdateQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var definitionKey = BuildDefinitionKey(body.DefinitionId);
 
@@ -462,21 +408,6 @@ public partial class QuestService : IQuestService
                 body.DefinitionId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating quest definition: {DefinitionId}", body.DefinitionId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "UpdateQuestDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/definition/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -484,7 +415,6 @@ public partial class QuestService : IQuestService
         DeprecateQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var definitionKey = BuildDefinitionKey(body.DefinitionId);
 
@@ -531,21 +461,6 @@ public partial class QuestService : IQuestService
                 body.DefinitionId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deprecating quest definition: {DefinitionId}", body.DefinitionId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "DeprecateQuestDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/definition/deprecate",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -557,7 +472,6 @@ public partial class QuestService : IQuestService
         AcceptQuestRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogDebug("Accepting quest for character {CharacterId}", body.QuestorCharacterId);
 
@@ -867,26 +781,6 @@ public partial class QuestService : IQuestService
             var response = await MapToInstanceResponseAsync(questInstance, definition, cancellationToken);
             return (StatusCodes.OK, response);
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Dependency error accepting quest");
-            return (StatusCodes.ServiceUnavailable, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error accepting quest");
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "AcceptQuest",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/accept",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -894,7 +788,6 @@ public partial class QuestService : IQuestService
         AbandonQuestRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var instanceKey = BuildInstanceKey(body.QuestInstanceId);
 
@@ -984,21 +877,6 @@ public partial class QuestService : IQuestService
                 body.QuestInstanceId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error abandoning quest: {QuestInstanceId}", body.QuestInstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "AbandonQuest",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/abandon",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1006,7 +884,6 @@ public partial class QuestService : IQuestService
         GetQuestRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var instanceKey = BuildInstanceKey(body.QuestInstanceId);
             var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
@@ -1020,21 +897,6 @@ public partial class QuestService : IQuestService
             var response = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting quest: {QuestInstanceId}", body.QuestInstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "GetQuest",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1042,7 +904,6 @@ public partial class QuestService : IQuestService
         ListQuestsRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var results = await InstanceStore.QueryAsync(
                 i => i.QuestorCharacterIds.Contains(body.CharacterId),
@@ -1075,21 +936,6 @@ public partial class QuestService : IQuestService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing quests for character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "ListQuests",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1097,7 +943,6 @@ public partial class QuestService : IQuestService
         ListAvailableQuestsRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             // Get all non-deprecated definitions
             var definitions = await DefinitionStore.QueryAsync(
@@ -1159,21 +1004,6 @@ public partial class QuestService : IQuestService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing available quests for character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "ListAvailableQuests",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/list-available",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1181,7 +1011,6 @@ public partial class QuestService : IQuestService
         GetQuestLogRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var characterIndexKey = BuildCharacterIndexKey(body.CharacterId);
             var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
@@ -1264,21 +1093,6 @@ public partial class QuestService : IQuestService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting quest log for character: {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "GetQuestLog",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/log",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1290,7 +1104,6 @@ public partial class QuestService : IQuestService
         ReportProgressRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var instanceKey = BuildInstanceKey(body.QuestInstanceId);
             var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
@@ -1424,22 +1237,6 @@ public partial class QuestService : IQuestService
                 _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error reporting objective progress: {QuestInstanceId}/{ObjectiveCode}",
-                body.QuestInstanceId, body.ObjectiveCode);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "ReportObjectiveProgress",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/objective/progress",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1447,7 +1244,6 @@ public partial class QuestService : IQuestService
         ForceCompleteObjectiveRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var instanceKey = BuildInstanceKey(body.QuestInstanceId);
             var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
@@ -1511,22 +1307,6 @@ public partial class QuestService : IQuestService
                 MilestoneCompleted = true
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error force completing objective: {QuestInstanceId}/{ObjectiveCode}",
-                body.QuestInstanceId, body.ObjectiveCode);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "ForceCompleteObjective",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/objective/complete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1534,7 +1314,6 @@ public partial class QuestService : IQuestService
         GetObjectiveProgressRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var instanceKey = BuildInstanceKey(body.QuestInstanceId);
             var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
@@ -1559,22 +1338,6 @@ public partial class QuestService : IQuestService
                 MilestoneCompleted = false
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting objective progress: {QuestInstanceId}/{ObjectiveCode}",
-                body.QuestInstanceId, body.ObjectiveCode);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "GetObjectiveProgress",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/objective/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1586,7 +1349,6 @@ public partial class QuestService : IQuestService
         MilestoneCompletedCallback body,
         CancellationToken cancellationToken)
     {
-        try
         {
             // Find quest instance by contract ID
             var instances = await InstanceStore.QueryAsync(
@@ -1608,22 +1370,6 @@ public partial class QuestService : IQuestService
 
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling milestone completed callback for contract {ContractInstanceId}",
-                body.ContractInstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "HandleMilestoneCompleted",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/internal/milestone-completed",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -1631,7 +1377,6 @@ public partial class QuestService : IQuestService
         QuestCompletedCallback body,
         CancellationToken cancellationToken)
     {
-        try
         {
             // Find quest instance by contract ID
             var instances = await InstanceStore.QueryAsync(
@@ -1648,22 +1393,6 @@ public partial class QuestService : IQuestService
             await CompleteQuestAsync(instance, cancellationToken);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling quest completed callback for contract {ContractInstanceId}",
-                body.ContractInstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "HandleQuestCompleted",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/internal/quest-completed",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1808,7 +1537,6 @@ public partial class QuestService : IQuestService
             return null;
         }
 
-        try
         {
             // Get currency definition by code
             CurrencyDefinitionResponse currencyDef;
@@ -2636,21 +2364,6 @@ public partial class QuestService : IQuestService
                 body.CharacterId, activeQuestSummaries.Count, completedCount);
 
             return (StatusCodes.OK, archive);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "quest",
-                "GetCompressData",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/quest/get-compress-data",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 

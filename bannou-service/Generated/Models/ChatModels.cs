@@ -170,29 +170,6 @@ public enum ContractRoomAction
 #pragma warning restore CS1591
 
 /// <summary>
-/// How Connect manages companion chat rooms for WebSocket sessions
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CompanionRoomMode
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Disabled")]
-    Disabled = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AutoJoinLazy")]
-    AutoJoinLazy = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AutoJoin")]
-    AutoJoin = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Manual")]
-    Manual = 3,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Validation rules applied to messages in rooms of this type
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

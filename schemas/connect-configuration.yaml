@@ -131,5 +131,11 @@ x-service-configuration:
       default: 1
       description: Additional minutes added to reconnection window on each extension
 
+    CompanionRoomMode:
+      $ref: 'connect-api.yaml#/components/schemas/CompanionRoomMode'
+      env: CONNECT_COMPANION_ROOM_MODE
+      default: Disabled
+      description: How Connect manages companion chat rooms (Disabled, AutoJoinLazy, AutoJoin, Manual)
+
 # Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
 # Topics subscribed: session.invalidated, permission.capabilities-updated

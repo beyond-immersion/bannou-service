@@ -14,12 +14,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    ChatEnabled:
-      type: boolean
-      env: CHAT_ENABLED
-      default: true
-      description: Master enable flag for the chat service
-
     DefaultRetentionDays:
       type: integer
       env: CHAT_DEFAULT_RETENTION_DAYS
@@ -107,17 +101,6 @@ x-service-configuration:
       env: CHAT_DEFAULT_CONTRACT_EXPIRED_ACTION
       default: Archive
       description: Default action when governing contract expires naturally
-
-    CompanionRoomMode:
-      $ref: 'chat-api.yaml#/components/schemas/CompanionRoomMode'
-      env: CHAT_COMPANION_ROOM_MODE
-      default: Disabled
-      description: >
-        How Connect manages companion chat rooms for WebSocket sessions.
-        Disabled = Connect does not create rooms (game-session handles at L2+).
-        AutoJoinLazy = room GUID in manifest, created on first use.
-        AutoJoin = room created on connection.
-        Manual = room GUID in manifest, client must explicitly join.
 
     MessageHistoryPageSize:
       type: integer

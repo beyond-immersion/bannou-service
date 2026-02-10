@@ -198,4 +198,10 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int ReconnectionWindowExtensionMinutes { get; set; } = 1;
 
+    /// <summary>
+    /// How Connect manages companion chat rooms (Disabled, AutoJoinLazy, AutoJoin, Manual)
+    /// Environment variable: CONNECT_COMPANION_ROOM_MODE
+    /// </summary>
+    public CompanionRoomMode CompanionRoomMode { get; set; } = CompanionRoomMode.Disabled;
+
 }

@@ -727,15 +727,6 @@ components:
         - Archive
         - Delete
 
-    CompanionRoomMode:
-      type: string
-      description: How Connect manages companion chat rooms for WebSocket sessions
-      enum:
-        - Disabled
-        - AutoJoinLazy
-        - AutoJoin
-        - Manual
-
     # ==========================================================================
     # Validator Config (shared across request/response)
     # ==========================================================================

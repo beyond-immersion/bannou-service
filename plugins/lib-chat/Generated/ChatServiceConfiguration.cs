@@ -54,12 +54,6 @@ public class ChatServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Master enable flag for the chat service
-    /// Environment variable: CHAT_ENABLED
-    /// </summary>
-    public bool ChatEnabled { get; set; } = true;
-
-    /// <summary>
     /// Default message retention for persistent rooms when room type does not specify
     /// Environment variable: CHAT_DEFAULT_RETENTION_DAYS
     /// </summary>
@@ -138,12 +132,6 @@ public class ChatServiceConfiguration : IServiceConfiguration
     /// Environment variable: CHAT_DEFAULT_CONTRACT_EXPIRED_ACTION
     /// </summary>
     public ContractRoomAction DefaultContractExpiredAction { get; set; } = ContractRoomAction.Archive;
-
-    /// <summary>
-    /// How Connect manages companion chat rooms for WebSocket sessions. Disabled = Connect does not create rooms (game-session handles at L2+). AutoJoinLazy = room GUID in manifest, created on first use. AutoJoin = room created on connection. Manual = room GUID in manifest, client must explicitly join.
-    /// Environment variable: CHAT_COMPANION_ROOM_MODE
-    /// </summary>
-    public CompanionRoomMode CompanionRoomMode { get; set; } = CompanionRoomMode.Disabled;
 
     /// <summary>
     /// Default page size for message history queries

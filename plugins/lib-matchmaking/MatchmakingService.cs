@@ -607,7 +607,6 @@ public partial class MatchmakingService : IMatchmakingService
         GetMatchmakingStatusRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var ticket = await LoadTicketAsync(body.TicketId, cancellationToken);
             if (ticket == null)
@@ -635,15 +634,6 @@ public partial class MatchmakingService : IMatchmakingService
                 MatchId = ticket.MatchId
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get matchmaking status for ticket {TicketId}", body.TicketId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "GetMatchmakingStatus", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/status",
-                details: new { TicketId = body.TicketId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -653,7 +643,6 @@ public partial class MatchmakingService : IMatchmakingService
         AcceptMatchRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var matchId = body.MatchId;
             var accountId = body.AccountId;
@@ -737,15 +726,6 @@ public partial class MatchmakingService : IMatchmakingService
                 TotalCount = match.MatchedTickets.Count
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to accept match {MatchId}", body.MatchId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "AcceptMatch", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/accept",
-                details: new { MatchId = body.MatchId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -755,7 +735,6 @@ public partial class MatchmakingService : IMatchmakingService
         DeclineMatchRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var matchId = body.MatchId;
             var accountId = body.AccountId;
@@ -779,15 +758,6 @@ public partial class MatchmakingService : IMatchmakingService
 
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to decline match {MatchId}", body.MatchId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "DeclineMatch", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/decline",
-                details: new { MatchId = body.MatchId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -797,7 +767,6 @@ public partial class MatchmakingService : IMatchmakingService
         GetMatchmakingStatsRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             var queueIds = await GetQueueIdsAsync(cancellationToken);
             var stats = new List<QueueStats>();
@@ -834,15 +803,6 @@ public partial class MatchmakingService : IMatchmakingService
                 Timestamp = DateTimeOffset.UtcNow,
                 QueueStats = stats
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get matchmaking stats");
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "GetMatchmakingStats", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/stats",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
