@@ -37,7 +37,10 @@ export class MatchmakingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListQueuesResponse']>> {
     return this.client.invokeAsync<Schemas['ListQueuesRequest'], Schemas['ListQueuesResponse']>(
-      '/matchmaking/queue/list', request, channel, timeout
+      '/matchmaking/queue/list',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -54,7 +57,10 @@ export class MatchmakingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueueResponse']>> {
     return this.client.invokeAsync<Schemas['GetQueueRequest'], Schemas['QueueResponse']>(
-      '/matchmaking/queue/get', request, channel, timeout
+      '/matchmaking/queue/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -70,9 +76,10 @@ export class MatchmakingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['JoinMatchmakingResponse']>> {
-    return this.client.invokeAsync<Schemas['JoinMatchmakingRequest'], Schemas['JoinMatchmakingResponse']>(
-      '/matchmaking/join', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['JoinMatchmakingRequest'],
+      Schemas['JoinMatchmakingResponse']
+    >('/matchmaking/join', request, channel, timeout);
   }
 
   /**
@@ -86,7 +93,9 @@ export class MatchmakingProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['LeaveMatchmakingRequest']>(
-      '/matchmaking/leave', request, channel
+      '/matchmaking/leave',
+      request,
+      channel
     );
   }
 
@@ -102,9 +111,10 @@ export class MatchmakingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['MatchmakingStatusResponse']>> {
-    return this.client.invokeAsync<Schemas['GetMatchmakingStatusRequest'], Schemas['MatchmakingStatusResponse']>(
-      '/matchmaking/status', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetMatchmakingStatusRequest'],
+      Schemas['MatchmakingStatusResponse']
+    >('/matchmaking/status', request, channel, timeout);
   }
 
   /**
@@ -120,7 +130,10 @@ export class MatchmakingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AcceptMatchResponse']>> {
     return this.client.invokeAsync<Schemas['AcceptMatchRequest'], Schemas['AcceptMatchResponse']>(
-      '/matchmaking/accept', request, channel, timeout
+      '/matchmaking/accept',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -135,7 +148,9 @@ export class MatchmakingProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['DeclineMatchRequest']>(
-      '/matchmaking/decline', request, channel
+      '/matchmaking/decline',
+      request,
+      channel
     );
   }
 
@@ -151,8 +166,9 @@ export class MatchmakingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['MatchmakingStatsResponse']>> {
-    return this.client.invokeAsync<Schemas['GetMatchmakingStatsRequest'], Schemas['MatchmakingStatsResponse']>(
-      '/matchmaking/stats', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetMatchmakingStatsRequest'],
+      Schemas['MatchmakingStatsResponse']
+    >('/matchmaking/stats', request, channel, timeout);
   }
 }

@@ -36,9 +36,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EntryTemplateResponse']>> {
-    return this.client.invokeAsync<Schemas['CreateEntryTemplateRequest'], Schemas['EntryTemplateResponse']>(
-      '/collection/entry-template/create', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CreateEntryTemplateRequest'],
+      Schemas['EntryTemplateResponse']
+    >('/collection/entry-template/create', request, channel, timeout);
   }
 
   /**
@@ -53,9 +54,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EntryTemplateResponse']>> {
-    return this.client.invokeAsync<Schemas['GetEntryTemplateRequest'], Schemas['EntryTemplateResponse']>(
-      '/collection/entry-template/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetEntryTemplateRequest'],
+      Schemas['EntryTemplateResponse']
+    >('/collection/entry-template/get', request, channel, timeout);
   }
 
   /**
@@ -70,9 +72,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListEntryTemplatesResponse']>> {
-    return this.client.invokeAsync<Schemas['ListEntryTemplatesRequest'], Schemas['ListEntryTemplatesResponse']>(
-      '/collection/entry-template/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListEntryTemplatesRequest'],
+      Schemas['ListEntryTemplatesResponse']
+    >('/collection/entry-template/list', request, channel, timeout);
   }
 
   /**
@@ -87,9 +90,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EntryTemplateResponse']>> {
-    return this.client.invokeAsync<Schemas['UpdateEntryTemplateRequest'], Schemas['EntryTemplateResponse']>(
-      '/collection/entry-template/update', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['UpdateEntryTemplateRequest'],
+      Schemas['EntryTemplateResponse']
+    >('/collection/entry-template/update', request, channel, timeout);
   }
 
   /**
@@ -104,9 +108,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EntryTemplateResponse']>> {
-    return this.client.invokeAsync<Schemas['DeleteEntryTemplateRequest'], Schemas['EntryTemplateResponse']>(
-      '/collection/entry-template/delete', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['DeleteEntryTemplateRequest'],
+      Schemas['EntryTemplateResponse']
+    >('/collection/entry-template/delete', request, channel, timeout);
   }
 
   /**
@@ -121,9 +126,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedEntryTemplatesResponse']>> {
-    return this.client.invokeAsync<Schemas['SeedEntryTemplatesRequest'], Schemas['SeedEntryTemplatesResponse']>(
-      '/collection/entry-template/seed', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['SeedEntryTemplatesRequest'],
+      Schemas['SeedEntryTemplatesResponse']
+    >('/collection/entry-template/seed', request, channel, timeout);
   }
 
   /**
@@ -138,9 +144,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CollectionResponse']>> {
-    return this.client.invokeAsync<Schemas['CreateCollectionRequest'], Schemas['CollectionResponse']>(
-      '/collection/create', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CreateCollectionRequest'],
+      Schemas['CollectionResponse']
+    >('/collection/create', request, channel, timeout);
   }
 
   /**
@@ -156,7 +163,10 @@ export class CollectionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CollectionResponse']>> {
     return this.client.invokeAsync<Schemas['GetCollectionRequest'], Schemas['CollectionResponse']>(
-      '/collection/get', request, channel, timeout
+      '/collection/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -172,9 +182,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListCollectionsResponse']>> {
-    return this.client.invokeAsync<Schemas['ListCollectionsRequest'], Schemas['ListCollectionsResponse']>(
-      '/collection/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListCollectionsRequest'],
+      Schemas['ListCollectionsResponse']
+    >('/collection/list', request, channel, timeout);
   }
 
   /**
@@ -189,9 +200,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CollectionResponse']>> {
-    return this.client.invokeAsync<Schemas['DeleteCollectionRequest'], Schemas['CollectionResponse']>(
-      '/collection/delete', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['DeleteCollectionRequest'],
+      Schemas['CollectionResponse']
+    >('/collection/delete', request, channel, timeout);
   }
 
   /**
@@ -207,7 +219,10 @@ export class CollectionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GrantEntryResponse']>> {
     return this.client.invokeAsync<Schemas['GrantEntryRequest'], Schemas['GrantEntryResponse']>(
-      '/collection/grant', request, channel, timeout
+      '/collection/grant',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -224,7 +239,10 @@ export class CollectionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HasEntryResponse']>> {
     return this.client.invokeAsync<Schemas['HasEntryRequest'], Schemas['HasEntryResponse']>(
-      '/collection/has', request, channel, timeout
+      '/collection/has',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -241,7 +259,10 @@ export class CollectionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryEntriesResponse']>> {
     return this.client.invokeAsync<Schemas['QueryEntriesRequest'], Schemas['QueryEntriesResponse']>(
-      '/collection/query', request, channel, timeout
+      '/collection/query',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -257,9 +278,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['UnlockedEntryResponse']>> {
-    return this.client.invokeAsync<Schemas['UpdateEntryMetadataRequest'], Schemas['UnlockedEntryResponse']>(
-      '/collection/update-metadata', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['UpdateEntryMetadataRequest'],
+      Schemas['UnlockedEntryResponse']
+    >('/collection/update-metadata', request, channel, timeout);
   }
 
   /**
@@ -274,9 +296,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CompletionStatsResponse']>> {
-    return this.client.invokeAsync<Schemas['GetCompletionStatsRequest'], Schemas['CompletionStatsResponse']>(
-      '/collection/stats', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetCompletionStatsRequest'],
+      Schemas['CompletionStatsResponse']
+    >('/collection/stats', request, channel, timeout);
   }
 
   /**
@@ -291,9 +314,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['MusicTrackSelectionResponse']>> {
-    return this.client.invokeAsync<Schemas['SelectTrackForAreaRequest'], Schemas['MusicTrackSelectionResponse']>(
-      '/collection/music/select-for-area', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['SelectTrackForAreaRequest'],
+      Schemas['MusicTrackSelectionResponse']
+    >('/collection/music/select-for-area', request, channel, timeout);
   }
 
   /**
@@ -308,9 +332,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AreaMusicConfigResponse']>> {
-    return this.client.invokeAsync<Schemas['SetAreaMusicConfigRequest'], Schemas['AreaMusicConfigResponse']>(
-      '/collection/music/area-config/set', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['SetAreaMusicConfigRequest'],
+      Schemas['AreaMusicConfigResponse']
+    >('/collection/music/area-config/set', request, channel, timeout);
   }
 
   /**
@@ -325,9 +350,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AreaMusicConfigResponse']>> {
-    return this.client.invokeAsync<Schemas['GetAreaMusicConfigRequest'], Schemas['AreaMusicConfigResponse']>(
-      '/collection/music/area-config/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetAreaMusicConfigRequest'],
+      Schemas['AreaMusicConfigResponse']
+    >('/collection/music/area-config/get', request, channel, timeout);
   }
 
   /**
@@ -342,9 +368,10 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListAreaMusicConfigsResponse']>> {
-    return this.client.invokeAsync<Schemas['ListAreaMusicConfigsRequest'], Schemas['ListAreaMusicConfigsResponse']>(
-      '/collection/music/area-config/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListAreaMusicConfigsRequest'],
+      Schemas['ListAreaMusicConfigsResponse']
+    >('/collection/music/area-config/list', request, channel, timeout);
   }
 
   /**
@@ -359,8 +386,9 @@ export class CollectionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AdvanceDiscoveryResponse']>> {
-    return this.client.invokeAsync<Schemas['AdvanceDiscoveryRequest'], Schemas['AdvanceDiscoveryResponse']>(
-      '/collection/discovery/advance', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['AdvanceDiscoveryRequest'],
+      Schemas['AdvanceDiscoveryResponse']
+    >('/collection/discovery/advance', request, channel, timeout);
   }
 }

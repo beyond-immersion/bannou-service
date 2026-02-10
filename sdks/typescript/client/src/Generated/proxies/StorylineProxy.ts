@@ -37,7 +37,10 @@ export class StorylineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ComposeResponse']>> {
     return this.client.invokeAsync<Schemas['ComposeRequest'], Schemas['ComposeResponse']>(
-      '/storyline/compose', request, channel, timeout
+      '/storyline/compose',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -54,7 +57,10 @@ export class StorylineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetPlanResponse']>> {
     return this.client.invokeAsync<Schemas['GetPlanRequest'], Schemas['GetPlanResponse']>(
-      '/storyline/plan/get', request, channel, timeout
+      '/storyline/plan/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -71,7 +77,10 @@ export class StorylineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListPlansResponse']>> {
     return this.client.invokeAsync<Schemas['ListPlansRequest'], Schemas['ListPlansResponse']>(
-      '/storyline/plan/list', request, channel, timeout
+      '/storyline/plan/list',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -87,9 +96,10 @@ export class StorylineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioDefinition']>> {
-    return this.client.invokeAsync<Schemas['CreateScenarioDefinitionRequest'], Schemas['ScenarioDefinition']>(
-      '/storyline/scenario/create', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CreateScenarioDefinitionRequest'],
+      Schemas['ScenarioDefinition']
+    >('/storyline/scenario/create', request, channel, timeout);
   }
 
   /**
@@ -104,9 +114,10 @@ export class StorylineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetScenarioDefinitionResponse']>> {
-    return this.client.invokeAsync<Schemas['GetScenarioDefinitionRequest'], Schemas['GetScenarioDefinitionResponse']>(
-      '/storyline/scenario/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetScenarioDefinitionRequest'],
+      Schemas['GetScenarioDefinitionResponse']
+    >('/storyline/scenario/get', request, channel, timeout);
   }
 
   /**
@@ -121,9 +132,10 @@ export class StorylineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListScenarioDefinitionsResponse']>> {
-    return this.client.invokeAsync<Schemas['ListScenarioDefinitionsRequest'], Schemas['ListScenarioDefinitionsResponse']>(
-      '/storyline/scenario/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListScenarioDefinitionsRequest'],
+      Schemas['ListScenarioDefinitionsResponse']
+    >('/storyline/scenario/list', request, channel, timeout);
   }
 
   /**
@@ -138,9 +150,10 @@ export class StorylineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioDefinition']>> {
-    return this.client.invokeAsync<Schemas['UpdateScenarioDefinitionRequest'], Schemas['ScenarioDefinition']>(
-      '/storyline/scenario/update', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['UpdateScenarioDefinitionRequest'],
+      Schemas['ScenarioDefinition']
+    >('/storyline/scenario/update', request, channel, timeout);
   }
 
   /**
@@ -154,7 +167,9 @@ export class StorylineProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['DeprecateScenarioDefinitionRequest']>(
-      '/storyline/scenario/deprecate', request, channel
+      '/storyline/scenario/deprecate',
+      request,
+      channel
     );
   }
 
@@ -171,7 +186,10 @@ export class StorylineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['TestScenarioResponse']>> {
     return this.client.invokeAsync<Schemas['TestScenarioRequest'], Schemas['TestScenarioResponse']>(
-      '/storyline/scenario/test', request, channel, timeout
+      '/storyline/scenario/test',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -187,9 +205,10 @@ export class StorylineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetActiveScenariosResponse']>> {
-    return this.client.invokeAsync<Schemas['GetActiveScenariosRequest'], Schemas['GetActiveScenariosResponse']>(
-      '/storyline/scenario/get-active', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetActiveScenariosRequest'],
+      Schemas['GetActiveScenariosResponse']
+    >('/storyline/scenario/get-active', request, channel, timeout);
   }
 
   /**
@@ -204,9 +223,10 @@ export class StorylineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetScenarioHistoryResponse']>> {
-    return this.client.invokeAsync<Schemas['GetScenarioHistoryRequest'], Schemas['GetScenarioHistoryResponse']>(
-      '/storyline/scenario/get-history', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetScenarioHistoryRequest'],
+      Schemas['GetScenarioHistoryResponse']
+    >('/storyline/scenario/get-history', request, channel, timeout);
   }
 
   /**
@@ -222,7 +242,10 @@ export class StorylineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['StorylineArchive']>> {
     return this.client.invokeAsync<Schemas['GetCompressDataRequest'], Schemas['StorylineArchive']>(
-      '/storyline/get-compress-data', request, channel, timeout
+      '/storyline/get-compress-data',
+      request,
+      channel,
+      timeout
     );
   }
 }

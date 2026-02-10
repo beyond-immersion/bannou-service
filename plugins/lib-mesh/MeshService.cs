@@ -148,57 +148,42 @@ public partial class MeshService : IMeshService
             "Registering endpoint for app {AppId} at {Host}:{Port}",
             body.AppId, body.Host, body.Port);
 
-        try
+        var instanceId = body.InstanceId != Guid.Empty ? body.InstanceId : Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var endpoint = new MeshEndpoint
         {
-            var instanceId = body.InstanceId != Guid.Empty ? body.InstanceId : Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
+            InstanceId = instanceId,
+            AppId = body.AppId,
+            Host = body.Host,
+            Port = body.Port,
+            Status = EndpointStatus.Healthy,
+            Services = body.Services ?? new List<string>(),
+            MaxConnections = body.MaxConnections,
+            CurrentConnections = 0,
+            LoadPercent = 0,
+            RegisteredAt = now,
+            LastSeen = now
+        };
 
-            var endpoint = new MeshEndpoint
-            {
-                InstanceId = instanceId,
-                AppId = body.AppId,
-                Host = body.Host,
-                Port = body.Port,
-                Status = EndpointStatus.Healthy,
-                Services = body.Services ?? new List<string>(),
-                MaxConnections = body.MaxConnections,
-                CurrentConnections = 0,
-                LoadPercent = 0,
-                RegisteredAt = now,
-                LastSeen = now
-            };
+        var success = await _stateManager.RegisterEndpointAsync(endpoint, _configuration.EndpointTtlSeconds);
 
-            var success = await _stateManager.RegisterEndpointAsync(endpoint, _configuration.EndpointTtlSeconds);
-
-            if (!success)
-            {
-                _logger.LogWarning("Failed to register endpoint {InstanceId}", instanceId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Publish registration event
-            await PublishEndpointRegisteredEventAsync(endpoint, cancellationToken);
-
-            var response = new RegisterEndpointResponse
-            {
-                Endpoint = endpoint,
-                TtlSeconds = _configuration.EndpointTtlSeconds
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        if (!success)
         {
-            _logger.LogError(ex, "Error registering endpoint for app {AppId}", body.AppId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "RegisterEndpoint",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
+            _logger.LogWarning("Failed to register endpoint {InstanceId}", instanceId);
             return (StatusCodes.InternalServerError, null);
         }
+
+        // Publish registration event
+        await PublishEndpointRegisteredEventAsync(endpoint, cancellationToken);
+
+        var response = new RegisterEndpointResponse
+        {
+            Endpoint = endpoint,
+            TtlSeconds = _configuration.EndpointTtlSeconds
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -211,45 +196,30 @@ public partial class MeshService : IMeshService
     {
         _logger.LogInformation("Deregistering endpoint {InstanceId}", body.InstanceId);
 
-        try
+        // Look up the endpoint to get appId for deregistration
+        var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
+        if (endpoint == null)
         {
-            // Look up the endpoint to get appId for deregistration
-            var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
-            if (endpoint == null)
-            {
-                _logger.LogWarning("Endpoint {InstanceId} not found for deregistration", body.InstanceId);
-                return StatusCodes.NotFound;
-            }
-
-            var success = await _stateManager.DeregisterEndpointAsync(body.InstanceId, endpoint.AppId);
-
-            if (!success)
-            {
-                _logger.LogWarning("Failed to deregister endpoint {InstanceId}", body.InstanceId);
-                return StatusCodes.NotFound;
-            }
-
-            // Publish deregistration event
-            await PublishEndpointDeregisteredEventAsync(
-                body.InstanceId,
-                endpoint.AppId,
-                MeshEndpointDeregisteredEventReason.Graceful,
-                cancellationToken);
-
-            return StatusCodes.OK;
+            _logger.LogWarning("Endpoint {InstanceId} not found for deregistration", body.InstanceId);
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
+
+        var success = await _stateManager.DeregisterEndpointAsync(body.InstanceId, endpoint.AppId);
+
+        if (!success)
         {
-            _logger.LogError(ex, "Error deregistering endpoint {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "DeregisterEndpoint",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
+            _logger.LogWarning("Failed to deregister endpoint {InstanceId}", body.InstanceId);
+            return StatusCodes.NotFound;
         }
+
+        // Publish deregistration event
+        await PublishEndpointDeregisteredEventAsync(
+            body.InstanceId,
+            endpoint.AppId,
+            MeshEndpointDeregisteredEventReason.Graceful,
+            cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -264,62 +234,47 @@ public partial class MeshService : IMeshService
             "Heartbeat from {InstanceId}, status: {Status}, load: {Load}%",
             body.InstanceId, body.Status, body.LoadPercent);
 
-        try
+        // Look up the endpoint to get appId
+        var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
+        if (endpoint == null)
         {
-            // Look up the endpoint to get appId
-            var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
-            if (endpoint == null)
-            {
-                _logger.LogWarning(
-                    "Heartbeat rejected for unknown endpoint {InstanceId}",
-                    body.InstanceId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (body.Issues != null && body.Issues.Count > 0)
-            {
-                _logger.LogDebug(
-                    "Endpoint {InstanceId} reporting {IssueCount} issue(s): {Issues}",
-                    body.InstanceId, body.Issues.Count, string.Join(", ", body.Issues));
-            }
-
-            var success = await _stateManager.UpdateHeartbeatAsync(
-                body.InstanceId,
-                endpoint.AppId,
-                body.Status ?? EndpointStatus.Healthy,
-                body.LoadPercent ?? 0,
-                body.CurrentConnections ?? 0,
-                body.Issues,
-                _configuration.EndpointTtlSeconds);
-
-            if (!success)
-            {
-                _logger.LogWarning(
-                    "Heartbeat update failed for endpoint {InstanceId}",
-                    body.InstanceId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var response = new HeartbeatResponse
-            {
-                NextHeartbeatSeconds = _configuration.HeartbeatIntervalSeconds,
-                TtlSeconds = _configuration.EndpointTtlSeconds
-            };
-
-            return (StatusCodes.OK, response);
+            _logger.LogWarning(
+                "Heartbeat rejected for unknown endpoint {InstanceId}",
+                body.InstanceId);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (body.Issues != null && body.Issues.Count > 0)
         {
-            _logger.LogError(ex, "Error processing heartbeat for {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "Heartbeat",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug(
+                "Endpoint {InstanceId} reporting {IssueCount} issue(s): {Issues}",
+                body.InstanceId, body.Issues.Count, string.Join(", ", body.Issues));
         }
+
+        var success = await _stateManager.UpdateHeartbeatAsync(
+            body.InstanceId,
+            endpoint.AppId,
+            body.Status ?? EndpointStatus.Healthy,
+            body.LoadPercent ?? 0,
+            body.CurrentConnections ?? 0,
+            body.Issues,
+            _configuration.EndpointTtlSeconds);
+
+        if (!success)
+        {
+            _logger.LogWarning(
+                "Heartbeat update failed for endpoint {InstanceId}",
+                body.InstanceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var response = new HeartbeatResponse
+        {
+            NextHeartbeatSeconds = _configuration.HeartbeatIntervalSeconds,
+            TtlSeconds = _configuration.EndpointTtlSeconds
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -332,9 +287,7 @@ public partial class MeshService : IMeshService
     {
         _logger.LogDebug("Getting route for app {AppId}", body.AppId);
 
-        try
-        {
-            var endpoints = await _stateManager.GetEndpointsForAppIdAsync(body.AppId, false);
+        var endpoints = await _stateManager.GetEndpointsForAppIdAsync(body.AppId, false);
 
             if (endpoints.Count == 0)
             {
@@ -400,20 +353,7 @@ public partial class MeshService : IMeshService
                 Alternates = alternates
             };
 
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting route for app {AppId}", body.AppId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "GetRoute",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -465,9 +405,7 @@ public partial class MeshService : IMeshService
     {
         _logger.LogDebug("Getting mesh health status");
 
-        try
-        {
-            var (isHealthy, _, _) = await _stateManager.CheckHealthAsync();
+        var (isHealthy, _, _) = await _stateManager.CheckHealthAsync();
 
             // Get overall mesh statistics
             var endpoints = await _stateManager.GetAllEndpointsAsync();
@@ -516,20 +454,7 @@ public partial class MeshService : IMeshService
                 response.Endpoints = endpoints;
             }
 
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting mesh health");
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "GetHealth",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, response);
     }
 
     #region Load Balancing

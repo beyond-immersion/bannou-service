@@ -37,7 +37,10 @@ export class BundlesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CreateBundleResponse']>> {
     return this.client.invokeAsync<Schemas['CreateBundleRequest'], Schemas['CreateBundleResponse']>(
-      '/bundles/create', request, channel, timeout
+      '/bundles/create',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -54,7 +57,10 @@ export class BundlesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BundleWithDownloadUrl']>> {
     return this.client.invokeAsync<Schemas['GetBundleRequest'], Schemas['BundleWithDownloadUrl']>(
-      '/bundles/get', request, channel, timeout
+      '/bundles/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -71,7 +77,10 @@ export class BundlesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['UploadResponse']>> {
     return this.client.invokeAsync<Schemas['BundleUploadRequest'], Schemas['UploadResponse']>(
-      '/bundles/upload/request', request, channel, timeout
+      '/bundles/upload/request',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -87,9 +96,10 @@ export class BundlesProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CreateMetabundleResponse']>> {
-    return this.client.invokeAsync<Schemas['CreateMetabundleRequest'], Schemas['CreateMetabundleResponse']>(
-      '/bundles/metabundle/create', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CreateMetabundleRequest'],
+      Schemas['CreateMetabundleResponse']
+    >('/bundles/metabundle/create', request, channel, timeout);
   }
 
   /**
@@ -105,7 +115,10 @@ export class BundlesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetJobStatusResponse']>> {
     return this.client.invokeAsync<Schemas['GetJobStatusRequest'], Schemas['GetJobStatusResponse']>(
-      '/bundles/job/status', request, channel, timeout
+      '/bundles/job/status',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -122,7 +135,10 @@ export class BundlesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CancelJobResponse']>> {
     return this.client.invokeAsync<Schemas['CancelJobRequest'], Schemas['CancelJobResponse']>(
-      '/bundles/job/cancel', request, channel, timeout
+      '/bundles/job/cancel',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -138,9 +154,10 @@ export class BundlesProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ResolveBundlesResponse']>> {
-    return this.client.invokeAsync<Schemas['ResolveBundlesRequest'], Schemas['ResolveBundlesResponse']>(
-      '/bundles/resolve', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ResolveBundlesRequest'],
+      Schemas['ResolveBundlesResponse']
+    >('/bundles/resolve', request, channel, timeout);
   }
 
   /**
@@ -155,9 +172,10 @@ export class BundlesProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryBundlesByAssetResponse']>> {
-    return this.client.invokeAsync<Schemas['QueryBundlesByAssetRequest'], Schemas['QueryBundlesByAssetResponse']>(
-      '/bundles/query/by-asset', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['QueryBundlesByAssetRequest'],
+      Schemas['QueryBundlesByAssetResponse']
+    >('/bundles/query/by-asset', request, channel, timeout);
   }
 
   /**
@@ -173,7 +191,10 @@ export class BundlesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['UpdateBundleResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateBundleRequest'], Schemas['UpdateBundleResponse']>(
-      '/bundles/update', request, channel, timeout
+      '/bundles/update',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -190,7 +211,10 @@ export class BundlesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeleteBundleResponse']>> {
     return this.client.invokeAsync<Schemas['DeleteBundleRequest'], Schemas['DeleteBundleResponse']>(
-      '/bundles/delete', request, channel, timeout
+      '/bundles/delete',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -206,9 +230,10 @@ export class BundlesProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RestoreBundleResponse']>> {
-    return this.client.invokeAsync<Schemas['RestoreBundleRequest'], Schemas['RestoreBundleResponse']>(
-      '/bundles/restore', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['RestoreBundleRequest'],
+      Schemas['RestoreBundleResponse']
+    >('/bundles/restore', request, channel, timeout);
   }
 
   /**
@@ -224,7 +249,10 @@ export class BundlesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryBundlesResponse']>> {
     return this.client.invokeAsync<Schemas['QueryBundlesRequest'], Schemas['QueryBundlesResponse']>(
-      '/bundles/query', request, channel, timeout
+      '/bundles/query',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -240,8 +268,9 @@ export class BundlesProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListBundleVersionsResponse']>> {
-    return this.client.invokeAsync<Schemas['ListBundleVersionsRequest'], Schemas['ListBundleVersionsResponse']>(
-      '/bundles/list-versions', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListBundleVersionsRequest'],
+      Schemas['ListBundleVersionsResponse']
+    >('/bundles/list-versions', request, channel, timeout);
   }
 }

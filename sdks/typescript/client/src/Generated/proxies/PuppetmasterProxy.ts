@@ -37,7 +37,10 @@ export class PuppetmasterProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['StartWatcherResponse']>> {
     return this.client.invokeAsync<Schemas['StartWatcherRequest'], Schemas['StartWatcherResponse']>(
-      '/puppetmaster/watchers/start', request, channel, timeout
+      '/puppetmaster/watchers/start',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -54,7 +57,10 @@ export class PuppetmasterProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['StopWatcherResponse']>> {
     return this.client.invokeAsync<Schemas['StopWatcherRequest'], Schemas['StopWatcherResponse']>(
-      '/puppetmaster/watchers/stop', request, channel, timeout
+      '/puppetmaster/watchers/stop',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -70,8 +76,9 @@ export class PuppetmasterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['StartWatchersForRealmResponse']>> {
-    return this.client.invokeAsync<Schemas['StartWatchersForRealmRequest'], Schemas['StartWatchersForRealmResponse']>(
-      '/puppetmaster/watchers/start-for-realm', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['StartWatchersForRealmRequest'],
+      Schemas['StartWatchersForRealmResponse']
+    >('/puppetmaster/watchers/start-for-realm', request, channel, timeout);
   }
 }
