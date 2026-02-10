@@ -1146,6 +1146,392 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
     #endregion
 
+    #region Decay Configuration Tests
+
+    [Fact]
+    public void ResolveDecayConfig_TypeOverrideEnabled_WinsOverGlobalDisabled()
+    {
+        // Arrange: global disabled, type enabled
+        Configuration.GrowthDecayEnabled = false;
+        Configuration.GrowthDecayRatePerDay = 0.01;
+        var seedType = CreateTestSeedType();
+        seedType.GrowthDecayEnabled = true;
+        seedType.GrowthDecayRatePerDay = 0.05f;
+
+        // Act
+        var (enabled, rate) = SeedService.ResolveDecayConfig(seedType, Configuration);
+
+        // Assert
+        Assert.True(enabled);
+        Assert.Equal(0.05f, rate);
+    }
+
+    [Fact]
+    public void ResolveDecayConfig_TypeOverrideDisabled_WinsOverGlobalEnabled()
+    {
+        // Arrange: global enabled, type explicitly disabled
+        Configuration.GrowthDecayEnabled = true;
+        Configuration.GrowthDecayRatePerDay = 0.01;
+        var seedType = CreateTestSeedType();
+        seedType.GrowthDecayEnabled = false;
+        seedType.GrowthDecayRatePerDay = null;
+
+        // Act
+        var (enabled, _) = SeedService.ResolveDecayConfig(seedType, Configuration);
+
+        // Assert
+        Assert.False(enabled);
+    }
+
+    [Fact]
+    public void ResolveDecayConfig_NullTypeOverrides_FallsBackToGlobal()
+    {
+        // Arrange: type has no overrides, global config used
+        Configuration.GrowthDecayEnabled = true;
+        Configuration.GrowthDecayRatePerDay = 0.02;
+        var seedType = CreateTestSeedType();
+        seedType.GrowthDecayEnabled = null;
+        seedType.GrowthDecayRatePerDay = null;
+
+        // Act
+        var (enabled, rate) = SeedService.ResolveDecayConfig(seedType, Configuration);
+
+        // Assert
+        Assert.True(enabled);
+        Assert.Equal(0.02f, rate);
+    }
+
+    [Fact]
+    public void ResolveDecayConfig_NullSeedType_FallsBackToGlobal()
+    {
+        // Arrange: null seed type (defensive path)
+        Configuration.GrowthDecayEnabled = true;
+        Configuration.GrowthDecayRatePerDay = 0.03;
+
+        // Act
+        var (enabled, rate) = SeedService.ResolveDecayConfig(null, Configuration);
+
+        // Assert
+        Assert.True(enabled);
+        Assert.Equal(0.03f, rate);
+    }
+
+    [Fact]
+    public void ResolveDecayConfig_TypeRateOverride_WinsOverGlobalRate()
+    {
+        // Arrange: type has only rate override, enabled falls back to global
+        Configuration.GrowthDecayEnabled = true;
+        Configuration.GrowthDecayRatePerDay = 0.01;
+        var seedType = CreateTestSeedType();
+        seedType.GrowthDecayEnabled = null;
+        seedType.GrowthDecayRatePerDay = 0.1f;
+
+        // Act
+        var (enabled, rate) = SeedService.ResolveDecayConfig(seedType, Configuration);
+
+        // Assert
+        Assert.True(enabled);
+        Assert.Equal(0.1f, rate);
+    }
+
+    #endregion
+
+    #region PeakDepth Tracking Tests
+
+    [Fact]
+    public async Task RecordGrowth_NewDomain_PeakDepthEqualsDepth()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        var seedType = CreateTestSeedType();
+
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync(seed);
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync((SeedGrowthModel?)null);
+        _mockTypeStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(seedType);
+
+        SeedGrowthModel? savedGrowth = null;
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedGrowthModel, StateOptions?, CancellationToken>((_, m, _, _) => savedGrowth = m)
+            .ReturnsAsync("etag");
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 5f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(savedGrowth);
+        var entry = savedGrowth.Domains["combat.melee"];
+        Assert.Equal(5f, entry.Depth);
+        Assert.Equal(5f, entry.PeakDepth);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_ExistingDomain_PeakDepthRetainedWhenBelowHistorical()
+    {
+        // Arrange: depth was decayed from 10 to 7, PeakDepth preserved at 10
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        var seedType = CreateTestSeedType();
+
+        var existingGrowth = new SeedGrowthModel
+        {
+            SeedId = seedId,
+            Domains = new Dictionary<string, DomainGrowthEntry>
+            {
+                { "combat.melee", new DomainGrowthEntry { Depth = 7f, LastActivityAt = DateTimeOffset.UtcNow.AddDays(-1), PeakDepth = 10f } }
+            }
+        };
+
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync(seed);
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync(existingGrowth);
+        _mockTypeStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(seedType);
+
+        SeedGrowthModel? savedGrowth = null;
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedGrowthModel, StateOptions?, CancellationToken>((_, m, _, _) => savedGrowth = m)
+            .ReturnsAsync("etag");
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act: add 2f → depth=9f, but PeakDepth should stay at 10f
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 2f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(savedGrowth);
+        var entry = savedGrowth.Domains["combat.melee"];
+        Assert.Equal(9f, entry.Depth);
+        Assert.Equal(10f, entry.PeakDepth);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_ExistingDomain_PeakDepthIncreasesWhenExceeded()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        var seedType = CreateTestSeedType();
+
+        var existingGrowth = new SeedGrowthModel
+        {
+            SeedId = seedId,
+            Domains = new Dictionary<string, DomainGrowthEntry>
+            {
+                { "combat.melee", new DomainGrowthEntry { Depth = 8f, LastActivityAt = DateTimeOffset.UtcNow, PeakDepth = 8f } }
+            }
+        };
+
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync(seed);
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync(existingGrowth);
+        _mockTypeStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(seedType);
+
+        SeedGrowthModel? savedGrowth = null;
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedGrowthModel, StateOptions?, CancellationToken>((_, m, _, _) => savedGrowth = m)
+            .ReturnsAsync("etag");
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act: add 5f → depth=13f exceeds PeakDepth=8f
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 5f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(savedGrowth);
+        var entry = savedGrowth.Domains["combat.melee"];
+        Assert.Equal(13f, entry.Depth);
+        Assert.Equal(13f, entry.PeakDepth);
+    }
+
+    #endregion
+
+    #region Bond Shared Activity Tests
+
+    [Fact]
+    public async Task RecordGrowth_PermanentBond_ResetsPartnerDecayTimerOnMatchingDomainsOnly()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        var bondId = Guid.NewGuid();
+
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        seed.BondId = bondId;
+        var seedType = CreateTestSeedType();
+
+        var bond = new SeedBondModel
+        {
+            BondId = bondId,
+            SeedTypeCode = "guardian",
+            Status = BondStatus.Active,
+            Permanent = true,
+            Participants = new List<BondParticipantEntry>
+            {
+                new() { SeedId = seedId, JoinedAt = DateTimeOffset.UtcNow, Confirmed = true },
+                new() { SeedId = partnerId, JoinedAt = DateTimeOffset.UtcNow, Confirmed = true }
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+            BondStrength = 1f,
+            SharedGrowth = 10f
+        };
+
+        var oldTime = DateTimeOffset.UtcNow.AddDays(-5);
+        var partnerGrowth = new SeedGrowthModel
+        {
+            SeedId = partnerId,
+            Domains = new Dictionary<string, DomainGrowthEntry>
+            {
+                { "combat.melee", new DomainGrowthEntry { Depth = 4f, LastActivityAt = oldTime, PeakDepth = 4f } },
+                { "magic.fire", new DomainGrowthEntry { Depth = 2f, LastActivityAt = oldTime, PeakDepth = 2f } }
+            }
+        };
+
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync(seed);
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedGrowthModel { SeedId = seedId, Domains = new() });
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{partnerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(partnerGrowth);
+        _mockTypeStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(seedType);
+        _mockBondStore.Setup(s => s.GetAsync($"bond:{bondId}", It.IsAny<CancellationToken>())).ReturnsAsync(bond);
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockBondStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedBondModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Act: record growth only in "combat.melee"
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: partner's combat.melee timer was reset, magic.fire was NOT
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            $"growth:{partnerId}",
+            It.Is<SeedGrowthModel>(g =>
+                g.Domains["combat.melee"].LastActivityAt > oldTime &&
+                g.Domains["magic.fire"].LastActivityAt == oldTime),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_NonPermanentBond_DoesNotResetPartnerDecayTimer()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        var bondId = Guid.NewGuid();
+
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        seed.BondId = bondId;
+        var seedType = CreateTestSeedType();
+
+        var bond = new SeedBondModel
+        {
+            BondId = bondId,
+            SeedTypeCode = "guardian",
+            Status = BondStatus.Active,
+            Permanent = false,
+            Participants = new List<BondParticipantEntry>
+            {
+                new() { SeedId = seedId, JoinedAt = DateTimeOffset.UtcNow, Confirmed = true },
+                new() { SeedId = partnerId, JoinedAt = DateTimeOffset.UtcNow, Confirmed = true }
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+            BondStrength = 1f,
+            SharedGrowth = 10f
+        };
+
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync(seed);
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedGrowthModel { SeedId = seedId, Domains = new() });
+        _mockTypeStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(seedType);
+        _mockBondStore.Setup(s => s.GetAsync($"bond:{bondId}", It.IsAny<CancellationToken>())).ReturnsAsync(bond);
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockBondStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedBondModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Act
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: partner growth was never read (non-permanent bond skips shared activity)
+        _mockGrowthStore.Verify(s => s.GetAsync($"growth:{partnerId}", It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region Phase Direction Tests
+
+    [Fact]
+    public async Task RecordGrowth_PhaseProgression_PublishesProgressedDirection()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        seed.GrowthPhase = "nascent";
+        seed.TotalGrowth = 8f;
+        var seedType = CreateTestSeedType();
+
+        var existingGrowth = new SeedGrowthModel
+        {
+            SeedId = seedId,
+            Domains = new Dictionary<string, DomainGrowthEntry>
+            {
+                { "combat.melee", new DomainGrowthEntry { Depth = 8f, LastActivityAt = DateTimeOffset.UtcNow, PeakDepth = 8f } }
+            }
+        };
+
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync(seed);
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>())).ReturnsAsync(existingGrowth);
+        _mockTypeStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(seedType);
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Act: cross the 10-threshold into "awakening"
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.phase.changed",
+            It.Is<SeedPhaseChangedEvent>(e =>
+                e.Direction == PhaseChangeDirection.Progressed &&
+                e.PreviousPhase == "nascent" &&
+                e.NewPhase == "awakening"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
     #region Event Handler Tests
 
     [Fact]
