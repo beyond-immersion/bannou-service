@@ -259,7 +259,7 @@ Unlock License Flow (under distributed lock, saga-ordered)
 
 ## Stubs & Unimplemented Features
 
-- ~~**`license-board.updated` event**: Declared in `license-events.yaml` as a lifecycle event with `LicenseBoardUpdatedEvent` model generated, but never published anywhere in the service code.~~ RESOLVED: Removed from `x-event-publications` in schema. The generated model is an unavoidable byproduct of `x-lifecycle` but is intentionally not published. Boards are immutable after creation. See [#355](https://github.com/beyond-immersion/bannou-service/issues/355).
+No stubs or unimplemented features at this time.
 
 ---
 

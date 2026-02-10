@@ -97,7 +97,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Creating encounter type with code {Code}", body.Code);
 
-        try
         {
             // Check if code is reserved (built-in)
             if (BuiltInTypes.Any(t => t.Code.Equals(body.Code, StringComparison.OrdinalIgnoreCase)))
@@ -139,21 +138,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             _logger.LogInformation("Created encounter type {Code} with ID {TypeId}", body.Code, typeId);
             return (StatusCodes.OK, MapToEncounterTypeResponse(data));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating encounter type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "CreateEncounterType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/create",
-                details: new { body.Code },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -163,7 +147,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Getting encounter type {Code}", body.Code);
 
-        try
         {
             var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
             var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
@@ -187,21 +170,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             return (StatusCodes.OK, MapToEncounterTypeResponse(data));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting encounter type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "GetEncounterType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/get",
-                details: new { body.Code },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -211,7 +179,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Listing encounter types");
 
-        try
         {
             // Ensure built-in types are seeded
             await EnsureBuiltInTypesSeededAsync(cancellationToken);
@@ -243,21 +210,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 TotalCount = types.Count
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing encounter types");
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "ListEncounterTypes",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -267,7 +219,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Updating encounter type {Code}", body.Code);
 
-        try
         {
             var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
             var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
@@ -299,21 +250,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             _logger.LogInformation("Updated encounter type {Code}", body.Code);
             return (StatusCodes.OK, MapToEncounterTypeResponse(data));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating encounter type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "UpdateEncounterType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/update",
-                details: new { body.Code },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -323,7 +259,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Deleting encounter type {Code}", body.Code);
 
-        try
         {
             var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
             var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
@@ -358,21 +293,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             _logger.LogInformation("Deleted (deactivated) encounter type {Code}", body.Code);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting encounter type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "DeleteEncounterType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/delete",
-                details: new { body.Code },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -382,7 +302,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Seeding encounter types, forceReset={ForceReset}", body.ForceReset);
 
-        try
         {
             var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
             var created = 0;
@@ -426,21 +345,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Skipped = skipped
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error seeding encounter types");
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "SeedEncounterTypes",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/type/seed",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -455,7 +359,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogInformation("Recording encounter of type {Type} between {Count} participants",
             body.EncounterTypeCode, body.ParticipantIds.Count);
 
-        try
         {
             // Validate participant count bounds
             if (body.ParticipantIds.Count < 2)
@@ -629,21 +532,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Perspectives = perspectives
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording encounter");
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "RecordEncounter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/record",
-                details: new { body.EncounterTypeCode, ParticipantCount = body.ParticipantIds.Count },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -657,7 +545,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Querying encounters for character {CharacterId}", body.CharacterId);
 
-        try
         {
             var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
             var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
@@ -764,21 +651,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 HasPreviousPage = page > 1
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying encounters for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "QueryByCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/query/by-character",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -788,7 +660,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Querying encounters between {CharA} and {CharB}", body.CharacterIdA, body.CharacterIdB);
 
-        try
         {
             var encounterIds = await GetPairEncounterIdsAsync(body.CharacterIdA, body.CharacterIdB, cancellationToken);
             var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
@@ -870,21 +741,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 HasPreviousPage = page > 1
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying encounters between {CharA} and {CharB}", body.CharacterIdA, body.CharacterIdB);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "QueryBetween",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/query/between",
-                details: new { body.CharacterIdA, body.CharacterIdB },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -894,7 +750,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Querying encounters at location {LocationId}", body.LocationId);
 
-        try
         {
             var encounterIds = await GetLocationEncounterIdsAsync(body.LocationId, cancellationToken);
             var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
@@ -971,21 +826,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 HasPreviousPage = page > 1
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying encounters at location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "QueryByLocation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/query/by-location",
-                details: new { body.LocationId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -995,7 +835,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Checking if {CharA} has met {CharB}", body.CharacterIdA, body.CharacterIdB);
 
-        try
         {
             var encounterIds = await GetPairEncounterIdsAsync(body.CharacterIdA, body.CharacterIdB, cancellationToken);
 
@@ -1004,21 +843,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 HasMet = encounterIds.Count > 0,
                 EncounterCount = encounterIds.Count
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking if {CharA} has met {CharB}", body.CharacterIdA, body.CharacterIdB);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "HasMet",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/has-met",
-                details: new { body.CharacterIdA, body.CharacterIdB },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -1029,7 +853,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Getting sentiment of {CharacterId} toward {TargetId}", body.CharacterId, body.TargetCharacterId);
 
-        try
         {
             var encounterIds = await GetPairEncounterIdsAsync(body.CharacterId, body.TargetCharacterId, cancellationToken);
 
@@ -1089,22 +912,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 DominantEmotion = dominantEmotion
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting sentiment for {CharacterId} toward {TargetId}",
-                body.CharacterId, body.TargetCharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "GetSentiment",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/get-sentiment",
-                details: new { body.CharacterId, body.TargetCharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1115,7 +922,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogDebug("Batch getting sentiment for {CharacterId} toward {Count} targets",
             body.CharacterId, body.TargetCharacterIds.Count);
 
-        try
         {
             if (body.TargetCharacterIds.Count > _configuration.MaxBatchSize)
             {
@@ -1149,21 +955,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Sentiments = sentiments
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error batch getting sentiments for {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "BatchGetSentiment",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/batch-get",
-                details: new { body.CharacterId, TargetCount = body.TargetCharacterIds.Count },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -1178,7 +969,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogDebug("Getting perspective of {CharacterId} on encounter {EncounterId}",
             body.CharacterId, body.EncounterId);
 
-        try
         {
             var perspective = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
             if (perspective == null)
@@ -1195,22 +985,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Perspective = MapToPerspectiveModel(perspective)
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting perspective for {CharacterId} on {EncounterId}",
-                body.CharacterId, body.EncounterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "GetPerspective",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/get-perspective",
-                details: new { body.CharacterId, body.EncounterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1221,7 +995,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogInformation("Updating perspective of {CharacterId} on encounter {EncounterId}",
             body.CharacterId, body.EncounterId);
 
-        try
         {
             var found = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
             if (found == null)
@@ -1278,22 +1051,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Perspective = MapToPerspectiveModel(perspective)
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating perspective for {CharacterId} on {EncounterId}",
-                body.CharacterId, body.EncounterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "UpdatePerspective",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/update-perspective",
-                details: new { body.CharacterId, body.EncounterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1304,7 +1061,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogDebug("Refreshing memory of {CharacterId} for encounter {EncounterId}",
             body.CharacterId, body.EncounterId);
 
-        try
         {
             var found = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
             if (found == null)
@@ -1356,22 +1112,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Perspective = MapToPerspectiveModel(perspective)
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error refreshing memory for {CharacterId} on {EncounterId}",
-                body.CharacterId, body.EncounterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "RefreshMemory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/refresh-memory",
-                details: new { body.CharacterId, body.EncounterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -1385,7 +1125,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Deleting encounter {EncounterId}", body.EncounterId);
 
-        try
         {
             var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
             var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{body.EncounterId}", cancellationToken);
@@ -1448,21 +1187,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 PerspectivesDeleted = perspectivesDeleted
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting encounter {EncounterId}", body.EncounterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "DeleteEncounter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/delete",
-                details: new { body.EncounterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1472,7 +1196,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Deleting all encounters for character {CharacterId}", body.CharacterId);
 
-        try
         {
             var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
             var encountersDeleted = 0;
@@ -1556,21 +1279,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 PerspectivesDeleted = perspectivesDeleted
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting encounters for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "DeleteByCharacter",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/delete-by-character",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1581,7 +1289,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _logger.LogInformation("Processing memory decay, characterId={CharacterId}, dryRun={DryRun}",
             body.CharacterId, body.DryRun);
 
-        try
         {
             if (!_configuration.MemoryDecayEnabled)
             {
@@ -1677,21 +1384,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 DryRun = dryRun
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing memory decay");
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "DecayMemories",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/decay-memories",
-                details: new { body.CharacterId, body.DryRun },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -1708,7 +1400,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
-        try
         {
             // Get all perspective IDs for this character
             var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
@@ -1794,21 +1485,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "GetCompressData",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/get-compress-data",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1824,7 +1500,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var encountersRestored = 0;
         var perspectivesRestored = 0;
 
-        try
         {
             // Decompress the archive data
             CharacterEncounterArchive archiveData;
@@ -1942,21 +1617,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 PerspectivesRestored = perspectivesRestored,
                 Success = true
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error restoring archive for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "RestoreFromArchive",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-encounter/restore-from-archive",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
