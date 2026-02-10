@@ -142,7 +142,7 @@ public partial class SeedService : ISeedService
 
             // Initialize empty growth record
             var growthStore = _stateStoreFactory.GetStore<SeedGrowthModel>(StateStoreDefinitions.SeedGrowth);
-            var growth = new SeedGrowthModel { SeedId = seed.SeedId, Domains = new() };
+            var growth = new SeedGrowthModel { SeedId = seed.SeedId, Domains = new(), LastDecayedAt = null };
             await growthStore.SaveAsync($"growth:{seed.SeedId}", growth, cancellationToken: cancellationToken);
 
             // Publish lifecycle event
@@ -518,23 +518,8 @@ public partial class SeedService : ISeedService
                 return (StatusCodes.NotFound, null);
             }
 
-            var domains = new Dictionary<string, float>(growth.Domains);
-
-            // Apply decay if enabled (deferred feature #352 - config wires up the knobs)
-            if (_configuration.GrowthDecayEnabled)
-            {
-                var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-                var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
-                if (seed != null)
-                {
-                    var daysSinceCreation = (DateTimeOffset.UtcNow - seed.CreatedAt).TotalDays;
-                    var decayFactor = Math.Max(0f, 1f - (float)(daysSinceCreation * _configuration.GrowthDecayRatePerDay));
-                    foreach (var key in domains.Keys.ToList())
-                    {
-                        domains[key] *= decayFactor;
-                    }
-                }
-            }
+            // Decay is applied by the background worker (write-back). Return stored values directly.
+            var domains = growth.Domains.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Depth);
 
             return (StatusCodes.OK, new GrowthResponse
             {
@@ -746,7 +731,9 @@ public partial class SeedService : ISeedService
                 GrowthPhases = body.GrowthPhases.ToList(),
                 BondCardinality = body.BondCardinality,
                 BondPermanent = body.BondPermanent,
-                CapabilityRules = body.CapabilityRules?.ToList()
+                CapabilityRules = body.CapabilityRules?.ToList(),
+                GrowthDecayEnabled = body.GrowthDecayEnabled,
+                GrowthDecayRatePerDay = body.GrowthDecayRatePerDay
             };
 
             await store.SaveAsync(key, model, cancellationToken: cancellationToken);
@@ -859,6 +846,10 @@ public partial class SeedService : ISeedService
                 seedType.GrowthPhases = body.GrowthPhases.ToList();
             if (body.CapabilityRules != null)
                 seedType.CapabilityRules = body.CapabilityRules.ToList();
+            if (body.GrowthDecayEnabled.HasValue)
+                seedType.GrowthDecayEnabled = body.GrowthDecayEnabled;
+            if (body.GrowthDecayRatePerDay.HasValue)
+                seedType.GrowthDecayRatePerDay = body.GrowthDecayRatePerDay;
 
             await store.SaveAsync(key, seedType, cancellationToken: cancellationToken);
 
@@ -1234,10 +1225,11 @@ public partial class SeedService : ISeedService
 
         // Apply bond shared growth multiplier only when bond is active
         var multiplier = 1.0f;
+        SeedBondModel? bond = null;
         if (seed.BondId.HasValue)
         {
             var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
-            var bond = await bondStore.GetAsync($"bond:{seed.BondId.Value}", cancellationToken);
+            bond = await bondStore.GetAsync($"bond:{seed.BondId.Value}", cancellationToken);
             if (bond is { Status: BondStatus.Active })
             {
                 multiplier = (float)_configuration.BondSharedGrowthMultiplier;
@@ -1249,30 +1241,66 @@ public partial class SeedService : ISeedService
             }
         }
 
-        // Record growth in each domain
+        // Record growth in each domain using per-domain tracking
+        var now = DateTimeOffset.UtcNow;
         foreach (var (domain, amount) in entries)
         {
             var adjustedAmount = amount * multiplier;
-            var previousDepth = growth.Domains.GetValueOrDefault(domain, 0f);
-            growth.Domains[domain] = previousDepth + adjustedAmount;
+            var entry = growth.Domains.GetValueOrDefault(domain);
+            var previousDepth = entry?.Depth ?? 0f;
+            var newDepth = previousDepth + adjustedAmount;
+
+            growth.Domains[domain] = new DomainGrowthEntry
+            {
+                Depth = newDepth,
+                LastActivityAt = now,
+                PeakDepth = Math.Max(entry?.PeakDepth ?? 0f, newDepth)
+            };
 
             await _messageBus.TryPublishAsync("seed.growth.updated", new SeedGrowthUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
+                Timestamp = now,
                 SeedId = seedId,
                 SeedTypeCode = seed.SeedTypeCode,
                 Domain = domain,
                 PreviousDepth = previousDepth,
-                NewDepth = growth.Domains[domain],
-                TotalGrowth = growth.Domains.Values.Sum()
+                NewDepth = newDepth,
+                TotalGrowth = growth.Domains.Values.Sum(d => d.Depth)
             }, cancellationToken: cancellationToken);
         }
 
         await growthStore.SaveAsync($"growth:{seedId}", growth, cancellationToken: cancellationToken);
 
+        // Reset partner's decay timer for exact domains when permanently bonded
+        if (bond is { Status: BondStatus.Active, Permanent: true })
+        {
+            var affectedDomains = entries.Select(e => e.Domain).ToHashSet();
+            foreach (var participant in bond.Participants.Where(p => p.SeedId != seedId))
+            {
+                var partnerGrowth = await growthStore.GetAsync($"growth:{participant.SeedId}", cancellationToken);
+                if (partnerGrowth == null) continue;
+
+                var partnerModified = false;
+                foreach (var domainKey in affectedDomains)
+                {
+                    if (partnerGrowth.Domains.TryGetValue(domainKey, out var partnerEntry))
+                    {
+                        partnerEntry.LastActivityAt = now;
+                        partnerModified = true;
+                    }
+                }
+
+                if (partnerModified)
+                {
+                    await growthStore.SaveAsync($"growth:{participant.SeedId}", partnerGrowth,
+                        cancellationToken: cancellationToken);
+                }
+            }
+        }
+
         // Update seed total growth and check phase transition
-        var newTotalGrowth = growth.Domains.Values.Sum();
+        var newTotalGrowth = growth.Domains.Values.Sum(d => d.Depth);
         var previousPhase = seed.GrowthPhase;
         seed.TotalGrowth = newTotalGrowth;
 
@@ -1302,7 +1330,8 @@ public partial class SeedService : ISeedService
                 SeedTypeCode = seed.SeedTypeCode,
                 PreviousPhase = previousPhase,
                 NewPhase = seed.GrowthPhase,
-                TotalGrowth = newTotalGrowth
+                TotalGrowth = newTotalGrowth,
+                Direction = PhaseChangeDirection.Progressed
             }, cancellationToken: cancellationToken);
         }
 
@@ -1314,7 +1343,7 @@ public partial class SeedService : ISeedService
         {
             SeedId = seedId,
             TotalGrowth = newTotalGrowth,
-            Domains = new Dictionary<string, float>(growth.Domains)
+            Domains = growth.Domains.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Depth)
         });
     }
 
@@ -1358,6 +1387,13 @@ public partial class SeedService : ISeedService
                     {
                         await seedStore.SaveAsync($"seed:{seed.SeedId}", seed, cancellationToken: cancellationToken);
 
+                        // Determine direction based on phase threshold comparison
+                        var prevPhaseThreshold = seedType.GrowthPhases.FirstOrDefault(p => p.PhaseCode == previousPhase)?.MinTotalGrowth ?? 0f;
+                        var newPhaseThreshold = seedType.GrowthPhases.FirstOrDefault(p => p.PhaseCode == seed.GrowthPhase)?.MinTotalGrowth ?? 0f;
+                        var direction = newPhaseThreshold >= prevPhaseThreshold
+                            ? PhaseChangeDirection.Progressed
+                            : PhaseChangeDirection.Regressed;
+
                         await _messageBus.TryPublishAsync("seed.phase.changed", new SeedPhaseChangedEvent
                         {
                             EventId = Guid.NewGuid(),
@@ -1366,7 +1402,8 @@ public partial class SeedService : ISeedService
                             SeedTypeCode = seed.SeedTypeCode,
                             PreviousPhase = previousPhase,
                             NewPhase = seed.GrowthPhase,
-                            TotalGrowth = seed.TotalGrowth
+                            TotalGrowth = seed.TotalGrowth,
+                            Direction = direction
                         }, cancellationToken: cancellationToken);
                     }
                 }
@@ -1386,6 +1423,17 @@ public partial class SeedService : ISeedService
 
         _logger.LogInformation("Recomputed {Count} seeds for type {SeedTypeCode} after type definition update",
             totalProcessed, seedType.SeedTypeCode);
+    }
+
+    /// <summary>
+    /// Resolves decay configuration: per-type overrides fall back to global config.
+    /// </summary>
+    internal static (bool Enabled, float RatePerDay) ResolveDecayConfig(
+        SeedTypeDefinitionModel? seedType, SeedServiceConfiguration configuration)
+    {
+        var enabled = seedType?.GrowthDecayEnabled ?? configuration.GrowthDecayEnabled;
+        var rate = seedType?.GrowthDecayRatePerDay ?? (float)configuration.GrowthDecayRatePerDay;
+        return (enabled, rate);
     }
 
     /// <summary>
@@ -1426,7 +1474,7 @@ public partial class SeedService : ISeedService
     {
         var growthStore = _stateStoreFactory.GetStore<SeedGrowthModel>(StateStoreDefinitions.SeedGrowth);
         var growth = await growthStore.GetAsync($"growth:{seed.SeedId}", cancellationToken);
-        var domains = growth?.Domains ?? new Dictionary<string, float>();
+        var domains = growth?.Domains ?? new Dictionary<string, DomainGrowthEntry>();
 
         var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
         var seedType = await typeStore.GetAsync($"type:{seed.GameServiceId}:{seed.SeedTypeCode}", cancellationToken);
@@ -1436,7 +1484,7 @@ public partial class SeedService : ISeedService
         {
             foreach (var rule in seedType.CapabilityRules)
             {
-                var domainDepth = domains.GetValueOrDefault(rule.Domain, 0f);
+                var domainDepth = domains.GetValueOrDefault(rule.Domain)?.Depth ?? 0f;
                 var unlocked = domainDepth >= rule.UnlockThreshold;
                 var fidelity = unlocked ? ComputeFidelity(domainDepth, rule.UnlockThreshold, rule.FidelityFormula) : 0f;
 
@@ -1526,7 +1574,9 @@ public partial class SeedService : ISeedService
         GrowthPhases = model.GrowthPhases,
         BondCardinality = model.BondCardinality,
         BondPermanent = model.BondPermanent,
-        CapabilityRules = model.CapabilityRules
+        CapabilityRules = model.CapabilityRules,
+        GrowthDecayEnabled = model.GrowthDecayEnabled,
+        GrowthDecayRatePerDay = model.GrowthDecayRatePerDay
     };
 
     /// <summary>

@@ -47,7 +47,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `growth:{seedId}` | `SeedGrowthModel` | Domain-to-depth map for growth tracking |
+| `growth:{seedId}` | `SeedGrowthModel` | Per-domain growth entries (`DomainGrowthEntry` with `Depth`, `LastActivityAt`, `PeakDepth`), plus `LastDecayedAt` for decay worker tracking |
 
 **Store**: `seed-type-definitions-statestore` (Backend: MySQL)
 
@@ -88,7 +88,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `seed.activated` | `SeedActivatedEvent` | Seed set to Active status; includes `PreviousActiveSeedId` if another seed was deactivated |
 | `seed.archived` | `SeedArchivedEvent` | Seed archived (soft delete) |
 | `seed.growth.updated` | `SeedGrowthUpdatedEvent` | Per-domain event fired for each domain in a growth recording; includes previous and new depth |
-| `seed.phase.changed` | `SeedPhaseChangedEvent` | Seed crossed a phase threshold during growth recording |
+| `seed.phase.changed` | `SeedPhaseChangedEvent` | Seed crossed a phase threshold during growth recording or decay; includes `Direction` (`Progressed` or `Regressed`) |
 | `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | Capability manifest recomputed and cached; includes manifest version and unlocked count |
 | `seed.bond.formed` | `SeedBondFormedEvent` | Bond transitions to Active after all participants confirm |
 
@@ -105,8 +105,10 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `CapabilityRecomputeDebounceMs` | `SEED_CAPABILITY_RECOMPUTE_DEBOUNCE_MS` | `5000` | Debounce window (ms) for capability cache; reads within this window return cached manifest without recomputing |
-| `GrowthDecayEnabled` | `SEED_GROWTH_DECAY_ENABLED` | `false` | Whether growth domains decay over time on read |
-| `GrowthDecayRatePerDay` | `SEED_GROWTH_DECAY_RATE_PER_DAY` | `0.01` | Daily decay rate applied to all domain values when decay is enabled |
+| `GrowthDecayEnabled` | `SEED_GROWTH_DECAY_ENABLED` | `false` | Global toggle for background growth decay; per-type overrides take precedence when set |
+| `GrowthDecayRatePerDay` | `SEED_GROWTH_DECAY_RATE_PER_DAY` | `0.01` | Global daily exponential decay rate; per-type overrides take precedence when set |
+| `DecayWorkerIntervalSeconds` | `SEED_DECAY_WORKER_INTERVAL_SECONDS` | `900` | Seconds between decay worker cycles (range: 60-86400) |
+| `DecayWorkerStartupDelaySeconds` | `SEED_DECAY_WORKER_STARTUP_DELAY_SECONDS` | `30` | Seconds to wait after startup before first decay cycle (range: 0-300) |
 | `BondSharedGrowthMultiplier` | `SEED_BOND_SHARED_GROWTH_MULTIPLIER` | `1.5` | Growth amount multiplier applied when recording growth for a seed with an active bond |
 | `MaxSeedTypesPerGameService` | `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | `50` | Maximum number of seed type definitions per game service |
 | `DefaultMaxSeedsPerOwner` | `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | `3` | Default per-owner seed limit when seed type's `MaxPerOwner` is 0 |
@@ -126,6 +128,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `IDistributedLockProvider` | Distributed locks for mutation operations |
 | `IEventConsumer` | Event subscription registration for `seed.growth.contributed` |
 | `IGameServiceClient` | Validates game service existence during seed creation and type registration |
+| `SeedDecayWorkerService` | Background `HostedService` that periodically applies exponential decay to growth domains; disabled when `GrowthDecayEnabled` is false |
 
 ---
 
@@ -143,9 +146,9 @@ Standard CRUD operations on seed entities. `CreateSeedAsync` validates the game 
 
 ### Growth (4 endpoints)
 
-`RecordGrowthAsync` and `RecordGrowthBatchAsync` both delegate to `RecordGrowthInternalAsync`, which acquires a distributed lock on the seed, verifies Active status, applies the bond shared growth multiplier if the seed has an active bond, updates domain depths, checks for phase transitions against the seed type definition, and invalidates the capability cache by deleting it from Redis. Publishes `seed.growth.updated` per domain and `seed.phase.changed` if a phase boundary was crossed.
+`RecordGrowthAsync` and `RecordGrowthBatchAsync` both delegate to `RecordGrowthInternalAsync`, which acquires a distributed lock on the seed, verifies Active status, applies the bond shared growth multiplier if the seed has an active permanent bond, updates per-domain `DomainGrowthEntry` values (Depth, LastActivityAt, PeakDepth), checks for phase transitions against the seed type definition, and invalidates the capability cache by deleting it from Redis. Publishes `seed.growth.updated` per domain and `seed.phase.changed` (with `Direction = Progressed`) if a phase boundary was crossed. For permanent bonds, resets `LastActivityAt` on matching domains of bonded partners to prevent their decay.
 
-`GetGrowthAsync` returns domain depths. When `GrowthDecayEnabled` is true, applies a linear decay factor based on time since seed creation (not per-domain last activity). The decay is read-time only -- stored values are not modified.
+`GetGrowthAsync` returns domain depths directly from stored values. Decay is applied by the background `SeedDecayWorkerService`, not at read time.
 
 `GetGrowthPhaseAsync` computes the current phase and next phase threshold from the seed type definition using `ComputePhaseInfo`, which iterates sorted phases and returns the highest phase whose `MinTotalGrowth` the seed has reached.
 
@@ -161,7 +164,7 @@ Manifest version is monotonically incremented from the previous cached version.
 
 ### Seed Type Definitions (4 endpoints)
 
-`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), and allowed owner types.
+`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), allowed owner types, and optional per-type decay overrides (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) that take precedence over global configuration.
 
 `UpdateSeedTypeAsync` acquires a distributed lock on the type key, supports partial updates (only non-null fields applied), and triggers recomputation of all existing seeds' phases and capability caches when growth phases or capability rules change.
 
@@ -193,15 +196,17 @@ No delete endpoint exists for seed types -- see Known Quirks.
 │   └──────────────────────────────────────────┘     InitiateBond     │
 │                                                                     │
 │   seed-statestore (MySQL)           seed-growth-statestore (MySQL)  │
-│   ┌──────────────────────┐         ┌─────────────────────────┐     │
-│   │ seed:{seedId}        │         │ growth:{seedId}          │     │
-│   │ ├── OwnerId/Type     │    1:1  │ ├── Domains: {           │     │
-│   │ ├── SeedTypeCode   ──┼──ref──→ │ │   "combat.melee": 3.2  │     │
-│   │ ├── GrowthPhase      │         │ │   "crafting": 8.0      │     │
-│   │ ├── TotalGrowth      │         │ │ }                      │     │
-│   │ ├── Status           │         │ └──────────────┬──────────┘     │
-│   │ └── BondId? ─────┐   │         │               │                │
-│   └──────────────────┼───┘         │               ▼                │
+│   ┌──────────────────────┐         ┌─────────────────────────────┐ │
+│   │ seed:{seedId}        │         │ growth:{seedId}              │ │
+│   │ ├── OwnerId/Type     │    1:1  │ ├── Domains: {               │ │
+│   │ ├── SeedTypeCode   ──┼──ref──→ │ │   "combat.melee": {        │ │
+│   │ ├── GrowthPhase      │         │ │     Depth: 3.2,            │ │
+│   │ ├── TotalGrowth      │         │ │     LastActivityAt: ...,   │ │
+│   │ ├── Status           │         │ │     PeakDepth: 4.1 }       │ │
+│   │ └── BondId? ─────┐   │         │ │ }                          │ │
+│   └──────────────────┼───┘         │ ├── LastDecayedAt?           │ │
+│                      │              │ └──────────────┬──────────────┘ │
+│                      ▼              │               ▼                │
 │                      │              │  seed-capabilities-cache       │
 │                      ▼              │  (Redis)                       │
 │   seed-bonds-statestore (MySQL)    │  ┌─────────────────────────┐  │
@@ -228,8 +233,7 @@ No delete endpoint exists for seed types -- see Known Quirks.
 
 ## Stubs & Unimplemented Features
 
-- **Growth decay**: Configuration properties (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) are wired up and the read-time decay logic exists in `GetGrowthAsync`, but the feature is disabled by default and the decay formula uses time since seed creation rather than per-domain last activity time. The code comment references "deferred feature #352". The decay is read-only (presentation layer) -- stored domain values are never modified by decay.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/359 -->
+*(No current stubs -- growth decay was the last stub and is now fully implemented.)*
 
 ---
 
@@ -243,9 +247,6 @@ No delete endpoint exists for seed types -- see Known Quirks.
 
 - **Seed type deletion**: No `DeleteSeedType` endpoint exists. Removing a type definition would need to consider existing seeds of that type (orphan prevention).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/363 -->
-
-- **Per-domain decay tracking**: Growth decay currently uses seed creation time as the basis for all domains. A more accurate model would track last activity time per domain, allowing active domains to resist decay while inactive ones fade.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/364 -->
 
 - **Capability push notifications**: Currently capabilities are pull-only (consumer calls `GetCapabilityManifest`). A push model via client events would allow real-time UI updates when capabilities unlock.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/365 -->
@@ -270,7 +271,9 @@ No delete endpoint exists for seed types -- see Known Quirks.
 
 - **Linear fidelity yields 0 at exact threshold**: The linear formula `(normalized - 1.0) / 1.0` produces 0.0 when `domainDepth == threshold` (normalized = 1.0). Fidelity only begins increasing above the threshold and reaches 1.0 at exactly 2x the threshold. This means "unlocked" capabilities start with zero fidelity.
 
-- **Growth decay is read-time presentation only**: When `GrowthDecayEnabled` is true, `GetGrowthAsync` applies a decay factor to returned domain values but does NOT modify stored data. Phase transitions and capability computations use stored (undecayed) values, so decay is purely cosmetic for API consumers reading growth data.
+- **Growth decay is write-back via background worker**: The `SeedDecayWorkerService` always runs on its configured interval and resolves decay config per type via `ResolveDecayConfig` (per-type override wins, then global fallback). Applies exponential decay (`depth *= (1 - ratePerDay) ^ decayDays`) to stored domain values for types where decay resolves to enabled. Decay is not applied at read time -- `GetGrowthAsync` returns stored values directly. Phase regressions are detected and published as `SeedPhaseChangedEvent` with `Direction = Regressed`. The global `GrowthDecayEnabled` is the fallback default, not a kill switch -- a type with `GrowthDecayEnabled = true` will decay even if the global is false.
+
+- **Bond shared activity resets partner decay timers**: When a bonded seed (permanent bond only) records growth, `LastActivityAt` is reset on matching domains of all bonded partners. This prevents partners from decaying in domains they share activity in, even if the partner itself didn't record growth directly.
 
 - **Metadata wrapped in `data` key**: When creating or updating seed metadata, the user-provided metadata object is nested under a `data` key in the stored model (`seed.Metadata["data"] = body.Metadata`). Consumers must be aware of this wrapping.
 
@@ -293,3 +296,4 @@ No delete endpoint exists for seed types -- see Known Quirks.
 - **Bond growth multiplier bug fix** (2026-02-09): Moved `BondSharedGrowthMultiplier` inside the active bond status check in `RecordGrowthInternalAsync`. Seeds with `PendingConfirmation` bonds no longer receive boosted growth.
 - **RecomputeSeedsForTypeAsync pagination fix** (2026-02-09): Added pagination loop so all seeds of a type are recomputed when the type definition changes, not just the first page.
 - **ConfirmBondAsync distributed lock fix** (2026-02-09): Added distributed lock on `bond:{bondId}` before read-mutate-write in `ConfirmBondAsync` to prevent concurrent confirmation races.
+- **Growth decay system implementation** (2026-02-10): Implemented #359 (umbrella for #352, #364). Replaced placeholder read-time decay with full write-back system: per-domain `DomainGrowthEntry` tracking (Depth, LastActivityAt, PeakDepth), per-type decay config overrides, `SeedDecayWorkerService` background worker with exponential decay formula, phase regression detection with directional events (`Progressed`/`Regressed`), and bond shared activity that resets partner decay timers on matching domains.

@@ -34,6 +34,9 @@ public class SeedServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
+        // Background worker for applying growth decay to seed domains
+        services.AddHostedService<SeedDecayWorkerService>();
+
         Logger?.LogDebug("Service dependencies configured");
     }
 

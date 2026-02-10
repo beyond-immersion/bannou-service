@@ -58,6 +58,21 @@ internal class SeedModel
 }
 
 /// <summary>
+/// Growth data for a single domain within a seed's growth record.
+/// </summary>
+internal class DomainGrowthEntry
+{
+    /// <summary>Current depth value (includes decay applied by worker).</summary>
+    public float Depth { get; set; }
+
+    /// <summary>When growth was last recorded for this domain.</summary>
+    public DateTimeOffset LastActivityAt { get; set; }
+
+    /// <summary>Highest depth ever reached in this domain (for future recovery mechanics).</summary>
+    public float PeakDepth { get; set; }
+}
+
+/// <summary>
 /// Internal storage model for growth domain data. Stored in seed-growth-statestore (MySQL).
 /// Key pattern: growth:{seedId}
 /// </summary>
@@ -66,8 +81,11 @@ internal class SeedGrowthModel
     /// <summary>The seed this growth data belongs to.</summary>
     public Guid SeedId { get; set; }
 
-    /// <summary>Map of domain path to depth value (e.g., "combat.melee.sword" -> 3.5).</summary>
-    public Dictionary<string, float> Domains { get; set; } = new();
+    /// <summary>Map of domain path to growth entry with depth, activity tracking, and peak.</summary>
+    public Dictionary<string, DomainGrowthEntry> Domains { get; set; } = new();
+
+    /// <summary>When the decay worker last applied decay to this model. Null if never decayed.</summary>
+    public DateTimeOffset? LastDecayedAt { get; set; }
 }
 
 /// <summary>
@@ -105,6 +123,12 @@ internal class SeedTypeDefinitionModel
 
     /// <summary>Rules for computing capabilities from growth domains.</summary>
     public List<CapabilityRule>? CapabilityRules { get; set; }
+
+    /// <summary>Per-type decay override. Null = use global config.</summary>
+    public bool? GrowthDecayEnabled { get; set; }
+
+    /// <summary>Per-type decay rate override. Null = use global config.</summary>
+    public float? GrowthDecayRatePerDay { get; set; }
 }
 
 /// <summary>

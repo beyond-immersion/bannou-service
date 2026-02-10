@@ -503,7 +503,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Assert.Equal(3.5f, response.Domains["combat.melee.sword"]);
 
         Assert.NotNull(savedGrowth);
-        Assert.Equal(3.5f, savedGrowth.Domains["combat.melee.sword"]);
+        Assert.Equal(3.5f, savedGrowth.Domains["combat.melee.sword"].Depth);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "seed.growth.updated",
@@ -522,7 +522,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var existingGrowth = new SeedGrowthModel
         {
             SeedId = seedId,
-            Domains = new Dictionary<string, float> { { "combat.melee", 5.0f } }
+            Domains = new Dictionary<string, DomainGrowthEntry> { { "combat.melee", new DomainGrowthEntry { Depth = 5.0f, LastActivityAt = DateTimeOffset.UtcNow, PeakDepth = 5.0f } } }
         };
 
         _mockSeedStore
@@ -554,7 +554,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(savedGrowth);
-        Assert.Equal(7.0f, savedGrowth.Domains["combat.melee"]);
+        Assert.Equal(7.0f, savedGrowth.Domains["combat.melee"].Depth);
     }
 
     [Fact]
@@ -571,7 +571,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var existingGrowth = new SeedGrowthModel
         {
             SeedId = seedId,
-            Domains = new Dictionary<string, float> { { "combat.melee", 8f } }
+            Domains = new Dictionary<string, DomainGrowthEntry> { { "combat.melee", new DomainGrowthEntry { Depth = 8f, LastActivityAt = DateTimeOffset.UtcNow, PeakDepth = 8f } } }
         };
 
         _mockSeedStore
@@ -657,8 +657,8 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Assert.NotNull(response);
         Assert.Equal(5f, response.TotalGrowth);
         Assert.NotNull(savedGrowth);
-        Assert.Equal(2f, savedGrowth.Domains["combat.melee"]);
-        Assert.Equal(3f, savedGrowth.Domains["magic.fire"]);
+        Assert.Equal(2f, savedGrowth.Domains["combat.melee"].Depth);
+        Assert.Equal(3f, savedGrowth.Domains["magic.fire"].Depth);
     }
 
     #endregion
@@ -709,7 +709,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var growth = new SeedGrowthModel
         {
             SeedId = seedId,
-            Domains = new Dictionary<string, float> { { "combat.melee", 8f } }
+            Domains = new Dictionary<string, DomainGrowthEntry> { { "combat.melee", new DomainGrowthEntry { Depth = 8f, LastActivityAt = DateTimeOffset.UtcNow, PeakDepth = 8f } } }
         };
 
         _mockCapabilitiesStore
@@ -759,7 +759,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var growth = new SeedGrowthModel
         {
             SeedId = seedId,
-            Domains = new Dictionary<string, float> { { "combat.melee", 7.5f } }
+            Domains = new Dictionary<string, DomainGrowthEntry> { { "combat.melee", new DomainGrowthEntry { Depth = 7.5f, LastActivityAt = DateTimeOffset.UtcNow, PeakDepth = 7.5f } } }
         };
 
         _mockCapabilitiesStore
@@ -807,7 +807,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var growth = new SeedGrowthModel
         {
             SeedId = seedId,
-            Domains = new Dictionary<string, float> { { "combat.melee", 5f } }
+            Domains = new Dictionary<string, DomainGrowthEntry> { { "combat.melee", new DomainGrowthEntry { Depth = 5f, LastActivityAt = DateTimeOffset.UtcNow, PeakDepth = 5f } } }
         };
 
         _mockCapabilitiesStore

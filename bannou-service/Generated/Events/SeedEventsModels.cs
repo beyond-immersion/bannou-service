@@ -242,6 +242,15 @@ public partial class SeedPhaseChangedEvent
     [System.Text.Json.Serialization.JsonPropertyName("totalGrowth")]
     public float TotalGrowth { get; set; } = default!;
 
+    /// <summary>
+    /// Whether this was a forward progression or a regression from decay
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("direction")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PhaseChangeDirection Direction { get; set; } = default!;
+
 }
 
 /// <summary>

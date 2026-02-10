@@ -60,16 +60,30 @@ public class SeedServiceConfiguration : IServiceConfiguration
     public int CapabilityRecomputeDebounceMs { get; set; } = 5000;
 
     /// <summary>
-    /// Whether unused growth domains decay over time (per-type configuration deferred to GH issue 352)
+    /// Global toggle for growth domain decay. Per-type overrides can enable or disable decay independently.
     /// Environment variable: SEED_GROWTH_DECAY_ENABLED
     /// </summary>
     public bool GrowthDecayEnabled { get; set; } = false;
 
     /// <summary>
-    /// Daily decay rate applied to unused growth domains when decay is enabled
+    /// Global daily decay rate applied to unused growth domains. Per-type overrides take precedence.
     /// Environment variable: SEED_GROWTH_DECAY_RATE_PER_DAY
     /// </summary>
     public double GrowthDecayRatePerDay { get; set; } = 0.01;
+
+    /// <summary>
+    /// Interval in seconds between growth decay worker cycles (default 15 minutes)
+    /// Environment variable: SEED_DECAY_WORKER_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 86400)]
+    public int DecayWorkerIntervalSeconds { get; set; } = 900;
+
+    /// <summary>
+    /// Delay in seconds before the decay worker starts its first cycle
+    /// Environment variable: SEED_DECAY_WORKER_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int DecayWorkerStartupDelaySeconds { get; set; } = 30;
 
     /// <summary>
     /// Growth multiplier applied when bonded seeds grow together in the same context
