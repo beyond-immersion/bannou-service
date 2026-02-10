@@ -109,96 +109,81 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Creating actor template for category {Category}", body.Category);
 
-        try
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(body.Category))
         {
-            // Validate required fields
-            if (string.IsNullOrWhiteSpace(body.Category))
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (string.IsNullOrWhiteSpace(body.BehaviorRef))
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-            var templateId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            // Check if category already exists
-            var existing = await templateStore.GetAsync($"category:{body.Category}", cancellationToken);
-            if (existing != null)
-            {
-                _logger.LogWarning("Template for category {Category} already exists", body.Category);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var template = new ActorTemplateData
-            {
-                TemplateId = templateId,
-                Category = body.Category,
-                BehaviorRef = body.BehaviorRef,
-                Configuration = body.Configuration,
-                AutoSpawn = AutoSpawnConfigData.FromConfig(body.AutoSpawn),
-                TickIntervalMs = body.TickIntervalMs > 0 ? body.TickIntervalMs : _configuration.DefaultTickIntervalMs,
-                AutoSaveIntervalSeconds = body.AutoSaveIntervalSeconds >= 0
-                    ? body.AutoSaveIntervalSeconds
-                    : _configuration.DefaultAutoSaveIntervalSeconds,
-                MaxInstancesPerNode = body.MaxInstancesPerNode > 0
-                    ? body.MaxInstancesPerNode
-                    : _configuration.DefaultActorsPerNode,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            // Save to state store (by ID and by category for lookup)
-            await templateStore.SaveAsync(templateId.ToString(), template, cancellationToken: cancellationToken);
-            await templateStore.SaveAsync($"category:{body.Category}", template, cancellationToken: cancellationToken);
-
-            // Add to template index with optimistic concurrency
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
-            var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
-            allIds ??= new List<string>();
-            if (!allIds.Contains(templateId.ToString()))
-            {
-                allIds.Add(templateId.ToString());
-                var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
-                if (indexResult == null)
-                {
-                    _logger.LogWarning("Concurrent modification on template index during create of {TemplateId}", templateId);
-                }
-            }
-
-            // Publish created event
-            var evt = new ActorTemplateCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                TemplateId = templateId,
-                Category = body.Category,
-                BehaviorRef = body.BehaviorRef,
-                CreatedAt = now
-            };
-            await _messageBus.TryPublishAsync("actor-template.created", evt, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Created actor template {TemplateId} for category {Category}",
-                templateId, body.Category);
-
-            return (StatusCodes.OK, template.ToResponse());
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        if (string.IsNullOrWhiteSpace(body.BehaviorRef))
         {
-            _logger.LogError(ex, "Error creating actor template");
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "CreateActorTemplate",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.BadRequest, null);
         }
+
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var templateId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Check if category already exists
+        var existing = await templateStore.GetAsync($"category:{body.Category}", cancellationToken);
+        if (existing != null)
+        {
+            _logger.LogWarning("Template for category {Category} already exists", body.Category);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var template = new ActorTemplateData
+        {
+            TemplateId = templateId,
+            Category = body.Category,
+            BehaviorRef = body.BehaviorRef,
+            Configuration = body.Configuration,
+            AutoSpawn = AutoSpawnConfigData.FromConfig(body.AutoSpawn),
+            TickIntervalMs = body.TickIntervalMs > 0 ? body.TickIntervalMs : _configuration.DefaultTickIntervalMs,
+            AutoSaveIntervalSeconds = body.AutoSaveIntervalSeconds >= 0
+                ? body.AutoSaveIntervalSeconds
+                : _configuration.DefaultAutoSaveIntervalSeconds,
+            MaxInstancesPerNode = body.MaxInstancesPerNode > 0
+                ? body.MaxInstancesPerNode
+                : _configuration.DefaultActorsPerNode,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Save to state store (by ID and by category for lookup)
+        await templateStore.SaveAsync(templateId.ToString(), template, cancellationToken: cancellationToken);
+        await templateStore.SaveAsync($"category:{body.Category}", template, cancellationToken: cancellationToken);
+
+        // Add to template index with optimistic concurrency
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
+        var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
+        allIds ??= new List<string>();
+        if (!allIds.Contains(templateId.ToString()))
+        {
+            allIds.Add(templateId.ToString());
+            var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
+            if (indexResult == null)
+            {
+                _logger.LogWarning("Concurrent modification on template index during create of {TemplateId}", templateId);
+            }
+        }
+
+        // Publish created event
+        var evt = new ActorTemplateCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            TemplateId = templateId,
+            Category = body.Category,
+            BehaviorRef = body.BehaviorRef,
+            CreatedAt = now
+        };
+        await _messageBus.TryPublishAsync("actor-template.created", evt, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Created actor template {TemplateId} for category {Category}",
+            templateId, body.Category);
+
+        return (StatusCodes.OK, template.ToResponse());
     }
 
     /// <summary>
@@ -211,43 +196,28 @@ public partial class ActorService : IActorService
         _logger.LogDebug("Getting actor template (templateId: {TemplateId}, category: {Category})",
             body.TemplateId, body.Category);
 
-        try
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        ActorTemplateData? template = null;
+
+        if (body.TemplateId.HasValue)
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-            ActorTemplateData? template = null;
-
-            if (body.TemplateId.HasValue)
-            {
-                template = await templateStore.GetAsync(body.TemplateId.Value.ToString(), cancellationToken);
-            }
-            else if (!string.IsNullOrWhiteSpace(body.Category))
-            {
-                template = await templateStore.GetAsync($"category:{body.Category}", cancellationToken);
-            }
-            else
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (template == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, template.ToResponse());
+            template = await templateStore.GetAsync(body.TemplateId.Value.ToString(), cancellationToken);
         }
-        catch (Exception ex)
+        else if (!string.IsNullOrWhiteSpace(body.Category))
         {
-            _logger.LogError(ex, "Error getting actor template");
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "GetActorTemplate",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            template = await templateStore.GetAsync($"category:{body.Category}", cancellationToken);
         }
+        else
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (template == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        return (StatusCodes.OK, template.ToResponse());
     }
 
     /// <summary>
@@ -259,50 +229,35 @@ public partial class ActorService : IActorService
     {
         _logger.LogDebug("Listing actor templates (limit: {Limit}, offset: {Offset})", body.Limit, body.Offset);
 
-        try
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
+
+        // Get all template IDs from index
+        var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+
+        if (allIds.Count == 0)
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
-
-            // Get all template IDs from index
-            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
-
-            if (allIds.Count == 0)
-            {
-                return (StatusCodes.OK, new ListActorTemplatesResponse
-                {
-                    Templates = new List<ActorTemplateResponse>(),
-                    Total = 0
-                });
-            }
-
-            // Load templates by IDs
-            var templatesDict = await templateStore.GetBulkAsync(allIds, cancellationToken);
-            var templates = templatesDict.Values
-                .OrderBy(t => t.CreatedAt)
-                .Skip(body.Offset)
-                .Take(body.Limit)
-                .Select(t => t.ToResponse())
-                .ToList();
-
             return (StatusCodes.OK, new ListActorTemplatesResponse
             {
-                Templates = templates,
-                Total = templatesDict.Count
+                Templates = new List<ActorTemplateResponse>(),
+                Total = 0
             });
         }
-        catch (Exception ex)
+
+        // Load templates by IDs
+        var templatesDict = await templateStore.GetBulkAsync(allIds, cancellationToken);
+        var templates = templatesDict.Values
+            .OrderBy(t => t.CreatedAt)
+            .Skip(body.Offset)
+            .Take(body.Limit)
+            .Select(t => t.ToResponse())
+            .ToList();
+
+        return (StatusCodes.OK, new ListActorTemplatesResponse
         {
-            _logger.LogError(ex, "Error listing actor templates");
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "ListActorTemplates",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Templates = templates,
+            Total = templatesDict.Count
+        });
     }
 
     /// <summary>
@@ -314,93 +269,78 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Updating actor template {TemplateId}", body.TemplateId);
 
-        try
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var (existing, etag) = await templateStore.GetWithETagAsync(body.TemplateId.ToString(), cancellationToken);
+
+        if (existing == null)
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-            var (existing, etag) = await templateStore.GetWithETagAsync(body.TemplateId.ToString(), cancellationToken);
-
-            if (existing == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var changedFields = new List<string>();
-            var now = DateTimeOffset.UtcNow;
-
-            // Apply updates
-            if (!string.IsNullOrWhiteSpace(body.BehaviorRef) && body.BehaviorRef != existing.BehaviorRef)
-            {
-                existing.BehaviorRef = body.BehaviorRef;
-                changedFields.Add("behaviorRef");
-            }
-
-            if (body.Configuration != null)
-            {
-                existing.Configuration = body.Configuration;
-                changedFields.Add("configuration");
-            }
-
-            if (body.AutoSpawn != null)
-            {
-                existing.AutoSpawn = AutoSpawnConfigData.FromConfig(body.AutoSpawn);
-                changedFields.Add("autoSpawn");
-            }
-
-            if (body.TickIntervalMs.HasValue && body.TickIntervalMs.Value != existing.TickIntervalMs)
-            {
-                existing.TickIntervalMs = body.TickIntervalMs.Value;
-                changedFields.Add("tickIntervalMs");
-            }
-
-            if (body.AutoSaveIntervalSeconds.HasValue && body.AutoSaveIntervalSeconds.Value != existing.AutoSaveIntervalSeconds)
-            {
-                existing.AutoSaveIntervalSeconds = body.AutoSaveIntervalSeconds.Value;
-                changedFields.Add("autoSaveIntervalSeconds");
-            }
-
-            existing.UpdatedAt = now;
-
-            // Save updates with optimistic concurrency
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var newEtag = await templateStore.TrySaveAsync(body.TemplateId.ToString(), existing, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for actor template {TemplateId}", body.TemplateId);
-                return (StatusCodes.Conflict, null);
-            }
-            await templateStore.SaveAsync($"category:{existing.Category}", existing, cancellationToken: cancellationToken);
-
-            // Publish updated event
-            var evt = new ActorTemplateUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                TemplateId = body.TemplateId,
-                Category = existing.Category,
-                BehaviorRef = existing.BehaviorRef,
-                CreatedAt = existing.CreatedAt,
-                ChangedFields = changedFields
-            };
-            await _messageBus.TryPublishAsync("actor-template.updated", evt, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Updated actor template {TemplateId} (changed: {Fields})",
-                body.TemplateId, string.Join(", ", changedFields));
-
-            return (StatusCodes.OK, existing.ToResponse());
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var changedFields = new List<string>();
+        var now = DateTimeOffset.UtcNow;
+
+        // Apply updates
+        if (!string.IsNullOrWhiteSpace(body.BehaviorRef) && body.BehaviorRef != existing.BehaviorRef)
         {
-            _logger.LogError(ex, "Error updating actor template");
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "UpdateActorTemplate",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            existing.BehaviorRef = body.BehaviorRef;
+            changedFields.Add("behaviorRef");
         }
+
+        if (body.Configuration != null)
+        {
+            existing.Configuration = body.Configuration;
+            changedFields.Add("configuration");
+        }
+
+        if (body.AutoSpawn != null)
+        {
+            existing.AutoSpawn = AutoSpawnConfigData.FromConfig(body.AutoSpawn);
+            changedFields.Add("autoSpawn");
+        }
+
+        if (body.TickIntervalMs.HasValue && body.TickIntervalMs.Value != existing.TickIntervalMs)
+        {
+            existing.TickIntervalMs = body.TickIntervalMs.Value;
+            changedFields.Add("tickIntervalMs");
+        }
+
+        if (body.AutoSaveIntervalSeconds.HasValue && body.AutoSaveIntervalSeconds.Value != existing.AutoSaveIntervalSeconds)
+        {
+            existing.AutoSaveIntervalSeconds = body.AutoSaveIntervalSeconds.Value;
+            changedFields.Add("autoSaveIntervalSeconds");
+        }
+
+        existing.UpdatedAt = now;
+
+        // Save updates with optimistic concurrency
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
+        var newEtag = await templateStore.TrySaveAsync(body.TemplateId.ToString(), existing, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for actor template {TemplateId}", body.TemplateId);
+            return (StatusCodes.Conflict, null);
+        }
+        await templateStore.SaveAsync($"category:{existing.Category}", existing, cancellationToken: cancellationToken);
+
+        // Publish updated event
+        var evt = new ActorTemplateUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            TemplateId = body.TemplateId,
+            Category = existing.Category,
+            BehaviorRef = existing.BehaviorRef,
+            CreatedAt = existing.CreatedAt,
+            ChangedFields = changedFields
+        };
+        await _messageBus.TryPublishAsync("actor-template.updated", evt, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Updated actor template {TemplateId} (changed: {Fields})",
+            body.TemplateId, string.Join(", ", changedFields));
+
+        return (StatusCodes.OK, existing.ToResponse());
     }
 
     /// <summary>
@@ -413,89 +353,74 @@ public partial class ActorService : IActorService
         _logger.LogInformation("Deleting actor template {TemplateId} (forceStop: {ForceStop})",
             body.TemplateId, body.ForceStopActors);
 
-        try
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
+
+        if (existing == null)
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-            var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (existing == null)
+        var stoppedCount = 0;
+
+        // Stop running actors if requested
+        if (body.ForceStopActors)
+        {
+            var actorsToStop = _actorRegistry.GetByTemplateId(body.TemplateId).ToList();
+            foreach (var actor in actorsToStop)
             {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var stoppedCount = 0;
-
-            // Stop running actors if requested
-            if (body.ForceStopActors)
-            {
-                var actorsToStop = _actorRegistry.GetByTemplateId(body.TemplateId).ToList();
-                foreach (var actor in actorsToStop)
+                try
                 {
-                    try
-                    {
-                        await actor.StopAsync(graceful: true, cancellationToken);
-                        _actorRegistry.TryRemove(actor.ActorId, out _);
-                        stoppedCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Error stopping actor {ActorId} during template deletion",
-                            actor.ActorId);
-                    }
+                    await actor.StopAsync(graceful: true, cancellationToken);
+                    _actorRegistry.TryRemove(actor.ActorId, out _);
+                    stoppedCount++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error stopping actor {ActorId} during template deletion",
+                        actor.ActorId);
                 }
             }
-
-            // Delete from state store
-            await templateStore.DeleteAsync(body.TemplateId.ToString(), cancellationToken);
-            await templateStore.DeleteAsync($"category:{existing.Category}", cancellationToken);
-
-            // Remove from template index with optimistic concurrency
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
-            var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
-            allIds ??= new List<string>();
-            if (allIds.Remove(body.TemplateId.ToString()))
-            {
-                var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
-                if (indexResult == null)
-                {
-                    _logger.LogWarning("Concurrent modification on template index during delete of {TemplateId}", body.TemplateId);
-                }
-            }
-
-            // Publish deleted event
-            var evt = new ActorTemplateDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                TemplateId = body.TemplateId,
-                Category = existing.Category,
-                BehaviorRef = existing.BehaviorRef,
-                CreatedAt = existing.CreatedAt,
-                DeletedReason = body.ForceStopActors ? $"Deleted with {stoppedCount} actors stopped" : null
-            };
-            await _messageBus.TryPublishAsync("actor-template.deleted", evt, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Deleted actor template {TemplateId} (stopped {StoppedCount} actors)",
-                body.TemplateId, stoppedCount);
-
-            return (StatusCodes.OK, new DeleteActorTemplateResponse
-            {
-                Deleted = true,
-                StoppedActorCount = stoppedCount
-            });
         }
-        catch (Exception ex)
+
+        // Delete from state store
+        await templateStore.DeleteAsync(body.TemplateId.ToString(), cancellationToken);
+        await templateStore.DeleteAsync($"category:{existing.Category}", cancellationToken);
+
+        // Remove from template index with optimistic concurrency
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
+        var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
+        allIds ??= new List<string>();
+        if (allIds.Remove(body.TemplateId.ToString()))
         {
-            _logger.LogError(ex, "Error deleting actor template");
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "DeleteActorTemplate",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
+            if (indexResult == null)
+            {
+                _logger.LogWarning("Concurrent modification on template index during delete of {TemplateId}", body.TemplateId);
+            }
         }
+
+        // Publish deleted event
+        var evt = new ActorTemplateDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            TemplateId = body.TemplateId,
+            Category = existing.Category,
+            BehaviorRef = existing.BehaviorRef,
+            CreatedAt = existing.CreatedAt,
+            DeletedReason = body.ForceStopActors ? $"Deleted with {stoppedCount} actors stopped" : null
+        };
+        await _messageBus.TryPublishAsync("actor-template.deleted", evt, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Deleted actor template {TemplateId} (stopped {StoppedCount} actors)",
+            body.TemplateId, stoppedCount);
+
+        return (StatusCodes.OK, new DeleteActorTemplateResponse
+        {
+            Deleted = true,
+            StoppedActorCount = stoppedCount
+        });
     }
 
     #endregion
@@ -511,162 +436,147 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Spawning actor from template {TemplateId}", body.TemplateId);
 
-        try
+        // Get template
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var template = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
+
+        if (template == null)
         {
-            // Get template
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-            var template = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
+            _logger.LogWarning("Template {TemplateId} not found", body.TemplateId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (template == null)
+        // Generate or use provided actor ID
+        var actorId = !string.IsNullOrWhiteSpace(body.ActorId)
+            ? body.ActorId
+            : $"{template.Category}-{Guid.NewGuid():N}";
+
+        // Check for duplicate (local registry - only in bannou mode)
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou && _actorRegistry.TryGet(actorId, out _))
+        {
+            _logger.LogWarning("Actor {ActorId} already exists", actorId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check pool assignment for non-bannou modes
+        if (_configuration.DeploymentMode != DeploymentMode.Bannou)
+        {
+            var existingAssignment = await _poolManager.GetActorAssignmentAsync(actorId, cancellationToken);
+            if (existingAssignment != null)
             {
-                _logger.LogWarning("Template {TemplateId} not found", body.TemplateId);
-                return (StatusCodes.NotFound, null);
+                _logger.LogWarning("Actor {ActorId} already assigned to node {NodeId}", actorId, existingAssignment.NodeId);
+                return (StatusCodes.Conflict, null);
             }
+        }
 
-            // Generate or use provided actor ID
-            var actorId = !string.IsNullOrWhiteSpace(body.ActorId)
-                ? body.ActorId
-                : $"{template.Category}-{Guid.NewGuid():N}";
+        string nodeId;
+        string nodeAppId;
+        DateTimeOffset startedAt = DateTimeOffset.UtcNow;
 
-            // Check for duplicate (local registry - only in bannou mode)
-            if (_configuration.DeploymentMode == DeploymentMode.Bannou && _actorRegistry.TryGet(actorId, out _))
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        {
+            // Bannou mode: run locally
+            var runner = _actorRunnerFactory.Create(
+                actorId,
+                template,
+                body.CharacterId,
+                body.ConfigurationOverrides,
+                body.InitialState);
+
+            if (!_actorRegistry.TryRegister(actorId, runner))
             {
-                _logger.LogWarning("Actor {ActorId} already exists", actorId);
+                _logger.LogWarning("Failed to register actor {ActorId}", actorId);
+                await runner.DisposeAsync();
                 return (StatusCodes.Conflict, null);
             }
 
-            // Check pool assignment for non-bannou modes
-            if (_configuration.DeploymentMode != DeploymentMode.Bannou)
+            using var startCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            startCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
+            await runner.StartAsync(startCts.Token);
+            nodeId = _configuration.LocalModeNodeId;
+            nodeAppId = _configuration.LocalModeAppId;
+            startedAt = runner.StartedAt;
+        }
+        else
+        {
+            // Pool mode: route to pool node
+            // Acquire a pool node with capacity
+            var poolNode = await _poolManager.AcquireNodeForActorAsync(template.Category, 1, cancellationToken);
+            if (poolNode == null)
             {
-                var existingAssignment = await _poolManager.GetActorAssignmentAsync(actorId, cancellationToken);
-                if (existingAssignment != null)
-                {
-                    _logger.LogWarning("Actor {ActorId} already assigned to node {NodeId}", actorId, existingAssignment.NodeId);
-                    return (StatusCodes.Conflict, null);
-                }
+                _logger.LogWarning("No pool nodes with capacity available for category {Category}", template.Category);
+                return (StatusCodes.ServiceUnavailable, null);
             }
 
-            string nodeId;
-            string nodeAppId;
-            DateTimeOffset startedAt = DateTimeOffset.UtcNow;
-
-            if (_configuration.DeploymentMode == DeploymentMode.Bannou)
-            {
-                // Bannou mode: run locally
-                var runner = _actorRunnerFactory.Create(
-                    actorId,
-                    template,
-                    body.CharacterId,
-                    body.ConfigurationOverrides,
-                    body.InitialState);
-
-                if (!_actorRegistry.TryRegister(actorId, runner))
-                {
-                    _logger.LogWarning("Failed to register actor {ActorId}", actorId);
-                    await runner.DisposeAsync();
-                    return (StatusCodes.Conflict, null);
-                }
-
-                using var startCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                startCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
-                await runner.StartAsync(startCts.Token);
-                nodeId = _configuration.LocalModeNodeId;
-                nodeAppId = _configuration.LocalModeAppId;
-                startedAt = runner.StartedAt;
-            }
-            else
-            {
-                // Pool mode: route to pool node
-                // Acquire a pool node with capacity
-                var poolNode = await _poolManager.AcquireNodeForActorAsync(template.Category, 1, cancellationToken);
-                if (poolNode == null)
-                {
-                    _logger.LogWarning("No pool nodes with capacity available for category {Category}", template.Category);
-                    return (StatusCodes.ServiceUnavailable, null);
-                }
-
-                // Record the assignment
-                var assignment = new ActorAssignment
-                {
-                    ActorId = actorId,
-                    NodeId = poolNode.NodeId,
-                    NodeAppId = poolNode.AppId,
-                    TemplateId = body.TemplateId,
-                    Category = template.Category,
-                    Status = ActorStatus.Pending,
-                    CharacterId = body.CharacterId
-                };
-                await _poolManager.RecordActorAssignmentAsync(assignment, cancellationToken);
-
-                // Send spawn command to pool node
-                var spawnCommand = new SpawnActorCommand
-                {
-                    ActorId = actorId,
-                    TemplateId = body.TemplateId,
-                    BehaviorRef = template.BehaviorRef,
-                    Configuration = template.Configuration,
-                    InitialState = body.InitialState,
-                    TickIntervalMs = template.TickIntervalMs > 0 ? template.TickIntervalMs : _configuration.DefaultTickIntervalMs,
-                    AutoSaveIntervalSeconds = template.AutoSaveIntervalSeconds > 0 ? template.AutoSaveIntervalSeconds : _configuration.DefaultAutoSaveIntervalSeconds,
-                    CharacterId = body.CharacterId
-                };
-                await _messageBus.TryPublishAsync($"actor.node.{poolNode.AppId}.spawn", spawnCommand, cancellationToken: cancellationToken);
-
-                nodeId = poolNode.NodeId;
-                nodeAppId = poolNode.AppId;
-
-                _logger.LogInformation("Routed actor {ActorId} to pool node {NodeId} (appId: {AppId})",
-                    actorId, poolNode.NodeId, poolNode.AppId);
-            }
-
-            // Publish spawned event
-            var evt = new ActorInstanceCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                ActorId = actorId,
-                TemplateId = body.TemplateId,
-                CharacterId = body.CharacterId ?? Guid.Empty,
-                NodeId = nodeId,
-                Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
-                StartedAt = startedAt
-            };
-            await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
-
-            // Register character reference if actor is linked to a character
-            if (body.CharacterId.HasValue)
-            {
-                await RegisterCharacterReferenceAsync(actorId, body.CharacterId.Value, cancellationToken);
-            }
-
-            _logger.LogInformation("Spawned actor {ActorId} from template {TemplateId}",
-                actorId, body.TemplateId);
-
-            return (StatusCodes.OK, new ActorInstanceResponse
+            // Record the assignment
+            var assignment = new ActorAssignment
             {
                 ActorId = actorId,
+                NodeId = poolNode.NodeId,
+                NodeAppId = poolNode.AppId,
                 TemplateId = body.TemplateId,
                 Category = template.Category,
-                CharacterId = body.CharacterId,
-                NodeId = nodeId,
-                NodeAppId = nodeAppId,
-                Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
-                StartedAt = startedAt,
-                LoopIterations = 0
-            });
+                Status = ActorStatus.Pending,
+                CharacterId = body.CharacterId
+            };
+            await _poolManager.RecordActorAssignmentAsync(assignment, cancellationToken);
+
+            // Send spawn command to pool node
+            var spawnCommand = new SpawnActorCommand
+            {
+                ActorId = actorId,
+                TemplateId = body.TemplateId,
+                BehaviorRef = template.BehaviorRef,
+                Configuration = template.Configuration,
+                InitialState = body.InitialState,
+                TickIntervalMs = template.TickIntervalMs > 0 ? template.TickIntervalMs : _configuration.DefaultTickIntervalMs,
+                AutoSaveIntervalSeconds = template.AutoSaveIntervalSeconds > 0 ? template.AutoSaveIntervalSeconds : _configuration.DefaultAutoSaveIntervalSeconds,
+                CharacterId = body.CharacterId
+            };
+            await _messageBus.TryPublishAsync($"actor.node.{poolNode.AppId}.spawn", spawnCommand, cancellationToken: cancellationToken);
+
+            nodeId = poolNode.NodeId;
+            nodeAppId = poolNode.AppId;
+
+            _logger.LogInformation("Routed actor {ActorId} to pool node {NodeId} (appId: {AppId})",
+                actorId, poolNode.NodeId, poolNode.AppId);
         }
-        catch (Exception ex)
+
+        // Publish spawned event
+        var evt = new ActorInstanceCreatedEvent
         {
-            _logger.LogError(ex, "Error spawning actor");
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "SpawnActor",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ActorId = actorId,
+            TemplateId = body.TemplateId,
+            CharacterId = body.CharacterId ?? Guid.Empty,
+            NodeId = nodeId,
+            Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
+            StartedAt = startedAt
+        };
+        await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
+
+        // Register character reference if actor is linked to a character
+        if (body.CharacterId.HasValue)
+        {
+            await RegisterCharacterReferenceAsync(actorId, body.CharacterId.Value, cancellationToken);
         }
+
+        _logger.LogInformation("Spawned actor {ActorId} from template {TemplateId}",
+            actorId, body.TemplateId);
+
+        return (StatusCodes.OK, new ActorInstanceResponse
+        {
+            ActorId = actorId,
+            TemplateId = body.TemplateId,
+            Category = template.Category,
+            CharacterId = body.CharacterId,
+            NodeId = nodeId,
+            NodeAppId = nodeAppId,
+            Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
+            StartedAt = startedAt,
+            LoopIterations = 0
+        });
     }
 
     /// <summary>
@@ -683,82 +593,67 @@ public partial class ActorService : IActorService
     {
         _logger.LogDebug("Getting actor {ActorId}", body.ActorId);
 
-        try
+        // First check local registry (bannou mode) or pool assignments (pool mode)
+        if (_actorRegistry.TryGet(body.ActorId, out var runner) && runner != null)
         {
-            // First check local registry (bannou mode) or pool assignments (pool mode)
-            if (_actorRegistry.TryGet(body.ActorId, out var runner) && runner != null)
+            return (StatusCodes.OK, runner.GetStateSnapshot().ToResponse(
+                nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
+                nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null));
+        }
+
+        // In pool mode, check if actor is assigned to a pool node
+        if (_configuration.DeploymentMode != DeploymentMode.Bannou)
+        {
+            var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
+            if (assignment != null)
             {
-                return (StatusCodes.OK, runner.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
-                    nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null));
+                // Actor exists on a pool node - return its status
+                return (StatusCodes.OK, new ActorInstanceResponse
+                {
+                    ActorId = assignment.ActorId,
+                    TemplateId = assignment.TemplateId,
+                    Category = assignment.Category ?? "unknown",
+                    CharacterId = assignment.CharacterId,
+                    NodeId = assignment.NodeId,
+                    NodeAppId = assignment.NodeAppId,
+                    Status = assignment.Status,
+                    StartedAt = assignment.StartedAt ?? assignment.AssignedAt,
+                    LoopIterations = 0
+                });
+            }
+        }
+
+        // Actor not found - check for auto-spawn templates
+        var (matchingTemplate, extractedCharacterId) = await FindAutoSpawnTemplateAsync(body.ActorId, cancellationToken);
+        if (matchingTemplate != null)
+        {
+            _logger.LogInformation(
+                "Auto-spawning actor {ActorId} from template {TemplateId} (category: {Category}, characterId: {CharacterId})",
+                body.ActorId, matchingTemplate.TemplateId, matchingTemplate.Category, extractedCharacterId);
+
+            // Spawn the actor using the matched template
+            // CharacterId is extracted from actor ID pattern via characterIdCaptureGroup if configured
+            var spawnRequest = new SpawnActorRequest
+            {
+                TemplateId = matchingTemplate.TemplateId,
+                ActorId = body.ActorId,
+                CharacterId = extractedCharacterId
+            };
+
+            var (spawnStatus, spawnResponse) = await SpawnActorAsync(spawnRequest, cancellationToken);
+            if (spawnStatus == StatusCodes.OK && spawnResponse != null)
+            {
+                return (StatusCodes.OK, spawnResponse);
             }
 
-            // In pool mode, check if actor is assigned to a pool node
-            if (_configuration.DeploymentMode != DeploymentMode.Bannou)
-            {
-                var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
-                if (assignment != null)
-                {
-                    // Actor exists on a pool node - return its status
-                    return (StatusCodes.OK, new ActorInstanceResponse
-                    {
-                        ActorId = assignment.ActorId,
-                        TemplateId = assignment.TemplateId,
-                        Category = assignment.Category ?? "unknown",
-                        CharacterId = assignment.CharacterId,
-                        NodeId = assignment.NodeId,
-                        NodeAppId = assignment.NodeAppId,
-                        Status = assignment.Status,
-                        StartedAt = assignment.StartedAt ?? assignment.AssignedAt,
-                        LoopIterations = 0
-                    });
-                }
-            }
-
-            // Actor not found - check for auto-spawn templates
-            var (matchingTemplate, extractedCharacterId) = await FindAutoSpawnTemplateAsync(body.ActorId, cancellationToken);
-            if (matchingTemplate != null)
-            {
-                _logger.LogInformation(
-                    "Auto-spawning actor {ActorId} from template {TemplateId} (category: {Category}, characterId: {CharacterId})",
-                    body.ActorId, matchingTemplate.TemplateId, matchingTemplate.Category, extractedCharacterId);
-
-                // Spawn the actor using the matched template
-                // CharacterId is extracted from actor ID pattern via characterIdCaptureGroup if configured
-                var spawnRequest = new SpawnActorRequest
-                {
-                    TemplateId = matchingTemplate.TemplateId,
-                    ActorId = body.ActorId,
-                    CharacterId = extractedCharacterId
-                };
-
-                var (spawnStatus, spawnResponse) = await SpawnActorAsync(spawnRequest, cancellationToken);
-                if (spawnStatus == StatusCodes.OK && spawnResponse != null)
-                {
-                    return (StatusCodes.OK, spawnResponse);
-                }
-
-                // If spawn failed (e.g., max instances exceeded, conflict), return not found
-                _logger.LogWarning(
-                    "Auto-spawn of actor {ActorId} failed with status {Status}",
-                    body.ActorId, spawnStatus);
-                return (StatusCodes.NotFound, null);
-            }
-
+            // If spawn failed (e.g., max instances exceeded, conflict), return not found
+            _logger.LogWarning(
+                "Auto-spawn of actor {ActorId} failed with status {Status}",
+                body.ActorId, spawnStatus);
             return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting actor {ActorId}", body.ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "GetActor",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+
+        return (StatusCodes.NotFound, null);
     }
 
     /// <summary>
@@ -888,101 +783,86 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Stopping actor {ActorId} (graceful: {Graceful})", body.ActorId, body.Graceful);
 
-        try
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
         {
-            if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+            // Bannou mode: stop locally
+            if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
             {
-                // Bannou mode: stop locally
-                if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
-                {
-                    return (StatusCodes.NotFound, null);
-                }
-
-                // Unregister character reference before stopping if actor is linked to a character
-                if (runner.CharacterId.HasValue)
-                {
-                    await UnregisterCharacterReferenceAsync(body.ActorId, runner.CharacterId.Value, cancellationToken);
-                }
-
-                using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                stopCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
-                await runner.StopAsync(body.Graceful, stopCts.Token);
-                _actorRegistry.TryRemove(body.ActorId, out _);
-
-                // Publish stopped event
-                var evt = new ActorInstanceDeletedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    ActorId = body.ActorId,
-                    TemplateId = runner.TemplateId,
-                    CharacterId = runner.CharacterId ?? Guid.Empty,
-                    NodeId = _configuration.LocalModeNodeId,
-                    Status = runner.Status,
-                    StartedAt = runner.StartedAt,
-                    DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
-                };
-                await _messageBus.TryPublishAsync("actor-instance.deleted", evt, cancellationToken: cancellationToken);
-
-                await runner.DisposeAsync();
-
-                _logger.LogInformation("Stopped actor {ActorId}", body.ActorId);
-
-                return (StatusCodes.OK, new StopActorResponse
-                {
-                    Stopped = true,
-                    FinalStatus = runner.Status
-                });
+                return (StatusCodes.NotFound, null);
             }
-            else
+
+            // Unregister character reference before stopping if actor is linked to a character
+            if (runner.CharacterId.HasValue)
             {
-                // Pool mode: send stop command to pool node
-                // Get assignment to find the node
-                var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
-                if (assignment == null)
-                {
-                    _logger.LogWarning("Actor {ActorId} not found in pool assignments", body.ActorId);
-                    return (StatusCodes.NotFound, null);
-                }
-
-                // Unregister character reference before stopping if actor is linked to a character
-                if (assignment.CharacterId.HasValue)
-                {
-                    await UnregisterCharacterReferenceAsync(body.ActorId, assignment.CharacterId.Value, cancellationToken);
-                }
-
-                // Send stop command to pool node
-                var stopCommand = new StopActorCommand
-                {
-                    ActorId = body.ActorId,
-                    Graceful = body.Graceful
-                };
-                await _messageBus.TryPublishAsync($"actor.node.{assignment.NodeAppId}.stop", stopCommand, cancellationToken: cancellationToken);
-
-                // Remove assignment (the pool node will publish ActorCompletedEvent)
-                await _poolManager.RemoveActorAssignmentAsync(body.ActorId, cancellationToken);
-
-                _logger.LogInformation("Sent stop command for actor {ActorId} to node {NodeId}",
-                    body.ActorId, assignment.NodeId);
-
-                return (StatusCodes.OK, new StopActorResponse
-                {
-                    Stopped = true,
-                    FinalStatus = ActorStatus.Stopping
-                });
+                await UnregisterCharacterReferenceAsync(body.ActorId, runner.CharacterId.Value, cancellationToken);
             }
+
+            using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            stopCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
+            await runner.StopAsync(body.Graceful, stopCts.Token);
+            _actorRegistry.TryRemove(body.ActorId, out _);
+
+            // Publish stopped event
+            var evt = new ActorInstanceDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ActorId = body.ActorId,
+                TemplateId = runner.TemplateId,
+                CharacterId = runner.CharacterId ?? Guid.Empty,
+                NodeId = _configuration.LocalModeNodeId,
+                Status = runner.Status,
+                StartedAt = runner.StartedAt,
+                DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
+            };
+            await _messageBus.TryPublishAsync("actor-instance.deleted", evt, cancellationToken: cancellationToken);
+
+            await runner.DisposeAsync();
+
+            _logger.LogInformation("Stopped actor {ActorId}", body.ActorId);
+
+            return (StatusCodes.OK, new StopActorResponse
+            {
+                Stopped = true,
+                FinalStatus = runner.Status
+            });
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Error stopping actor {ActorId}", body.ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "StopActor",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            // Pool mode: send stop command to pool node
+            // Get assignment to find the node
+            var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
+            if (assignment == null)
+            {
+                _logger.LogWarning("Actor {ActorId} not found in pool assignments", body.ActorId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Unregister character reference before stopping if actor is linked to a character
+            if (assignment.CharacterId.HasValue)
+            {
+                await UnregisterCharacterReferenceAsync(body.ActorId, assignment.CharacterId.Value, cancellationToken);
+            }
+
+            // Send stop command to pool node
+            var stopCommand = new StopActorCommand
+            {
+                ActorId = body.ActorId,
+                Graceful = body.Graceful
+            };
+            await _messageBus.TryPublishAsync($"actor.node.{assignment.NodeAppId}.stop", stopCommand, cancellationToken: cancellationToken);
+
+            // Remove assignment (the pool node will publish ActorCompletedEvent)
+            await _poolManager.RemoveActorAssignmentAsync(body.ActorId, cancellationToken);
+
+            _logger.LogInformation("Sent stop command for actor {ActorId} to node {NodeId}",
+                body.ActorId, assignment.NodeId);
+
+            return (StatusCodes.OK, new StopActorResponse
+            {
+                Stopped = true,
+                FinalStatus = ActorStatus.Stopping
+            });
         }
     }
 
@@ -998,85 +878,70 @@ public partial class ActorService : IActorService
 
         var cleanedUpActorIds = new List<string>();
 
-        try
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
         {
-            if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+            // Bannou mode: find and stop all local actors with this character
+            var actorsToStop = _actorRegistry.GetAllRunners()
+                .Where(r => r.CharacterId == body.CharacterId)
+                .ToList();
+
+            foreach (var runner in actorsToStop)
             {
-                // Bannou mode: find and stop all local actors with this character
-                var actorsToStop = _actorRegistry.GetAllRunners()
-                    .Where(r => r.CharacterId == body.CharacterId)
-                    .ToList();
-
-                foreach (var runner in actorsToStop)
+                try
                 {
-                    try
-                    {
-                        using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                        stopCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
-                        await runner.StopAsync(graceful: true, stopCts.Token);
-                        _actorRegistry.TryRemove(runner.ActorId, out _);
-                        await runner.DisposeAsync();
-                        cleanedUpActorIds.Add(runner.ActorId);
+                    using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    stopCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
+                    await runner.StopAsync(graceful: true, stopCts.Token);
+                    _actorRegistry.TryRemove(runner.ActorId, out _);
+                    await runner.DisposeAsync();
+                    cleanedUpActorIds.Add(runner.ActorId);
 
-                        _logger.LogInformation("Cleaned up actor {ActorId} for character {CharacterId}",
-                            runner.ActorId, body.CharacterId);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to cleanup actor {ActorId}", runner.ActorId);
-                    }
+                    _logger.LogInformation("Cleaned up actor {ActorId} for character {CharacterId}",
+                        runner.ActorId, body.CharacterId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to cleanup actor {ActorId}", runner.ActorId);
                 }
             }
-            else
+        }
+        else
+        {
+            // Pool mode: find all assignments for this character and send stop commands
+            var assignments = await _poolManager.GetActorAssignmentsByCharacterAsync(body.CharacterId, cancellationToken);
+
+            foreach (var assignment in assignments)
             {
-                // Pool mode: find all assignments for this character and send stop commands
-                var assignments = await _poolManager.GetActorAssignmentsByCharacterAsync(body.CharacterId, cancellationToken);
-
-                foreach (var assignment in assignments)
+                try
                 {
-                    try
+                    var stopCommand = new StopActorCommand
                     {
-                        var stopCommand = new StopActorCommand
-                        {
-                            ActorId = assignment.ActorId,
-                            Graceful = true
-                        };
-                        await _messageBus.TryPublishAsync($"actor.node.{assignment.NodeAppId}.stop", stopCommand, cancellationToken: cancellationToken);
-                        await _poolManager.RemoveActorAssignmentAsync(assignment.ActorId, cancellationToken);
-                        cleanedUpActorIds.Add(assignment.ActorId);
+                        ActorId = assignment.ActorId,
+                        Graceful = true
+                    };
+                    await _messageBus.TryPublishAsync($"actor.node.{assignment.NodeAppId}.stop", stopCommand, cancellationToken: cancellationToken);
+                    await _poolManager.RemoveActorAssignmentAsync(assignment.ActorId, cancellationToken);
+                    cleanedUpActorIds.Add(assignment.ActorId);
 
-                        _logger.LogInformation("Sent cleanup stop for actor {ActorId} to node {NodeId}",
-                            assignment.ActorId, assignment.NodeId);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to send cleanup stop for actor {ActorId}", assignment.ActorId);
-                    }
+                    _logger.LogInformation("Sent cleanup stop for actor {ActorId} to node {NodeId}",
+                        assignment.ActorId, assignment.NodeId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send cleanup stop for actor {ActorId}", assignment.ActorId);
                 }
             }
-
-            _logger.LogInformation("Cleaned up {Count} actors for character {CharacterId}",
-                cleanedUpActorIds.Count, body.CharacterId);
-
-            return (StatusCodes.OK, new CleanupByCharacterResponse
-            {
-                ActorsCleanedUp = cleanedUpActorIds.Count,
-                ActorIds = cleanedUpActorIds,
-                Success = true
-            });
         }
-        catch (Exception ex)
+
+        _logger.LogInformation("Cleaned up {Count} actors for character {CharacterId}",
+            cleanedUpActorIds.Count, body.CharacterId);
+
+        return (StatusCodes.OK, new CleanupByCharacterResponse
         {
-            _logger.LogError(ex, "Error during character cleanup for {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "CleanupByCharacter",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            ActorsCleanedUp = cleanedUpActorIds.Count,
+            ActorIds = cleanedUpActorIds,
+            Success = true
+        });
     }
 
     /// <summary>
@@ -1089,56 +954,41 @@ public partial class ActorService : IActorService
         _logger.LogDebug("Listing actors (category: {Category}, nodeId: {NodeId}, status: {Status})",
             body.Category, body.NodeId, body.Status);
 
-        try
+        IEnumerable<IActorRunner> runners = _actorRegistry.GetAllRunners();
+
+        // Apply filters
+        if (!string.IsNullOrWhiteSpace(body.Category))
         {
-            IEnumerable<IActorRunner> runners = _actorRegistry.GetAllRunners();
-
-            // Apply filters
-            if (!string.IsNullOrWhiteSpace(body.Category))
-            {
-                runners = runners.Where(r => string.Equals(r.Category, body.Category, StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (body.Status != default)
-            {
-                runners = runners.Where(r => r.Status == body.Status);
-            }
-
-            if (body.CharacterId.HasValue)
-            {
-                runners = runners.Where(r => r.CharacterId == body.CharacterId);
-            }
-
-            // Note: nodeId filtering not applicable in bannou mode
-
-            var filteredRunners = runners.ToList();
-            var total = filteredRunners.Count;
-            var actors = filteredRunners
-                .Skip(body.Offset)
-                .Take(body.Limit)
-                .Select(r => r.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
-                    nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null))
-                .ToList();
-
-            return (StatusCodes.OK, new ListActorsResponse
-            {
-                Actors = actors,
-                Total = total
-            });
+            runners = runners.Where(r => string.Equals(r.Category, body.Category, StringComparison.OrdinalIgnoreCase));
         }
-        catch (Exception ex)
+
+        if (body.Status != default)
         {
-            _logger.LogError(ex, "Error listing actors");
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "ListActors",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            runners = runners.Where(r => r.Status == body.Status);
         }
+
+        if (body.CharacterId.HasValue)
+        {
+            runners = runners.Where(r => r.CharacterId == body.CharacterId);
+        }
+
+        // Note: nodeId filtering not applicable in bannou mode
+
+        var filteredRunners = runners.ToList();
+        var total = filteredRunners.Count;
+        var actors = filteredRunners
+            .Skip(body.Offset)
+            .Take(body.Limit)
+            .Select(r => r.GetStateSnapshot().ToResponse(
+                nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
+                nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null))
+            .ToList();
+
+        return (StatusCodes.OK, new ListActorsResponse
+        {
+            Actors = actors,
+            Total = total
+        });
     }
 
     #endregion
@@ -1154,35 +1004,20 @@ public partial class ActorService : IActorService
     {
         _logger.LogDebug("Injecting perception into actor {ActorId}", body.ActorId);
 
-        try
+        if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
         {
-            if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var queued = runner.InjectPerception(body.Perception);
-
-            _logger.LogDebug("Perception injected into actor {ActorId} (queued: {Queued})", body.ActorId, queued);
-
-            return (StatusCodes.OK, new InjectPerceptionResponse
-            {
-                Queued = queued,
-                QueueDepth = runner.PerceptionQueueDepth
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var queued = runner.InjectPerception(body.Perception);
+
+        _logger.LogDebug("Perception injected into actor {ActorId} (queued: {Queued})", body.ActorId, queued);
+
+        return (StatusCodes.OK, new InjectPerceptionResponse
         {
-            _logger.LogError(ex, "Error injecting perception into actor {ActorId}", body.ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "InjectPerception",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Queued = queued,
+            QueueDepth = runner.PerceptionQueueDepth
+        });
     }
 
     #endregion
@@ -1203,176 +1038,161 @@ public partial class ActorService : IActorService
         _logger.LogDebug("Querying options from actor {ActorId} (type: {QueryType}, freshness: {Freshness})",
             body.ActorId, body.QueryType, body.Freshness);
 
-        try
+        // Find the actor
+        if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
         {
-            // Find the actor
-            if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
+            // In pool mode, actor might be on another node
+            if (_configuration.DeploymentMode != DeploymentMode.Bannou)
             {
-                // In pool mode, actor might be on another node
-                if (_configuration.DeploymentMode != DeploymentMode.Bannou)
+                var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
+                if (assignment != null)
                 {
-                    var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
-                    if (assignment != null)
+                    _logger.LogWarning(
+                        "Actor {ActorId} is on pool node {NodeId} - query-options requires local actor",
+                        body.ActorId, assignment.NodeId);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+            return (StatusCodes.NotFound, null);
+        }
+
+        var freshness = body.Freshness;
+        var maxAgeMs = body.MaxAgeMs ?? _configuration.QueryOptionsDefaultMaxAgeMs;
+        var optionsKey = $"{body.QueryType.ToString().ToLowerInvariant()}_options";
+
+        // Get actor state snapshot
+        var stateSnapshot = runner.GetStateSnapshot();
+
+        // Handle fresh queries by injecting context as perception
+        if (freshness == OptionsFreshness.Fresh && body.Context != null)
+        {
+            // Inject query context as a perception to trigger recomputation
+            var queryPerception = new PerceptionData
+            {
+                PerceptionType = "options_query",
+                SourceId = "query-options-endpoint",
+                SourceType = PerceptionSourceType.System,
+                Data = new Dictionary<string, object?>
+                {
+                    ["queryType"] = body.QueryType.ToString(),
+                    ["context"] = body.Context
+                },
+                Urgency = body.Context.Urgency ?? 0.5f
+            };
+            runner.InjectPerception(queryPerception);
+
+            // Wait briefly for actor to process (one tick)
+            await Task.Delay(_configuration.DefaultTickIntervalMs, cancellationToken);
+
+            // Re-fetch state after processing
+            stateSnapshot = runner.GetStateSnapshot();
+        }
+
+        // Read options from actor's memories (list of MemoryEntry)
+        var options = new List<ActorOption>();
+        DateTimeOffset computedAt = DateTimeOffset.UtcNow;
+
+        // Find the options memory entry by key
+        var optionsEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == optionsKey);
+        if (optionsEntry?.MemoryValue != null)
+        {
+            // Options are stored as a memory with value being the list
+            if (optionsEntry.MemoryValue is IEnumerable<ActorOption> optionsList)
+            {
+                options = optionsList.ToList();
+            }
+            else if (optionsEntry.MemoryValue is IEnumerable<object> objectList)
+            {
+                // Try to convert from generic objects
+                foreach (var obj in objectList)
+                {
+                    if (obj is ActorOption option)
                     {
-                        _logger.LogWarning(
-                            "Actor {ActorId} is on pool node {NodeId} - query-options requires local actor",
-                            body.ActorId, assignment.NodeId);
-                        return (StatusCodes.BadRequest, null);
+                        options.Add(option);
+                    }
+                    else if (obj is IDictionary<string, object?> dict)
+                    {
+                        options.Add(ConvertDictToOption(dict));
                     }
                 }
-                return (StatusCodes.NotFound, null);
             }
 
-            var freshness = body.Freshness;
-            var maxAgeMs = body.MaxAgeMs ?? _configuration.QueryOptionsDefaultMaxAgeMs;
-            var optionsKey = $"{body.QueryType.ToString().ToLowerInvariant()}_options";
-
-            // Get actor state snapshot
-            var stateSnapshot = runner.GetStateSnapshot();
-
-            // Handle fresh queries by injecting context as perception
-            if (freshness == OptionsFreshness.Fresh && body.Context != null)
-            {
-                // Inject query context as a perception to trigger recomputation
-                var queryPerception = new PerceptionData
-                {
-                    PerceptionType = "options_query",
-                    SourceId = "query-options-endpoint",
-                    SourceType = PerceptionSourceType.System,
-                    Data = new Dictionary<string, object?>
-                    {
-                        ["queryType"] = body.QueryType.ToString(),
-                        ["context"] = body.Context
-                    },
-                    Urgency = body.Context.Urgency ?? 0.5f
-                };
-                runner.InjectPerception(queryPerception);
-
-                // Wait briefly for actor to process (one tick)
-                await Task.Delay(_configuration.DefaultTickIntervalMs, cancellationToken);
-
-                // Re-fetch state after processing
-                stateSnapshot = runner.GetStateSnapshot();
-            }
-
-            // Read options from actor's memories (list of MemoryEntry)
-            var options = new List<ActorOption>();
-            DateTimeOffset computedAt = DateTimeOffset.UtcNow;
-
-            // Find the options memory entry by key
-            var optionsEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == optionsKey);
-            if (optionsEntry?.MemoryValue != null)
-            {
-                // Options are stored as a memory with value being the list
-                if (optionsEntry.MemoryValue is IEnumerable<ActorOption> optionsList)
-                {
-                    options = optionsList.ToList();
-                }
-                else if (optionsEntry.MemoryValue is IEnumerable<object> objectList)
-                {
-                    // Try to convert from generic objects
-                    foreach (var obj in objectList)
-                    {
-                        if (obj is ActorOption option)
-                        {
-                            options.Add(option);
-                        }
-                        else if (obj is IDictionary<string, object?> dict)
-                        {
-                            options.Add(ConvertDictToOption(dict));
-                        }
-                    }
-                }
-
-                computedAt = optionsEntry.CreatedAt;
-            }
-
-            // Try to get computed timestamp from separate memory entry
-            var timestampKey = $"{optionsKey}_timestamp";
-            var timestampEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == timestampKey);
-            if (timestampEntry?.MemoryValue is DateTimeOffset storedTimestamp)
-            {
-                computedAt = storedTimestamp;
-            }
-
-            // Check freshness requirements
-            var ageMs = (int)(DateTimeOffset.UtcNow - computedAt).TotalMilliseconds;
-            if (freshness == OptionsFreshness.Cached && ageMs > maxAgeMs && options.Count == 0)
-            {
-                // Options too old and empty - actor may not support this query type
-                _logger.LogDebug("Actor {ActorId} has no {QueryType} options (or they're stale)",
-                    body.ActorId, body.QueryType);
-            }
-
-            // Build character context if this is a character-based actor
-            CharacterOptionContext? characterContext = null;
-            if (runner.CharacterId.HasValue)
-            {
-                characterContext = new CharacterOptionContext();
-
-                // Extract combat preferences from memories if available
-                var combatStyleEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == "combat_style");
-                if (combatStyleEntry?.MemoryValue != null)
-                {
-                    characterContext.CombatStyle = combatStyleEntry.MemoryValue.ToString();
-                }
-
-                var riskEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == "risk_tolerance");
-                if (riskEntry?.MemoryValue is float riskValue)
-                {
-                    characterContext.RiskTolerance = riskValue;
-                }
-                else if (riskEntry?.MemoryValue is double riskDouble)
-                {
-                    characterContext.RiskTolerance = (float)riskDouble;
-                }
-
-                var protectEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == "protect_allies");
-                if (protectEntry?.MemoryValue is bool protectValue)
-                {
-                    characterContext.ProtectAllies = protectValue;
-                }
-
-                if (stateSnapshot.Goals?.PrimaryGoal != null)
-                {
-                    characterContext.CurrentGoal = stateSnapshot.Goals.PrimaryGoal;
-                }
-
-                // Get dominant emotion
-                var dominantEmotion = stateSnapshot.Feelings
-                    .OrderByDescending(f => f.Value)
-                    .FirstOrDefault();
-                if (!string.IsNullOrEmpty(dominantEmotion.Key))
-                {
-                    characterContext.EmotionalState = dominantEmotion.Key;
-                }
-            }
-
-            _logger.LogDebug("Returning {Count} options for actor {ActorId} (type: {QueryType}, age: {AgeMs}ms)",
-                options.Count, body.ActorId, body.QueryType, ageMs);
-
-            return (StatusCodes.OK, new QueryOptionsResponse
-            {
-                ActorId = body.ActorId,
-                QueryType = body.QueryType,
-                Options = options,
-                ComputedAt = computedAt,
-                AgeMs = ageMs,
-                CharacterContext = characterContext
-            });
+            computedAt = optionsEntry.CreatedAt;
         }
-        catch (Exception ex)
+
+        // Try to get computed timestamp from separate memory entry
+        var timestampKey = $"{optionsKey}_timestamp";
+        var timestampEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == timestampKey);
+        if (timestampEntry?.MemoryValue is DateTimeOffset storedTimestamp)
         {
-            _logger.LogError(ex, "Error querying options from actor {ActorId}", body.ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "QueryOptions",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            computedAt = storedTimestamp;
         }
+
+        // Check freshness requirements
+        var ageMs = (int)(DateTimeOffset.UtcNow - computedAt).TotalMilliseconds;
+        if (freshness == OptionsFreshness.Cached && ageMs > maxAgeMs && options.Count == 0)
+        {
+            // Options too old and empty - actor may not support this query type
+            _logger.LogDebug("Actor {ActorId} has no {QueryType} options (or they're stale)",
+                body.ActorId, body.QueryType);
+        }
+
+        // Build character context if this is a character-based actor
+        CharacterOptionContext? characterContext = null;
+        if (runner.CharacterId.HasValue)
+        {
+            characterContext = new CharacterOptionContext();
+
+            // Extract combat preferences from memories if available
+            var combatStyleEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == "combat_style");
+            if (combatStyleEntry?.MemoryValue != null)
+            {
+                characterContext.CombatStyle = combatStyleEntry.MemoryValue.ToString();
+            }
+
+            var riskEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == "risk_tolerance");
+            if (riskEntry?.MemoryValue is float riskValue)
+            {
+                characterContext.RiskTolerance = riskValue;
+            }
+            else if (riskEntry?.MemoryValue is double riskDouble)
+            {
+                characterContext.RiskTolerance = (float)riskDouble;
+            }
+
+            var protectEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == "protect_allies");
+            if (protectEntry?.MemoryValue is bool protectValue)
+            {
+                characterContext.ProtectAllies = protectValue;
+            }
+
+            if (stateSnapshot.Goals?.PrimaryGoal != null)
+            {
+                characterContext.CurrentGoal = stateSnapshot.Goals.PrimaryGoal;
+            }
+
+            // Get dominant emotion
+            var dominantEmotion = stateSnapshot.Feelings
+                .OrderByDescending(f => f.Value)
+                .FirstOrDefault();
+            if (!string.IsNullOrEmpty(dominantEmotion.Key))
+            {
+                characterContext.EmotionalState = dominantEmotion.Key;
+            }
+        }
+
+        _logger.LogDebug("Returning {Count} options for actor {ActorId} (type: {QueryType}, age: {AgeMs}ms)",
+            options.Count, body.ActorId, body.QueryType, ageMs);
+
+        return (StatusCodes.OK, new QueryOptionsResponse
+        {
+            ActorId = body.ActorId,
+            QueryType = body.QueryType,
+            Options = options,
+            ComputedAt = computedAt,
+            AgeMs = ageMs,
+            CharacterContext = characterContext
+        });
     }
 
     /// <summary>
@@ -1423,78 +1243,62 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Starting encounter {EncounterId} on actor {ActorId}", body.EncounterId, body.ActorId);
 
-        try
+        // Find the actor (may be local or remote)
+        var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
+
+        // If actor is on a remote node, forward the request
+        if (remoteNodeId != null)
         {
-            // Find the actor (may be local or remote)
-            var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
-
-            // If actor is on a remote node, forward the request
-            if (remoteNodeId != null)
-            {
-                await InvokeRemoteNoResponseAsync(
-                    remoteNodeId,
-                    "actor/encounter/start",
-                    body,
-                    cancellationToken);
-                return StatusCodes.OK;
-            }
-
-            // Actor not found anywhere
-            if (localRunner == null)
-            {
-                _logger.LogDebug("Actor {ActorId} not found for encounter start", body.ActorId);
-                return StatusCodes.NotFound;
-            }
-
-            var runner = localRunner;
-
-            // Convert initialData to Dictionary<string, object?> if it's a dictionary
-            Dictionary<string, object?>? initialData = null;
-            if (body.InitialData is IDictionary<string, object?> dict)
-            {
-                initialData = new Dictionary<string, object?>(dict);
-            }
-            else if (body.InitialData is System.Text.Json.JsonElement jsonElement &&
-                    jsonElement.ValueKind == System.Text.Json.JsonValueKind.Object)
-            {
-                initialData = new Dictionary<string, object?>();
-                foreach (var prop in jsonElement.EnumerateObject())
-                {
-                    initialData[prop.Name] = prop.Value.Clone();
-                }
-            }
-
-            // Start the encounter (Participants is already ICollection<Guid>)
-            var success = runner.StartEncounter(
-                body.EncounterId,
-                body.EncounterType,
-                body.Participants.ToList(),
-                initialData);
-
-            if (!success)
-            {
-                _logger.LogDebug("Actor {ActorId} already has an active encounter", body.ActorId);
-                return StatusCodes.Conflict;
-            }
-
-            _logger.LogInformation("Started encounter {EncounterId} on actor {ActorId} with {Count} participants",
-                body.EncounterId, body.ActorId, body.Participants.Count);
-
+            await InvokeRemoteNoResponseAsync(
+                remoteNodeId,
+                "actor/encounter/start",
+                body,
+                cancellationToken);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
+
+        // Actor not found anywhere
+        if (localRunner == null)
         {
-            _logger.LogError(ex, "Error starting encounter {EncounterId} on actor {ActorId}",
-                body.EncounterId, body.ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "StartEncounter",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            _logger.LogDebug("Actor {ActorId} not found for encounter start", body.ActorId);
+            return StatusCodes.NotFound;
         }
+
+        var runner = localRunner;
+
+        // Convert initialData to Dictionary<string, object?> if it's a dictionary
+        Dictionary<string, object?>? initialData = null;
+        if (body.InitialData is IDictionary<string, object?> dict)
+        {
+            initialData = new Dictionary<string, object?>(dict);
+        }
+        else if (body.InitialData is System.Text.Json.JsonElement jsonElement &&
+                jsonElement.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            initialData = new Dictionary<string, object?>();
+            foreach (var prop in jsonElement.EnumerateObject())
+            {
+                initialData[prop.Name] = prop.Value.Clone();
+            }
+        }
+
+        // Start the encounter (Participants is already ICollection<Guid>)
+        var success = runner.StartEncounter(
+            body.EncounterId,
+            body.EncounterType,
+            body.Participants.ToList(),
+            initialData);
+
+        if (!success)
+        {
+            _logger.LogDebug("Actor {ActorId} already has an active encounter", body.ActorId);
+            return StatusCodes.Conflict;
+        }
+
+        _logger.LogInformation("Started encounter {EncounterId} on actor {ActorId} with {Count} participants",
+            body.EncounterId, body.ActorId, body.Participants.Count);
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -1506,66 +1310,51 @@ public partial class ActorService : IActorService
     {
         _logger.LogDebug("Updating encounter phase on actor {ActorId} to {Phase}", body.ActorId, body.Phase);
 
-        try
+        // Find the actor (may be local or remote)
+        var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
+
+        // If actor is on a remote node, forward the request
+        if (remoteNodeId != null)
         {
-            // Find the actor (may be local or remote)
-            var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
-
-            // If actor is on a remote node, forward the request
-            if (remoteNodeId != null)
-            {
-                var remoteResponse = await InvokeRemoteAsync<UpdateEncounterPhaseRequest, UpdateEncounterPhaseResponse>(
-                    remoteNodeId,
-                    "actor/encounter/phase/update",
-                    body,
-                    cancellationToken);
-                return (StatusCodes.OK, remoteResponse);
-            }
-
-            // Actor not found anywhere
-            if (localRunner == null)
-            {
-                _logger.LogDebug("Actor {ActorId} not found for encounter phase update", body.ActorId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var runner = localRunner;
-
-            // Get previous phase for response
-            var snapshot = runner.GetStateSnapshot();
-            var encounter = snapshot.Encounter;
-
-            // No active encounter to update
-            if (encounter == null)
-            {
-                _logger.LogDebug("Actor {ActorId} has no active encounter to update phase", body.ActorId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var previousPhase = encounter.Phase;
-
-            // Update the phase
-            var success = runner.SetEncounterPhase(body.Phase);
-
-            return (StatusCodes.OK, new UpdateEncounterPhaseResponse
-            {
-                ActorId = body.ActorId,
-                PreviousPhase = previousPhase,
-                CurrentPhase = success ? body.Phase : previousPhase
-            });
+            var remoteResponse = await InvokeRemoteAsync<UpdateEncounterPhaseRequest, UpdateEncounterPhaseResponse>(
+                remoteNodeId,
+                "actor/encounter/phase/update",
+                body,
+                cancellationToken);
+            return (StatusCodes.OK, remoteResponse);
         }
-        catch (Exception ex)
+
+        // Actor not found anywhere
+        if (localRunner == null)
         {
-            _logger.LogError(ex, "Error updating encounter phase on actor {ActorId}", body.ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "UpdateEncounterPhase",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("Actor {ActorId} not found for encounter phase update", body.ActorId);
+            return (StatusCodes.NotFound, null);
         }
+
+        var runner = localRunner;
+
+        // Get previous phase for response
+        var snapshot = runner.GetStateSnapshot();
+        var encounter = snapshot.Encounter;
+
+        // No active encounter to update
+        if (encounter == null)
+        {
+            _logger.LogDebug("Actor {ActorId} has no active encounter to update phase", body.ActorId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var previousPhase = encounter.Phase;
+
+        // Update the phase
+        var success = runner.SetEncounterPhase(body.Phase);
+
+        return (StatusCodes.OK, new UpdateEncounterPhaseResponse
+        {
+            ActorId = body.ActorId,
+            PreviousPhase = previousPhase,
+            CurrentPhase = success ? body.Phase : previousPhase
+        });
     }
 
     /// <summary>
@@ -1577,75 +1366,60 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Ending encounter on actor {ActorId}", body.ActorId);
 
-        try
+        // Find the actor (may be local or remote)
+        var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
+
+        // If actor is on a remote node, forward the request
+        if (remoteNodeId != null)
         {
-            // Find the actor (may be local or remote)
-            var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
-
-            // If actor is on a remote node, forward the request
-            if (remoteNodeId != null)
-            {
-                var remoteResponse = await InvokeRemoteAsync<EndEncounterRequest, EndEncounterResponse>(
-                    remoteNodeId,
-                    "actor/encounter/end",
-                    body,
-                    cancellationToken);
-                return (StatusCodes.OK, remoteResponse);
-            }
-
-            // Actor not found anywhere
-            if (localRunner == null)
-            {
-                _logger.LogDebug("Actor {ActorId} not found for encounter end", body.ActorId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var runner = localRunner;
-
-            // Get encounter info before ending
-            var snapshot = runner.GetStateSnapshot();
-            var encounter = snapshot.Encounter;
-
-            // No active encounter to end
-            if (encounter == null)
-            {
-                _logger.LogDebug("Actor {ActorId} has no active encounter to end", body.ActorId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var encounterId = encounter.EncounterId;
-            var startedAt = encounter.StartedAt;
-
-            // End the encounter
-            var success = runner.EndEncounter();
-
-            var durationMs = (int)(DateTimeOffset.UtcNow - startedAt).TotalMilliseconds;
-
-            if (success)
-            {
-                _logger.LogInformation("Ended encounter {EncounterId} on actor {ActorId} (duration: {Duration}ms)",
-                    encounterId, body.ActorId, durationMs);
-            }
-
-            return (StatusCodes.OK, new EndEncounterResponse
-            {
-                ActorId = body.ActorId,
-                EncounterId = encounterId,
-                DurationMs = durationMs
-            });
+            var remoteResponse = await InvokeRemoteAsync<EndEncounterRequest, EndEncounterResponse>(
+                remoteNodeId,
+                "actor/encounter/end",
+                body,
+                cancellationToken);
+            return (StatusCodes.OK, remoteResponse);
         }
-        catch (Exception ex)
+
+        // Actor not found anywhere
+        if (localRunner == null)
         {
-            _logger.LogError(ex, "Error ending encounter on actor {ActorId}", body.ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "EndEncounter",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("Actor {ActorId} not found for encounter end", body.ActorId);
+            return (StatusCodes.NotFound, null);
         }
+
+        var runner = localRunner;
+
+        // Get encounter info before ending
+        var snapshot = runner.GetStateSnapshot();
+        var encounter = snapshot.Encounter;
+
+        // No active encounter to end
+        if (encounter == null)
+        {
+            _logger.LogDebug("Actor {ActorId} has no active encounter to end", body.ActorId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var encounterId = encounter.EncounterId;
+        var startedAt = encounter.StartedAt;
+
+        // End the encounter
+        var success = runner.EndEncounter();
+
+        var durationMs = (int)(DateTimeOffset.UtcNow - startedAt).TotalMilliseconds;
+
+        if (success)
+        {
+            _logger.LogInformation("Ended encounter {EncounterId} on actor {ActorId} (duration: {Duration}ms)",
+                encounterId, body.ActorId, durationMs);
+        }
+
+        return (StatusCodes.OK, new EndEncounterResponse
+        {
+            ActorId = body.ActorId,
+            EncounterId = encounterId,
+            DurationMs = durationMs
+        });
     }
 
     /// <summary>
@@ -1655,70 +1429,55 @@ public partial class ActorService : IActorService
         GetEncounterRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        // Find the actor (may be local or remote)
+        var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
+
+        // If actor is on a remote node, forward the request
+        if (remoteNodeId != null)
         {
-            // Find the actor (may be local or remote)
-            var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
+            var remoteResponse = await InvokeRemoteAsync<GetEncounterRequest, GetEncounterResponse>(
+                remoteNodeId,
+                "actor/encounter/get",
+                body,
+                cancellationToken);
+            return (StatusCodes.OK, remoteResponse);
+        }
 
-            // If actor is on a remote node, forward the request
-            if (remoteNodeId != null)
-            {
-                var remoteResponse = await InvokeRemoteAsync<GetEncounterRequest, GetEncounterResponse>(
-                    remoteNodeId,
-                    "actor/encounter/get",
-                    body,
-                    cancellationToken);
-                return (StatusCodes.OK, remoteResponse);
-            }
+        // Actor not found anywhere
+        if (localRunner == null)
+        {
+            _logger.LogDebug("Actor {ActorId} not found for encounter get", body.ActorId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Actor not found anywhere
-            if (localRunner == null)
-            {
-                _logger.LogDebug("Actor {ActorId} not found for encounter get", body.ActorId);
-                return (StatusCodes.NotFound, null);
-            }
+        var runner = localRunner;
+        var snapshot = runner.GetStateSnapshot();
+        var encounterData = snapshot.Encounter;
 
-            var runner = localRunner;
-            var snapshot = runner.GetStateSnapshot();
-            var encounterData = snapshot.Encounter;
-
-            if (encounterData == null)
-            {
-                return (StatusCodes.OK, new GetEncounterResponse
-                {
-                    ActorId = body.ActorId,
-                    HasActiveEncounter = false,
-                    Encounter = null
-                });
-            }
-
+        if (encounterData == null)
+        {
             return (StatusCodes.OK, new GetEncounterResponse
             {
                 ActorId = body.ActorId,
-                HasActiveEncounter = true,
-                Encounter = new EncounterState
-                {
-                    EncounterId = encounterData.EncounterId,
-                    EncounterType = encounterData.EncounterType,
-                    Participants = encounterData.Participants,
-                    Phase = encounterData.Phase,
-                    StartedAt = encounterData.StartedAt,
-                    Data = encounterData.Data
-                }
+                HasActiveEncounter = false,
+                Encounter = null
             });
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new GetEncounterResponse
         {
-            _logger.LogError(ex, "Error getting encounter for actor {ActorId}", body.ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "GetEncounter",
-                "unexpected_exception",
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            ActorId = body.ActorId,
+            HasActiveEncounter = true,
+            Encounter = new EncounterState
+            {
+                EncounterId = encounterData.EncounterId,
+                EncounterType = encounterData.EncounterType,
+                Participants = encounterData.Participants,
+                Phase = encounterData.Phase,
+                StartedAt = encounterData.StartedAt,
+                Data = encounterData.Data
+            }
+        });
     }
 
     /// <summary>

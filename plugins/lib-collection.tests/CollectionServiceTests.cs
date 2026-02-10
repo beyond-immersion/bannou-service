@@ -2007,6 +2007,425 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
     #endregion
 
+    #region Event Handler Tests
+
+    [Fact]
+    public async Task HandleCharacterDeleted_CleansUpCharacterOwnedCollections()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var collection1 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: characterId, ownerType: "character");
+        var collection2 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: characterId, ownerType: "character",
+            collectionType: CollectionType.MusicLibrary);
+
+        _mockCollectionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CollectionInstanceModel> { collection1, collection2 });
+
+        _mockInventoryClient
+            .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeleteContainerResponse());
+
+        var service = CreateService();
+
+        // Act
+        await service.HandleCharacterDeletedAsync(new CharacterDeletedEvent { CharacterId = characterId });
+
+        // Assert - both containers deleted
+        _mockInventoryClient.Verify(
+            c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
+        // Assert - both collection instances deleted (by ID and by owner key = 4 deletes)
+        _mockCollectionStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(4));
+
+        // Assert - both cache entries deleted
+        _mockCollectionCache.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task HandleAccountDeleted_CleansUpAccountOwnedCollections()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var collection = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: accountId, ownerType: "account");
+
+        _mockCollectionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CollectionInstanceModel> { collection });
+
+        _mockInventoryClient
+            .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeleteContainerResponse());
+
+        var service = CreateService();
+
+        // Act
+        await service.HandleAccountDeletedAsync(new AccountDeletedEvent { AccountId = accountId });
+
+        // Assert - container deleted
+        _mockInventoryClient.Verify(
+            c => c.DeleteContainerAsync(
+                It.Is<DeleteContainerRequest>(r => r.ContainerId == collection.ContainerId),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Assert - collection instance deleted
+        _mockCollectionStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task HandleCharacterDeleted_NoCollections_LogsAndReturns()
+    {
+        // Arrange - no collections for this character
+        var characterId = Guid.NewGuid();
+        _mockCollectionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CollectionInstanceModel>());
+
+        var service = CreateService();
+
+        // Act
+        await service.HandleCharacterDeletedAsync(new CharacterDeletedEvent { CharacterId = characterId });
+
+        // Assert - no delete operations performed
+        _mockInventoryClient.Verify(
+            c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _mockCollectionStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
+
+    #region Grant Event Verification Tests
+
+    [Fact]
+    public async Task GrantEntry_PublishesUnlockedEventWithOwnerType()
+    {
+        // Arrange
+        var collection = CreateTestCollection(ownerType: "account");
+        var template = CreateTestTemplate();
+
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:account:{TestGameServiceId}:{CollectionType.Bestiary}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache());
+
+        _mockCollectionCache
+            .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CreateTestCache(), "etag-1"));
+
+        _mockCollectionCache
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntryTemplateModel> { template });
+
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = Guid.NewGuid() });
+
+        CollectionEntryUnlockedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(CollectionTopics.EntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((_, evt, _) => capturedEvent = (CollectionEntryUnlockedEvent)evt)
+            .ReturnsAsync(true);
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = "account",
+                GameServiceId = TestGameServiceId,
+                CollectionType = CollectionType.Bestiary,
+                EntryCode = "boss_dragon"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("account", capturedEvent.OwnerType);
+        Assert.Equal(TestOwnerId, capturedEvent.OwnerId);
+        Assert.Equal("boss_dragon", capturedEvent.EntryCode);
+    }
+
+    [Fact]
+    public async Task GrantEntry_Milestone50Percent_PublishesMilestoneEvent()
+    {
+        // Arrange - 1 of 2 templates already unlocked, granting the 2nd reaches 100% (but also crosses 50%)
+        var template1 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_one");
+        var template2 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_two");
+        var collection = CreateTestCollection();
+
+        // Already have 1 unlocked entry
+        var cache = CreateTestCache(unlockedEntries: new List<UnlockedEntryRecord>
+        {
+            new UnlockedEntryRecord { Code = "entry_one", EntryTemplateId = template1.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+        });
+
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:entry_two",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template2);
+
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+
+        _mockCollectionCache
+            .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((cache, "etag-1"));
+
+        _mockCollectionCache
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Return 2 total templates for milestone calculation
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntryTemplateModel> { template1, template2 });
+
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = Guid.NewGuid() });
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = "character",
+                GameServiceId = TestGameServiceId,
+                CollectionType = CollectionType.Bestiary,
+                EntryCode = "entry_two"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Should publish milestone events (50% crossed when going from 1/2 to 2/2, and 100%)
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task GrantEntry_Milestone100Percent_PublishesCompletionEvent()
+    {
+        // Arrange - single template collection, granting the only entry reaches 100%
+        var template = CreateTestTemplate();
+        var collection = CreateTestCollection();
+        var cache = CreateTestCache();
+
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+
+        _mockCollectionCache
+            .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((cache, "etag-1"));
+
+        _mockCollectionCache
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Only 1 template total = 100% when unlocked
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntryTemplateModel> { template });
+
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = Guid.NewGuid() });
+
+        CollectionMilestoneReachedEvent? capturedMilestone = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((_, evt, _) => capturedMilestone = (CollectionMilestoneReachedEvent)evt)
+            .ReturnsAsync(true);
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = "character",
+                GameServiceId = TestGameServiceId,
+                CollectionType = CollectionType.Bestiary,
+                EntryCode = "boss_dragon"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify the 100% milestone was published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                CollectionTopics.MilestoneReached,
+                It.Is<CollectionMilestoneReachedEvent>(e => e.Milestone == "100%"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        Assert.NotNull(capturedMilestone);
+        Assert.Equal("100%", capturedMilestone.Milestone);
+        Assert.Equal(100.0, capturedMilestone.CompletionPercentage);
+    }
+
+    #endregion
+
+    #region Cache Reconciliation Tests
+
+    [Fact]
+    public async Task GetCollection_CacheMiss_RebuildsFromInventory()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        _mockCollectionStore
+            .Setup(s => s.GetAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        // Cache miss (returns null)
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CollectionCacheModel?)null);
+
+        // Inventory returns container with items
+        var template = CreateTestTemplate();
+        _mockInventoryClient
+            .Setup(c => c.GetContainerAsync(It.IsAny<GetContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerWithContentsResponse
+            {
+                Container = new ContainerResponse { ContainerId = TestContainerId },
+                Items = new List<ContainerItem>
+                {
+                    new ContainerItem { InstanceId = Guid.NewGuid(), TemplateId = TestItemTemplateId }
+                }
+            });
+
+        // Template query for matching items to templates
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntryTemplateModel> { template });
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.GetCollectionAsync(
+            new GetCollectionRequest { CollectionId = TestCollectionId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.EntryCount); // Rebuilt from inventory
+
+        // Verify inventory was queried for rebuild
+        _mockInventoryClient.Verify(
+            c => c.GetContainerAsync(
+                It.Is<GetContainerRequest>(r => r.ContainerId == TestContainerId && r.IncludeContents == true),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify rebuilt cache was saved
+        _mockCollectionCache.Verify(
+            s => s.SaveAsync(
+                $"cache:{TestCollectionId}",
+                It.Is<CollectionCacheModel>(c => c.UnlockedEntries.Count == 1),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCollection_CacheHit_ReturnsCachedData()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        _mockCollectionStore
+            .Setup(s => s.GetAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        // Cache hit with 3 entries
+        var cache = CreateTestCache(unlockedEntries: new List<UnlockedEntryRecord>
+        {
+            new UnlockedEntryRecord { Code = "entry1", EntryTemplateId = Guid.NewGuid(), ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
+            new UnlockedEntryRecord { Code = "entry2", EntryTemplateId = Guid.NewGuid(), ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
+            new UnlockedEntryRecord { Code = "entry3", EntryTemplateId = Guid.NewGuid(), ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+        });
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.GetCollectionAsync(
+            new GetCollectionRequest { CollectionId = TestCollectionId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(3, response.EntryCount);
+
+        // Verify inventory was NOT queried (cache hit, no rebuild needed)
+        _mockInventoryClient.Verify(
+            c => c.GetContainerAsync(It.IsAny<GetContainerRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
+
     #region Event Consumer Registration Tests
 
     [Fact]

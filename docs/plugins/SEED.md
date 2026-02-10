@@ -72,6 +72,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | Key Pattern | Purpose |
 |-------------|---------|
 | `{seedId}` | Distributed lock for growth recording, seed updates, and bond initiation (ordered dual-lock for bonds) |
+| `bond:{bondId}` | Distributed lock for bond confirmation (serializes concurrent participant confirmations) |
 | `owner:{ownerId}:{seedTypeCode}` | Distributed lock for seed activation (prevents concurrent activation races) |
 | `type:{gameServiceId}:{seedTypeCode}` | Distributed lock for seed type updates (prevents concurrent type mutations) |
 
@@ -116,7 +117,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `MaxSeedTypesPerGameService` | `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | `50` | Maximum number of seed type definitions per game service |
 | `DefaultMaxSeedsPerOwner` | `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | `3` | Default per-owner seed limit when seed type's `MaxPerOwner` is 0 |
 | `BondStrengthGrowthRate` | `SEED_BOND_STRENGTH_GROWTH_RATE` | `0.1` | Rate at which bond strength increases per unit of shared growth recorded |
-| `DefaultQueryPageSize` | `SEED_DEFAULT_QUERY_PAGE_SIZE` | `100` | Default page size for queries that do not expose pagination parameters (`GetSeedsByOwnerAsync`, `ListSeedTypesAsync`) |
+| `DefaultQueryPageSize` | `SEED_DEFAULT_QUERY_PAGE_SIZE` | `100` | Default page size for queries that do not expose pagination parameters (`GetSeedsByOwnerAsync`, `ListSeedTypesAsync`, `RecomputeSeedsForTypeAsync`) |
 
 ---
 
@@ -235,6 +236,7 @@ Manifest version is monotonically incremented from the previous cached version.
 │   seed-lock (Redis)                                                 │
 │   ├── {seedId}                    -- Growth recording, updates,     │
 │   │                                  bond initiation (ordered)      │
+│   ├── bond:{bondId}              -- Bond confirmation serialization │
 │   ├── owner:{ownerId}:{typeCode}  -- Activation exclusivity        │
 │   └── type:{gsId}:{typeCode}      -- Type definition updates       │
 └─────────────────────────────────────────────────────────────────────┘
@@ -259,7 +261,7 @@ Manifest version is monotonically incremented from the previous cached version.
 - **Seed type merge**: No `MergeSeedType` endpoint exists. Unlike species merge (simple foreign key reassignment), seed type merge is fundamentally complex due to incompatible growth domains, phase definitions, capability rules, bond constraints, and per-owner limits. See [#374](https://github.com/beyond-immersion/bannou-service/issues/374).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/374 -->
 
-- **Capability push notifications**: Currently capabilities are pull-only (consumer calls `GetCapabilityManifest`). A push model via client events would allow real-time UI updates when capabilities unlock.
+- **Capability push notifications (L4 consumer responsibility)**: Currently capabilities are pull-only (consumer calls `GetCapabilityManifest`). Real-time UI updates when capabilities unlock should be implemented by L4 consumers (lib-gardener, dungeon plugin) subscribing to `seed.capability.updated` and forwarding to connected sessions via `IClientEventPublisher`. Adding client events directly to Seed (L2) would violate the service hierarchy by introducing session/WebSocket awareness into a foundational service.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/365 -->
 
 ---
@@ -268,11 +270,7 @@ Manifest version is monotonically incremented from the previous cached version.
 
 ### Bugs (Fix Immediately)
 
-- ~~**Bond growth multiplier applied regardless of bond status**~~: **FIXED** (2026-02-09) - Moved the `BondSharedGrowthMultiplier` assignment inside the `bond is { Status: BondStatus.Active }` check in `RecordGrowthInternalAsync`. Seeds with `PendingConfirmation` bonds no longer receive the boosted growth rate.
-
-- ~~**`RecomputeSeedsForTypeAsync` only processes first page of seeds**~~: **FIXED** (2026-02-09) - Added pagination loop in `RecomputeSeedsForTypeAsync` that iterates through all pages of seeds using `DefaultQueryPageSize` until all seeds of the type are recomputed. Previously only processed offset 0.
-
-- ~~**`ConfirmBondAsync` has no distributed lock**~~: **FIXED** (2026-02-09) - Added distributed lock on `bond:{bondId}` in `ConfirmBondAsync` before reading/mutating the bond record. Concurrent confirmations from multiple participants now serialize correctly, preventing lost confirmations from last-write-wins.
+*(No current bugs.)*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -304,10 +302,4 @@ Manifest version is monotonically incremented from the previous cached version.
 
 ## Work Tracking
 
-### Completed
-
-- **Bond growth multiplier bug fix** (2026-02-09): Moved `BondSharedGrowthMultiplier` inside the active bond status check in `RecordGrowthInternalAsync`. Seeds with `PendingConfirmation` bonds no longer receive boosted growth.
-- **RecomputeSeedsForTypeAsync pagination fix** (2026-02-09): Added pagination loop so all seeds of a type are recomputed when the type definition changes, not just the first page.
-- **ConfirmBondAsync distributed lock fix** (2026-02-09): Added distributed lock on `bond:{bondId}` before read-mutate-write in `ConfirmBondAsync` to prevent concurrent confirmation races.
-- **Growth decay system implementation** (2026-02-10): Implemented #359 (umbrella for #352, #364). Replaced placeholder read-time decay with full write-back system: per-domain `DomainGrowthEntry` tracking (Depth, LastActivityAt, PeakDepth), per-type decay config overrides, `SeedDecayWorkerService` background worker with exponential decay formula, phase regression detection with directional events (`Progressed`/`Regressed`), and bond shared activity that resets partner decay timers on matching domains.
-- **Cross-seed growth sharing** (2026-02-10): Implemented #353. Added `SameOwnerGrowthMultiplier` to seed type definitions (0.0-1.0, default 0.0) enabling configurable fraction of growth to be applied to same-type same-owner siblings. Uses try-lock with 3-second timeout per sibling (best-effort, no deadlock risk). Cross-pollination uses raw amounts (not bond-boosted), applies full processing (phase transitions, cap invalidation, events), and is structurally prevented from cascading. Added `CrossPollinated` boolean to `SeedGrowthUpdatedEvent` for event discrimination.
+*(No active work items.)*
