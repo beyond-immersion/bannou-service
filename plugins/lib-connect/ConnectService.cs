@@ -148,7 +148,6 @@ public partial class ConnectService : IConnectService, IDisposable
         InternalProxyRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Processing internal proxy request to {TargetService}/{Method} {Endpoint}",
                 body.TargetService, body.Method, body.TargetEndpoint);
@@ -283,12 +282,6 @@ public partial class ConnectService : IConnectService, IDisposable
                 return (StatusCodes.ServiceUnavailable, errorResponse);
             }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing internal proxy request");
-            await PublishErrorEventAsync("ProxyInternalRequest", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // REMOVED: PublishServiceMappingUpdateAsync - Service mapping events belong to Orchestrator
@@ -305,7 +298,6 @@ public partial class ConnectService : IConnectService, IDisposable
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask; // Satisfy async requirement for sync method
-        try
         {
             _logger.LogDebug("GetClientCapabilitiesAsync called for session {SessionId} with filter: {Filter}",
                 body.SessionId, body.ServiceFilter ?? "(none)");
@@ -358,12 +350,6 @@ public partial class ConnectService : IConnectService, IDisposable
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving client capabilities for session {SessionId}", body.SessionId);
-            await PublishErrorEventAsync("GetClientCapabilities", ex.GetType().Name, ex.Message, details: new { SessionId = body.SessionId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -374,7 +360,6 @@ public partial class ConnectService : IConnectService, IDisposable
         GetAccountSessionsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("GetAccountSessionsAsync called for account {AccountId}", body.AccountId);
 
@@ -393,12 +378,6 @@ public partial class ConnectService : IConnectService, IDisposable
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving sessions for account {AccountId}", body.AccountId);
-            await PublishErrorEventAsync("GetAccountSessions", ex.GetType().Name, ex.Message, details: new { AccountId = body.AccountId });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -413,7 +392,6 @@ public partial class ConnectService : IConnectService, IDisposable
         string? serviceTokenHeader,
         CancellationToken cancellationToken)
     {
-        try
         {
             // Internal mode authentication - bypass JWT validation
             if (_connectionMode == ConnectionMode.Internal)
@@ -536,12 +514,6 @@ public partial class ConnectService : IConnectService, IDisposable
             _logger.LogWarning("Authorization format not recognized (expected 'Bearer' or 'Reconnect' prefix)");
             return (null, null, null, null, false);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "JWT validation failed with exception");
-            await PublishErrorEventAsync("ValidateJWT", ex.GetType().Name, ex.Message, dependency: "auth");
-            return (null, null, null, null, false);
-        }
     }
 
     /// <summary>
@@ -595,6 +567,25 @@ public partial class ConnectService : IConnectService, IDisposable
     /// Creates persistent connection state and processes messages with proper routing.
     /// </summary>
     public async Task HandleWebSocketCommunicationAsync(
+        WebSocket webSocket,
+        string sessionId,
+        Guid? accountId,
+        ICollection<string>? userRoles,
+        ICollection<string>? authorizations,
+        bool isReconnection,
+        CancellationToken cancellationToken)
+    {
+        await HandleWebSocketCommunicationCoreAsync(
+            webSocket,
+            sessionId,
+            accountId,
+            userRoles,
+            authorizations,
+            isReconnection,
+            cancellationToken);
+    }
+
+    private async Task HandleWebSocketCommunicationCoreAsync(
         WebSocket webSocket,
         string sessionId,
         Guid? accountId,
@@ -2520,7 +2511,6 @@ public partial class ConnectService : IConnectService, IDisposable
     public async Task DisconnectSessionAsync(string sessionId, string reason, CancellationToken cancellationToken = default)
     {
         WebSocketConnection? connection = null;
-        try
         {
             connection = _connectionManager.GetConnection(sessionId);
             if (connection == null)
@@ -2556,16 +2546,6 @@ public partial class ConnectService : IConnectService, IDisposable
 
             // Clean up Redis session data (forced disconnect = no reconnection)
             await _sessionManager.RemoveSessionAsync(sessionId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error disconnecting session {SessionId}: {Reason}", sessionId, reason);
-            // Still try to remove from connection manager even if close fails
-            // Use instance-matching if we have a valid connection reference
-            if (connection != null)
-            {
-                _connectionManager.RemoveConnectionIfMatch(sessionId, connection.WebSocket);
-            }
         }
     }
 
