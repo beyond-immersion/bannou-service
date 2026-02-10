@@ -2108,4 +2108,520 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     }
 
     #endregion
+
+    #region Board Clone Tests
+
+    [Fact]
+    public async Task CloneBoard_ValidRequest_ClonesAllLicenses()
+    {
+        // Arrange - source board with 3 unlocked licenses
+        var sourceBoard = CreateTestBoard();
+        var template = CreateTestTemplate();
+        var targetOwnerId = Guid.NewGuid();
+        var newContainerId = Guid.NewGuid();
+
+        var def1 = CreateTestDefinition(code: "skill_a", positionX: 0, positionY: 0);
+        var def2 = CreateTestDefinition(code: "skill_b", positionX: 1, positionY: 0);
+        var def3 = CreateTestDefinition(code: "skill_c", positionX: 0, positionY: 1);
+        var allDefinitions = new List<LicenseDefinitionModel> { def1, def2, def3 };
+
+        var sourceCache = CreateTestCache(sourceBoard.BoardId, new List<UnlockedLicenseEntry>
+        {
+            new UnlockedLicenseEntry { Code = "skill_a", PositionX = 0, PositionY = 0, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
+            new UnlockedLicenseEntry { Code = "skill_b", PositionX = 1, PositionY = 0, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
+            new UnlockedLicenseEntry { Code = "skill_c", PositionX = 0, PositionY = 1, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+        });
+
+        // Source board exists
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBoard);
+
+        // Template exists
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{template.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Target character exists
+        _mockCharacterClient
+            .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterResponse { CharacterId = targetOwnerId, RealmId = TestRealmId });
+
+        // Definitions for the template
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<LicenseDefinitionModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(allDefinitions);
+
+        // Source board cache
+        _mockBoardCache
+            .Setup(s => s.GetAsync($"cache:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceCache);
+
+        // Container creation
+        _mockInventoryClient
+            .Setup(c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerResponse { ContainerId = newContainerId });
+
+        // Item creation returns unique IDs
+        var itemCallCount = 0;
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => new ItemInstanceResponse { InstanceId = Guid.NewGuid() })
+            .Callback(() => itemCallCount++);
+
+        // Capture saved board
+        BoardInstanceModel? savedBoard = null;
+        _mockBoardStore
+            .Setup(s => s.SaveAsync(It.Is<string>(k => k.StartsWith("board:")), It.IsAny<BoardInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BoardInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedBoard = m)
+            .ReturnsAsync("etag");
+
+        // Capture saved cache
+        BoardCacheModel? savedCache = null;
+        _mockBoardCache
+            .Setup(s => s.SaveAsync(It.Is<string>(k => k.StartsWith("cache:")), It.IsAny<BoardCacheModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BoardCacheModel, StateOptions?, CancellationToken>((_, m, _, _) => savedCache = m)
+            .ReturnsAsync("etag");
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = sourceBoard.BoardId,
+                TargetOwnerType = "character",
+                TargetOwnerId = targetOwnerId
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(sourceBoard.BoardId, response.SourceBoardId);
+        Assert.Equal("character", response.TargetOwnerType);
+        Assert.Equal(targetOwnerId, response.TargetOwnerId);
+        Assert.Equal(newContainerId, response.TargetContainerId);
+        Assert.Equal(3, response.LicensesCloned);
+        Assert.Equal(3, itemCallCount);
+
+        Assert.NotNull(savedBoard);
+        Assert.Equal("character", savedBoard.OwnerType);
+        Assert.Equal(targetOwnerId, savedBoard.OwnerId);
+        Assert.Equal(newContainerId, savedBoard.ContainerId);
+        Assert.Equal(template.BoardTemplateId, savedBoard.BoardTemplateId);
+
+        Assert.NotNull(savedCache);
+        Assert.Equal(3, savedCache.UnlockedPositions.Count);
+    }
+
+    [Fact]
+    public async Task CloneBoard_SourceBoardNotFound_ReturnsNotFound()
+    {
+        // Arrange - source board does not exist
+        _mockBoardStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BoardInstanceModel?)null);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = Guid.NewGuid(),
+                TargetOwnerType = "character",
+                TargetOwnerId = Guid.NewGuid()
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CloneBoard_TargetAlreadyHasBoard_ReturnsConflict()
+    {
+        // Arrange
+        var sourceBoard = CreateTestBoard();
+        var template = CreateTestTemplate();
+        var targetOwnerId = Guid.NewGuid();
+
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBoard);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{template.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockCharacterClient
+            .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterResponse { CharacterId = targetOwnerId, RealmId = TestRealmId });
+
+        // Target already has a board for this template
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board-owner:character:{targetOwnerId}:{template.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestBoard(boardId: Guid.NewGuid(), ownerId: targetOwnerId));
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = sourceBoard.BoardId,
+                TargetOwnerType = "character",
+                TargetOwnerId = targetOwnerId
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify no container was created
+        _mockInventoryClient.Verify(
+            c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CloneBoard_MaxBoardsExceeded_ReturnsConflict()
+    {
+        // Arrange
+        Configuration.MaxBoardsPerOwner = 1;
+        var sourceBoard = CreateTestBoard();
+        var template = CreateTestTemplate();
+        var targetOwnerId = Guid.NewGuid();
+
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBoard);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{template.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockCharacterClient
+            .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterResponse { CharacterId = targetOwnerId, RealmId = TestRealmId });
+
+        // Target already at max boards (different template)
+        _mockBoardStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<BoardInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<BoardInstanceModel> { CreateTestBoard(boardId: Guid.NewGuid(), boardTemplateId: Guid.NewGuid()) });
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = sourceBoard.BoardId,
+                TargetOwnerType = "character",
+                TargetOwnerId = targetOwnerId
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CloneBoard_OwnerTypeNotAllowed_ReturnsBadRequest()
+    {
+        // Arrange - template only allows "character", request targets "account"
+        var sourceBoard = CreateTestBoard();
+        var template = CreateTestTemplate(allowedOwnerTypes: new List<string> { "character" });
+
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBoard);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{template.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = sourceBoard.BoardId,
+                TargetOwnerType = "account",
+                TargetOwnerId = Guid.NewGuid()
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CloneBoard_CharacterNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var sourceBoard = CreateTestBoard();
+        var template = CreateTestTemplate();
+
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBoard);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{template.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockCharacterClient
+            .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = sourceBoard.BoardId,
+                TargetOwnerType = "character",
+                TargetOwnerId = Guid.NewGuid()
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CloneBoard_EmptySourceBoard_ClonesEmptyBoard()
+    {
+        // Arrange - source board has 0 unlocked licenses
+        var sourceBoard = CreateTestBoard();
+        var template = CreateTestTemplate();
+        var targetOwnerId = Guid.NewGuid();
+        var newContainerId = Guid.NewGuid();
+
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBoard);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{template.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockCharacterClient
+            .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterResponse { CharacterId = targetOwnerId, RealmId = TestRealmId });
+
+        // Empty definitions list and empty cache
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<LicenseDefinitionModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<LicenseDefinitionModel>());
+        _mockBoardCache
+            .Setup(s => s.GetAsync($"cache:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache(sourceBoard.BoardId));
+
+        _mockInventoryClient
+            .Setup(c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerResponse { ContainerId = newContainerId });
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = sourceBoard.BoardId,
+                TargetOwnerType = "character",
+                TargetOwnerId = targetOwnerId
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.LicensesCloned);
+        Assert.Equal(newContainerId, response.TargetContainerId);
+
+        // Verify no items were created
+        _mockItemClient.Verify(
+            c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CloneBoard_InvalidOwnerTypeFormat_ReturnsBadRequest()
+    {
+        // Arrange
+        var sourceBoard = CreateTestBoard();
+
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBoard);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{sourceBoard.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestTemplate());
+
+        var service = CreateService();
+
+        // Act - ownerType contains ':' separator
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = sourceBoard.BoardId,
+                TargetOwnerType = "character:npc",
+                TargetOwnerId = Guid.NewGuid()
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CloneBoard_PublishesBoardCreatedAndClonedEvents()
+    {
+        // Arrange
+        var sourceBoard = CreateTestBoard();
+        var template = CreateTestTemplate();
+        var targetOwnerId = Guid.NewGuid();
+        var newContainerId = Guid.NewGuid();
+        var def1 = CreateTestDefinition(code: "skill_x", positionX: 0, positionY: 0);
+
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBoard);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{template.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockCharacterClient
+            .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterResponse { CharacterId = targetOwnerId, RealmId = TestRealmId });
+
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<LicenseDefinitionModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<LicenseDefinitionModel> { def1 });
+        _mockBoardCache
+            .Setup(s => s.GetAsync($"cache:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache(sourceBoard.BoardId, new List<UnlockedLicenseEntry>
+            {
+                new UnlockedLicenseEntry { Code = "skill_x", PositionX = 0, PositionY = 0, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+            }));
+
+        _mockInventoryClient
+            .Setup(c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerResponse { ContainerId = newContainerId });
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = Guid.NewGuid() });
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = sourceBoard.BoardId,
+                TargetOwnerType = "character",
+                TargetOwnerId = targetOwnerId
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify both events published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync("license-board.created", It.IsAny<LicenseBoardCreatedEvent>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync("license-board.cloned", It.IsAny<LicenseBoardClonedEvent>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify character reference registered
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync("resource.reference.registered", It.IsAny<ResourceReferenceRegisteredEvent>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CloneBoard_ItemCreationFails_CleansUpAndReturnsError()
+    {
+        // Arrange
+        var sourceBoard = CreateTestBoard();
+        var template = CreateTestTemplate();
+        var targetOwnerId = Guid.NewGuid();
+        var newContainerId = Guid.NewGuid();
+
+        var def1 = CreateTestDefinition(code: "skill_a", positionX: 0, positionY: 0);
+        var def2 = CreateTestDefinition(code: "skill_b", positionX: 1, positionY: 0);
+
+        _mockBoardStore
+            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBoard);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{template.BoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockCharacterClient
+            .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterResponse { CharacterId = targetOwnerId, RealmId = TestRealmId });
+
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<LicenseDefinitionModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<LicenseDefinitionModel> { def1, def2 });
+        _mockBoardCache
+            .Setup(s => s.GetAsync($"cache:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache(sourceBoard.BoardId, new List<UnlockedLicenseEntry>
+            {
+                new UnlockedLicenseEntry { Code = "skill_a", PositionX = 0, PositionY = 0, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
+                new UnlockedLicenseEntry { Code = "skill_b", PositionX = 1, PositionY = 0, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+            }));
+
+        _mockInventoryClient
+            .Setup(c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerResponse { ContainerId = newContainerId });
+
+        // First item succeeds, second fails
+        var itemCallSequence = 0;
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                itemCallSequence++;
+                if (itemCallSequence >= 2)
+                    throw new ApiException("Item creation failed", 500, null, null, null);
+                return new ItemInstanceResponse { InstanceId = Guid.NewGuid() };
+            });
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CloneBoardAsync(
+            new CloneBoardRequest
+            {
+                SourceBoardId = sourceBoard.BoardId,
+                TargetOwnerType = "character",
+                TargetOwnerId = targetOwnerId
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+
+        // Verify container was cleaned up
+        _mockInventoryClient.Verify(
+            c => c.DeleteContainerAsync(It.Is<DeleteContainerRequest>(r => r.ContainerId == newContainerId), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify no board records were saved
+        _mockBoardStore.Verify(
+            s => s.SaveAsync(It.Is<string>(k => k.StartsWith("board:")), It.IsAny<BoardInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        // Verify no events published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync("license-board.created", It.IsAny<LicenseBoardCreatedEvent>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
 }

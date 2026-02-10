@@ -2137,6 +2137,366 @@ public partial class LicenseService : ILicenseService
 
     #endregion
 
+    #region Board Clone
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CloneBoardResponse?)> CloneBoardAsync(
+        CloneBoardRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Cloning board {SourceBoardId} to owner {TargetOwnerType}:{TargetOwnerId}",
+                body.SourceBoardId, body.TargetOwnerType, body.TargetOwnerId);
+
+            // 1. Load source board
+            var sourceBoard = await BoardStore.GetAsync(
+                BuildBoardKey(body.SourceBoardId),
+                cancellationToken);
+
+            if (sourceBoard == null)
+            {
+                _logger.LogWarning("Source board {SourceBoardId} not found", body.SourceBoardId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // 2. Load board template
+            var template = await BoardTemplateStore.GetAsync(
+                BuildTemplateKey(sourceBoard.BoardTemplateId),
+                cancellationToken);
+
+            if (template == null)
+            {
+                _logger.LogWarning(
+                    "Board template {BoardTemplateId} not found for source board {SourceBoardId}",
+                    sourceBoard.BoardTemplateId, body.SourceBoardId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // 3. Validate target ownerType format
+            if (!IsValidOwnerType(body.TargetOwnerType))
+            {
+                _logger.LogWarning("Invalid target owner type format: {OwnerType}", body.TargetOwnerType);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // 4. Validate target ownerType is in template's allowedOwnerTypes
+            if (!template.AllowedOwnerTypes.Contains(body.TargetOwnerType))
+            {
+                _logger.LogWarning(
+                    "Target owner type {OwnerType} not in template's allowedOwnerTypes [{Allowed}]",
+                    body.TargetOwnerType, string.Join(", ", template.AllowedOwnerTypes));
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // 5. Map ownerType to ContainerOwnerType
+            var containerOwnerType = MapToContainerOwnerType(body.TargetOwnerType)
+                ?? throw new InvalidOperationException(
+                    $"Owner type {body.TargetOwnerType} passed template validation but has no ContainerOwnerType mapping");
+
+            // 6. Resolve realm context
+            Guid? resolvedRealmId = body.TargetRealmId;
+
+            if (body.TargetOwnerType == "character")
+            {
+                // For character owners: validate character exists and resolve realm
+                try
+                {
+                    var character = await _characterClient.GetCharacterAsync(
+                        new GetCharacterRequest { CharacterId = body.TargetOwnerId },
+                        cancellationToken);
+
+                    if (body.TargetRealmId.HasValue && body.TargetRealmId.Value != character.RealmId)
+                    {
+                        _logger.LogWarning(
+                            "TargetRealmId {RealmId} does not match character's realm {CharacterRealmId}",
+                            body.TargetRealmId, character.RealmId);
+                        return (StatusCodes.BadRequest, null);
+                    }
+
+                    resolvedRealmId = character.RealmId;
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    _logger.LogWarning("Target character {OwnerId} not found", body.TargetOwnerId);
+                    return (StatusCodes.NotFound, null);
+                }
+            }
+            else if (body.TargetOwnerType == "realm")
+            {
+                resolvedRealmId = body.TargetOwnerId;
+            }
+
+            // 7. Enforce one board per template per owner
+            var existingBoard = await BoardStore.GetAsync(
+                BuildBoardByOwnerKey(body.TargetOwnerType, body.TargetOwnerId, sourceBoard.BoardTemplateId),
+                cancellationToken);
+
+            if (existingBoard != null)
+            {
+                _logger.LogWarning(
+                    "Target owner {OwnerType}:{OwnerId} already has a board for template {BoardTemplateId}",
+                    body.TargetOwnerType, body.TargetOwnerId, sourceBoard.BoardTemplateId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // 8. Enforce MaxBoardsPerOwner
+            var ownerBoards = await BoardStore.QueryAsync(
+                b => b.OwnerType == body.TargetOwnerType && b.OwnerId == body.TargetOwnerId,
+                cancellationToken: cancellationToken);
+
+            if (ownerBoards.Count >= _configuration.MaxBoardsPerOwner)
+            {
+                _logger.LogWarning(
+                    "Target owner {OwnerType}:{OwnerId} has reached max boards limit of {Max}",
+                    body.TargetOwnerType, body.TargetOwnerId, _configuration.MaxBoardsPerOwner);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // 9. Load source board's unlock state
+            var allDefinitions = await DefinitionStore.QueryAsync(
+                d => d.BoardTemplateId == sourceBoard.BoardTemplateId,
+                cancellationToken: cancellationToken);
+
+            var sourceCache = await LoadOrRebuildBoardCacheAsync(sourceBoard, allDefinitions, cancellationToken);
+
+            // Build lookup from license code to definition for item template resolution
+            var definitionsByCode = allDefinitions.ToDictionary(d => d.Code);
+
+            // 10. Create inventory container for target board
+            ContainerResponse containerResponse;
+            try
+            {
+                containerResponse = await _inventoryClient.CreateContainerAsync(
+                    new CreateContainerRequest
+                    {
+                        OwnerId = body.TargetOwnerId,
+                        OwnerType = containerOwnerType,
+                        ContainerType = "license_board",
+                        ConstraintModel = ContainerConstraintModel.SlotOnly,
+                        MaxSlots = template.GridWidth * template.GridHeight
+                    },
+                    cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to create inventory container for cloned board (target {OwnerType}:{OwnerId})",
+                    body.TargetOwnerType, body.TargetOwnerId);
+                await _messageBus.TryPublishErrorAsync(
+                    "license", "CloneBoard", "container_creation_failed", ex.Message,
+                    dependency: "inventory", endpoint: "post:/license/board/clone",
+                    details: $"TargetOwnerType: {body.TargetOwnerType}, TargetOwnerId: {body.TargetOwnerId}",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // 11. Validate realm context for item creation (required when cloning unlocked licenses)
+            var effectiveRealmId = resolvedRealmId ?? sourceBoard.RealmId;
+            if (sourceCache.UnlockedPositions.Count > 0 && !effectiveRealmId.HasValue)
+            {
+                _logger.LogError(
+                    "Cannot clone board {SourceBoardId} — no realm context available for item creation",
+                    body.SourceBoardId);
+                // Clean up the container we already created
+                try
+                {
+                    await _inventoryClient.DeleteContainerAsync(
+                        new DeleteContainerRequest { ContainerId = containerResponse.ContainerId },
+                        cancellationToken);
+                }
+                catch (Exception cleanupEx)
+                {
+                    _logger.LogError(cleanupEx,
+                        "Failed to clean up container {ContainerId} after realm validation failure",
+                        containerResponse.ContainerId);
+                }
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // 12. Bulk-create item instances for each unlocked license
+            // Uses Spawn origin since this is admin tooling seeding items directly
+            var clonedEntries = new List<UnlockedLicenseEntry>();
+            var itemCreationFailed = false;
+
+            foreach (var unlocked in sourceCache.UnlockedPositions)
+            {
+                if (!definitionsByCode.TryGetValue(unlocked.Code, out var definition))
+                {
+                    _logger.LogWarning(
+                        "Skipping unlocked license {Code} during clone — no matching definition found",
+                        unlocked.Code);
+                    continue;
+                }
+
+                // Realm validated non-null above when UnlockedPositions.Count > 0
+                var itemRealmId = effectiveRealmId
+                    ?? throw new InvalidOperationException("RealmId should be validated non-null before item creation");
+
+                try
+                {
+                    var itemInstance = await _itemClient.CreateItemInstanceAsync(
+                        new CreateItemInstanceRequest
+                        {
+                            TemplateId = definition.ItemTemplateId,
+                            ContainerId = containerResponse.ContainerId,
+                            RealmId = itemRealmId,
+                            Quantity = 1,
+                            OriginType = ItemOriginType.Spawn,
+                            OriginId = body.SourceBoardId
+                        },
+                        cancellationToken);
+
+                    clonedEntries.Add(new UnlockedLicenseEntry
+                    {
+                        Code = unlocked.Code,
+                        PositionX = definition.PositionX,
+                        PositionY = definition.PositionY,
+                        ItemInstanceId = itemInstance.InstanceId,
+                        UnlockedAt = DateTimeOffset.UtcNow
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Item creation failed during clone for license {Code} on board {SourceBoardId}",
+                        unlocked.Code, body.SourceBoardId);
+                    itemCreationFailed = true;
+                    break;
+                }
+            }
+
+            // If item creation failed, clean up the container (cascades to any items created)
+            if (itemCreationFailed)
+            {
+                try
+                {
+                    await _inventoryClient.DeleteContainerAsync(
+                        new DeleteContainerRequest { ContainerId = containerResponse.ContainerId },
+                        cancellationToken);
+                }
+                catch (Exception cleanupEx)
+                {
+                    _logger.LogError(cleanupEx,
+                        "Failed to clean up container {ContainerId} after clone failure",
+                        containerResponse.ContainerId);
+                }
+
+                await _messageBus.TryPublishErrorAsync(
+                    "license", "CloneBoard", "item_creation_failed",
+                    "Item creation failed during board clone",
+                    dependency: "item", endpoint: "post:/license/board/clone",
+                    details: $"SourceBoardId: {body.SourceBoardId}, TargetOwnerId: {body.TargetOwnerId}",
+                    stack: null, cancellationToken: cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // 12. Create board instance record
+            var now = DateTimeOffset.UtcNow;
+            var newBoard = new BoardInstanceModel
+            {
+                BoardId = Guid.NewGuid(),
+                OwnerType = body.TargetOwnerType,
+                OwnerId = body.TargetOwnerId,
+                RealmId = resolvedRealmId,
+                BoardTemplateId = sourceBoard.BoardTemplateId,
+                GameServiceId = sourceBoard.GameServiceId,
+                ContainerId = containerResponse.ContainerId,
+                CreatedAt = now
+            };
+
+            await BoardStore.SaveAsync(BuildBoardKey(newBoard.BoardId), newBoard, cancellationToken: cancellationToken);
+
+            // 13. Save uniqueness key
+            await BoardStore.SaveAsync(
+                BuildBoardByOwnerKey(newBoard.OwnerType, newBoard.OwnerId, newBoard.BoardTemplateId),
+                newBoard,
+                cancellationToken: cancellationToken);
+
+            // 14. Initialize board cache with cloned unlock state
+            await BoardCache.SaveAsync(
+                BuildBoardCacheKey(newBoard.BoardId),
+                new BoardCacheModel
+                {
+                    BoardId = newBoard.BoardId,
+                    UnlockedPositions = clonedEntries,
+                    LastUpdated = now
+                },
+                new StateOptions { Ttl = _configuration.BoardCacheTtlSeconds },
+                cancellationToken);
+
+            // 15. Register character reference for cleanup coordination
+            if (newBoard.OwnerType == "character")
+            {
+                await RegisterCharacterReferenceAsync(
+                    newBoard.BoardId.ToString(),
+                    newBoard.OwnerId,
+                    cancellationToken);
+            }
+
+            // 16. Publish license-board.created lifecycle event
+            await _messageBus.TryPublishAsync(
+                "license-board.created",
+                new LicenseBoardCreatedEvent
+                {
+                    BoardId = newBoard.BoardId,
+                    OwnerType = newBoard.OwnerType,
+                    OwnerId = newBoard.OwnerId,
+                    RealmId = newBoard.RealmId,
+                    BoardTemplateId = newBoard.BoardTemplateId,
+                    GameServiceId = newBoard.GameServiceId,
+                    ContainerId = newBoard.ContainerId,
+                    CreatedAt = newBoard.CreatedAt
+                },
+                cancellationToken: cancellationToken);
+
+            // 17. Publish license-board.cloned custom event
+            await _messageBus.TryPublishAsync(
+                LicenseTopics.LicenseBoardCloned,
+                new LicenseBoardClonedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = now,
+                    SourceBoardId = body.SourceBoardId,
+                    TargetBoardId = newBoard.BoardId,
+                    TargetOwnerType = newBoard.OwnerType,
+                    TargetOwnerId = newBoard.OwnerId,
+                    TargetGameServiceId = newBoard.GameServiceId,
+                    LicensesCloned = clonedEntries.Count
+                },
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation(
+                "Cloned board {SourceBoardId} to {TargetBoardId} for owner {OwnerType}:{OwnerId} with {LicensesCloned} licenses",
+                body.SourceBoardId, newBoard.BoardId, newBoard.OwnerType, newBoard.OwnerId, clonedEntries.Count);
+
+            // 18. Return response
+            return (StatusCodes.OK, new CloneBoardResponse
+            {
+                SourceBoardId = body.SourceBoardId,
+                TargetBoardId = newBoard.BoardId,
+                TargetOwnerType = newBoard.OwnerType,
+                TargetOwnerId = newBoard.OwnerId,
+                TargetContainerId = newBoard.ContainerId,
+                LicensesCloned = clonedEntries.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error cloning board {SourceBoardId} to owner {TargetOwnerType}:{TargetOwnerId}",
+                body.SourceBoardId, body.TargetOwnerType, body.TargetOwnerId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "CloneBoard", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board/clone",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
     #region Cleanup Operations
 
     /// <inheritdoc/>

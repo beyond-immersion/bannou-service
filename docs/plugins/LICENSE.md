@@ -87,6 +87,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | `license-board-template.deleted` | `LicenseBoardTemplateDeletedEvent` | Board template deleted via `DeleteBoardTemplateAsync` |
 | `license-board.created` | `LicenseBoardCreatedEvent` | Board instance created via `CreateBoardAsync` |
 | `license-board.deleted` | `LicenseBoardDeletedEvent` | Board instance deleted via `DeleteBoardAsync` |
+| `license-board.cloned` | `LicenseBoardClonedEvent` | Board unlock state cloned to new owner via `CloneBoardAsync` (includes sourceBoardId, targetBoardId, targetOwnerType, targetOwnerId, targetGameServiceId, licensesCloned) |
 | `license.unlocked` | `LicenseUnlockedEvent` | License successfully unlocked (includes boardId, ownerType, ownerId, licenseCode, position, itemInstanceId, contractInstanceId, lpCost) |
 | `license.unlock-failed` | `LicenseUnlockFailedEvent` | License unlock failed (includes boardId, ownerType, ownerId, licenseCode, reason enum) |
 
@@ -141,7 +142,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 - `MapToEntityType(ownerType)` - Maps owner type string to `EntityType` for contract parties (character, account, realm, guild, location, actor → mapped; others → null)
 - `IsValidOwnerType(ownerType)` - Validates owner type string is non-empty and doesn't contain the `:` key separator
 - `MapTemplateToResponse`, `MapDefinitionToResponse`, `MapBoardToResponse` - Static model-to-response mapping helpers
-- `LicenseTopics` - Static class with topic string constants for `license.unlocked` and `license.unlock-failed`
+- `LicenseTopics` - Static class with topic string constants for `license.unlocked`, `license.unlock-failed`, and `license-board.cloned`
 
 ---
 
@@ -163,7 +164,7 @@ Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLi
 
 `RemoveLicenseDefinitionAsync` acquires a template lock, then checks all board instances for the template and uses `LoadOrRebuildBoardCacheAsync` to verify no boards have the definition unlocked before allowing removal. On cache miss (TTL expiry), the cache is rebuilt from inventory (authoritative source) before checking.
 
-### Board Instance Management (4 endpoints, mixed roles)
+### Board Instance Management (5 endpoints, mixed roles)
 
 `CreateBoardAsync` (user role): Validates ownerType format (no `:` separator), validates ownerType is in template's `allowedOwnerTypes`, performs owner-type-specific validation (character owners: validates character exists via ICharacterClient, resolves realm context; other owners: accepts provided realmId). Enforces one board per template per owner via uniqueness key (`board-owner:{ownerType}:{ownerId}:{boardTemplateId}`), enforces `MaxBoardsPerOwner` limit by counting existing boards. Creates an Inventory container with mapped `ContainerOwnerType` and initializes an empty Redis cache entry. Registers character-type owners as resource references via lib-resource.
 
@@ -172,6 +173,8 @@ Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLi
 `ListBoardsByOwnerAsync` (user role): Queries all boards for an owner (by ownerType + ownerId), optionally filtered by game service.
 
 `DeleteBoardAsync` (developer role): Acquires distributed lock, deletes inventory container (which destroys contained items), deletes board record, uniqueness key, and cache entry. Unregisters character-type resource references. Publishes lifecycle event.
+
+`CloneBoardAsync` (developer role): Developer-only NPC tooling for bulk state initialization. Reads unlock state from source board, validates target owner (type format, allowed types, character existence for character owners, uniqueness, max boards), creates new inventory container, bulk-creates item instances with `ItemOriginType.Spawn` for each unlocked license, saves board record and cache with cloned unlock state. Skips contracts entirely (admin tooling, not gameplay). Publishes both `license-board.created` lifecycle event and `license-board.cloned` custom event. Registers character-type resource references. On item creation failure, cleans up the container (cascading to any items created) and returns error.
 
 ### Gameplay Operations (3 endpoints, user role)
 
@@ -264,8 +267,7 @@ Unlock License Flow (under distributed lock, saga-ordered)
 
 - **Board reset/respec**: Allow owners to reset all unlocked licenses on a board, returning LP and removing items. Would require a new endpoint, contract template for refund execution, and inventory bulk-delete.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/356 -->
-- **Board sharing/copying**: Developer-only endpoint for cloning NPC progression. Skip contracts (admin tooling), create items directly, publish single `license.board.cloned` event. Design decisions resolved — see [#357](https://github.com/beyond-immersion/bannou-service/issues/357) for details.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/357 -->
+- ~~**Board sharing/copying**: Developer-only endpoint for cloning NPC progression.~~ FIXED: Implemented `CloneBoardAsync` — reads unlock state from source board, creates new board for target owner, bulk-creates item instances with `ItemOriginType.Spawn`. Skips contracts entirely (admin tooling). Publishes single `license-board.cloned` event. Validates target owner type, uniqueness, max boards. Cleanup on item creation failure. See [#357](https://github.com/beyond-immersion/bannou-service/issues/357).
 - ~~**Resource reference integration**: Register boards as references to characters via lib-resource for proper cleanup coordination instead of direct event handling.~~ FIXED: Added `x-references` to schema, generated reference tracking helpers, implemented `CleanupByOwnerAsync` endpoint, registered cleanup callbacks in plugin startup, removed direct `character.deleted` event subscription.
 - ~~**Achievement integration**: Publish events when specific board completion thresholds are reached.~~ CLOSED: Not a License concern. License already publishes `license.unlocked` events with all data needed for milestone derivation. Achievement integration belongs in Analytics (Source → Analytics → Achievement pipeline). See [#358](https://github.com/beyond-immersion/bannou-service/issues/358).
 - ~~**Polymorphic ownership**: Replace `characterId` with `ownerType` + `ownerId` to support non-character boards.~~ FIXED: Implemented polymorphic ownership with `ownerType` (opaque string) + `ownerId` (Guid) + `realmId` (nullable). Templates declare `allowedOwnerTypes` with two-gate validation (template creation + board creation). Owner type mapping functions bridge to ContainerOwnerType, WalletOwnerType, and EntityType. Realm context stored at board creation time — no character load during unlock. LP check returns `null` for unmappable owner types. Day-one character x-references via lib-resource; other owner types deferred. See [#368](https://github.com/beyond-immersion/bannou-service/issues/368).
@@ -312,6 +314,6 @@ No known bugs at this time.
 |-------|--------|---------|
 | [#355](https://github.com/beyond-immersion/bannou-service/issues/355) | Fixed | Removed unused `license-board.updated` from event publications |
 | [#356](https://github.com/beyond-immersion/bannou-service/issues/356) | Open (needs game design) | Board reset/respec — refund %, partial vs full, cooldown |
-| [#357](https://github.com/beyond-immersion/bannou-service/issues/357) | Open (design resolved) | Board clone for NPC progression — implementation needed |
+| [#357](https://github.com/beyond-immersion/bannou-service/issues/357) | Fixed | Board clone for NPC progression — `CloneBoardAsync` with bulk item creation, event publishing, cleanup on failure |
 | [#360](https://github.com/beyond-immersion/bannou-service/issues/360) | Fixed | Saga-ordered unlock flow with item-before-contract compensation |
 | [#368](https://github.com/beyond-immersion/bannou-service/issues/368) | Fixed | Polymorphic ownership (OwnerType + OwnerId + RealmId) with two-gate validation, owner type mapping, and nullable LP checks |
