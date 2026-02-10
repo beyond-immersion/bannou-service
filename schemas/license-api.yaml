@@ -80,7 +80,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '400':
-          description: Invalid request (validation error)        '404':
+          description: Invalid request (validation error)
+        '404':
           description: Referenced game service or contract template not found
   /license/board-template/get:
     post:
@@ -184,7 +185,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '404':
-          description: Board template not found        '409':
+          description: Board template not found
+        '409':
           description: Active board instances exist for this template
   # ===========================================================================
   # License Definition Management (5 endpoints)
@@ -218,8 +220,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/LicenseDefinitionResponse'
         '400':
-          description: Invalid request (position out of bounds, invalid item template)        '404':
-          description: Board template or item template not found        '409':
+          description: Invalid request (position out of bounds, invalid item template)
+        '404':
+          description: Board template or item template not found
+        '409':
           description: Duplicate code or position, or max definitions exceeded
   /license/definition/get:
     post:
@@ -324,7 +328,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/LicenseDefinitionResponse'
         '404':
-          description: Board template or license definition not found        '409':
+          description: Board template or license definition not found
+        '409':
           description: License is unlocked by active board instances
   # ===========================================================================
   # Board Instance Management (4 endpoints)
@@ -359,8 +364,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/BoardResponse'
         '400':
-          description: Invalid request (inactive template)        '404':
-          description: Character, game service, or board template not found        '409':
+          description: Invalid request (inactive template)
+        '404':
+          description: Character, game service, or board template not found
+        '409':
           description: Duplicate board or max boards per character exceeded
   /license/board/get:
     post:
@@ -471,9 +478,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/UnlockLicenseResponse'
         '400':
-          description: Not adjacent, prerequisites not met, or insufficient LP        '404':
-          description: Board or license definition not found        '409':
-          description: License already unlocked        '500':
+          description: Not adjacent, prerequisites not met, or insufficient LP
+        '404':
+          description: Board or license definition not found
+        '409':
+          description: License already unlocked
+        '500':
           description: Contract execution failed
   /license/check-unlockable:
     post:
@@ -557,7 +567,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/SeedBoardTemplateResponse'
         '400':
-          description: Invalid definitions (out of bounds, duplicates)        '404':
+          description: Invalid definitions (out of bounds, duplicates)
+        '404':
           description: Board template not found
   # ===========================================================================
   # Board Clone (1 endpoint)
@@ -592,8 +603,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/CloneBoardResponse'
         '400':
-          description: Invalid request (owner type not allowed, missing realm for character)        '404':
-          description: Source board, target owner (character), or template not found        '409':
+          description: Invalid request (owner type not allowed, missing realm for character)
+        '404':
+          description: Source board, target owner (character), or template not found
+        '409':
           description: Target already has a board for this template, or max boards exceeded
   # ===========================================================================
   # Resource Cleanup (1 endpoint)

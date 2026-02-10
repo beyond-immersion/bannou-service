@@ -532,22 +532,14 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 400)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Invalid request (validation error)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid request (validation error)", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Referenced game service or contract template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Referenced game service or contract template not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -635,12 +627,8 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board template not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -812,12 +800,8 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board template not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -906,22 +890,14 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board template not found", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Active board instances exist for this template", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Active board instances exist for this template", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1012,32 +988,20 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 400)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Invalid request (position out of bounds, invalid item template)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid request (position out of bounds, invalid item template)", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template or item template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board template or item template not found", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Duplicate code or position, or max definitions exceeded", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Duplicate code or position, or max definitions exceeded", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1125,12 +1089,8 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template or license definition not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board template or license definition not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1218,12 +1178,8 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board template not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1312,12 +1268,8 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template or license definition not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board template or license definition not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1406,22 +1358,14 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template or license definition not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board template or license definition not found", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("License is unlocked by active board instances", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("License is unlocked by active board instances", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1513,32 +1457,20 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 400)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Invalid request (inactive template)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid request (inactive template)", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Character, game service, or board template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Character, game service, or board template not found", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Duplicate board or max boards per character exceeded", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Duplicate board or max boards per character exceeded", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1626,12 +1558,8 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1803,12 +1731,8 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1900,42 +1824,26 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 400)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Not adjacent, prerequisites not met, or insufficient LP", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Not adjacent, prerequisites not met, or insufficient LP", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board or license definition not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board or license definition not found", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("License already unlocked", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("License already unlocked", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 500)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Contract execution failed", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Contract execution failed", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -2025,12 +1933,8 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board or license definition not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board or license definition not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -2120,12 +2024,8 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -2214,22 +2114,14 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 400)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Invalid definitions (out of bounds, duplicates)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid definitions (out of bounds, duplicates)", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Board template not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -2321,32 +2213,20 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 400)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Invalid request (owner type not allowed, missing realm for character)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid request (owner type not allowed, missing realm for character)", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Source board, target owner (character), or template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Source board, target owner (character), or template not found", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Target already has a board for this template, or max boards exceeded", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Target already has a board for this template, or max boards exceeded", status_, responseText_, headers_, null);
                     }
                     else
                     {

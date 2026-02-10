@@ -138,7 +138,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ContactResponse'
         '400':
-          description: Invalid form data        '429':
+          description: Invalid form data
+        '429':
           description: Too many requests
   /website/account/profile:
     get:

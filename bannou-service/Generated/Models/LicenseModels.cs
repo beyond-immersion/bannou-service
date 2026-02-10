@@ -1457,49 +1457,6 @@ public partial class CleanupByOwnerResponse
 
 }
 
-/// <summary>
-/// Standard error response format
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ErrorResponse
-{
-
-    /// <summary>
-    /// Error code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Error { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable error message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Message { get; set; } = default!;
-
-    /// <summary>
-    /// Additional error context
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("details")]
-    public object? Details { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
 
 
 #pragma warning restore  108

@@ -408,7 +408,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfirmReleaseResponse'
         '400':
-          description: Confirmation failed        '404':
+          description: Confirmation failed
+        '404':
           description: Escrow not found
   /escrow/confirm-refund:
     post:
@@ -436,7 +437,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfirmRefundResponse'
         '400':
-          description: Confirmation failed        '404':
+          description: Confirmation failed
+        '404':
           description: Escrow not found
   # ===========================================================================
   # Arbiter (1 endpoint)
