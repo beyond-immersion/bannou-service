@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.License;
 
@@ -161,14 +176,15 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> RemoveLicenseDefinitionAsync(RemoveLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Create a board instance for a character
+    /// Create a board instance for an owner
     /// </summary>
 
     /// <remarks>
-    /// Create a board instance for a character from a board template. Validates character
-    /// <br/>exists, game service matches, and no duplicate board exists (one board per template
-    /// <br/>per character). Creates an inventory container (slot_only, maxSlots = gridWidth *
-    /// <br/>gridHeight) to hold unlocked license items.
+    /// Create a board instance for an owner from a board template. Validates the owner type
+    /// <br/>is in the template's allowedOwnerTypes, game service matches, and no duplicate board
+    /// <br/>exists (one board per template per owner). For character owners, validates the character
+    /// <br/>exists and resolves realm context. Creates an inventory container (slot_only,
+    /// <br/>maxSlots = gridWidth * gridHeight) to hold unlocked license items.
     /// </remarks>
 
     /// <returns>Board created successfully</returns>
@@ -188,16 +204,16 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> GetBoardAsync(GetBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// List boards for a character
+    /// List boards for an owner
     /// </summary>
 
     /// <remarks>
-    /// List all board instances for a character, with optional game service filter.
+    /// List all board instances for an owner (by ownerType + ownerId), with optional game service filter.
     /// </remarks>
 
     /// <returns>Boards retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardsByCharacterResponse>> ListBoardsByCharacterAsync(ListBoardsByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardsByOwnerResponse>> ListBoardsByOwnerAsync(ListBoardsByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Delete a board instance
@@ -270,20 +286,20 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedBoardTemplateResponse>> SeedBoardTemplateAsync(SeedBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Cleanup boards referencing a deleted character
+    /// Cleanup boards referencing a deleted owner
     /// </summary>
 
     /// <remarks>
-    /// Called by lib-resource cleanup coordination when a character is deleted.
-    /// <br/>Deletes all board instances for the specified character, destroying their
-    /// <br/>inventory containers and all contained license items.
+    /// Called by lib-resource cleanup coordination when an owner entity is deleted.
+    /// <br/>Deletes all board instances for the specified owner (ownerType + ownerId),
+    /// <br/>destroying their inventory containers and all contained license items.
     /// <br/>This endpoint is designed for internal service-to-service calls during
     /// <br/>cascading resource cleanup.
     /// </remarks>
 
     /// <returns>Cleanup completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByOwnerResponse>> CleanupByOwnerAsync(CleanupByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -504,13 +520,14 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Create a board instance for a character
+    /// Create a board instance for an owner
     /// </summary>
     /// <remarks>
-    /// Create a board instance for a character from a board template. Validates character
-    /// <br/>exists, game service matches, and no duplicate board exists (one board per template
-    /// <br/>per character). Creates an inventory container (slot_only, maxSlots = gridWidth *
-    /// <br/>gridHeight) to hold unlocked license items.
+    /// Create a board instance for an owner from a board template. Validates the owner type
+    /// <br/>is in the template's allowedOwnerTypes, game service matches, and no duplicate board
+    /// <br/>exists (one board per template per owner). For character owners, validates the character
+    /// <br/>exists and resolves realm context. Creates an inventory container (slot_only,
+    /// <br/>maxSlots = gridWidth * gridHeight) to hold unlocked license items.
     /// </remarks>
     /// <returns>Board created successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("license/board/create")]
@@ -539,18 +556,18 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// List boards for a character
+    /// List boards for an owner
     /// </summary>
     /// <remarks>
-    /// List all board instances for a character, with optional game service filter.
+    /// List all board instances for an owner (by ownerType + ownerId), with optional game service filter.
     /// </remarks>
     /// <returns>Boards retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("license/board/list-by-character")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("license/board/list-by-owner")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardsByCharacterResponse>> ListBoardsByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBoardsByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardsByOwnerResponse>> ListBoardsByOwner([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBoardsByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListBoardsByCharacterAsync(body, cancellationToken);
+        var (statusCode, result) = await _implementation.ListBoardsByOwnerAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -645,22 +662,22 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Cleanup boards referencing a deleted character
+    /// Cleanup boards referencing a deleted owner
     /// </summary>
     /// <remarks>
-    /// Called by lib-resource cleanup coordination when a character is deleted.
-    /// <br/>Deletes all board instances for the specified character, destroying their
-    /// <br/>inventory containers and all contained license items.
+    /// Called by lib-resource cleanup coordination when an owner entity is deleted.
+    /// <br/>Deletes all board instances for the specified owner (ownerType + ownerId),
+    /// <br/>destroying their inventory containers and all contained license items.
     /// <br/>This endpoint is designed for internal service-to-service calls during
     /// <br/>cascading resource cleanup.
     /// </remarks>
     /// <returns>Cleanup completed</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("license/cleanup-by-character")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("license/cleanup-by-owner")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByOwnerResponse>> CleanupByOwner([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
+        var (statusCode, result) = await _implementation.CleanupByOwnerAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

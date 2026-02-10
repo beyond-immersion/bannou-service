@@ -105,8 +105,8 @@ public partial class LicenseService
                     SourceType = "license-board",
                     OnDeleteAction = OnDeleteAction.CASCADE,
                     ServiceName = "license",
-                    CallbackEndpoint = "/license/cleanup-by-character",
-                    PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+                    CallbackEndpoint = "/license/cleanup-by-owner",
+                    PayloadTemplate = "{\"ownerType\": \"character\", \"ownerId\": \"{{resourceId}}\"}",
                     Description = "Cleanup license-board entities referencing deleted character"
                 },
                 cancellationToken);

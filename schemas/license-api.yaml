@@ -37,11 +37,11 @@ info:
   x-references:
     - target: character
       sourceType: license-board
-      field: characterId
+      field: ownerId
       onDelete: cascade
       cleanup:
-        endpoint: /license/cleanup-by-character
-        payloadTemplate: '{"characterId": "{{resourceId}}"}'
+        endpoint: /license/cleanup-by-owner
+        payloadTemplate: '{"ownerType": "character", "ownerId": "{{resourceId}}"}'
 x-service-layer: GameFeatures
 
 servers:
@@ -405,12 +405,13 @@ paths:
       operationId: createBoard
       tags:
       - Board
-      summary: Create a board instance for a character
+      summary: Create a board instance for an owner
       description: |
-        Create a board instance for a character from a board template. Validates character
-        exists, game service matches, and no duplicate board exists (one board per template
-        per character). Creates an inventory container (slot_only, maxSlots = gridWidth *
-        gridHeight) to hold unlocked license items.
+        Create a board instance for an owner from a board template. Validates the owner type
+        is in the template's allowedOwnerTypes, game service matches, and no duplicate board
+        exists (one board per template per owner). For character owners, validates the character
+        exists and resolves realm context. Creates an inventory container (slot_only,
+        maxSlots = gridWidth * gridHeight) to hold unlocked license items.
       x-permissions:
       - role: user
         states: {}
@@ -476,13 +477,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /license/board/list-by-character:
+  /license/board/list-by-owner:
     post:
-      operationId: listBoardsByCharacter
+      operationId: listBoardsByOwner
       tags:
       - Board
-      summary: List boards for a character
-      description: List all board instances for a character, with optional game service filter.
+      summary: List boards for an owner
+      description: List all board instances for an owner (by ownerType + ownerId), with optional game service filter.
       x-permissions:
       - role: user
         states: {}
@@ -491,14 +492,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ListBoardsByCharacterRequest'
+              $ref: '#/components/schemas/ListBoardsByOwnerRequest'
       responses:
         '200':
           description: Boards retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListBoardsByCharacterResponse'
+                $ref: '#/components/schemas/ListBoardsByOwnerResponse'
 
   /license/board/delete:
     post:
@@ -697,16 +698,16 @@ paths:
   # Resource Cleanup (1 endpoint)
   # ===========================================================================
 
-  /license/cleanup-by-character:
+  /license/cleanup-by-owner:
     post:
-      operationId: cleanupByCharacter
+      operationId: cleanupByOwner
       tags:
       - Cleanup
-      summary: Cleanup boards referencing a deleted character
+      summary: Cleanup boards referencing a deleted owner
       description: |
-        Called by lib-resource cleanup coordination when a character is deleted.
-        Deletes all board instances for the specified character, destroying their
-        inventory containers and all contained license items.
+        Called by lib-resource cleanup coordination when an owner entity is deleted.
+        Deletes all board instances for the specified owner (ownerType + ownerId),
+        destroying their inventory containers and all contained license items.
         This endpoint is designed for internal service-to-service calls during
         cascading resource cleanup.
       x-permissions:
@@ -717,14 +718,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CleanupByCharacterRequest'
+              $ref: '#/components/schemas/CleanupByOwnerRequest'
       responses:
         '200':
           description: Cleanup completed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CleanupByCharacterResponse'
+                $ref: '#/components/schemas/CleanupByOwnerResponse'
 
 components:
   schemas:
@@ -856,6 +857,7 @@ components:
       - gridHeight
       - startingNodes
       - boardContractTemplateId
+      - allowedOwnerTypes
       properties:
         gameServiceId:
           type: string
@@ -893,6 +895,12 @@ components:
             - $ref: '#/components/schemas/AdjacencyMode'
           nullable: true
           description: Grid traversal mode. Defaults to eight_way if not specified.
+        allowedOwnerTypes:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild).
 
     GetBoardTemplateRequest:
       type: object
@@ -929,6 +937,13 @@ components:
           type: boolean
           nullable: true
           description: Whether the template is active (can create new board instances)
+        allowedOwnerTypes:
+          type: array
+          nullable: true
+          items:
+            type: string
+          minItems: 1
+          description: Updated allowed owner types. Narrowing checks for existing boards with removed types.
 
     DeleteBoardTemplateRequest:
       type: object
@@ -977,6 +992,7 @@ components:
       - startingNodes
       - boardContractTemplateId
       - adjacencyMode
+      - allowedOwnerTypes
       - isActive
       - createdAt
       properties:
@@ -1013,6 +1029,11 @@ components:
         adjacencyMode:
           $ref: '#/components/schemas/AdjacencyMode'
           description: Grid traversal mode for this template
+        allowedOwnerTypes:
+          type: array
+          items:
+            type: string
+          description: Owner types allowed to create boards from this template
         isActive:
           type: boolean
           description: Whether the template is active (can create new board instances)
@@ -1295,17 +1316,21 @@ components:
 
     CreateBoardRequest:
       type: object
-      description: Request to create a board instance for a character
+      description: Request to create a board instance for an owner entity
       additionalProperties: false
       required:
-      - characterId
+      - ownerType
+      - ownerId
       - boardTemplateId
       - gameServiceId
       properties:
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity that owns this board (e.g., character, account, realm, guild)
+        ownerId:
           type: string
           format: uuid
-          description: Character to create the board for
+          description: ID of the entity that owns this board
         boardTemplateId:
           type: string
           format: uuid
@@ -1314,6 +1339,11 @@ components:
           type: string
           format: uuid
           description: Game service context for validation
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for item creation. Required for character owners (validated against character realm). For realm owners, must equal ownerId. Null for realm-agnostic boards.
 
     GetBoardRequest:
       type: object
@@ -1339,17 +1369,21 @@ components:
           format: uuid
           description: Board instance to delete
 
-    ListBoardsByCharacterRequest:
+    ListBoardsByOwnerRequest:
       type: object
-      description: Request to list board instances for a character
+      description: Request to list board instances for an owner entity
       additionalProperties: false
       required:
-      - characterId
+      - ownerType
+      - ownerId
       properties:
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity that owns the boards
+        ownerId:
           type: string
           format: uuid
-          description: Character to list boards for
+          description: Entity to list boards for
         gameServiceId:
           type: string
           format: uuid
@@ -1362,7 +1396,8 @@ components:
       additionalProperties: false
       required:
       - boardId
-      - characterId
+      - ownerType
+      - ownerId
       - boardTemplateId
       - gameServiceId
       - containerId
@@ -1372,10 +1407,18 @@ components:
           type: string
           format: uuid
           description: Unique board instance identifier
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity that owns this board
+        ownerId:
           type: string
           format: uuid
-          description: Character this board belongs to
+          description: Entity that owns this board
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for this board. Null for realm-agnostic boards.
         boardTemplateId:
           type: string
           format: uuid
@@ -1393,9 +1436,9 @@ components:
           format: date-time
           description: When this board instance was created
 
-    ListBoardsByCharacterResponse:
+    ListBoardsByOwnerResponse:
       type: object
-      description: List of board instances for a character
+      description: List of board instances for an owner entity
       additionalProperties: false
       required:
       - boards
@@ -1404,7 +1447,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BoardResponse'
-          description: Board instances for this character
+          description: Board instances for this owner
 
     # ==========================================================================
     # Request/Response Models - Gameplay
@@ -1480,7 +1523,6 @@ components:
       - unlockable
       - adjacencyMet
       - prerequisitesMet
-      - lpSufficient
       - requiredLp
       properties:
         unlockable:
@@ -1494,11 +1536,12 @@ components:
           description: Whether all non-adjacent prerequisites are unlocked
         lpSufficient:
           type: boolean
-          description: Whether the character has enough LP
+          nullable: true
+          description: Whether the owner has enough LP. Null if LP check is not applicable for this owner type.
         currentLp:
           type: number
           nullable: true
-          description: Current LP balance of the character (null if balance check failed)
+          description: Current LP balance of the owner (null if balance check failed or not applicable)
         requiredLp:
           type: integer
           description: LP cost for this license
@@ -1521,7 +1564,8 @@ components:
       additionalProperties: false
       required:
       - boardId
-      - characterId
+      - ownerType
+      - ownerId
       - boardTemplateId
       - gridWidth
       - gridHeight
@@ -1531,10 +1575,13 @@ components:
           type: string
           format: uuid
           description: Board instance identifier
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity that owns this board (e.g., character, account, guild)
+        ownerId:
           type: string
           format: uuid
-          description: Character this board belongs to
+          description: ID of the entity that owns this board
         boardTemplateId:
           type: string
           format: uuid
@@ -1555,30 +1602,38 @@ components:
     # Request/Response Models - Resource Cleanup
     # ==========================================================================
 
-    CleanupByCharacterRequest:
+    CleanupByOwnerRequest:
       type: object
-      description: Request to cleanup all boards for a deleted character
+      description: Request to cleanup all boards for a deleted owner entity
       additionalProperties: false
       required:
-      - characterId
+      - ownerType
+      - ownerId
       properties:
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity whose boards should be cleaned up
+        ownerId:
           type: string
           format: uuid
-          description: Character whose boards should be cleaned up
+          description: ID of the entity whose boards should be cleaned up
 
-    CleanupByCharacterResponse:
+    CleanupByOwnerResponse:
       type: object
-      description: Result of character board cleanup
+      description: Result of owner board cleanup
       additionalProperties: false
       required:
-      - characterId
+      - ownerType
+      - ownerId
       - boardsDeleted
       properties:
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity that was cleaned up
+        ownerId:
           type: string
           format: uuid
-          description: Character that was cleaned up
+          description: ID of the entity that was cleaned up
         boardsDeleted:
           type: integer
           description: Number of boards deleted during cleanup

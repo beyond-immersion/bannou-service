@@ -156,7 +156,8 @@ components:
       - eventId
       - timestamp
       - boardId
-      - characterId
+      - ownerType
+      - ownerId
       - boardTemplateId
       - gameServiceId
       - containerId
@@ -170,23 +171,31 @@ components:
           type: string
           format: uuid
           description: "Unique board instance identifier"
-        characterId: &id012
+        ownerType: &id012
+          type: string
+          description: "Type of entity that owns this board"
+        ownerId: &id013
           type: string
           format: uuid
-          description: "Character this board belongs to"
-        boardTemplateId: &id013
+          description: "Entity that owns this board"
+        realmId: &id014
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm context for this board"
+        boardTemplateId: &id015
           type: string
           format: uuid
           description: "Board template this instance was created from"
-        gameServiceId: &id014
+        gameServiceId: &id016
           type: string
           format: uuid
           description: "Game service this board belongs to"
-        containerId: &id015
+        containerId: &id017
           type: string
           format: uuid
           description: "Inventory container holding unlocked license items"
-        createdAt: &id016
+        createdAt: &id018
           type: string
           format: date-time
           description: "When this board instance was created"
@@ -201,7 +210,8 @@ components:
       - eventId
       - timestamp
       - boardId
-      - characterId
+      - ownerType
+      - ownerId
       - boardTemplateId
       - gameServiceId
       - containerId
@@ -213,11 +223,13 @@ components:
           default: license-board.updated
           description: 'Event type identifier: license-board.updated'
         boardId: *id011
-        characterId: *id012
-        boardTemplateId: *id013
-        gameServiceId: *id014
-        containerId: *id015
-        createdAt: *id016
+        ownerType: *id012
+        ownerId: *id013
+        realmId: *id014
+        boardTemplateId: *id015
+        gameServiceId: *id016
+        containerId: *id017
+        createdAt: *id018
         changedFields:
           type: array
           items:
@@ -234,7 +246,8 @@ components:
       - eventId
       - timestamp
       - boardId
-      - characterId
+      - ownerType
+      - ownerId
       - boardTemplateId
       - gameServiceId
       - containerId
@@ -245,11 +258,13 @@ components:
           default: license-board.deleted
           description: 'Event type identifier: license-board.deleted'
         boardId: *id011
-        characterId: *id012
-        boardTemplateId: *id013
-        gameServiceId: *id014
-        containerId: *id015
-        createdAt: *id016
+        ownerType: *id012
+        ownerId: *id013
+        realmId: *id014
+        boardTemplateId: *id015
+        gameServiceId: *id016
+        containerId: *id017
+        createdAt: *id018
         deletedReason:
           type: string
           nullable: true

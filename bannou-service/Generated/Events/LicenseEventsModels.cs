@@ -78,12 +78,20 @@ public partial class LicenseUnlockedEvent
     public System.Guid BoardId { get; set; } = default!;
 
     /// <summary>
-    /// Character who unlocked the license
+    /// Type of entity that owns the board
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public string OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Entity that owns the board
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Game service context
@@ -165,12 +173,20 @@ public partial class LicenseUnlockFailedEvent
     public System.Guid BoardId { get; set; } = default!;
 
     /// <summary>
-    /// Character who attempted the unlock
+    /// Type of entity that owns the board
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public string OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Entity that owns the board
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
     /// License code that failed to unlock

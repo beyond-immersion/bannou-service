@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.License;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.License;
 
@@ -274,6 +289,15 @@ public partial class CreateBoardTemplateRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AdjacencyMode? AdjacencyMode { get; set; } = default!;
 
+    /// <summary>
+    /// Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    public System.Collections.Generic.ICollection<string> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
 }
 
 /// <summary>
@@ -325,6 +349,13 @@ public partial class UpdateBoardTemplateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool? IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Updated allowed owner types. Narrowing checks for existing boards with removed types.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    public System.Collections.Generic.ICollection<string>? AllowedOwnerTypes { get; set; } = default!;
 
 }
 
@@ -448,6 +479,14 @@ public partial class BoardTemplateResponse
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AdjacencyMode AdjacencyMode { get; set; } = default!;
+
+    /// <summary>
+    /// Owner types allowed to create boards from this template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
     /// Whether the template is active (can create new board instances)
@@ -847,19 +886,27 @@ public partial class ListLicenseDefinitionsResponse
 }
 
 /// <summary>
-/// Request to create a board instance for a character
+/// Request to create a board instance for an owner entity
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateBoardRequest
 {
 
     /// <summary>
-    /// Character to create the board for
+    /// Type of entity that owns this board (e.g., character, account, realm, guild)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public string OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity that owns this board
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Board template to instantiate
@@ -876,6 +923,12 @@ public partial class CreateBoardRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm context for item creation. Required for character owners (validated against character realm). For realm owners, must equal ownerId. Null for realm-agnostic boards.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
 
 }
 
@@ -914,19 +967,27 @@ public partial class DeleteBoardRequest
 }
 
 /// <summary>
-/// Request to list board instances for a character
+/// Request to list board instances for an owner entity
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ListBoardsByCharacterRequest
+public partial class ListBoardsByOwnerRequest
 {
 
     /// <summary>
-    /// Character to list boards for
+    /// Type of entity that owns the boards
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public string OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Entity to list boards for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Optional filter by game service
@@ -952,12 +1013,26 @@ public partial class BoardResponse
     public System.Guid BoardId { get; set; } = default!;
 
     /// <summary>
-    /// Character this board belongs to
+    /// Type of entity that owns this board
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public string OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Entity that owns this board
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm context for this board. Null for realm-agnostic boards.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
     /// Board template this instance was created from
@@ -994,14 +1069,14 @@ public partial class BoardResponse
 }
 
 /// <summary>
-/// List of board instances for a character
+/// List of board instances for an owner entity
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ListBoardsByCharacterResponse
+public partial class ListBoardsByOwnerResponse
 {
 
     /// <summary>
-    /// Board instances for this character
+    /// Board instances for this owner
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("boards")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -1135,13 +1210,13 @@ public partial class CheckUnlockableResponse
     public bool PrerequisitesMet { get; set; } = default!;
 
     /// <summary>
-    /// Whether the character has enough LP
+    /// Whether the owner has enough LP. Null if LP check is not applicable for this owner type.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lpSufficient")]
-    public bool LpSufficient { get; set; } = default!;
+    public bool? LpSufficient { get; set; } = default!;
 
     /// <summary>
-    /// Current LP balance of the character (null if balance check failed)
+    /// Current LP balance of the owner (null if balance check failed or not applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentLp")]
     public double? CurrentLp { get; set; } = default!;
@@ -1187,12 +1262,20 @@ public partial class BoardStateResponse
     public System.Guid BoardId { get; set; } = default!;
 
     /// <summary>
-    /// Character this board belongs to
+    /// Type of entity that owns this board (e.g., character, account, guild)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public string OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity that owns this board
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Board template this instance was created from
@@ -1225,36 +1308,52 @@ public partial class BoardStateResponse
 }
 
 /// <summary>
-/// Request to cleanup all boards for a deleted character
+/// Request to cleanup all boards for a deleted owner entity
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CleanupByCharacterRequest
+public partial class CleanupByOwnerRequest
 {
 
     /// <summary>
-    /// Character whose boards should be cleaned up
+    /// Type of entity whose boards should be cleaned up
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public string OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity whose boards should be cleaned up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Result of character board cleanup
+/// Result of owner board cleanup
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CleanupByCharacterResponse
+public partial class CleanupByOwnerResponse
 {
 
     /// <summary>
-    /// Character that was cleaned up
+    /// Type of entity that was cleaned up
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public string OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity that was cleaned up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Number of boards deleted during cleanup
@@ -1299,9 +1398,9 @@ public partial class ErrorResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 

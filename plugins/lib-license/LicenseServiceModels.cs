@@ -59,6 +59,9 @@ internal class BoardTemplateModel
     /// <summary>Grid traversal mode for adjacency checks.</summary>
     public AdjacencyMode AdjacencyMode { get; set; }
 
+    /// <summary>Owner types allowed to create boards from this template.</summary>
+    public List<string> AllowedOwnerTypes { get; set; } = new();
+
     /// <summary>Whether this template is available for new board creation.</summary>
     public bool IsActive { get; set; } = true;
 
@@ -110,16 +113,22 @@ internal class LicenseDefinitionModel
 }
 
 /// <summary>
-/// Internal storage model for board instances (character-specific board).
-/// Links a character to a board template with an inventory container.
+/// Internal storage model for board instances (owner-specific board).
+/// Links an owner (ownerType + ownerId) to a board template with an inventory container.
 /// </summary>
 internal class BoardInstanceModel
 {
     /// <summary>Unique identifier for the board instance.</summary>
     public Guid BoardId { get; set; }
 
-    /// <summary>Character who owns this board.</summary>
-    public Guid CharacterId { get; set; }
+    /// <summary>Type of entity that owns this board (e.g., character, account, guild).</summary>
+    public string OwnerType { get; set; } = string.Empty;
+
+    /// <summary>Entity that owns this board.</summary>
+    public Guid OwnerId { get; set; }
+
+    /// <summary>Realm context for item creation. Null for realm-agnostic boards.</summary>
+    public Guid? RealmId { get; set; }
 
     /// <summary>Board template this instance was created from.</summary>
     public Guid BoardTemplateId { get; set; }

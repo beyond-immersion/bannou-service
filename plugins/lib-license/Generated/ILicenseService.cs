@@ -90,9 +90,9 @@ public partial interface ILicenseService : IBannouService
         Task<(StatusCodes, BoardResponse?)> GetBoardAsync(GetBoardRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// ListBoardsByCharacter operation
+        /// ListBoardsByOwner operation
         /// </summary>
-        Task<(StatusCodes, ListBoardsByCharacterResponse?)> ListBoardsByCharacterAsync(ListBoardsByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, ListBoardsByOwnerResponse?)> ListBoardsByOwnerAsync(ListBoardsByOwnerRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// DeleteBoard operation
@@ -120,8 +120,8 @@ public partial interface ILicenseService : IBannouService
         Task<(StatusCodes, SeedBoardTemplateResponse?)> SeedBoardTemplateAsync(SeedBoardTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// CleanupByCharacter operation
+        /// CleanupByOwner operation
         /// </summary>
-        Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, CleanupByOwnerResponse?)> CleanupByOwnerAsync(CleanupByOwnerRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

@@ -54,10 +54,10 @@ public class LicenseServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Maximum number of active boards a single character can have
-    /// Environment variable: LICENSE_MAX_BOARDS_PER_CHARACTER
+    /// Maximum number of active boards a single owner entity can have
+    /// Environment variable: LICENSE_MAX_BOARDS_PER_OWNER
     /// </summary>
-    public int MaxBoardsPerCharacter { get; set; } = 10;
+    public int MaxBoardsPerOwner { get; set; } = 10;
 
     /// <summary>
     /// Maximum license definitions per board template

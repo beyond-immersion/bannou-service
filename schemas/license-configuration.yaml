@@ -14,11 +14,11 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    maxBoardsPerCharacter:
+    maxBoardsPerOwner:
       type: integer
-      env: LICENSE_MAX_BOARDS_PER_CHARACTER
+      env: LICENSE_MAX_BOARDS_PER_OWNER
       default: 10
-      description: Maximum number of active boards a single character can have
+      description: Maximum number of active boards a single owner entity can have
     maxDefinitionsPerBoard:
       type: integer
       env: LICENSE_MAX_DEFINITIONS_PER_BOARD

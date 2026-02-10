@@ -247,9 +247,9 @@ public static class LicensePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/license/board/list-by-character",
+            Path = "/license/board/list-by-owner",
             Method = ServiceEndpointMethod.POST,
-            Description = "listBoardsByCharacter",
+            Description = "listBoardsByOwner",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -337,9 +337,9 @@ public static class LicensePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/license/cleanup-by-character",
+            Path = "/license/cleanup-by-owner",
             Method = ServiceEndpointMethod.POST,
-            Description = "cleanupByCharacter",
+            Description = "cleanupByOwner",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
