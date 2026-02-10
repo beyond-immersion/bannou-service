@@ -2006,17 +2006,20 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act - creating the service should register event consumers
         var service = CreateService();
 
-        // Assert
+        // Assert - verify the underlying Register<TEvent> interface method is called
+        // (RegisterHandler is an extension method that delegates to Register)
         _mockEventConsumer.Verify(
-            ec => ec.RegisterHandler<ICollectionService, CharacterDeletedEvent>(
+            ec => ec.Register<CharacterDeletedEvent>(
                 "character.deleted",
-                It.IsAny<Func<ICollectionService, CharacterDeletedEvent, Task>>()),
+                It.IsAny<string>(),
+                It.IsAny<Func<IServiceProvider, CharacterDeletedEvent, Task>>()),
             Times.Once);
 
         _mockEventConsumer.Verify(
-            ec => ec.RegisterHandler<ICollectionService, AccountDeletedEvent>(
+            ec => ec.Register<AccountDeletedEvent>(
                 "account.deleted",
-                It.IsAny<Func<ICollectionService, AccountDeletedEvent, Task>>()),
+                It.IsAny<string>(),
+                It.IsAny<Func<IServiceProvider, AccountDeletedEvent, Task>>()),
             Times.Once);
     }
 

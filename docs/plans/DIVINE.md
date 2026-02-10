@@ -3,108 +3,45 @@
 > **Source**: Synthesized from `~/repos/arcadia-kb/Claude/systems-mining-2026-02-10/` (5 agent reports + synthesis)
 > **Related**: `docs/plugins/PUPPETMASTER.md`, `docs/plugins/ACTOR.md`, `docs/reference/SERVICE-HIERARCHY.md`
 > **Prerequisites**: lib-seed, lib-currency, lib-item, lib-inventory, lib-contract, lib-relationship, lib-actor, lib-puppetmaster must be operational
-> **Status**: DRAFT -- Open questions require human decision before implementation
+> **Status**: APPROVED -- All design decisions resolved
 
 ---
 
-## Open Questions Requiring Human Decision
+## Resolved Design Decisions
 
-These questions must be answered before this plan can be finalized and executed. Each is marked with its impact on the plan.
+All open questions have been resolved. These decisions are final and inform the implementation below.
 
-### Q1: God Entity Ownership -- Who Owns the God Record?
+### Q1: God Entity Ownership -> lib-divine Owns Deity Entities Directly
 
-**Context**: Gods are persistent entities with names, domains, personalities, rivalries, follower counts, and divinity pools. The KB describes them as both world-lore entities and active event-monitoring actors.
+Gods are **completely distinct from characters** -- there are far more differences than similarities. Gods don't have physical bodies, don't belong to realms in the character sense, have domain power, accumulate divinity, and act through their own motivations. They share more in common with the Actors that make characters grow/change, minus all the "humanity/character" parts. A god whispering in someone's ear does so **through the character's own actor**, not the character themselves, and to the god's own ends, not the character's. lib-divine owns the DeityModel; each deity has an associated actorId linking to its Actor brain.
 
-**Options**:
-- **(A) lib-divine owns god entities directly** -- Gods are DeityModel records in divine's own state store. Each god also has an associated Actor (event brain type) for behavior, but the canonical identity lives in lib-divine. This is the Quest pattern: Quest owns quest definitions, Contract owns the machinery.
-- **(B) Gods are Characters** -- Gods are special Character records (species: "deity"?) with lib-divine providing the overlay. This reuses Character's CRUD but couples divine to character semantics.
-- **(C) Gods are Actors only** -- No separate entity; the Actor record IS the god. lib-divine provides API sugar over Actor management.
+### Q2: Puppetmaster Integration -> One-Way Dependency (Divine Calls Puppetmaster)
 
-**Recommendation**: **(A)** -- Gods are fundamentally different from characters (they don't have physical bodies, don't belong to a realm in the same way, have domain power, accumulate divinity). lib-divine owns the DeityModel; each deity has an associated actorId linking to its Actor brain.
+lib-divine calls into Puppetmaster to spawn/stop deity watcher actors. This avoids circularity -- if Puppetmaster knew about divine directly, divine would still need to know about Puppetmaster anyway. The one-way call mirrors Puppetmaster's own pattern with Actor. lib-divine owns "what a god is" (domain, divinity, blessings, followers). Puppetmaster owns "how a god acts" (watcher lifecycle, behavior execution, event monitoring). lib-divine registers custom ABML action handlers (e.g., `grant_blessing`, `spend_divinity`) that deity behavior documents invoke.
 
-**Impact**: Determines the primary state store model, CRUD endpoints, and lifecycle events.
+### Q3: DanMachi Leveling Gate -> Deferred
 
-### Q2: Relationship to Puppetmaster Regional Watchers
+Not needed yet -- Character has no leveling mechanic. This is very implementation-specific and will be added when leveling exists. The Variable Provider Factory pattern is documented as the future integration path.
 
-**Context**: VISION.md states "Regional Watchers are the game-system implementation of gods." Puppetmaster already manages regional watcher lifecycle (spawn/stop), resource snapshot caching, and dynamic behavior loading.
+### Q4: God Scoping -> Game-Service-Scoped (No Arcadia-Specific Content)
 
-**Options**:
-- **(A) lib-divine creates watchers via Puppetmaster** -- When a deity is created/activated for a realm, lib-divine calls Puppetmaster to spawn a regional watcher with the deity's ABML behavior document. Puppetmaster owns the Actor lifecycle; lib-divine owns the deity semantics.
-- **(B) lib-divine manages its own watcher lifecycle** -- lib-divine directly creates Actor entities and manages their behavior, bypassing Puppetmaster. This duplicates Puppetmaster's watcher management.
-- **(C) Puppetmaster owns everything, lib-divine is unnecessary** -- Regional watchers ARE gods; Puppetmaster handles all divine logic through ABML behaviors and action handlers.
+Deities are scoped to game services, consistent with every other L2/L4 entity. The service itself contains zero Arcadia-specific content -- Arcadia's 18 Old Gods are seeded via behaviors and templates at deployment time, not baked into lib-divine. The service just needs to support what Arcadia requires with minimal effort (a few behavior docs and item templates).
 
-**Recommendation**: **(A)** -- Clean separation. lib-divine owns "what a god is" (domain, divinity, blessings, followers). Puppetmaster owns "how a god acts" (watcher lifecycle, behavior execution, event monitoring). lib-divine calls Puppetmaster to spawn/stop watchers, and registers custom ABML action handlers (e.g., `grant_blessing`, `spend_divinity`) that the deity's behavior document can invoke.
+### Q5: Divinity as Currency -> Shared "divinity" Currency Type, Per-Entity Wallets
 
-**Impact**: Determines whether lib-divine needs Puppetmaster as a soft dependency or if it manages Actors directly.
+One "divinity" currency definition per game service, with wallets per entity. Gods get wallets, but **humans can also get and use divinity** -- it's used differently but there's no reason it wouldn't be the same currency type (gods give divinity to humans to begin with). God-to-god divinity transfers work naturally as Currency transfers. This gives full Currency primitives (credit, debit, hold, transfer, history, idempotency) for free.
 
-### Q3: DanMachi Blessing Gate -- Is Leveling Hard-Gated?
+### Q6: Blessings -> Existing Item Patterns (#286 / #282)
 
-**Context**: The KB (agent1, Intentional Inequality doc) states "Characters cannot level up without receiving a divine blessing from a deity NPC." This is a DanMachi-inspired mechanic where Greater Blessings = rank increases (exponential divinity cost).
+Blessings map to existing "itemize anything" patterns:
+- **Greater Blessings** (permanent rank-ups, unlocks) -> lib-collection (#286) -- universal content unlock and archive pattern. A Greater Blessing is a permanent unlock entry.
+- **Minor Blessings** (temporary buffs, timed effects) -> Status Inventory (#282) -- status items with contract-based lifecycle. A Minor Blessing is a status item with a duration contract.
 
-**Options**:
-- **(A) Hard gate** -- Character level-up requires an active Greater Blessing. Character service needs to check blessing status before allowing level increase. This requires the Variable Provider Factory pattern (Character defines `ILevelGateProviderFactory`, lib-divine implements it) since Character (L2) cannot depend on Divine (L4).
-- **(B) Soft gate** -- Blessings provide bonus XP multipliers and unlock advanced abilities, but characters can technically level without them (just much slower). No L2 integration needed.
-- **(C) Deferred** -- Start without the leveling gate. Add it later when character leveling is actually implemented (Character service currently has no leveling mechanic).
+lib-divine orchestrates the granting/revoking ceremony (deity evaluation, divinity debit, worthiness check) and delegates the actual blessing storage to whichever pattern fits the tier. This avoids inventing a new storage model.
 
-**Recommendation**: **(C)** for MVP, with the Variable Provider Factory pattern documented as the future integration path. Character leveling isn't implemented yet, so building the gate now would have nothing to gate.
+### Q7: MVP Scope -> Deity + Divinity + Blessings (~18 endpoints)
 
-**Impact**: Determines whether to define `ILevelGateProviderFactory` in bannou-service/ and implement it in lib-divine.
-
-### Q4: The 18 Gods -- Hardcoded or Game-Scoped?
-
-**Context**: The KB describes 18 specific Old Gods for Arcadia (Mnemosyne, Nexius, etc.) with detailed domains and relationships. But Bannou is a platform that supports multiple game services.
-
-**Options**:
-- **(A) Game-service-scoped, Arcadia seeds 18** -- DeityModel includes a gameServiceId. The 18 Arcadia gods are seeded via configuration or API. Other games define their own pantheons.
-- **(B) Global, 18 fixed** -- The 18 gods are universal across all game services.
-
-**Recommendation**: **(A)** -- Consistent with every other L2/L4 entity (items, species, realms, currencies are all game-service-scoped). Arcadia's 18 gods are seeded as initial data.
-
-**Impact**: Minor -- adds gameServiceId to DeityModel and query filters.
-
-### Q5: Divinity as Currency -- Shared or Dedicated Pool?
-
-**Context**: Each god accumulates "divinity" when mortals perform actions in their domain. Gods spend divinity on blessings. The synthesis identifies Currency as the direct mapping.
-
-**Options**:
-- **(A) Each god has a Currency wallet** -- lib-divine creates a currency definition per god (e.g., "divinity_mnemosyne") and a wallet. Divinity credits/debits go through lib-currency, getting transaction history, holds, and idempotency for free.
-- **(B) Divinity is a float field on DeityModel** -- Simple, no external dependency, but loses Currency's distributed lock safety, transaction history, and hold mechanics.
-- **(C) Shared "divinity" currency, per-god wallets** -- One currency type ("divinity"), each god gets a wallet. Simpler currency management but all gods share the same currency definition.
-
-**Recommendation**: **(C)** -- One "divinity" currency definition per game service, with a wallet per deity. This gives full Currency primitives (credit, debit, hold, transfer, history) while keeping currency management simple. God-to-god divinity transfers (e.g., domain disputes) work naturally as Currency transfers.
-
-**Impact**: Determines whether lib-divine creates N currency definitions or 1 per game service.
-
-### Q6: Blessing Representation -- Items or Custom Model?
-
-**Context**: Blessings are tangible things characters receive from gods. The synthesis maps them to Items in a character's inventory.
-
-**Options**:
-- **(A) Blessings are Items in a dedicated "blessing" container** -- lib-divine creates a BlessingTemplate as an Item template (category: "blessing", with stats representing the blessing effects). Characters get a special "divine_blessings" inventory container. Granting a blessing = creating an item instance and placing it in the container.
-- **(B) Blessings are a custom BlessingModel in lib-divine's own state store** -- Full control over blessing semantics but duplicates Item/Inventory's management patterns.
-- **(C) Hybrid: BlessingModel in lib-divine, backed by Item instances** -- lib-divine owns the semantic record (which god, blessing tier, granted date), and creates a corresponding Item instance for game-mechanical effects (stats, buffs).
-
-**Recommendation**: **(A)** -- Pure composability. Blessings ARE items, just a special category. This means blessings automatically work with:
-  - Inventory queries ("show me all my blessings")
-  - Item stats ("this blessing grants +10 wisdom")
-  - Escrow (blessings could theoretically be traded if game design allows)
-  - Save/Load (blessing state persists automatically)
-  - The only divine-specific logic is the granting/revoking ceremony, which lib-divine orchestrates.
-
-**Impact**: Determines primary blessing storage and query patterns.
-
-### Q7: MVP Scope
-
-**Context**: The full divine system encompasses deity management, divinity economy, blessing orchestration, holy magic invocations, domain attention mechanics, god personality/rivalry simulation, follower tracking, and leveling gates. That's a large surface area.
-
-**Options**:
-- **(A) Full system** -- All of the above in one implementation pass.
-- **(B) Deity + Divinity + Blessings** -- Core identity, economy, and primary output. No holy magic, no leveling gate, no god personality simulation (behavior docs handle that). ~15 endpoints.
-- **(C) Deity + Blessings only** -- Even smaller. Divinity tracked as a simple field, not through Currency. ~10 endpoints.
-
-**Recommendation**: **(B)** -- Deity management, divinity economy via Currency, and blessing orchestration via Item/Inventory. This covers the core "gods exist, earn divinity, grant blessings" loop. Holy magic invocations (via Contract) and advanced features come in a follow-up. God personality and attention patterns are ABML behavior concerns, not lib-divine API concerns.
-
-**Impact**: Determines endpoint count, event count, and implementation scope below.
+Core identity, economy, and primary output. No holy magic invocations, no leveling gate, no god personality simulation (ABML behavior docs handle that). God personality and attention patterns are behavior authoring concerns, not lib-divine API concerns.
 
 ---
 
@@ -113,30 +50,33 @@ These questions must be answered before this plan can be finalized and executed.
 The Divine service is a new L4 Game Features plugin that manages the pantheon -- deity entities, divinity economy, and blessing orchestration. It is a thin orchestration layer (like Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver divine game mechanics.
 
 **The composability thesis** (from systems mining synthesis):
-- **God identity** -> DeityModel in lib-divine (owns the entity)
+- **God identity** -> DeityModel in lib-divine (owns the entity -- completely distinct from characters)
 - **God behavior** -> Actor (event brain type) managed via Puppetmaster (owns the how)
 - **God domain power** -> Seed (progressive growth of a deity's influence)
-- **Divinity resource** -> Currency (divine energy pool per god)
-- **Blessings** -> Item + Inventory (tangible effects granted to characters)
+- **Divinity resource** -> Currency (shared "divinity" type, per-entity wallets -- gods AND humans can hold it)
+- **Greater Blessings** -> lib-collection (#286) -- permanent unlocks (rank-ups, ability access)
+- **Minor Blessings** -> Status Inventory (#282) -- temporary buffs with contract lifecycle
 - **Holy magic invocations** -> Contract (micro-agreements between deity and caster) [DEFERRED to follow-up]
 - **God-follower bonds** -> Relationship (deity-character)
 - **God-god rivalries** -> Relationship (deity-deity)
+
+**Critical architectural insight**: Gods influence characters **through the character's own Actor**, not directly. A god deciding to bless or curse a character publishes events that the character's Actor brain consumes and acts upon. The god's Actor (regional watcher) monitors event streams and makes decisions; the character's Actor receives the consequences. This is fundamental -- gods act to their own ends, through intermediaries.
 
 **Why L4**: Divine depends on Currency, Item, Inventory (L2), and Puppetmaster, Behavior (L4). It is optional -- games without divine systems work fine. It orchestrates content from multiple layers. Classic L4 -- optional, feature-rich, maximum connectivity.
 
 **Why not just composable primitives?** The synthesis concluded: "Seed (domain power) + Currency (divinity) + Contract (blessings) gets close but may not be enough." The unique domain logic lib-divine owns:
 1. **Deity-as-entity CRUD** -- gods aren't characters, items, or seeds. They have domains, attention capacity, and follower mechanics.
-2. **Blessing orchestration ceremony** -- the multi-step flow of a god noticing a character, evaluating worthiness, spending divinity, and granting a blessing as an item. No existing primitive handles this workflow.
+2. **Blessing orchestration ceremony** -- the multi-step flow of a god noticing a character, evaluating worthiness, spending divinity, and granting a blessing. No existing primitive handles this workflow.
 3. **Divinity generation rules** -- mapping mortal actions in a domain to divinity credit for the domain's god. This is divine-specific event routing logic.
 4. **Attention economy** -- gods have limited attention capacity and personality-driven patterns for which characters they notice. This feeds into Actor behavior but the attention tracking lives in lib-divine.
 
 **Design principle**: Puppetmaster orchestrates what NPCs experience. Gardener orchestrates what players experience. **Divine orchestrates what gods experience.** Each is a thin L4 layer over shared primitives, with its own domain-specific semantics.
 
+**Zero Arcadia-specific content**: lib-divine is a generic pantheon management service. It knows about deities, domains, divinity, and blessings. It does NOT know about Mnemosyne, Nexius, or any specific god. Arcadia's 18 Old Gods are configured through behaviors and templates at deployment time.
+
 ---
 
 ## Implementation Steps
-
-*Note: This plan assumes Q1=A, Q2=A, Q3=C, Q4=A, Q5=C, Q6=A, Q7=B as the recommended answers. Adjust if decisions differ.*
 
 ### Step 1: Create Schema Files
 
@@ -324,18 +264,18 @@ x-service-configuration:
       default: 1.0
       description: Global multiplier applied to all divinity generation from mortal actions
 
-    # Blessing items
-    BlessingItemCategory:
+    # Blessing integration
+    BlessingCollectionType:
       type: string
-      env: DIVINE_BLESSING_ITEM_CATEGORY
-      default: divine_blessing
-      description: Item category code used when creating blessing item templates
-
-    BlessingContainerCode:
-      type: string
-      env: DIVINE_BLESSING_CONTAINER_CODE
+      env: DIVINE_BLESSING_COLLECTION_TYPE
       default: divine_blessings
-      description: Inventory container code for character blessing storage
+      description: Collection type code for permanent blessings via lib-collection
+
+    BlessingStatusCategory:
+      type: string
+      env: DIVINE_BLESSING_STATUS_CATEGORY
+      default: divine_blessing
+      description: Status category code for temporary blessings via Status Inventory
 
     MaxBlessingsPerCharacter:
       type: integer
@@ -495,7 +435,7 @@ The generator creates the skeleton. Fill in following the GameSessionServicePlug
   1. Register the `deity_domain` seed type via `ISeedClient.RegisterSeedTypeAsync` if it does not already exist. Use the `DeitySeedTypeCode` config property.
   2. Ensure the `divinity` currency definition exists via `ICurrencyClient`. Use the `DivinityCurrencyCode` config property.
   3. Ensure the `deity_follower` and `deity_rivalry` relationship types exist via `IRelationshipClient`. Use config properties.
-  4. Ensure the `divine_blessing` item category exists for blessing items.
+  4. Register blessing collection type and status templates if lib-collection / Status Inventory are available (soft -- skip if not enabled).
 
 ### Step 4: Fill In Internal Models
 
@@ -526,7 +466,7 @@ Partial class of DivineService:
 
 - `HandleCharacterDeletedAsync(CharacterDeletedEvent evt)`:
   1. Query blessings by characterId from `divine-blessings` store
-  2. For each active blessing: revoke it (remove item instance via `IInventoryClient`, update blessing record)
+  2. For each active blessing: revoke it (remove via Collection or Status Inventory as appropriate, update blessing record)
   3. Remove follower relationships via `IRelationshipClient`
   4. Update follower counts on affected deities
   5. Remove character from any deity attention slots
@@ -578,15 +518,15 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 - `DivineServiceConfiguration` - typed config
 - `IEventConsumer` - event handler registration
 - `ICurrencyClient` - divinity wallet management (L2 hard dependency)
-- `IItemClient` - blessing item template/instance management (L2 hard dependency)
-- `IInventoryClient` - blessing container management (L2 hard dependency)
 - `IRelationshipClient` - follower/rivalry bond management (L2 hard dependency)
 - `ICharacterClient` - validate character existence (L2 hard dependency)
 - `IGameServiceClient` - validate game service existence (L2 hard dependency)
 - `IServiceProvider` - for optional L4 soft dependencies
 
 **Soft dependencies** (resolved at runtime via `IServiceProvider`, null-checked):
-- `ISeedClient` - deity domain power seed management (L2 hard in practice, but deferred seed creation is acceptable)
+- `ISeedClient` - deity domain power seed management (L2, deferred seed creation is acceptable)
+- `ICollectionClient` - permanent blessing grants via lib-collection (#286) (L4)
+- `IStatusClient` - temporary blessing grants via Status Inventory (#282) (L4)
 - `IPuppetmasterClient` - spawn deity watcher actors (L4)
 - `IAnalyticsClient` - query domain-relevant score data (L4)
 
@@ -612,8 +552,8 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 | `CreditDivinityAsync` | Validate deity exists. Call `ICurrencyClient.CreditAsync` on deity's wallet. Publish `divine.divinity.credited` event. |
 | `DebitDivinityAsync` | Validate deity exists. Validate sufficient balance via `ICurrencyClient.GetBalanceAsync`. Call `ICurrencyClient.DebitAsync`. Publish `divine.divinity.debited` event. |
 | `GetDivinityHistoryAsync` | Load deity, get walletId, call `ICurrencyClient.GetTransactionHistoryAsync`. |
-| `GrantBlessingAsync` | Lock deity. Validate deity is Active. Validate character exists via `ICharacterClient`. Validate character blessing count < `MaxBlessingsPerCharacter`. Calculate divinity cost from tier using `DefaultDivinityPerBlessingTier` config. Debit divinity from deity wallet. Create item instance via `IItemClient.CreateItemInstanceAsync` with blessing template. Place item in character's blessing container via `IInventoryClient.AddItemAsync`. Create BlessingModel in MySQL. Increment deity follower count if not already a follower. Publish `divine.blessing.granted` event. |
-| `RevokeBlessingAsync` | Lock. Load blessing record. Remove item instance from character's inventory via `IInventoryClient.RemoveItemAsync`. Mark blessing as Revoked with timestamp. Publish `divine.blessing.revoked` event. |
+| `GrantBlessingAsync` | Lock deity. Validate deity is Active. Validate character exists via `ICharacterClient`. Validate character blessing count < `MaxBlessingsPerCharacter`. Calculate divinity cost from tier using `DefaultDivinityPerBlessingTier` config. Debit divinity from deity wallet. **For Greater/Supreme blessings**: grant permanent unlock via lib-collection (#286) pattern. **For Minor/Standard blessings**: grant status item via Status Inventory (#282) pattern with contract-based duration. Create BlessingModel in MySQL linking to the granted item/status. Publish `divine.blessing.granted` event. |
+| `RevokeBlessingAsync` | Lock. Load blessing record. For status-type blessings: remove status item (triggers contract cleanup). For permanent blessings: mark as revoked in collection. Mark BlessingModel as Revoked with timestamp. Publish `divine.blessing.revoked` event. |
 | `ListBlessingsByCharacterAsync` | Paged JSON query on `divine-blessings` by characterId. |
 | `ListBlessingsByDeityAsync` | Paged JSON query on `divine-blessings` by deityId, optional tier filter. |
 | `GetBlessingAsync` | Load from MySQL by blessingId. 404 if not found. |
@@ -730,8 +670,6 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | `IMessageBus` | L0 | Event publishing for all 8+ custom events |
 | `IEventConsumer` | L0 | Event subscription registration for 2 consumed events |
 | `ICurrencyClient` | L2 | Divinity wallet creation, credit, debit, balance, history |
-| `IItemClient` | L2 | Blessing item template and instance creation |
-| `IInventoryClient` | L2 | Blessing container placement, item add/remove |
 | `IRelationshipClient` | L2 | Follower bonds (deity-character), rivalry bonds (deity-deity) |
 | `ICharacterClient` | L2 | Validate character existence for blessings and followers |
 | `IGameServiceClient` | L2 | Validate game service existence for deity scoping |
@@ -741,6 +679,8 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | Dependency | Layer | Usage | Behavior When Missing |
 |------------|-------|-------|-----------------------|
 | `ISeedClient` | L2 | Deity domain power seed creation | Deity created without seed; domain growth tracking disabled |
+| `ICollectionClient` | L4 | Permanent blessing grants (Greater/Supreme tiers, #286) | Permanent blessings unavailable; only temporary blessings work |
+| `IStatusClient` | L4 | Temporary blessing grants (Minor/Standard tiers, #282) | Temporary blessings unavailable; only permanent blessings work |
 | `IPuppetmasterClient` | L4 | Spawn/stop deity watcher actors | Deities have no active behavior; blessings still work via API |
 | `IAnalyticsClient` | L4 | Domain-relevant score queries for divinity generation | Divinity generation from analytics events disabled; manual credit still works |
 
@@ -758,21 +698,22 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | Debit divinity for blessing grants | `ICurrencyClient.DebitAsync` |
 | Query divinity transaction history | `ICurrencyClient.GetTransactionHistoryAsync` |
 
-### Divine -> Item (L2, hard dependency)
+### Divine -> Collection (L4, soft dependency -- #286)
 
 | Interaction | API Call |
 |-------------|----------|
-| Create blessing item instance | `IItemClient.CreateItemInstanceAsync` (template: blessing item code, category: config.BlessingItemCategory) |
-| Destroy blessing item on revoke | `IItemClient.DeleteItemInstanceAsync` |
+| Grant permanent blessing (Greater/Supreme) | `ICollectionClient.GrantEntryAsync` (collection: "divine_blessings", entry: blessing template code) |
+| Revoke permanent blessing | `ICollectionClient.RevokeEntryAsync` or mark as revoked |
+| Check permanent blessings | `ICollectionClient.QueryAsync` by collection type |
 
-### Divine -> Inventory (L2, hard dependency)
+### Divine -> Status Inventory (L4, soft dependency -- #282)
 
 | Interaction | API Call |
 |-------------|----------|
-| Ensure character has blessing container | `IInventoryClient.GetOrCreateContainerAsync` (code: config.BlessingContainerCode) |
-| Place blessing item in container | `IInventoryClient.AddItemAsync` |
-| Remove blessing item on revoke | `IInventoryClient.RemoveItemAsync` |
-| Count active blessings | `IInventoryClient.GetContainerItemsAsync` for MaxBlessingsPerCharacter check |
+| Grant temporary blessing (Minor/Standard) | `IStatusClient.GrantAsync` (status template: blessing code, entity: characterId) |
+| Revoke temporary blessing | `IStatusClient.RemoveAsync` (triggers contract cleanup) |
+| Check active temporary blessings | `IStatusClient.ListAsync` by category "divine_blessing" |
+| Count active blessings (both types) | Query both Collection and Status for `MaxBlessingsPerCharacter` check |
 
 ### Divine -> Relationship (L2, hard dependency)
 
@@ -830,19 +771,19 @@ These are explicitly deferred from the initial implementation:
 
 ---
 
-## Open Design Questions
+## Implementation-Time Design Questions
 
-These are questions identified during plan extraction that need resolution during implementation:
+These are smaller questions that should be resolved during implementation, not blocking the plan:
 
-1. **Blessing item template management**: Does lib-divine create Item templates on startup (one per BlessingTier?) or expect them to already exist? Recommendation: Create them in `OnRunningAsync` if missing, using `BlessingItemCategory` config and tier-specific stat definitions.
+1. **Blessing item/status template management**: Does lib-divine create templates on startup or expect them to pre-exist? Recommendation: Create them in `OnRunningAsync` if missing. Greater/Supreme tiers create collection entry templates (#286); Minor/Standard tiers create status templates (#282).
 
-2. **Divinity cost scaling**: The `DefaultDivinityPerBlessingTier` config provides base costs, but should costs scale with deity follower count, character level, or realm conditions? Start with flat costs per tier; add scaling in follow-up.
+2. **Divinity cost scaling**: Start with flat costs per tier from `DefaultDivinityPerBlessingTier` config. Add scaling (by follower count, realm conditions, etc.) in a follow-up.
 
-3. **Attention slot semantics**: Are attention slots purely internal (the god "notices" characters for behavior purposes) or visible to players? If visible, need client events. Start internal-only.
+3. **Attention slot semantics**: Start internal-only (god "notices" characters for behavior purposes). Add client events in follow-up if players should see divine attention.
 
-4. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs a mapping from analytics categories to DomainCategory. Where does this mapping live? Recommendation: config property `DomainAnalyticsMappings` as a JSON string, or a dedicated mapping state store.
+4. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs analytics-category-to-DomainCategory mapping. Recommendation: config property `DomainAnalyticsMappings` as a JSON string, or a dedicated mapping state store.
 
-5. **Multi-deity follower rules**: Can a character follow multiple deities? If yes, how does this interact with blessing limits? The KB suggests monotheistic tendencies ("a character's patron deity") but doesn't explicitly forbid polytheism. Recommendation: Allow multiple followings; `MaxBlessingsPerCharacter` is the natural limit.
+5. **Multi-deity follower rules**: Allow multiple followings; `MaxBlessingsPerCharacter` is the natural limit. The KB suggests monotheistic tendencies ("a character's patron deity") but doesn't forbid polytheism -- the game design (ABML behaviors, blessing costs, god jealousy) creates soft monotheistic pressure without hard-coding it.
 
 ---
 
@@ -856,4 +797,4 @@ These are questions identified during plan extraction that need resolution durin
 6. Verify event subscription handlers generated in `DivineEventsController.cs` for consumed events
 7. Verify the `IDivineService` interface has methods for all 18 endpoints
 8. Manual verification: confirm `ICurrencyClient`, `IItemClient`, `IInventoryClient`, `IRelationshipClient` are available via constructor injection (L2 loads before L4)
-9. Verify blessing grant flow end-to-end in unit tests: debit divinity -> create item -> place in container -> record blessing -> publish event
+9. Verify blessing grant flow end-to-end in unit tests: debit divinity -> grant via Collection (#286) or Status Inventory (#282) based on tier -> record BlessingModel -> publish event

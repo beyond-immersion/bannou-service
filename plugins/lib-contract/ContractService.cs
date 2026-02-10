@@ -330,42 +330,33 @@ public partial class ContractService : IContractService
         GetContractTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        string? templateId = body.TemplateId?.ToString();
+
+        // If code provided, look up template ID
+        if (string.IsNullOrEmpty(templateId) && !string.IsNullOrEmpty(body.Code))
         {
-            string? templateId = body.TemplateId?.ToString();
-
-            // If code provided, look up template ID
-            if (string.IsNullOrEmpty(templateId) && !string.IsNullOrEmpty(body.Code))
-            {
-                var codeIndexKey = $"{TEMPLATE_CODE_INDEX}{body.Code}";
-                templateId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract)
-                    .GetAsync(codeIndexKey, cancellationToken);
-            }
-
-            if (string.IsNullOrEmpty(templateId))
-            {
-                _logger.LogWarning("Template not found - no ID or code provided, or code not found");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var templateKey = $"{TEMPLATE_PREFIX}{templateId}";
-            var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                .GetAsync(templateKey, cancellationToken);
-
-            if (model == null || !model.IsActive)
-            {
-                _logger.LogWarning("Template not found or inactive: {TemplateId}", templateId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapTemplateToResponse(model));
+            var codeIndexKey = $"{TEMPLATE_CODE_INDEX}{body.Code}";
+            templateId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract)
+                .GetAsync(codeIndexKey, cancellationToken);
         }
-        catch (Exception ex)
+
+        if (string.IsNullOrEmpty(templateId))
         {
-            _logger.LogError(ex, "Error getting contract template");
-            await EmitErrorAsync("GetContractTemplate", "post:/contract/template/get", ex);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Template not found - no ID or code provided, or code not found");
+            return (StatusCodes.BadRequest, null);
         }
+
+        var templateKey = $"{TEMPLATE_PREFIX}{templateId}";
+        var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .GetAsync(templateKey, cancellationToken);
+
+        if (model == null || !model.IsActive)
+        {
+            _logger.LogWarning("Template not found or inactive: {TemplateId}", templateId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        return (StatusCodes.OK, MapTemplateToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -373,81 +364,72 @@ public partial class ContractService : IContractService
         ListContractTemplatesRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Listing contract templates with cursor-based pagination");
+
+        // Decode cursor to get offset (null cursor = start from beginning)
+        var offset = DecodeCursorOffset(body.Cursor);
+        var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
+
+        // Get all template IDs
+        var allTemplateIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+            .GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+
+        if (allTemplateIds.Count == 0)
         {
-            _logger.LogDebug("Listing contract templates with cursor-based pagination");
-
-            // Decode cursor to get offset (null cursor = start from beginning)
-            var offset = DecodeCursorOffset(body.Cursor);
-            var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
-
-            // Get all template IDs
-            var allTemplateIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
-                .GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
-
-            if (allTemplateIds.Count == 0)
-            {
-                return (StatusCodes.OK, new ListContractTemplatesResponse
-                {
-                    Templates = new List<ContractTemplateResponse>(),
-                    NextCursor = null,
-                    HasMore = false
-                });
-            }
-
-            // Load all templates
-            var keys = allTemplateIds.Select(id => $"{TEMPLATE_PREFIX}{id}").ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                .GetBulkAsync(keys, cancellationToken);
-
-            var templates = new List<ContractTemplateModel>();
-            foreach (var (key, model) in bulkResults)
-            {
-                if (model != null) templates.Add(model);
-            }
-
-            // Apply filters
-            var filtered = templates.AsEnumerable();
-
-            if (body.RealmId.HasValue)
-            {
-                filtered = filtered.Where(t => t.RealmId == body.RealmId.Value || t.RealmId == null);
-            }
-
-            if (body.IsActive.HasValue)
-            {
-                filtered = filtered.Where(t => t.IsActive == body.IsActive.Value);
-            }
-
-            if (!string.IsNullOrEmpty(body.SearchTerm))
-            {
-                var searchLower = body.SearchTerm.ToLowerInvariant();
-                filtered = filtered.Where(t =>
-                    t.Name.ToLowerInvariant().Contains(searchLower) ||
-                    (t.Description?.ToLowerInvariant().Contains(searchLower) ?? false));
-            }
-
-            // Cursor-based pagination: fetch pageSize + 1 to detect hasMore
-            var sorted = filtered.OrderByDescending(t => t.CreatedAt).ToList();
-            var paged = sorted.Skip(offset).Take(pageSize + 1).ToList();
-
-            var hasMore = paged.Count > pageSize;
-            var resultItems = paged.Take(pageSize).ToList();
-            var nextCursor = hasMore ? EncodeCursorOffset(offset + pageSize) : null;
-
             return (StatusCodes.OK, new ListContractTemplatesResponse
             {
-                Templates = resultItems.Select(MapTemplateToResponse).ToList(),
-                NextCursor = nextCursor,
-                HasMore = hasMore
+                Templates = new List<ContractTemplateResponse>(),
+                NextCursor = null,
+                HasMore = false
             });
         }
-        catch (Exception ex)
+
+        // Load all templates
+        var keys = allTemplateIds.Select(id => $"{TEMPLATE_PREFIX}{id}").ToList();
+        var bulkResults = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .GetBulkAsync(keys, cancellationToken);
+
+        var templates = new List<ContractTemplateModel>();
+        foreach (var (key, model) in bulkResults)
         {
-            _logger.LogError(ex, "Error listing contract templates");
-            await EmitErrorAsync("ListContractTemplates", "post:/contract/template/list", ex);
-            return (StatusCodes.InternalServerError, null);
+            if (model != null) templates.Add(model);
         }
+
+        // Apply filters
+        var filtered = templates.AsEnumerable();
+
+        if (body.RealmId.HasValue)
+        {
+            filtered = filtered.Where(t => t.RealmId == body.RealmId.Value || t.RealmId == null);
+        }
+
+        if (body.IsActive.HasValue)
+        {
+            filtered = filtered.Where(t => t.IsActive == body.IsActive.Value);
+        }
+
+        if (!string.IsNullOrEmpty(body.SearchTerm))
+        {
+            var searchLower = body.SearchTerm.ToLowerInvariant();
+            filtered = filtered.Where(t =>
+                t.Name.ToLowerInvariant().Contains(searchLower) ||
+                (t.Description?.ToLowerInvariant().Contains(searchLower) ?? false));
+        }
+
+        // Cursor-based pagination: fetch pageSize + 1 to detect hasMore
+        var sorted = filtered.OrderByDescending(t => t.CreatedAt).ToList();
+        var paged = sorted.Skip(offset).Take(pageSize + 1).ToList();
+
+        var hasMore = paged.Count > pageSize;
+        var resultItems = paged.Take(pageSize).ToList();
+        var nextCursor = hasMore ? EncodeCursorOffset(offset + pageSize) : null;
+
+        return (StatusCodes.OK, new ListContractTemplatesResponse
+        {
+            Templates = resultItems.Select(MapTemplateToResponse).ToList(),
+            NextCursor = nextCursor,
+            HasMore = hasMore
+        });
     }
 
     /// <inheritdoc/>
@@ -455,63 +437,54 @@ public partial class ContractService : IContractService
         UpdateContractTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogInformation("Updating contract template: {TemplateId}", body.TemplateId);
+
+        var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
+        var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .GetAsync(templateKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogInformation("Updating contract template: {TemplateId}", body.TemplateId);
-
-            var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
-            var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                .GetAsync(templateKey, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var changedFields = new List<string>();
-
-            if (!string.IsNullOrEmpty(body.Name) && body.Name != model.Name)
-            {
-                model.Name = body.Name;
-                changedFields.Add("name");
-            }
-
-            if (body.Description != null && body.Description != model.Description)
-            {
-                model.Description = body.Description;
-                changedFields.Add("description");
-            }
-
-            if (body.IsActive.HasValue && body.IsActive.Value != model.IsActive)
-            {
-                model.IsActive = body.IsActive.Value;
-                changedFields.Add("isActive");
-            }
-
-            if (body.GameMetadata != null)
-            {
-                model.GameMetadata = body.GameMetadata;
-                changedFields.Add("gameMetadata");
-            }
-
-            if (changedFields.Count > 0)
-            {
-                model.UpdatedAt = DateTimeOffset.UtcNow;
-                await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                    .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
-
-                await PublishTemplateUpdatedEventAsync(model, changedFields, cancellationToken);
-            }
-
-            return (StatusCodes.OK, MapTemplateToResponse(model));
+            _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var changedFields = new List<string>();
+
+        if (!string.IsNullOrEmpty(body.Name) && body.Name != model.Name)
         {
-            _logger.LogError(ex, "Error updating contract template: {TemplateId}", body.TemplateId);
-            await EmitErrorAsync("UpdateContractTemplate", "post:/contract/template/update", ex);
-            return (StatusCodes.InternalServerError, null);
+            model.Name = body.Name;
+            changedFields.Add("name");
         }
+
+        if (body.Description != null && body.Description != model.Description)
+        {
+            model.Description = body.Description;
+            changedFields.Add("description");
+        }
+
+        if (body.IsActive.HasValue && body.IsActive.Value != model.IsActive)
+        {
+            model.IsActive = body.IsActive.Value;
+            changedFields.Add("isActive");
+        }
+
+        if (body.GameMetadata != null)
+        {
+            model.GameMetadata = body.GameMetadata;
+            changedFields.Add("gameMetadata");
+        }
+
+        if (changedFields.Count > 0)
+        {
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+            await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+                .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
+
+            await PublishTemplateUpdatedEventAsync(model, changedFields, cancellationToken);
+        }
+
+        return (StatusCodes.OK, MapTemplateToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -519,57 +492,48 @@ public partial class ContractService : IContractService
         DeleteContractTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogInformation("Deleting contract template: {TemplateId}", body.TemplateId);
+
+        var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
+        var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .GetAsync(templateKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogInformation("Deleting contract template: {TemplateId}", body.TemplateId);
-
-            var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
-            var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                .GetAsync(templateKey, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
-                return StatusCodes.NotFound;
-            }
-
-            // Check for active instances
-            var templateIndexKey = $"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}";
-            var instanceIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
-                .GetAsync(templateIndexKey, cancellationToken) ?? new List<string>();
-
-            if (instanceIds.Count > 0)
-            {
-                // Check if any are active
-                var instanceKeys = instanceIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
-                var instances = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                    .GetBulkAsync(instanceKeys, cancellationToken);
-
-                var activeStatuses = new[] { ContractStatus.Draft, ContractStatus.Proposed, ContractStatus.Pending, ContractStatus.Active };
-                if (instances.Any(i => i.Value != null && activeStatuses.Contains(i.Value.Status)))
-                {
-                    _logger.LogWarning("Cannot delete template with active instances: {TemplateId}", body.TemplateId);
-                    return StatusCodes.Conflict;
-                }
-            }
-
-            // Soft delete - mark as inactive
-            model.IsActive = false;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-            await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
-
-            await PublishTemplateDeletedEventAsync(model, cancellationToken);
-
-            _logger.LogInformation("Deleted (soft) contract template: {TemplateId}", body.TemplateId);
-            return StatusCodes.OK;
+            _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
+
+        // Check for active instances
+        var templateIndexKey = $"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}";
+        var instanceIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+            .GetAsync(templateIndexKey, cancellationToken) ?? new List<string>();
+
+        if (instanceIds.Count > 0)
         {
-            _logger.LogError(ex, "Error deleting contract template: {TemplateId}", body.TemplateId);
-            await EmitErrorAsync("DeleteContractTemplate", "post:/contract/template/delete", ex);
-            return StatusCodes.InternalServerError;
+            // Check if any are active
+            var instanceKeys = instanceIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
+            var instances = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+                .GetBulkAsync(instanceKeys, cancellationToken);
+
+            var activeStatuses = new[] { ContractStatus.Draft, ContractStatus.Proposed, ContractStatus.Pending, ContractStatus.Active };
+            if (instances.Any(i => i.Value != null && activeStatuses.Contains(i.Value.Status)))
+            {
+                _logger.LogWarning("Cannot delete template with active instances: {TemplateId}", body.TemplateId);
+                return StatusCodes.Conflict;
+            }
         }
+
+        // Soft delete - mark as inactive
+        model.IsActive = false;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+        await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
+
+        await PublishTemplateDeletedEventAsync(model, cancellationToken);
+
+        _logger.LogInformation("Deleted (soft) contract template: {TemplateId}", body.TemplateId);
+        return StatusCodes.OK;
     }
 
     #endregion
@@ -581,158 +545,149 @@ public partial class ContractService : IContractService
         CreateContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogInformation("Creating contract instance from template: {TemplateId}", body.TemplateId);
+
+        // Load template
+        var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
+        var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .GetAsync(templateKey, cancellationToken);
+
+        if (template == null)
         {
-            _logger.LogInformation("Creating contract instance from template: {TemplateId}", body.TemplateId);
+            _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Load template
-            var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
-            var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                .GetAsync(templateKey, cancellationToken);
+        if (!template.IsActive)
+        {
+            _logger.LogWarning("Template is not active: {TemplateId}", body.TemplateId);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (template == null)
+        // Validate party count against template bounds
+        if (body.Parties.Count < template.MinParties || body.Parties.Count > template.MaxParties)
+        {
+            _logger.LogWarning("Invalid party count: {Count}, expected {Min}-{Max}",
+                body.Parties.Count, template.MinParties, template.MaxParties);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Validate party count against configuration hard cap
+        if (body.Parties.Count > _configuration.MaxPartiesPerContract)
+        {
+            _logger.LogWarning("Party count {Count} exceeds configuration maximum {Max}",
+                body.Parties.Count, _configuration.MaxPartiesPerContract);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Validate active contract limit per entity (0 = unlimited)
+        // Only counts Draft/Proposed/Pending/Active contracts, not Fulfilled/Terminated/etc.
+        if (_configuration.MaxActiveContractsPerEntity > 0)
+        {
+            foreach (var party in body.Parties)
             {
-                _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
-                return (StatusCodes.NotFound, null);
-            }
+                var partyIndexKey = $"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}";
+                var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+                    .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
 
-            if (!template.IsActive)
-            {
-                _logger.LogWarning("Template is not active: {TemplateId}", body.TemplateId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate party count against template bounds
-            if (body.Parties.Count < template.MinParties || body.Parties.Count > template.MaxParties)
-            {
-                _logger.LogWarning("Invalid party count: {Count}, expected {Min}-{Max}",
-                    body.Parties.Count, template.MinParties, template.MaxParties);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate party count against configuration hard cap
-            if (body.Parties.Count > _configuration.MaxPartiesPerContract)
-            {
-                _logger.LogWarning("Party count {Count} exceeds configuration maximum {Max}",
-                    body.Parties.Count, _configuration.MaxPartiesPerContract);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate active contract limit per entity (0 = unlimited)
-            // Only counts Draft/Proposed/Pending/Active contracts, not Fulfilled/Terminated/etc.
-            if (_configuration.MaxActiveContractsPerEntity > 0)
-            {
-                foreach (var party in body.Parties)
+                // Count only contracts in active statuses
+                var activeCount = 0;
+                foreach (var contractIdStr in contractIds)
                 {
-                    var partyIndexKey = $"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}";
-                    var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
-                        .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
-
-                    // Count only contracts in active statuses
-                    var activeCount = 0;
-                    foreach (var contractIdStr in contractIds)
+                    var existingContract = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+                        .GetAsync($"{INSTANCE_PREFIX}{contractIdStr}", cancellationToken);
+                    if (existingContract != null && ActiveStatuses.Contains(existingContract.Status))
                     {
-                        var existingContract = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                            .GetAsync($"{INSTANCE_PREFIX}{contractIdStr}", cancellationToken);
-                        if (existingContract != null && ActiveStatuses.Contains(existingContract.Status))
+                        activeCount++;
+                        // Early exit if we've already hit the limit
+                        if (activeCount >= _configuration.MaxActiveContractsPerEntity)
                         {
-                            activeCount++;
-                            // Early exit if we've already hit the limit
-                            if (activeCount >= _configuration.MaxActiveContractsPerEntity)
-                            {
-                                break;
-                            }
+                            break;
                         }
                     }
+                }
 
-                    if (activeCount >= _configuration.MaxActiveContractsPerEntity)
-                    {
-                        _logger.LogWarning(
-                            "Entity {EntityType}:{EntityId} has {Count} active contracts, exceeds limit {Max}",
-                            party.EntityType, party.EntityId, activeCount, _configuration.MaxActiveContractsPerEntity);
-                        return (StatusCodes.BadRequest, null);
-                    }
+                if (activeCount >= _configuration.MaxActiveContractsPerEntity)
+                {
+                    _logger.LogWarning(
+                        "Entity {EntityType}:{EntityId} has {Count} active contracts, exceeds limit {Max}",
+                        party.EntityType, party.EntityId, activeCount, _configuration.MaxActiveContractsPerEntity);
+                    return (StatusCodes.BadRequest, null);
                 }
             }
-
-            var contractId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            // Create parties with pending consent
-            var parties = body.Parties.Select(p => new ContractPartyModel
-            {
-                EntityId = p.EntityId,
-                EntityType = p.EntityType,
-                Role = p.Role,
-                ConsentStatus = ConsentStatus.Pending,
-                ConsentedAt = null
-            }).ToList();
-
-            // Merge terms from template and request
-            var mergedTerms = MergeTerms(template.DefaultTerms, MapTermsToModel(body.Terms));
-
-            // Create milestone instances from template
-            var milestones = template.Milestones?.Select(m => new MilestoneInstanceModel
-            {
-                Code = m.Code,
-                Name = m.Name,
-                Description = m.Description,
-                Sequence = m.Sequence,
-                Required = m.Required,
-                Status = MilestoneStatus.Pending,
-                Deadline = m.Deadline,
-                DeadlineBehavior = m.DeadlineBehavior,
-                OnComplete = m.OnComplete,
-                OnExpire = m.OnExpire
-            }).ToList();
-
-            var model = new ContractInstanceModel
-            {
-                ContractId = contractId,
-                TemplateId = body.TemplateId,
-                TemplateCode = template.Code,
-                Status = ContractStatus.Draft,
-                Parties = parties,
-                Terms = mergedTerms,
-                Milestones = milestones,
-                CurrentMilestoneIndex = 0,
-                EscrowIds = body.EscrowIds?.ToList(),
-                EffectiveFrom = body.EffectiveFrom,
-                EffectiveUntil = body.EffectiveUntil,
-                GameMetadata = body.GameMetadata != null ? new GameMetadataModel
-                {
-                    InstanceData = body.GameMetadata
-                } : null,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            // Save instance
-            var instanceKey = $"{INSTANCE_PREFIX}{contractId}";
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
-
-            // Update indexes
-            await AddToListAsync($"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}", contractId.ToString(), cancellationToken);
-            await AddToListAsync($"{STATUS_INDEX_PREFIX}draft", contractId.ToString(), cancellationToken);
-
-            foreach (var party in parties)
-            {
-                await AddToListAsync($"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}", contractId.ToString(), cancellationToken);
-            }
-
-            // Publish event
-            await PublishInstanceCreatedEventAsync(model, cancellationToken);
-
-            _logger.LogInformation("Created contract instance: {ContractId}", contractId);
-            return (StatusCodes.OK, MapInstanceToResponse(model));
         }
-        catch (Exception ex)
+
+        var contractId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Create parties with pending consent
+        var parties = body.Parties.Select(p => new ContractPartyModel
         {
-            _logger.LogError(ex, "Error creating contract instance");
-            await EmitErrorAsync("CreateContractInstance", "post:/contract/instance/create", ex);
-            return (StatusCodes.InternalServerError, null);
+            EntityId = p.EntityId,
+            EntityType = p.EntityType,
+            Role = p.Role,
+            ConsentStatus = ConsentStatus.Pending,
+            ConsentedAt = null
+        }).ToList();
+
+        // Merge terms from template and request
+        var mergedTerms = MergeTerms(template.DefaultTerms, MapTermsToModel(body.Terms));
+
+        // Create milestone instances from template
+        var milestones = template.Milestones?.Select(m => new MilestoneInstanceModel
+        {
+            Code = m.Code,
+            Name = m.Name,
+            Description = m.Description,
+            Sequence = m.Sequence,
+            Required = m.Required,
+            Status = MilestoneStatus.Pending,
+            Deadline = m.Deadline,
+            DeadlineBehavior = m.DeadlineBehavior,
+            OnComplete = m.OnComplete,
+            OnExpire = m.OnExpire
+        }).ToList();
+
+        var model = new ContractInstanceModel
+        {
+            ContractId = contractId,
+            TemplateId = body.TemplateId,
+            TemplateCode = template.Code,
+            Status = ContractStatus.Draft,
+            Parties = parties,
+            Terms = mergedTerms,
+            Milestones = milestones,
+            CurrentMilestoneIndex = 0,
+            EscrowIds = body.EscrowIds?.ToList(),
+            EffectiveFrom = body.EffectiveFrom,
+            EffectiveUntil = body.EffectiveUntil,
+            GameMetadata = body.GameMetadata != null ? new GameMetadataModel
+            {
+                InstanceData = body.GameMetadata
+            } : null,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Save instance
+        var instanceKey = $"{INSTANCE_PREFIX}{contractId}";
+        await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+
+        // Update indexes
+        await AddToListAsync($"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}", contractId.ToString(), cancellationToken);
+        await AddToListAsync($"{STATUS_INDEX_PREFIX}draft", contractId.ToString(), cancellationToken);
+
+        foreach (var party in parties)
+        {
+            await AddToListAsync($"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}", contractId.ToString(), cancellationToken);
         }
+
+        // Publish event
+        await PublishInstanceCreatedEventAsync(model, cancellationToken);
+
+        _logger.LogInformation("Created contract instance: {ContractId}", contractId);
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -740,64 +695,55 @@ public partial class ContractService : IContractService
         ProposeContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogInformation("Proposing contract: {ContractId}", body.ContractId);
+
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+        // Acquire contract lock for state transition
+        await using var contractLock = await _lockProvider.LockAsync(
+            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+        if (!contractLock.Success)
         {
-            _logger.LogInformation("Proposing contract: {ContractId}", body.ContractId);
-
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-
-            // Acquire contract lock for state transition
-            await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
-            if (!contractLock.Success)
-            {
-                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (model.Status != ContractStatus.Draft)
-            {
-                _logger.LogWarning("Contract not in draft status: {ContractId}, status: {Status}",
-                    body.ContractId, model.Status);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            model.Status = ContractStatus.Proposed;
-            model.ProposedAt = DateTimeOffset.UtcNow;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Persist first
-            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Then update indexes
-            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}draft", body.ContractId.ToString(), cancellationToken);
-            await AddToListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
-
-            // Then publish events
-            await PublishContractProposedEventAsync(model, cancellationToken);
-
-            _logger.LogInformation("Proposed contract: {ContractId}", body.ContractId);
-            return (StatusCodes.OK, MapInstanceToResponse(model));
+            _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
+
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogError(ex, "Error proposing contract: {ContractId}", body.ContractId);
-            await EmitErrorAsync("ProposeContractInstance", "post:/contract/instance/propose", ex);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        if (model.Status != ContractStatus.Draft)
+        {
+            _logger.LogWarning("Contract not in draft status: {ContractId}, status: {Status}",
+                body.ContractId, model.Status);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        model.Status = ContractStatus.Proposed;
+        model.ProposedAt = DateTimeOffset.UtcNow;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Persist first
+        var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Then update indexes
+        await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}draft", body.ContractId.ToString(), cancellationToken);
+        await AddToListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
+
+        // Then publish events
+        await PublishContractProposedEventAsync(model, cancellationToken);
+
+        _logger.LogInformation("Proposed contract: {ContractId}", body.ContractId);
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -805,7 +751,6 @@ public partial class ContractService : IContractService
         ConsentToContractRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Recording consent for contract: {ContractId} from {EntityId}",
                 body.ContractId, body.PartyEntityId);
@@ -958,12 +903,6 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording consent: {ContractId}", body.ContractId);
-            await EmitErrorAsync("ConsentToContract", "post:/contract/instance/consent", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -971,7 +910,6 @@ public partial class ContractService : IContractService
         GetContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
@@ -984,12 +922,6 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting contract instance: {ContractId}", body.ContractId);
-            await EmitErrorAsync("GetContractInstance", "post:/contract/instance/get", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -997,7 +929,6 @@ public partial class ContractService : IContractService
         QueryContractInstancesRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Querying contract instances with cursor-based pagination");
 
@@ -1087,12 +1018,6 @@ public partial class ContractService : IContractService
                 HasMore = hasMore
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying contract instances");
-            await EmitErrorAsync("QueryContractInstances", "post:/contract/instance/query", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1100,7 +1025,6 @@ public partial class ContractService : IContractService
         TerminateContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Terminating contract: {ContractId}", body.ContractId);
 
@@ -1166,12 +1090,6 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Terminated contract: {ContractId}", body.ContractId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error terminating contract: {ContractId}", body.ContractId);
-            await EmitErrorAsync("TerminateContractInstance", "post:/contract/instance/terminate", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1179,7 +1097,6 @@ public partial class ContractService : IContractService
         GetContractInstanceStatusRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
@@ -1261,12 +1178,6 @@ public partial class ContractService : IContractService
                 DaysUntilExpiration = daysUntilExpiration
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting contract status: {ContractId}", body.ContractId);
-            await EmitErrorAsync("GetContractInstanceStatus", "post:/contract/instance/get-status", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1278,7 +1189,6 @@ public partial class ContractService : IContractService
         CompleteMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Completing milestone: {MilestoneCode} for contract {ContractId}",
                 body.MilestoneCode, body.ContractId);
@@ -1376,12 +1286,6 @@ public partial class ContractService : IContractService
                 Milestone = MapMilestoneToResponse(milestone)
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error completing milestone: {MilestoneCode}", body.MilestoneCode);
-            await EmitErrorAsync("CompleteMilestone", "post:/contract/milestone/complete", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1389,7 +1293,6 @@ public partial class ContractService : IContractService
         FailMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Failing milestone: {MilestoneCode} for contract {ContractId}",
                 body.MilestoneCode, body.ContractId);
@@ -1464,12 +1367,6 @@ public partial class ContractService : IContractService
                 Milestone = MapMilestoneToResponse(milestone)
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error failing milestone: {MilestoneCode}", body.MilestoneCode);
-            await EmitErrorAsync("FailMilestone", "post:/contract/milestone/fail", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1477,7 +1374,6 @@ public partial class ContractService : IContractService
         GetMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
@@ -1508,12 +1404,6 @@ public partial class ContractService : IContractService
                 Milestone = MapMilestoneToResponse(milestone)
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting milestone: {MilestoneCode}", body.MilestoneCode);
-            await EmitErrorAsync("GetMilestone", "post:/contract/milestone/get", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1525,7 +1415,6 @@ public partial class ContractService : IContractService
         ReportBreachRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Reporting breach for contract: {ContractId}", body.ContractId);
 
@@ -1602,12 +1491,6 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, MapBreachToResponse(breachModel));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error reporting breach for contract: {ContractId}", body.ContractId);
-            await EmitErrorAsync("ReportBreach", "post:/contract/breach/report", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1615,7 +1498,6 @@ public partial class ContractService : IContractService
         CureBreachRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Curing breach: {BreachId}", body.BreachId);
 
@@ -1658,12 +1540,6 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, MapBreachToResponse(breachModel));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error curing breach: {BreachId}", body.BreachId);
-            await EmitErrorAsync("CureBreach", "post:/contract/breach/cure", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1671,7 +1547,6 @@ public partial class ContractService : IContractService
         GetBreachRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
             var breachModel = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
@@ -1684,12 +1559,6 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, MapBreachToResponse(breachModel));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting breach: {BreachId}", body.BreachId);
-            await EmitErrorAsync("GetBreach", "post:/contract/breach/get", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1701,7 +1570,6 @@ public partial class ContractService : IContractService
         UpdateContractMetadataRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Updating metadata for contract: {ContractId}", body.ContractId);
 
@@ -1741,12 +1609,6 @@ public partial class ContractService : IContractService
                 RuntimeState = model.GameMetadata.RuntimeState
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating metadata: {ContractId}", body.ContractId);
-            await EmitErrorAsync("UpdateContractMetadata", "post:/contract/metadata/update", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1754,7 +1616,6 @@ public partial class ContractService : IContractService
         GetContractMetadataRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
@@ -1772,12 +1633,6 @@ public partial class ContractService : IContractService
                 RuntimeState = model.GameMetadata?.RuntimeState
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting metadata: {ContractId}", body.ContractId);
-            await EmitErrorAsync("GetContractMetadata", "post:/contract/metadata/get", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1789,7 +1644,6 @@ public partial class ContractService : IContractService
         CheckConstraintRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Checking constraint for entity: {EntityId}", body.EntityId);
 
@@ -1919,12 +1773,6 @@ public partial class ContractService : IContractService
                 Reason = reason
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking constraint for entity: {EntityId}", body.EntityId);
-            await EmitErrorAsync("CheckContractConstraint", "post:/contract/check-constraint", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1932,7 +1780,6 @@ public partial class ContractService : IContractService
         QueryActiveContractsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Querying active contracts for entity: {EntityId}", body.EntityId);
 
@@ -1990,12 +1837,6 @@ public partial class ContractService : IContractService
             {
                 Contracts = summaries
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying active contracts for entity: {EntityId}", body.EntityId);
-            await EmitErrorAsync("QueryActiveContracts", "post:/contract/query-active", ex);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
