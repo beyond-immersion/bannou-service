@@ -1442,9 +1442,7 @@ public partial class CurrencyService : ICurrencyService
         CreateHoldRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            if (body.Amount <= 0) return (StatusCodes.BadRequest, null);
+        if (body.Amount <= 0) return (StatusCodes.BadRequest, null);
 
             var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
             if (isDuplicate) return (StatusCodes.Conflict, null);
@@ -1526,22 +1524,7 @@ public partial class CurrencyService : ICurrencyService
                 ReferenceId = body.ReferenceId
             }, cancellationToken);
 
-            return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating hold for wallet {WalletId}", body.WalletId);
-            await _messageBus.TryPublishErrorAsync(
-                "currency",
-                "CreateHold",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/currency/hold/create",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
     }
 
     /// <inheritdoc/>
@@ -1549,10 +1532,8 @@ public partial class CurrencyService : ICurrencyService
         CaptureHoldRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
-            if (isDuplicate) return (StatusCodes.Conflict, null);
+        var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
+        if (isDuplicate) return (StatusCodes.Conflict, null);
 
             var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
 
@@ -1643,28 +1624,13 @@ public partial class CurrencyService : ICurrencyService
                 TransactionId = debitResp.Transaction.TransactionId
             }, cancellationToken);
 
-            return (StatusCodes.OK, new CaptureHoldResponse
-            {
-                Hold = MapHoldToRecord(hold),
-                Transaction = debitResp.Transaction,
-                NewBalance = debitResp.NewBalance,
-                AmountReleased = amountReleased
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new CaptureHoldResponse
         {
-            _logger.LogError(ex, "Error capturing hold {HoldId}", body.HoldId);
-            await _messageBus.TryPublishErrorAsync(
-                "currency",
-                "CaptureHold",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/currency/hold/capture",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Hold = MapHoldToRecord(hold),
+            Transaction = debitResp.Transaction,
+            NewBalance = debitResp.NewBalance,
+            AmountReleased = amountReleased
+        });
     }
 
     /// <inheritdoc/>
@@ -1672,9 +1638,7 @@ public partial class CurrencyService : ICurrencyService
         ReleaseHoldRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
+        var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
 
             // Read from MySQL with ETag for optimistic concurrency
             var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
@@ -1731,22 +1695,7 @@ public partial class CurrencyService : ICurrencyService
                 Amount = hold.Amount
             }, cancellationToken);
 
-            return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error releasing hold {HoldId}", body.HoldId);
-            await _messageBus.TryPublishErrorAsync(
-                "currency",
-                "ReleaseHold",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/currency/hold/release",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
     }
 
     /// <inheritdoc/>
@@ -1754,9 +1703,7 @@ public partial class CurrencyService : ICurrencyService
         GetHoldRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
+        var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
 
             // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
             var hold = await TryGetHoldFromCacheAsync(holdKey, cancellationToken);
@@ -1772,22 +1719,7 @@ public partial class CurrencyService : ICurrencyService
             // Populate cache for future reads
             await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
 
-            return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting hold {HoldId}", body.HoldId);
-            await _messageBus.TryPublishErrorAsync(
-                "currency",
-                "GetHold",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/currency/hold/get",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
     }
 
     #endregion
