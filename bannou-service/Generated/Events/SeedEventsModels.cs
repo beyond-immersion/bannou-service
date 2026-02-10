@@ -179,6 +179,12 @@ public partial class SeedGrowthUpdatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("totalGrowth")]
     public float TotalGrowth { get; set; } = default!;
 
+    /// <summary>
+    /// Whether this growth was applied via cross-seed pollination rather than direct recording
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("crossPollinated")]
+    public bool CrossPollinated { get; set; } = false;
+
 }
 
 /// <summary>

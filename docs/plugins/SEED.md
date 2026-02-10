@@ -150,6 +150,8 @@ Standard CRUD operations on seed entities. `CreateSeedAsync` validates the game 
 
 `GetGrowthAsync` returns domain depths directly from stored values. Decay is applied by the background `SeedDecayWorkerService`, not at read time.
 
+**Cross-pollination**: When `SameOwnerGrowthMultiplier` > 0 on the seed type definition, growth recording on a seed also applies a fraction of the raw growth (before bond multiplier) to sibling seeds of the same type owned by the same entity. Cross-pollination uses a try-lock with 3-second timeout per sibling (best-effort -- lock failures are silently skipped). Full processing is applied to each sibling: phase transitions, capability cache invalidation, and event publication. Events from cross-pollinated growth have `CrossPollinated = true`. Dormant siblings receive cross-pollinated growth; archived siblings do not. Cross-pollination is structurally prevented from cascading by using a dedicated `ApplyCrossPollination` method that never queries for further siblings.
+
 `GetGrowthPhaseAsync` computes the current phase and next phase threshold from the seed type definition using `ComputePhaseInfo`, which iterates sorted phases and returns the highest phase whose `MinTotalGrowth` the seed has reached.
 
 ### Capabilities (1 endpoint)
@@ -164,7 +166,7 @@ Manifest version is monotonically incremented from the previous cached version.
 
 ### Seed Type Definitions (4 endpoints)
 
-`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), allowed owner types, and optional per-type decay overrides (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) that take precedence over global configuration.
+`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), allowed owner types, optional per-type decay overrides (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) that take precedence over global configuration, and a `SameOwnerGrowthMultiplier` (0.0-1.0, default 0.0) that controls cross-pollination of growth to same-type same-owner siblings.
 
 `UpdateSeedTypeAsync` acquires a distributed lock on the type key, supports partial updates (only non-null fields applied), and triggers recomputation of all existing seeds' phases and capability caches when growth phases or capability rules change.
 
@@ -279,6 +281,8 @@ No delete endpoint exists for seed types -- see Known Quirks.
 
 - **Phase computation sorts phases on every call**: `ComputePhaseInfo` calls `phases.OrderBy(p => p.MinTotalGrowth).ToList()` on every invocation rather than requiring pre-sorted phase definitions. This is safe but wasteful for frequent calls.
 
+- **Cross-pollination is best-effort**: `ApplyCrossPollination` acquires a try-lock with 3-second timeout. If the sibling seed is locked by another operation, cross-pollination is silently skipped (logged at Debug level). This prevents deadlocks but means siblings may occasionally miss cross-pollinated growth during high-contention periods. The multiplier uses raw amounts (before bond multiplier), and the receiving side does not apply its own bond multiplier.
+
 ### Design Considerations (Requires Planning)
 
 - **No cleanup of associated data on archive**: `ArchiveSeedAsync` sets the seed's status to `Archived` but does not clean up growth data (`growth:{seedId}`), capability cache (`cap:{seedId}`), or bond data (`bond:{bondId}`). Archived seeds retain all associated state indefinitely. A cleanup strategy is needed -- either immediate deletion, a background retention worker, or integration with lib-resource for compression.
@@ -297,3 +301,4 @@ No delete endpoint exists for seed types -- see Known Quirks.
 - **RecomputeSeedsForTypeAsync pagination fix** (2026-02-09): Added pagination loop so all seeds of a type are recomputed when the type definition changes, not just the first page.
 - **ConfirmBondAsync distributed lock fix** (2026-02-09): Added distributed lock on `bond:{bondId}` before read-mutate-write in `ConfirmBondAsync` to prevent concurrent confirmation races.
 - **Growth decay system implementation** (2026-02-10): Implemented #359 (umbrella for #352, #364). Replaced placeholder read-time decay with full write-back system: per-domain `DomainGrowthEntry` tracking (Depth, LastActivityAt, PeakDepth), per-type decay config overrides, `SeedDecayWorkerService` background worker with exponential decay formula, phase regression detection with directional events (`Progressed`/`Regressed`), and bond shared activity that resets partner decay timers on matching domains.
+- **Cross-seed growth sharing** (2026-02-10): Implemented #353. Added `SameOwnerGrowthMultiplier` to seed type definitions (0.0-1.0, default 0.0) enabling configurable fraction of growth to be applied to same-type same-owner siblings. Uses try-lock with 3-second timeout per sibling (best-effort, no deadlock risk). Cross-pollination uses raw amounts (not bond-boosted), applies full processing (phase transitions, cap invalidation, events), and is structurally prevented from cascading. Added `CrossPollinated` boolean to `SeedGrowthUpdatedEvent` for event discrimination.

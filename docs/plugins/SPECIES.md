@@ -3,7 +3,7 @@
 > **Plugin**: lib-species
 > **Schema**: schemas/species-api.yaml
 > **Version**: 2.0.0
-> **State Store**: species (Redis/MySQL)
+> **State Store**: species (MySQL)
 
 ---
 
@@ -17,7 +17,7 @@ Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. 
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis/MySQL persistence for species data, code indexes, realm indexes |
+| lib-state (`IStateStoreFactory`) | MySQL persistence for species data, code indexes, realm indexes |
 | lib-messaging (`IMessageBus`) | Publishing species lifecycle events; error event publishing |
 | lib-messaging (`IEventConsumer`) | Event handler registration (partial class pattern) |
 | lib-character (`ICharacterClient`) | Character reference checking for delete/merge/realm-removal safety |
@@ -30,14 +30,13 @@ Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. 
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-character | Uses `ISpeciesClient` for species validation during character creation |
-| lib-character-personality | References species for trait modifier lookups |
-| lib-character-history | References species context |
+| lib-realm | Uses `ISpeciesClient` for species-realm migration during realm merge (list by realm, add/remove from realm) |
 
 ---
 
 ## State Storage
 
-**Store**: `species` (via `StateStoreDefinitions.Species`)
+**Store**: `species-statestore` (via `StateStoreDefinitions.Species`, Backend: MySQL)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -79,9 +78,9 @@ This plugin does not consume external events.
 |---------|----------|------|
 | `ILogger<SpeciesService>` | Scoped | Structured logging |
 | `SpeciesServiceConfiguration` | Singleton | Config properties (SeedPageSize) |
-| `IStateStoreFactory` | Singleton | Redis/MySQL state store access |
+| `IStateStoreFactory` | Singleton | MySQL state store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IEventConsumer` | Scoped | Event handler registration |
+| `IEventConsumer` | Singleton | Event handler registration (no active handlers - species has no event subscriptions) |
 | `ICharacterClient` | Scoped | Character reference checking |
 | `IRealmClient` | Scoped | Realm validation |
 
@@ -102,7 +101,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 - **CreateSpecies** (`/species/create`): Validates realm existence (if initial realms provided). Normalizes code to uppercase. Checks code index for conflicts. Saves species, updates all indexes (code, realm, all-species). Publishes `species.created`.
 - **UpdateSpecies** (`/species/update`): Partial update tracking via `changedFields` list. Only changed fields included in event. Updates `UpdatedAt` timestamp.
-- **DeleteSpecies** (`/species/delete`): Does NOT require species to be deprecated (unlike the schema description implies). Checks character references via `ICharacterClient` (Conflict if characters exist). Removes from all indexes (code, realm, all-species). Publishes `species.deleted`.
+- **DeleteSpecies** (`/species/delete`): Requires species to be deprecated (returns BadRequest if not). Checks character references via `ICharacterClient` (Conflict if characters exist). Removes from all indexes (code, realm, all-species). Publishes `species.deleted`.
 
 ### Deprecation Operations (3 endpoints)
 
@@ -164,8 +163,8 @@ Deprecation & Merge Flow
             ▼
   DeleteSpecies(speciesId)   [if not auto-deleted by merge]
        │
+       ├── Check: species is deprecated (BadRequest if not)
        ├── Check: no remaining character references (Conflict if any)
-       ├── NOTE: Does NOT check IsDeprecated (bug - see Quirks)
        ├── Remove from all indexes
        └── Publish: species.deleted
 
@@ -211,9 +210,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-1. ~~**species.created event only populates subset of fields**~~: **FIXED** (2026-01-31) - `PublishSpeciesCreatedEventAsync` now populates all lifecycle fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt, IsDeprecated, DeprecatedAt, DeprecationReason) matching the pattern used by `PublishSpeciesDeletedEventAsync` and `PublishSpeciesUpdatedEventAsync`.
-
-2. ~~**Delete endpoint doesn't enforce deprecation requirement**~~: **FIXED** (2026-01-31) - `DeleteSpeciesAsync` now checks `IsDeprecated` before allowing deletion, returning `StatusCodes.BadRequest` if the species is not deprecated. This enforces the intended two-step lifecycle (deprecate -> merge -> delete) as documented in the schema.
+None currently identified.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -221,13 +218,11 @@ State Store Layout
 
 2. **Realm validation asymmetry**: `CreateSpecies` and `AddSpeciesToRealm` validate realm is active (not deprecated). `RemoveSpeciesFromRealm` doesn't validate realm status at all (only checks species membership). `ListSpeciesByRealm` validates realm exists but allows deprecated realms.
 
-3. ~~**Page fetch error during merge stops migration**~~: **FIXED** (2026-02-08) - Page fetch errors during merge now return `InternalServerError` immediately instead of silently setting `hasMorePages = false`. Errors are logged at Error level and published via `TryPublishErrorAsync` with context (page number, migrated/failed counts). See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
-
-4. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.
+3. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.
 
 ### Design Considerations
 
-1. **All-species list loaded in full**: `ListSpecies` loads all species IDs from the `all-species` key, then bulk-loads each. With hundreds of species, this generates O(N) state store calls.
+1. **All-species list loaded in full**: `ListSpecies` loads all species IDs from the `all-species` key, then uses `GetBulkAsync` to load all in one call. The full list is loaded into memory for filtering and pagination rather than using server-side filtering.
 
 2. **No distributed locks**: Species operations don't use distributed locks. Concurrent create operations with the same code could race on the code index (unlikely in practice, codes are admin-created).
 
@@ -248,10 +243,3 @@ State Store Layout
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
-
-### Completed
-
-- **2026-02-08**: Fixed species merge silent pagination abort ([#310](https://github.com/beyond-immersion/bannou-service/issues/310)). Page fetch errors during `MergeSpeciesAsync` now return `InternalServerError` with error logging and `TryPublishErrorAsync` instead of silently terminating the migration loop.
-
-- **2026-01-31**: Fixed species.created event to populate all lifecycle fields (was only setting 7 of 18 fields)
-- **2026-01-31**: Fixed DeleteSpecies to enforce deprecation requirement - now returns BadRequest if species is not deprecated, matching schema documentation

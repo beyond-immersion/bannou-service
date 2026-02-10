@@ -1615,4 +1615,473 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     }
 
     #endregion
+
+    #region Cross-Pollination Tests
+
+    [Fact]
+    public async Task RecordGrowth_MultiplierGreaterThanZero_AppliesGrowthToSiblings()
+    {
+        // Arrange
+        var service = CreateService();
+        var primarySeedId = Guid.NewGuid();
+        var siblingSeedId = Guid.NewGuid();
+
+        var primarySeed = CreateTestSeed(seedId: primarySeedId, status: SeedStatus.Active);
+        var siblingSeed = CreateTestSeed(seedId: siblingSeedId, status: SeedStatus.Active);
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 0.5f;
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(primarySeed);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{siblingSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(siblingSeed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{siblingSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        // Sibling query returns both seeds (primary will be skipped)
+        SetupSeedQueryPagedAsync(new List<SeedModel> { primarySeed, siblingSeed }, 2);
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        SeedGrowthModel? savedSiblingGrowth = null;
+        _mockGrowthStore
+            .Setup(s => s.SaveAsync($"growth:{siblingSeedId}", It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedGrowthModel, StateOptions?, CancellationToken>((_, m, _, _) => savedSiblingGrowth = m)
+            .ReturnsAsync("etag");
+        _mockGrowthStore
+            .Setup(s => s.SaveAsync($"growth:{primarySeedId}", It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act: record 10.0 growth on primary
+        var (status, _) = await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 10f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: sibling received 10.0 * 0.5 = 5.0 growth
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedSiblingGrowth);
+        Assert.Equal(5.0f, savedSiblingGrowth.Domains["combat.melee"].Depth);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_MultiplierZero_DoesNotQuerySiblings()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 0f;
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Act
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 5f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: no sibling query was made
+        _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
+            It.IsAny<IReadOnlyList<QueryCondition>?>(),
+            It.IsAny<int>(), It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_CrossPollination_ArchivedSiblingExcluded()
+    {
+        // Arrange
+        var service = CreateService();
+        var primarySeedId = Guid.NewGuid();
+        var archivedSeedId = Guid.NewGuid();
+
+        var primarySeed = CreateTestSeed(seedId: primarySeedId, status: SeedStatus.Active);
+        var archivedSeed = CreateTestSeed(seedId: archivedSeedId, status: SeedStatus.Archived);
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 0.5f;
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(primarySeed);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{archivedSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(archivedSeed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        // Sibling query returns the archived seed (it somehow got through the query filter)
+        SetupSeedQueryPagedAsync(new List<SeedModel> { primarySeed, archivedSeed }, 2);
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Act
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 10f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: no growth saved for the archived sibling
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            $"growth:{archivedSeedId}",
+            It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_CrossPollination_DormantSiblingReceivesGrowth()
+    {
+        // Arrange
+        var service = CreateService();
+        var primarySeedId = Guid.NewGuid();
+        var dormantSeedId = Guid.NewGuid();
+
+        var primarySeed = CreateTestSeed(seedId: primarySeedId, status: SeedStatus.Active);
+        var dormantSeed = CreateTestSeed(seedId: dormantSeedId, status: SeedStatus.Dormant);
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 0.25f;
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(primarySeed);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{dormantSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dormantSeed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{dormantSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SetupSeedQueryPagedAsync(new List<SeedModel> { primarySeed, dormantSeed }, 2);
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        SeedGrowthModel? savedDormantGrowth = null;
+        _mockGrowthStore
+            .Setup(s => s.SaveAsync($"growth:{dormantSeedId}", It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedGrowthModel, StateOptions?, CancellationToken>((_, m, _, _) => savedDormantGrowth = m)
+            .ReturnsAsync("etag");
+        _mockGrowthStore
+            .Setup(s => s.SaveAsync($"growth:{primarySeedId}", It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act: record 8.0 growth
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = primarySeedId, Domain = "magic.fire", Amount = 8f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: dormant sibling received 8.0 * 0.25 = 2.0
+        Assert.NotNull(savedDormantGrowth);
+        Assert.Equal(2.0f, savedDormantGrowth.Domains["magic.fire"].Depth);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_CrossPollination_UsesRawAmountsNotBondBoosted()
+    {
+        // Arrange
+        var service = CreateService();
+        var primarySeedId = Guid.NewGuid();
+        var siblingSeedId = Guid.NewGuid();
+        var bondId = Guid.NewGuid();
+
+        var primarySeed = CreateTestSeed(seedId: primarySeedId, status: SeedStatus.Active);
+        primarySeed.BondId = bondId;
+        var siblingSeed = CreateTestSeed(seedId: siblingSeedId, status: SeedStatus.Active);
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 1.0f; // Full mirror for easy math
+
+        var bond = new SeedBondModel
+        {
+            BondId = bondId,
+            SeedTypeCode = "guardian",
+            Status = BondStatus.Active,
+            Permanent = false,
+            Participants = new List<BondParticipantEntry>
+            {
+                new() { SeedId = primarySeedId, JoinedAt = DateTimeOffset.UtcNow, Confirmed = true },
+                new() { SeedId = Guid.NewGuid(), JoinedAt = DateTimeOffset.UtcNow, Confirmed = true }
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+            BondStrength = 1f,
+            SharedGrowth = 0f
+        };
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(primarySeed);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{siblingSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(siblingSeed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{siblingSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+        _mockBondStore
+            .Setup(s => s.GetAsync($"bond:{bondId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bond);
+
+        SetupSeedQueryPagedAsync(new List<SeedModel> { primarySeed, siblingSeed }, 2);
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockBondStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedBondModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockGrowthStore
+            .Setup(s => s.SaveAsync($"growth:{primarySeedId}", It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        SeedGrowthModel? savedSiblingGrowth = null;
+        _mockGrowthStore
+            .Setup(s => s.SaveAsync($"growth:{siblingSeedId}", It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedGrowthModel, StateOptions?, CancellationToken>((_, m, _, _) => savedSiblingGrowth = m)
+            .ReturnsAsync("etag");
+
+        // Act: record 4.0 growth (bond multiplier is 1.5x, so primary gets 6.0, but sibling should get 4.0 * 1.0 = 4.0 raw)
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 4f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: sibling got raw 4.0 (not bond-boosted 6.0)
+        Assert.NotNull(savedSiblingGrowth);
+        Assert.Equal(4.0f, savedSiblingGrowth.Domains["combat.melee"].Depth);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_CrossPollination_EventsHaveCrossPollinatedTrue()
+    {
+        // Arrange
+        var service = CreateService();
+        var primarySeedId = Guid.NewGuid();
+        var siblingSeedId = Guid.NewGuid();
+
+        var primarySeed = CreateTestSeed(seedId: primarySeedId, status: SeedStatus.Active);
+        var siblingSeed = CreateTestSeed(seedId: siblingSeedId, status: SeedStatus.Active);
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 0.5f;
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(primarySeed);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{siblingSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(siblingSeed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SetupSeedQueryPagedAsync(new List<SeedModel> { primarySeed, siblingSeed }, 2);
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Act
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 5f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: primary seed's event has CrossPollinated = false
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.growth.updated",
+            It.Is<SeedGrowthUpdatedEvent>(e =>
+                e.SeedId == primarySeedId &&
+                e.CrossPollinated == false),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert: sibling seed's event has CrossPollinated = true
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.growth.updated",
+            It.Is<SeedGrowthUpdatedEvent>(e =>
+                e.SeedId == siblingSeedId &&
+                e.CrossPollinated == true),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_CrossPollination_LockFailure_SkipsSibling()
+    {
+        // Arrange
+        var service = CreateService();
+        var primarySeedId = Guid.NewGuid();
+        var siblingSeedId = Guid.NewGuid();
+
+        var primarySeed = CreateTestSeed(seedId: primarySeedId, status: SeedStatus.Active);
+        var siblingSeed = CreateTestSeed(seedId: siblingSeedId, status: SeedStatus.Active);
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 0.5f;
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(primarySeed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SetupSeedQueryPagedAsync(new List<SeedModel> { primarySeed, siblingSeed }, 2);
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Set up lock to succeed for primary but fail for sibling's try-lock
+        var primaryLock = new Mock<ILockResponse>();
+        primaryLock.Setup(r => r.Success).Returns(true);
+        var siblingLock = new Mock<ILockResponse>();
+        siblingLock.Setup(r => r.Success).Returns(false);
+
+        var lockCallCount = 0;
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                lockCallCount++;
+                // First call is for the primary seed (10s timeout), second for sibling (3s timeout)
+                return lockCallCount == 1 ? primaryLock.Object : siblingLock.Object;
+            });
+
+        // Act
+        var (status, _) = await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 10f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: primary succeeds, sibling growth not saved
+        Assert.Equal(StatusCodes.OK, status);
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            $"growth:{siblingSeedId}",
+            It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RecordGrowth_CrossPollination_SiblingPhaseTransition()
+    {
+        // Arrange
+        var service = CreateService();
+        var primarySeedId = Guid.NewGuid();
+        var siblingSeedId = Guid.NewGuid();
+
+        var primarySeed = CreateTestSeed(seedId: primarySeedId, status: SeedStatus.Active);
+        var siblingSeed = CreateTestSeed(seedId: siblingSeedId, status: SeedStatus.Active);
+        siblingSeed.GrowthPhase = "nascent";
+        siblingSeed.TotalGrowth = 8f;
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 1.0f; // Full mirror
+
+        var existingSiblingGrowth = new SeedGrowthModel
+        {
+            SeedId = siblingSeedId,
+            Domains = new Dictionary<string, DomainGrowthEntry>
+            {
+                { "combat.melee", new DomainGrowthEntry { Depth = 8f, LastActivityAt = DateTimeOffset.UtcNow, PeakDepth = 8f } }
+            }
+        };
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(primarySeed);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{siblingSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(siblingSeed);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{primarySeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedGrowthModel?)null);
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{siblingSeedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingSiblingGrowth);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SetupSeedQueryPagedAsync(new List<SeedModel> { primarySeed, siblingSeed }, 2);
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Act: record 3.0 growth — sibling has 8.0 + 3.0 = 11.0, crossing "awakening" threshold at 10
+        await service.RecordGrowthAsync(
+            new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
+            CancellationToken.None);
+
+        // Assert: sibling phase change event published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.phase.changed",
+            It.Is<SeedPhaseChangedEvent>(e =>
+                e.SeedId == siblingSeedId &&
+                e.PreviousPhase == "nascent" &&
+                e.NewPhase == "awakening" &&
+                e.Direction == PhaseChangeDirection.Progressed),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert: sibling capability cache invalidated
+        _mockCapabilitiesStore.Verify(s => s.DeleteAsync(
+            $"cap:{siblingSeedId}",
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
 }

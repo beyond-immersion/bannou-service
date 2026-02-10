@@ -733,7 +733,8 @@ public partial class SeedService : ISeedService
                 BondPermanent = body.BondPermanent,
                 CapabilityRules = body.CapabilityRules?.ToList(),
                 GrowthDecayEnabled = body.GrowthDecayEnabled,
-                GrowthDecayRatePerDay = body.GrowthDecayRatePerDay
+                GrowthDecayRatePerDay = body.GrowthDecayRatePerDay,
+                SameOwnerGrowthMultiplier = body.SameOwnerGrowthMultiplier
             };
 
             await store.SaveAsync(key, model, cancellationToken: cancellationToken);
@@ -850,6 +851,8 @@ public partial class SeedService : ISeedService
                 seedType.GrowthDecayEnabled = body.GrowthDecayEnabled;
             if (body.GrowthDecayRatePerDay.HasValue)
                 seedType.GrowthDecayRatePerDay = body.GrowthDecayRatePerDay;
+            if (body.SameOwnerGrowthMultiplier.HasValue)
+                seedType.SameOwnerGrowthMultiplier = body.SameOwnerGrowthMultiplier.Value;
 
             await store.SaveAsync(key, seedType, cancellationToken: cancellationToken);
 
@@ -1266,7 +1269,8 @@ public partial class SeedService : ISeedService
                 Domain = domain,
                 PreviousDepth = previousDepth,
                 NewDepth = newDepth,
-                TotalGrowth = growth.Domains.Values.Sum(d => d.Depth)
+                TotalGrowth = growth.Domains.Values.Sum(d => d.Depth),
+                CrossPollinated = false
             }, cancellationToken: cancellationToken);
         }
 
@@ -1339,12 +1343,152 @@ public partial class SeedService : ISeedService
         var cacheStore = _stateStoreFactory.GetStore<CapabilityManifestModel>(StateStoreDefinitions.SeedCapabilitiesCache);
         await cacheStore.DeleteAsync($"cap:{seedId}", cancellationToken);
 
+        // Cross-pollinate to same-type same-owner siblings if configured (uses raw amounts, not bond-boosted)
+        if (seedType != null && seedType.SameOwnerGrowthMultiplier > 0f)
+        {
+            var crossPollEntries = entries
+                .Select(e => (e.Domain, Amount: e.Amount * seedType.SameOwnerGrowthMultiplier))
+                .ToArray();
+
+            var siblingQueryStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
+            var siblingConditions = new List<QueryCondition>
+            {
+                new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = seed.OwnerId.ToString() },
+                new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = seed.OwnerType },
+                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = seed.SeedTypeCode },
+                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = seed.GameServiceId.ToString() },
+                new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() },
+                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
+            };
+
+            var siblings = await siblingQueryStore.JsonQueryPagedAsync(
+                siblingConditions, 0, _configuration.DefaultMaxSeedsPerOwner + 1, null, cancellationToken);
+
+            foreach (var sibling in siblings.Items)
+            {
+                if (sibling.Value.SeedId == seedId)
+                    continue;
+
+                try
+                {
+                    await ApplyCrossPollination(
+                        sibling.Value.SeedId, crossPollEntries, seed.SeedTypeCode, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Cross-pollination failed for sibling seed {SiblingSeedId}", sibling.Value.SeedId);
+                }
+            }
+        }
+
         return (StatusCodes.OK, new GrowthResponse
         {
             SeedId = seedId,
             TotalGrowth = newTotalGrowth,
             Domains = growth.Domains.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Depth)
         });
+    }
+
+    /// <summary>
+    /// Applies cross-pollinated growth to a single sibling seed. Uses try-lock with
+    /// short timeout -- failure is expected and graceful (best-effort semantics).
+    /// Structurally cannot cascade: this method never queries for further siblings.
+    /// Bond multiplier is NOT applied to cross-pollinated growth.
+    /// </summary>
+    private async Task ApplyCrossPollination(
+        Guid siblingSeedId,
+        (string Domain, float Amount)[] entries,
+        string primarySeedTypeCode,
+        CancellationToken cancellationToken)
+    {
+        var lockOwner = $"crosspoll-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, siblingSeedId.ToString(), lockOwner, 3, cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogDebug("Cross-pollination skipped for seed {SeedId}: could not acquire lock", siblingSeedId);
+            return;
+        }
+
+        var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var seed = await seedStore.GetAsync($"seed:{siblingSeedId}", cancellationToken);
+
+        if (seed == null || seed.Status == SeedStatus.Archived)
+            return;
+
+        var growthStore = _stateStoreFactory.GetStore<SeedGrowthModel>(StateStoreDefinitions.SeedGrowth);
+        var growth = await growthStore.GetAsync($"growth:{siblingSeedId}", cancellationToken);
+        growth ??= new SeedGrowthModel { SeedId = siblingSeedId, Domains = new() };
+
+        var now = DateTimeOffset.UtcNow;
+        foreach (var (domain, amount) in entries)
+        {
+            var entry = growth.Domains.GetValueOrDefault(domain);
+            var previousDepth = entry?.Depth ?? 0f;
+            var newDepth = previousDepth + amount;
+
+            growth.Domains[domain] = new DomainGrowthEntry
+            {
+                Depth = newDepth,
+                LastActivityAt = now,
+                PeakDepth = Math.Max(entry?.PeakDepth ?? 0f, newDepth)
+            };
+
+            await _messageBus.TryPublishAsync("seed.growth.updated", new SeedGrowthUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                SeedId = siblingSeedId,
+                SeedTypeCode = primarySeedTypeCode,
+                Domain = domain,
+                PreviousDepth = previousDepth,
+                NewDepth = newDepth,
+                TotalGrowth = growth.Domains.Values.Sum(d => d.Depth),
+                CrossPollinated = true
+            }, cancellationToken: cancellationToken);
+        }
+
+        await growthStore.SaveAsync($"growth:{siblingSeedId}", growth, cancellationToken: cancellationToken);
+
+        // Update seed total growth and check phase transition
+        var newTotalGrowth = growth.Domains.Values.Sum(d => d.Depth);
+        var previousPhase = seed.GrowthPhase;
+        seed.TotalGrowth = newTotalGrowth;
+
+        var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var seedType = await typeStore.GetAsync($"type:{seed.GameServiceId}:{seed.SeedTypeCode}", cancellationToken);
+
+        if (seedType != null)
+        {
+            var (currentPhase, _) = ComputePhaseInfo(seedType.GrowthPhases, newTotalGrowth);
+            seed.GrowthPhase = currentPhase.PhaseCode;
+        }
+
+        await seedStore.SaveAsync($"seed:{siblingSeedId}", seed, cancellationToken: cancellationToken);
+
+        if (previousPhase != seed.GrowthPhase)
+        {
+            _logger.LogInformation(
+                "Seed {SeedId} transitioned from phase {OldPhase} to {NewPhase} via cross-pollination",
+                siblingSeedId, previousPhase, seed.GrowthPhase);
+
+            await _messageBus.TryPublishAsync("seed.phase.changed", new SeedPhaseChangedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SeedId = siblingSeedId,
+                SeedTypeCode = primarySeedTypeCode,
+                PreviousPhase = previousPhase,
+                NewPhase = seed.GrowthPhase,
+                TotalGrowth = newTotalGrowth,
+                Direction = PhaseChangeDirection.Progressed
+            }, cancellationToken: cancellationToken);
+        }
+
+        // Invalidate capability cache
+        var cacheStore = _stateStoreFactory.GetStore<CapabilityManifestModel>(StateStoreDefinitions.SeedCapabilitiesCache);
+        await cacheStore.DeleteAsync($"cap:{siblingSeedId}", cancellationToken);
     }
 
     /// <summary>
@@ -1576,7 +1720,8 @@ public partial class SeedService : ISeedService
         BondPermanent = model.BondPermanent,
         CapabilityRules = model.CapabilityRules,
         GrowthDecayEnabled = model.GrowthDecayEnabled,
-        GrowthDecayRatePerDay = model.GrowthDecayRatePerDay
+        GrowthDecayRatePerDay = model.GrowthDecayRatePerDay,
+        SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier
     };
 
     /// <summary>

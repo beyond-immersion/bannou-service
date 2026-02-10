@@ -189,6 +189,10 @@ components:
           type: number
           format: float
           description: Updated aggregate growth across all domains
+        crossPollinated:
+          type: boolean
+          default: false
+          description: Whether this growth was applied via cross-seed pollination rather than direct recording
 
     SeedPhaseChangedEvent:
       type: object

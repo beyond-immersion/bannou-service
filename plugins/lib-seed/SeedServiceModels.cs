@@ -124,6 +124,9 @@ internal class SeedTypeDefinitionModel
     /// <summary>Rules for computing capabilities from growth domains.</summary>
     public List<CapabilityRule>? CapabilityRules { get; set; }
 
+    /// <summary>Fraction of growth cross-pollinated to same-type same-owner siblings. 0.0 = none.</summary>
+    public float SameOwnerGrowthMultiplier { get; set; }
+
     /// <summary>Per-type decay override. Null = use global config.</summary>
     public bool? GrowthDecayEnabled { get; set; }
 

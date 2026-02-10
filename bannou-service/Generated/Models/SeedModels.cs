@@ -819,6 +819,13 @@ public partial class RegisterSeedTypeRequest
     [System.Text.Json.Serialization.JsonPropertyName("growthDecayRatePerDay")]
     public float? GrowthDecayRatePerDay { get; set; } = default!;
 
+    /// <summary>
+    /// Fraction of growth applied to other seeds of the same type owned by the same entity. 0.0 = no sharing (default), 1.0 = full mirror.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sameOwnerGrowthMultiplier")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float SameOwnerGrowthMultiplier { get; set; } = 0.0F;
+
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     /// <summary>
@@ -963,6 +970,13 @@ public partial class UpdateSeedTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthDecayRatePerDay")]
     public float? GrowthDecayRatePerDay { get; set; } = default!;
+
+    /// <summary>
+    /// Updated fraction of growth applied to other seeds of the same type owned by the same entity.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sameOwnerGrowthMultiplier")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float? SameOwnerGrowthMultiplier { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1587,6 +1601,12 @@ public partial class SeedTypeResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthDecayRatePerDay")]
     public float? GrowthDecayRatePerDay { get; set; } = default!;
+
+    /// <summary>
+    /// Fraction of growth applied to other seeds of the same type owned by the same entity.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sameOwnerGrowthMultiplier")]
+    public float SameOwnerGrowthMultiplier { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
