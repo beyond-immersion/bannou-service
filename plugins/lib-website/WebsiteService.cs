@@ -41,8 +41,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, StatusResponse?)> GetStatusAsync(CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodGetStatusAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodGetStatusAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -50,8 +51,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, PageContent?)> GetPageContentAsync(string slug, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodGetPageContentAsync called but not implemented for slug: {Slug}", slug);
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodGetPageContentAsync called but not implemented for slug: {Slug}", slug);
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -59,8 +61,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, NewsResponse?)> GetNewsAsync(int? limit = 10, int? offset = 0, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodGetNewsAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodGetNewsAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -68,8 +71,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, DownloadsResponse?)> GetDownloadsAsync(Platform? platform = null, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodGetDownloadsAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodGetDownloadsAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -77,8 +81,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, ContactResponse?)> SubmitContactAsync(ContactRequest body, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodSubmitContactAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodSubmitContactAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -86,8 +91,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, AccountProfile?)> GetAccountProfileAsync(CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodGetAccountProfileAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodGetAccountProfileAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -95,8 +101,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, PageContent?)> CreatePageAsync(PageContent body, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodCreatePageAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodCreatePageAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -104,8 +111,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, PageContent?)> UpdatePageAsync(string slug, PageContent body, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodUpdatePageAsync called but not implemented for slug: {Slug}", slug);
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodUpdatePageAsync called but not implemented for slug: {Slug}", slug);
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -113,8 +121,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, SiteSettings?)> GetSiteSettingsAsync(CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodGetSiteSettingsAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodGetSiteSettingsAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -122,8 +131,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, SiteSettings?)> UpdateSiteSettingsAsync(SiteSettings body, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodUpdateSiteSettingsAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodUpdateSiteSettingsAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -131,8 +141,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, ThemeConfig?)> GetThemeAsync(CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodGetThemeAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodGetThemeAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     /// <summary>
@@ -140,8 +151,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<StatusCodes> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodUpdateThemeAsync called but not implemented");
-            return StatusCodes.NotImplemented;
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodUpdateThemeAsync called but not implemented");
+        return StatusCodes.NotImplemented;
     }
 
     /// <summary>
@@ -149,8 +161,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<StatusCodes> DeletePageAsync(string slug, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodDeletePageAsync called but not implemented for slug: {Slug}", slug);
-            return StatusCodes.NotImplemented;
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodDeletePageAsync called but not implemented for slug: {Slug}", slug);
+        return StatusCodes.NotImplemented;
     }
 
     /// <summary>
@@ -158,8 +171,9 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task<(StatusCodes, ICollection<PageMetadata>?)> ListPagesAsync(bool? includeUnpublished = false, CancellationToken cancellationToken = default)
     {
-            _logger.LogDebug("MethodListPagesAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+        await Task.CompletedTask;
+        _logger.LogDebug("MethodListPagesAsync called but not implemented");
+        return (StatusCodes.NotImplemented, null);
     }
 
     #region Permission Registration

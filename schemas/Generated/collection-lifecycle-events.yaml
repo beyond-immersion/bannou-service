@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: Collection Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for collection service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: collection-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    CollectionEntryTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection-entry-template.created when a collectionentrytemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryTemplateId
+      - code
+      - collectionType
+      - gameServiceId
+      - displayName
+      - hideWhenLocked
+      - itemTemplateId
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: collection-entry-template.created
+          description: 'Event type identifier: collection-entry-template.created'
+        entryTemplateId: &id001
+          type: string
+          format: uuid
+          description: "Unique entry template identifier"
+        code: &id002
+          type: string
+          description: "Unique code within collection type and game service"
+        collectionType: &id003
+          $ref: ../collection-api.yaml#/components/schemas/CollectionType
+          description: "Type of collection this entry belongs to"
+        gameServiceId: &id004
+          type: string
+          format: uuid
+          description: "Game service this entry template is scoped to"
+        displayName: &id005
+          type: string
+          description: "Human-readable display name"
+        category: &id006
+          type: string
+          nullable: true
+          description: "Category within the collection type"
+        hideWhenLocked: &id007
+          type: boolean
+          description: "Whether this entry is hidden until unlocked"
+        itemTemplateId: &id008
+          type: string
+          format: uuid
+          description: "Item template used when granting this entry"
+        createdAt: &id009
+          type: string
+          format: date-time
+          description: "When this entry template was created"
+        updatedAt: &id010
+          type: string
+          format: date-time
+          nullable: true
+          description: "When this entry template was last updated"
+    CollectionEntryTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection-entry-template.updated when a collectionentrytemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryTemplateId
+      - code
+      - collectionType
+      - gameServiceId
+      - displayName
+      - hideWhenLocked
+      - itemTemplateId
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: collection-entry-template.updated
+          description: 'Event type identifier: collection-entry-template.updated'
+        entryTemplateId: *id001
+        code: *id002
+        collectionType: *id003
+        gameServiceId: *id004
+        displayName: *id005
+        category: *id006
+        hideWhenLocked: *id007
+        itemTemplateId: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    CollectionEntryTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection-entry-template.deleted when a collectionentrytemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryTemplateId
+      - code
+      - collectionType
+      - gameServiceId
+      - displayName
+      - hideWhenLocked
+      - itemTemplateId
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: collection-entry-template.deleted
+          description: 'Event type identifier: collection-entry-template.deleted'
+        entryTemplateId: *id001
+        code: *id002
+        collectionType: *id003
+        gameServiceId: *id004
+        displayName: *id005
+        category: *id006
+        hideWhenLocked: *id007
+        itemTemplateId: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    CollectionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection.created when a collection is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - collectionId
+      - ownerId
+      - ownerType
+      - collectionType
+      - gameServiceId
+      - containerId
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: collection.created
+          description: 'Event type identifier: collection.created'
+        collectionId: &id011
+          type: string
+          format: uuid
+          description: "Unique collection instance identifier"
+        ownerId: &id012
+          type: string
+          format: uuid
+          description: "Entity that owns this collection"
+        ownerType: &id013
+          type: string
+          description: "Entity type discriminator"
+        collectionType: &id014
+          $ref: ../collection-api.yaml#/components/schemas/CollectionType
+          description: "Type of collection"
+        gameServiceId: &id015
+          type: string
+          format: uuid
+          description: "Game service this collection is scoped to"
+        containerId: &id016
+          type: string
+          format: uuid
+          description: "Inventory container holding unlocked entry items"
+        createdAt: &id017
+          type: string
+          format: date-time
+          description: "When this collection was created"
+    CollectionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection.updated when a collection is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - collectionId
+      - ownerId
+      - ownerType
+      - collectionType
+      - gameServiceId
+      - containerId
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: collection.updated
+          description: 'Event type identifier: collection.updated'
+        collectionId: *id011
+        ownerId: *id012
+        ownerType: *id013
+        collectionType: *id014
+        gameServiceId: *id015
+        containerId: *id016
+        createdAt: *id017
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    CollectionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection.deleted when a collection is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - collectionId
+      - ownerId
+      - ownerType
+      - collectionType
+      - gameServiceId
+      - containerId
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: collection.deleted
+          description: 'Event type identifier: collection.deleted'
+        collectionId: *id011
+        ownerId: *id012
+        ownerType: *id013
+        collectionType: *id014
+        gameServiceId: *id015
+        containerId: *id016
+        createdAt: *id017
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

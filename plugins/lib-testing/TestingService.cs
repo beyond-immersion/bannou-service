@@ -41,6 +41,7 @@ public partial class TestingService : ITestingService
     /// </summary>
     public async Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
             _logger.LogDebug("Running test: {TestName}", testName);
 
             var response = new TestResponse
@@ -59,6 +60,7 @@ public partial class TestingService : ITestingService
     /// </summary>
     public async Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
             _logger.LogDebug("Testing configuration");
 
             var response = new ConfigTestResponse
@@ -77,6 +79,7 @@ public partial class TestingService : ITestingService
     /// </summary>
     public async Task<(StatusCodes, DependencyTestResponse?)> TestDependencyInjectionHealthAsync(CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
             _logger.LogDebug("Testing dependency injection health");
 
             // Since we established null safety in constructor with proper null checks,
@@ -140,6 +143,7 @@ public partial class TestingService : ITestingService
         PingRequest? request,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         var serverReceiveTime = DateTimeOffset.UtcNow;
 
             // Create response with timing data

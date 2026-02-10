@@ -808,3 +808,34 @@ x-state-stores:
     prefix: "license:lock"
     service: License
     purpose: Distributed locks for board mutations and unlock operations
+
+  # ============================================================================
+  # Collection Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  collection-entry-templates:
+    backend: mysql
+    service: Collection
+    purpose: Entry template definitions per collection type and game service
+
+  collection-instances:
+    backend: mysql
+    service: Collection
+    purpose: Per-owner collection containers linking entities to collection types
+
+  collection-area-music-configs:
+    backend: mysql
+    service: Collection
+    purpose: Area-to-theme mappings for dynamic music track selection
+
+  collection-cache:
+    backend: redis
+    prefix: "collection:state"
+    service: Collection
+    purpose: Collection state cache (unlocked entries per collection)
+
+  collection-lock:
+    backend: redis
+    prefix: "collection:lock"
+    service: Collection
+    purpose: Distributed locks for collection mutations and grant operations

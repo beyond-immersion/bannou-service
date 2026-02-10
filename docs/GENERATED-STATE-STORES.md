@@ -32,6 +32,11 @@ This document lists all state store components used in Bannou.
 | `character-lock` | Redis | Character | Distributed locks for character update and compression operations |
 | `character-personality-statestore` | MySQL | CharacterPersonality | Character personality traits and combat preferences |
 | `character-statestore` | MySQL | Character | Persistent character data |
+| `collection-area-music-configs` | MySQL | Collection | Area-to-theme mappings for dynamic music track selection |
+| `collection-cache` | Redis | Collection | Collection state cache (unlocked entries per collection) |
+| `collection-entry-templates` | MySQL | Collection | Entry template definitions per collection type and game service |
+| `collection-instances` | MySQL | Collection | Per-owner collection containers linking entities to collection types |
+| `collection-lock` | Redis | Collection | Distributed locks for collection mutations and grant operations |
 | `connect-statestore` | Redis | Connect | WebSocket session state |
 | `contract-statestore` | Redis | Contract | Contract templates, instances, breaches, and indexes |
 | `currency-balance-cache` | Redis | Currency | Real-time balance lookups (cached, refreshed on access) |
@@ -129,7 +134,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 119 stores (75 Redis, 44 MySQL)
+**Total**: 124 stores (77 Redis, 47 MySQL)
 
 ## Naming Conventions
 

@@ -250,19 +250,6 @@ public partial class AssetService : IAssetService
                 });
 
             return (StatusCodes.OK, response);
-        {
-            _logger.LogError(ex, "Error executing RequestUpload operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "RequestUpload",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/assets/upload/request",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -446,19 +433,6 @@ public partial class AssetService : IAssetService
             }
 
             return (StatusCodes.OK, assetMetadata);
-        {
-            _logger.LogError(ex, "Error executing CompleteUpload operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "CompleteUpload",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/assets/upload/complete",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -510,19 +484,6 @@ public partial class AssetService : IAssetService
             };
 
             return (StatusCodes.OK, response);
-        {
-            _logger.LogError(ex, "Error executing GetAsset operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "GetAsset",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/assets/get",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -599,19 +560,6 @@ public partial class AssetService : IAssetService
             };
 
             return (StatusCodes.OK, response);
-        {
-            _logger.LogError(ex, "Error executing DeleteAsset operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "DeleteAsset",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/assets/delete",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -661,19 +609,6 @@ public partial class AssetService : IAssetService
             };
 
             return (StatusCodes.OK, response);
-        {
-            _logger.LogError(ex, "Error executing ListAssetVersions operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "ListAssetVersions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/assets/list-versions",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -688,6 +623,8 @@ public partial class AssetService : IAssetService
             body.AssetType,
             body.Realm);
 
+        try
+        {
             // Check if search is supported for this store
             if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Asset))
             {
@@ -753,6 +690,8 @@ public partial class AssetService : IAssetService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("search") || ex.Message.Contains("Search"))
         {
             // Search not available, fall back to index-based search
             _logger.LogError(ex, "Search store not available, falling back to index-based search - infrastructure degraded");
@@ -766,20 +705,6 @@ public partial class AssetService : IAssetService
                 details: ex.Message,
                 stack: ex.StackTrace);
             return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing SearchAssets operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "SearchAssets",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/assets/search",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -1044,19 +969,6 @@ public partial class AssetService : IAssetService
                 Status = CreateBundleResponseStatus.Ready,
                 EstimatedSize = bundleStream.Length
             });
-        {
-            _logger.LogError(ex, "Error executing CreateBundle operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "CreateBundle",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/create",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1195,19 +1107,6 @@ public partial class AssetService : IAssetService
                 AssetCount = bundleMetadata.AssetIds.Count,
                 FromCache = fromCache
             });
-        {
-            _logger.LogError(ex, "Error executing GetBundle operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "GetBundle",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/get",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1327,19 +1226,6 @@ public partial class AssetService : IAssetService
             }
 
             return (StatusCodes.OK, response);
-        {
-            _logger.LogError(ex, "Error executing RequestBundleUpload operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "RequestBundleUpload",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/upload/request",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1756,19 +1642,6 @@ public partial class AssetService : IAssetService
                 SourceBundles = sourceBundleRefs.Select(r => r.ToApiModel()).ToList(),
                 StandaloneAssetCount = standalonesToInclude.Count
             });
-        {
-            _logger.LogError(ex, "Error executing CreateMetabundle operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "CreateMetabundle",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/metabundle/create",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1970,19 +1843,6 @@ public partial class AssetService : IAssetService
             };
 
             return (StatusCodes.OK, response);
-        {
-            _logger.LogError(ex, "Error executing ResolveBundles operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "ResolveBundles",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/resolve",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -2067,19 +1927,6 @@ public partial class AssetService : IAssetService
             }
 
             return (StatusCodes.OK, response);
-        {
-            _logger.LogError(ex, "Error executing GetJobStatus operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "GetJobStatus",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/job/status",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -2174,19 +2021,6 @@ public partial class AssetService : IAssetService
                 Status = CancelJobResponseStatus.Cancelled,
                 Message = $"Job cancelled successfully (was {previousStatus})"
             });
-        {
-            _logger.LogError(ex, "Error executing CancelJob operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "CancelJob",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/job/cancel",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -2257,19 +2091,6 @@ public partial class AssetService : IAssetService
                 Limit = body.Limit,
                 Offset = body.Offset
             });
-        {
-            _logger.LogError(ex, "Error executing QueryBundlesByAsset operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "QueryBundlesByAsset",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/query/by-asset",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -2343,19 +2164,6 @@ public partial class AssetService : IAssetService
                 Assets = assets,
                 NotFound = notFound
             });
-        {
-            _logger.LogError(ex, "Error executing BulkGetAssets operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "BulkGetAssets",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/assets/bulk-get",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #region Private Helper Methods
@@ -2930,19 +2738,6 @@ public partial class AssetService : IAssetService
                 Changes = changes,
                 UpdatedAt = bundle.UpdatedAt.Value
             });
-        {
-            _logger.LogError(ex, "UpdateBundle: Unexpected error for bundle {BundleId}", body.BundleId);
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "UpdateBundle",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/update",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -3063,19 +2858,6 @@ public partial class AssetService : IAssetService
                 DeletedAt = deletedAt,
                 RetentionUntil = retentionUntil
             });
-        {
-            _logger.LogError(ex, "DeleteBundle: Unexpected error for bundle {BundleId}", body.BundleId);
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "DeleteBundle",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/delete",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -3166,19 +2948,6 @@ public partial class AssetService : IAssetService
                 RestoredAt = restoredAt,
                 RestoredFromVersion = restoredFromVersion
             });
-        {
-            _logger.LogError(ex, "RestoreBundle: Unexpected error for bundle {BundleId}", body.BundleId);
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "RestoreBundle",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/restore",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -3333,19 +3102,6 @@ public partial class AssetService : IAssetService
                 Limit = limit,
                 Offset = offset
             });
-        {
-            _logger.LogError(ex, "QueryBundles: Unexpected error");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "QueryBundles",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/query",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -3418,19 +3174,6 @@ public partial class AssetService : IAssetService
                 Versions = pagedVersions,
                 TotalCount = totalCount
             });
-        {
-            _logger.LogError(ex, "ListBundleVersions: Unexpected error for bundle {BundleId}", body.BundleId);
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "ListBundleVersions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/bundles/list-versions",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>

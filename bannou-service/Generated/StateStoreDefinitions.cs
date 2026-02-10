@@ -91,6 +91,18 @@ public static class StateStoreDefinitions
     /// <summary>Character personality traits and combat preferences</summary>
     public const string CharacterPersonality = "character-personality-statestore";
 
+    // Collection Service
+    /// <summary>Area-to-theme mappings for dynamic music track selection</summary>
+    public const string CollectionAreaMusicConfigs = "collection-area-music-configs";
+    /// <summary>Collection state cache (unlocked entries per collection)</summary>
+    public const string CollectionCache = "collection-cache";
+    /// <summary>Entry template definitions per collection type and game service</summary>
+    public const string CollectionEntryTemplates = "collection-entry-templates";
+    /// <summary>Per-owner collection containers linking entities to collection types</summary>
+    public const string CollectionInstances = "collection-instances";
+    /// <summary>Distributed locks for collection mutations and grant operations</summary>
+    public const string CollectionLock = "collection-lock";
+
     // Connect Service
     /// <summary>WebSocket session state</summary>
     public const string Connect = "connect-statestore";
@@ -379,6 +391,11 @@ public static class StateStoreDefinitions
             [CharacterLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "character:lock" },
             [CharacterPersonality] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_personality_statestore" },
             [Character] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_statestore" },
+            [CollectionAreaMusicConfigs] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_area_music_configs" },
+            [CollectionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "collection:state" },
+            [CollectionEntryTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_entry_templates" },
+            [CollectionInstances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_instances" },
+            [CollectionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "collection:lock" },
             [Connect] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "connect" },
             [Contract] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract", EnableSearch = true },
             [CurrencyBalanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:balance" },
@@ -510,6 +527,11 @@ public static class StateStoreDefinitions
             [CharacterLock] = new StoreMetadata("Character", "Distributed locks for character update and compression operations", "redis"),
             [CharacterPersonality] = new StoreMetadata("CharacterPersonality", "Character personality traits and combat preferences", "mysql"),
             [Character] = new StoreMetadata("Character", "Persistent character data", "mysql"),
+            [CollectionAreaMusicConfigs] = new StoreMetadata("Collection", "Area-to-theme mappings for dynamic music track selection", "mysql"),
+            [CollectionCache] = new StoreMetadata("Collection", "Collection state cache (unlocked entries per collection)", "redis"),
+            [CollectionEntryTemplates] = new StoreMetadata("Collection", "Entry template definitions per collection type and game service", "mysql"),
+            [CollectionInstances] = new StoreMetadata("Collection", "Per-owner collection containers linking entities to collection types", "mysql"),
+            [CollectionLock] = new StoreMetadata("Collection", "Distributed locks for collection mutations and grant operations", "redis"),
             [Connect] = new StoreMetadata("Connect", "WebSocket session state", "redis"),
             [Contract] = new StoreMetadata("Contract", "Contract templates, instances, breaches, and indexes", "redis"),
             [CurrencyBalanceCache] = new StoreMetadata("Currency", "Real-time balance lookups (cached, refreshed on access)", "redis"),

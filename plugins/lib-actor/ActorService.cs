@@ -951,6 +951,7 @@ public partial class ActorService : IActorService
         ListActorsRequest body,
         CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         _logger.LogDebug("Listing actors (category: {Category}, nodeId: {NodeId}, status: {Status})",
             body.Category, body.NodeId, body.Status);
 
@@ -1002,6 +1003,7 @@ public partial class ActorService : IActorService
         InjectPerceptionRequest body,
         CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         _logger.LogDebug("Injecting perception into actor {ActorId}", body.ActorId);
 
             if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
