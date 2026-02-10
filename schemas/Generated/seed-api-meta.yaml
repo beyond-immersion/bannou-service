@@ -830,55 +830,61 @@ paths:
         : \"Full seed type definition response.\",\n            \"required\": [\n                \"seedTypeCode\",\n     \
         \           \"gameServiceId\",\n                \"displayName\",\n                \"description\",\n             \
         \   \"maxPerOwner\",\n                \"allowedOwnerTypes\",\n                \"growthPhases\",\n                \"\
-        bondCardinality\",\n                \"bondPermanent\"\n            ],\n            \"properties\": {\n           \
-        \     \"seedTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        type code.\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Game service scope.\"\n       \
-        \         },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Human-readable name.\"\n                },\n                \"description\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"Type description.\"\n                },\n     \
-        \           \"maxPerOwner\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Maximum seeds of this type per owner.\"\n                },\n                \"allowedOwnerTypes\": {\n          \
-        \          \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n\
-        \                    },\n                    \"description\": \"Allowed owner entity types.\"\n                },\n\
-        \                \"growthPhases\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n                   \
-        \ \"description\": \"Phase definitions with thresholds.\"\n                },\n                \"bondCardinality\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Bond participant limit.\"\n\
-        \                },\n                \"bondPermanent\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether bonds of this type are permanent.\"\n                },\n                \"\
-        capabilityRules\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/CapabilityRule\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Capability computation rules.\"\n                },\n                \"growthDecayEnabled\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Whether unused growth domains decay over time for this seed type. Null means using global config.\"\n        \
-        \        },\n                \"growthDecayRatePerDay\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"float\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Daily decay rate for unused domains of this seed type. Null means using global config.\"\n                },\n   \
-        \             \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Fraction of growth applied to other seeds of the same
-        type owned by the same entity.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
-        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
-        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
-        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
-        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
-        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
-        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
-        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
-        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
-        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
-        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
-        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
-        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
-        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        bondCardinality\",\n                \"bondPermanent\",\n                \"isDeprecated\"\n            ],\n       \
+        \     \"properties\": {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Unique type code.\"\n                },\n                \"gameServiceId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service scope.\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable name.\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type description.\"\n     \
+        \           },\n                \"maxPerOwner\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Maximum seeds of this type per owner.\"\n                },\n                \"allowedOwnerTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Allowed owner entity types.\"\n     \
+        \           },\n                \"growthPhases\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n   \
+        \                 \"description\": \"Phase definitions with thresholds.\"\n                },\n                \"\
+        bondCardinality\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Bond participant
+        limit.\"\n                },\n                \"bondPermanent\": {\n                    \"type\": \"boolean\",\n \
+        \                   \"description\": \"Whether bonds of this type are permanent.\"\n                },\n         \
+        \       \"capabilityRules\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/CapabilityRule\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Capability computation rules.\"\n                },\n            \
+        \    \"growthDecayEnabled\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Whether unused growth domains decay over time for this seed type. Null means
+        using global config.\"\n                },\n                \"growthDecayRatePerDay\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
+        \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
+        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
+        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
+        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
+        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
+        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
+        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
+        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
+        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
+        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
+        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
+        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
+        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
+        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
+        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Register a new seed type definition\",\n    \"description\": \"Registers
         a seed type with its growth phase definitions, capability rules, bond cardinality, and owner type restrictions. Seed
         types are scoped to game services.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"RegisterSeedType\"\
@@ -916,55 +922,61 @@ paths:
         : \"Full seed type definition response.\",\n            \"required\": [\n                \"seedTypeCode\",\n     \
         \           \"gameServiceId\",\n                \"displayName\",\n                \"description\",\n             \
         \   \"maxPerOwner\",\n                \"allowedOwnerTypes\",\n                \"growthPhases\",\n                \"\
-        bondCardinality\",\n                \"bondPermanent\"\n            ],\n            \"properties\": {\n           \
-        \     \"seedTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        type code.\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Game service scope.\"\n       \
-        \         },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Human-readable name.\"\n                },\n                \"description\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"Type description.\"\n                },\n     \
-        \           \"maxPerOwner\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Maximum seeds of this type per owner.\"\n                },\n                \"allowedOwnerTypes\": {\n          \
-        \          \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n\
-        \                    },\n                    \"description\": \"Allowed owner entity types.\"\n                },\n\
-        \                \"growthPhases\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n                   \
-        \ \"description\": \"Phase definitions with thresholds.\"\n                },\n                \"bondCardinality\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Bond participant limit.\"\n\
-        \                },\n                \"bondPermanent\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether bonds of this type are permanent.\"\n                },\n                \"\
-        capabilityRules\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/CapabilityRule\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Capability computation rules.\"\n                },\n                \"growthDecayEnabled\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Whether unused growth domains decay over time for this seed type. Null means using global config.\"\n        \
-        \        },\n                \"growthDecayRatePerDay\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"float\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Daily decay rate for unused domains of this seed type. Null means using global config.\"\n                },\n   \
-        \             \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Fraction of growth applied to other seeds of the same
-        type owned by the same entity.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
-        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
-        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
-        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
-        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
-        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
-        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
-        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
-        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
-        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
-        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
-        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
-        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
-        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        bondCardinality\",\n                \"bondPermanent\",\n                \"isDeprecated\"\n            ],\n       \
+        \     \"properties\": {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Unique type code.\"\n                },\n                \"gameServiceId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service scope.\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable name.\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type description.\"\n     \
+        \           },\n                \"maxPerOwner\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Maximum seeds of this type per owner.\"\n                },\n                \"allowedOwnerTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Allowed owner entity types.\"\n     \
+        \           },\n                \"growthPhases\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n   \
+        \                 \"description\": \"Phase definitions with thresholds.\"\n                },\n                \"\
+        bondCardinality\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Bond participant
+        limit.\"\n                },\n                \"bondPermanent\": {\n                    \"type\": \"boolean\",\n \
+        \                   \"description\": \"Whether bonds of this type are permanent.\"\n                },\n         \
+        \       \"capabilityRules\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/CapabilityRule\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Capability computation rules.\"\n                },\n            \
+        \    \"growthDecayEnabled\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Whether unused growth domains decay over time for this seed type. Null means
+        using global config.\"\n                },\n                \"growthDecayRatePerDay\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
+        \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
+        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
+        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
+        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
+        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
+        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
+        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
+        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
+        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
+        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
+        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
+        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
+        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
+        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
+        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get seed type definition\",\n    \"description\": \"Returns the full seed
         type definition including phases and capability rules.\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"GetSeedType\"\n}"
@@ -993,7 +1005,9 @@ paths:
         : \"Request to list seed types for a game service.\",\n            \"required\": [\n                \"gameServiceId\"\
         \n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service to list
-        seed types for.\"\n                }\n            }\n        }\n    }\n}"
+        seed types for.\"\n                },\n                \"includeDeprecated\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether to include deprecated
+        seed types in the response.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListSeedTypesResponse\"\
         ,\n    \"$defs\": {\n        \"ListSeedTypesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"List of registered seed types.\",\n            \"required\": [\n                \"seedTypes\"\n            ],\n\
@@ -1004,54 +1018,61 @@ paths:
         definition response.\",\n            \"required\": [\n                \"seedTypeCode\",\n                \"gameServiceId\"\
         ,\n                \"displayName\",\n                \"description\",\n                \"maxPerOwner\",\n        \
         \        \"allowedOwnerTypes\",\n                \"growthPhases\",\n                \"bondCardinality\",\n       \
-        \         \"bondPermanent\"\n            ],\n            \"properties\": {\n                \"seedTypeCode\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Unique type code.\"\n         \
-        \       },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"description\": \"Game service scope.\"\n                },\n          \
-        \      \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        name.\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n     \
-        \               \"description\": \"Type description.\"\n                },\n                \"maxPerOwner\": {\n \
-        \                   \"type\": \"integer\",\n                    \"description\": \"Maximum seeds of this type per
-        owner.\"\n                },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Allowed owner entity types.\"\n                },\n                \"growthPhases\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/GrowthPhaseDefinition\"\n                    },\n                    \"description\": \"Phase definitions
-        with thresholds.\"\n                },\n                \"bondCardinality\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Bond participant limit.\"\n                },\n                \"bondPermanent\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether bonds of this type
-        are permanent.\"\n                },\n                \"capabilityRules\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/CapabilityRule\"\n              \
-        \      },\n                    \"nullable\": true,\n                    \"description\": \"Capability computation
-        rules.\"\n                },\n                \"growthDecayEnabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether unused growth domains decay
-        over time for this seed type. Null means using global config.\"\n                },\n                \"growthDecayRatePerDay\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Daily decay rate for unused domains of this seed type. Null
-        means using global config.\"\n                },\n                \"sameOwnerGrowthMultiplier\": {\n             \
-        \       \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"\
-        Fraction of growth applied to other seeds of the same type owned by the same entity.\"\n                }\n      \
-        \      }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
-        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
-        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
-        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
-        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
-        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
-        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
-        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
-        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
-        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
-        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
-        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        \         \"bondPermanent\",\n                \"isDeprecated\"\n            ],\n            \"properties\": {\n  \
+        \              \"seedTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique type code.\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service scope.\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"description\": \"Human-readable name.\"\n                },\n                \"description\": {\n     \
+        \               \"type\": \"string\",\n                    \"description\": \"Type description.\"\n              \
+        \  },\n                \"maxPerOwner\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Maximum seeds of this type per owner.\"\n                },\n                \"allowedOwnerTypes\": {\n      \
+        \              \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Allowed owner entity types.\"\n                },\n\
+        \                \"growthPhases\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n                   \
+        \ \"description\": \"Phase definitions with thresholds.\"\n                },\n                \"bondCardinality\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Bond participant limit.\"\n\
+        \                },\n                \"bondPermanent\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether bonds of this type are permanent.\"\n                },\n                \"\
+        capabilityRules\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
+        \         \"$ref\": \"#/$defs/CapabilityRule\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Capability computation rules.\"\n                },\n                \"growthDecayEnabled\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Whether unused growth domains decay over time for this seed type. Null means using global config.\"\n        \
+        \        },\n                \"growthDecayRatePerDay\": {\n                    \"type\": \"number\",\n           \
+        \         \"format\": \"float\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Daily decay rate for unused domains of this seed type. Null means using global config.\"\n                },\n   \
+        \             \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"description\": \"Fraction of growth applied to other seeds of the same
+        type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated and cannot be used
+        for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Timestamp when this seed type was deprecated.\"\n                },\n                \"deprecationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional reason for deprecation.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
+        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
+        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
+        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
+        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
+        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
+        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
+        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
+        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
+        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
+        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
+        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        }\n  \
+        \  }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List registered seed types\",\n    \"description\": \"Returns all seed
         types registered for the specified game service.\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"ListSeedTypes\"\n}"
@@ -1130,58 +1151,303 @@ paths:
         : \"Full seed type definition response.\",\n            \"required\": [\n                \"seedTypeCode\",\n     \
         \           \"gameServiceId\",\n                \"displayName\",\n                \"description\",\n             \
         \   \"maxPerOwner\",\n                \"allowedOwnerTypes\",\n                \"growthPhases\",\n                \"\
-        bondCardinality\",\n                \"bondPermanent\"\n            ],\n            \"properties\": {\n           \
-        \     \"seedTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        type code.\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Game service scope.\"\n       \
-        \         },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Human-readable name.\"\n                },\n                \"description\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"Type description.\"\n                },\n     \
-        \           \"maxPerOwner\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Maximum seeds of this type per owner.\"\n                },\n                \"allowedOwnerTypes\": {\n          \
-        \          \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n\
-        \                    },\n                    \"description\": \"Allowed owner entity types.\"\n                },\n\
-        \                \"growthPhases\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n                   \
-        \ \"description\": \"Phase definitions with thresholds.\"\n                },\n                \"bondCardinality\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Bond participant limit.\"\n\
-        \                },\n                \"bondPermanent\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether bonds of this type are permanent.\"\n                },\n                \"\
-        capabilityRules\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/CapabilityRule\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Capability computation rules.\"\n                },\n                \"growthDecayEnabled\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Whether unused growth domains decay over time for this seed type. Null means using global config.\"\n        \
-        \        },\n                \"growthDecayRatePerDay\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"float\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Daily decay rate for unused domains of this seed type. Null means using global config.\"\n                },\n   \
-        \             \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Fraction of growth applied to other seeds of the same
-        type owned by the same entity.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
-        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
-        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
-        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
-        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
-        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
-        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
-        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
-        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
-        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
-        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
-        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
-        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
-        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        bondCardinality\",\n                \"bondPermanent\",\n                \"isDeprecated\"\n            ],\n       \
+        \     \"properties\": {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Unique type code.\"\n                },\n                \"gameServiceId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service scope.\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable name.\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type description.\"\n     \
+        \           },\n                \"maxPerOwner\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Maximum seeds of this type per owner.\"\n                },\n                \"allowedOwnerTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Allowed owner entity types.\"\n     \
+        \           },\n                \"growthPhases\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n   \
+        \                 \"description\": \"Phase definitions with thresholds.\"\n                },\n                \"\
+        bondCardinality\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Bond participant
+        limit.\"\n                },\n                \"bondPermanent\": {\n                    \"type\": \"boolean\",\n \
+        \                   \"description\": \"Whether bonds of this type are permanent.\"\n                },\n         \
+        \       \"capabilityRules\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/CapabilityRule\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Capability computation rules.\"\n                },\n            \
+        \    \"growthDecayEnabled\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Whether unused growth domains decay over time for this seed type. Null means
+        using global config.\"\n                },\n                \"growthDecayRatePerDay\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
+        \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
+        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
+        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
+        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
+        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
+        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
+        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
+        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
+        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
+        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
+        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
+        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
+        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
+        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
+        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update seed type definition\",\n    \"description\": \"Updates a seed type
         definition. Changes to phase thresholds or capability rules trigger recomputation for all seeds of this type.\\n\"\
         ,\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateSeedType\"\n}"
+  /seed/type/deprecate:
+    post:
+      operationId: DeprecateSeedType
+      summary: Deprecate a seed type
+      description: >
+        Marks a seed type as deprecated. Deprecated seed types cannot be used
+        to create new seeds. Existing seeds of this type remain unaffected.
+        Must be deprecated before it can be deleted.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+        '404':
+          description: Seed type not found
+        '409':
+          description: Seed type already deprecated
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateSeedTypeRequest\"\
+        ,\n    \"$defs\": {\n        \"DeprecateSeedTypeRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to deprecate a seed type, preventing new seed creation.\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"seedTypeCode\",\n                \"gameServiceId\"\n            ],\n\
+        \            \"properties\": {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n \
+        \                   \"description\": \"The seed type to deprecate.\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"The game service scope.\"\n                },\n                \"reason\": {\n                  \
+        \  \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Optional reason for deprecation (for audit purposes).\"\n                }\n  \
+        \          }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedTypeResponse\"\
+        ,\n    \"$defs\": {\n        \"SeedTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Full seed type definition response.\",\n            \"required\": [\n                \"seedTypeCode\",\n     \
+        \           \"gameServiceId\",\n                \"displayName\",\n                \"description\",\n             \
+        \   \"maxPerOwner\",\n                \"allowedOwnerTypes\",\n                \"growthPhases\",\n                \"\
+        bondCardinality\",\n                \"bondPermanent\",\n                \"isDeprecated\"\n            ],\n       \
+        \     \"properties\": {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Unique type code.\"\n                },\n                \"gameServiceId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service scope.\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable name.\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type description.\"\n     \
+        \           },\n                \"maxPerOwner\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Maximum seeds of this type per owner.\"\n                },\n                \"allowedOwnerTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Allowed owner entity types.\"\n     \
+        \           },\n                \"growthPhases\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n   \
+        \                 \"description\": \"Phase definitions with thresholds.\"\n                },\n                \"\
+        bondCardinality\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Bond participant
+        limit.\"\n                },\n                \"bondPermanent\": {\n                    \"type\": \"boolean\",\n \
+        \                   \"description\": \"Whether bonds of this type are permanent.\"\n                },\n         \
+        \       \"capabilityRules\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/CapabilityRule\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Capability computation rules.\"\n                },\n            \
+        \    \"growthDecayEnabled\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Whether unused growth domains decay over time for this seed type. Null means
+        using global config.\"\n                },\n                \"growthDecayRatePerDay\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
+        \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
+        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
+        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
+        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
+        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
+        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
+        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
+        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
+        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
+        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
+        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
+        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
+        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
+        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
+        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a seed type\",\n    \"description\": \"Marks a seed type as deprecated.
+        Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated
+        before it can be deleted.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"DeprecateSeedType\"\
+        \n}"
+  /seed/type/undeprecate:
+    post:
+      operationId: UndeprecateSeedType
+      summary: Restore a deprecated seed type
+      description: >
+        Removes deprecated status from a seed type, allowing new seeds
+        of this type to be created again.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+        '404':
+          description: Seed type not found
+        '409':
+          description: Seed type is not deprecated
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UndeprecateSeedTypeRequest\"\
+        ,\n    \"$defs\": {\n        \"UndeprecateSeedTypeRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to restore a deprecated seed type to active status.\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"seedTypeCode\",\n                \"gameServiceId\"\n    \
+        \        ],\n            \"properties\": {\n                \"seedTypeCode\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"The seed type to restore.\"\n                },\n              \
+        \  \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"The game service scope.\"\n                }\n            }\n        }\n   \
+        \ }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedTypeResponse\"\
+        ,\n    \"$defs\": {\n        \"SeedTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Full seed type definition response.\",\n            \"required\": [\n                \"seedTypeCode\",\n     \
+        \           \"gameServiceId\",\n                \"displayName\",\n                \"description\",\n             \
+        \   \"maxPerOwner\",\n                \"allowedOwnerTypes\",\n                \"growthPhases\",\n                \"\
+        bondCardinality\",\n                \"bondPermanent\",\n                \"isDeprecated\"\n            ],\n       \
+        \     \"properties\": {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Unique type code.\"\n                },\n                \"gameServiceId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service scope.\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable name.\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type description.\"\n     \
+        \           },\n                \"maxPerOwner\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Maximum seeds of this type per owner.\"\n                },\n                \"allowedOwnerTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Allowed owner entity types.\"\n     \
+        \           },\n                \"growthPhases\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n   \
+        \                 \"description\": \"Phase definitions with thresholds.\"\n                },\n                \"\
+        bondCardinality\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Bond participant
+        limit.\"\n                },\n                \"bondPermanent\": {\n                    \"type\": \"boolean\",\n \
+        \                   \"description\": \"Whether bonds of this type are permanent.\"\n                },\n         \
+        \       \"capabilityRules\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/CapabilityRule\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Capability computation rules.\"\n                },\n            \
+        \    \"growthDecayEnabled\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Whether unused growth domains decay over time for this seed type. Null means
+        using global config.\"\n                },\n                \"growthDecayRatePerDay\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
+        \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
+        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
+        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
+        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
+        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
+        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
+        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
+        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
+        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
+        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
+        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
+        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
+        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
+        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
+        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Restore a deprecated seed type\",\n    \"description\": \"Removes deprecated
+        status from a seed type, allowing new seeds of this type to be created again.\\n\",\n    \"tags\": [],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"UndeprecateSeedType\"\n}"
+  /seed/type/delete:
+    post:
+      operationId: DeleteSeedType
+      summary: Delete a seed type
+      description: >
+        Hard deletes a deprecated seed type. Fails if any non-archived seeds
+        of this type exist. Must deprecate first, then ensure all seeds are
+        archived or deleted before calling this endpoint.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type deleted
+        '400':
+          description: Seed type is not deprecated
+        '404':
+          description: Seed type not found
+        '409':
+          description: Non-archived seeds still exist for this type
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteSeedTypeRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteSeedTypeRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to hard-delete a deprecated seed type with no remaining non-archived seeds.\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"seedTypeCode\",\n                \"gameServiceId\"\n    \
+        \        ],\n            \"properties\": {\n                \"seedTypeCode\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"The seed type to delete.\"\n                },\n               \
+        \ \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"The game service scope.\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a seed type\",\n    \"description\": \"Hard deletes a deprecated
+        seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived
+        or deleted before calling this endpoint.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"DeleteSeedType\"\n}"
   /seed/bond/initiate:
     post:
       operationId: InitiateBond
@@ -1870,6 +2136,10 @@ components:
           type: string
           format: uuid
           description: Game service to list seed types for.
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated seed types in the response.
     UpdateSeedTypeRequest:
       type: object
       description: Request to update a seed type definition.
@@ -1925,6 +2195,56 @@ components:
           minimum: 0.0
           maximum: 1.0
           description: Updated fraction of growth applied to other seeds of the same type owned by the same entity.
+    DeprecateSeedTypeRequest:
+      type: object
+      description: Request to deprecate a seed type, preventing new seed creation.
+      additionalProperties: false
+      required:
+      - seedTypeCode
+      - gameServiceId
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to deprecate.
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope.
+        reason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Optional reason for deprecation (for audit purposes).
+    UndeprecateSeedTypeRequest:
+      type: object
+      description: Request to restore a deprecated seed type to active status.
+      additionalProperties: false
+      required:
+      - seedTypeCode
+      - gameServiceId
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to restore.
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope.
+    DeleteSeedTypeRequest:
+      type: object
+      description: Request to hard-delete a deprecated seed type with no remaining non-archived seeds.
+      additionalProperties: false
+      required:
+      - seedTypeCode
+      - gameServiceId
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to delete.
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope.
     InitiateBondRequest:
       type: object
       description: Request to initiate a bond between seeds.
@@ -2179,6 +2499,7 @@ components:
       - growthPhases
       - bondCardinality
       - bondPermanent
+      - isDeprecated
       properties:
         seedTypeCode:
           type: string
@@ -2231,6 +2552,18 @@ components:
           type: number
           format: float
           description: Fraction of growth applied to other seeds of the same type owned by the same entity.
+        isDeprecated:
+          type: boolean
+          description: Whether this seed type is deprecated and cannot be used for new seeds.
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when this seed type was deprecated.
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Optional reason for deprecation.
     ListSeedTypesResponse:
       type: object
       description: List of registered seed types.

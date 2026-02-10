@@ -91,10 +91,14 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 - **WebSocket Protocol**: `docs/WEBSOCKET-PROTOCOL.md` - Protocol details
 - **Deployment**: `docs/guides/DEPLOYMENT.md` - Deployment patterns
 
-**Vision & Planning References** (read when explicitly asked OR when you need high-level architectural context for why systems exist, how they interconnect, or what the player experience should be):
+**"Big Brain Mode"**: When the user says **"Big Brain Mode"**, you MUST read both vision documents in full before proceeding:
+- `/home/lysander/repos/arcadia-kb/VISION.md` - The "what and why" of Bannou and Arcadia at the highest level: the five north stars, the content flywheel thesis, system interdependencies, and non-negotiable design principles.
+- `/home/lysander/repos/arcadia-kb/PLAYER-VISION.md` - How players actually experience Arcadia: progressive agency (guardian spirit model), generational play, genre gradients, and the alpha-to-release deployment strategy.
 
-- **Project Vision**: `docs/reference/VISION.md` - The "what and why" of Bannou and Arcadia at the highest level: the five north stars, the content flywheel thesis, system interdependencies, and non-negotiable design principles. Read this when planning cross-cutting features, evaluating whether work aligns with project goals, or needing context on how services serve the bigger picture.
-- **Player Experience Vision**: `docs/reference/PLAYER-VISION.md` - How players actually experience Arcadia: progressive agency (guardian spirit model), generational play, genre gradients, and the alpha-to-release deployment strategy. Read this when designing player-facing features, understanding the guardian spirit/character autonomy model, or evaluating UX implications of service changes.
+These documents provide the high-level architectural north-star context for the entire project. Read them when planning cross-cutting features, evaluating whether work aligns with project goals, designing player-facing features, or needing context on how services serve the bigger picture.
+
+**Other Planning References**:
+
 - **Plan Example**: `docs/reference/PLAN-EXAMPLE.md` - A preserved real implementation plan (Seed service) showing the expected structure, detail level, and patterns for planning a new Bannou service. Read this when creating implementation plans for new services or major features to match the established planning format.
 
 **Auto-Generated References** (regenerate with `make generate-docs`):

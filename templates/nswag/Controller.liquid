@@ -164,26 +164,29 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 {%-                 endif -%}
 {%-             endif -%}
 {%-         endfor %}
+{%-         assign pathParts_ = operation.Path | split: "/" -%}
+        try
+        {
 {%-             if IsAspNetCore and operation.WrapResponse %}
-        var result = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %}).ConfigureAwait(false);
+            var result = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %}).ConfigureAwait(false);
 
-        var status = result.StatusCode;
-        Microsoft.AspNetCore.Mvc.ObjectResult response = new Microsoft.AspNetCore.Mvc.ObjectResult(result{% if operation.UnwrappedResultType != "void" %}.Result{% endif %}) { StatusCode = status };
+            var status = result.StatusCode;
+            Microsoft.AspNetCore.Mvc.ObjectResult response = new Microsoft.AspNetCore.Mvc.ObjectResult(result{% if operation.UnwrappedResultType != "void" %}.Result{% endif %}) { StatusCode = status };
 
-        foreach (var header in result.Headers)
-            Request.HttpContext.Response.Headers.Add(header.Key, new Microsoft.Extensions.Primitives.StringValues(header.Value.ToArray()));
+            foreach (var header in result.Headers)
+                Request.HttpContext.Response.Headers.Add(header.Key, new Microsoft.Extensions.Primitives.StringValues(header.Value.ToArray()));
 
-        return response;
+            return response;
 {%-             elsif operation.WrapResponse %}
-        var result = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %}).ConfigureAwait(false);
+            var result = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %}).ConfigureAwait(false);
 
-        var status = (System.Net.HttpStatusCode)result.StatusCode;
-        HttpResponseMessage response = Request.CreateResponse(status{% if operation.UnwrappedResultType != "void" %}, result.Result{% endif %});
+            var status = (System.Net.HttpStatusCode)result.StatusCode;
+            HttpResponseMessage response = Request.CreateResponse(status{% if operation.UnwrappedResultType != "void" %}, result.Result{% endif %});
 
-        foreach (var header in result.Headers)
-            response.Headers.Add(header.Key, header.Value);
+            foreach (var header in result.Headers)
+                response.Headers.Add(header.Key, header.Value);
 
-        return response;
+            return response;
 {%-             else %}
 {%-               comment -%}
         Check if operation has no response body (e.g., 204 No Content).
@@ -195,13 +198,35 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 {%-                 assign hasResponseBody = false -%}
 {%-               endif -%}
 {%-               if hasResponseBody %}
-        var (statusCode, result) = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %});
-        return ConvertToActionResult(statusCode, result);
+            var (statusCode, result) = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %});
+            return ConvertToActionResult(statusCode, result);
 {%-               else %}
-        var statusCode = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %});
-        return ConvertToActionResult(statusCode);
+            var statusCode = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %});
+            return ConvertToActionResult(statusCode);
 {%-               endif -%}
 {%             endif -%}
+        }
+        catch (BeyondImmersion.BannouService.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller{% if hasControllerOnlyMethods %}Base{% endif %}>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "{{ operation.HttpMethodUpper | downcase }}:{{ operation.Path }}");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller{% if hasControllerOnlyMethods %}Base{% endif %}>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "{{ operation.HttpMethodUpper | downcase }}:{{ operation.Path }}");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "{{ pathParts_[0] }}",
+                "{{ operation.ActualOperationName }}",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "{{ operation.HttpMethodUpper | downcase }}:{{ operation.Path }}",
+                stack: ex_.StackTrace,
+                cancellationToken: {% if UseCancellationToken %}cancellationToken{% else %}default{% endif %});
+            return StatusCode(500);
+        }
     }
 {%-         endif %}
 {%-         endif %}
