@@ -3519,6 +3519,829 @@
         }
       }
     },
+    "/collection/entry-template/create": {
+      "post": {
+        "operationId": "createEntryTemplate",
+        "tags": [
+          "EntryTemplate"
+        ],
+        "summary": "Create an entry template",
+        "description": "Create an entry template defining a collectible content item. Each template\nhas a unique code within its collection type and game service, references\nan item template for inventory placement, and includes display/metadata fields.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEntryTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entry template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryTemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (validation error)"
+          },
+          "404": {
+            "description": "Referenced game service or item template not found"
+          },
+          "409": {
+            "description": "Duplicate code for this collection type and game service"
+          }
+        }
+      }
+    },
+    "/collection/entry-template/get": {
+      "post": {
+        "operationId": "getEntryTemplate",
+        "tags": [
+          "EntryTemplate"
+        ],
+        "summary": "Get an entry template by ID",
+        "description": "Retrieves an entry template by its unique identifier.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetEntryTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entry template retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entry template not found"
+          }
+        }
+      }
+    },
+    "/collection/entry-template/list": {
+      "post": {
+        "operationId": "listEntryTemplates",
+        "tags": [
+          "EntryTemplate"
+        ],
+        "summary": "List entry templates",
+        "description": "Paginated list of entry templates filtered by collection type, game service, and optional category.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListEntryTemplatesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entry templates retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListEntryTemplatesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collection/entry-template/update": {
+      "post": {
+        "operationId": "updateEntryTemplate",
+        "tags": [
+          "EntryTemplate"
+        ],
+        "summary": "Update an entry template",
+        "description": "Update mutable fields of an entry template (displayName, tags, assets, unlockHint, themes, music metadata).",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEntryTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entry template updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entry template not found"
+          }
+        }
+      }
+    },
+    "/collection/entry-template/delete": {
+      "post": {
+        "operationId": "deleteEntryTemplate",
+        "tags": [
+          "EntryTemplate"
+        ],
+        "summary": "Delete an entry template",
+        "description": "Delete an entry template. Warns if instances reference it but does not block deletion.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteEntryTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entry template deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entry template not found"
+          }
+        }
+      }
+    },
+    "/collection/entry-template/seed": {
+      "post": {
+        "operationId": "seedEntryTemplates",
+        "tags": [
+          "EntryTemplate"
+        ],
+        "summary": "Bulk seed entry templates",
+        "description": "Bulk create entry templates from a payload, skipping duplicates. Validates item template IDs. Returns count of created templates.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedEntryTemplatesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedEntryTemplatesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (validation errors)"
+          }
+        }
+      }
+    },
+    "/collection/create": {
+      "post": {
+        "operationId": "createCollection",
+        "tags": [
+          "Collection"
+        ],
+        "summary": "Create a collection for an owner",
+        "description": "Create a collection instance for an owner entity. One collection per type\nper game service per owner (ownerId + ownerType). Creates an inventory\ncontainer (unlimited type) to hold unlocked entry items.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collection created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced game service not found"
+          },
+          "409": {
+            "description": "Duplicate collection type for this owner and game service, or max collections exceeded"
+          }
+        }
+      }
+    },
+    "/collection/get": {
+      "post": {
+        "operationId": "getCollection",
+        "tags": [
+          "Collection"
+        ],
+        "summary": "Get a collection with unlocked entry summary",
+        "description": "Retrieves a collection instance with its unlocked entry count.",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCollectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collection retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found"
+          }
+        }
+      }
+    },
+    "/collection/list": {
+      "post": {
+        "operationId": "listCollections",
+        "tags": [
+          "Collection"
+        ],
+        "summary": "List all collections for an owner",
+        "description": "List all collection instances for an owner entity, with optional game service filter.",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListCollectionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collections retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCollectionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collection/delete": {
+      "post": {
+        "operationId": "deleteCollection",
+        "tags": [
+          "Collection"
+        ],
+        "summary": "Delete a collection and its inventory container",
+        "description": "Delete a collection instance, destroying its inventory container and all contained entry items.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteCollectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collection deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found"
+          }
+        }
+      }
+    },
+    "/collection/grant": {
+      "post": {
+        "operationId": "grantEntry",
+        "tags": [
+          "Entry"
+        ],
+        "summary": "Grant/unlock an entry (idempotent)",
+        "description": "Grant an entry to a collection. Idempotent: returns existing if already\nunlocked. Auto-creates collection instance (and inventory container)\nif one does not exist for this owner+type+game. Creates an item instance\nand places it in the collection container.\n",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entry granted (or already unlocked)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantEntryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entry template not found"
+          },
+          "409": {
+            "description": "Max entries reached or item creation failed"
+          }
+        }
+      }
+    },
+    "/collection/has": {
+      "post": {
+        "operationId": "hasEntry",
+        "tags": [
+          "Entry"
+        ],
+        "summary": "Check if owner has a specific entry",
+        "description": "Check if an owner has a specific entry unlocked in their collection.",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HasEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Check completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HasEntryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collection/query": {
+      "post": {
+        "operationId": "queryEntries",
+        "tags": [
+          "Entry"
+        ],
+        "summary": "Query unlocked entries with filtering",
+        "description": "Query unlocked entries in a collection with optional filtering by category, tags, and metadata.",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryEntriesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entries retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryEntriesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found"
+          }
+        }
+      }
+    },
+    "/collection/update-metadata": {
+      "post": {
+        "operationId": "updateEntryMetadata",
+        "tags": [
+          "Entry"
+        ],
+        "summary": "Update entry instance metadata",
+        "description": "Update metadata for an unlocked entry (play count, kill count, favorites, discovery level, custom data).",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEntryMetadataRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Metadata updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnlockedEntryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection or entry not found"
+          }
+        }
+      }
+    },
+    "/collection/stats": {
+      "post": {
+        "operationId": "getCompletionStats",
+        "tags": [
+          "Entry"
+        ],
+        "summary": "Get completion statistics per collection type",
+        "description": "Get completion statistics for a collection including total entries, unlocked count, percentage, and breakdown by category.",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCompletionStatsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletionStatsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found"
+          }
+        }
+      }
+    },
+    "/collection/music/select-for-area": {
+      "post": {
+        "operationId": "selectTrackForArea",
+        "tags": [
+          "Music"
+        ],
+        "summary": "Select a track for an area based on unlocked library",
+        "description": "Select a music track for an area based on the owner's unlocked music library\nand area theme configuration. Uses weighted random selection based on theme overlap.\nFalls back to the area's default track if no matches are found.\n",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectTrackForAreaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Track selected successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicTrackSelectionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Area config not found or no music library collection exists"
+          }
+        }
+      }
+    },
+    "/collection/music/area-config/set": {
+      "post": {
+        "operationId": "setAreaMusicConfig",
+        "tags": [
+          "Music"
+        ],
+        "summary": "Set area-to-theme mapping",
+        "description": "Create or update an area music configuration that maps an area code to themes and a default track.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAreaMusicConfigRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Area music config saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AreaMusicConfigResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Game service or default track template not found"
+          }
+        }
+      }
+    },
+    "/collection/music/area-config/get": {
+      "post": {
+        "operationId": "getAreaMusicConfig",
+        "tags": [
+          "Music"
+        ],
+        "summary": "Get area music config",
+        "description": "Get the music configuration for a specific area and game service.",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetAreaMusicConfigRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Area music config retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AreaMusicConfigResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Area music config not found"
+          }
+        }
+      }
+    },
+    "/collection/music/area-config/list": {
+      "post": {
+        "operationId": "listAreaMusicConfigs",
+        "tags": [
+          "Music"
+        ],
+        "summary": "List area configs for a game service",
+        "description": "List all area music configurations for a game service.",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListAreaMusicConfigsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Area music configs retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAreaMusicConfigsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collection/discovery/advance": {
+      "post": {
+        "operationId": "advanceDiscovery",
+        "tags": [
+          "Discovery"
+        ],
+        "summary": "Advance progressive discovery level",
+        "description": "Advance the discovery level of an unlocked entry (bestiary-style progressive\nreveal). Each level reveals additional information about the entry as defined\nin the entry template's discovery levels.\n",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvanceDiscoveryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Discovery level advanced",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvanceDiscoveryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection or entry not found, or entry not unlocked"
+          },
+          "409": {
+            "description": "Already at max discovery level"
+          }
+        }
+      }
+    },
     "/client-capabilities": {
       "post": {
         "summary": "Get client capability manifest (GUID \u2192 API mappings)",
@@ -17395,6 +18218,53 @@
           "eight_way"
         ]
       },
+      "AdvanceDiscoveryRequest": {
+        "type": "object",
+        "description": "Request to advance the discovery level of an unlocked entry",
+        "additionalProperties": false,
+        "required": [
+          "collectionId",
+          "entryCode"
+        ],
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Collection containing the entry"
+          },
+          "entryCode": {
+            "type": "string",
+            "description": "Entry code to advance discovery for"
+          }
+        }
+      },
+      "AdvanceDiscoveryResponse": {
+        "type": "object",
+        "description": "Result of advancing discovery level",
+        "additionalProperties": false,
+        "required": [
+          "entryCode",
+          "newLevel",
+          "reveals"
+        ],
+        "properties": {
+          "entryCode": {
+            "type": "string",
+            "description": "Entry code that was advanced"
+          },
+          "newLevel": {
+            "type": "integer",
+            "description": "New discovery level after advancement"
+          },
+          "reveals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Information keys revealed at the new level"
+          }
+        }
+      },
       "Affordance": {
         "type": "object",
         "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
@@ -17767,6 +18637,57 @@
             "type": "string",
             "format": "uuid",
             "description": "The seed to archive."
+          }
+        }
+      },
+      "AreaMusicConfigResponse": {
+        "type": "object",
+        "description": "Area music configuration",
+        "additionalProperties": false,
+        "required": [
+          "areaConfigId",
+          "areaCode",
+          "gameServiceId",
+          "themes",
+          "defaultTrackCode",
+          "createdAt"
+        ],
+        "properties": {
+          "areaConfigId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique area config identifier"
+          },
+          "areaCode": {
+            "type": "string",
+            "description": "Area code"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this area config belongs to"
+          },
+          "themes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Theme tags for this area"
+          },
+          "defaultTrackCode": {
+            "type": "string",
+            "description": "Default track code"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this area config was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When this area config was last updated"
           }
         }
       },
@@ -20446,6 +21367,31 @@
           }
         }
       },
+      "CategoryStats": {
+        "type": "object",
+        "description": "Completion statistics for a single category",
+        "additionalProperties": false,
+        "required": [
+          "total",
+          "unlocked",
+          "percentage"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total entries in this category"
+          },
+          "unlocked": {
+            "type": "integer",
+            "description": "Unlocked entries in this category"
+          },
+          "percentage": {
+            "type": "number",
+            "format": "double",
+            "description": "Completion percentage for this category"
+          }
+        }
+      },
       "CharacterArchive": {
         "description": "Compressed archive of a dead character.\nContains text summaries instead of structured data for long-term storage.\nSelf-contained with no external references (suitable for cleanup).\n",
         "type": "object",
@@ -21958,6 +22904,73 @@
           }
         }
       },
+      "CollectionResponse": {
+        "type": "object",
+        "description": "Collection instance with summary",
+        "additionalProperties": false,
+        "required": [
+          "collectionId",
+          "ownerId",
+          "ownerType",
+          "collectionType",
+          "gameServiceId",
+          "containerId",
+          "entryCount",
+          "createdAt"
+        ],
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique collection instance identifier"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity that owns this collection"
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Entity type discriminator"
+          },
+          "collectionType": {
+            "$ref": "#/components/schemas/CollectionType",
+            "description": "Type of collection"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this collection is scoped to"
+          },
+          "containerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Inventory container holding unlocked entry items"
+          },
+          "entryCount": {
+            "type": "integer",
+            "description": "Number of unlocked entries in this collection"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this collection was created"
+          }
+        }
+      },
+      "CollectionType": {
+        "type": "string",
+        "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
+        "enum": [
+          "voice_gallery",
+          "scene_archive",
+          "ending_gallery",
+          "music_library",
+          "bestiary",
+          "recipe_book",
+          "custom"
+        ]
+      },
       "CombatPreferences": {
         "type": "object",
         "description": "Combat behavior preferences that influence tactical decisions.\nThese values affect GOAP action selection, retreat conditions,\nand group coordination behavior.\n",
@@ -22396,6 +23409,44 @@
           "etag": {
             "type": "string",
             "description": "ETag returned from part upload"
+          }
+        }
+      },
+      "CompletionStatsResponse": {
+        "type": "object",
+        "description": "Completion statistics for a collection",
+        "additionalProperties": false,
+        "required": [
+          "collectionType",
+          "totalEntries",
+          "unlockedEntries",
+          "completionPercentage"
+        ],
+        "properties": {
+          "collectionType": {
+            "$ref": "#/components/schemas/CollectionType",
+            "description": "Type of collection"
+          },
+          "totalEntries": {
+            "type": "integer",
+            "description": "Total number of entry templates available"
+          },
+          "unlockedEntries": {
+            "type": "integer",
+            "description": "Number of entries unlocked by this owner"
+          },
+          "completionPercentage": {
+            "type": "number",
+            "format": "double",
+            "description": "Completion percentage (0.0 to 100.0)"
+          },
+          "byCategory": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CategoryStats"
+            },
+            "description": "Completion breakdown by category"
           }
         }
       },
@@ -24467,6 +25518,37 @@
           }
         }
       },
+      "CreateCollectionRequest": {
+        "type": "object",
+        "description": "Request to create a collection for an owner",
+        "additionalProperties": false,
+        "required": [
+          "ownerId",
+          "ownerType",
+          "collectionType",
+          "gameServiceId"
+        ],
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity that owns this collection"
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Entity type discriminator (e.g., account, character)"
+          },
+          "collectionType": {
+            "$ref": "#/components/schemas/CollectionType",
+            "description": "Type of collection to create"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this collection is scoped to"
+          }
+        }
+      },
       "CreateContainerRequest": {
         "type": "object",
         "description": "Request to create a new container",
@@ -24716,6 +25798,107 @@
             "additionalProperties": true,
             "description": "Additional metadata",
             "nullable": true
+          }
+        }
+      },
+      "CreateEntryTemplateRequest": {
+        "type": "object",
+        "description": "Request to create a new entry template",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "collectionType",
+          "gameServiceId",
+          "displayName",
+          "itemTemplateId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Unique code within this collection type and game service"
+          },
+          "collectionType": {
+            "$ref": "#/components/schemas/CollectionType",
+            "description": "Type of collection this entry belongs to"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this entry template is scoped to"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable display name for this entry"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Category within the collection type (e.g., boss, ambient, battle)"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Searchable tags for filtering entries"
+          },
+          "assetId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary asset identifier for this entry (audio, video, image)"
+          },
+          "thumbnailAssetId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Thumbnail or preview asset identifier"
+          },
+          "unlockHint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Hint text shown to users about how to unlock this entry"
+          },
+          "hideWhenLocked": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this entry should be hidden from users until unlocked (spoiler protection)"
+          },
+          "itemTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item template used when granting this entry to a collection"
+          },
+          "discoveryLevels": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryLevel"
+            },
+            "description": "Progressive discovery levels for bestiary-style entries"
+          },
+          "themes": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Theme tags for music entries (e.g., battle, peaceful, forest)"
+          },
+          "duration": {
+            "type": "string",
+            "nullable": true,
+            "description": "Duration of the content (ISO 8601 duration or human-readable)"
+          },
+          "loopPoint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Loop point for music entries (ISO 8601 duration or timestamp)"
+          },
+          "composer": {
+            "type": "string",
+            "nullable": true,
+            "description": "Composer or creator name for music entries"
           }
         }
       },
@@ -26608,6 +27791,36 @@
           }
         }
       },
+      "DeleteCollectionRequest": {
+        "type": "object",
+        "description": "Request to delete a collection",
+        "additionalProperties": false,
+        "required": [
+          "collectionId"
+        ],
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Collection instance to delete"
+          }
+        }
+      },
+      "DeleteEntryTemplateRequest": {
+        "type": "object",
+        "description": "Request to delete an entry template",
+        "additionalProperties": false,
+        "required": [
+          "entryTemplateId"
+        ],
+        "properties": {
+          "entryTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entry template to delete"
+          }
+        }
+      },
       "DeleteLeaderboardDefinitionRequest": {
         "type": "object",
         "description": "Request to delete a leaderboard",
@@ -27043,6 +28256,29 @@
           "discarded": {
             "type": "boolean",
             "description": "Whether discard was successful"
+          }
+        }
+      },
+      "DiscoveryLevel": {
+        "type": "object",
+        "description": "A discovery level defining what information is revealed at this level",
+        "additionalProperties": false,
+        "required": [
+          "level",
+          "reveals"
+        ],
+        "properties": {
+          "level": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Discovery level number (zero-indexed)"
+          },
+          "reveals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of field or information keys revealed at this level"
           }
         }
       },
@@ -28099,6 +29335,173 @@
           "custom",
           "other"
         ]
+      },
+      "EntryMetadata": {
+        "type": "object",
+        "description": "Metadata for an unlocked entry instance tracking usage and discovery state",
+        "additionalProperties": false,
+        "properties": {
+          "unlockedIn": {
+            "type": "string",
+            "nullable": true,
+            "description": "Context where the entry was unlocked (e.g., location code)"
+          },
+          "unlockedDuring": {
+            "type": "string",
+            "nullable": true,
+            "description": "Event or activity during which the entry was unlocked"
+          },
+          "playCount": {
+            "type": "integer",
+            "default": 0,
+            "description": "Number of times this entry has been played or viewed"
+          },
+          "lastAccessedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When this entry was last accessed or played"
+          },
+          "favorited": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this entry has been favorited by the owner"
+          },
+          "discoveryLevel": {
+            "type": "integer",
+            "default": 0,
+            "description": "Current discovery level for progressive reveal entries"
+          },
+          "killCount": {
+            "type": "integer",
+            "default": 0,
+            "description": "Kill count for bestiary entries"
+          },
+          "customData": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Arbitrary custom data for game-specific metadata"
+          }
+        }
+      },
+      "EntryTemplateResponse": {
+        "type": "object",
+        "description": "Entry template with all fields",
+        "additionalProperties": false,
+        "required": [
+          "entryTemplateId",
+          "code",
+          "collectionType",
+          "gameServiceId",
+          "displayName",
+          "hideWhenLocked",
+          "itemTemplateId",
+          "createdAt"
+        ],
+        "properties": {
+          "entryTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique entry template identifier"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code within this collection type and game service"
+          },
+          "collectionType": {
+            "$ref": "#/components/schemas/CollectionType",
+            "description": "Type of collection this entry belongs to"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this entry template is scoped to"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable display name"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Category within the collection type"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Searchable tags"
+          },
+          "assetId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary asset identifier"
+          },
+          "thumbnailAssetId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Thumbnail or preview asset identifier"
+          },
+          "unlockHint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Hint text about how to unlock this entry"
+          },
+          "hideWhenLocked": {
+            "type": "boolean",
+            "description": "Whether this entry is hidden until unlocked"
+          },
+          "itemTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item template used when granting this entry"
+          },
+          "discoveryLevels": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryLevel"
+            },
+            "description": "Progressive discovery levels"
+          },
+          "themes": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Theme tags for music entries"
+          },
+          "duration": {
+            "type": "string",
+            "nullable": true,
+            "description": "Duration of the content"
+          },
+          "loopPoint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Loop point for music entries"
+          },
+          "composer": {
+            "type": "string",
+            "nullable": true,
+            "description": "Composer or creator name"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this entry template was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When this entry template was last updated"
+          }
+        }
       },
       "EscrowAgreement": {
         "type": "object",
@@ -30521,6 +31924,26 @@
           }
         }
       },
+      "GetAreaMusicConfigRequest": {
+        "type": "object",
+        "description": "Request to get an area music config",
+        "additionalProperties": false,
+        "required": [
+          "areaCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "areaCode": {
+            "type": "string",
+            "description": "Area code to look up"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          }
+        }
+      },
       "GetAssetRequest": {
         "description": "Request to retrieve asset metadata and download URL",
         "type": "object",
@@ -30896,6 +32319,21 @@
           }
         }
       },
+      "GetCollectionRequest": {
+        "type": "object",
+        "description": "Request to get a collection by ID",
+        "additionalProperties": false,
+        "required": [
+          "collectionId"
+        ],
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Collection instance identifier"
+          }
+        }
+      },
       "GetCombatPreferencesRequest": {
         "type": "object",
         "description": "Request payload for retrieving combat preferences",
@@ -30908,6 +32346,37 @@
             "type": "string",
             "format": "uuid",
             "description": "ID of the character to get combat preferences for"
+          }
+        }
+      },
+      "GetCompletionStatsRequest": {
+        "type": "object",
+        "description": "Request to get completion statistics",
+        "additionalProperties": false,
+        "required": [
+          "ownerId",
+          "ownerType",
+          "gameServiceId",
+          "collectionType"
+        ],
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity that owns the collection"
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Entity type discriminator"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "collectionType": {
+            "$ref": "#/components/schemas/CollectionType",
+            "description": "Type of collection to get stats for"
           }
         }
       },
@@ -31312,6 +32781,21 @@
           "entityType": {
             "$ref": "#/components/schemas/EntityType",
             "description": "Entity type whose rank is requested"
+          }
+        }
+      },
+      "GetEntryTemplateRequest": {
+        "type": "object",
+        "description": "Request to get an entry template by ID",
+        "additionalProperties": false,
+        "required": [
+          "entryTemplateId"
+        ],
+        "properties": {
+          "entryTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entry template identifier"
           }
         }
       },
@@ -33299,6 +34783,89 @@
           }
         }
       },
+      "GrantEntryRequest": {
+        "type": "object",
+        "description": "Request to grant/unlock an entry in a collection",
+        "additionalProperties": false,
+        "required": [
+          "ownerId",
+          "ownerType",
+          "gameServiceId",
+          "entryCode",
+          "collectionType"
+        ],
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity that owns the collection"
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Entity type discriminator"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "entryCode": {
+            "type": "string",
+            "description": "Entry template code to grant"
+          },
+          "collectionType": {
+            "$ref": "#/components/schemas/CollectionType",
+            "description": "Type of collection to grant into"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/EntryMetadata",
+            "description": "Optional initial metadata for the unlocked entry"
+          }
+        }
+      },
+      "GrantEntryResponse": {
+        "type": "object",
+        "description": "Result of a grant operation",
+        "additionalProperties": false,
+        "required": [
+          "entryTemplateId",
+          "code",
+          "collectionId",
+          "itemInstanceId",
+          "alreadyUnlocked",
+          "unlockedAt"
+        ],
+        "properties": {
+          "entryTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entry template that was granted"
+          },
+          "code": {
+            "type": "string",
+            "description": "Entry code that was granted"
+          },
+          "collectionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Collection the entry was granted to"
+          },
+          "itemInstanceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item instance created for this entry"
+          },
+          "alreadyUnlocked": {
+            "type": "boolean",
+            "description": "Whether this entry was already unlocked (idempotent return)"
+          },
+          "unlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the entry was unlocked"
+          }
+        }
+      },
       "GridPosition": {
         "type": "object",
         "description": "A position on the board grid (zero-indexed)",
@@ -33489,6 +35056,62 @@
             },
             "nullable": true,
             "description": "Common chord progressions as roman numeral strings"
+          }
+        }
+      },
+      "HasEntryRequest": {
+        "type": "object",
+        "description": "Request to check if an entry is unlocked",
+        "additionalProperties": false,
+        "required": [
+          "ownerId",
+          "ownerType",
+          "gameServiceId",
+          "entryCode",
+          "collectionType"
+        ],
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity that owns the collection"
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Entity type discriminator"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "entryCode": {
+            "type": "string",
+            "description": "Entry template code to check"
+          },
+          "collectionType": {
+            "$ref": "#/components/schemas/CollectionType",
+            "description": "Type of collection to check"
+          }
+        }
+      },
+      "HasEntryResponse": {
+        "type": "object",
+        "description": "Result of entry ownership check",
+        "additionalProperties": false,
+        "required": [
+          "hasEntry"
+        ],
+        "properties": {
+          "hasEntry": {
+            "type": "boolean",
+            "description": "Whether the owner has this entry unlocked"
+          },
+          "unlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the entry was unlocked (null if not unlocked)"
           }
         }
       },
@@ -35120,6 +36743,38 @@
           }
         }
       },
+      "ListAreaMusicConfigsRequest": {
+        "type": "object",
+        "description": "Request to list area music configs for a game service",
+        "additionalProperties": false,
+        "required": [
+          "gameServiceId"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service to list area configs for"
+          }
+        }
+      },
+      "ListAreaMusicConfigsResponse": {
+        "type": "object",
+        "description": "List of area music configurations",
+        "additionalProperties": false,
+        "required": [
+          "configs"
+        ],
+        "properties": {
+          "configs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AreaMusicConfigResponse"
+            },
+            "description": "Area music configurations for this game service"
+          }
+        }
+      },
       "ListAvailableQuestsRequest": {
         "type": "object",
         "description": "Request to list quests available for a character to accept",
@@ -35430,6 +37085,49 @@
           "totalCount": {
             "type": "integer",
             "description": "Total number of callbacks returned"
+          }
+        }
+      },
+      "ListCollectionsRequest": {
+        "type": "object",
+        "description": "Request to list collections for an owner",
+        "additionalProperties": false,
+        "required": [
+          "ownerId",
+          "ownerType"
+        ],
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity to list collections for"
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Entity type discriminator"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional filter by game service"
+          }
+        }
+      },
+      "ListCollectionsResponse": {
+        "type": "object",
+        "description": "List of collections for an owner",
+        "additionalProperties": false,
+        "required": [
+          "collections"
+        ],
+        "properties": {
+          "collections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionResponse"
+            },
+            "description": "Collection instances for this owner"
           }
         }
       },
@@ -35828,6 +37526,70 @@
             "type": "boolean",
             "default": false,
             "description": "Only return custom types"
+          }
+        }
+      },
+      "ListEntryTemplatesRequest": {
+        "type": "object",
+        "description": "Request to list entry templates with filtering and pagination",
+        "additionalProperties": false,
+        "required": [
+          "collectionType",
+          "gameServiceId"
+        ],
+        "properties": {
+          "collectionType": {
+            "$ref": "#/components/schemas/CollectionType",
+            "description": "Filter by collection type"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Filter by game service"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional filter by category"
+          },
+          "cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor from previous response for pagination"
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Number of items per page (uses service default if not specified)"
+          }
+        }
+      },
+      "ListEntryTemplatesResponse": {
+        "type": "object",
+        "description": "Paginated list of entry templates",
+        "additionalProperties": false,
+        "required": [
+          "templates",
+          "hasMore"
+        ],
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntryTemplateResponse"
+            },
+            "description": "Entry templates in this page"
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor for next page (null if no more results)"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether more results exist beyond this page"
           }
         }
       },
@@ -39024,6 +40786,61 @@
           }
         }
       },
+      "MusicTrackSelectionResponse": {
+        "type": "object",
+        "description": "Selected music track for an area",
+        "additionalProperties": false,
+        "required": [
+          "trackCode",
+          "displayName",
+          "matchedThemes"
+        ],
+        "properties": {
+          "trackCode": {
+            "type": "string",
+            "description": "Code of the selected track"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name of the selected track"
+          },
+          "composer": {
+            "type": "string",
+            "nullable": true,
+            "description": "Composer of the selected track"
+          },
+          "assetId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Asset identifier for the track audio"
+          },
+          "duration": {
+            "type": "string",
+            "nullable": true,
+            "description": "Duration of the track"
+          },
+          "loopPoint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Loop point for seamless playback"
+          },
+          "themes": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Theme tags of the selected track"
+          },
+          "matchedThemes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Themes that matched the area configuration"
+          }
+        }
+      },
       "MutationType": {
         "type": "string",
         "enum": [
@@ -41431,6 +43248,73 @@
           "noResultsMessage": {
             "type": "string",
             "description": "User-friendly message when no results found"
+          }
+        }
+      },
+      "QueryEntriesRequest": {
+        "type": "object",
+        "description": "Request to query unlocked entries",
+        "additionalProperties": false,
+        "required": [
+          "collectionId"
+        ],
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Collection to query entries from"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by category"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by tags (entries matching any tag are included)"
+          },
+          "cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor from previous response for pagination"
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Number of items per page"
+          }
+        }
+      },
+      "QueryEntriesResponse": {
+        "type": "object",
+        "description": "Paginated list of unlocked entries",
+        "additionalProperties": false,
+        "required": [
+          "entries",
+          "hasMore"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnlockedEntryResponse"
+            },
+            "description": "Unlocked entries matching the query"
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor for next page"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether more results exist"
           }
         }
       },
@@ -46059,6 +47943,42 @@
           }
         }
       },
+      "SeedEntryTemplatesRequest": {
+        "type": "object",
+        "description": "Request to bulk seed entry templates",
+        "additionalProperties": false,
+        "required": [
+          "templates"
+        ],
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateEntryTemplateRequest"
+            },
+            "description": "Entry templates to create (duplicates are skipped)"
+          }
+        }
+      },
+      "SeedEntryTemplatesResponse": {
+        "type": "object",
+        "description": "Result of bulk seed operation",
+        "additionalProperties": false,
+        "required": [
+          "created",
+          "skipped"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "description": "Number of entry templates successfully created"
+          },
+          "skipped": {
+            "type": "integer",
+            "description": "Number of templates skipped (duplicates)"
+          }
+        }
+      },
       "SeedResponse": {
         "type": "object",
         "description": "Full seed entity response.",
@@ -46261,6 +48181,37 @@
           }
         }
       },
+      "SelectTrackForAreaRequest": {
+        "type": "object",
+        "description": "Request to select a music track for an area",
+        "additionalProperties": false,
+        "required": [
+          "ownerId",
+          "ownerType",
+          "gameServiceId",
+          "areaCode"
+        ],
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity whose music library to search"
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "Entity type discriminator"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "areaCode": {
+            "type": "string",
+            "description": "Area code to select music for"
+          }
+        }
+      },
       "SentimentResponse": {
         "type": "object",
         "description": "Response containing aggregate sentiment",
@@ -46426,6 +48377,40 @@
               "$ref": "#/components/schemas/SessionInfo"
             },
             "description": "List of active sessions for the account"
+          }
+        }
+      },
+      "SetAreaMusicConfigRequest": {
+        "type": "object",
+        "description": "Request to create or update an area music configuration",
+        "additionalProperties": false,
+        "required": [
+          "areaCode",
+          "gameServiceId",
+          "themes",
+          "defaultTrackCode"
+        ],
+        "properties": {
+          "areaCode": {
+            "type": "string",
+            "description": "Area code to configure (unique per game service)"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service this area config belongs to"
+          },
+          "themes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Theme tags for this area (matched against music entry themes)"
+          },
+          "defaultTrackCode": {
+            "type": "string",
+            "description": "Default track code to use when no matches are found"
           }
         }
       },
@@ -49048,6 +51033,60 @@
           }
         }
       },
+      "UnlockedEntryResponse": {
+        "type": "object",
+        "description": "An unlocked entry with template info and metadata",
+        "additionalProperties": false,
+        "required": [
+          "entryTemplateId",
+          "code",
+          "displayName",
+          "itemInstanceId",
+          "unlockedAt"
+        ],
+        "properties": {
+          "entryTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entry template identifier"
+          },
+          "code": {
+            "type": "string",
+            "description": "Entry code"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name from the template"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Category from the template"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags from the template"
+          },
+          "itemInstanceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item instance for this unlocked entry"
+          },
+          "unlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this entry was unlocked"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/EntryMetadata",
+            "description": "Entry instance metadata"
+          }
+        }
+      },
       "UnpinVersionRequest": {
         "type": "object",
         "description": "Request to unpin a previously pinned save version",
@@ -49595,6 +51634,136 @@
           "currentPhase": {
             "type": "string",
             "description": "Current phase name after update"
+          }
+        }
+      },
+      "UpdateEntryMetadataRequest": {
+        "type": "object",
+        "description": "Request to update metadata for an unlocked entry",
+        "additionalProperties": false,
+        "required": [
+          "collectionId",
+          "entryCode"
+        ],
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Collection containing the entry"
+          },
+          "entryCode": {
+            "type": "string",
+            "description": "Entry code to update metadata for"
+          },
+          "playCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Updated play count (replaces current value)"
+          },
+          "killCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Updated kill count (replaces current value)"
+          },
+          "favorited": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Updated favorite status"
+          },
+          "discoveryLevel": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Updated discovery level"
+          },
+          "customData": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Updated custom data (merged with existing)"
+          }
+        }
+      },
+      "UpdateEntryTemplateRequest": {
+        "type": "object",
+        "description": "Request to update mutable fields of an entry template",
+        "additionalProperties": false,
+        "required": [
+          "entryTemplateId"
+        ],
+        "properties": {
+          "entryTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entry template to update"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated display name"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated category"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Updated tags"
+          },
+          "assetId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated primary asset identifier"
+          },
+          "thumbnailAssetId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated thumbnail asset identifier"
+          },
+          "unlockHint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated unlock hint text"
+          },
+          "hideWhenLocked": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Updated spoiler protection flag"
+          },
+          "discoveryLevels": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryLevel"
+            },
+            "description": "Updated discovery levels"
+          },
+          "themes": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Updated theme tags for music entries"
+          },
+          "duration": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated duration"
+          },
+          "loopPoint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated loop point"
+          },
+          "composer": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated composer name"
           }
         }
       },
@@ -51897,6 +54066,10 @@
     {
       "name": "Bannou Website",
       "description": "Public-facing website service for registration, information, and account management."
+    },
+    {
+      "name": "Collection",
+      "description": "Universal content unlock and archive system for collectible content."
     },
     {
       "name": "Contract",

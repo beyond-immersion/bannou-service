@@ -24,6 +24,7 @@ import { CharacterEncounterProxy } from './proxies/CharacterEncounterProxy.js';
 import { CharacterHistoryProxy } from './proxies/CharacterHistoryProxy.js';
 import { CharacterPersonalityProxy } from './proxies/CharacterPersonalityProxy.js';
 import { ClientCapabilitiesProxy } from './proxies/ClientCapabilitiesProxy.js';
+import { CollectionProxy } from './proxies/CollectionProxy.js';
 import { CompileProxy } from './proxies/CompileProxy.js';
 import { ContractProxy } from './proxies/ContractProxy.js';
 import { CurrencyProxy } from './proxies/CurrencyProxy.js';
@@ -74,6 +75,7 @@ interface ProxyCache {
   characterHistory?: CharacterHistoryProxy;
   characterPersonality?: CharacterPersonalityProxy;
   clientCapabilities?: ClientCapabilitiesProxy;
+  collection?: CollectionProxy;
   compile?: CompileProxy;
   contract?: ContractProxy;
   currency?: CurrencyProxy;
@@ -250,6 +252,18 @@ Object.defineProperty(BannouClient.prototype, 'clientCapabilities', {
   get(this: BannouClientWithCache): ClientCapabilitiesProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.clientCapabilities ??= new ClientCapabilitiesProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
+ * Add lazy-initialized collection proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'collection', {
+  get(this: BannouClientWithCache): CollectionProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.collection ??= new CollectionProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -690,6 +704,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for ClientCapabilities API endpoints.
      */
     readonly clientCapabilities: ClientCapabilitiesProxy;
+    /**
+     * Typed proxy for Collection API endpoints.
+     */
+    readonly collection: CollectionProxy;
     /**
      * Typed proxy for Compile API endpoints.
      */

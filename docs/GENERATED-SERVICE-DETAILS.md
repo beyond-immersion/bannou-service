@@ -20,6 +20,7 @@ This document provides a compact reference of all Bannou services.
 | [Character Encounter](#character-encounter) | 1.0.0 | 21 | Character encounter tracking service for memorable interacti... |
 | [Character History](#character-history) | 1.0.0 | 12 | Historical event participation and backstory management for ... |
 | [Character Personality](#character-personality) | 1.0.0 | 12 | Machine-readable personality traits for NPC behavior decisio... |
+| [Collection](#collection) | 1.0.0 | 20 | Universal content unlock and archive system for collectible ... |
 | [Common](#common) | 1.0.0 | 0 | Shared type definitions used across multiple Bannou services... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract](#contract) | 1.0.0 | 30 | Binding agreements between entities with milestone-based pro... |
@@ -147,6 +148,14 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 **Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md)
 
 Machine-readable personality traits and combat preferences (L4 GameFeatures) for NPC behavior decisions. Features probabilistic personality evolution based on character experiences and combat preference adaptation based on battle outcomes. Traits are floating-point values on bipolar axes that shift based on experience intensity. Provides `${personality.*}` and `${combat.*}` ABML variables to the Actor service via the Variable Provider Factory pattern.
+
+---
+
+## Collection {#collection}
+
+**Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Deep Dive**: [docs/plugins/COLLECTION.md](plugins/COLLECTION.md)
+
+Universal content unlock and archive system for collectible content.
 
 ---
 
@@ -442,8 +451,8 @@ Public-facing website service (L3 AppFeatures) for browser-based access to news,
 
 ## Summary
 
-- **Total services**: 47
-- **Total endpoints**: 671
+- **Total services**: 48
+- **Total endpoints**: 691
 
 ---
 

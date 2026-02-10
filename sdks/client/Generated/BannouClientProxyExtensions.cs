@@ -25,6 +25,7 @@ public partial class BannouClient
     private CharacterEncounterProxy? _characterEncounter;
     private CharacterHistoryProxy? _characterHistory;
     private CharacterPersonalityProxy? _characterPersonality;
+    private CollectionProxy? _collection;
     private ConnectProxy? _connect;
     private ContractProxy? _contract;
     private CurrencyProxy? _currency;
@@ -126,6 +127,12 @@ public partial class BannouClient
     /// </summary>
     public CharacterPersonalityProxy CharacterPersonality =>
         _characterPersonality ??= new CharacterPersonalityProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Collection Service API operations.
+    /// </summary>
+    public CollectionProxy Collection =>
+        _collection ??= new CollectionProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Connect API operations.

@@ -152,6 +152,15 @@ This document lists all events defined in Bannou's event schemas.
 | `PersonalityEvolvedEvent` | Custom | `personality-evolved` | Published when a character's personality evolves d... |
 | `PersonalityUpdatedEvent` | Lifecycle (Updated) | `personality.updated` | Published when a character's personality traits ar... |
 
+### Collection
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CollectionDiscoveryAdvancedEvent` | Custom | `collection-discovery-advanced` | Published when progressive discovery level is adva... |
+| `CollectionEntryGrantFailedEvent` | Custom | `collection-entry-grant-failed` | Published when a grant attempt fails |
+| `CollectionEntryUnlockedEvent` | Custom | `collection-entry-unlocked` | Published when an entry is successfully unlocked i... |
+| `CollectionMilestoneReachedEvent` | Custom | `collection-milestone-reached` | Published when a completion milestone is reached (... |
+
 ### Common (client)
 
 | Event | Type | Likely Topic | Description |

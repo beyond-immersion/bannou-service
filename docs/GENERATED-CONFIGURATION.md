@@ -346,6 +346,17 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT` | double | `0.1` | Maximum magnitude of trait change per evolution event |
 | `CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT` | double | `0.02` | Minimum magnitude of trait change per evolution event |
 
+### Collection
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `COLLECTION_CACHE_TTL_SECONDS` | int | `300` | Redis TTL for collection state cache in seconds |
+| `COLLECTION_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries |
+| `COLLECTION_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock TTL for collection mutations in seconds |
+| `COLLECTION_MAX_COLLECTIONS_PER_OWNER` | int | `20` | Maximum number of collections a single owner entity can have |
+| `COLLECTION_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
+| `COLLECTION_MAX_ENTRIES_PER_COLLECTION` | int | `500` | Maximum number of unlocked entries per collection instance |
+
 ### Connect
 
 | Environment Variable | Type | Default | Description |
@@ -994,9 +1005,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 747
+- **Total properties**: 753
 - **Required (no default)**: 51
-- **Optional (has default)**: 696
+- **Optional (has default)**: 702
 
 ## Environment Variable Naming Convention
 

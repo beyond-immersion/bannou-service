@@ -16,6 +16,7 @@ using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
+using BeyondImmersion.BannouService.Collection;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
@@ -113,6 +114,11 @@ public partial interface IServiceNavigator
     /// Gets the CharacterPersonality service client.
     /// </summary>
     ICharacterPersonalityClient CharacterPersonality { get; }
+
+    /// <summary>
+    /// Gets the Collection service client.
+    /// </summary>
+    ICollectionClient Collection { get; }
 
     /// <summary>
     /// Gets the Connect service client.

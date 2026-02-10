@@ -20,6 +20,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
+| [Collection Service API](#collection) | `client.Collection` | 20 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
@@ -541,6 +542,59 @@ Machine-readable personality traits for NPC behavior decisions.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup all personality data for a deleted character |
+
+---
+
+## Collection Service API {#collection}
+
+**Proxy**: `client.Collection` | **Version**: 1.0.0
+
+Universal content unlock and archive system for collectible content.
+
+### Collection
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateCollectionAsync` | `CreateCollectionRequest` | `CollectionResponse` | Create a collection for an owner |
+| `GetCollectionAsync` | `GetCollectionRequest` | `CollectionResponse` | Get a collection with unlocked entry summary |
+| `ListCollectionsAsync` | `ListCollectionsRequest` | `ListCollectionsResponse` | List all collections for an owner |
+| `DeleteCollectionAsync` | `DeleteCollectionRequest` | `CollectionResponse` | Delete a collection and its inventory container |
+
+### Discovery
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AdvancediscoveryAsync` | `AdvanceDiscoveryRequest` | `AdvanceDiscoveryResponse` | Advance progressive discovery level |
+
+### Entry
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GrantentryAsync` | `GrantEntryRequest` | `GrantEntryResponse` | Grant/unlock an entry (idempotent) |
+| `HasentryAsync` | `HasEntryRequest` | `HasEntryResponse` | Check if owner has a specific entry |
+| `QueryentriesAsync` | `QueryEntriesRequest` | `QueryEntriesResponse` | Query unlocked entries with filtering |
+| `UpdateEntrymetadataAsync` | `UpdateEntryMetadataRequest` | `UnlockedEntryResponse` | Update entry instance metadata |
+| `GetCompletionstatsAsync` | `GetCompletionStatsRequest` | `CompletionStatsResponse` | Get completion statistics per collection type |
+
+### EntryTemplate
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateEntrytemplateAsync` | `CreateEntryTemplateRequest` | `EntryTemplateResponse` | Create an entry template |
+| `GetEntrytemplateAsync` | `GetEntryTemplateRequest` | `EntryTemplateResponse` | Get an entry template by ID |
+| `ListEntrytemplatesAsync` | `ListEntryTemplatesRequest` | `ListEntryTemplatesResponse` | List entry templates |
+| `UpdateEntrytemplateAsync` | `UpdateEntryTemplateRequest` | `EntryTemplateResponse` | Update an entry template |
+| `DeleteEntrytemplateAsync` | `DeleteEntryTemplateRequest` | `EntryTemplateResponse` | Delete an entry template |
+| `SeedentrytemplatesAsync` | `SeedEntryTemplatesRequest` | `SeedEntryTemplatesResponse` | Bulk seed entry templates |
+
+### Music
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SelecttrackforareaAsync` | `SelectTrackForAreaRequest` | `MusicTrackSelectionResponse` | Select a track for an area based on unlocked library |
+| `SetareamusicconfigAsync` | `SetAreaMusicConfigRequest` | `AreaMusicConfigResponse` | Set area-to-theme mapping |
+| `GetAreamusicconfigAsync` | `GetAreaMusicConfigRequest` | `AreaMusicConfigResponse` | Get area music config |
+| `ListAreamusicconfigsAsync` | `ListAreaMusicConfigsRequest` | `ListAreaMusicConfigsResponse` | List area configs for a game service |
 
 ---
 
@@ -2006,8 +2060,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 46
-- **Total methods**: 665
+- **Total services**: 47
+- **Total methods**: 685
 
 ---
 

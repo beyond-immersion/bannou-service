@@ -73,42 +73,27 @@ public partial class MeshService : IMeshService
     {
         _logger.LogDebug("Getting endpoints for app {AppId}", body.AppId);
 
-        try
+        var endpoints = await _stateManager.GetEndpointsForAppIdAsync(
+            body.AppId,
+            body.IncludeUnhealthy);
+
+        // Filter by service name if specified
+        if (!string.IsNullOrEmpty(body.ServiceName))
         {
-            var endpoints = await _stateManager.GetEndpointsForAppIdAsync(
-                body.AppId,
-                body.IncludeUnhealthy);
-
-            // Filter by service name if specified
-            if (!string.IsNullOrEmpty(body.ServiceName))
-            {
-                endpoints = endpoints
-                    .Where(e => e.Services?.Contains(body.ServiceName) == true)
-                    .ToList();
-            }
-
-            var response = new GetEndpointsResponse
-            {
-                AppId = body.AppId,
-                Endpoints = endpoints,
-                HealthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy),
-                TotalCount = endpoints.Count
-            };
-
-            return (StatusCodes.OK, response);
+            endpoints = endpoints
+                .Where(e => e.Services?.Contains(body.ServiceName) == true)
+                .ToList();
         }
-        catch (Exception ex)
+
+        var response = new GetEndpointsResponse
         {
-            _logger.LogError(ex, "Error getting endpoints for app {AppId}", body.AppId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "GetEndpoints",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            AppId = body.AppId,
+            Endpoints = endpoints,
+            HealthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy),
+            TotalCount = endpoints.Count
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -123,47 +108,32 @@ public partial class MeshService : IMeshService
             "Listing all endpoints, appIdFilter: {AppIdFilter}, statusFilter: {StatusFilter}",
             body.AppIdFilter, body.StatusFilter);
 
-        try
-        {
-            var endpoints = await _stateManager.GetAllEndpointsAsync(body.AppIdFilter);
+        var endpoints = await _stateManager.GetAllEndpointsAsync(body.AppIdFilter);
 
-            // Apply status filter if specified
-            if (body.StatusFilter.HasValue)
+        // Apply status filter if specified
+        if (body.StatusFilter.HasValue)
+        {
+            endpoints = endpoints.Where(e => e.Status == body.StatusFilter.Value).ToList();
+        }
+
+        // Group by status for summary
+        var byStatus = endpoints.GroupBy(e => e.Status)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var response = new ListEndpointsResponse
+        {
+            Endpoints = endpoints,
+            Summary = new EndpointSummary
             {
-                endpoints = endpoints.Where(e => e.Status == body.StatusFilter.Value).ToList();
+                TotalEndpoints = endpoints.Count,
+                HealthyCount = byStatus.GetValueOrDefault(EndpointStatus.Healthy, 0),
+                DegradedCount = byStatus.GetValueOrDefault(EndpointStatus.Degraded, 0),
+                UnavailableCount = byStatus.GetValueOrDefault(EndpointStatus.Unavailable, 0),
+                UniqueAppIds = endpoints.Select(e => e.AppId).Distinct().Count()
             }
+        };
 
-            // Group by status for summary
-            var byStatus = endpoints.GroupBy(e => e.Status)
-                .ToDictionary(g => g.Key, g => g.Count());
-
-            var response = new ListEndpointsResponse
-            {
-                Endpoints = endpoints,
-                Summary = new EndpointSummary
-                {
-                    TotalEndpoints = endpoints.Count,
-                    HealthyCount = byStatus.GetValueOrDefault(EndpointStatus.Healthy, 0),
-                    DegradedCount = byStatus.GetValueOrDefault(EndpointStatus.Degraded, 0),
-                    UnavailableCount = byStatus.GetValueOrDefault(EndpointStatus.Unavailable, 0),
-                    UniqueAppIds = endpoints.Select(e => e.AppId).Distinct().Count()
-                }
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing endpoints");
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "ListEndpoints",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>

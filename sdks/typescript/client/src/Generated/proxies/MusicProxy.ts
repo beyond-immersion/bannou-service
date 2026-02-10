@@ -36,10 +36,9 @@ export class MusicProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GenerateCompositionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GenerateCompositionRequest'],
-      Schemas['GenerateCompositionResponse']
-    >('/music/generate', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GenerateCompositionRequest'], Schemas['GenerateCompositionResponse']>(
+      '/music/generate', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class MusicProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ValidateMidiJsonResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ValidateMidiJsonRequest'],
-      Schemas['ValidateMidiJsonResponse']
-    >('/music/validate', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ValidateMidiJsonRequest'], Schemas['ValidateMidiJsonResponse']>(
+      '/music/validate', request, channel, timeout
+    );
   }
 
   /**
@@ -73,10 +71,7 @@ export class MusicProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['StyleDefinitionResponse']>> {
     return this.client.invokeAsync<Schemas['GetStyleRequest'], Schemas['StyleDefinitionResponse']>(
-      '/music/style/get',
-      request,
-      channel,
-      timeout
+      '/music/style/get', request, channel, timeout
     );
   }
 
@@ -93,10 +88,7 @@ export class MusicProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListStylesResponse']>> {
     return this.client.invokeAsync<Schemas['ListStylesRequest'], Schemas['ListStylesResponse']>(
-      '/music/style/list',
-      request,
-      channel,
-      timeout
+      '/music/style/list', request, channel, timeout
     );
   }
 
@@ -112,10 +104,9 @@ export class MusicProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GenerateProgressionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GenerateProgressionRequest'],
-      Schemas['GenerateProgressionResponse']
-    >('/music/theory/progression', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GenerateProgressionRequest'], Schemas['GenerateProgressionResponse']>(
+      '/music/theory/progression', request, channel, timeout
+    );
   }
 
   /**
@@ -130,10 +121,9 @@ export class MusicProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GenerateMelodyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GenerateMelodyRequest'],
-      Schemas['GenerateMelodyResponse']
-    >('/music/theory/melody', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GenerateMelodyRequest'], Schemas['GenerateMelodyResponse']>(
+      '/music/theory/melody', request, channel, timeout
+    );
   }
 
   /**
@@ -149,10 +139,7 @@ export class MusicProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['VoiceLeadResponse']>> {
     return this.client.invokeAsync<Schemas['VoiceLeadRequest'], Schemas['VoiceLeadResponse']>(
-      '/music/theory/voice-lead',
-      request,
-      channel,
-      timeout
+      '/music/theory/voice-lead', request, channel, timeout
     );
   }
 }
