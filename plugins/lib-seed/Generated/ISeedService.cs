@@ -110,6 +110,21 @@ public partial interface ISeedService : IBannouService
         Task<(StatusCodes, SeedTypeResponse?)> UpdateSeedTypeAsync(UpdateSeedTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeprecateSeedType operation
+        /// </summary>
+        Task<(StatusCodes, SeedTypeResponse?)> DeprecateSeedTypeAsync(DeprecateSeedTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// UndeprecateSeedType operation
+        /// </summary>
+        Task<(StatusCodes, SeedTypeResponse?)> UndeprecateSeedTypeAsync(UndeprecateSeedTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DeleteSeedType operation
+        /// </summary>
+        Task<StatusCodes> DeleteSeedTypeAsync(DeleteSeedTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// InitiateBond operation
         /// </summary>
         Task<(StatusCodes, BondResponse?)> InitiateBondAsync(InitiateBondRequest body, CancellationToken cancellationToken = default(CancellationToken));

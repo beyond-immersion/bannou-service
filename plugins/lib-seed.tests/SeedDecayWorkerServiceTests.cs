@@ -108,23 +108,23 @@ public class SeedDecayWorkerServiceTests
     private SeedTypeDefinitionModel CreateTestType(
         bool? decayEnabled = null,
         float? decayRate = null) => new()
-    {
-        SeedTypeCode = "guardian",
-        GameServiceId = _testGameServiceId,
-        DisplayName = "Guardian",
-        Description = "Test type",
-        MaxPerOwner = 3,
-        AllowedOwnerTypes = new List<string> { "character" },
-        GrowthPhases = new List<GrowthPhaseDefinition>
+        {
+            SeedTypeCode = "guardian",
+            GameServiceId = _testGameServiceId,
+            DisplayName = "Guardian",
+            Description = "Test type",
+            MaxPerOwner = 3,
+            AllowedOwnerTypes = new List<string> { "character" },
+            GrowthPhases = new List<GrowthPhaseDefinition>
         {
             new() { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 },
             new() { PhaseCode = "awakening", DisplayName = "Awakening", MinTotalGrowth = 10 },
             new() { PhaseCode = "mature", DisplayName = "Mature", MinTotalGrowth = 50 }
         },
-        BondCardinality = 0,
-        GrowthDecayEnabled = decayEnabled,
-        GrowthDecayRatePerDay = decayRate
-    };
+            BondCardinality = 0,
+            GrowthDecayEnabled = decayEnabled,
+            GrowthDecayRatePerDay = decayRate
+        };
 
     /// <summary>
     /// Runs one decay cycle by starting the worker and cancelling after a short delay.

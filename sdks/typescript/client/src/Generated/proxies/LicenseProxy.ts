@@ -205,7 +205,7 @@ export class LicenseProxy {
   }
 
   /**
-   * Create a board instance for a character
+   * Create a board instance for an owner
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
@@ -245,21 +245,21 @@ export class LicenseProxy {
   }
 
   /**
-   * List boards for a character
+   * List boards for an owner
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listBoardsByCharacterAsync(
-    request: Schemas['ListBoardsByCharacterRequest'],
+  async listBoardsByOwnerAsync(
+    request: Schemas['ListBoardsByOwnerRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['ListBoardsByCharacterResponse']>> {
+  ): Promise<ApiResponse<Schemas['ListBoardsByOwnerResponse']>> {
     return this.client.invokeAsync<
-      Schemas['ListBoardsByCharacterRequest'],
-      Schemas['ListBoardsByCharacterResponse']
-    >('/license/board/list-by-character', request, channel, timeout);
+      Schemas['ListBoardsByOwnerRequest'],
+      Schemas['ListBoardsByOwnerResponse']
+    >('/license/board/list-by-owner', request, channel, timeout);
   }
 
   /**
@@ -357,20 +357,40 @@ export class LicenseProxy {
   }
 
   /**
-   * Cleanup boards referencing a deleted character
+   * Clone a board's unlock state to a new owner
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByCharacterAsync(
-    request: Schemas['CleanupByCharacterRequest'],
+  async cloneBoardAsync(
+    request: Schemas['CloneBoardRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
+  ): Promise<ApiResponse<Schemas['CloneBoardResponse']>> {
+    return this.client.invokeAsync<Schemas['CloneBoardRequest'], Schemas['CloneBoardResponse']>(
+      '/license/board/clone',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
+   * Cleanup boards referencing a deleted owner
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByOwnerAsync(
+    request: Schemas['CleanupByOwnerRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CleanupByOwnerResponse']>> {
     return this.client.invokeAsync<
-      Schemas['CleanupByCharacterRequest'],
-      Schemas['CleanupByCharacterResponse']
-    >('/license/cleanup-by-character', request, channel, timeout);
+      Schemas['CleanupByOwnerRequest'],
+      Schemas['CleanupByOwnerResponse']
+    >('/license/cleanup-by-owner', request, channel, timeout);
   }
 }

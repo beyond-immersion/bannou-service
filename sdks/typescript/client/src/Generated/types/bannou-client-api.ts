@@ -4569,11 +4569,12 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create a board instance for a character
-     * @description Create a board instance for a character from a board template. Validates character
-     *     exists, game service matches, and no duplicate board exists (one board per template
-     *     per character). Creates an inventory container (slot_only, maxSlots = gridWidth *
-     *     gridHeight) to hold unlocked license items.
+     * Create a board instance for an owner
+     * @description Create a board instance for an owner from a board template. Validates the owner type
+     *     is in the template's allowedOwnerTypes, game service matches, and no duplicate board
+     *     exists (one board per template per owner). For character owners, validates the character
+     *     exists and resolves realm context. Creates an inventory container (slot_only,
+     *     maxSlots = gridWidth * gridHeight) to hold unlocked license items.
      */
     post: operations['createBoard'];
     delete?: never;
@@ -4602,7 +4603,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/license/board/list-by-character': {
+  '/license/board/list-by-owner': {
     parameters: {
       query?: never;
       header?: never;
@@ -4612,10 +4613,10 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * List boards for a character
-     * @description List all board instances for a character, with optional game service filter.
+     * List boards for an owner
+     * @description List all board instances for an owner (by ownerType + ownerId), with optional game service filter.
      */
-    post: operations['listBoardsByCharacter'];
+    post: operations['listBoardsByOwner'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4732,7 +4733,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/license/cleanup-by-character': {
+  '/license/board/clone': {
     parameters: {
       query?: never;
       header?: never;
@@ -4742,14 +4743,38 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Cleanup boards referencing a deleted character
-     * @description Called by lib-resource cleanup coordination when a character is deleted.
-     *     Deletes all board instances for the specified character, destroying their
-     *     inventory containers and all contained license items.
+     * Clone a board's unlock state to a new owner
+     * @description Developer-only endpoint for cloning NPC progression. Reads unlock state
+     *     from a source board, creates a new board for the target owner, and bulk-creates
+     *     item instances for all unlocked licenses. Skips contracts entirely (admin tooling,
+     *     not gameplay). Publishes a single license.board.cloned event.
+     *     Does not publish individual license.unlocked events.
+     */
+    post: operations['cloneBoard'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/license/cleanup-by-owner': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cleanup boards referencing a deleted owner
+     * @description Called by lib-resource cleanup coordination when an owner entity is deleted.
+     *     Deletes all board instances for the specified owner (ownerType + ownerId),
+     *     destroying their inventory containers and all contained license items.
      *     This endpoint is designed for internal service-to-service calls during
      *     cascading resource cleanup.
      */
-    post: operations['cleanupByCharacter'];
+    post: operations['cleanupByOwner'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7672,6 +7697,66 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/seed/type/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a seed type
+     * @description Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
+     */
+    post: operations['DeprecateSeedType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/type/undeprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Restore a deprecated seed type
+     * @description Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
+     */
+    post: operations['UndeprecateSeedType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/seed/type/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a seed type
+     * @description Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
+     */
+    post: operations['DeleteSeedType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/seed/bond/initiate': {
     parameters: {
       query?: never;
@@ -9832,11 +9917,18 @@ export interface components {
        * @description Unique board instance identifier
        */
       boardId: string;
+      /** @description Type of entity that owns this board */
+      ownerType: string;
       /**
        * Format: uuid
-       * @description Character this board belongs to
+       * @description Entity that owns this board
        */
-      characterId: string;
+      ownerId: string;
+      /**
+       * Format: uuid
+       * @description Realm context for this board. Null for realm-agnostic boards.
+       */
+      realmId?: string | null;
       /**
        * Format: uuid
        * @description Board template this instance was created from
@@ -9873,11 +9965,13 @@ export interface components {
        * @description Board instance identifier
        */
       boardId: string;
+      /** @description Type of entity that owns this board (e.g., character, account, guild) */
+      ownerType: string;
       /**
        * Format: uuid
-       * @description Character this board belongs to
+       * @description ID of the entity that owns this board
        */
-      characterId: string;
+      ownerId: string;
       /**
        * Format: uuid
        * @description Board template this instance was created from
@@ -9919,6 +10013,8 @@ export interface components {
       boardContractTemplateId: string;
       /** @description Grid traversal mode for this template */
       adjacencyMode: components['schemas']['AdjacencyMode'];
+      /** @description Owner types allowed to create boards from this template */
+      allowedOwnerTypes: string[];
       /** @description Whether the template is active (can create new board instances) */
       isActive: boolean;
       /**
@@ -10895,9 +10991,9 @@ export interface components {
       adjacencyMet: boolean;
       /** @description Whether all non-adjacent prerequisites are unlocked */
       prerequisitesMet: boolean;
-      /** @description Whether the character has enough LP */
-      lpSufficient: boolean;
-      /** @description Current LP balance of the character (null if balance check failed) */
+      /** @description Whether the owner has enough LP. Null if LP check is not applicable for this owner type. */
+      lpSufficient?: boolean | null;
+      /** @description Current LP balance of the owner (null if balance check failed or not applicable) */
       currentLp?: number | null;
       /** @description LP cost for this license */
       requiredLp: number;
@@ -11058,6 +11154,28 @@ export interface components {
       /** @description Whether the cleanup completed without errors */
       success: boolean;
     };
+    /** @description Request to cleanup all boards for a deleted owner entity */
+    CleanupByOwnerRequest: {
+      /** @description Type of entity whose boards should be cleaned up */
+      ownerType: string;
+      /**
+       * Format: uuid
+       * @description ID of the entity whose boards should be cleaned up
+       */
+      ownerId: string;
+    };
+    /** @description Result of owner board cleanup */
+    CleanupByOwnerResponse: {
+      /** @description Type of entity that was cleaned up */
+      ownerType: string;
+      /**
+       * Format: uuid
+       * @description ID of the entity that was cleaned up
+       */
+      ownerId: string;
+      /** @description Number of boards deleted during cleanup */
+      boardsDeleted: number;
+    };
     /** @description Result of executing a single cleanup callback */
     CleanupCallbackResult: {
       /** @description Source type that was cleaned up (opaque identifier) */
@@ -11186,6 +11304,53 @@ export interface components {
        * @description When this shortcut expires (if time-limited).
        */
       expiresAt?: string | null;
+    };
+    /** @description Request to clone a board's unlock state to a new owner (developer tooling) */
+    CloneBoardRequest: {
+      /**
+       * Format: uuid
+       * @description Source board instance to clone unlock state from
+       */
+      sourceBoardId: string;
+      /** @description Type of entity to clone the board to (must be in template's allowedOwnerTypes) */
+      targetOwnerType: string;
+      /**
+       * Format: uuid
+       * @description ID of the target entity
+       */
+      targetOwnerId: string;
+      /**
+       * Format: uuid
+       * @description Realm context for the cloned board. Required for character owners (auto-resolved from character). For realm owners, must equal targetOwnerId. Null for realm-agnostic boards.
+       */
+      targetRealmId?: string | null;
+    };
+    /** @description Result of a board clone operation */
+    CloneBoardResponse: {
+      /**
+       * Format: uuid
+       * @description Source board that was cloned from
+       */
+      sourceBoardId: string;
+      /**
+       * Format: uuid
+       * @description New board instance created for the target
+       */
+      targetBoardId: string;
+      /** @description Type of entity the board was cloned to */
+      targetOwnerType: string;
+      /**
+       * Format: uuid
+       * @description ID of the entity the board was cloned to
+       */
+      targetOwnerId: string;
+      /**
+       * Format: uuid
+       * @description Inventory container created for the cloned board
+       */
+      targetContainerId: string;
+      /** @description Number of licenses cloned (item instances created) */
+      licensesCloned: number;
     };
     /** @description Request to collapse a delta chain into a full snapshot */
     CollapseDeltasRequest: {
@@ -12422,13 +12587,15 @@ export interface components {
       /** @description Git commit hash if namespace is bound */
       commitHash?: string | null;
     };
-    /** @description Request to create a board instance for a character */
+    /** @description Request to create a board instance for an owner entity */
     CreateBoardRequest: {
+      /** @description Type of entity that owns this board (e.g., character, account, realm, guild) */
+      ownerType: string;
       /**
        * Format: uuid
-       * @description Character to create the board for
+       * @description ID of the entity that owns this board
        */
-      characterId: string;
+      ownerId: string;
       /**
        * Format: uuid
        * @description Board template to instantiate
@@ -12439,6 +12606,11 @@ export interface components {
        * @description Game service context for validation
        */
       gameServiceId: string;
+      /**
+       * Format: uuid
+       * @description Realm context for item creation. Required for character owners (validated against character realm). For realm owners, must equal ownerId. Null for realm-agnostic boards.
+       */
+      realmId?: string | null;
     };
     /** @description Request to create a new board template */
     CreateBoardTemplateRequest: {
@@ -12464,6 +12636,8 @@ export interface components {
       boardContractTemplateId: string;
       /** @description Grid traversal mode. Defaults to eight_way if not specified. */
       adjacencyMode?: components['schemas']['AdjacencyMode'] | null;
+      /** @description Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild). */
+      allowedOwnerTypes: string[];
     };
     /** @description Request to create a new asset bundle from multiple assets */
     CreateBundleRequest: {
@@ -13712,6 +13886,16 @@ export interface components {
       /** @description If deletion failed, IDs of scenes that reference this one */
       referencingScenes?: string[] | null;
     };
+    /** @description Request to hard-delete a deprecated seed type with no remaining non-archived seeds. */
+    DeleteSeedTypeRequest: {
+      /** @description The seed type to delete. */
+      seedTypeCode: string;
+      /**
+       * Format: uuid
+       * @description The game service scope.
+       */
+      gameServiceId: string;
+    };
     /** @description Request to permanently delete a save slot and all its versions */
     DeleteSlotRequest: {
       /** @description Game identifier for namespace isolation */
@@ -13818,6 +14002,18 @@ export interface components {
        * @description Scenario to deprecate
        */
       scenarioId: string;
+    };
+    /** @description Request to deprecate a seed type, preventing new seed creation. */
+    DeprecateSeedTypeRequest: {
+      /** @description The seed type to deprecate. */
+      seedTypeCode: string;
+      /**
+       * Format: uuid
+       * @description The game service scope.
+       */
+      gameServiceId: string;
+      /** @description Optional reason for deprecation (for audit purposes). */
+      reason?: string | null;
     };
     /** @description Request to destroy an item instance */
     DestroyItemInstanceRequest: {
@@ -14428,17 +14624,6 @@ export interface components {
       | 'monster'
       | 'custom'
       | 'other';
-    /** @description Standard error response format */
-    ErrorResponse: {
-      /** @description Error code */
-      error: string;
-      /** @description Human-readable error message */
-      message: string;
-      /** @description Additional error details */
-      details?: {
-        [key: string]: unknown;
-      } | null;
-    };
     /** @description Main escrow agreement record */
     EscrowAgreement: {
       /**
@@ -18325,22 +18510,24 @@ export interface components {
       /** @description Whether more results exist beyond this page */
       hasMore: boolean;
     };
-    /** @description Request to list board instances for a character */
-    ListBoardsByCharacterRequest: {
+    /** @description Request to list board instances for an owner entity */
+    ListBoardsByOwnerRequest: {
+      /** @description Type of entity that owns the boards */
+      ownerType: string;
       /**
        * Format: uuid
-       * @description Character to list boards for
+       * @description Entity to list boards for
        */
-      characterId: string;
+      ownerId: string;
       /**
        * Format: uuid
        * @description Optional filter by game service
        */
       gameServiceId?: string | null;
     };
-    /** @description List of board instances for a character */
-    ListBoardsByCharacterResponse: {
-      /** @description Board instances for this character */
+    /** @description List of board instances for an owner entity */
+    ListBoardsByOwnerResponse: {
+      /** @description Board instances for this owner */
       boards: components['schemas']['BoardResponse'][];
     };
     /** @description Request to list bundle version history */
@@ -19199,6 +19386,11 @@ export interface components {
        * @description Game service to list seed types for.
        */
       gameServiceId: string;
+      /**
+       * @description Whether to include deprecated seed types in the response.
+       * @default false
+       */
+      includeDeprecated: boolean;
     };
     /** @description List of registered seed types. */
     ListSeedTypesResponse: {
@@ -22483,6 +22675,19 @@ export interface components {
       bondPermanent: boolean;
       /** @description Rules for computing capabilities from growth domains. */
       capabilityRules?: components['schemas']['CapabilityRule'][] | null;
+      /** @description Whether unused growth domains decay over time for this seed type. Falls back to global config if null. */
+      growthDecayEnabled?: boolean | null;
+      /**
+       * Format: float
+       * @description Daily decay rate for unused domains of this seed type. Falls back to global config if null.
+       */
+      growthDecayRatePerDay?: number | null;
+      /**
+       * Format: float
+       * @description Fraction of growth applied to other seeds of the same type owned by the same entity. 0.0 = no sharing (default), 1.0 = full mirror.
+       * @default 0
+       */
+      sameOwnerGrowthMultiplier: number;
     };
     /**
      * @description How deep to traverse related document links:
@@ -24039,6 +24244,27 @@ export interface components {
       bondPermanent: boolean;
       /** @description Capability computation rules. */
       capabilityRules?: components['schemas']['CapabilityRule'][] | null;
+      /** @description Whether unused growth domains decay over time for this seed type. Null means using global config. */
+      growthDecayEnabled?: boolean | null;
+      /**
+       * Format: float
+       * @description Daily decay rate for unused domains of this seed type. Null means using global config.
+       */
+      growthDecayRatePerDay?: number | null;
+      /**
+       * Format: float
+       * @description Fraction of growth applied to other seeds of the same type owned by the same entity.
+       */
+      sameOwnerGrowthMultiplier?: number;
+      /** @description Whether this seed type is deprecated and cannot be used for new seeds. */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description Timestamp when this seed type was deprecated.
+       */
+      deprecatedAt?: string | null;
+      /** @description Optional reason for deprecation. */
+      deprecationReason?: string | null;
     };
     /** @description Response containing aggregate sentiment */
     SentimentResponse: {
@@ -25398,6 +25624,16 @@ export interface components {
       /** @description Rhythm pattern names to use */
       rhythmPatterns?: string[] | null;
     };
+    /** @description Request to restore a deprecated seed type to active status. */
+    UndeprecateSeedTypeRequest: {
+      /** @description The seed type to restore. */
+      seedTypeCode: string;
+      /**
+       * Format: uuid
+       * @description The game service scope.
+       */
+      gameServiceId: string;
+    };
     /** @description Request to unlock a contract from guardian custody */
     UnlockContractRequest: {
       /**
@@ -25603,6 +25839,8 @@ export interface components {
       description?: string | null;
       /** @description Whether the template is active (can create new board instances) */
       isActive?: boolean | null;
+      /** @description Updated allowed owner types. Narrowing checks for existing boards with removed types. */
+      allowedOwnerTypes?: string[] | null;
     };
     /** @description Request to update bundle metadata */
     UpdateBundleRequest: {
@@ -26000,6 +26238,18 @@ export interface components {
       growthPhases?: components['schemas']['GrowthPhaseDefinition'][] | null;
       /** @description Updated capability rules. */
       capabilityRules?: components['schemas']['CapabilityRule'][] | null;
+      /** @description Whether unused growth domains decay over time for this seed type. Falls back to global config if null. */
+      growthDecayEnabled?: boolean | null;
+      /**
+       * Format: float
+       * @description Daily decay rate for unused domains of this seed type. Falls back to global config if null.
+       */
+      growthDecayRatePerDay?: number | null;
+      /**
+       * Format: float
+       * @description Updated fraction of growth applied to other seeds of the same type owned by the same entity.
+       */
+      sameOwnerGrowthMultiplier?: number | null;
     };
     /** @description Request to update email verification status */
     UpdateVerificationRequest: {
@@ -31534,9 +31784,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31567,9 +31815,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31624,9 +31870,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31705,9 +31949,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31762,9 +32004,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31795,9 +32035,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31828,9 +32066,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31861,9 +32097,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31894,18 +32128,14 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Escrow not found */
       404: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31936,18 +32166,14 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Escrow not found */
       404: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -31978,9 +32204,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -32011,9 +32235,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -32044,9 +32266,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33441,18 +33661,14 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Referenced game service or contract template not found */
       404: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33483,9 +33699,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33540,9 +33754,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33573,18 +33785,14 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Active board instances exist for this template */
       409: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33615,27 +33823,21 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Board template or item template not found */
       404: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Duplicate code or position, or max definitions exceeded */
       409: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33666,9 +33868,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33699,9 +33899,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33732,9 +33930,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33765,18 +33961,14 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description License is unlocked by active board instances */
       409: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33807,27 +33999,21 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Character, game service, or board template not found */
       404: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Duplicate board or max boards per character exceeded */
       409: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33858,13 +34044,11 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
-  listBoardsByCharacter: {
+  listBoardsByOwner: {
     parameters: {
       query?: never;
       header?: never;
@@ -33873,7 +34057,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['ListBoardsByCharacterRequest'];
+        'application/json': components['schemas']['ListBoardsByOwnerRequest'];
       };
     };
     responses: {
@@ -33883,7 +34067,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ListBoardsByCharacterResponse'];
+          'application/json': components['schemas']['ListBoardsByOwnerResponse'];
         };
       };
     };
@@ -33915,9 +34099,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -33948,36 +34130,28 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Board or license definition not found */
       404: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description License already unlocked */
       409: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Contract execution failed */
       500: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -34008,9 +34182,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -34041,9 +34213,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -34074,22 +34244,18 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Board template not found */
       404: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
-  cleanupByCharacter: {
+  cloneBoard: {
     parameters: {
       query?: never;
       header?: never;
@@ -34098,7 +34264,52 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['CleanupByCharacterRequest'];
+        'application/json': components['schemas']['CloneBoardRequest'];
+      };
+    };
+    responses: {
+      /** @description Board cloned successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CloneBoardResponse'];
+        };
+      };
+      /** @description Invalid request (owner type not allowed, missing realm for character) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Source board, target owner (character), or template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Target already has a board for this template, or max boards exceeded */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  cleanupByOwner: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CleanupByOwnerRequest'];
       };
     };
     responses: {
@@ -34108,7 +34319,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['CleanupByCharacterResponse'];
+          'application/json': components['schemas']['CleanupByOwnerResponse'];
         };
       };
     };
@@ -38079,6 +38290,125 @@ export interface operations {
       };
     };
   };
+  DeprecateSeedType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateSeedTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed type deprecated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedTypeResponse'];
+        };
+      };
+      /** @description Seed type not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Seed type already deprecated */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  UndeprecateSeedType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UndeprecateSeedTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed type restored */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedTypeResponse'];
+        };
+      };
+      /** @description Seed type not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Seed type is not deprecated */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DeleteSeedType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteSeedTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed type deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Seed type is not deprecated */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Seed type not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Non-archived seeds still exist for this type */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   InitiateBond: {
     parameters: {
       query?: never;
@@ -38854,9 +39184,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -38935,18 +39263,14 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
       /** @description Too many requests */
       429: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -38973,9 +39297,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
+        content?: never;
       };
     };
   };

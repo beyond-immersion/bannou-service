@@ -307,6 +307,51 @@ public static class SeedPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/seed/type/deprecate",
+            Method = ServiceEndpointMethod.POST,
+            Description = "DeprecateSeedType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/seed/type/undeprecate",
+            Method = ServiceEndpointMethod.POST,
+            Description = "UndeprecateSeedType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/seed/type/delete",
+            Method = ServiceEndpointMethod.POST,
+            Description = "DeleteSeedType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/seed/bond/initiate",
             Method = ServiceEndpointMethod.POST,
             Description = "InitiateBond",

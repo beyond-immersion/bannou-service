@@ -73,10 +73,6 @@ paths:
                 $ref: '#/components/schemas/PageContent'
         '404':
           description: Page not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
       x-request-schema-json: '{}'
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PageContent\"\
         ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
@@ -258,16 +254,8 @@ paths:
                 $ref: '#/components/schemas/ContactResponse'
         '400':
           description: Invalid form data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '429':
           description: Too many requests
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContactRequest\"\
         ,\n    \"$defs\": {\n        \"ContactRequest\": {\n            \"description\": \"User-submitted contact form data\"\
         ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -316,10 +304,6 @@ paths:
                 $ref: '#/components/schemas/AccountProfile'
         '401':
           description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
       x-request-schema-json: '{}'
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountProfile\"\
         ,\n    \"$defs\": {\n        \"AccountProfile\": {\n            \"description\": \"User account information displayed
@@ -1436,22 +1420,3 @@ components:
           format: date-time
           nullable: true
           description: Date and time of the last successful login
-    ErrorResponse:
-      description: Standard error response with code and message
-      type: object
-      additionalProperties: false
-      required:
-      - error
-      - message
-      properties:
-        error:
-          type: string
-          description: Error code identifying the type of error
-        message:
-          type: string
-          description: Human-readable error message
-        details:
-          type: object
-          additionalProperties: true
-          nullable: true
-          description: Additional error details or context

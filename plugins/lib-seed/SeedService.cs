@@ -88,6 +88,12 @@ public partial class SeedService : ISeedService
                 return (StatusCodes.NotFound, null);
             }
 
+            if (seedType.IsDeprecated)
+            {
+                _logger.LogWarning("Cannot create seed: type {SeedTypeCode} is deprecated", body.SeedTypeCode);
+                return (StatusCodes.BadRequest, null);
+            }
+
             if (!seedType.AllowedOwnerTypes.Contains(body.OwnerType))
             {
                 _logger.LogWarning("Owner type {OwnerType} not allowed for seed type {SeedTypeCode}",
@@ -739,6 +745,23 @@ public partial class SeedService : ISeedService
 
             await store.SaveAsync(key, model, cancellationToken: cancellationToken);
 
+            await _messageBus.TryPublishAsync("seed-type.created", new SeedTypeCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SeedTypeCode = model.SeedTypeCode,
+                GameServiceId = model.GameServiceId,
+                DisplayName = model.DisplayName,
+                Description = model.Description,
+                MaxPerOwner = model.MaxPerOwner,
+                BondCardinality = model.BondCardinality,
+                BondPermanent = model.BondPermanent,
+                SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+                IsDeprecated = model.IsDeprecated,
+                DeprecatedAt = model.DeprecatedAt,
+                DeprecationReason = model.DeprecationReason
+            }, cancellationToken: cancellationToken);
+
             return (StatusCodes.OK, MapTypeToResponse(model));
         }
         catch (Exception ex)
@@ -793,7 +816,15 @@ public partial class SeedService : ISeedService
             };
 
             var result = await store.JsonQueryPagedAsync(conditions, 0, _configuration.DefaultQueryPageSize, null, cancellationToken);
-            var types = result.Items.Select(r => MapTypeToResponse(r.Value)).ToList();
+            var items = result.Items.Select(r => r.Value).ToList();
+
+            // Filter out deprecated unless explicitly included
+            if (!body.IncludeDeprecated)
+            {
+                items = items.Where(t => !t.IsDeprecated).ToList();
+            }
+
+            var types = items.Select(MapTypeToResponse).ToList();
 
             return (StatusCodes.OK, new ListSeedTypesResponse { SeedTypes = types });
         }
@@ -862,6 +893,34 @@ public partial class SeedService : ISeedService
                 await RecomputeSeedsForTypeAsync(seedType, phasesChanged, cancellationToken);
             }
 
+            var changedFields = new List<string>();
+            if (body.DisplayName != null) changedFields.Add("displayName");
+            if (body.Description != null) changedFields.Add("description");
+            if (body.MaxPerOwner.HasValue) changedFields.Add("maxPerOwner");
+            if (body.GrowthPhases != null) changedFields.Add("growthPhases");
+            if (body.CapabilityRules != null) changedFields.Add("capabilityRules");
+            if (body.GrowthDecayEnabled.HasValue) changedFields.Add("growthDecayEnabled");
+            if (body.GrowthDecayRatePerDay.HasValue) changedFields.Add("growthDecayRatePerDay");
+            if (body.SameOwnerGrowthMultiplier.HasValue) changedFields.Add("sameOwnerGrowthMultiplier");
+
+            await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SeedTypeCode = seedType.SeedTypeCode,
+                GameServiceId = seedType.GameServiceId,
+                DisplayName = seedType.DisplayName,
+                Description = seedType.Description,
+                MaxPerOwner = seedType.MaxPerOwner,
+                BondCardinality = seedType.BondCardinality,
+                BondPermanent = seedType.BondPermanent,
+                SameOwnerGrowthMultiplier = seedType.SameOwnerGrowthMultiplier,
+                IsDeprecated = seedType.IsDeprecated,
+                DeprecatedAt = seedType.DeprecatedAt,
+                DeprecationReason = seedType.DeprecationReason,
+                ChangedFields = changedFields
+            }, cancellationToken: cancellationToken);
+
             return (StatusCodes.OK, MapTypeToResponse(seedType));
         }
         catch (Exception ex)
@@ -871,6 +930,219 @@ public partial class SeedService : ISeedService
                 dependency: null, endpoint: "post:/seed/type/update", details: null, stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Deprecates a seed type, preventing creation of new seeds of this type.
+    /// Existing seeds remain unaffected.
+    /// </summary>
+    public async Task<(StatusCodes, SeedTypeResponse?)> DeprecateSeedTypeAsync(DeprecateSeedTypeRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Deprecating seed type {SeedTypeCode} for game service {GameServiceId}",
+            body.SeedTypeCode, body.GameServiceId);
+
+        try
+        {
+            var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+            var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+            var model = await store.GetAsync(key, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogDebug("Seed type not found for deprecation: {SeedTypeCode}", body.SeedTypeCode);
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (model.IsDeprecated)
+            {
+                _logger.LogDebug("Seed type already deprecated: {SeedTypeCode}", body.SeedTypeCode);
+                return (StatusCodes.Conflict, null);
+            }
+
+            model.IsDeprecated = true;
+            model.DeprecatedAt = DateTimeOffset.UtcNow;
+            model.DeprecationReason = body.Reason;
+
+            await store.SaveAsync(key, model, cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SeedTypeCode = model.SeedTypeCode,
+                GameServiceId = model.GameServiceId,
+                DisplayName = model.DisplayName,
+                Description = model.Description,
+                MaxPerOwner = model.MaxPerOwner,
+                BondCardinality = model.BondCardinality,
+                BondPermanent = model.BondPermanent,
+                SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+                IsDeprecated = model.IsDeprecated,
+                DeprecatedAt = model.DeprecatedAt,
+                DeprecationReason = model.DeprecationReason,
+                ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
+            }, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Deprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
+            return (StatusCodes.OK, MapTypeToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deprecating seed type {SeedTypeCode}", body.SeedTypeCode);
+            await _messageBus.TryPublishErrorAsync("seed", "DeprecateSeedType", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/seed/type/deprecate", details: null, stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Restores a deprecated seed type, allowing new seeds to be created again.
+    /// </summary>
+    public async Task<(StatusCodes, SeedTypeResponse?)> UndeprecateSeedTypeAsync(UndeprecateSeedTypeRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Undeprecating seed type {SeedTypeCode} for game service {GameServiceId}",
+            body.SeedTypeCode, body.GameServiceId);
+
+        try
+        {
+            var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+            var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+            var model = await store.GetAsync(key, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogDebug("Seed type not found for undeprecation: {SeedTypeCode}", body.SeedTypeCode);
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (!model.IsDeprecated)
+            {
+                _logger.LogDebug("Seed type not deprecated: {SeedTypeCode}", body.SeedTypeCode);
+                return (StatusCodes.Conflict, null);
+            }
+
+            model.IsDeprecated = false;
+            model.DeprecatedAt = null;
+            model.DeprecationReason = null;
+
+            await store.SaveAsync(key, model, cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SeedTypeCode = model.SeedTypeCode,
+                GameServiceId = model.GameServiceId,
+                DisplayName = model.DisplayName,
+                Description = model.Description,
+                MaxPerOwner = model.MaxPerOwner,
+                BondCardinality = model.BondCardinality,
+                BondPermanent = model.BondPermanent,
+                SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+                IsDeprecated = model.IsDeprecated,
+                DeprecatedAt = model.DeprecatedAt,
+                DeprecationReason = model.DeprecationReason,
+                ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
+            }, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Undeprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
+            return (StatusCodes.OK, MapTypeToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error undeprecating seed type {SeedTypeCode}", body.SeedTypeCode);
+            await _messageBus.TryPublishErrorAsync("seed", "UndeprecateSeedType", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/seed/type/undeprecate", details: null, stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Hard deletes a deprecated seed type. Requires deprecation first and zero non-archived seeds.
+    /// </summary>
+    public async Task<StatusCodes> DeleteSeedTypeAsync(DeleteSeedTypeRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Deleting seed type {SeedTypeCode} for game service {GameServiceId}",
+            body.SeedTypeCode, body.GameServiceId);
+
+        try
+        {
+            var lockOwner = $"delete-type-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
+                lockOwner, 30, cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                return StatusCodes.Conflict;
+            }
+
+            var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+            var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+            var model = await typeStore.GetAsync(key, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogDebug("Seed type not found for deletion: {SeedTypeCode}", body.SeedTypeCode);
+                return StatusCodes.NotFound;
+            }
+
+            if (!model.IsDeprecated)
+            {
+                _logger.LogDebug("Cannot delete non-deprecated seed type {SeedTypeCode}: must deprecate first", body.SeedTypeCode);
+                return StatusCodes.BadRequest;
+            }
+
+            // Check for non-archived seeds of this type (same-service JSON query)
+            var seedStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
+            var conditions = new List<QueryCondition>
+            {
+                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = model.SeedTypeCode },
+                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = model.GameServiceId.ToString() },
+                new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() },
+                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
+            };
+            var existing = await seedStore.JsonQueryPagedAsync(conditions, 0, 1, null, cancellationToken);
+
+            if (existing.TotalCount > 0)
+            {
+                _logger.LogDebug("Cannot delete seed type {SeedTypeCode}: {Count} non-archived seeds exist",
+                    body.SeedTypeCode, existing.TotalCount);
+                return StatusCodes.Conflict;
+            }
+
+            await typeStore.DeleteAsync(key, cancellationToken);
+
+            await _messageBus.TryPublishAsync("seed-type.deleted", new SeedTypeDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SeedTypeCode = model.SeedTypeCode,
+                GameServiceId = model.GameServiceId,
+                DisplayName = model.DisplayName,
+                Description = model.Description,
+                MaxPerOwner = model.MaxPerOwner,
+                BondCardinality = model.BondCardinality,
+                BondPermanent = model.BondPermanent,
+                SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+                IsDeprecated = model.IsDeprecated,
+                DeprecatedAt = model.DeprecatedAt,
+                DeprecationReason = model.DeprecationReason
+            }, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Deleted seed type: {SeedTypeCode}", body.SeedTypeCode);
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting seed type {SeedTypeCode}", body.SeedTypeCode);
+            await _messageBus.TryPublishErrorAsync("seed", "DeleteSeedType", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/seed/type/delete", details: null, stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1718,7 +1990,10 @@ public partial class SeedService : ISeedService
         CapabilityRules = model.CapabilityRules,
         GrowthDecayEnabled = model.GrowthDecayEnabled,
         GrowthDecayRatePerDay = model.GrowthDecayRatePerDay,
-        SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier
+        SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+        IsDeprecated = model.IsDeprecated,
+        DeprecatedAt = model.DeprecatedAt,
+        DeprecationReason = model.DeprecationReason
     };
 
     /// <summary>

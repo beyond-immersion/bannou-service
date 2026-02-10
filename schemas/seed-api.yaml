@@ -401,6 +401,87 @@ paths:
               schema:
                 $ref: '#/components/schemas/SeedTypeResponse'
 
+  /seed/type/deprecate:
+    post:
+      operationId: DeprecateSeedType
+      summary: Deprecate a seed type
+      description: >
+        Marks a seed type as deprecated. Deprecated seed types cannot be used
+        to create new seeds. Existing seeds of this type remain unaffected.
+        Must be deprecated before it can be deleted.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+        '404':
+          description: Seed type not found
+        '409':
+          description: Seed type already deprecated
+
+  /seed/type/undeprecate:
+    post:
+      operationId: UndeprecateSeedType
+      summary: Restore a deprecated seed type
+      description: >
+        Removes deprecated status from a seed type, allowing new seeds
+        of this type to be created again.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+        '404':
+          description: Seed type not found
+        '409':
+          description: Seed type is not deprecated
+
+  /seed/type/delete:
+    post:
+      operationId: DeleteSeedType
+      summary: Delete a seed type
+      description: >
+        Hard deletes a deprecated seed type. Fails if any non-archived seeds
+        of this type exist. Must deprecate first, then ensure all seeds are
+        archived or deleted before calling this endpoint.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type deleted
+        '400':
+          description: Seed type is not deprecated
+        '404':
+          description: Seed type not found
+        '409':
+          description: Non-archived seeds still exist for this type
+
   # --- Bonds ---
 
   /seed/bond/initiate:
@@ -886,6 +967,10 @@ components:
           type: string
           format: uuid
           description: Game service to list seed types for.
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated seed types in the response.
 
     UpdateSeedTypeRequest:
       type: object
@@ -939,6 +1024,53 @@ components:
           minimum: 0.0
           maximum: 1.0
           description: Updated fraction of growth applied to other seeds of the same type owned by the same entity.
+
+    DeprecateSeedTypeRequest:
+      type: object
+      description: Request to deprecate a seed type, preventing new seed creation.
+      additionalProperties: false
+      required: [seedTypeCode, gameServiceId]
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to deprecate.
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope.
+        reason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Optional reason for deprecation (for audit purposes).
+
+    UndeprecateSeedTypeRequest:
+      type: object
+      description: Request to restore a deprecated seed type to active status.
+      additionalProperties: false
+      required: [seedTypeCode, gameServiceId]
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to restore.
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope.
+
+    DeleteSeedTypeRequest:
+      type: object
+      description: Request to hard-delete a deprecated seed type with no remaining non-archived seeds.
+      additionalProperties: false
+      required: [seedTypeCode, gameServiceId]
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to delete.
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope.
 
     InitiateBondRequest:
       type: object
@@ -1166,7 +1298,8 @@ components:
       description: Full seed type definition response.
       required:
         [seedTypeCode, gameServiceId, displayName, description,
-         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent]
+         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent,
+         isDeprecated]
       properties:
         seedTypeCode:
           type: string
@@ -1219,6 +1352,18 @@ components:
           type: number
           format: float
           description: Fraction of growth applied to other seeds of the same type owned by the same entity.
+        isDeprecated:
+          type: boolean
+          description: Whether this seed type is deprecated and cannot be used for new seeds.
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when this seed type was deprecated.
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Optional reason for deprecation.
 
     ListSeedTypesResponse:
       type: object

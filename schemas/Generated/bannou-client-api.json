@@ -6245,14 +6245,7 @@
             }
           },
           "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid request"
           }
         }
       }
@@ -6293,14 +6286,7 @@
             }
           },
           "404": {
-            "description": "Escrow not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Escrow not found"
           }
         }
       }
@@ -6379,14 +6365,7 @@
             }
           },
           "400": {
-            "description": "Deposit failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Deposit failed"
           }
         }
       }
@@ -6503,14 +6482,7 @@
             }
           },
           "400": {
-            "description": "Consent failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Consent failed"
           }
         }
       }
@@ -6589,14 +6561,7 @@
             }
           },
           "400": {
-            "description": "Release failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Release failed"
           }
         }
       }
@@ -6637,14 +6602,7 @@
             }
           },
           "400": {
-            "description": "Refund failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Refund failed"
           }
         }
       }
@@ -6685,14 +6643,7 @@
             }
           },
           "400": {
-            "description": "Cancel failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Cancel failed"
           }
         }
       }
@@ -6733,14 +6684,7 @@
             }
           },
           "400": {
-            "description": "Dispute failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Dispute failed"
           }
         }
       }
@@ -6781,24 +6725,10 @@
             }
           },
           "400": {
-            "description": "Confirmation failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Confirmation failed"
           },
           "404": {
-            "description": "Escrow not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Escrow not found"
           }
         }
       }
@@ -6839,24 +6769,10 @@
             }
           },
           "400": {
-            "description": "Confirmation failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Confirmation failed"
           },
           "404": {
-            "description": "Escrow not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Escrow not found"
           }
         }
       }
@@ -6897,14 +6813,7 @@
             }
           },
           "400": {
-            "description": "Resolution failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Resolution failed"
           }
         }
       }
@@ -6945,14 +6854,7 @@
             }
           },
           "400": {
-            "description": "Verification failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Verification failed"
           }
         }
       }
@@ -6993,14 +6895,7 @@
             }
           },
           "400": {
-            "description": "Reaffirmation failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Reaffirmation failed"
           }
         }
       }
@@ -8780,24 +8675,10 @@
             }
           },
           "400": {
-            "description": "Invalid request (validation error)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid request (validation error)"
           },
           "404": {
-            "description": "Referenced game service or contract template not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Referenced game service or contract template not found"
           }
         }
       }
@@ -8838,14 +8719,7 @@
             }
           },
           "404": {
-            "description": "Board template not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board template not found"
           }
         }
       }
@@ -8924,14 +8798,7 @@
             }
           },
           "404": {
-            "description": "Board template not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board template not found"
           }
         }
       }
@@ -8972,24 +8839,10 @@
             }
           },
           "404": {
-            "description": "Board template not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board template not found"
           },
           "409": {
-            "description": "Active board instances exist for this template",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Active board instances exist for this template"
           }
         }
       }
@@ -9030,34 +8883,13 @@
             }
           },
           "400": {
-            "description": "Invalid request (position out of bounds, invalid item template)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid request (position out of bounds, invalid item template)"
           },
           "404": {
-            "description": "Board template or item template not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board template or item template not found"
           },
           "409": {
-            "description": "Duplicate code or position, or max definitions exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Duplicate code or position, or max definitions exceeded"
           }
         }
       }
@@ -9098,14 +8930,7 @@
             }
           },
           "404": {
-            "description": "Board template or license definition not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board template or license definition not found"
           }
         }
       }
@@ -9146,14 +8971,7 @@
             }
           },
           "404": {
-            "description": "Board template not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board template not found"
           }
         }
       }
@@ -9194,14 +9012,7 @@
             }
           },
           "404": {
-            "description": "Board template or license definition not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board template or license definition not found"
           }
         }
       }
@@ -9242,24 +9053,10 @@
             }
           },
           "404": {
-            "description": "Board template or license definition not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board template or license definition not found"
           },
           "409": {
-            "description": "License is unlocked by active board instances",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "License is unlocked by active board instances"
           }
         }
       }
@@ -9270,8 +9067,8 @@
         "tags": [
           "Board"
         ],
-        "summary": "Create a board instance for a character",
-        "description": "Create a board instance for a character from a board template. Validates character\nexists, game service matches, and no duplicate board exists (one board per template\nper character). Creates an inventory container (slot_only, maxSlots = gridWidth *\ngridHeight) to hold unlocked license items.\n",
+        "summary": "Create a board instance for an owner",
+        "description": "Create a board instance for an owner from a board template. Validates the owner type\nis in the template's allowedOwnerTypes, game service matches, and no duplicate board\nexists (one board per template per owner). For character owners, validates the character\nexists and resolves realm context. Creates an inventory container (slot_only,\nmaxSlots = gridWidth * gridHeight) to hold unlocked license items.\n",
         "x-permissions": [
           {
             "role": "user",
@@ -9300,34 +9097,13 @@
             }
           },
           "400": {
-            "description": "Invalid request (inactive template)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid request (inactive template)"
           },
           "404": {
-            "description": "Character, game service, or board template not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Character, game service, or board template not found"
           },
           "409": {
-            "description": "Duplicate board or max boards per character exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Duplicate board or max boards per character exceeded"
           }
         }
       }
@@ -9368,26 +9144,19 @@
             }
           },
           "404": {
-            "description": "Board not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board not found"
           }
         }
       }
     },
-    "/license/board/list-by-character": {
+    "/license/board/list-by-owner": {
       "post": {
-        "operationId": "listBoardsByCharacter",
+        "operationId": "listBoardsByOwner",
         "tags": [
           "Board"
         ],
-        "summary": "List boards for a character",
-        "description": "List all board instances for a character, with optional game service filter.",
+        "summary": "List boards for an owner",
+        "description": "List all board instances for an owner (by ownerType + ownerId), with optional game service filter.",
         "x-permissions": [
           {
             "role": "user",
@@ -9399,7 +9168,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ListBoardsByCharacterRequest"
+                "$ref": "#/components/schemas/ListBoardsByOwnerRequest"
               }
             }
           }
@@ -9410,7 +9179,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListBoardsByCharacterResponse"
+                  "$ref": "#/components/schemas/ListBoardsByOwnerResponse"
                 }
               }
             }
@@ -9454,14 +9223,7 @@
             }
           },
           "404": {
-            "description": "Board not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board not found"
           }
         }
       }
@@ -9502,44 +9264,16 @@
             }
           },
           "400": {
-            "description": "Not adjacent, prerequisites not met, or insufficient LP",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Not adjacent, prerequisites not met, or insufficient LP"
           },
           "404": {
-            "description": "Board or license definition not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board or license definition not found"
           },
           "409": {
-            "description": "License already unlocked",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "License already unlocked"
           },
           "500": {
-            "description": "Contract execution failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Contract execution failed"
           }
         }
       }
@@ -9580,14 +9314,7 @@
             }
           },
           "404": {
-            "description": "Board or license definition not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board or license definition not found"
           }
         }
       }
@@ -9628,14 +9355,7 @@
             }
           },
           "404": {
-            "description": "Board not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board not found"
           }
         }
       }
@@ -9676,36 +9396,22 @@
             }
           },
           "400": {
-            "description": "Invalid definitions (out of bounds, duplicates)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid definitions (out of bounds, duplicates)"
           },
           "404": {
-            "description": "Board template not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Board template not found"
           }
         }
       }
     },
-    "/license/cleanup-by-character": {
+    "/license/board/clone": {
       "post": {
-        "operationId": "cleanupByCharacter",
+        "operationId": "cloneBoard",
         "tags": [
-          "Cleanup"
+          "Board"
         ],
-        "summary": "Cleanup boards referencing a deleted character",
-        "description": "Called by lib-resource cleanup coordination when a character is deleted.\nDeletes all board instances for the specified character, destroying their\ninventory containers and all contained license items.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+        "summary": "Clone a board's unlock state to a new owner",
+        "description": "Developer-only endpoint for cloning NPC progression. Reads unlock state\nfrom a source board, creates a new board for the target owner, and bulk-creates\nitem instances for all unlocked licenses. Skips contracts entirely (admin tooling,\nnot gameplay). Publishes a single license.board.cloned event.\nDoes not publish individual license.unlocked events.\n",
         "x-permissions": [
           {
             "role": "developer",
@@ -9717,7 +9423,54 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CleanupByCharacterRequest"
+                "$ref": "#/components/schemas/CloneBoardRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Board cloned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloneBoardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (owner type not allowed, missing realm for character)"
+          },
+          "404": {
+            "description": "Source board, target owner (character), or template not found"
+          },
+          "409": {
+            "description": "Target already has a board for this template, or max boards exceeded"
+          }
+        }
+      }
+    },
+    "/license/cleanup-by-owner": {
+      "post": {
+        "operationId": "cleanupByOwner",
+        "tags": [
+          "Cleanup"
+        ],
+        "summary": "Cleanup boards referencing a deleted owner",
+        "description": "Called by lib-resource cleanup coordination when an owner entity is deleted.\nDeletes all board instances for the specified owner (ownerType + ownerId),\ndestroying their inventory containers and all contained license items.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanupByOwnerRequest"
               }
             }
           }
@@ -9728,7 +9481,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CleanupByCharacterResponse"
+                  "$ref": "#/components/schemas/CleanupByOwnerResponse"
                 }
               }
             }
@@ -15142,6 +14895,122 @@
         }
       }
     },
+    "/seed/type/deprecate": {
+      "post": {
+        "operationId": "DeprecateSeedType",
+        "summary": "Deprecate a seed type",
+        "description": "Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeprecateSeedTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed type deprecated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedTypeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Seed type not found"
+          },
+          "409": {
+            "description": "Seed type already deprecated"
+          }
+        }
+      }
+    },
+    "/seed/type/undeprecate": {
+      "post": {
+        "operationId": "UndeprecateSeedType",
+        "summary": "Restore a deprecated seed type",
+        "description": "Removes deprecated status from a seed type, allowing new seeds of this type to be created again.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UndeprecateSeedTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed type restored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedTypeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Seed type not found"
+          },
+          "409": {
+            "description": "Seed type is not deprecated"
+          }
+        }
+      }
+    },
+    "/seed/type/delete": {
+      "post": {
+        "operationId": "DeleteSeedType",
+        "summary": "Delete a seed type",
+        "description": "Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteSeedTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed type deleted"
+          },
+          "400": {
+            "description": "Seed type is not deprecated"
+          },
+          "404": {
+            "description": "Seed type not found"
+          },
+          "409": {
+            "description": "Non-archived seeds still exist for this type"
+          }
+        }
+      }
+    },
     "/seed/bond/initiate": {
       "post": {
         "operationId": "InitiateBond",
@@ -16167,14 +16036,7 @@
             }
           },
           "404": {
-            "description": "Page not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Page not found"
           }
         }
       }
@@ -16301,24 +16163,10 @@
             }
           },
           "400": {
-            "description": "Invalid form data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid form data"
           },
           "429": {
-            "description": "Too many requests",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Too many requests"
           }
         }
       }
@@ -16353,14 +16201,7 @@
             }
           },
           "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Unauthorized"
           }
         }
       }
@@ -19379,7 +19220,8 @@
         "additionalProperties": false,
         "required": [
           "boardId",
-          "characterId",
+          "ownerType",
+          "ownerId",
           "boardTemplateId",
           "gameServiceId",
           "containerId",
@@ -19391,10 +19233,20 @@
             "format": "uuid",
             "description": "Unique board instance identifier"
           },
-          "characterId": {
+          "ownerType": {
+            "type": "string",
+            "description": "Type of entity that owns this board"
+          },
+          "ownerId": {
             "type": "string",
             "format": "uuid",
-            "description": "Character this board belongs to"
+            "description": "Entity that owns this board"
+          },
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Realm context for this board. Null for realm-agnostic boards."
           },
           "boardTemplateId": {
             "type": "string",
@@ -19439,7 +19291,8 @@
         "additionalProperties": false,
         "required": [
           "boardId",
-          "characterId",
+          "ownerType",
+          "ownerId",
           "boardTemplateId",
           "gridWidth",
           "gridHeight",
@@ -19451,10 +19304,14 @@
             "format": "uuid",
             "description": "Board instance identifier"
           },
-          "characterId": {
+          "ownerType": {
+            "type": "string",
+            "description": "Type of entity that owns this board (e.g., character, account, guild)"
+          },
+          "ownerId": {
             "type": "string",
             "format": "uuid",
-            "description": "Character this board belongs to"
+            "description": "ID of the entity that owns this board"
           },
           "boardTemplateId": {
             "type": "string",
@@ -19491,6 +19348,7 @@
           "startingNodes",
           "boardContractTemplateId",
           "adjacencyMode",
+          "allowedOwnerTypes",
           "isActive",
           "createdAt"
         ],
@@ -19537,6 +19395,13 @@
           "adjacencyMode": {
             "$ref": "#/components/schemas/AdjacencyMode",
             "description": "Grid traversal mode for this template"
+          },
+          "allowedOwnerTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Owner types allowed to create boards from this template"
           },
           "isActive": {
             "type": "boolean",
@@ -21321,7 +21186,6 @@
           "unlockable",
           "adjacencyMet",
           "prerequisitesMet",
-          "lpSufficient",
           "requiredLp"
         ],
         "properties": {
@@ -21339,12 +21203,13 @@
           },
           "lpSufficient": {
             "type": "boolean",
-            "description": "Whether the character has enough LP"
+            "nullable": true,
+            "description": "Whether the owner has enough LP. Null if LP check is not applicable for this owner type."
           },
           "currentLp": {
             "type": "number",
             "nullable": true,
-            "description": "Current LP balance of the character (null if balance check failed)"
+            "description": "Current LP balance of the owner (null if balance check failed or not applicable)"
           },
           "requiredLp": {
             "type": "integer",
@@ -21683,6 +21548,51 @@
           }
         }
       },
+      "CleanupByOwnerRequest": {
+        "type": "object",
+        "description": "Request to cleanup all boards for a deleted owner entity",
+        "additionalProperties": false,
+        "required": [
+          "ownerType",
+          "ownerId"
+        ],
+        "properties": {
+          "ownerType": {
+            "type": "string",
+            "description": "Type of entity whose boards should be cleaned up"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the entity whose boards should be cleaned up"
+          }
+        }
+      },
+      "CleanupByOwnerResponse": {
+        "type": "object",
+        "description": "Result of owner board cleanup",
+        "additionalProperties": false,
+        "required": [
+          "ownerType",
+          "ownerId",
+          "boardsDeleted"
+        ],
+        "properties": {
+          "ownerType": {
+            "type": "string",
+            "description": "Type of entity that was cleaned up"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the entity that was cleaned up"
+          },
+          "boardsDeleted": {
+            "type": "integer",
+            "description": "Number of boards deleted during cleanup"
+          }
+        }
+      },
       "CleanupCallbackResult": {
         "type": "object",
         "additionalProperties": false,
@@ -21931,6 +21841,81 @@
             "format": "date-time",
             "description": "When this shortcut expires (if time-limited).",
             "nullable": true
+          }
+        }
+      },
+      "CloneBoardRequest": {
+        "type": "object",
+        "description": "Request to clone a board's unlock state to a new owner (developer tooling)",
+        "additionalProperties": false,
+        "required": [
+          "sourceBoardId",
+          "targetOwnerType",
+          "targetOwnerId"
+        ],
+        "properties": {
+          "sourceBoardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Source board instance to clone unlock state from"
+          },
+          "targetOwnerType": {
+            "type": "string",
+            "description": "Type of entity to clone the board to (must be in template's allowedOwnerTypes)"
+          },
+          "targetOwnerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the target entity"
+          },
+          "targetRealmId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Realm context for the cloned board. Required for character owners (auto-resolved from character). For realm owners, must equal targetOwnerId. Null for realm-agnostic boards."
+          }
+        }
+      },
+      "CloneBoardResponse": {
+        "type": "object",
+        "description": "Result of a board clone operation",
+        "additionalProperties": false,
+        "required": [
+          "sourceBoardId",
+          "targetBoardId",
+          "targetOwnerType",
+          "targetOwnerId",
+          "targetContainerId",
+          "licensesCloned"
+        ],
+        "properties": {
+          "sourceBoardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Source board that was cloned from"
+          },
+          "targetBoardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "New board instance created for the target"
+          },
+          "targetOwnerType": {
+            "type": "string",
+            "description": "Type of entity the board was cloned to"
+          },
+          "targetOwnerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the entity the board was cloned to"
+          },
+          "targetContainerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Inventory container created for the cloned board"
+          },
+          "licensesCloned": {
+            "type": "integer",
+            "description": "Number of licenses cloned (item instances created)"
           }
         }
       },
@@ -24292,18 +24277,23 @@
       },
       "CreateBoardRequest": {
         "type": "object",
-        "description": "Request to create a board instance for a character",
+        "description": "Request to create a board instance for an owner entity",
         "additionalProperties": false,
         "required": [
-          "characterId",
+          "ownerType",
+          "ownerId",
           "boardTemplateId",
           "gameServiceId"
         ],
         "properties": {
-          "characterId": {
+          "ownerType": {
+            "type": "string",
+            "description": "Type of entity that owns this board (e.g., character, account, realm, guild)"
+          },
+          "ownerId": {
             "type": "string",
             "format": "uuid",
-            "description": "Character to create the board for"
+            "description": "ID of the entity that owns this board"
           },
           "boardTemplateId": {
             "type": "string",
@@ -24314,6 +24304,12 @@
             "type": "string",
             "format": "uuid",
             "description": "Game service context for validation"
+          },
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Realm context for item creation. Required for character owners (validated against character realm). For realm owners, must equal ownerId. Null for realm-agnostic boards."
           }
         }
       },
@@ -24327,7 +24323,8 @@
           "gridWidth",
           "gridHeight",
           "startingNodes",
-          "boardContractTemplateId"
+          "boardContractTemplateId",
+          "allowedOwnerTypes"
         ],
         "properties": {
           "gameServiceId": {
@@ -24377,6 +24374,14 @@
             ],
             "nullable": true,
             "description": "Grid traversal mode. Defaults to eight_way if not specified."
+          },
+          "allowedOwnerTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild)."
           }
         }
       },
@@ -26669,6 +26674,26 @@
           }
         }
       },
+      "DeleteSeedTypeRequest": {
+        "type": "object",
+        "description": "Request to hard-delete a deprecated seed type with no remaining non-archived seeds.",
+        "additionalProperties": false,
+        "required": [
+          "seedTypeCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "seedTypeCode": {
+            "type": "string",
+            "description": "The seed type to delete."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The game service scope."
+          }
+        }
+      },
       "DeleteSlotRequest": {
         "type": "object",
         "description": "Request to permanently delete a save slot and all its versions",
@@ -26881,6 +26906,32 @@
             "type": "string",
             "format": "uuid",
             "description": "Scenario to deprecate"
+          }
+        }
+      },
+      "DeprecateSeedTypeRequest": {
+        "type": "object",
+        "description": "Request to deprecate a seed type, preventing new seed creation.",
+        "additionalProperties": false,
+        "required": [
+          "seedTypeCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "seedTypeCode": {
+            "type": "string",
+            "description": "The seed type to deprecate."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The game service scope."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true,
+            "description": "Optional reason for deprecation (for audit purposes)."
           }
         }
       },
@@ -28048,30 +28099,6 @@
           "custom",
           "other"
         ]
-      },
-      "ErrorResponse": {
-        "type": "object",
-        "description": "Standard error response format",
-        "required": [
-          "error",
-          "message"
-        ],
-        "properties": {
-          "error": {
-            "type": "string",
-            "description": "Error code"
-          },
-          "message": {
-            "type": "string",
-            "description": "Human-readable error message"
-          },
-          "details": {
-            "type": "object",
-            "nullable": true,
-            "additionalProperties": true,
-            "description": "Additional error details"
-          }
-        }
       },
       "EscrowAgreement": {
         "type": "object",
@@ -35191,18 +35218,23 @@
           }
         }
       },
-      "ListBoardsByCharacterRequest": {
+      "ListBoardsByOwnerRequest": {
         "type": "object",
-        "description": "Request to list board instances for a character",
+        "description": "Request to list board instances for an owner entity",
         "additionalProperties": false,
         "required": [
-          "characterId"
+          "ownerType",
+          "ownerId"
         ],
         "properties": {
-          "characterId": {
+          "ownerType": {
+            "type": "string",
+            "description": "Type of entity that owns the boards"
+          },
+          "ownerId": {
             "type": "string",
             "format": "uuid",
-            "description": "Character to list boards for"
+            "description": "Entity to list boards for"
           },
           "gameServiceId": {
             "type": "string",
@@ -35212,9 +35244,9 @@
           }
         }
       },
-      "ListBoardsByCharacterResponse": {
+      "ListBoardsByOwnerResponse": {
         "type": "object",
-        "description": "List of board instances for a character",
+        "description": "List of board instances for an owner entity",
         "additionalProperties": false,
         "required": [
           "boards"
@@ -35225,7 +35257,7 @@
             "items": {
               "$ref": "#/components/schemas/BoardResponse"
             },
-            "description": "Board instances for this character"
+            "description": "Board instances for this owner"
           }
         }
       },
@@ -36883,6 +36915,11 @@
             "type": "string",
             "format": "uuid",
             "description": "Game service to list seed types for."
+          },
+          "includeDeprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to include deprecated seed types in the response."
           }
         }
       },
@@ -43281,6 +43318,25 @@
             },
             "nullable": true,
             "description": "Rules for computing capabilities from growth domains."
+          },
+          "growthDecayEnabled": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether unused growth domains decay over time for this seed type. Falls back to global config if null."
+          },
+          "growthDecayRatePerDay": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Daily decay rate for unused domains of this seed type. Falls back to global config if null."
+          },
+          "sameOwnerGrowthMultiplier": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 0.0,
+            "description": "Fraction of growth applied to other seeds of the same type owned by the same entity. 0.0 = no sharing (default), 1.0 = full mirror."
           }
         }
       },
@@ -46117,7 +46173,8 @@
           "allowedOwnerTypes",
           "growthPhases",
           "bondCardinality",
-          "bondPermanent"
+          "bondPermanent",
+          "isDeprecated"
         ],
         "properties": {
           "seedTypeCode": {
@@ -46170,6 +46227,37 @@
             },
             "nullable": true,
             "description": "Capability computation rules."
+          },
+          "growthDecayEnabled": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether unused growth domains decay over time for this seed type. Null means using global config."
+          },
+          "growthDecayRatePerDay": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Daily decay rate for unused domains of this seed type. Null means using global config."
+          },
+          "sameOwnerGrowthMultiplier": {
+            "type": "number",
+            "format": "float",
+            "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
+          },
+          "isDeprecated": {
+            "type": "boolean",
+            "description": "Whether this seed type is deprecated and cannot be used for new seeds."
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when this seed type was deprecated."
+          },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional reason for deprecation."
           }
         }
       },
@@ -48791,6 +48879,26 @@
           }
         }
       },
+      "UndeprecateSeedTypeRequest": {
+        "type": "object",
+        "description": "Request to restore a deprecated seed type to active status.",
+        "additionalProperties": false,
+        "required": [
+          "seedTypeCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "seedTypeCode": {
+            "type": "string",
+            "description": "The seed type to restore."
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The game service scope."
+          }
+        }
+      },
       "UnlockContractRequest": {
         "type": "object",
         "description": "Request to unlock a contract from guardian custody",
@@ -49197,6 +49305,15 @@
             "type": "boolean",
             "nullable": true,
             "description": "Whether the template is active (can create new board instances)"
+          },
+          "allowedOwnerTypes": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Updated allowed owner types. Narrowing checks for existing boards with removed types."
           }
         }
       },
@@ -50124,6 +50241,25 @@
             },
             "nullable": true,
             "description": "Updated capability rules."
+          },
+          "growthDecayEnabled": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether unused growth domains decay over time for this seed type. Falls back to global config if null."
+          },
+          "growthDecayRatePerDay": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Daily decay rate for unused domains of this seed type. Falls back to global config if null."
+          },
+          "sameOwnerGrowthMultiplier": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Updated fraction of growth applied to other seeds of the same type owned by the same entity."
           }
         }
       },

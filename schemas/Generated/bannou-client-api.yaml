@@ -4195,10 +4195,6 @@ paths:
                 $ref: '#/components/schemas/CreateEscrowResponse'
         '400':
           description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/get:
     post:
       operationId: getEscrow
@@ -4224,10 +4220,6 @@ paths:
                 $ref: '#/components/schemas/GetEscrowResponse'
         '404':
           description: Escrow not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/list:
     post:
       operationId: listEscrows
@@ -4281,10 +4273,6 @@ paths:
                 $ref: '#/components/schemas/DepositResponse'
         '400':
           description: Deposit failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/deposit/validate:
     post:
       operationId: validateDeposit
@@ -4356,10 +4344,6 @@ paths:
                 $ref: '#/components/schemas/ConsentResponse'
         '400':
           description: Consent failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/consent/status:
     post:
       operationId: getConsentStatus
@@ -4411,10 +4395,6 @@ paths:
                 $ref: '#/components/schemas/ReleaseResponse'
         '400':
           description: Release failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/refund:
     post:
       operationId: refund
@@ -4440,10 +4420,6 @@ paths:
                 $ref: '#/components/schemas/RefundResponse'
         '400':
           description: Refund failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/cancel:
     post:
       operationId: cancel
@@ -4469,10 +4445,6 @@ paths:
                 $ref: '#/components/schemas/CancelResponse'
         '400':
           description: Cancel failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/dispute:
     post:
       operationId: dispute
@@ -4498,10 +4470,6 @@ paths:
                 $ref: '#/components/schemas/DisputeResponse'
         '400':
           description: Dispute failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/confirm-release:
     post:
       operationId: confirmRelease
@@ -4529,16 +4497,8 @@ paths:
                 $ref: '#/components/schemas/ConfirmReleaseResponse'
         '400':
           description: Confirmation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Escrow not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/confirm-refund:
     post:
       operationId: confirmRefund
@@ -4566,16 +4526,8 @@ paths:
                 $ref: '#/components/schemas/ConfirmRefundResponse'
         '400':
           description: Confirmation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Escrow not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/resolve:
     post:
       operationId: resolve
@@ -4601,10 +4553,6 @@ paths:
                 $ref: '#/components/schemas/ResolveResponse'
         '400':
           description: Resolution failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/verify-condition:
     post:
       operationId: verifyCondition
@@ -4632,10 +4580,6 @@ paths:
                 $ref: '#/components/schemas/VerifyConditionResponse'
         '400':
           description: Verification failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /escrow/reaffirm:
     post:
       operationId: reaffirm
@@ -4662,10 +4606,6 @@ paths:
                 $ref: '#/components/schemas/ReaffirmResponse'
         '400':
           description: Reaffirmation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /game-service/services/list:
     post:
       summary: List all registered game services
@@ -5826,16 +5766,8 @@ paths:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '400':
           description: Invalid request (validation error)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Referenced game service or contract template not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/board-template/get:
     post:
       operationId: getBoardTemplate
@@ -5861,10 +5793,6 @@ paths:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '404':
           description: Board template not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/board-template/list:
     post:
       operationId: listBoardTemplates
@@ -5916,10 +5844,6 @@ paths:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '404':
           description: Board template not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/board-template/delete:
     post:
       operationId: deleteBoardTemplate
@@ -5947,16 +5871,8 @@ paths:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '404':
           description: Board template not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Active board instances exist for this template
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/definition/add:
     post:
       operationId: addLicenseDefinition
@@ -5987,22 +5903,10 @@ paths:
         '400':
           description: Invalid request (position out of bounds, invalid item 
             template)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Board template or item template not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Duplicate code or position, or max definitions exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/definition/get:
     post:
       operationId: getLicenseDefinition
@@ -6029,10 +5933,6 @@ paths:
                 $ref: '#/components/schemas/LicenseDefinitionResponse'
         '404':
           description: Board template or license definition not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/definition/list:
     post:
       operationId: listLicenseDefinitions
@@ -6059,10 +5959,6 @@ paths:
                 $ref: '#/components/schemas/ListLicenseDefinitionsResponse'
         '404':
           description: Board template not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/definition/update:
     post:
       operationId: updateLicenseDefinition
@@ -6090,10 +5986,6 @@ paths:
                 $ref: '#/components/schemas/LicenseDefinitionResponse'
         '404':
           description: Board template or license definition not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/definition/remove:
     post:
       operationId: removeLicenseDefinition
@@ -6121,27 +6013,20 @@ paths:
                 $ref: '#/components/schemas/LicenseDefinitionResponse'
         '404':
           description: Board template or license definition not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: License is unlocked by active board instances
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/board/create:
     post:
       operationId: createBoard
       tags:
       - Board
-      summary: Create a board instance for a character
+      summary: Create a board instance for an owner
       description: |
-        Create a board instance for a character from a board template. Validates character
-        exists, game service matches, and no duplicate board exists (one board per template
-        per character). Creates an inventory container (slot_only, maxSlots = gridWidth *
-        gridHeight) to hold unlocked license items.
+        Create a board instance for an owner from a board template. Validates the owner type
+        is in the template's allowedOwnerTypes, game service matches, and no duplicate board
+        exists (one board per template per owner). For character owners, validates the character
+        exists and resolves realm context. Creates an inventory container (slot_only,
+        maxSlots = gridWidth * gridHeight) to hold unlocked license items.
       x-permissions:
       - role: user
         states: {}
@@ -6160,22 +6045,10 @@ paths:
                 $ref: '#/components/schemas/BoardResponse'
         '400':
           description: Invalid request (inactive template)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Character, game service, or board template not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Duplicate board or max boards per character exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/board/get:
     post:
       operationId: getBoard
@@ -6201,18 +6074,14 @@ paths:
                 $ref: '#/components/schemas/BoardResponse'
         '404':
           description: Board not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /license/board/list-by-character:
+  /license/board/list-by-owner:
     post:
-      operationId: listBoardsByCharacter
+      operationId: listBoardsByOwner
       tags:
       - Board
-      summary: List boards for a character
-      description: List all board instances for a character, with optional game 
-        service filter.
+      summary: List boards for an owner
+      description: List all board instances for an owner (by ownerType + 
+        ownerId), with optional game service filter.
       x-permissions:
       - role: user
         states: {}
@@ -6221,14 +6090,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ListBoardsByCharacterRequest'
+              $ref: '#/components/schemas/ListBoardsByOwnerRequest'
       responses:
         '200':
           description: Boards retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListBoardsByCharacterResponse'
+                $ref: '#/components/schemas/ListBoardsByOwnerResponse'
   /license/board/delete:
     post:
       operationId: deleteBoard
@@ -6256,10 +6125,6 @@ paths:
                 $ref: '#/components/schemas/BoardResponse'
         '404':
           description: Board not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/unlock:
     post:
       operationId: unlockLicense
@@ -6290,28 +6155,12 @@ paths:
                 $ref: '#/components/schemas/UnlockLicenseResponse'
         '400':
           description: Not adjacent, prerequisites not met, or insufficient LP
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Board or license definition not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: License already unlocked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Contract execution failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/check-unlockable:
     post:
       operationId: checkUnlockable
@@ -6340,10 +6189,6 @@ paths:
                 $ref: '#/components/schemas/CheckUnlockableResponse'
         '404':
           description: Board or license definition not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/board-state:
     post:
       operationId: getBoardState
@@ -6372,10 +6217,6 @@ paths:
                 $ref: '#/components/schemas/BoardStateResponse'
         '404':
           description: Board not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /license/board-template/seed:
     post:
       operationId: seedBoardTemplate
@@ -6403,26 +6244,55 @@ paths:
                 $ref: '#/components/schemas/SeedBoardTemplateResponse'
         '400':
           description: Invalid definitions (out of bounds, duplicates)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Board template not found
+  /license/board/clone:
+    post:
+      operationId: cloneBoard
+      tags:
+      - Board
+      summary: Clone a board's unlock state to a new owner
+      description: |
+        Developer-only endpoint for cloning NPC progression. Reads unlock state
+        from a source board, creates a new board for the target owner, and bulk-creates
+        item instances for all unlocked licenses. Skips contracts entirely (admin tooling,
+        not gameplay). Publishes a single license.board.cloned event.
+        Does not publish individual license.unlocked events.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneBoardRequest'
+      responses:
+        '200':
+          description: Board cloned successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /license/cleanup-by-character:
+                $ref: '#/components/schemas/CloneBoardResponse'
+        '400':
+          description: Invalid request (owner type not allowed, missing realm 
+            for character)
+        '404':
+          description: Source board, target owner (character), or template not 
+            found
+        '409':
+          description: Target already has a board for this template, or max 
+            boards exceeded
+  /license/cleanup-by-owner:
     post:
-      operationId: cleanupByCharacter
+      operationId: cleanupByOwner
       tags:
       - Cleanup
-      summary: Cleanup boards referencing a deleted character
+      summary: Cleanup boards referencing a deleted owner
       description: |
-        Called by lib-resource cleanup coordination when a character is deleted.
-        Deletes all board instances for the specified character, destroying their
-        inventory containers and all contained license items.
+        Called by lib-resource cleanup coordination when an owner entity is deleted.
+        Deletes all board instances for the specified owner (ownerType + ownerId),
+        destroying their inventory containers and all contained license items.
         This endpoint is designed for internal service-to-service calls during
         cascading resource cleanup.
       x-permissions:
@@ -6433,14 +6303,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CleanupByCharacterRequest'
+              $ref: '#/components/schemas/CleanupByOwnerRequest'
       responses:
         '200':
           description: Cleanup completed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CleanupByCharacterResponse'
+                $ref: '#/components/schemas/CleanupByOwnerResponse'
   /location/get:
     post:
       summary: Get location by ID
@@ -10013,6 +9883,84 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SeedTypeResponse'
+  /seed/type/deprecate:
+    post:
+      operationId: DeprecateSeedType
+      summary: Deprecate a seed type
+      description: >
+        Marks a seed type as deprecated. Deprecated seed types cannot be used
+        to create new seeds. Existing seeds of this type remain unaffected.
+        Must be deprecated before it can be deleted.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+        '404':
+          description: Seed type not found
+        '409':
+          description: Seed type already deprecated
+  /seed/type/undeprecate:
+    post:
+      operationId: UndeprecateSeedType
+      summary: Restore a deprecated seed type
+      description: >
+        Removes deprecated status from a seed type, allowing new seeds
+        of this type to be created again.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+        '404':
+          description: Seed type not found
+        '409':
+          description: Seed type is not deprecated
+  /seed/type/delete:
+    post:
+      operationId: DeleteSeedType
+      summary: Delete a seed type
+      description: >
+        Hard deletes a deprecated seed type. Fails if any non-archived seeds
+        of this type exist. Must deprecate first, then ensure all seeds are
+        archived or deleted before calling this endpoint.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type deleted
+        '400':
+          description: Seed type is not deprecated
+        '404':
+          description: Seed type not found
+        '409':
+          description: Non-archived seeds still exist for this type
   /seed/bond/initiate:
     post:
       operationId: InitiateBond
@@ -10682,10 +10630,6 @@ paths:
                 $ref: '#/components/schemas/PageContent'
         '404':
           description: Page not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /website/news:
     get:
       summary: Get latest news and announcements
@@ -10764,16 +10708,8 @@ paths:
                 $ref: '#/components/schemas/ContactResponse'
         '400':
           description: Invalid form data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '429':
           description: Too many requests
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /website/account/profile:
     get:
       summary: Get account profile for logged-in user
@@ -10794,10 +10730,6 @@ paths:
                 $ref: '#/components/schemas/AccountProfile'
         '401':
           description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /website/cms/pages:
     get:
       summary: List all CMS pages
@@ -13160,7 +13092,8 @@ components:
       additionalProperties: false
       required:
       - boardId
-      - characterId
+      - ownerType
+      - ownerId
       - boardTemplateId
       - gameServiceId
       - containerId
@@ -13170,10 +13103,19 @@ components:
           type: string
           format: uuid
           description: Unique board instance identifier
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity that owns this board
+        ownerId:
           type: string
           format: uuid
-          description: Character this board belongs to
+          description: Entity that owns this board
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for this board. Null for realm-agnostic 
+            boards.
         boardTemplateId:
           type: string
           format: uuid
@@ -13208,7 +13150,8 @@ components:
       additionalProperties: false
       required:
       - boardId
-      - characterId
+      - ownerType
+      - ownerId
       - boardTemplateId
       - gridWidth
       - gridHeight
@@ -13218,10 +13161,14 @@ components:
           type: string
           format: uuid
           description: Board instance identifier
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity that owns this board (e.g., character, 
+            account, guild)
+        ownerId:
           type: string
           format: uuid
-          description: Character this board belongs to
+          description: ID of the entity that owns this board
         boardTemplateId:
           type: string
           format: uuid
@@ -13250,6 +13197,7 @@ components:
       - startingNodes
       - boardContractTemplateId
       - adjacencyMode
+      - allowedOwnerTypes
       - isActive
       - createdAt
       properties:
@@ -13287,6 +13235,11 @@ components:
         adjacencyMode:
           $ref: '#/components/schemas/AdjacencyMode'
           description: Grid traversal mode for this template
+        allowedOwnerTypes:
+          type: array
+          items:
+            type: string
+          description: Owner types allowed to create boards from this template
         isActive:
           type: boolean
           description: Whether the template is active (can create new board 
@@ -14713,7 +14666,6 @@ components:
       - unlockable
       - adjacencyMet
       - prerequisitesMet
-      - lpSufficient
       - requiredLp
       properties:
         unlockable:
@@ -14727,12 +14679,14 @@ components:
           description: Whether all non-adjacent prerequisites are unlocked
         lpSufficient:
           type: boolean
-          description: Whether the character has enough LP
+          nullable: true
+          description: Whether the owner has enough LP. Null if LP check is not 
+            applicable for this owner type.
         currentLp:
           type: number
           nullable: true
-          description: Current LP balance of the character (null if balance 
-            check failed)
+          description: Current LP balance of the owner (null if balance check 
+            failed or not applicable)
         requiredLp:
           type: integer
           description: LP cost for this license
@@ -15000,6 +14954,40 @@ components:
         success:
           type: boolean
           description: Whether the cleanup completed without errors
+    CleanupByOwnerRequest:
+      type: object
+      description: Request to cleanup all boards for a deleted owner entity
+      additionalProperties: false
+      required:
+      - ownerType
+      - ownerId
+      properties:
+        ownerType:
+          type: string
+          description: Type of entity whose boards should be cleaned up
+        ownerId:
+          type: string
+          format: uuid
+          description: ID of the entity whose boards should be cleaned up
+    CleanupByOwnerResponse:
+      type: object
+      description: Result of owner board cleanup
+      additionalProperties: false
+      required:
+      - ownerType
+      - ownerId
+      - boardsDeleted
+      properties:
+        ownerType:
+          type: string
+          description: Type of entity that was cleaned up
+        ownerId:
+          type: string
+          format: uuid
+          description: ID of the entity that was cleaned up
+        boardsDeleted:
+          type: integer
+          description: Number of boards deleted during cleanup
     CleanupCallbackResult:
       type: object
       additionalProperties: false
@@ -15212,6 +15200,69 @@ components:
           format: date-time
           description: When this shortcut expires (if time-limited).
           nullable: true
+    CloneBoardRequest:
+      type: object
+      description: Request to clone a board's unlock state to a new owner 
+        (developer tooling)
+      additionalProperties: false
+      required:
+      - sourceBoardId
+      - targetOwnerType
+      - targetOwnerId
+      properties:
+        sourceBoardId:
+          type: string
+          format: uuid
+          description: Source board instance to clone unlock state from
+        targetOwnerType:
+          type: string
+          description: Type of entity to clone the board to (must be in 
+            template's allowedOwnerTypes)
+        targetOwnerId:
+          type: string
+          format: uuid
+          description: ID of the target entity
+        targetRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for the cloned board. Required for 
+            character owners (auto-resolved from character). For realm owners, 
+            must equal targetOwnerId. Null for realm-agnostic boards.
+    CloneBoardResponse:
+      type: object
+      description: Result of a board clone operation
+      additionalProperties: false
+      required:
+      - sourceBoardId
+      - targetBoardId
+      - targetOwnerType
+      - targetOwnerId
+      - targetContainerId
+      - licensesCloned
+      properties:
+        sourceBoardId:
+          type: string
+          format: uuid
+          description: Source board that was cloned from
+        targetBoardId:
+          type: string
+          format: uuid
+          description: New board instance created for the target
+        targetOwnerType:
+          type: string
+          description: Type of entity the board was cloned to
+        targetOwnerId:
+          type: string
+          format: uuid
+          description: ID of the entity the board was cloned to
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Inventory container created for the cloned board
+        licensesCloned:
+          type: integer
+          description: Number of licenses cloned (item instances created)
     CollapseDeltasRequest:
       type: object
       description: Request to collapse a delta chain into a full snapshot
@@ -17131,17 +17182,22 @@ components:
           description: Git commit hash if namespace is bound
     CreateBoardRequest:
       type: object
-      description: Request to create a board instance for a character
+      description: Request to create a board instance for an owner entity
       additionalProperties: false
       required:
-      - characterId
+      - ownerType
+      - ownerId
       - boardTemplateId
       - gameServiceId
       properties:
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity that owns this board (e.g., character, 
+            account, realm, guild)
+        ownerId:
           type: string
           format: uuid
-          description: Character to create the board for
+          description: ID of the entity that owns this board
         boardTemplateId:
           type: string
           format: uuid
@@ -17150,6 +17206,13 @@ components:
           type: string
           format: uuid
           description: Game service context for validation
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for item creation. Required for character 
+            owners (validated against character realm). For realm owners, must 
+            equal ownerId. Null for realm-agnostic boards.
     CreateBoardTemplateRequest:
       type: object
       description: Request to create a new board template
@@ -17161,6 +17224,7 @@ components:
       - gridHeight
       - startingNodes
       - boardContractTemplateId
+      - allowedOwnerTypes
       properties:
         gameServiceId:
           type: string
@@ -17201,6 +17265,14 @@ components:
           nullable: true
           description: Grid traversal mode. Defaults to eight_way if not 
             specified.
+        allowedOwnerTypes:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Owner types allowed to create boards from this template. 
+            Each must map to a supported container owner type (e.g., character, 
+            account, location, guild).
     CreateBundleRequest:
       description: Request to create a new asset bundle from multiple assets
       type: object
@@ -19074,6 +19146,22 @@ components:
             format: uuid
           nullable: true
           description: If deletion failed, IDs of scenes that reference this one
+    DeleteSeedTypeRequest:
+      type: object
+      description: Request to hard-delete a deprecated seed type with no 
+        remaining non-archived seeds.
+      additionalProperties: false
+      required:
+      - seedTypeCode
+      - gameServiceId
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to delete.
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope.
     DeleteSlotRequest:
       type: object
       description: Request to permanently delete a save slot and all its 
@@ -19242,6 +19330,27 @@ components:
           type: string
           format: uuid
           description: Scenario to deprecate
+    DeprecateSeedTypeRequest:
+      type: object
+      description: Request to deprecate a seed type, preventing new seed 
+        creation.
+      additionalProperties: false
+      required:
+      - seedTypeCode
+      - gameServiceId
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to deprecate.
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope.
+        reason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Optional reason for deprecation (for audit purposes).
     DestroyItemInstanceRequest:
       type: object
       description: Request to destroy an item instance
@@ -20167,24 +20276,6 @@ components:
       - monster
       - custom
       - other
-    ErrorResponse:
-      type: object
-      description: Standard error response format
-      required:
-      - error
-      - message
-      properties:
-        error:
-          type: string
-          description: Error code
-        message:
-          type: string
-          description: Human-readable error message
-        details:
-          type: object
-          nullable: true
-          additionalProperties: true
-          description: Additional error details
     EscrowAgreement:
       type: object
       description: Main escrow agreement record
@@ -25850,25 +25941,29 @@ components:
         hasMore:
           type: boolean
           description: Whether more results exist beyond this page
-    ListBoardsByCharacterRequest:
+    ListBoardsByOwnerRequest:
       type: object
-      description: Request to list board instances for a character
+      description: Request to list board instances for an owner entity
       additionalProperties: false
       required:
-      - characterId
+      - ownerType
+      - ownerId
       properties:
-        characterId:
+        ownerType:
+          type: string
+          description: Type of entity that owns the boards
+        ownerId:
           type: string
           format: uuid
-          description: Character to list boards for
+          description: Entity to list boards for
         gameServiceId:
           type: string
           format: uuid
           nullable: true
           description: Optional filter by game service
-    ListBoardsByCharacterResponse:
+    ListBoardsByOwnerResponse:
       type: object
-      description: List of board instances for a character
+      description: List of board instances for an owner entity
       additionalProperties: false
       required:
       - boards
@@ -25877,7 +25972,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BoardResponse'
-          description: Board instances for this character
+          description: Board instances for this owner
     ListBundleVersionsRequest:
       type: object
       additionalProperties: false
@@ -27149,6 +27244,10 @@ components:
           type: string
           format: uuid
           description: Game service to list seed types for.
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated seed types in the response.
     ListSeedTypesResponse:
       type: object
       description: List of registered seed types.
@@ -32254,6 +32353,26 @@ components:
             $ref: '#/components/schemas/CapabilityRule'
           nullable: true
           description: Rules for computing capabilities from growth domains.
+        growthDecayEnabled:
+          type: boolean
+          nullable: true
+          description: Whether unused growth domains decay over time for this 
+            seed type. Falls back to global config if null.
+        growthDecayRatePerDay:
+          type: number
+          format: float
+          nullable: true
+          description: Daily decay rate for unused domains of this seed type. 
+            Falls back to global config if null.
+        sameOwnerGrowthMultiplier:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Fraction of growth applied to other seeds of the same 
+            type owned by the same entity. 0.0 = no sharing (default), 1.0 = 
+            full mirror.
     RelatedDepth:
       type: string
       enum:
@@ -34564,6 +34683,7 @@ components:
       - growthPhases
       - bondCardinality
       - bondPermanent
+      - isDeprecated
       properties:
         seedTypeCode:
           type: string
@@ -34603,6 +34723,35 @@ components:
             $ref: '#/components/schemas/CapabilityRule'
           nullable: true
           description: Capability computation rules.
+        growthDecayEnabled:
+          type: boolean
+          nullable: true
+          description: Whether unused growth domains decay over time for this 
+            seed type. Null means using global config.
+        growthDecayRatePerDay:
+          type: number
+          format: float
+          nullable: true
+          description: Daily decay rate for unused domains of this seed type. 
+            Null means using global config.
+        sameOwnerGrowthMultiplier:
+          type: number
+          format: float
+          description: Fraction of growth applied to other seeds of the same 
+            type owned by the same entity.
+        isDeprecated:
+          type: boolean
+          description: Whether this seed type is deprecated and cannot be used 
+            for new seeds.
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when this seed type was deprecated.
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Optional reason for deprecation.
     SentimentResponse:
       type: object
       description: Response containing aggregate sentiment
@@ -36702,6 +36851,21 @@ components:
             type: string
           nullable: true
           description: Rhythm pattern names to use
+    UndeprecateSeedTypeRequest:
+      type: object
+      description: Request to restore a deprecated seed type to active status.
+      additionalProperties: false
+      required:
+      - seedTypeCode
+      - gameServiceId
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to restore.
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope.
     UnlockContractRequest:
       type: object
       description: Request to unlock a contract from guardian custody
@@ -37022,6 +37186,14 @@ components:
           nullable: true
           description: Whether the template is active (can create new board 
             instances)
+        allowedOwnerTypes:
+          type: array
+          nullable: true
+          items:
+            type: string
+          minItems: 1
+          description: Updated allowed owner types. Narrowing checks for 
+            existing boards with removed types.
     UpdateBundleRequest:
       type: object
       additionalProperties: false
@@ -37740,6 +37912,25 @@ components:
             $ref: '#/components/schemas/CapabilityRule'
           nullable: true
           description: Updated capability rules.
+        growthDecayEnabled:
+          type: boolean
+          nullable: true
+          description: Whether unused growth domains decay over time for this 
+            seed type. Falls back to global config if null.
+        growthDecayRatePerDay:
+          type: number
+          format: float
+          nullable: true
+          description: Daily decay rate for unused domains of this seed type. 
+            Falls back to global config if null.
+        sameOwnerGrowthMultiplier:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0.0
+          maximum: 1.0
+          description: Updated fraction of growth applied to other seeds of the 
+            same type owned by the same entity.
     UpdateVerificationRequest:
       type: object
       description: Request to update email verification status

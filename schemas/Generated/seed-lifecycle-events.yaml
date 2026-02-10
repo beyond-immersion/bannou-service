@@ -145,3 +145,145 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    SeedTypeCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to seed-type.created when a seedtype is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - seedTypeCode
+      - gameServiceId
+      - displayName
+      - description
+      - maxPerOwner
+      - bondCardinality
+      - bondPermanent
+      - sameOwnerGrowthMultiplier
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: seed-type.created
+          description: 'Event type identifier: seed-type.created'
+        seedTypeCode: &id011
+          type: string
+          description: "Unique seed type code"
+        gameServiceId: &id012
+          type: string
+          format: uuid
+          description: "Game service this type is scoped to"
+        displayName: &id013
+          type: string
+          description: "Human-readable name"
+        description: &id014
+          type: string
+          description: "Description of what this seed type represents"
+        maxPerOwner: &id015
+          type: integer
+          description: "Maximum seeds of this type per owner"
+        bondCardinality: &id016
+          type: integer
+          description: "Max bond participants (0 = no bonding)"
+        bondPermanent: &id017
+          type: boolean
+          description: "Whether bonds of this type are permanent"
+        sameOwnerGrowthMultiplier: &id018
+          type: number
+          format: float
+          description: "Cross-pollination multiplier"
+        isDeprecated: &id019
+          type: boolean
+          description: "Whether this seed type is deprecated"
+        deprecatedAt: &id020
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the seed type was deprecated"
+        deprecationReason: &id021
+          type: string
+          nullable: true
+          description: "Reason for deprecation"
+    SeedTypeUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to seed-type.updated when a seedtype is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - seedTypeCode
+      - gameServiceId
+      - displayName
+      - description
+      - maxPerOwner
+      - bondCardinality
+      - bondPermanent
+      - sameOwnerGrowthMultiplier
+      - isDeprecated
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: seed-type.updated
+          description: 'Event type identifier: seed-type.updated'
+        seedTypeCode: *id011
+        gameServiceId: *id012
+        displayName: *id013
+        description: *id014
+        maxPerOwner: *id015
+        bondCardinality: *id016
+        bondPermanent: *id017
+        sameOwnerGrowthMultiplier: *id018
+        isDeprecated: *id019
+        deprecatedAt: *id020
+        deprecationReason: *id021
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    SeedTypeDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to seed-type.deleted when a seedtype is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - seedTypeCode
+      - gameServiceId
+      - displayName
+      - description
+      - maxPerOwner
+      - bondCardinality
+      - bondPermanent
+      - sameOwnerGrowthMultiplier
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: seed-type.deleted
+          description: 'Event type identifier: seed-type.deleted'
+        seedTypeCode: *id011
+        gameServiceId: *id012
+        displayName: *id013
+        description: *id014
+        maxPerOwner: *id015
+        bondCardinality: *id016
+        bondPermanent: *id017
+        sameOwnerGrowthMultiplier: *id018
+        isDeprecated: *id019
+        deprecatedAt: *id020
+        deprecationReason: *id021
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

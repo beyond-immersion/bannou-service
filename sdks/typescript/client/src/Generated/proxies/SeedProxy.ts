@@ -339,6 +339,59 @@ export class SeedProxy {
   }
 
   /**
+   * Deprecate a seed type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deprecateSeedTypeAsync(
+    request: Schemas['DeprecateSeedTypeRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['SeedTypeResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateSeedTypeRequest'],
+      Schemas['SeedTypeResponse']
+    >('/seed/type/deprecate', request, channel, timeout);
+  }
+
+  /**
+   * Restore a deprecated seed type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async undeprecateSeedTypeAsync(
+    request: Schemas['UndeprecateSeedTypeRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['SeedTypeResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['UndeprecateSeedTypeRequest'],
+      Schemas['SeedTypeResponse']
+    >('/seed/type/undeprecate', request, channel, timeout);
+  }
+
+  /**
+   * Delete a seed type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async deleteSeedTypeEventAsync(
+    request: Schemas['DeleteSeedTypeRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['DeleteSeedTypeRequest']>(
+      '/seed/type/delete',
+      request,
+      channel
+    );
+  }
+
+  /**
    * Begin bond process between seeds
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

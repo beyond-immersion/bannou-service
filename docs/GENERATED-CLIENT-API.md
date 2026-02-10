@@ -30,7 +30,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [License Service API](#license) | `client.License` | 19 | Grid-based progression boards via itemized contracts. |
+| [License Service API](#license) | `client.License` | 20 | Grid-based progression boards via itemized contracts. |
 | [Bannou Location Service API](#location) | `client.Location` | 19 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
@@ -47,7 +47,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Resource Lifecycle API](#resource) | `client.Resource` | 17 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
-| [Seed Service API](#seed) | `client.Seed` | 21 | Generic progressive growth entity service (L2 GameFoundation... |
+| [Seed Service API](#seed) | `client.Seed` | 24 | Generic progressive growth entity service (L2 GameFoundation... |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
 | [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
@@ -1052,10 +1052,11 @@ Grid-based progression boards via itemized contracts.
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `CreateBoardAsync` | `CreateBoardRequest` | `BoardResponse` | Create a board instance for a character |
+| `CreateBoardAsync` | `CreateBoardRequest` | `BoardResponse` | Create a board instance for an owner |
 | `GetBoardAsync` | `GetBoardRequest` | `BoardResponse` | Get a board instance by ID |
-| `ListBoardsbycharacterAsync` | `ListBoardsByCharacterRequest` | `ListBoardsByCharacterResponse` | List boards for a character |
+| `ListBoardsbyownerAsync` | `ListBoardsByOwnerRequest` | `ListBoardsByOwnerResponse` | List boards for an owner |
 | `DeleteBoardAsync` | `DeleteBoardRequest` | `BoardResponse` | Delete a board instance |
+| `CloneboardAsync` | `CloneBoardRequest` | `CloneBoardResponse` | Clone a board's unlock state to a new owner |
 
 ### BoardTemplate
 
@@ -1072,7 +1073,7 @@ Grid-based progression boards via itemized contracts.
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup boards referencing a deleted character |
+| `CleanupbyownerAsync` | `CleanupByOwnerRequest` | `CleanupByOwnerResponse` | Cleanup boards referencing a deleted owner |
 
 ### Definition
 
@@ -1776,6 +1777,9 @@ Generic progressive growth entity service (L2 GameFoundation). Seeds are entitie
 | `GetSeedtypeAsync` | `GetSeedTypeRequest` | `SeedTypeResponse` | Get seed type definition |
 | `ListSeedtypesAsync` | `ListSeedTypesRequest` | `ListSeedTypesResponse` | List registered seed types |
 | `UpdateSeedtypeAsync` | `UpdateSeedTypeRequest` | `SeedTypeResponse` | Update seed type definition |
+| `DeprecateseedtypeAsync` | `DeprecateSeedTypeRequest` | `SeedTypeResponse` | Deprecate a seed type |
+| `UndeprecateseedtypeAsync` | `UndeprecateSeedTypeRequest` | `SeedTypeResponse` | Restore a deprecated seed type |
+| `DeleteSeedtypeEventAsync` | `DeleteSeedTypeRequest` | *(fire-and-forget)* | Delete a seed type |
 | `InitiatebondAsync` | `InitiateBondRequest` | `BondResponse` | Begin bond process between seeds |
 | `ConfirmbondAsync` | `ConfirmBondRequest` | `BondResponse` | Confirm a pending bond |
 | `GetBondAsync` | `GetBondRequest` | `BondResponse` | Get bond by ID |
@@ -2003,7 +2007,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 46
-- **Total methods**: 661
+- **Total methods**: 665
 
 ---
 

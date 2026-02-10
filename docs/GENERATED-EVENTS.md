@@ -300,6 +300,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `LicenseBoardClonedEvent` | Custom | `license-board-cloned` | Published when a board's unlock state is cloned to... |
 | `LicenseUnlockFailedEvent` | Custom | `license-unlock-failed` | Published when a license unlock attempt fails |
 | `LicenseUnlockedEvent` | Custom | `license-unlocked` | Published when a license is successfully unlocked ... |
 

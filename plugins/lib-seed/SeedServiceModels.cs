@@ -132,6 +132,15 @@ internal class SeedTypeDefinitionModel
 
     /// <summary>Per-type decay rate override. Null = use global config.</summary>
     public float? GrowthDecayRatePerDay { get; set; }
+
+    /// <summary>Whether this seed type is deprecated and cannot be used for new seeds.</summary>
+    public bool IsDeprecated { get; set; }
+
+    /// <summary>When this seed type was deprecated. Null if not deprecated.</summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>Optional reason for deprecation.</summary>
+    public string? DeprecationReason { get; set; }
 }
 
 /// <summary>

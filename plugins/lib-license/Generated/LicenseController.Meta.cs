@@ -32,7 +32,8 @@ public partial class LicenseController
                 "gridWidth",
                 "gridHeight",
                 "startingNodes",
-                "boardContractTemplateId"
+                "boardContractTemplateId",
+                "allowedOwnerTypes"
             ],
             "properties": {
                 "gameServiceId": {
@@ -82,6 +83,14 @@ public partial class LicenseController
                     ],
                     "nullable": true,
                     "description": "Grid traversal mode. Defaults to eight_way if not specified."
+                },
+                "allowedOwnerTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "description": "Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild)."
                 }
             }
         },
@@ -134,6 +143,7 @@ public partial class LicenseController
                 "startingNodes",
                 "boardContractTemplateId",
                 "adjacencyMode",
+                "allowedOwnerTypes",
                 "isActive",
                 "createdAt"
             ],
@@ -180,6 +190,13 @@ public partial class LicenseController
                 "adjacencyMode": {
                     "$ref": "#/$defs/AdjacencyMode",
                     "description": "Grid traversal mode for this template"
+                },
+                "allowedOwnerTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Owner types allowed to create boards from this template"
                 },
                 "isActive": {
                     "type": "boolean",
@@ -327,6 +344,7 @@ public partial class LicenseController
                 "startingNodes",
                 "boardContractTemplateId",
                 "adjacencyMode",
+                "allowedOwnerTypes",
                 "isActive",
                 "createdAt"
             ],
@@ -373,6 +391,13 @@ public partial class LicenseController
                 "adjacencyMode": {
                     "$ref": "#/$defs/AdjacencyMode",
                     "description": "Grid traversal mode for this template"
+                },
+                "allowedOwnerTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Owner types allowed to create boards from this template"
                 },
                 "isActive": {
                     "type": "boolean",
@@ -559,6 +584,7 @@ public partial class LicenseController
                 "startingNodes",
                 "boardContractTemplateId",
                 "adjacencyMode",
+                "allowedOwnerTypes",
                 "isActive",
                 "createdAt"
             ],
@@ -605,6 +631,13 @@ public partial class LicenseController
                 "adjacencyMode": {
                     "$ref": "#/$defs/AdjacencyMode",
                     "description": "Grid traversal mode for this template"
+                },
+                "allowedOwnerTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Owner types allowed to create boards from this template"
                 },
                 "isActive": {
                     "type": "boolean",
@@ -742,6 +775,15 @@ public partial class LicenseController
                     "type": "boolean",
                     "nullable": true,
                     "description": "Whether the template is active (can create new board instances)"
+                },
+                "allowedOwnerTypes": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "description": "Updated allowed owner types. Narrowing checks for existing boards with removed types."
                 }
             }
         }
@@ -767,6 +809,7 @@ public partial class LicenseController
                 "startingNodes",
                 "boardContractTemplateId",
                 "adjacencyMode",
+                "allowedOwnerTypes",
                 "isActive",
                 "createdAt"
             ],
@@ -813,6 +856,13 @@ public partial class LicenseController
                 "adjacencyMode": {
                     "$ref": "#/$defs/AdjacencyMode",
                     "description": "Grid traversal mode for this template"
+                },
+                "allowedOwnerTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Owner types allowed to create boards from this template"
                 },
                 "isActive": {
                     "type": "boolean",
@@ -960,6 +1010,7 @@ public partial class LicenseController
                 "startingNodes",
                 "boardContractTemplateId",
                 "adjacencyMode",
+                "allowedOwnerTypes",
                 "isActive",
                 "createdAt"
             ],
@@ -1006,6 +1057,13 @@ public partial class LicenseController
                 "adjacencyMode": {
                     "$ref": "#/$defs/AdjacencyMode",
                     "description": "Grid traversal mode for this template"
+                },
+                "allowedOwnerTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Owner types allowed to create boards from this template"
                 },
                 "isActive": {
                     "type": "boolean",
@@ -2117,18 +2175,23 @@ public partial class LicenseController
     "$defs": {
         "CreateBoardRequest": {
             "type": "object",
-            "description": "Request to create a board instance for a character",
+            "description": "Request to create a board instance for an owner entity",
             "additionalProperties": false,
             "required": [
-                "characterId",
+                "ownerType",
+                "ownerId",
                 "boardTemplateId",
                 "gameServiceId"
             ],
             "properties": {
-                "characterId": {
+                "ownerType": {
+                    "type": "string",
+                    "description": "Type of entity that owns this board (e.g., character, account, realm, guild)"
+                },
+                "ownerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character to create the board for"
+                    "description": "ID of the entity that owns this board"
                 },
                 "boardTemplateId": {
                     "type": "string",
@@ -2139,6 +2202,12 @@ public partial class LicenseController
                     "type": "string",
                     "format": "uuid",
                     "description": "Game service context for validation"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm context for item creation. Required for character owners (validated against character realm). For realm owners, must equal ownerId. Null for realm-agnostic boards."
                 }
             }
         }
@@ -2157,7 +2226,8 @@ public partial class LicenseController
             "additionalProperties": false,
             "required": [
                 "boardId",
-                "characterId",
+                "ownerType",
+                "ownerId",
                 "boardTemplateId",
                 "gameServiceId",
                 "containerId",
@@ -2169,10 +2239,20 @@ public partial class LicenseController
                     "format": "uuid",
                     "description": "Unique board instance identifier"
                 },
-                "characterId": {
+                "ownerType": {
+                    "type": "string",
+                    "description": "Type of entity that owns this board"
+                },
+                "ownerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character this board belongs to"
+                    "description": "Entity that owns this board"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm context for this board. Null for realm-agnostic boards."
                 },
                 "boardTemplateId": {
                     "type": "string",
@@ -2202,8 +2282,8 @@ public partial class LicenseController
 
     private static readonly string _CreateBoard_Info = """
 {
-    "summary": "Create a board instance for a character",
-    "description": "Create a board instance for a character from a board template. Validates character\nexists, game service matches, and no duplicate board exists (one board per template\nper character). Creates an inventory container (slot_only, maxSlots = gridWidth *\ngridHeight) to hold unlocked license items.\n",
+    "summary": "Create a board instance for an owner",
+    "description": "Create a board instance for an owner from a board template. Validates the owner type\nis in the template's allowedOwnerTypes, game service matches, and no duplicate board\nexists (one board per template per owner). For character owners, validates the character\nexists and resolves realm context. Creates an inventory container (slot_only,\nmaxSlots = gridWidth * gridHeight) to hold unlocked license items.\n",
     "tags": [
         "Board"
     ],
@@ -2291,7 +2371,8 @@ public partial class LicenseController
             "additionalProperties": false,
             "required": [
                 "boardId",
-                "characterId",
+                "ownerType",
+                "ownerId",
                 "boardTemplateId",
                 "gameServiceId",
                 "containerId",
@@ -2303,10 +2384,20 @@ public partial class LicenseController
                     "format": "uuid",
                     "description": "Unique board instance identifier"
                 },
-                "characterId": {
+                "ownerType": {
+                    "type": "string",
+                    "description": "Type of entity that owns this board"
+                },
+                "ownerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character this board belongs to"
+                    "description": "Entity that owns this board"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm context for this board. Null for realm-agnostic boards."
                 },
                 "boardTemplateId": {
                     "type": "string",
@@ -2388,25 +2479,30 @@ public partial class LicenseController
 
     #endregion
 
-    #region Meta Endpoints for ListBoardsByCharacter
+    #region Meta Endpoints for ListBoardsByOwner
 
-    private static readonly string _ListBoardsByCharacter_RequestSchema = """
+    private static readonly string _ListBoardsByOwner_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ListBoardsByCharacterRequest",
+    "$ref": "#/$defs/ListBoardsByOwnerRequest",
     "$defs": {
-        "ListBoardsByCharacterRequest": {
+        "ListBoardsByOwnerRequest": {
             "type": "object",
-            "description": "Request to list board instances for a character",
+            "description": "Request to list board instances for an owner entity",
             "additionalProperties": false,
             "required": [
-                "characterId"
+                "ownerType",
+                "ownerId"
             ],
             "properties": {
-                "characterId": {
+                "ownerType": {
+                    "type": "string",
+                    "description": "Type of entity that owns the boards"
+                },
+                "ownerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character to list boards for"
+                    "description": "Entity to list boards for"
                 },
                 "gameServiceId": {
                     "type": "string",
@@ -2420,14 +2516,14 @@ public partial class LicenseController
 }
 """;
 
-    private static readonly string _ListBoardsByCharacter_ResponseSchema = """
+    private static readonly string _ListBoardsByOwner_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ListBoardsByCharacterResponse",
+    "$ref": "#/$defs/ListBoardsByOwnerResponse",
     "$defs": {
-        "ListBoardsByCharacterResponse": {
+        "ListBoardsByOwnerResponse": {
             "type": "object",
-            "description": "List of board instances for a character",
+            "description": "List of board instances for an owner entity",
             "additionalProperties": false,
             "required": [
                 "boards"
@@ -2438,7 +2534,7 @@ public partial class LicenseController
                     "items": {
                         "$ref": "#/$defs/BoardResponse"
                     },
-                    "description": "Board instances for this character"
+                    "description": "Board instances for this owner"
                 }
             }
         },
@@ -2448,7 +2544,8 @@ public partial class LicenseController
             "additionalProperties": false,
             "required": [
                 "boardId",
-                "characterId",
+                "ownerType",
+                "ownerId",
                 "boardTemplateId",
                 "gameServiceId",
                 "containerId",
@@ -2460,10 +2557,20 @@ public partial class LicenseController
                     "format": "uuid",
                     "description": "Unique board instance identifier"
                 },
-                "characterId": {
+                "ownerType": {
+                    "type": "string",
+                    "description": "Type of entity that owns this board"
+                },
+                "ownerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character this board belongs to"
+                    "description": "Entity that owns this board"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm context for this board. Null for realm-agnostic boards."
                 },
                 "boardTemplateId": {
                     "type": "string",
@@ -2491,57 +2598,57 @@ public partial class LicenseController
 }
 """;
 
-    private static readonly string _ListBoardsByCharacter_Info = """
+    private static readonly string _ListBoardsByOwner_Info = """
 {
-    "summary": "List boards for a character",
-    "description": "List all board instances for a character, with optional game service filter.",
+    "summary": "List boards for an owner",
+    "description": "List all board instances for an owner (by ownerType + ownerId), with optional game service filter.",
     "tags": [
         "Board"
     ],
     "deprecated": false,
-    "operationId": "listBoardsByCharacter"
+    "operationId": "listBoardsByOwner"
 }
 """;
 
-    /// <summary>Returns endpoint information for ListBoardsByCharacter</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/list-by-character/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBoardsByCharacter_MetaInfo()
+    /// <summary>Returns endpoint information for ListBoardsByOwner</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/list-by-owner/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBoardsByOwner_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "License",
             "POST",
-            "/license/board/list-by-character",
-            _ListBoardsByCharacter_Info));
+            "/license/board/list-by-owner",
+            _ListBoardsByOwner_Info));
 
-    /// <summary>Returns request schema for ListBoardsByCharacter</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/list-by-character/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBoardsByCharacter_MetaRequestSchema()
+    /// <summary>Returns request schema for ListBoardsByOwner</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/list-by-owner/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBoardsByOwner_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "License",
             "POST",
-            "/license/board/list-by-character",
+            "/license/board/list-by-owner",
             "request-schema",
-            _ListBoardsByCharacter_RequestSchema));
+            _ListBoardsByOwner_RequestSchema));
 
-    /// <summary>Returns response schema for ListBoardsByCharacter</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/list-by-character/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBoardsByCharacter_MetaResponseSchema()
+    /// <summary>Returns response schema for ListBoardsByOwner</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/list-by-owner/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBoardsByOwner_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "License",
             "POST",
-            "/license/board/list-by-character",
+            "/license/board/list-by-owner",
             "response-schema",
-            _ListBoardsByCharacter_ResponseSchema));
+            _ListBoardsByOwner_ResponseSchema));
 
-    /// <summary>Returns full schema for ListBoardsByCharacter</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/list-by-character/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBoardsByCharacter_MetaFullSchema()
+    /// <summary>Returns full schema for ListBoardsByOwner</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/list-by-owner/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBoardsByOwner_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "License",
             "POST",
-            "/license/board/list-by-character",
-            _ListBoardsByCharacter_Info,
-            _ListBoardsByCharacter_RequestSchema,
-            _ListBoardsByCharacter_ResponseSchema));
+            "/license/board/list-by-owner",
+            _ListBoardsByOwner_Info,
+            _ListBoardsByOwner_RequestSchema,
+            _ListBoardsByOwner_ResponseSchema));
 
     #endregion
 
@@ -2582,7 +2689,8 @@ public partial class LicenseController
             "additionalProperties": false,
             "required": [
                 "boardId",
-                "characterId",
+                "ownerType",
+                "ownerId",
                 "boardTemplateId",
                 "gameServiceId",
                 "containerId",
@@ -2594,10 +2702,20 @@ public partial class LicenseController
                     "format": "uuid",
                     "description": "Unique board instance identifier"
                 },
-                "characterId": {
+                "ownerType": {
+                    "type": "string",
+                    "description": "Type of entity that owns this board"
+                },
+                "ownerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character this board belongs to"
+                    "description": "Entity that owns this board"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm context for this board. Null for realm-agnostic boards."
                 },
                 "boardTemplateId": {
                     "type": "string",
@@ -2873,7 +2991,6 @@ public partial class LicenseController
                 "unlockable",
                 "adjacencyMet",
                 "prerequisitesMet",
-                "lpSufficient",
                 "requiredLp"
             ],
             "properties": {
@@ -2891,12 +3008,13 @@ public partial class LicenseController
                 },
                 "lpSufficient": {
                     "type": "boolean",
-                    "description": "Whether the character has enough LP"
+                    "nullable": true,
+                    "description": "Whether the owner has enough LP. Null if LP check is not applicable for this owner type."
                 },
                 "currentLp": {
                     "type": "number",
                     "nullable": true,
-                    "description": "Current LP balance of the character (null if balance check failed)"
+                    "description": "Current LP balance of the owner (null if balance check failed or not applicable)"
                 },
                 "requiredLp": {
                     "type": "integer",
@@ -2999,7 +3117,8 @@ public partial class LicenseController
             "additionalProperties": false,
             "required": [
                 "boardId",
-                "characterId",
+                "ownerType",
+                "ownerId",
                 "boardTemplateId",
                 "gridWidth",
                 "gridHeight",
@@ -3011,10 +3130,14 @@ public partial class LicenseController
                     "format": "uuid",
                     "description": "Board instance identifier"
                 },
-                "characterId": {
+                "ownerType": {
+                    "type": "string",
+                    "description": "Type of entity that owns this board (e.g., character, account, guild)"
+                },
+                "ownerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character this board belongs to"
+                    "description": "ID of the entity that owns this board"
                 },
                 "boardTemplateId": {
                     "type": "string",
@@ -3119,7 +3242,7 @@ public partial class LicenseController
         },
         "LicenseStatus": {
             "type": "string",
-            "description": "Unlock status of a license node on a board.\n- locked: Not adjacent to any unlocked node (cannot be unlocked)\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\n- unlocked: Already unlocked (item placed at this position)\n",
+            "description": "Unlock status of a license node on a board.\ n- locked: Not adjacent to any unlocked node (cannot be unlocked)\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\n- unlocked: Already unlocked (item placed at this position)\n",
             "enum": [
                 "locked",
                 "unlockable",
@@ -3471,25 +3594,42 @@ public partial class LicenseController
 
     #endregion
 
-    #region Meta Endpoints for CleanupByCharacter
+    #region Meta Endpoints for CloneBoard
 
-    private static readonly string _CleanupByCharacter_RequestSchema = """
+    private static readonly string _CloneBoard_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/CleanupByCharacterRequest",
+    "$ref": "#/$defs/CloneBoardRequest",
     "$defs": {
-        "CleanupByCharacterRequest": {
+        "CloneBoardRequest": {
             "type": "object",
-            "description": "Request to cleanup all boards for a deleted character",
+            "description": "Request to clone a board's unlock state to a new owner (developer tooling)",
             "additionalProperties": false,
             "required": [
-                "characterId"
+                "sourceBoardId",
+                "targetOwnerType",
+                "targetOwnerId"
             ],
             "properties": {
-                "characterId": {
+                "sourceBoardId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character whose boards should be cleaned up"
+                    "description": "Source board instance to clone unlock state from"
+                },
+                "targetOwnerType": {
+                    "type": "string",
+                    "description": "Type of entity to clone the board to (must be in template's allowedOwnerTypes)"
+                },
+                "targetOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the target entity"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm context for the cloned board. Required for character owners (auto-resolved from character). For realm owners, must equal targetOwnerId. Null for realm-agnostic boards."
                 }
             }
         }
@@ -3497,24 +3637,166 @@ public partial class LicenseController
 }
 """;
 
-    private static readonly string _CleanupByCharacter_ResponseSchema = """
+    private static readonly string _CloneBoard_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/CleanupByCharacterResponse",
+    "$ref": "#/$defs/CloneBoardResponse",
     "$defs": {
-        "CleanupByCharacterResponse": {
+        "CloneBoardResponse": {
             "type": "object",
-            "description": "Result of character board cleanup",
+            "description": "Result of a board clone operation",
             "additionalProperties": false,
             "required": [
-                "characterId",
+                "sourceBoardId",
+                "targetBoardId",
+                "targetOwnerType",
+                "targetOwnerId",
+                "targetContainerId",
+                "licensesCloned"
+            ],
+            "properties": {
+                "sourceBoardId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Source board that was cloned from"
+                },
+                "targetBoardId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "New board instance created for the target"
+                },
+                "targetOwnerType": {
+                    "type": "string",
+                    "description": "Type of entity the board was cloned to"
+                },
+                "targetOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the entity the board was cloned to"
+                },
+                "targetContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Inventory container created for the cloned board"
+                },
+                "licensesCloned": {
+                    "type": "integer",
+                    "description": "Number of licenses cloned (item instances created)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CloneBoard_Info = """
+{
+    "summary": "Clone a board's unlock state to a new owner",
+    "description": "Developer-only endpoint for cloning NPC progression. Reads unlock state\nfrom a source board, creates a new board for the target owner, and bulk-creates\nitem instances for all unlocked licenses. Skips contracts entirely (admin tooling,\nnot gameplay). Publishes a single license.board.cloned event.\nDoes not publish individual license.unlocked events.\n",
+    "tags": [
+        "Board"
+    ],
+    "deprecated": false,
+    "operationId": "cloneBoard"
+}
+""";
+
+    /// <summary>Returns endpoint information for CloneBoard</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/clone/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CloneBoard_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "License",
+            "POST",
+            "/license/board/clone",
+            _CloneBoard_Info));
+
+    /// <summary>Returns request schema for CloneBoard</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/clone/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CloneBoard_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "License",
+            "POST",
+            "/license/board/clone",
+            "request-schema",
+            _CloneBoard_RequestSchema));
+
+    /// <summary>Returns response schema for CloneBoard</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/clone/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CloneBoard_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "License",
+            "POST",
+            "/license/board/clone",
+            "response-schema",
+            _CloneBoard_ResponseSchema));
+
+    /// <summary>Returns full schema for CloneBoard</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/board/clone/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CloneBoard_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "License",
+            "POST",
+            "/license/board/clone",
+            _CloneBoard_Info,
+            _CloneBoard_RequestSchema,
+            _CloneBoard_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanupByOwner
+
+    private static readonly string _CleanupByOwner_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByOwnerRequest",
+    "$defs": {
+        "CleanupByOwnerRequest": {
+            "type": "object",
+            "description": "Request to cleanup all boards for a deleted owner entity",
+            "additionalProperties": false,
+            "required": [
+                "ownerType",
+                "ownerId"
+            ],
+            "properties": {
+                "ownerType": {
+                    "type": "string",
+                    "description": "Type of entity whose boards should be cleaned up"
+                },
+                "ownerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the entity whose boards should be cleaned up"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByOwner_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByOwnerResponse",
+    "$defs": {
+        "CleanupByOwnerResponse": {
+            "type": "object",
+            "description": "Result of owner board cleanup",
+            "additionalProperties": false,
+            "required": [
+                "ownerType",
+                "ownerId",
                 "boardsDeleted"
             ],
             "properties": {
-                "characterId": {
+                "ownerType": {
+                    "type": "string",
+                    "description": "Type of entity that was cleaned up"
+                },
+                "ownerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character that was cleaned up"
+                    "description": "ID of the entity that was cleaned up"
                 },
                 "boardsDeleted": {
                     "type": "integer",
@@ -3526,57 +3808,57 @@ public partial class LicenseController
 }
 """;
 
-    private static readonly string _CleanupByCharacter_Info = """
+    private static readonly string _CleanupByOwner_Info = """
 {
-    "summary": "Cleanup boards referencing a deleted character",
-    "description": "Called by lib-resource cleanup coordination when a character is deleted.\nDeletes all board instances for the specified character, destroying their\ninventory containers and all contained license items.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+    "summary": "Cleanup boards referencing a deleted owner",
+    "description": "Called by lib-resource cleanup coordination when an owner entity is deleted.\nDeletes all board instances for the specified owner (ownerType + ownerId),\ndestroying their inventory containers and all contained license items.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
     "tags": [
         "Cleanup"
     ],
     "deprecated": false,
-    "operationId": "cleanupByCharacter"
+    "operationId": "cleanupByOwner"
 }
 """;
 
-    /// <summary>Returns endpoint information for CleanupByCharacter</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-character/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaInfo()
+    /// <summary>Returns endpoint information for CleanupByOwner</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-owner/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByOwner_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "License",
             "POST",
-            "/license/cleanup-by-character",
-            _CleanupByCharacter_Info));
+            "/license/cleanup-by-owner",
+            _CleanupByOwner_Info));
 
-    /// <summary>Returns request schema for CleanupByCharacter</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-character/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaRequestSchema()
+    /// <summary>Returns request schema for CleanupByOwner</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-owner/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByOwner_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "License",
             "POST",
-            "/license/cleanup-by-character",
+            "/license/cleanup-by-owner",
             "request-schema",
-            _CleanupByCharacter_RequestSchema));
+            _CleanupByOwner_RequestSchema));
 
-    /// <summary>Returns response schema for CleanupByCharacter</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-character/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaResponseSchema()
+    /// <summary>Returns response schema for CleanupByOwner</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-owner/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByOwner_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "License",
             "POST",
-            "/license/cleanup-by-character",
+            "/license/cleanup-by-owner",
             "response-schema",
-            _CleanupByCharacter_ResponseSchema));
+            _CleanupByOwner_ResponseSchema));
 
-    /// <summary>Returns full schema for CleanupByCharacter</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-character/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaFullSchema()
+    /// <summary>Returns full schema for CleanupByOwner</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/license/cleanup-by-owner/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByOwner_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "License",
             "POST",
-            "/license/cleanup-by-character",
-            _CleanupByCharacter_Info,
-            _CleanupByCharacter_RequestSchema,
-            _CleanupByCharacter_ResponseSchema));
+            "/license/cleanup-by-owner",
+            _CleanupByOwner_Info,
+            _CleanupByOwner_RequestSchema,
+            _CleanupByOwner_ResponseSchema));
 
     #endregion
 }

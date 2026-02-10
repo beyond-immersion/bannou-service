@@ -892,6 +892,12 @@ public partial class ListSeedTypesRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid GameServiceId { get; set; } = default!;
 
+    /// <summary>
+    /// Whether to include deprecated seed types in the response.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
+
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     /// <summary>
@@ -989,6 +995,88 @@ public partial class UpdateSeedTypeRequest
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
+
+}
+
+/// <summary>
+/// Request to deprecate a seed type, preventing new seed creation.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeprecateSeedTypeRequest
+{
+
+    /// <summary>
+    /// The seed type to deprecate.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SeedTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// The game service scope.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deprecation (for audit purposes).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to restore a deprecated seed type to active status.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UndeprecateSeedTypeRequest
+{
+
+    /// <summary>
+    /// The seed type to restore.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SeedTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// The game service scope.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to hard-delete a deprecated seed type with no remaining non-archived seeds.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteSeedTypeRequest
+{
+
+    /// <summary>
+    /// The seed type to delete.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SeedTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// The game service scope.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
 
 }
 
@@ -1607,6 +1695,24 @@ public partial class SeedTypeResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sameOwnerGrowthMultiplier")]
     public float SameOwnerGrowthMultiplier { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this seed type is deprecated and cannot be used for new seeds.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when this seed type was deprecated.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deprecation.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    public string? DeprecationReason { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

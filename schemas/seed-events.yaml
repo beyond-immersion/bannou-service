@@ -40,6 +40,17 @@ info:
       event: SeedDeletedEvent
       description: Published when a seed is deleted
 
+    # Seed type lifecycle events (auto-generated from x-lifecycle)
+    - topic: seed-type.created
+      event: SeedTypeCreatedEvent
+      description: Published when a new seed type is registered
+    - topic: seed-type.updated
+      event: SeedTypeUpdatedEvent
+      description: Published when a seed type is updated (including deprecation)
+    - topic: seed-type.deleted
+      event: SeedTypeDeletedEvent
+      description: Published when a seed type is deleted
+
     # Growth events
     - topic: seed.growth.updated
       event: SeedGrowthUpdatedEvent
@@ -82,6 +93,20 @@ x-lifecycle:
       status: { $ref: 'seed-api.yaml#/components/schemas/SeedStatus', required: true, description: "Current lifecycle status" }
       bondId: { type: string, format: uuid, nullable: true, description: "Bond ID if bonded, null otherwise" }
     sensitive: [metadata]
+  SeedType:
+    model:
+      seedTypeCode: { type: string, primary: true, required: true, description: "Unique seed type code" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this type is scoped to" }
+      displayName: { type: string, required: true, description: "Human-readable name" }
+      description: { type: string, required: true, description: "Description of what this seed type represents" }
+      maxPerOwner: { type: integer, required: true, description: "Maximum seeds of this type per owner" }
+      bondCardinality: { type: integer, required: true, description: "Max bond participants (0 = no bonding)" }
+      bondPermanent: { type: boolean, required: true, description: "Whether bonds of this type are permanent" }
+      sameOwnerGrowthMultiplier: { type: number, format: float, required: true, description: "Cross-pollination multiplier" }
+      isDeprecated: { type: boolean, required: true, description: "Whether this seed type is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the seed type was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
+    sensitive: [capabilityRules, growthPhases, allowedOwnerTypes]
 
 paths: {}  # Events don't have HTTP paths
 

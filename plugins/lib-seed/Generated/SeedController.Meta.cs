@@ -2047,6 +2047,25 @@ public partial class SeedController
                     },
                     "nullable": true,
                     "description": "Rules for computing capabilities from growth domains."
+                },
+                "growthDecayEnabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether unused growth domains decay over time for this seed type. Falls back to global config if null."
+                },
+                "growthDecayRatePerDay": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Daily decay rate for unused domains of this seed type. Falls back to global config if null."
+                },
+                "sameOwnerGrowthMultiplier": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "default": 0.0,
+                    "description": "Fraction of growth applied to other seeds of the same type owned by the same entity. 0.0 = no sharing (default), 1.0 = full mirror."
                 }
             }
         },
@@ -2177,6 +2196,22 @@ public partial class SeedController
                     },
                     "nullable": true,
                     "description": "Capability computation rules."
+                },
+                "growthDecayEnabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether unused growth domains decay over time for this seed type. Null means using global config."
+                },
+                "growthDecayRatePerDay": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Daily decay rate for unused domains of this seed type. Null means using global config."
+                },
+                "sameOwnerGrowthMultiplier": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 }
             }
         },
@@ -2389,6 +2424,22 @@ public partial class SeedController
                     },
                     "nullable": true,
                     "description": "Capability computation rules."
+                },
+                "growthDecayEnabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether unused growth domains decay over time for this seed type. Null means using global config."
+                },
+                "growthDecayRatePerDay": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Daily decay rate for unused domains of this seed type. Null means using global config."
+                },
+                "sameOwnerGrowthMultiplier": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 }
             }
         },
@@ -2612,6 +2663,22 @@ public partial class SeedController
                     },
                     "nullable": true,
                     "description": "Capability computation rules."
+                },
+                "growthDecayEnabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether unused growth domains decay over time for this seed type. Null means using global config."
+                },
+                "growthDecayRatePerDay": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Daily decay rate for unused domains of this seed type. Null means using global config."
+                },
+                "sameOwnerGrowthMultiplier": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 }
             }
         },
@@ -2778,6 +2845,25 @@ public partial class SeedController
                     },
                     "nullable": true,
                     "description": "Updated capability rules."
+                },
+                "growthDecayEnabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether unused growth domains decay over time for this seed type. Falls back to global config if null."
+                },
+                "growthDecayRatePerDay": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Daily decay rate for unused domains of this seed type. Falls back to global config if null."
+                },
+                "sameOwnerGrowthMultiplier": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Updated fraction of growth applied to other seeds of the same type owned by the same entity."
                 }
             }
         },
@@ -2908,6 +2994,22 @@ public partial class SeedController
                     },
                     "nullable": true,
                     "description": "Capability computation rules."
+                },
+                "growthDecayEnabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether unused growth domains decay over time for this seed type. Null means using global config."
+                },
+                "growthDecayRatePerDay": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Daily decay rate for unused domains of this seed type. Null means using global config."
+                },
+                "sameOwnerGrowthMultiplier": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 }
             }
         },

@@ -538,7 +538,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `LICENSE_DEFAULT_ADJACENCY_MODE` | string | `eight_way` | Default adjacency mode for new board templates |
 | `LICENSE_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries (min 1, max 100) |
 | `LICENSE_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock TTL for board mutations in seconds |
-| `LICENSE_MAX_BOARDS_PER_CHARACTER` | int | `10` | Maximum number of active boards a single character can have |
+| `LICENSE_MAX_BOARDS_PER_OWNER` | int | `10` | Maximum number of active boards a single owner entity can ha... |
 | `LICENSE_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
 | `LICENSE_MAX_DEFINITIONS_PER_BOARD` | int | `200` | Maximum license definitions per board template |
 
@@ -876,17 +876,19 @@ CHECK_ALL (defaul... |
 | `SEED_BOND_SHARED_GROWTH_MULTIPLIER` | double | `1.5` | Growth multiplier applied when bonded seeds grow together in... |
 | `SEED_BOND_STRENGTH_GROWTH_RATE` | double | `0.1` | Rate at which bond strength increases per unit of shared gro... |
 | `SEED_CAPABILITY_RECOMPUTE_DEBOUNCE_MS` | int | `5000` | Debounce interval in milliseconds before recomputing capabil... |
+| `SEED_DECAY_WORKER_INTERVAL_SECONDS` | int | `900` | Interval in seconds between growth decay worker cycles (defa... |
+| `SEED_DECAY_WORKER_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before the decay worker starts its first cy... |
 | `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | int | `3` | Default maximum seeds of any single type per owner when not ... |
 | `SEED_DEFAULT_QUERY_PAGE_SIZE` | int | `100` | Default page size for queries that do not expose pagination ... |
-| `SEED_GROWTH_DECAY_ENABLED` | bool | `false` | Whether unused growth domains decay over time (per-type conf... |
-| `SEED_GROWTH_DECAY_RATE_PER_DAY` | double | `0.01` | Daily decay rate applied to unused growth domains when decay... |
+| `SEED_GROWTH_DECAY_ENABLED` | bool | `false` | Global toggle for growth domain decay. Per-type overrides ca... |
+| `SEED_GROWTH_DECAY_RATE_PER_DAY` | double | `0.01` | Global daily decay rate applied to unused growth domains. Pe... |
 | `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum number of seed types that can be registered per game... |
 
 ### Species
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SPECIES_SEED_PAGE_SIZE` | int | `100` | Number of records to process per page during seed operations |
+| `SPECIES_MERGE_PAGE_SIZE` | int | `100` | Number of characters to process per page during species merg... |
 
 ### State
 
@@ -992,9 +994,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 745
+- **Total properties**: 747
 - **Required (no default)**: 51
-- **Optional (has default)**: 694
+- **Optional (has default)**: 696
 
 ## Environment Variable Naming Convention
 

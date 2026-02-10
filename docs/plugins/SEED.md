@@ -91,6 +91,9 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `seed.phase.changed` | `SeedPhaseChangedEvent` | Seed crossed a phase threshold during growth recording or decay; includes `Direction` (`Progressed` or `Regressed`) |
 | `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | Capability manifest recomputed and cached; includes manifest version and unlocked count |
 | `seed.bond.formed` | `SeedBondFormedEvent` | Bond transitions to Active after all participants confirm |
+| `seed-type.created` | `SeedTypeCreatedEvent` | New seed type registered via `RegisterSeedTypeAsync` |
+| `seed-type.updated` | `SeedTypeUpdatedEvent` | Seed type updated, deprecated, or undeprecated; includes `ChangedFields` list |
+| `seed-type.deleted` | `SeedTypeDeletedEvent` | Seed type hard-deleted via `DeleteSeedTypeAsync` |
 
 ### Consumed Events
 
@@ -164,13 +167,19 @@ Standard CRUD operations on seed entities. `CreateSeedAsync` validates the game 
 
 Manifest version is monotonically incremented from the previous cached version.
 
-### Seed Type Definitions (4 endpoints)
+### Seed Type Definitions (7 endpoints)
 
-`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), allowed owner types, optional per-type decay overrides (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) that take precedence over global configuration, and a `SameOwnerGrowthMultiplier` (0.0-1.0, default 0.0) that controls cross-pollination of growth to same-type same-owner siblings.
+`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), allowed owner types, optional per-type decay overrides (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) that take precedence over global configuration, and a `SameOwnerGrowthMultiplier` (0.0-1.0, default 0.0) that controls cross-pollination of growth to same-type same-owner siblings. Publishes `seed-type.created` lifecycle event.
 
-`UpdateSeedTypeAsync` acquires a distributed lock on the type key, supports partial updates (only non-null fields applied), and triggers recomputation of all existing seeds' phases and capability caches when growth phases or capability rules change.
+`UpdateSeedTypeAsync` acquires a distributed lock on the type key, supports partial updates (only non-null fields applied), and triggers recomputation of all existing seeds' phases and capability caches when growth phases or capability rules change. Publishes `seed-type.updated` with `changedFields`.
 
-No delete endpoint exists for seed types -- see Known Quirks.
+`ListSeedTypesAsync` supports `includeDeprecated` filter (default: false) to control visibility of deprecated types.
+
+`DeprecateSeedTypeAsync` marks a seed type as deprecated, preventing creation of new seeds of this type. Existing seeds are unaffected. Publishes `seed-type.updated` with `changedFields = ["isDeprecated", "deprecatedAt", "deprecationReason"]`. No distributed lock needed (simple flag flip).
+
+`UndeprecateSeedTypeAsync` restores a deprecated seed type to active status. Publishes `seed-type.updated` with the same changed fields.
+
+`DeleteSeedTypeAsync` hard-deletes a deprecated seed type. Requires deprecation first (`BadRequest` if not deprecated) and zero non-archived seeds (`Conflict` if any exist, checked via same-service JSON query). Acquires a distributed lock to prevent concurrent deletes. Publishes `seed-type.deleted`. `CreateSeedAsync` checks the `IsDeprecated` flag to prevent seed creation for deprecated types. No merge endpoint exists -- see [#374](https://github.com/beyond-immersion/bannou-service/issues/374).
 
 ### Bonds (5 endpoints)
 
@@ -247,8 +256,8 @@ No delete endpoint exists for seed types -- see Known Quirks.
 - **Bond dissolution endpoint**: No endpoint exists to dissolve or break a bond. The `BondPermanent` flag on seed type definitions implies some bonds should be dissolvable, but no dissolution flow is implemented. Would need to handle clearing `BondId` on participant seeds, emitting a dissolution event, and respecting the permanence flag.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/362 -->
 
-- **Seed type deletion**: No `DeleteSeedType` endpoint exists. Removing a type definition would need to consider existing seeds of that type (orphan prevention).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/363 -->
+- **Seed type merge**: No `MergeSeedType` endpoint exists. Unlike species merge (simple foreign key reassignment), seed type merge is fundamentally complex due to incompatible growth domains, phase definitions, capability rules, bond constraints, and per-owner limits. See [#374](https://github.com/beyond-immersion/bannou-service/issues/374).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/374 -->
 
 - **Capability push notifications**: Currently capabilities are pull-only (consumer calls `GetCapabilityManifest`). A push model via client events would allow real-time UI updates when capabilities unlock.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/365 -->

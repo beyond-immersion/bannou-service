@@ -32,7 +32,7 @@ Des... |
 | [Inventory](#inventory) | 1.0.0 | 16 | Container and inventory management service for games. |
 | [Item](#item) | 1.0.0 | 16 | Item template and instance management service. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [License](#license) | 1.0.0 | 19 | Grid-based progression boards via itemized contracts. |
+| [License](#license) | 1.0.0 | 20 | Grid-based progression boards via itemized contracts. |
 | [Location](#location) | 1.0.0 | 19 | Location management service for game worlds. |
 | [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for game worlds. |
 | [Matchmaking](#matchmaking) | 1.0.0 | 11 | Matchmaking service for competitive and casual game matching... |
@@ -50,7 +50,7 @@ Des... |
 | [Save Load](#save-load) | 1.0.0 | 26 | Generic save/load system for game state persistence.
 Support... |
 | [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
-| [Seed](#seed) | 1.0.0 | 21 | Generic progressive growth entity service (L2 GameFoundation... |
+| [Seed](#seed) | 1.0.0 | 24 | Generic progressive growth entity service (L2 GameFoundation... |
 | [Species](#species) | 2.0.0 | 13 | Species management service for game worlds. |
 | [State](#state) | 1.0.0 | 9 | Repository pattern state management with Redis and MySQL bac... |
 | [Storyline](#storyline) | 1.0.0 | 15 | Seeded narrative generation from compressed archives using t... |
@@ -244,7 +244,7 @@ Real-time leaderboard management (L4 GameFeatures) built on Redis Sorted Sets. S
 
 **Version**: 1.0.0 | **Schema**: `schemas/license-api.yaml` | **Deep Dive**: [docs/plugins/LICENSE.md](plugins/LICENSE.md)
 
-The License service (L4 GameFeatures) provides grid-based progression boards (skill trees, license boards, tech trees) inspired by Final Fantasy XII's License Board system. It is a thin orchestration layer that combines Inventory (containers for license items), Items (license nodes as item instances), and Contracts (unlock behavior via prebound API execution) to manage character progression across a grid. Internal-only, never internet-facing. See [GitHub Issue #281](https://github.com/BeyondImmersion/bannou-service/issues/281) for the original design specification.
+The License service (L4 GameFeatures) provides grid-based progression boards (skill trees, license boards, tech trees) inspired by Final Fantasy XII's License Board system. It is a thin orchestration layer that combines Inventory (containers for license items), Items (license nodes as item instances), and Contracts (unlock behavior via prebound API execution) to manage entity progression across a grid. Boards support polymorphic ownership via `ownerType` + `ownerId` — characters, accounts, guilds, and locations can all own boards. Internal-only, never internet-facing. See [GitHub Issue #281](https://github.com/BeyondImmersion/bannou-service/issues/281) for the original design specification.
 
 ---
 
@@ -443,7 +443,7 @@ Public-facing website service (L3 AppFeatures) for browser-based access to news,
 ## Summary
 
 - **Total services**: 47
-- **Total endpoints**: 667
+- **Total endpoints**: 671
 
 ---
 

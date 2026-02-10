@@ -239,6 +239,42 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UpdateSeedTypeAsync(UpdateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Deprecate a seed type
+    /// </summary>
+
+    /// <remarks>
+    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
+    /// </remarks>
+
+    /// <returns>Seed type deprecated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> DeprecateSeedTypeAsync(DeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Restore a deprecated seed type
+    /// </summary>
+
+    /// <remarks>
+    /// Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
+    /// </remarks>
+
+    /// <returns>Seed type restored</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UndeprecateSeedTypeAsync(UndeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Delete a seed type
+    /// </summary>
+
+    /// <remarks>
+    /// Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
+    /// </remarks>
+
+    /// <returns>Seed type deleted</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSeedTypeAsync(DeleteSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Begin bond process between seeds
     /// </summary>
 
@@ -601,6 +637,54 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         var (statusCode, result) = await _implementation.UpdateSeedTypeAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Deprecate a seed type
+    /// </summary>
+    /// <remarks>
+    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
+    /// </remarks>
+    /// <returns>Seed type deprecated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("seed/type/deprecate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> DeprecateSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.DeprecateSeedTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Restore a deprecated seed type
+    /// </summary>
+    /// <remarks>
+    /// Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
+    /// </remarks>
+    /// <returns>Seed type restored</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("seed/type/undeprecate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UndeprecateSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UndeprecateSeedTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Delete a seed type
+    /// </summary>
+    /// <remarks>
+    /// Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
+    /// </remarks>
+    /// <returns>Seed type deleted</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("seed/type/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var statusCode = await _implementation.DeleteSeedTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>

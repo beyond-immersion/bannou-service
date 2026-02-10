@@ -207,7 +207,7 @@ public sealed class LicenseProxy
     }
 
     /// <summary>
-    /// Create a board instance for a character
+    /// Create a board instance for an owner
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
@@ -243,21 +243,21 @@ public sealed class LicenseProxy
     }
 
     /// <summary>
-    /// List boards for a character
+    /// List boards for an owner
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing ListBoardsByCharacterResponse on success.</returns>
-    public Task<ApiResponse<ListBoardsByCharacterResponse>> ListBoardsByCharacterAsync(
-        ListBoardsByCharacterRequest request,
+    /// <returns>ApiResponse containing ListBoardsByOwnerResponse on success.</returns>
+    public Task<ApiResponse<ListBoardsByOwnerResponse>> ListBoardsByOwnerAsync(
+        ListBoardsByOwnerRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<ListBoardsByCharacterRequest, ListBoardsByCharacterResponse>(
-            "/license/board/list-by-character", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<ListBoardsByOwnerRequest, ListBoardsByOwnerResponse>(
+            "/license/board/list-by-owner", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -351,20 +351,38 @@ public sealed class LicenseProxy
     }
 
     /// <summary>
-    /// Cleanup boards referencing a deleted character
+    /// Clone a board's unlock state to a new owner
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing CleanupByCharacterResponse on success.</returns>
-    public Task<ApiResponse<CleanupByCharacterResponse>> CleanupByCharacterAsync(
-        CleanupByCharacterRequest request,
+    /// <returns>ApiResponse containing CloneBoardResponse on success.</returns>
+    public Task<ApiResponse<CloneBoardResponse>> CloneBoardAsync(
+        CloneBoardRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<CleanupByCharacterRequest, CleanupByCharacterResponse>(
-            "/license/cleanup-by-character", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<CloneBoardRequest, CloneBoardResponse>(
+            "/license/board/clone", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Cleanup boards referencing a deleted owner
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CleanupByOwnerResponse on success.</returns>
+    public Task<ApiResponse<CleanupByOwnerResponse>> CleanupByOwnerAsync(
+        CleanupByOwnerRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CleanupByOwnerRequest, CleanupByOwnerResponse>(
+            "/license/cleanup-by-owner", request, channel, timeout, cancellationToken);
     }
 }
