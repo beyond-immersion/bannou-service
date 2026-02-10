@@ -64,11 +64,6 @@ paths:
                 $ref: '#/components/schemas/CreateEscrowResponse'
         '400':
           description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/get:
     post:
       operationId: getEscrow
@@ -94,11 +89,6 @@ paths:
                 $ref: '#/components/schemas/GetEscrowResponse'
         '404':
           description: Escrow not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/list:
     post:
       operationId: listEscrows
@@ -150,11 +140,6 @@ paths:
                 $ref: '#/components/schemas/GetMyTokenResponse'
         '404':
           description: Escrow or party not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ===========================================================================
   # Deposits (3 endpoints)
   # ===========================================================================
@@ -189,11 +174,6 @@ paths:
                 $ref: '#/components/schemas/DepositResponse'
         '400':
           description: Deposit failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/deposit/validate:
     post:
       operationId: validateDeposit
@@ -271,11 +251,6 @@ paths:
                 $ref: '#/components/schemas/ConsentResponse'
         '400':
           description: Consent failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/consent/status:
     post:
       operationId: getConsentStatus
@@ -332,11 +307,6 @@ paths:
                 $ref: '#/components/schemas/ReleaseResponse'
         '400':
           description: Release failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/refund:
     post:
       operationId: refund
@@ -362,11 +332,6 @@ paths:
                 $ref: '#/components/schemas/RefundResponse'
         '400':
           description: Refund failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/cancel:
     post:
       operationId: cancel
@@ -392,11 +357,6 @@ paths:
                 $ref: '#/components/schemas/CancelResponse'
         '400':
           description: Cancel failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/dispute:
     post:
       operationId: dispute
@@ -422,11 +382,6 @@ paths:
                 $ref: '#/components/schemas/DisputeResponse'
         '400':
           description: Dispute failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/confirm-release:
     post:
       operationId: confirmRelease
@@ -454,17 +409,8 @@ paths:
                 $ref: '#/components/schemas/ConfirmReleaseResponse'
         '400':
           description: Confirmation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Escrow not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/confirm-refund:
     post:
       operationId: confirmRefund
@@ -492,17 +438,8 @@ paths:
                 $ref: '#/components/schemas/ConfirmRefundResponse'
         '400':
           description: Confirmation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Escrow not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ===========================================================================
   # Arbiter (1 endpoint)
   # ===========================================================================
@@ -532,11 +469,6 @@ paths:
                 $ref: '#/components/schemas/ResolveResponse'
         '400':
           description: Resolution failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ===========================================================================
   # Condition (1 endpoint)
   # ===========================================================================
@@ -568,11 +500,6 @@ paths:
                 $ref: '#/components/schemas/VerifyConditionResponse'
         '400':
           description: Verification failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ===========================================================================
   # Validation (2 endpoints)
   # ===========================================================================
@@ -626,11 +553,6 @@ paths:
                 $ref: '#/components/schemas/ReaffirmResponse'
         '400':
           description: Reaffirmation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ===========================================================================
   # Handlers (3 endpoints)
   # ===========================================================================
@@ -660,11 +582,6 @@ paths:
                 $ref: '#/components/schemas/RegisterHandlerResponse'
         '400':
           description: Registration failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/handler/list:
     post:
       operationId: listHandlers
@@ -714,11 +631,6 @@ paths:
                 $ref: '#/components/schemas/DeregisterHandlerResponse'
         '400':
           description: Deregistration failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
 components:
   schemas:
     # ==========================================================================
@@ -2855,28 +2767,6 @@ components:
           type: boolean
           description: Whether deregistration succeeded
 
-    # ==========================================================================
-    # Error Response
-    # ==========================================================================
-
-    ErrorResponse:
-      type: object
-      description: Standard error response format
-      required:
-      - error
-      - message
-      properties:
-        error:
-          type: string
-          description: Error code
-        message:
-          type: string
-          description: Human-readable error message
-        details:
-          type: object
-          nullable: true
-          additionalProperties: true
-          description: Additional error details
 
     EntityType:
       type: string
