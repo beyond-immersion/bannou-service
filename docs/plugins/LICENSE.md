@@ -20,11 +20,11 @@ The License service (L4 GameFeatures) provides grid-based progression boards (sk
 | lib-state (`IStateStoreFactory`) | Persistence for board templates, definitions, board instances (MySQL) and board cache, locks (Redis) |
 | lib-state (`IDistributedLockProvider`) | Board-level and template-level distributed locks for mutation operations |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events (template/board CRUD) and gameplay events (unlock, unlock-failed) |
-| lib-messaging (`IEventConsumer`) | Subscribing to `character.deleted` for board cleanup |
+| lib-messaging (`IEventConsumer`) | Event consumer registration (currently unused — cleanup via lib-resource) |
 | lib-contract (`IContractClient`) | Creating contract instances, setting template values, proposing, consenting, and completing milestones during unlock execution (L1 hard dependency) |
 | lib-character (`ICharacterClient`) | Validating character existence during board creation and fetching realm context during unlock (L2 hard dependency) |
 | lib-inventory (`IInventoryClient`) | Creating/deleting containers for board instances and reading container contents for cache rebuild (L2 hard dependency) |
-| lib-item (`IItemClient`) | Creating item instances when licenses are unlocked (L2 hard dependency) |
+| lib-item (`IItemClient`) | Creating/destroying item instances during unlock flow and compensation (L2 hard dependency) |
 | lib-currency (`ICurrencyClient`) | Advisory LP balance checks in `CheckUnlockable` (L2 hard dependency) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence during template creation (L2 hard dependency) |
 
@@ -90,11 +90,13 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | `license.unlocked` | `LicenseUnlockedEvent` | License successfully unlocked (includes boardId, characterId, licenseCode, position, itemInstanceId, contractInstanceId, lpCost) |
 | `license.unlock-failed` | `LicenseUnlockFailedEvent` | License unlock failed (includes boardId, characterId, licenseCode, reason enum) |
 
+**Note**: `license-board.updated` is NOT published — boards are immutable after creation. The `LicenseBoardUpdatedEvent` model exists as an unavoidable byproduct of `x-lifecycle` auto-generation but is intentionally excluded from `x-event-publications`.
+
 ### Consumed Events
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `character.deleted` | `HandleCharacterDeletedAsync` | Queries all boards for the deleted character, deletes inventory containers (destroying contained license items), deletes board instance records, deletes character-template uniqueness keys, and invalidates board caches |
+| *(via lib-resource cleanup callback)* | `CleanupByCharacterAsync` | Queries all boards for the deleted character, deletes inventory containers (destroying contained license items), deletes board instance records, deletes character-template uniqueness keys, and invalidates board caches |
 
 ---
 
@@ -125,13 +127,14 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | `IContractClient` | Contract lifecycle operations during unlock |
 | `ICharacterClient` | Character validation and realm context |
 | `IInventoryClient` | Container CRUD and content queries |
-| `IItemClient` | Item instance creation |
+| `IItemClient` | Item instance creation and destruction (saga compensation) |
 | `ICurrencyClient` | Advisory LP balance checks |
 | `IGameServiceClient` | Game service existence validation |
 
 **Internal Helpers:**
 - `IsAdjacent(x1, y1, x2, y2, mode)` - Static method computing grid adjacency for FourWay (Manhattan distance = 1) and EightWay (Chebyshev distance <= 1)
 - `LoadOrRebuildBoardCacheAsync(board, definitions, ct)` - Cache read-through: tries Redis first, on miss rebuilds from inventory container contents by matching item template IDs to definitions
+- `CompensateItemCreationAsync(itemInstanceId, boardId, licenseCode, ct)` - Saga compensation: destroys an item created during unlock if the subsequent contract fails. Publishes error event on compensation failure.
 - `PublishUnlockFailedAsync(boardId, characterId, licenseCode, reason, ct)` - Helper for publishing `license.unlock-failed` events
 - `MapTemplateToResponse`, `MapDefinitionToResponse`, `MapBoardToResponse` - Static model-to-response mapping helpers
 - `LicenseTopics` - Static class with topic string constants for `license.unlocked` and `license.unlock-failed`
@@ -168,7 +171,7 @@ Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLi
 
 ### Gameplay Operations (3 endpoints, user role)
 
-**`UnlockLicenseAsync`** - The core operation. 15-step flow under distributed lock:
+**`UnlockLicenseAsync`** - The core operation. 14-step flow under distributed lock with saga compensation:
 1. Acquire board lock
 2. Load board instance
 3. Load board template
@@ -177,13 +180,12 @@ Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLi
 6. Load/rebuild board cache from inventory
 7. Check not already unlocked
 8. Validate adjacency (starting node bypass or adjacent to unlocked node)
-9. Validate non-adjacent prerequisites (codes that must be unlocked anywhere on board)
-10. Create contract instance with licensee (character) and licensor (game service) parties
-11. Set contract template values (characterId, boardId, lpCost, licenseCode, itemTemplateId, gameServiceId, plus definition metadata)
-12. Auto-propose, auto-consent both parties, complete "unlock" milestone
-13. Load character for realm context, create item instance in board container
-14. Update board cache with optimistic concurrency retry (ETag-based, up to `MaxConcurrencyRetries`)
-15. Publish `license.unlocked` event
+9. Load character for realm context
+10. **Create item instance** in board container (easily reversible — saga ordering)
+11. **Contract lifecycle**: create instance, set template values, propose, consent both parties, complete "unlock" milestone (LP deduction via prebound API). If contract fails, **compensate by destroying the item** from step 10.
+12. Update board cache with optimistic concurrency retry (ETag-based, up to `MaxConcurrencyRetries`)
+13. Publish `license.unlocked` event
+14. Return success
 
 **`CheckUnlockableAsync`** - Read-only advisory check. Evaluates adjacency, prerequisites, and LP balance. LP check sums all wallet balances as an approximation; actual LP deduction is handled by the contract template's prebound API execution.
 
@@ -194,8 +196,8 @@ Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLi
 ## Visual Aid
 
 ```
-Unlock License Flow (under distributed lock)
-═════════════════════════════════════════════
+Unlock License Flow (under distributed lock, saga-ordered)
+══════════════════════════════════════════════════════════
 
   ┌─────────────┐     ┌──────────────┐     ┌───────────────┐
   │  Board Store │     │  Definition  │     │  Board Cache   │
@@ -210,10 +212,18 @@ Unlock License Flow (under distributed lock)
   │                    Validation Phase                      │
   │  7. Not already unlocked (cache)                        │
   │  8. Adjacent to unlocked OR starting node               │
-  │  9. Prerequisites met (all required codes unlocked)     │
   └──────────────────────────┬──────────────────────────────┘
                              │
-                    10-12. Contract Flow
+                    9. Load character
+                             │
+                    10. Create item (reversible)
+                             │
+         ┌───────────────────▼────────────────────┐
+         │          IItemClient (L2)               │
+         │  Create instance in board container     │
+         └───────────────────┬────────────────────┘
+                             │
+                    11. Contract Flow
                              │
          ┌───────────────────▼────────────────────┐
          │         IContractClient (L1)            │
@@ -221,23 +231,18 @@ Unlock License Flow (under distributed lock)
          │  Propose → Consent×2 → Complete         │
          │  "unlock" milestone                     │
          │  (prebound APIs handle LP deduction)    │
+         │                                         │
+         │  ON FAILURE: Destroy item (compensate)  │
          └───────────────────┬────────────────────┘
                              │
-                    13. Create item
-                             │
-         ┌───────────────────▼────────────────────┐
-         │          IItemClient (L2)               │
-         │  Create instance in board container     │
-         └───────────────────┬────────────────────┘
-                             │
-                    14. Update cache
+                    12. Update cache
                              │
          ┌───────────────────▼────────────────────┐
          │     Board Cache (Redis, ETag retry)     │
          │  Add unlocked entry → Save with TTL     │
          └───────────────────┬────────────────────┘
                              │
-                    15. Publish event
+                    13. Publish event
                              │
                              ▼
                    license.unlocked
@@ -247,8 +252,7 @@ Unlock License Flow (under distributed lock)
 
 ## Stubs & Unimplemented Features
 
-- **`license-board.updated` event**: Declared in `license-events.yaml` as a lifecycle event with `LicenseBoardUpdatedEvent` model generated, but never published anywhere in the service code. No board update endpoint exists either -- boards are immutable after creation (only licenses within them change).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/355 -->
+- ~~**`license-board.updated` event**: Declared in `license-events.yaml` as a lifecycle event with `LicenseBoardUpdatedEvent` model generated, but never published anywhere in the service code.~~ RESOLVED: Removed from `x-event-publications` in schema. The generated model is an unavoidable byproduct of `x-lifecycle` but is intentionally not published. Boards are immutable after creation. See [#355](https://github.com/beyond-immersion/bannou-service/issues/355).
 
 ---
 
@@ -256,11 +260,12 @@ Unlock License Flow (under distributed lock)
 
 - **Board reset/respec**: Allow characters to reset all unlocked licenses on a board, returning LP and removing items. Would require a new endpoint, contract template for refund execution, and inventory bulk-delete.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/356 -->
-- **Board sharing/copying**: Allow copying a board state from one character to another, e.g., for cloning NPC progression.
+- **Board sharing/copying**: Developer-only endpoint for cloning NPC progression. Skip contracts (admin tooling), create items directly, publish single `license.board.cloned` event. Design decisions resolved — see [#357](https://github.com/beyond-immersion/bannou-service/issues/357) for details.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/357 -->
 - ~~**Resource reference integration**: Register boards as references to characters via lib-resource for proper cleanup coordination instead of direct event handling.~~ FIXED: Added `x-references` to schema, generated reference tracking helpers, implemented `CleanupByCharacterAsync` endpoint, registered cleanup callbacks in plugin startup, removed direct `character.deleted` event subscription.
-- **Achievement integration**: Publish events when specific board completion thresholds are reached (e.g., "50% unlocked", "full board clear") for the Achievement service to consume.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/358 -->
+- ~~**Achievement integration**: Publish events when specific board completion thresholds are reached.~~ CLOSED: Not a License concern. License already publishes `license.unlocked` events with all data needed for milestone derivation. Achievement integration belongs in Analytics (Source → Analytics → Achievement pipeline). See [#358](https://github.com/beyond-immersion/bannou-service/issues/358).
+- **Polymorphic ownership**: Replace `characterId` with `ownerType` + `ownerId` to support non-character boards (realm tech trees, account achievement boards, seed progression). Follows established Seed pattern. See [#368](https://github.com/beyond-immersion/bannou-service/issues/368).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/368 -->
 
 ---
 
@@ -292,14 +297,18 @@ No known bugs at this time.
 
 ### Design Considerations (Requires Planning)
 
-- **No rollback on partial unlock failure**: The unlock flow performs multiple external calls sequentially (contract creation, contract propose/consent/complete, item creation, cache update). If item creation fails after the contract has been completed, the contract is orphaned in a completed state with no corresponding item. Similarly, if cache update fails after item creation, the item exists but the cache doesn't reflect it (mitigated by cache rebuild on next access). A compensation/saga pattern would be needed for full transactional guarantees.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/360 -->
+- ~~**No rollback on partial unlock failure**~~ FIXED: Unlock flow reordered with saga compensation. Item creation now happens BEFORE contract completion (easily reversible action first). If contract fails after item creation, the item is destroyed via `CompensateItemCreationAsync`. No failure mode results in LP deducted without item granted. See [#360](https://github.com/beyond-immersion/bannou-service/issues/360).
 
-- **`license-board.updated` event declared but never published**: The events schema declares a `license-board.updated` lifecycle event and the `LicenseBoardUpdatedEvent` model is generated, but no code path publishes it. Decision needed: should unlock operations publish board-updated events (since unlocking changes board state), or should this event be removed from the schema?
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/355 -->
+- ~~**`license-board.updated` event declared but never published**~~ FIXED: Removed from `x-event-publications`. Boards are immutable — the Updated concept doesn't apply. The `x-lifecycle`-generated model remains as harmless dead code. See [#355](https://github.com/beyond-immersion/bannou-service/issues/355).
 
 ---
 
 ## Work Tracking
 
-No active work items.
+| Issue | Status | Summary |
+|-------|--------|---------|
+| [#355](https://github.com/beyond-immersion/bannou-service/issues/355) | Fixed | Removed unused `license-board.updated` from event publications |
+| [#356](https://github.com/beyond-immersion/bannou-service/issues/356) | Open (needs game design) | Board reset/respec — refund %, partial vs full, cooldown |
+| [#357](https://github.com/beyond-immersion/bannou-service/issues/357) | Open (design resolved) | Board clone for NPC progression — implementation needed |
+| [#360](https://github.com/beyond-immersion/bannou-service/issues/360) | Fixed | Saga-ordered unlock flow with item-before-contract compensation |
+| [#368](https://github.com/beyond-immersion/bannou-service/issues/368) | Open | Polymorphic ownership (OwnerType + OwnerId) |

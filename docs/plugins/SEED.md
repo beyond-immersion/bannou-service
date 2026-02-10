@@ -239,12 +239,16 @@ No delete endpoint exists for seed types -- see Known Quirks.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/361 -->
 
 - **Bond dissolution endpoint**: No endpoint exists to dissolve or break a bond. The `BondPermanent` flag on seed type definitions implies some bonds should be dissolvable, but no dissolution flow is implemented. Would need to handle clearing `BondId` on participant seeds, emitting a dissolution event, and respecting the permanence flag.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/362 -->
 
 - **Seed type deletion**: No `DeleteSeedType` endpoint exists. Removing a type definition would need to consider existing seeds of that type (orphan prevention).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/363 -->
 
 - **Per-domain decay tracking**: Growth decay currently uses seed creation time as the basis for all domains. A more accurate model would track last activity time per domain, allowing active domains to resist decay while inactive ones fade.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/364 -->
 
 - **Capability push notifications**: Currently capabilities are pull-only (consumer calls `GetCapabilityManifest`). A push model via client events would allow real-time UI updates when capabilities unlock.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/365 -->
 
 ---
 
@@ -275,8 +279,10 @@ No delete endpoint exists for seed types -- see Known Quirks.
 ### Design Considerations (Requires Planning)
 
 - **No cleanup of associated data on archive**: `ArchiveSeedAsync` sets the seed's status to `Archived` but does not clean up growth data (`growth:{seedId}`), capability cache (`cap:{seedId}`), or bond data (`bond:{bondId}`). Archived seeds retain all associated state indefinitely. A cleanup strategy is needed -- either immediate deletion, a background retention worker, or integration with lib-resource for compression.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/366 -->
 
 - **Bond shared growth applied regardless of partner activity**: When a bonded seed records growth, the `BondSharedGrowthMultiplier` is applied if the bond is active. The partner seed does not need to be simultaneously active or growing. This means a bonded seed always gets boosted growth even if the partner is dormant or archived. Whether this is the intended semantic needs clarification.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/367 -->
 
 ---
 

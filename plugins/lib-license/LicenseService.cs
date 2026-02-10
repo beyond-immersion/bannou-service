@@ -1349,7 +1349,60 @@ public partial class LicenseService : ILicenseService
                 }
             }
 
-            // 9a. Create contract instance with two parties
+            // 9. Load character to get realm context for item creation
+            // Moved before item/contract flow per saga ordering: easily-reversible actions first
+            CharacterResponse character;
+            try
+            {
+                character = await _characterClient.GetCharacterAsync(
+                    new GetCharacterRequest { CharacterId = board.CharacterId },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogError(ex, "Character {CharacterId} not found during unlock of {Code} on board {BoardId}",
+                    board.CharacterId, body.LicenseCode, body.BoardId);
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.ContractFailed, cancellationToken);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // 10. Create item instance FIRST (easily reversible via DestroyItemInstance)
+            // Saga ordering: item creation before contract completion ensures the worst failure
+            // mode (LP deducted, no item) cannot occur. If contract fails after item creation,
+            // we compensate by destroying the item — player loses nothing either way.
+            ItemInstanceResponse itemInstance;
+            try
+            {
+                itemInstance = await _itemClient.CreateItemInstanceAsync(
+                    new CreateItemInstanceRequest
+                    {
+                        TemplateId = definition.ItemTemplateId,
+                        ContainerId = board.ContainerId,
+                        RealmId = character.RealmId,
+                        Quantity = 1
+                    },
+                    cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Item creation failed for unlock of {Code} on board {BoardId} (status {StatusCode})",
+                    body.LicenseCode, body.BoardId, ex.StatusCode);
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.ContractFailed, cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error creating item for unlock of {Code} on board {BoardId}",
+                    body.LicenseCode, body.BoardId);
+                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    UnlockFailureReason.ContractFailed, cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // 11. Contract lifecycle — LP deduction via prebound API execution
+            // If this fails, compensate by destroying the item created in step 10
             Guid contractInstanceId;
             try
             {
@@ -1376,7 +1429,7 @@ public partial class LicenseService : ILicenseService
                     cancellationToken);
                 contractInstanceId = contractInstance.ContractId;
 
-                // 9b. Set template values for prebound API execution
+                // 11b. Set template values for prebound API execution
                 var templateValues = new Dictionary<string, string>
                 {
                     ["characterId"] = board.CharacterId.ToString(),
@@ -1408,12 +1461,12 @@ public partial class LicenseService : ILicenseService
                     },
                     cancellationToken);
 
-                // 9c. Auto-propose the contract
+                // 11c. Auto-propose the contract
                 await _contractClient.ProposeContractInstanceAsync(
                     new ProposeContractInstanceRequest { ContractId = contractInstanceId },
                     cancellationToken);
 
-                // 9d. Auto-consent both parties
+                // 11d. Auto-consent both parties
                 await _contractClient.ConsentToContractAsync(
                     new ConsentToContractRequest
                     {
@@ -1432,7 +1485,7 @@ public partial class LicenseService : ILicenseService
                     },
                     cancellationToken);
 
-                // 9e. Complete the "unlock" milestone
+                // 11e. Complete the "unlock" milestone (triggers LP deduction via prebound API)
                 await _contractClient.CompleteMilestoneAsync(
                     new CompleteMilestoneRequest
                     {
@@ -1444,70 +1497,24 @@ public partial class LicenseService : ILicenseService
             }
             catch (ApiException ex)
             {
-                _logger.LogError(ex, "Contract execution failed for unlock of {Code} on board {BoardId} (status {StatusCode})",
-                    body.LicenseCode, body.BoardId, ex.StatusCode);
+                _logger.LogError(ex, "Contract execution failed for unlock of {Code} on board {BoardId} (status {StatusCode}), compensating by destroying item {ItemInstanceId}",
+                    body.LicenseCode, body.BoardId, ex.StatusCode, itemInstance.InstanceId);
+                await CompensateItemCreationAsync(itemInstance.InstanceId, body.BoardId, body.LicenseCode, cancellationToken);
                 await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
                     UnlockFailureReason.ContractFailed, cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Contract execution failed for unlock of {Code} on board {BoardId}",
-                    body.LicenseCode, body.BoardId);
+                _logger.LogError(ex, "Contract execution failed for unlock of {Code} on board {BoardId}, compensating by destroying item {ItemInstanceId}",
+                    body.LicenseCode, body.BoardId, itemInstance.InstanceId);
+                await CompensateItemCreationAsync(itemInstance.InstanceId, body.BoardId, body.LicenseCode, cancellationToken);
                 await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
                     UnlockFailureReason.ContractFailed, cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // 10. Load character to get realm context for item creation
-            CharacterResponse character;
-            try
-            {
-                character = await _characterClient.GetCharacterAsync(
-                    new GetCharacterRequest { CharacterId = board.CharacterId },
-                    cancellationToken);
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogError(ex, "Character {CharacterId} not found during unlock of {Code} on board {BoardId}",
-                    board.CharacterId, body.LicenseCode, body.BoardId);
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
-                    UnlockFailureReason.ContractFailed, cancellationToken);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // 11. Create item instance
-            ItemInstanceResponse itemInstance;
-            try
-            {
-                itemInstance = await _itemClient.CreateItemInstanceAsync(
-                    new CreateItemInstanceRequest
-                    {
-                        TemplateId = definition.ItemTemplateId,
-                        ContainerId = board.ContainerId,
-                        RealmId = character.RealmId,
-                        Quantity = 1
-                    },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Item creation failed for unlock of {Code} on board {BoardId} (status {StatusCode})",
-                    body.LicenseCode, body.BoardId, ex.StatusCode);
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
-                    UnlockFailureReason.ContractFailed, cancellationToken);
-                return (StatusCodes.InternalServerError, null);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error creating item for unlock of {Code} on board {BoardId}",
-                    body.LicenseCode, body.BoardId);
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
-                    UnlockFailureReason.ContractFailed, cancellationToken);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // 13. Update board cache with optimistic concurrency retry
+            // 12. Update board cache with optimistic concurrency retry
             var cacheKey = BuildBoardCacheKey(body.BoardId);
             for (var attempt = 0; attempt <= _configuration.MaxConcurrencyRetries; attempt++)
             {
@@ -1550,7 +1557,7 @@ public partial class LicenseService : ILicenseService
                     attempt + 1, body.BoardId);
             }
 
-            // 14. Publish license.unlocked event
+            // 13. Publish license.unlocked event
             await _messageBus.TryPublishAsync(
                 LicenseTopics.LicenseUnlocked,
                 new LicenseUnlockedEvent
@@ -1572,7 +1579,7 @@ public partial class LicenseService : ILicenseService
                 "Unlocked license {Code} at ({X}, {Y}) on board {BoardId} for character {CharacterId}",
                 body.LicenseCode, definition.PositionX, definition.PositionY, body.BoardId, board.CharacterId);
 
-            // 15. Return success
+            // 14. Return success
             return (StatusCodes.OK, new UnlockLicenseResponse
             {
                 BoardId = body.BoardId,
@@ -1591,6 +1598,37 @@ public partial class LicenseService : ILicenseService
                 dependency: null, endpoint: "post:/license/unlock",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Compensates for a failed contract by destroying the item created during the unlock flow.
+    /// Called when contract execution fails after item creation succeeded (saga compensation).
+    /// </summary>
+    private async Task CompensateItemCreationAsync(
+        Guid itemInstanceId, Guid boardId, string licenseCode, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _itemClient.DestroyItemInstanceAsync(
+                new DestroyItemInstanceRequest { InstanceId = itemInstanceId },
+                cancellationToken);
+            _logger.LogInformation(
+                "Compensation successful: destroyed item {ItemInstanceId} after contract failure for {Code} on board {BoardId}",
+                itemInstanceId, licenseCode, boardId);
+        }
+        catch (Exception compensationEx)
+        {
+            // Compensation failure is serious but must not mask the original error.
+            // The orphaned item will be cleaned up when the board is deleted or manually reconciled.
+            _logger.LogError(compensationEx,
+                "Compensation FAILED: could not destroy item {ItemInstanceId} after contract failure for {Code} on board {BoardId}. Orphaned item requires manual cleanup",
+                itemInstanceId, licenseCode, boardId);
+            await _messageBus.TryPublishErrorAsync(
+                "license", "CompensateItemCreation", "compensation_failed",
+                $"Failed to destroy orphaned item {itemInstanceId} after contract failure",
+                dependency: "item", endpoint: "post:/item/instance/destroy",
+                details: null, stack: compensationEx.StackTrace, cancellationToken: cancellationToken);
         }
     }
 
