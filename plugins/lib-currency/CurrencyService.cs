@@ -68,6 +68,8 @@ public partial class CurrencyService : ICurrencyService
         CreateCurrencyDefinitionRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Creating currency definition with code: {Code}", body.Code);
 
             var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
@@ -162,6 +164,21 @@ public partial class CurrencyService : ICurrencyService
 
             _logger.LogInformation("Created currency definition: {DefinitionId} code={Code}", definitionId, body.Code);
             return (StatusCodes.OK, MapDefinitionToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating currency definition for code {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "CreateCurrencyDefinition",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/definition/create",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -169,6 +186,8 @@ public partial class CurrencyService : ICurrencyService
         GetCurrencyDefinitionRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var model = await ResolveCurrencyDefinitionAsync(body.DefinitionId?.ToString(), body.Code, cancellationToken);
             if (model is null)
             {
@@ -176,6 +195,21 @@ public partial class CurrencyService : ICurrencyService
             }
 
             return (StatusCodes.OK, MapDefinitionToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting currency definition {DefinitionId}", body.DefinitionId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetCurrencyDefinition",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/definition/get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -183,6 +217,8 @@ public partial class CurrencyService : ICurrencyService
         ListCurrencyDefinitionsRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
 
@@ -209,6 +245,21 @@ public partial class CurrencyService : ICurrencyService
             }
 
             return (StatusCodes.OK, new ListCurrencyDefinitionsResponse { Definitions = definitions });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing currency definitions");
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "ListCurrencyDefinitions",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/definition/list",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -216,6 +267,8 @@ public partial class CurrencyService : ICurrencyService
         UpdateCurrencyDefinitionRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
             var key = $"{DEF_PREFIX}{body.DefinitionId}";
             var model = await store.GetAsync(key, cancellationToken);
@@ -267,6 +320,21 @@ public partial class CurrencyService : ICurrencyService
             }, cancellationToken);
 
             return (StatusCodes.OK, MapDefinitionToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating currency definition {DefinitionId}", body.DefinitionId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "UpdateCurrencyDefinition",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/definition/update",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -278,6 +346,8 @@ public partial class CurrencyService : ICurrencyService
         CreateWalletRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyWallets);
 
@@ -318,6 +388,21 @@ public partial class CurrencyService : ICurrencyService
             }, cancellationToken);
 
             return (StatusCodes.OK, MapWalletToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating wallet for owner {OwnerId}", body.OwnerId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "CreateWallet",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/wallet/create",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -325,6 +410,8 @@ public partial class CurrencyService : ICurrencyService
         GetWalletRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var wallet = await ResolveWalletAsync(body.WalletId?.ToString(), body.OwnerId?.ToString(),
                 body.OwnerType?.ToString(), body.RealmId?.ToString(), cancellationToken);
 
@@ -340,6 +427,21 @@ public partial class CurrencyService : ICurrencyService
                 Wallet = MapWalletToResponse(wallet),
                 Balances = balances
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting wallet {WalletId}", body.WalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetWallet",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/wallet/get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -347,6 +449,8 @@ public partial class CurrencyService : ICurrencyService
         GetOrCreateWalletRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyWallets);
             var ownerKey = BuildOwnerKey(body.OwnerId.ToString(), body.OwnerType.ToString(), body.RealmId?.ToString());
             var existingId = await stringStore.GetAsync($"{WALLET_OWNER_INDEX}{ownerKey}", cancellationToken);
@@ -386,6 +490,21 @@ public partial class CurrencyService : ICurrencyService
                 Balances = new List<BalanceSummary>(),
                 Created = true
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in get-or-create wallet for owner {OwnerId}", body.OwnerId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetOrCreateWallet",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/wallet/get-or-create",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -393,6 +512,8 @@ public partial class CurrencyService : ICurrencyService
         FreezeWalletRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
             var key = $"{WALLET_PREFIX}{body.WalletId}";
             var (wallet, etag) = await store.GetWithETagAsync(key, cancellationToken);
@@ -423,6 +544,21 @@ public partial class CurrencyService : ICurrencyService
             }, cancellationToken);
 
             return (StatusCodes.OK, MapWalletToResponse(wallet));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error freezing wallet {WalletId}", body.WalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "FreezeWallet",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/wallet/freeze",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -430,6 +566,8 @@ public partial class CurrencyService : ICurrencyService
         UnfreezeWalletRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
             var key = $"{WALLET_PREFIX}{body.WalletId}";
             var (wallet, etag) = await store.GetWithETagAsync(key, cancellationToken);
@@ -459,6 +597,21 @@ public partial class CurrencyService : ICurrencyService
             }, cancellationToken);
 
             return (StatusCodes.OK, MapWalletToResponse(wallet));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unfreezing wallet {WalletId}", body.WalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "UnfreezeWallet",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/wallet/unfreeze",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -466,6 +619,8 @@ public partial class CurrencyService : ICurrencyService
         CloseWalletRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
             var walletKey = $"{WALLET_PREFIX}{body.WalletId}";
             var (wallet, walletEtag) = await store.GetWithETagAsync(walletKey, cancellationToken);
@@ -541,6 +696,21 @@ public partial class CurrencyService : ICurrencyService
                 Wallet = MapWalletToResponse(wallet),
                 TransferredBalances = transferredBalances
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error closing wallet {WalletId}", body.WalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "CloseWallet",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/wallet/close",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -552,6 +722,8 @@ public partial class CurrencyService : ICurrencyService
         GetBalanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var wallet = await GetWalletByIdAsync(body.WalletId.ToString(), cancellationToken);
             if (wallet is null) return (StatusCodes.NotFound, null);
 
@@ -582,6 +754,21 @@ public partial class CurrencyService : ICurrencyService
                 EarnCapInfo = BuildEarnCapInfo(balance, definition),
                 AutogainInfo = BuildAutogainInfo(balance, definition)
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting balance for wallet {WalletId}", body.WalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetBalance",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/balance/get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -589,6 +776,8 @@ public partial class CurrencyService : ICurrencyService
         BatchGetBalancesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var results = new List<BatchBalanceResult>();
             foreach (var query in body.Queries)
             {
@@ -617,6 +806,21 @@ public partial class CurrencyService : ICurrencyService
             }
 
             return (StatusCodes.OK, new BatchGetBalancesResponse { Balances = results });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error batch getting balances");
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "BatchGetBalances",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/balance/batch-get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -624,6 +828,8 @@ public partial class CurrencyService : ICurrencyService
         CreditCurrencyRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             if (body.Amount <= 0) return (StatusCodes.BadRequest, null);
 
             // Idempotency check
@@ -762,6 +968,21 @@ public partial class CurrencyService : ICurrencyService
                 WalletCapApplied = walletCapApplied,
                 WalletCapAmountLost = walletCapApplied ? walletCapAmountLost : null
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error crediting currency to wallet {WalletId}", body.WalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "CreditCurrency",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/credit",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -769,6 +990,8 @@ public partial class CurrencyService : ICurrencyService
         DebitCurrencyRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             if (body.Amount <= 0) return (StatusCodes.BadRequest, null);
 
             var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
@@ -839,6 +1062,21 @@ public partial class CurrencyService : ICurrencyService
                 Transaction = MapTransactionToRecord(transaction),
                 NewBalance = balance.Amount
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error debiting currency from wallet {WalletId}", body.WalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "DebitCurrency",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/debit",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -846,6 +1084,8 @@ public partial class CurrencyService : ICurrencyService
         TransferCurrencyRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             if (body.Amount <= 0) return (StatusCodes.BadRequest, null);
 
             var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
@@ -961,6 +1201,21 @@ public partial class CurrencyService : ICurrencyService
                 TargetCapApplied = targetCapApplied,
                 TargetCapAmountLost = targetCapApplied ? targetCapAmountLost : null
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error transferring currency from {SourceWalletId} to {TargetWalletId}", body.SourceWalletId, body.TargetWalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "TransferCurrency",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/transfer",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -968,6 +1223,8 @@ public partial class CurrencyService : ICurrencyService
         BatchCreditRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
             if (isDuplicate) return (StatusCodes.Conflict, null);
 
@@ -1000,6 +1257,21 @@ public partial class CurrencyService : ICurrencyService
             await RecordIdempotencyAsync(body.IdempotencyKey, Guid.NewGuid().ToString(), cancellationToken);
 
             return (StatusCodes.OK, new BatchCreditResponse { Results = results });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in batch credit");
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "BatchCreditCurrency",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/batch-credit",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1011,6 +1283,8 @@ public partial class CurrencyService : ICurrencyService
         CalculateConversionRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var fromDef = await GetDefinitionByIdAsync(body.FromCurrencyId.ToString(), cancellationToken);
             if (fromDef is null) return (StatusCodes.NotFound, null);
 
@@ -1033,6 +1307,21 @@ public partial class CurrencyService : ICurrencyService
                     new() { From = baseCurrency, To = toDef.Code, Rate = 1.0 / (toDef.ExchangeRateToBase ?? 1.0) }
                 }
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calculating conversion from {FromCurrencyId} to {ToCurrencyId}", body.FromCurrencyId, body.ToCurrencyId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "CalculateConversion",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/conversion/calculate",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1040,6 +1329,8 @@ public partial class CurrencyService : ICurrencyService
         ExecuteConversionRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
             if (isDuplicate) return (StatusCodes.Conflict, null);
 
@@ -1129,6 +1420,21 @@ public partial class CurrencyService : ICurrencyService
                 ToCredited = toAmount,
                 EffectiveRate = rate
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing conversion from {FromCurrencyId} to {ToCurrencyId}", body.FromCurrencyId, body.ToCurrencyId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "ExecuteConversion",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/conversion/execute",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1136,6 +1442,8 @@ public partial class CurrencyService : ICurrencyService
         GetExchangeRateRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var fromDef = await GetDefinitionByIdAsync(body.FromCurrencyId.ToString(), cancellationToken);
             if (fromDef is null) return (StatusCodes.NotFound, null);
 
@@ -1153,6 +1461,21 @@ public partial class CurrencyService : ICurrencyService
                 FromCurrencyRateToBase = fromDef.ExchangeRateToBase ?? 1.0,
                 ToCurrencyRateToBase = toDef.ExchangeRateToBase ?? 1.0
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting exchange rate from {FromCurrencyId} to {ToCurrencyId}", body.FromCurrencyId, body.ToCurrencyId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetExchangeRate",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/exchange-rate/get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1160,6 +1483,8 @@ public partial class CurrencyService : ICurrencyService
         UpdateExchangeRateRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
             var key = $"{DEF_PREFIX}{body.CurrencyDefinitionId}";
 
@@ -1207,6 +1532,21 @@ public partial class CurrencyService : ICurrencyService
             _logger.LogWarning("Exchange rate update failed after retries for {CurrencyDefinitionId} due to concurrent modifications",
                 body.CurrencyDefinitionId);
             return (StatusCodes.Conflict, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating exchange rate for {CurrencyDefinitionId}", body.CurrencyDefinitionId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "UpdateExchangeRate",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/exchange-rate/update",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1218,11 +1558,28 @@ public partial class CurrencyService : ICurrencyService
         GetTransactionRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var store = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
             var tx = await store.GetAsync($"{TX_PREFIX}{body.TransactionId}", cancellationToken);
             if (tx is null) return (StatusCodes.NotFound, null);
 
             return (StatusCodes.OK, new TransactionResponse { Transaction = MapTransactionToRecord(tx) });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting transaction {TransactionId}", body.TransactionId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetTransaction",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/transaction/get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1230,6 +1587,8 @@ public partial class CurrencyService : ICurrencyService
         GetTransactionHistoryRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var wallet = await GetWalletByIdAsync(body.WalletId.ToString(), cancellationToken);
             if (wallet is null) return (StatusCodes.NotFound, null);
 
@@ -1270,6 +1629,21 @@ public partial class CurrencyService : ICurrencyService
                 Transactions = paged,
                 TotalCount = totalCount
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting transaction history for wallet {WalletId}", body.WalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetTransactionHistory",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/transaction/history",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1277,6 +1651,8 @@ public partial class CurrencyService : ICurrencyService
         GetTransactionsByReferenceRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyTransactions);
             var txStore = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
 
@@ -1295,6 +1671,21 @@ public partial class CurrencyService : ICurrencyService
             }
 
             return (StatusCodes.OK, new GetTransactionsByReferenceResponse { Transactions = transactions });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting transactions by reference {ReferenceType}:{ReferenceId}", body.ReferenceType, body.ReferenceId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetTransactionsByReference",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/transaction/by-reference",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1306,6 +1697,8 @@ public partial class CurrencyService : ICurrencyService
         GetGlobalSupplyRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (definition is null) return (StatusCodes.NotFound, null);
 
@@ -1321,6 +1714,21 @@ public partial class CurrencyService : ICurrencyService
                 SupplyCap = definition.GlobalSupplyCap,
                 SupplyCapRemaining = definition.GlobalSupplyCap
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting global supply for {CurrencyDefinitionId}", body.CurrencyDefinitionId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetGlobalSupply",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/analytics/global-supply",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1328,6 +1736,8 @@ public partial class CurrencyService : ICurrencyService
         GetWalletDistributionRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (definition is null) return (StatusCodes.NotFound, null);
 
@@ -1350,6 +1760,21 @@ public partial class CurrencyService : ICurrencyService
                 },
                 GiniCoefficient = 0
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting wallet distribution for {CurrencyDefinitionId}", body.CurrencyDefinitionId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetWalletDistribution",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/analytics/wallet-distribution",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1361,6 +1786,8 @@ public partial class CurrencyService : ICurrencyService
         EscrowDepositRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var (status, debitResp) = await DebitCurrencyAsync(new DebitCurrencyRequest
             {
                 WalletId = body.WalletId,
@@ -1379,6 +1806,21 @@ public partial class CurrencyService : ICurrencyService
                 Transaction = debitResp.Transaction,
                 NewBalance = debitResp.NewBalance
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing escrow deposit for escrow {EscrowId}", body.EscrowId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "EscrowDeposit",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/escrow/deposit",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1386,6 +1828,8 @@ public partial class CurrencyService : ICurrencyService
         EscrowReleaseRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var (status, creditResp) = await CreditCurrencyAsync(new CreditCurrencyRequest
             {
                 WalletId = body.WalletId,
@@ -1405,6 +1849,21 @@ public partial class CurrencyService : ICurrencyService
                 Transaction = creditResp.Transaction,
                 NewBalance = creditResp.NewBalance
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing escrow release for escrow {EscrowId}", body.EscrowId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "EscrowRelease",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/escrow/release",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1412,6 +1871,8 @@ public partial class CurrencyService : ICurrencyService
         EscrowRefundRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var (status, creditResp) = await CreditCurrencyAsync(new CreditCurrencyRequest
             {
                 WalletId = body.WalletId,
@@ -1431,6 +1892,21 @@ public partial class CurrencyService : ICurrencyService
                 Transaction = creditResp.Transaction,
                 NewBalance = creditResp.NewBalance
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing escrow refund for escrow {EscrowId}", body.EscrowId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "EscrowRefund",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/escrow/refund",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1442,6 +1918,8 @@ public partial class CurrencyService : ICurrencyService
         CreateHoldRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             if (body.Amount <= 0) return (StatusCodes.BadRequest, null);
 
             var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
@@ -1525,6 +2003,21 @@ public partial class CurrencyService : ICurrencyService
             }, cancellationToken);
 
             return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating hold for wallet {WalletId}", body.WalletId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "CreateHold",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/hold/create",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1532,6 +2025,8 @@ public partial class CurrencyService : ICurrencyService
         CaptureHoldRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
             if (isDuplicate) return (StatusCodes.Conflict, null);
 
@@ -1631,6 +2126,21 @@ public partial class CurrencyService : ICurrencyService
                 NewBalance = debitResp.NewBalance,
                 AmountReleased = amountReleased
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error capturing hold {HoldId}", body.HoldId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "CaptureHold",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/hold/capture",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1638,6 +2148,8 @@ public partial class CurrencyService : ICurrencyService
         ReleaseHoldRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
 
             // Read from MySQL with ETag for optimistic concurrency
@@ -1696,6 +2208,21 @@ public partial class CurrencyService : ICurrencyService
             }, cancellationToken);
 
             return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error releasing hold {HoldId}", body.HoldId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "ReleaseHold",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/hold/release",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1703,6 +2230,8 @@ public partial class CurrencyService : ICurrencyService
         GetHoldRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
 
             // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
@@ -1720,6 +2249,21 @@ public partial class CurrencyService : ICurrencyService
             await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
 
             return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting hold {HoldId}", body.HoldId);
+            await _messageBus.TryPublishErrorAsync(
+                "currency",
+                "GetHold",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/currency/hold/get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -2350,6 +2894,8 @@ public partial class CurrencyService : ICurrencyService
     /// </summary>
     private async Task<BalanceModel?> TryGetBalanceFromCacheAsync(string key, CancellationToken ct)
     {
+        try
+        {
             var cache = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalanceCache);
             return await cache.GetAsync(key, ct);
         }
@@ -2367,6 +2913,8 @@ public partial class CurrencyService : ICurrencyService
     /// </summary>
     private async Task UpdateBalanceCacheAsync(string key, BalanceModel balance, CancellationToken ct)
     {
+        try
+        {
             var cache = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalanceCache);
             await cache.SaveAsync(key, balance, new StateOptions { Ttl = _configuration.BalanceCacheTtlSeconds }, ct);
         }
@@ -2387,6 +2935,8 @@ public partial class CurrencyService : ICurrencyService
     /// </summary>
     private async Task<HoldModel?> TryGetHoldFromCacheAsync(string key, CancellationToken ct)
     {
+        try
+        {
             var cache = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
             return await cache.GetAsync(key, ct);
         }
@@ -2404,6 +2954,8 @@ public partial class CurrencyService : ICurrencyService
     /// </summary>
     private async Task UpdateHoldCacheAsync(string key, HoldModel hold, CancellationToken ct)
     {
+        try
+        {
             var cache = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
             await cache.SaveAsync(key, hold, new StateOptions { Ttl = _configuration.HoldCacheTtlSeconds }, ct);
         }
@@ -2419,6 +2971,8 @@ public partial class CurrencyService : ICurrencyService
     /// </summary>
     private async Task InvalidateHoldCacheAsync(string key, CancellationToken ct)
     {
+        try
+        {
             var cache = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
             await cache.DeleteAsync(key, ct);
         }

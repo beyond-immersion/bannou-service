@@ -128,6 +128,8 @@ public partial class SpeciesService : ISpeciesService
         GetSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting species by ID: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId);
@@ -140,12 +142,24 @@ public partial class SpeciesService : ISpeciesService
             }
 
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting species: {SpeciesId}", body.SpeciesId);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "GetSpecies", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/get",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     public async Task<(StatusCodes, SpeciesResponse?)> GetSpeciesByCodeAsync(
         GetSpeciesByCodeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting species by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code);
@@ -167,12 +181,24 @@ public partial class SpeciesService : ISpeciesService
             }
 
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting species by code: {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "GetSpeciesByCode", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/get-by-code",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     public async Task<(StatusCodes, SpeciesListResponse?)> ListSpeciesAsync(
         ListSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Listing all species with filters - Category: {Category}, IsPlayable: {IsPlayable}",
                 body.Category, body.IsPlayable);
 
@@ -229,12 +255,24 @@ public partial class SpeciesService : ISpeciesService
                 Page = page,
                 PageSize = pageSize
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing species");
+            await _messageBus.TryPublishErrorAsync(
+                "species", "ListSpecies", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/list",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     public async Task<(StatusCodes, SpeciesListResponse?)> ListSpeciesByRealmAsync(
         ListSpeciesByRealmRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Listing species by realm: {RealmId}", body.RealmId);
 
             // Validate realm exists (regardless of deprecation status - allow viewing deprecated realm species)
@@ -288,6 +326,16 @@ public partial class SpeciesService : ISpeciesService
                 Page = page,
                 PageSize = pageSize
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing species by realm: {RealmId}", body.RealmId);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "ListSpeciesByRealm", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/list-by-realm",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -298,6 +346,8 @@ public partial class SpeciesService : ISpeciesService
         CreateSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Creating species with code: {Code}", body.Code);
 
             var code = body.Code.ToUpperInvariant();
@@ -379,12 +429,24 @@ public partial class SpeciesService : ISpeciesService
 
             _logger.LogInformation("Created species: {SpeciesId} with code {Code}", speciesId, code);
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating species: {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "CreateSpecies", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/create",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     public async Task<(StatusCodes, SpeciesResponse?)> UpdateSpeciesAsync(
         UpdateSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Updating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId);
@@ -414,12 +476,24 @@ public partial class SpeciesService : ISpeciesService
 
             _logger.LogInformation("Updated species: {SpeciesId}", body.SpeciesId);
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating species: {SpeciesId}", body.SpeciesId);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "UpdateSpecies", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/update",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     public async Task<StatusCodes> DeleteSpeciesAsync(
         DeleteSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Deleting species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId);
@@ -491,6 +565,16 @@ public partial class SpeciesService : ISpeciesService
 
             _logger.LogInformation("Deleted species: {SpeciesId} ({Code})", body.SpeciesId, model.Code);
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting species: {SpeciesId}", body.SpeciesId);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "DeleteSpecies", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/delete",
+                details: null, stack: ex.StackTrace);
+            return StatusCodes.InternalServerError;
+        }
     }
 
     #endregion
@@ -501,6 +585,8 @@ public partial class SpeciesService : ISpeciesService
         AddSpeciesToRealmRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Adding species {SpeciesId} to realm {RealmId}", body.SpeciesId, body.RealmId);
 
             // Validate realm exists and is active
@@ -542,12 +628,24 @@ public partial class SpeciesService : ISpeciesService
 
             _logger.LogInformation("Added species {SpeciesId} to realm {RealmId}", body.SpeciesId, body.RealmId);
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding species to realm");
+            await _messageBus.TryPublishErrorAsync(
+                "species", "AddSpeciesToRealm", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/add-to-realm",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     public async Task<(StatusCodes, SpeciesResponse?)> RemoveSpeciesFromRealmAsync(
         RemoveSpeciesFromRealmRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Removing species {SpeciesId} from realm {RealmId}", body.SpeciesId, body.RealmId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId);
@@ -610,6 +708,16 @@ public partial class SpeciesService : ISpeciesService
 
             _logger.LogInformation("Removed species {SpeciesId} from realm {RealmId}", body.SpeciesId, body.RealmId);
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing species from realm");
+            await _messageBus.TryPublishErrorAsync(
+                "species", "RemoveSpeciesFromRealm", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/remove-from-realm",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -620,6 +728,8 @@ public partial class SpeciesService : ISpeciesService
         SeedSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Seeding {Count} species, updateExisting: {UpdateExisting}",
                 body.Species.Count, body.UpdateExisting);
 
@@ -748,6 +858,16 @@ public partial class SpeciesService : ISpeciesService
                 Skipped = skipped,
                 Errors = errors
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error seeding species");
+            await _messageBus.TryPublishErrorAsync(
+                "species", "SeedSpecies", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/seed",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -758,6 +878,8 @@ public partial class SpeciesService : ISpeciesService
         DeprecateSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Deprecating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId);
@@ -787,12 +909,24 @@ public partial class SpeciesService : ISpeciesService
 
             _logger.LogInformation("Deprecated species: {SpeciesId}", body.SpeciesId);
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deprecating species: {SpeciesId}", body.SpeciesId);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "DeprecateSpecies", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/deprecate",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     public async Task<(StatusCodes, SpeciesResponse?)> UndeprecateSpeciesAsync(
         UndeprecateSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Undeprecating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId);
@@ -822,12 +956,24 @@ public partial class SpeciesService : ISpeciesService
 
             _logger.LogInformation("Undeprecated species: {SpeciesId}", body.SpeciesId);
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error undeprecating species: {SpeciesId}", body.SpeciesId);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "UndeprecateSpecies", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/undeprecate",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     public async Task<(StatusCodes, MergeSpeciesResponse?)> MergeSpeciesAsync(
         MergeSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Merging species {SourceId} into {TargetId}", body.SourceSpeciesId, body.TargetSpeciesId);
 
             // Verify source exists and is deprecated
@@ -977,6 +1123,16 @@ public partial class SpeciesService : ISpeciesService
                 CharactersMigrated = migratedCount,
                 SourceDeleted = sourceDeleted
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error merging species {SourceId} into {TargetId}", body.SourceSpeciesId, body.TargetSpeciesId);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "MergeSpecies", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/species/merge",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion

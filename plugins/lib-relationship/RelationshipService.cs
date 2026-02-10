@@ -79,6 +79,8 @@ public partial class RelationshipService : IRelationshipService
         GetRelationshipRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting relationship by ID: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId);
@@ -93,6 +95,13 @@ public partial class RelationshipService : IRelationshipService
 
             var response = MapToResponse(model);
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting relationship: {RelationshipId}", body.RelationshipId);
+            await EmitErrorAsync("GetRelationship", "post:/relationship/get", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -105,6 +114,8 @@ public partial class RelationshipService : IRelationshipService
         ListRelationshipsByEntityRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Listing relationships for entity: {EntityId} ({EntityType})",
                 body.EntityId, body.EntityType);
 
@@ -182,6 +193,13 @@ public partial class RelationshipService : IRelationshipService
                 HasNextPage = (page * pageSize) < totalCount,
                 HasPreviousPage = page > 1
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing relationships for entity: {EntityId}", body.EntityId);
+            await EmitErrorAsync("ListRelationshipsByEntity", "post:/relationship/list-by-entity", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -194,6 +212,8 @@ public partial class RelationshipService : IRelationshipService
         GetRelationshipsBetweenRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting relationships between {Entity1Id} and {Entity2Id}",
                 body.Entity1Id, body.Entity2Id);
 
@@ -268,6 +288,13 @@ public partial class RelationshipService : IRelationshipService
                 HasNextPage = (page * pageSize) < totalCount,
                 HasPreviousPage = page > 1
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting relationships between entities");
+            await EmitErrorAsync("GetRelationshipsBetween", "post:/relationship/get-between", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -280,6 +307,8 @@ public partial class RelationshipService : IRelationshipService
         ListRelationshipsByTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Listing relationships by type: {RelationshipTypeId}", body.RelationshipTypeId);
 
             // Get all relationship IDs for this type from the type index
@@ -353,6 +382,13 @@ public partial class RelationshipService : IRelationshipService
                 HasNextPage = (page * pageSize) < totalCount,
                 HasPreviousPage = page > 1
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing relationships by type: {TypeId}", body.RelationshipTypeId);
+            await EmitErrorAsync("ListRelationshipsByType", "post:/relationship/list-by-type", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -370,6 +406,8 @@ public partial class RelationshipService : IRelationshipService
         CreateRelationshipRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Creating relationship between {Entity1Id} ({Entity1Type}) and {Entity2Id} ({Entity2Type}) with type {TypeId}",
                 body.Entity1Id, body.Entity1Type, body.Entity2Id, body.Entity2Type, body.RelationshipTypeId);
 
@@ -448,6 +486,13 @@ public partial class RelationshipService : IRelationshipService
 
             _logger.LogInformation("Created relationship: {RelationshipId}", relationshipId);
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating relationship");
+            await EmitErrorAsync("CreateRelationship", "post:/relationship/create", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -460,6 +505,8 @@ public partial class RelationshipService : IRelationshipService
         UpdateRelationshipRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Updating relationship: {RelationshipId}", body.RelationshipId);
 
             // Acquire distributed lock on relationship ID to prevent concurrent updates
@@ -536,6 +583,13 @@ public partial class RelationshipService : IRelationshipService
             }
 
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating relationship: {RelationshipId}", body.RelationshipId);
+            await EmitErrorAsync("UpdateRelationship", "post:/relationship/update", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -550,6 +604,8 @@ public partial class RelationshipService : IRelationshipService
         EndRelationshipRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Ending relationship: {RelationshipId}", body.RelationshipId);
 
             // Acquire distributed lock on relationship ID to prevent concurrent end/update races
@@ -603,6 +659,13 @@ public partial class RelationshipService : IRelationshipService
 
             _logger.LogInformation("Ended relationship: {RelationshipId}", body.RelationshipId);
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error ending relationship: {RelationshipId}", body.RelationshipId);
+            await EmitErrorAsync("EndRelationship", "post:/relationship/end", ex);
+            return StatusCodes.InternalServerError;
+        }
     }
 
     #endregion
@@ -621,6 +684,8 @@ public partial class RelationshipService : IRelationshipService
         CleanupByEntityRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation(
                 "Starting cleanup of relationships for deleted entity {EntityId} ({EntityType})",
                 body.EntityId, body.EntityType);
@@ -718,6 +783,13 @@ public partial class RelationshipService : IRelationshipService
                 AlreadyEnded = alreadyEndedCount,
                 Success = true
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during cleanup for entity {EntityId} ({EntityType})", body.EntityId, body.EntityType);
+            await EmitErrorAsync("CleanupByEntity", "post:/relationship/cleanup-by-entity", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -735,6 +807,8 @@ public partial class RelationshipService : IRelationshipService
         GetRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
@@ -749,6 +823,13 @@ public partial class RelationshipService : IRelationshipService
 
             var response = MapToTypeResponse(model);
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting relationship type: {TypeId}", body.RelationshipTypeId);
+            await EmitErrorAsync("GetRelationshipType", "post:/relationship-type/get", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -758,6 +839,8 @@ public partial class RelationshipService : IRelationshipService
         GetRelationshipTypeByCodeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting relationship type by code: {Code}", body.Code);
 
             var codeIndexKey = BuildRtCodeIndexKey(body.Code.ToUpperInvariant());
@@ -782,6 +865,13 @@ public partial class RelationshipService : IRelationshipService
 
             var response = MapToTypeResponse(model);
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting relationship type by code: {Code}", body.Code);
+            await EmitErrorAsync("GetRelationshipTypeByCode", "post:/relationship-type/get-by-code", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -791,6 +881,8 @@ public partial class RelationshipService : IRelationshipService
         ListRelationshipTypesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Listing relationship types");
 
             var allTypeIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType)
@@ -844,6 +936,13 @@ public partial class RelationshipService : IRelationshipService
                 Types = responses,
                 TotalCount = responses.Count
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing relationship types");
+            await EmitErrorAsync("ListRelationshipTypes", "post:/relationship-type/list", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -853,6 +952,8 @@ public partial class RelationshipService : IRelationshipService
         GetChildRelationshipTypesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting child types for parent: {ParentId}", body.ParentTypeId);
 
             // Verify parent exists
@@ -895,6 +996,13 @@ public partial class RelationshipService : IRelationshipService
                 Types = responses,
                 TotalCount = responses.Count
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting child types: {ParentId}", body.ParentTypeId);
+            await EmitErrorAsync("GetChildRelationshipTypes", "post:/relationship-type/get-children", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -904,6 +1012,8 @@ public partial class RelationshipService : IRelationshipService
         MatchesHierarchyRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Checking hierarchy match: {TypeId} -> {AncestorId}",
                 body.TypeId, body.AncestorTypeId);
 
@@ -962,6 +1072,13 @@ public partial class RelationshipService : IRelationshipService
                 Matches = false,
                 Depth = -1
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking hierarchy match");
+            await EmitErrorAsync("MatchesHierarchy", "post:/relationship-type/matches-hierarchy", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -971,6 +1088,8 @@ public partial class RelationshipService : IRelationshipService
         GetAncestorsRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting ancestors for type: {TypeId}", body.TypeId);
 
             var typeKey = BuildRtTypeKey(body.TypeId);
@@ -1003,6 +1122,13 @@ public partial class RelationshipService : IRelationshipService
                 Types = ancestors,
                 TotalCount = ancestors.Count
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting ancestors: {TypeId}", body.TypeId);
+            await EmitErrorAsync("GetAncestors", "post:/relationship-type/get-ancestors", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1016,6 +1142,8 @@ public partial class RelationshipService : IRelationshipService
         CreateRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Creating relationship type: {Code}", body.Code);
 
             var code = body.Code.ToUpperInvariant();
@@ -1116,6 +1244,13 @@ public partial class RelationshipService : IRelationshipService
 
             var response = MapToTypeResponse(model);
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating relationship type: {Code}", body.Code);
+            await EmitErrorAsync("CreateRelationshipType", "post:/relationship-type/create", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1125,6 +1260,8 @@ public partial class RelationshipService : IRelationshipService
         UpdateRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Updating relationship type: {TypeId}", body.RelationshipTypeId);
 
             // Acquire distributed lock on type ID to prevent concurrent updates
@@ -1249,6 +1386,13 @@ public partial class RelationshipService : IRelationshipService
 
             var response = MapToTypeResponse(existing);
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating relationship type: {TypeId}", body.RelationshipTypeId);
+            await EmitErrorAsync("UpdateRelationshipType", "post:/relationship-type/update", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1258,6 +1402,8 @@ public partial class RelationshipService : IRelationshipService
         DeleteRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Deleting relationship type: {TypeId}", body.RelationshipTypeId);
 
             // Acquire distributed lock on type ID for safe delete validation + cleanup
@@ -1335,6 +1481,13 @@ public partial class RelationshipService : IRelationshipService
             await PublishRelationshipTypeDeletedEventAsync(existing, cancellationToken);
 
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting relationship type: {TypeId}", body.RelationshipTypeId);
+            await EmitErrorAsync("DeleteRelationshipType", "post:/relationship-type/delete", ex);
+            return StatusCodes.InternalServerError;
+        }
     }
 
     /// <summary>
@@ -1344,6 +1497,8 @@ public partial class RelationshipService : IRelationshipService
         SeedRelationshipTypesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Seeding {Count} relationship types", body.Types.Count);
 
             var created = 0;
@@ -1483,6 +1638,13 @@ public partial class RelationshipService : IRelationshipService
                 Skipped = skipped,
                 Errors = errors
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error seeding relationship types");
+            await EmitErrorAsync("SeedRelationshipTypes", "post:/relationship-type/seed", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1496,6 +1658,8 @@ public partial class RelationshipService : IRelationshipService
         DeprecateRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Deprecating relationship type: {TypeId}", body.RelationshipTypeId);
 
             // Acquire distributed lock on type ID to prevent concurrent state changes
@@ -1540,6 +1704,13 @@ public partial class RelationshipService : IRelationshipService
 
             _logger.LogInformation("Deprecated relationship type: {TypeId}", body.RelationshipTypeId);
             return (StatusCodes.OK, MapToTypeResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deprecating relationship type: {TypeId}", body.RelationshipTypeId);
+            await EmitErrorAsync("DeprecateRelationshipType", "post:/relationship-type/deprecate", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1549,6 +1720,8 @@ public partial class RelationshipService : IRelationshipService
         UndeprecateRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
 
             // Acquire distributed lock on type ID to prevent concurrent state changes
@@ -1593,6 +1766,13 @@ public partial class RelationshipService : IRelationshipService
 
             _logger.LogInformation("Undeprecated relationship type: {TypeId}", body.RelationshipTypeId);
             return (StatusCodes.OK, MapToTypeResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
+            await EmitErrorAsync("UndeprecateRelationshipType", "post:/relationship-type/undeprecate", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1603,6 +1783,8 @@ public partial class RelationshipService : IRelationshipService
         MergeRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Merging relationship type {SourceId} into {TargetId}",
                 body.SourceTypeId, body.TargetTypeId);
 
@@ -1936,6 +2118,14 @@ public partial class RelationshipService : IRelationshipService
                 MigrationErrors = migrationErrors,
                 SourceDeleted = sourceDeleted
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error merging relationship type {SourceId} into {TargetId}",
+                body.SourceTypeId, body.TargetTypeId);
+            await EmitErrorAsync("MergeRelationshipType", "post:/relationship-type/merge", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -2498,6 +2688,19 @@ public partial class RelationshipService : IRelationshipService
     // ========================================================================
 
     #region Error Handling
+
+    private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
+    {
+        await _messageBus.TryPublishErrorAsync(
+            "relationship",
+            operation,
+            "unexpected_exception",
+            ex.Message,
+            dependency: null,
+            endpoint: endpoint,
+            details: null,
+            stack: ex.StackTrace);
+    }
 
     private async Task EmitDataInconsistencyErrorAsync(string operation, string orphanedKey, Guid indexEntityId, EntityType indexEntityType)
     {

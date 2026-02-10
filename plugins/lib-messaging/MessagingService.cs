@@ -124,35 +124,53 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     {
         _logger.LogDebug("Publishing event to topic {Topic}", body.Topic);
 
-        // Wrap payload in GenericMessageEnvelope - MassTransit requires concrete types
-        var envelope = new Services.GenericMessageEnvelope(body.Topic, body.Payload);
-
-        // IMPLEMENTATION TENETS (T26 compliance): Normalize Guid.Empty sentinel to null
-        // Callers should pass null for "no correlation", but we normalize defensively
-        var options = body.Options;
-        if (options?.CorrelationId == Guid.Empty)
+        try
         {
-            options.CorrelationId = null;
+            // Wrap payload in GenericMessageEnvelope - MassTransit requires concrete types
+            var envelope = new Services.GenericMessageEnvelope(body.Topic, body.Payload);
+
+            // IMPLEMENTATION TENETS (T26 compliance): Normalize Guid.Empty sentinel to null
+            // Callers should pass null for "no correlation", but we normalize defensively
+            var options = body.Options;
+            if (options?.CorrelationId == Guid.Empty)
+            {
+                options.CorrelationId = null;
+            }
+
+            // Generate messageId upfront so we can return it to the caller
+            var messageId = Guid.NewGuid();
+
+            // Publish via IMessageBus using the envelope
+            // API options and interface options use the same generated PublishOptions type
+            var success = await _messageBus.TryPublishAsync(
+                body.Topic,
+                envelope,
+                options,
+                messageId,
+                cancellationToken);
+
+            _logger.LogDebug("Published event {MessageId} to topic {Topic} (success: {Success})", messageId, body.Topic, success);
+
+            return (StatusCodes.OK, new PublishEventResponse
+            {
+                MessageId = messageId
+            });
         }
-
-        // Generate messageId upfront so we can return it to the caller
-        var messageId = Guid.NewGuid();
-
-        // Publish via IMessageBus using the envelope
-        // API options and interface options use the same generated PublishOptions type
-        var success = await _messageBus.TryPublishAsync(
-            body.Topic,
-            envelope,
-            options,
-            messageId,
-            cancellationToken);
-
-        _logger.LogDebug("Published event {MessageId} to topic {Topic} (success: {Success})", messageId, body.Topic, success);
-
-        return (StatusCodes.OK, new PublishEventResponse
+        catch (Exception ex)
         {
-            MessageId = messageId
-        });
+            _logger.LogError(ex, "Failed to publish event to topic {Topic}", body.Topic);
+            await _messageBus.TryPublishErrorAsync(
+                "messaging",
+                "PublishEvent",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "rabbitmq",
+                endpoint: "post:/messaging/publish",
+                details: new { Topic = body.Topic },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -163,54 +181,76 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         _logger.LogDebug("Creating subscription to topic {Topic} with callback {CallbackUrl}",
             body.Topic, body.CallbackUrl);
 
-        var subscriptionId = Guid.NewGuid();
-        var queueName = $"bannou-dynamic-{subscriptionId:N}";
-
-        // Create HTTP client that lives for the subscription duration (FOUNDATION TENETS: use IHttpClientFactory)
-        var httpClient = _httpClientFactory.CreateClient(HttpClientName);
-        var callbackUrlString = body.CallbackUrl.ToString();
-
-        // Create callback handler with retry logic (publishErrorEvent=true for new subscriptions)
-        var callbackHandler = CreateCallbackHandler(
-            httpClient,
-            callbackUrlString,
-            body.Topic,
-            _configuration.CallbackRetryMaxAttempts,
-            _configuration.CallbackRetryDelayMs,
-            publishErrorEvent: true);
-
-        var handle = await _messageSubscriber.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
-            body.Topic,
-            callbackHandler,
-            exchange: null, // Use default exchange
-            cancellationToken: cancellationToken);
-
-        // Track for later removal - includes HttpClient for proper disposal
-        var entry = new SubscriptionEntry(body.Topic, handle, httpClient);
-        _activeSubscriptions[subscriptionId] = entry;
-
-        // Persist to lib-state for recovery on restart (keyed by app-id)
-        // External callers (via HTTP API) need their subscriptions restored automatically
-        var subscriptionData = new ExternalSubscriptionData(
-            subscriptionId,
-            body.Topic,
-            callbackUrlString,
-            DateTimeOffset.UtcNow);
-
-        await _subscriptionStore.AddToSetAsync(
-            _appId,
-            subscriptionData,
-            new StateOptions { Ttl = _configuration.ExternalSubscriptionTtlSeconds },
-            cancellationToken);
-
-        _logger.LogInformation("Created subscription {SubscriptionId} to topic {Topic} (persisted for app-id: {AppId})",
-            subscriptionId, body.Topic, _appId);
-
-        return (StatusCodes.OK, new CreateSubscriptionResponse
+        HttpClient? httpClient = null;
+        try
         {
-            SubscriptionId = subscriptionId,
-            QueueName = queueName
-        });
+            var subscriptionId = Guid.NewGuid();
+            var queueName = $"bannou-dynamic-{subscriptionId:N}";
+
+            // Create HTTP client that lives for the subscription duration (FOUNDATION TENETS: use IHttpClientFactory)
+            httpClient = _httpClientFactory.CreateClient(HttpClientName);
+            var callbackUrlString = body.CallbackUrl.ToString();
+
+            // Create callback handler with retry logic (publishErrorEvent=true for new subscriptions)
+            var callbackHandler = CreateCallbackHandler(
+                httpClient,
+                callbackUrlString,
+                body.Topic,
+                _configuration.CallbackRetryMaxAttempts,
+                _configuration.CallbackRetryDelayMs,
+                publishErrorEvent: true);
+
+            var handle = await _messageSubscriber.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
+                body.Topic,
+                callbackHandler,
+                exchange: null, // Use default exchange
+                cancellationToken: cancellationToken);
+
+            // Track for later removal - includes HttpClient for proper disposal
+            var entry = new SubscriptionEntry(body.Topic, handle, httpClient);
+            _activeSubscriptions[subscriptionId] = entry;
+
+            // Persist to lib-state for recovery on restart (keyed by app-id)
+            // External callers (via HTTP API) need their subscriptions restored automatically
+            var subscriptionData = new ExternalSubscriptionData(
+                subscriptionId,
+                body.Topic,
+                callbackUrlString,
+                DateTimeOffset.UtcNow);
+
+            await _subscriptionStore.AddToSetAsync(
+                _appId,
+                subscriptionData,
+                new StateOptions { Ttl = _configuration.ExternalSubscriptionTtlSeconds },
+                cancellationToken);
+
+            _logger.LogInformation("Created subscription {SubscriptionId} to topic {Topic} (persisted for app-id: {AppId})",
+                subscriptionId, body.Topic, _appId);
+
+            return (StatusCodes.OK, new CreateSubscriptionResponse
+            {
+                SubscriptionId = subscriptionId,
+                QueueName = queueName
+            });
+        }
+        catch (Exception ex)
+        {
+            // Dispose HttpClient if we failed after creating it
+            httpClient?.Dispose();
+
+            _logger.LogError(ex, "Failed to create subscription to topic {Topic}", body.Topic);
+            await _messageBus.TryPublishErrorAsync(
+                "messaging",
+                "CreateSubscription",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "rabbitmq",
+                endpoint: "post:/messaging/subscribe",
+                details: new { Topic = body.Topic, CallbackUrl = body.CallbackUrl },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -220,27 +260,45 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     {
         _logger.LogDebug("Removing subscription {SubscriptionId}", body.SubscriptionId);
 
-        if (!_activeSubscriptions.TryRemove(body.SubscriptionId, out var entry))
+        try
         {
-            _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
-            return StatusCodes.NotFound;
+            if (!_activeSubscriptions.TryRemove(body.SubscriptionId, out var entry))
+            {
+                _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
+                return StatusCodes.NotFound;
+            }
+
+            // Dispose the subscription entry (handle + HttpClient)
+            await entry.DisposeAsync();
+
+            // Remove from persisted set - find the matching subscription by ID
+            var persistedSubs = await _subscriptionStore.GetSetAsync<ExternalSubscriptionData>(_appId, cancellationToken);
+            var subToRemove = persistedSubs.FirstOrDefault(s => s.SubscriptionId == body.SubscriptionId);
+            if (subToRemove != null)
+            {
+                await _subscriptionStore.RemoveFromSetAsync(_appId, subToRemove, cancellationToken);
+            }
+
+            _logger.LogInformation("Removed subscription {SubscriptionId} from topic {Topic}",
+                body.SubscriptionId, entry.Topic);
+
+            return StatusCodes.OK;
         }
-
-        // Dispose the subscription entry (handle + HttpClient)
-        await entry.DisposeAsync();
-
-        // Remove from persisted set - find the matching subscription by ID
-        var persistedSubs = await _subscriptionStore.GetSetAsync<ExternalSubscriptionData>(_appId, cancellationToken);
-        var subToRemove = persistedSubs.FirstOrDefault(s => s.SubscriptionId == body.SubscriptionId);
-        if (subToRemove != null)
+        catch (Exception ex)
         {
-            await _subscriptionStore.RemoveFromSetAsync(_appId, subToRemove, cancellationToken);
+            _logger.LogError(ex, "Failed to remove subscription {SubscriptionId}", body.SubscriptionId);
+            await _messageBus.TryPublishErrorAsync(
+                "messaging",
+                "RemoveSubscription",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "rabbitmq",
+                endpoint: "post:/messaging/unsubscribe",
+                details: new { SubscriptionId = body.SubscriptionId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCodes.InternalServerError;
         }
-
-        _logger.LogInformation("Removed subscription {SubscriptionId} from topic {Topic}",
-            body.SubscriptionId, entry.Topic);
-
-        return StatusCodes.OK;
     }
 
     /// <inheritdoc />
@@ -250,22 +308,39 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     {
         _logger.LogDebug("Listing topics with filter {ExchangeFilter}", body?.ExchangeFilter);
 
-        // Get topics from active subscriptions we're tracking
-        var topics = _activeSubscriptions.Values
-            .Select(entry => entry.Topic)
-            .Distinct()
-            .Where(t => string.IsNullOrEmpty(body?.ExchangeFilter) ||
-                        t.StartsWith(body.ExchangeFilter, StringComparison.OrdinalIgnoreCase))
-            .Select(t => new TopicInfo
-            {
-                Name = t,
-                MessageCount = 0, // Would require RabbitMQ management API to get real counts
-                ConsumerCount = _activeSubscriptions.Values.Count(entry => entry.Topic == t)
-            })
-            .ToList();
+        try
+        {
+            // Get topics from active subscriptions we're tracking
+            var topics = _activeSubscriptions.Values
+                .Select(entry => entry.Topic)
+                .Distinct()
+                .Where(t => string.IsNullOrEmpty(body?.ExchangeFilter) ||
+                            t.StartsWith(body.ExchangeFilter, StringComparison.OrdinalIgnoreCase))
+                .Select(t => new TopicInfo
+                {
+                    Name = t,
+                    MessageCount = 0, // Would require RabbitMQ management API to get real counts
+                    ConsumerCount = _activeSubscriptions.Values.Count(entry => entry.Topic == t)
+                })
+                .ToList();
 
-        await Task.CompletedTask;
-        return (StatusCodes.OK, new ListTopicsResponse { Topics = topics });
+            return (StatusCodes.OK, new ListTopicsResponse { Topics = topics });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list topics");
+            await _messageBus.TryPublishErrorAsync(
+                "messaging",
+                "ListTopics",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "rabbitmq",
+                endpoint: "post:/messaging/list-topics",
+                details: new { ExchangeFilter = body?.ExchangeFilter },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>

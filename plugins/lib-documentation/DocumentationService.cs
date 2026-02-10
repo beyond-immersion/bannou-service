@@ -198,6 +198,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, QueryDocumentationResponse?)> QueryDocumentationAsync(QueryDocumentationRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("QueryDocumentation: namespace={Namespace}, query={Query}", body.Namespace, body.Query);
+        try
+        {
             // Input validation
             if (string.IsNullOrWhiteSpace(body.Namespace))
             {
@@ -263,6 +265,8 @@ public partial class DocumentationService : IDocumentationService
                 Query = body.Query,
                 Namespace = namespaceId
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in QueryDocumentation");
             await _messageBus.TryPublishErrorAsync("documentation", "QueryDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -275,6 +279,8 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("GetDocument: namespace={Namespace}, documentId={DocumentId}, slug={Slug}",
             body.Namespace, body.DocumentId, body.Slug);
+        try
+        {
             // Input validation
             if (string.IsNullOrWhiteSpace(body.Namespace))
             {
@@ -378,6 +384,8 @@ public partial class DocumentationService : IDocumentationService
 
             _logger.LogDebug("Retrieved document {DocumentId} from namespace {Namespace}", documentId, namespaceId);
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetDocument");
             await _messageBus.TryPublishErrorAsync("documentation", "GetDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -389,6 +397,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, SearchDocumentationResponse?)> SearchDocumentationAsync(SearchDocumentationRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("SearchDocumentation: namespace={Namespace}, term={Term}", body.Namespace, body.SearchTerm);
+        try
+        {
             // Input validation
             if (string.IsNullOrWhiteSpace(body.Namespace))
             {
@@ -486,6 +496,8 @@ public partial class DocumentationService : IDocumentationService
             }
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in SearchDocumentation");
             await _messageBus.TryPublishErrorAsync("documentation", "SearchDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -498,6 +510,8 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("ListDocuments: namespace={Namespace}, category={Category}, sortBy={SortBy}, sortOrder={SortOrder}",
             body.Namespace, body.Category, body.SortBy, body.SortOrder);
+        try
+        {
             // Input validation
             if (string.IsNullOrWhiteSpace(body.Namespace))
             {
@@ -603,6 +617,8 @@ public partial class DocumentationService : IDocumentationService
                 TotalPages = totalPages,
                 Namespace = namespaceId
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ListDocuments");
             await _messageBus.TryPublishErrorAsync("documentation", "ListDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -614,6 +630,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, SuggestRelatedResponse?)> SuggestRelatedTopicsAsync(SuggestRelatedRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("SuggestRelatedTopics: namespace={Namespace}, source={SourceValue}", body.Namespace, body.SourceValue);
+        try
+        {
             var namespaceId = body.Namespace;
             var maxSuggestions = body.MaxSuggestions;
 
@@ -653,6 +671,8 @@ public partial class DocumentationService : IDocumentationService
                 Suggestions = suggestions,
                 Namespace = namespaceId
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in SuggestRelatedTopics");
             await _messageBus.TryPublishErrorAsync("documentation", "SuggestRelatedTopics", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -664,6 +684,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, CreateDocumentResponse?)> CreateDocumentAsync(CreateDocumentRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("CreateDocument: namespace={Namespace}, slug={Slug}", body.Namespace, body.Slug);
+        try
+        {
             // Input validation
             if (string.IsNullOrWhiteSpace(body.Namespace))
             {
@@ -770,6 +792,8 @@ public partial class DocumentationService : IDocumentationService
                 Slug = slug,
                 CreatedAt = now
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in CreateDocument");
             await _messageBus.TryPublishErrorAsync("documentation", "CreateDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -781,6 +805,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, UpdateDocumentResponse?)> UpdateDocumentAsync(UpdateDocumentRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("UpdateDocument: namespace={Namespace}, documentId={DocumentId}", body.Namespace, body.DocumentId);
+        try
+        {
             var namespaceId = body.Namespace;
             var documentId = body.DocumentId;
 
@@ -922,6 +948,8 @@ public partial class DocumentationService : IDocumentationService
                 DocumentId = documentId,
                 UpdatedAt = now
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in UpdateDocument");
             await _messageBus.TryPublishErrorAsync("documentation", "UpdateDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -934,6 +962,8 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("DeleteDocument: namespace={Namespace}, documentId={DocumentId}, slug={Slug}",
             body.Namespace, body.DocumentId, body.Slug);
+        try
+        {
             // Input validation
             if (string.IsNullOrWhiteSpace(body.Namespace))
             {
@@ -1031,6 +1061,8 @@ public partial class DocumentationService : IDocumentationService
                 DeletedAt = now,
                 RecoverableUntil = expiresAt
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in DeleteDocument");
             await _messageBus.TryPublishErrorAsync("documentation", "DeleteDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -1042,6 +1074,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, RecoverDocumentResponse?)> RecoverDocumentAsync(RecoverDocumentRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("RecoverDocument: namespace={Namespace}, documentId={DocumentId}", body.Namespace, body.DocumentId);
+        try
+        {
             var namespaceId = body.Namespace;
             var documentId = body.DocumentId;
             var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
@@ -1115,6 +1149,8 @@ public partial class DocumentationService : IDocumentationService
                 DocumentId = documentId,
                 RecoveredAt = now
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in RecoverDocument");
             await _messageBus.TryPublishErrorAsync("documentation", "RecoverDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -1126,6 +1162,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, BulkUpdateResponse?)> BulkUpdateDocumentsAsync(BulkUpdateRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("BulkUpdateDocuments: namespace={Namespace}, count={Count}", body.Namespace, body.DocumentIds.Count);
+        try
+        {
             var namespaceId = body.Namespace;
             var succeeded = new List<Guid>();
             var failed = new List<BulkOperationFailure>();
@@ -1217,6 +1255,8 @@ public partial class DocumentationService : IDocumentationService
                 Succeeded = succeeded,
                 Failed = failed
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in BulkUpdateDocuments");
             await _messageBus.TryPublishErrorAsync("documentation", "BulkUpdateDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -1228,6 +1268,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, BulkDeleteResponse?)> BulkDeleteDocumentsAsync(BulkDeleteRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("BulkDeleteDocuments: namespace={Namespace}, count={Count}", body.Namespace, body.DocumentIds.Count);
+        try
+        {
             var namespaceId = body.Namespace;
             var succeeded = new List<Guid>();
             var failed = new List<BulkOperationFailure>();
@@ -1305,6 +1347,8 @@ public partial class DocumentationService : IDocumentationService
                 Succeeded = succeeded,
                 Failed = failed
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in BulkDeleteDocuments");
             await _messageBus.TryPublishErrorAsync("documentation", "BulkDeleteDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -1316,6 +1360,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, ImportDocumentationResponse?)> ImportDocumentationAsync(ImportDocumentationRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("ImportDocumentation: namespace={Namespace}, count={Count}", body.Namespace, body.Documents.Count);
+        try
+        {
             var namespaceId = body.Namespace;
             var created = 0;
             var updated = 0;
@@ -1439,6 +1485,8 @@ public partial class DocumentationService : IDocumentationService
                 Skipped = skipped,
                 Failed = failed
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ImportDocumentation");
             await _messageBus.TryPublishErrorAsync("documentation", "ImportDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -1450,6 +1498,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, ListTrashcanResponse?)> ListTrashcanAsync(ListTrashcanRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("ListTrashcan: namespace={Namespace}", body.Namespace);
+        try
+        {
             var namespaceId = body.Namespace;
             var page = body.Page;
             var pageSize = body.PageSize;
@@ -1533,6 +1583,8 @@ public partial class DocumentationService : IDocumentationService
                 Items = items,
                 TotalCount = totalCount
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ListTrashcan");
             await _messageBus.TryPublishErrorAsync("documentation", "ListTrashcan", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -1544,6 +1596,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, PurgeTrashcanResponse?)> PurgeTrashcanAsync(PurgeTrashcanRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("PurgeTrashcan: namespace={Namespace}", body.Namespace);
+        try
+        {
             var namespaceId = body.Namespace;
             var purgedCount = 0;
             var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
@@ -1602,6 +1656,8 @@ public partial class DocumentationService : IDocumentationService
             {
                 PurgedCount = purgedCount
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in PurgeTrashcan");
             await _messageBus.TryPublishErrorAsync("documentation", "PurgeTrashcan", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -1613,6 +1669,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, NamespaceStatsResponse?)> GetNamespaceStatsAsync(GetNamespaceStatsRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("GetNamespaceStats: namespace={Namespace}", body.Namespace);
+        try
+        {
             var namespaceId = body.Namespace;
             var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
             var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
@@ -1665,6 +1723,8 @@ public partial class DocumentationService : IDocumentationService
                 TotalContentSizeBytes = estimatedContentSize,
                 LastUpdated = lastUpdated == DateTimeOffset.MinValue ? DateTimeOffset.UtcNow : lastUpdated
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetNamespaceStats");
             await _messageBus.TryPublishErrorAsync("documentation", "GetNamespaceStats", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -2147,6 +2207,8 @@ public partial class DocumentationService : IDocumentationService
 
         _logger.LogInformation("Binding repository {Url} to namespace {Namespace}", body.RepositoryUrl, body.Namespace);
 
+        try
+        {
             // Check if namespace already has a binding
             var existingBinding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
             if (existingBinding != null)
@@ -2192,6 +2254,8 @@ public partial class DocumentationService : IDocumentationService
                 Status = MapBindingStatus(binding.Status),
                 CreatedAt = binding.CreatedAt
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bind repository to namespace {Namespace}", body.Namespace);
             await _messageBus.TryPublishErrorAsync("documentation", "BindRepository", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -2205,6 +2269,8 @@ public partial class DocumentationService : IDocumentationService
 
         _logger.LogInformation("Unbinding repository from namespace {Namespace}", body.Namespace);
 
+        try
+        {
             var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
             if (binding == null)
             {
@@ -2247,6 +2313,8 @@ public partial class DocumentationService : IDocumentationService
                 Namespace = body.Namespace,
                 DocumentsDeleted = documentsDeleted
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to unbind repository from namespace {Namespace}", body.Namespace);
             await _messageBus.TryPublishErrorAsync("documentation", "UnbindRepository", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -2266,6 +2334,8 @@ public partial class DocumentationService : IDocumentationService
 
         _logger.LogInformation("Manual sync requested for namespace {Namespace}", body.Namespace);
 
+        try
+        {
             var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
             if (binding == null)
             {
@@ -2287,6 +2357,8 @@ public partial class DocumentationService : IDocumentationService
                 DurationMs = result.DurationMs,
                 ErrorMessage = result.ErrorMessage
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to sync repository for namespace {Namespace}", body.Namespace);
             await _messageBus.TryPublishErrorAsync("documentation", "SyncRepository", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -2298,6 +2370,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, RepositoryStatusResponse?)> GetRepositoryStatusAsync(RepositoryStatusRequest body, CancellationToken cancellationToken = default)
     {
 
+        try
+        {
             var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
             if (binding == null)
             {
@@ -2325,6 +2399,8 @@ public partial class DocumentationService : IDocumentationService
             }
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get repository status for namespace {Namespace}", body.Namespace);
             await _messageBus.TryPublishErrorAsync("documentation", "GetRepositoryStatus", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -2336,6 +2412,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, ListRepositoryBindingsResponse?)> ListRepositoryBindingsAsync(ListRepositoryBindingsRequest body, CancellationToken cancellationToken = default)
     {
 
+        try
+        {
             var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
 
             // Get all binding namespace IDs from registry
@@ -2373,6 +2451,8 @@ public partial class DocumentationService : IDocumentationService
                 Bindings = paginatedBindings,
                 Total = totalCount
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list repository bindings");
             await _messageBus.TryPublishErrorAsync("documentation", "ListRepositoryBindings", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -2384,6 +2464,8 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, UpdateRepositoryBindingResponse?)> UpdateRepositoryBindingAsync(UpdateRepositoryBindingRequest body, CancellationToken cancellationToken = default)
     {
 
+        try
+        {
             var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
             if (binding == null)
             {
@@ -2425,6 +2507,8 @@ public partial class DocumentationService : IDocumentationService
             {
                 Binding = MapToBindingInfo(binding)
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update repository binding for namespace {Namespace}", body.Namespace);
             await _messageBus.TryPublishErrorAsync("documentation", "UpdateRepositoryBinding", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -2444,6 +2528,8 @@ public partial class DocumentationService : IDocumentationService
 
         _logger.LogInformation("Creating archive for namespace {Namespace}", body.Namespace);
 
+        try
+        {
             // Get all documents in namespace
             var documents = await GetAllNamespaceDocumentsAsync(body.Namespace, cancellationToken);
             if (documents.Count == 0)
@@ -2516,6 +2602,8 @@ public partial class DocumentationService : IDocumentationService
                 SizeBytes = bundleData.Length,
                 CreatedAt = archive.CreatedAt
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create archive for namespace {Namespace}", body.Namespace);
             await _messageBus.TryPublishErrorAsync("documentation", "CreateDocumentationArchive", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -2533,6 +2621,8 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
+        try
+        {
             var archives = await GetArchivesForNamespaceAsync(body.Namespace, cancellationToken);
             var offset = body.Offset;
             var limit = body.Limit;
@@ -2559,6 +2649,8 @@ public partial class DocumentationService : IDocumentationService
                 Archives = pagedArchives,
                 Total = archives.Count
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list archives for namespace {Namespace}", body.Namespace);
             await _messageBus.TryPublishErrorAsync("documentation", "ListDocumentationArchives", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -2576,6 +2668,8 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
+        try
+        {
             // Get archive metadata
             var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
             if (archive == null)
@@ -2630,6 +2724,8 @@ public partial class DocumentationService : IDocumentationService
                 Namespace = archive.Namespace,
                 DocumentsRestored = documentsRestored
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to restore archive {ArchiveId}", body.ArchiveId);
             await _messageBus.TryPublishErrorAsync("documentation", "RestoreDocumentationArchive", "unexpected_exception", ex.Message, stack: ex.StackTrace);
@@ -2647,6 +2743,8 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
+        try
+        {
             // Get archive metadata
             var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
             if (archive == null)
@@ -2667,6 +2765,8 @@ public partial class DocumentationService : IDocumentationService
             {
                 Deleted = true
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete archive {ArchiveId}", body.ArchiveId);
             await _messageBus.TryPublishErrorAsync("documentation", "DeleteDocumentationArchive", "unexpected_exception", ex.Message, stack: ex.StackTrace);

@@ -103,6 +103,8 @@ public partial class BehaviorService : IBehaviorService
     {
         var stopwatch = Stopwatch.StartNew();
 
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.AbmlContent))
             {
                 _logger.LogWarning("ABML compilation rejected: content is empty or whitespace");
@@ -226,6 +228,19 @@ public partial class BehaviorService : IBehaviorService
                 IsUpdate = isUpdate,
                 Warnings = new List<string>()
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error compiling ABML behavior");
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "behavior",
+                operation: "CompileAbmlBehavior",
+                errorType: ex.GetType().Name,
+                message: ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -479,8 +494,8 @@ public partial class BehaviorService : IBehaviorService
     /// <returns>Validation result with errors and warnings.</returns>
     public async Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
     {
-            await Task.CompletedTask;
-
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.AbmlContent))
             {
                 _logger.LogWarning("ABML validation rejected: content is empty or whitespace");
@@ -516,6 +531,19 @@ public partial class BehaviorService : IBehaviorService
                 SemanticWarnings = result.Warnings.Select(w => w.Message).ToList(),
                 SchemaVersion = "1.0"
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating ABML");
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "behavior",
+                operation: "ValidateAbml",
+                errorType: ex.GetType().Name,
+                message: ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -526,6 +554,8 @@ public partial class BehaviorService : IBehaviorService
     /// <returns>The cached behavior with download URL for the compiled bytecode.</returns>
     public async Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(GetCachedBehaviorRequest body, CancellationToken cancellationToken = default)
     {
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.BehaviorId))
             {
                 return (StatusCodes.BadRequest, null);
@@ -602,6 +632,20 @@ public partial class BehaviorService : IBehaviorService
                 CacheTimestamp = DateTimeOffset.UtcNow, // Asset service doesn't provide timestamp
                 CacheHit = true
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving cached behavior: {BehaviorId}", body.BehaviorId);
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "behavior",
+                operation: "GetCachedBehavior",
+                errorType: ex.GetType().Name,
+                message: ex.Message,
+                details: new { BehaviorId = body.BehaviorId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     // NOTE: ResolveContextVariablesAsync removed - see docs/guides/ABML.md for rationale
@@ -615,6 +659,8 @@ public partial class BehaviorService : IBehaviorService
     /// <returns>OK if behavior was deleted, NotFound if not in cache.</returns>
     public async Task<StatusCodes> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default)
     {
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.BehaviorId))
             {
                 _logger.LogWarning("InvalidateCachedBehavior called with missing BehaviorId");
@@ -682,6 +728,20 @@ public partial class BehaviorService : IBehaviorService
             }
 
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error invalidating cached behavior: {BehaviorId}", body.BehaviorId);
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "behavior",
+                operation: "InvalidateCachedBehavior",
+                errorType: ex.GetType().Name,
+                message: ex.Message,
+                details: new { BehaviorId = body.BehaviorId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCodes.InternalServerError;
+        }
     }
 
     /// <summary>
@@ -723,6 +783,8 @@ public partial class BehaviorService : IBehaviorService
     /// <returns>The planning result with actions or failure reason.</returns>
     public async Task<(StatusCodes, GoapPlanResponse?)> GenerateGoapPlanAsync(GoapPlanRequest body, CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug(
                 "Generating GOAP plan for agent {AgentId}, goal {GoalName}",
                 body.AgentId,
@@ -843,6 +905,20 @@ public partial class BehaviorService : IBehaviorService
                 PlanningTimeMs = (int)plan.PlanningTimeMs,
                 NodesExpanded = plan.NodesExpanded
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating GOAP plan for agent {AgentId}", body.AgentId);
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "behavior",
+                operation: "GenerateGoapPlan",
+                errorType: ex.GetType().Name,
+                message: ex.Message,
+                details: new { AgentId = body.AgentId, GoalName = body.Goal.Name },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -853,6 +929,8 @@ public partial class BehaviorService : IBehaviorService
     /// <returns>The validation result with suggested action.</returns>
     public async Task<(StatusCodes, ValidateGoapPlanResponse?)> ValidateGoapPlanAsync(ValidateGoapPlanRequest body, CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug(
                 "Validating GOAP plan for goal {GoalId}, current action index {ActionIndex}",
                 body.Plan.GoalId,
@@ -888,6 +966,20 @@ public partial class BehaviorService : IBehaviorService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating GOAP plan for goal {GoalId}", body.Plan.GoalId);
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "behavior",
+                operation: "ValidateGoapPlan",
+                errorType: ex.GetType().Name,
+                message: ex.Message,
+                details: new { GoalId = body.Plan.GoalId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #region GOAP Type Conversions

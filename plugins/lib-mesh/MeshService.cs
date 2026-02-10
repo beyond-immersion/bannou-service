@@ -73,6 +73,8 @@ public partial class MeshService : IMeshService
     {
         _logger.LogDebug("Getting endpoints for app {AppId}", body.AppId);
 
+        try
+        {
             var endpoints = await _stateManager.GetEndpointsForAppIdAsync(
                 body.AppId,
                 body.IncludeUnhealthy);
@@ -94,6 +96,8 @@ public partial class MeshService : IMeshService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting endpoints for app {AppId}", body.AppId);
             await _messageBus.TryPublishErrorAsync(
@@ -119,6 +123,8 @@ public partial class MeshService : IMeshService
             "Listing all endpoints, appIdFilter: {AppIdFilter}, statusFilter: {StatusFilter}",
             body.AppIdFilter, body.StatusFilter);
 
+        try
+        {
             var endpoints = await _stateManager.GetAllEndpointsAsync(body.AppIdFilter);
 
             // Apply status filter if specified
@@ -145,6 +151,8 @@ public partial class MeshService : IMeshService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing endpoints");
             await _messageBus.TryPublishErrorAsync(
@@ -170,6 +178,8 @@ public partial class MeshService : IMeshService
             "Registering endpoint for app {AppId} at {Host}:{Port}",
             body.AppId, body.Host, body.Port);
 
+        try
+        {
             var instanceId = body.InstanceId != Guid.Empty ? body.InstanceId : Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
@@ -206,6 +216,8 @@ public partial class MeshService : IMeshService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering endpoint for app {AppId}", body.AppId);
             await _messageBus.TryPublishErrorAsync(
@@ -229,6 +241,8 @@ public partial class MeshService : IMeshService
     {
         _logger.LogInformation("Deregistering endpoint {InstanceId}", body.InstanceId);
 
+        try
+        {
             // Look up the endpoint to get appId for deregistration
             var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
             if (endpoint == null)
@@ -253,6 +267,8 @@ public partial class MeshService : IMeshService
                 cancellationToken);
 
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error deregistering endpoint {InstanceId}", body.InstanceId);
             await _messageBus.TryPublishErrorAsync(
@@ -278,6 +294,8 @@ public partial class MeshService : IMeshService
             "Heartbeat from {InstanceId}, status: {Status}, load: {Load}%",
             body.InstanceId, body.Status, body.LoadPercent);
 
+        try
+        {
             // Look up the endpoint to get appId
             var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
             if (endpoint == null)
@@ -319,6 +337,8 @@ public partial class MeshService : IMeshService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing heartbeat for {InstanceId}", body.InstanceId);
             await _messageBus.TryPublishErrorAsync(
@@ -342,6 +362,8 @@ public partial class MeshService : IMeshService
     {
         _logger.LogDebug("Getting route for app {AppId}", body.AppId);
 
+        try
+        {
             var endpoints = await _stateManager.GetEndpointsForAppIdAsync(body.AppId, false);
 
             if (endpoints.Count == 0)
@@ -409,6 +431,8 @@ public partial class MeshService : IMeshService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting route for app {AppId}", body.AppId);
             await _messageBus.TryPublishErrorAsync(
@@ -471,6 +495,8 @@ public partial class MeshService : IMeshService
     {
         _logger.LogDebug("Getting mesh health status");
 
+        try
+        {
             var (isHealthy, _, _) = await _stateManager.CheckHealthAsync();
 
             // Get overall mesh statistics
@@ -521,6 +547,8 @@ public partial class MeshService : IMeshService
             }
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting mesh health");
             await _messageBus.TryPublishErrorAsync(

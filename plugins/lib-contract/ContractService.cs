@@ -215,6 +215,8 @@ public partial class ContractService : IContractService
         CreateContractTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Creating contract template with code: {Code}", body.Code);
 
             // Check if template code already exists
@@ -323,6 +325,13 @@ public partial class ContractService : IContractService
 
             _logger.LogInformation("Created contract template: {TemplateId} with code {Code}", templateId, body.Code);
             return (StatusCodes.OK, MapTemplateToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating contract template");
+            await EmitErrorAsync("CreateContractTemplate", "post:/contract/template/create", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -330,6 +339,8 @@ public partial class ContractService : IContractService
         GetContractTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             string? templateId = body.TemplateId?.ToString();
 
             // If code provided, look up template ID
@@ -357,6 +368,13 @@ public partial class ContractService : IContractService
             }
 
             return (StatusCodes.OK, MapTemplateToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting contract template");
+            await EmitErrorAsync("GetContractTemplate", "post:/contract/template/get", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -364,6 +382,8 @@ public partial class ContractService : IContractService
         ListContractTemplatesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Listing contract templates with cursor-based pagination");
 
             // Decode cursor to get offset (null cursor = start from beginning)
@@ -431,6 +451,12 @@ public partial class ContractService : IContractService
                 HasMore = hasMore
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing contract templates");
+            await EmitErrorAsync("ListContractTemplates", "post:/contract/template/list", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -438,6 +464,8 @@ public partial class ContractService : IContractService
         UpdateContractTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Updating contract template: {TemplateId}", body.TemplateId);
 
             var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
@@ -486,6 +514,13 @@ public partial class ContractService : IContractService
             }
 
             return (StatusCodes.OK, MapTemplateToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating contract template: {TemplateId}", body.TemplateId);
+            await EmitErrorAsync("UpdateContractTemplate", "post:/contract/template/update", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -493,6 +528,8 @@ public partial class ContractService : IContractService
         DeleteContractTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Deleting contract template: {TemplateId}", body.TemplateId);
 
             var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
@@ -535,6 +572,13 @@ public partial class ContractService : IContractService
 
             _logger.LogInformation("Deleted (soft) contract template: {TemplateId}", body.TemplateId);
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting contract template: {TemplateId}", body.TemplateId);
+            await EmitErrorAsync("DeleteContractTemplate", "post:/contract/template/delete", ex);
+            return StatusCodes.InternalServerError;
+        }
     }
 
     #endregion
@@ -546,6 +590,8 @@ public partial class ContractService : IContractService
         CreateContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Creating contract instance from template: {TemplateId}", body.TemplateId);
 
             // Load template
@@ -690,6 +736,12 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Created contract instance: {ContractId}", contractId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating contract instance");
+            await EmitErrorAsync("CreateContractInstance", "post:/contract/instance/create", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -697,6 +749,8 @@ public partial class ContractService : IContractService
         ProposeContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Proposing contract: {ContractId}", body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
@@ -747,6 +801,12 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Proposed contract: {ContractId}", body.ContractId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error proposing contract: {ContractId}", body.ContractId);
+            await EmitErrorAsync("ProposeContractInstance", "post:/contract/instance/propose", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -754,6 +814,8 @@ public partial class ContractService : IContractService
         ConsentToContractRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Recording consent for contract: {ContractId} from {EntityId}",
                 body.ContractId, body.PartyEntityId);
 
@@ -905,6 +967,12 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error recording consent: {ContractId}", body.ContractId);
+            await EmitErrorAsync("ConsentToContract", "post:/contract/instance/consent", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -912,6 +980,8 @@ public partial class ContractService : IContractService
         GetContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
                 .GetAsync(instanceKey, cancellationToken);
@@ -923,6 +993,12 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting contract instance: {ContractId}", body.ContractId);
+            await EmitErrorAsync("GetContractInstance", "post:/contract/instance/get", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -930,6 +1006,8 @@ public partial class ContractService : IContractService
         QueryContractInstancesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Querying contract instances with cursor-based pagination");
 
             // Decode cursor to get offset (null cursor = start from beginning)
@@ -1018,6 +1096,12 @@ public partial class ContractService : IContractService
                 HasMore = hasMore
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error querying contract instances");
+            await EmitErrorAsync("QueryContractInstances", "post:/contract/instance/query", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1025,6 +1109,8 @@ public partial class ContractService : IContractService
         TerminateContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Terminating contract: {ContractId}", body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
@@ -1089,6 +1175,12 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Terminated contract: {ContractId}", body.ContractId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error terminating contract: {ContractId}", body.ContractId);
+            await EmitErrorAsync("TerminateContractInstance", "post:/contract/instance/terminate", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1096,6 +1188,8 @@ public partial class ContractService : IContractService
         GetContractInstanceStatusRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
             var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
@@ -1176,6 +1270,12 @@ public partial class ContractService : IContractService
                 DaysUntilExpiration = daysUntilExpiration
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting contract status: {ContractId}", body.ContractId);
+            await EmitErrorAsync("GetContractInstanceStatus", "post:/contract/instance/get-status", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1187,6 +1287,8 @@ public partial class ContractService : IContractService
         CompleteMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Completing milestone: {MilestoneCode} for contract {ContractId}",
                 body.MilestoneCode, body.ContractId);
 
@@ -1283,6 +1385,12 @@ public partial class ContractService : IContractService
                 Milestone = MapMilestoneToResponse(milestone)
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error completing milestone: {MilestoneCode}", body.MilestoneCode);
+            await EmitErrorAsync("CompleteMilestone", "post:/contract/milestone/complete", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1290,6 +1398,8 @@ public partial class ContractService : IContractService
         FailMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Failing milestone: {MilestoneCode} for contract {ContractId}",
                 body.MilestoneCode, body.ContractId);
 
@@ -1363,6 +1473,12 @@ public partial class ContractService : IContractService
                 Milestone = MapMilestoneToResponse(milestone)
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error failing milestone: {MilestoneCode}", body.MilestoneCode);
+            await EmitErrorAsync("FailMilestone", "post:/contract/milestone/fail", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1370,6 +1486,8 @@ public partial class ContractService : IContractService
         GetMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
             var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
@@ -1399,6 +1517,12 @@ public partial class ContractService : IContractService
                 Milestone = MapMilestoneToResponse(milestone)
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting milestone: {MilestoneCode}", body.MilestoneCode);
+            await EmitErrorAsync("GetMilestone", "post:/contract/milestone/get", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1410,6 +1534,8 @@ public partial class ContractService : IContractService
         ReportBreachRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Reporting breach for contract: {ContractId}", body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
@@ -1485,6 +1611,12 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, MapBreachToResponse(breachModel));
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reporting breach for contract: {ContractId}", body.ContractId);
+            await EmitErrorAsync("ReportBreach", "post:/contract/breach/report", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1492,6 +1624,8 @@ public partial class ContractService : IContractService
         CureBreachRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Curing breach: {BreachId}", body.BreachId);
 
             var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
@@ -1533,6 +1667,12 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, MapBreachToResponse(breachModel));
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error curing breach: {BreachId}", body.BreachId);
+            await EmitErrorAsync("CureBreach", "post:/contract/breach/cure", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1540,6 +1680,8 @@ public partial class ContractService : IContractService
         GetBreachRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
             var breachModel = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
                 .GetAsync(breachKey, cancellationToken);
@@ -1550,6 +1692,12 @@ public partial class ContractService : IContractService
             }
 
             return (StatusCodes.OK, MapBreachToResponse(breachModel));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting breach: {BreachId}", body.BreachId);
+            await EmitErrorAsync("GetBreach", "post:/contract/breach/get", ex);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -1562,6 +1710,8 @@ public partial class ContractService : IContractService
         UpdateContractMetadataRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Updating metadata for contract: {ContractId}", body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
@@ -1600,6 +1750,12 @@ public partial class ContractService : IContractService
                 RuntimeState = model.GameMetadata.RuntimeState
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating metadata: {ContractId}", body.ContractId);
+            await EmitErrorAsync("UpdateContractMetadata", "post:/contract/metadata/update", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1607,6 +1763,8 @@ public partial class ContractService : IContractService
         GetContractMetadataRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
                 .GetAsync(instanceKey, cancellationToken);
@@ -1623,6 +1781,12 @@ public partial class ContractService : IContractService
                 RuntimeState = model.GameMetadata?.RuntimeState
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting metadata: {ContractId}", body.ContractId);
+            await EmitErrorAsync("GetContractMetadata", "post:/contract/metadata/get", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1634,6 +1798,8 @@ public partial class ContractService : IContractService
         CheckConstraintRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Checking constraint for entity: {EntityId}", body.EntityId);
 
             // Get active contracts for entity
@@ -1762,6 +1928,12 @@ public partial class ContractService : IContractService
                 Reason = reason
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking constraint for entity: {EntityId}", body.EntityId);
+            await EmitErrorAsync("CheckContractConstraint", "post:/contract/check-constraint", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -1769,6 +1941,8 @@ public partial class ContractService : IContractService
         QueryActiveContractsRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Querying active contracts for entity: {EntityId}", body.EntityId);
 
             var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
@@ -1825,6 +1999,12 @@ public partial class ContractService : IContractService
             {
                 Contracts = summaries
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error querying active contracts for entity: {EntityId}", body.EntityId);
+            await EmitErrorAsync("QueryActiveContracts", "post:/contract/query-active", ex);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -2201,6 +2381,19 @@ public partial class ContractService : IContractService
             PreboundApiExecutionMode.FireAndForget => ServiceClients.ExecutionMode.FireAndForget,
             _ => ServiceClients.ExecutionMode.Sync
         };
+    }
+
+    private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
+    {
+        await _messageBus.TryPublishErrorAsync(
+            "contract",
+            operation,
+            "unexpected_exception",
+            ex.Message,
+            dependency: null,
+            endpoint: endpoint,
+            details: null,
+            stack: ex.StackTrace);
     }
 
     /// <summary>

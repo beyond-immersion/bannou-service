@@ -55,6 +55,8 @@ public partial class GameServiceService : IGameServiceService
         _logger.LogDebug("Listing services (activeOnly={ActiveOnly}, skip={Skip}, take={Take})",
             body.ActiveOnly, body.Skip, body.Take);
 
+        try
+        {
             // Get all service IDs from the index
             var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
             var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
@@ -94,6 +96,13 @@ public partial class GameServiceService : IGameServiceService
             _logger.LogDebug("Listed {PageCount} of {TotalCount} services (skip={Skip}, take={Take})",
                 paginatedServices.Count, allMatchingServices.Count, body.Skip, body.Take);
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing services");
+            await PublishErrorEventAsync("ListServices", ex.GetType().Name, ex.Message, dependency: "state");
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -109,6 +118,8 @@ public partial class GameServiceService : IGameServiceService
         _logger.LogDebug("Getting service (serviceId={ServiceId}, stubName={StubName})",
             body.ServiceId, body.StubName);
 
+        try
+        {
             GameServiceRegistryModel? serviceModel = null;
             var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
@@ -138,6 +149,13 @@ public partial class GameServiceService : IGameServiceService
             }
 
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting service");
+            await PublishErrorEventAsync("GetService", ex.GetType().Name, ex.Message, dependency: "state");
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -154,6 +172,8 @@ public partial class GameServiceService : IGameServiceService
         _logger.LogDebug("Creating service (stubName={StubName}, displayName={DisplayName})",
             body.StubName, body.DisplayName);
 
+        try
+        {
             // Validate required fields
             if (string.IsNullOrWhiteSpace(body.StubName))
             {
@@ -211,6 +231,13 @@ public partial class GameServiceService : IGameServiceService
             await PublishServiceCreatedEventAsync(serviceModel);
 
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating service");
+            await PublishErrorEventAsync("CreateService", ex.GetType().Name, ex.Message, dependency: "state");
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -226,6 +253,8 @@ public partial class GameServiceService : IGameServiceService
     {
         _logger.LogDebug("Updating service {ServiceId}", body.ServiceId);
 
+        try
+        {
             if (body.ServiceId == Guid.Empty)
             {
                 _logger.LogDebug("Service ID is required");
@@ -283,6 +312,13 @@ public partial class GameServiceService : IGameServiceService
             await PublishServiceUpdatedEventAsync(serviceModel, changedFields);
 
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating service {ServiceId}", body.ServiceId);
+            await PublishErrorEventAsync("UpdateService", ex.GetType().Name, ex.Message, dependency: "state");
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -298,6 +334,8 @@ public partial class GameServiceService : IGameServiceService
     {
         _logger.LogDebug("Deleting service {ServiceId}", body.ServiceId);
 
+        try
+        {
             if (body.ServiceId == Guid.Empty)
             {
                 _logger.LogDebug("Service ID is required");
@@ -334,6 +372,13 @@ public partial class GameServiceService : IGameServiceService
             await PublishServiceDeletedEventAsync(serviceModel, body.Reason);
 
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting service {ServiceId}", body.ServiceId);
+            await PublishErrorEventAsync("DeleteService", ex.GetType().Name, ex.Message, dependency: "state");
+            return StatusCodes.InternalServerError;
+        }
     }
 
     #region Private Helpers
@@ -439,6 +484,34 @@ public partial class GameServiceService : IGameServiceService
 
     #endregion
 
+    #region Error Event Publishing
+
+    /// <summary>
+    /// Publishes an error event for unexpected/internal failures.
+    /// Does NOT publish for validation errors or expected failure cases.
+    /// </summary>
+    /// <param name="operation">The operation that failed (e.g., "CreateService").</param>
+    /// <param name="errorType">The type of error (e.g., exception type name).</param>
+    /// <param name="message">The error message.</param>
+    /// <param name="dependency">Optional dependency that caused the failure (e.g., "state").</param>
+    /// <param name="details">Optional additional details about the error.</param>
+    private async Task PublishErrorEventAsync(
+        string operation,
+        string errorType,
+        string message,
+        string? dependency = null,
+        object? details = null)
+    {
+        await _messageBus.TryPublishErrorAsync(
+            serviceName: "game-service",
+            operation: operation,
+            errorType: errorType,
+            message: message,
+            dependency: dependency,
+            details: details);
+    }
+
+    #endregion
 
     #region Lifecycle Event Publishing
 

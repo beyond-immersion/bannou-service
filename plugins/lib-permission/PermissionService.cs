@@ -113,6 +113,8 @@ public partial class PermissionService : IPermissionService
         CapabilityRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting capabilities for session {SessionId}", body.SessionId);
 
             // Check in-memory cache first
@@ -199,6 +201,8 @@ public partial class PermissionService : IPermissionService
                 body.SessionId, permissions.Count);
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting capabilities for session {SessionId}", body.SessionId);
             await PublishErrorEventAsync(
@@ -218,6 +222,8 @@ public partial class PermissionService : IPermissionService
         ValidationRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Validating API access for session {SessionId}, service {ServiceId}, endpoint {Endpoint}",
                 body.SessionId, body.ServiceId, body.Endpoint);
 
@@ -250,6 +256,8 @@ public partial class PermissionService : IPermissionService
                 Allowed = allowed,
                 SessionId = body.SessionId
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating API access for session {SessionId}", body.SessionId);
             await PublishErrorEventAsync(
@@ -270,6 +278,8 @@ public partial class PermissionService : IPermissionService
         ServicePermissionMatrix body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Registering service permissions for {ServiceId} version {Version}",
                 body.ServiceId, body.Version);
 
@@ -421,6 +431,8 @@ public partial class PermissionService : IPermissionService
                 AffectedSessions = recompiledCount,
                 Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering service permissions for {ServiceId}", body.ServiceId);
             await PublishErrorEventAsync(
@@ -441,6 +453,8 @@ public partial class PermissionService : IPermissionService
         SessionStateUpdate body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Updating session {SessionId} state for service {ServiceId}: {OldState} → {NewState}",
                 body.SessionId, body.ServiceId, body.PreviousState, body.NewState);
 
@@ -483,6 +497,8 @@ public partial class PermissionService : IPermissionService
                 SessionId = body.SessionId,
                 Message = $"Updated {body.ServiceId} state to {body.NewState}, version {newVersion}"
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating session state for {SessionId}", body.SessionId);
             await PublishErrorEventAsync(
@@ -502,6 +518,8 @@ public partial class PermissionService : IPermissionService
         SessionRoleUpdate body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Updating session {SessionId} role: {OldRole} → {NewRole}",
                 body.SessionId, body.PreviousRole, body.NewRole);
 
@@ -531,6 +549,8 @@ public partial class PermissionService : IPermissionService
                 SessionId = body.SessionId,
                 Message = $"Updated role to {body.NewRole}"
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating session role for {SessionId}", body.SessionId);
             await PublishErrorEventAsync(
@@ -552,6 +572,8 @@ public partial class PermissionService : IPermissionService
         ClearSessionStateRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
 
             // Get current session states
@@ -642,6 +664,8 @@ public partial class PermissionService : IPermissionService
                 PermissionsChanged = true,
                 Message = $"Cleared state '{currentState}' for service {body.ServiceId}"
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error clearing session state for {SessionId}", body.SessionId);
             await PublishErrorEventAsync(
@@ -661,6 +685,8 @@ public partial class PermissionService : IPermissionService
         SessionInfoRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting session info for {SessionId}", body.SessionId);
 
             var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
@@ -718,6 +744,8 @@ public partial class PermissionService : IPermissionService
             };
 
             return (StatusCodes.OK, sessionInfo);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting session info for {SessionId}", body.SessionId);
             await PublishErrorEventAsync(
@@ -985,6 +1013,8 @@ public partial class PermissionService : IPermissionService
     /// </summary>
     public async Task<(StatusCodes, RegisteredServicesResponse?)> GetRegisteredServicesAsync(ListServicesRequest body, CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Getting list of registered services");
 
             // Get all registered service IDs via atomic set read
@@ -1054,6 +1084,8 @@ public partial class PermissionService : IPermissionService
                 Services = services,
                 Timestamp = DateTimeOffset.UtcNow
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting registered services");
             await PublishErrorEventAsync(

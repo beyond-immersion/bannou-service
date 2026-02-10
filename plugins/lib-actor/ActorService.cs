@@ -109,6 +109,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Creating actor template for category {Category}", body.Category);
 
+        try
+        {
             // Validate required fields
             if (string.IsNullOrWhiteSpace(body.Category))
             {
@@ -184,6 +186,19 @@ public partial class ActorService : IActorService
                 templateId, body.Category);
 
             return (StatusCodes.OK, template.ToResponse());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating actor template");
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "CreateActorTemplate",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -196,6 +211,8 @@ public partial class ActorService : IActorService
         _logger.LogDebug("Getting actor template (templateId: {TemplateId}, category: {Category})",
             body.TemplateId, body.Category);
 
+        try
+        {
             var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
             ActorTemplateData? template = null;
 
@@ -218,6 +235,19 @@ public partial class ActorService : IActorService
             }
 
             return (StatusCodes.OK, template.ToResponse());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting actor template");
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "GetActorTemplate",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -229,6 +259,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogDebug("Listing actor templates (limit: {Limit}, offset: {Offset})", body.Limit, body.Offset);
 
+        try
+        {
             var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
             var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
 
@@ -258,6 +290,19 @@ public partial class ActorService : IActorService
                 Templates = templates,
                 Total = templatesDict.Count
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing actor templates");
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "ListActorTemplates",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -269,6 +314,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Updating actor template {TemplateId}", body.TemplateId);
 
+        try
+        {
             var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
             var (existing, etag) = await templateStore.GetWithETagAsync(body.TemplateId.ToString(), cancellationToken);
 
@@ -341,6 +388,19 @@ public partial class ActorService : IActorService
                 body.TemplateId, string.Join(", ", changedFields));
 
             return (StatusCodes.OK, existing.ToResponse());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating actor template");
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "UpdateActorTemplate",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -353,6 +413,8 @@ public partial class ActorService : IActorService
         _logger.LogInformation("Deleting actor template {TemplateId} (forceStop: {ForceStop})",
             body.TemplateId, body.ForceStopActors);
 
+        try
+        {
             var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
             var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
@@ -421,6 +483,19 @@ public partial class ActorService : IActorService
                 Deleted = true,
                 StoppedActorCount = stoppedCount
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting actor template");
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "DeleteActorTemplate",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -436,6 +511,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Spawning actor from template {TemplateId}", body.TemplateId);
 
+        try
+        {
             // Get template
             var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
             var template = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
@@ -577,6 +654,19 @@ public partial class ActorService : IActorService
                 StartedAt = startedAt,
                 LoopIterations = 0
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error spawning actor");
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "SpawnActor",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -593,6 +683,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogDebug("Getting actor {ActorId}", body.ActorId);
 
+        try
+        {
             // First check local registry (bannou mode) or pool assignments (pool mode)
             if (_actorRegistry.TryGet(body.ActorId, out var runner) && runner != null)
             {
@@ -654,6 +746,19 @@ public partial class ActorService : IActorService
             }
 
             return (StatusCodes.NotFound, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "GetActor",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -783,6 +888,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Stopping actor {ActorId} (graceful: {Graceful})", body.ActorId, body.Graceful);
 
+        try
+        {
             if (_configuration.DeploymentMode == DeploymentMode.Bannou)
             {
                 // Bannou mode: stop locally
@@ -864,6 +971,19 @@ public partial class ActorService : IActorService
                     FinalStatus = ActorStatus.Stopping
                 });
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error stopping actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "StopActor",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -878,6 +998,8 @@ public partial class ActorService : IActorService
 
         var cleanedUpActorIds = new List<string>();
 
+        try
+        {
             if (_configuration.DeploymentMode == DeploymentMode.Bannou)
             {
                 // Bannou mode: find and stop all local actors with this character
@@ -942,6 +1064,19 @@ public partial class ActorService : IActorService
                 ActorIds = cleanedUpActorIds,
                 Success = true
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during character cleanup for {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "CleanupByCharacter",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -951,10 +1086,11 @@ public partial class ActorService : IActorService
         ListActorsRequest body,
         CancellationToken cancellationToken)
     {
-        await Task.CompletedTask;
         _logger.LogDebug("Listing actors (category: {Category}, nodeId: {NodeId}, status: {Status})",
             body.Category, body.NodeId, body.Status);
 
+        try
+        {
             IEnumerable<IActorRunner> runners = _actorRegistry.GetAllRunners();
 
             // Apply filters
@@ -990,6 +1126,19 @@ public partial class ActorService : IActorService
                 Actors = actors,
                 Total = total
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing actors");
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "ListActors",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1003,9 +1152,10 @@ public partial class ActorService : IActorService
         InjectPerceptionRequest body,
         CancellationToken cancellationToken)
     {
-        await Task.CompletedTask;
         _logger.LogDebug("Injecting perception into actor {ActorId}", body.ActorId);
 
+        try
+        {
             if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -1020,6 +1170,19 @@ public partial class ActorService : IActorService
                 Queued = queued,
                 QueueDepth = runner.PerceptionQueueDepth
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error injecting perception into actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "InjectPerception",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -1040,6 +1203,8 @@ public partial class ActorService : IActorService
         _logger.LogDebug("Querying options from actor {ActorId} (type: {QueryType}, freshness: {Freshness})",
             body.ActorId, body.QueryType, body.Freshness);
 
+        try
+        {
             // Find the actor
             if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
             {
@@ -1195,6 +1360,19 @@ public partial class ActorService : IActorService
                 AgeMs = ageMs,
                 CharacterContext = characterContext
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error querying options from actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "QueryOptions",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1245,6 +1423,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Starting encounter {EncounterId} on actor {ActorId}", body.EncounterId, body.ActorId);
 
+        try
+        {
             // Find the actor (may be local or remote)
             var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
 
@@ -1301,6 +1481,20 @@ public partial class ActorService : IActorService
                 body.EncounterId, body.ActorId, body.Participants.Count);
 
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting encounter {EncounterId} on actor {ActorId}",
+                body.EncounterId, body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "StartEncounter",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCodes.InternalServerError;
+        }
     }
 
     /// <summary>
@@ -1312,6 +1506,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogDebug("Updating encounter phase on actor {ActorId} to {Phase}", body.ActorId, body.Phase);
 
+        try
+        {
             // Find the actor (may be local or remote)
             var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
 
@@ -1357,6 +1553,19 @@ public partial class ActorService : IActorService
                 PreviousPhase = previousPhase,
                 CurrentPhase = success ? body.Phase : previousPhase
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating encounter phase on actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "UpdateEncounterPhase",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1368,6 +1577,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Ending encounter on actor {ActorId}", body.ActorId);
 
+        try
+        {
             // Find the actor (may be local or remote)
             var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
 
@@ -1422,6 +1633,19 @@ public partial class ActorService : IActorService
                 EncounterId = encounterId,
                 DurationMs = durationMs
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error ending encounter on actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "EndEncounter",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1431,6 +1655,8 @@ public partial class ActorService : IActorService
         GetEncounterRequest body,
         CancellationToken cancellationToken)
     {
+        try
+        {
             // Find the actor (may be local or remote)
             var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
 
@@ -1480,6 +1706,19 @@ public partial class ActorService : IActorService
                     Data = encounterData.Data
                 }
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting encounter for actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "GetEncounter",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1526,11 +1765,34 @@ public partial class ActorService : IActorService
         where TResponse : class
     {
         _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId}", endpoint, nodeId);
+        try
+        {
             return await _meshClient.InvokeMethodAsync<TRequest, TResponse>(
                 nodeId,
                 endpoint,
                 request,
                 cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            // Remote service intentionally returned an error - propagate it
+            _logger.LogDebug("Remote call to {NodeId}/{Endpoint} returned status {Status}: {Message}",
+                nodeId, endpoint, ex.StatusCode, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected failure (network, timeout, etc.) - log and publish error event
+            _logger.LogError(ex, "Unexpected error invoking remote {Endpoint} on node {NodeId}",
+                endpoint, nodeId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "InvokeRemote",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { nodeId, endpoint });
+            throw;
+        }
     }
 
     /// <summary>
@@ -1544,11 +1806,34 @@ public partial class ActorService : IActorService
         where TRequest : class
     {
         _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId} (no response)", endpoint, nodeId);
+        try
+        {
             await _meshClient.InvokeMethodAsync(
                 nodeId,
                 endpoint,
                 request,
                 cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            // Remote service intentionally returned an error - propagate it
+            _logger.LogDebug("Remote call to {NodeId}/{Endpoint} returned status {Status}: {Message}",
+                nodeId, endpoint, ex.StatusCode, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected failure (network, timeout, etc.) - log and publish error event
+            _logger.LogError(ex, "Unexpected error invoking remote {Endpoint} on node {NodeId}",
+                endpoint, nodeId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "InvokeRemote",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { nodeId, endpoint });
+            throw;
+        }
     }
 
     #endregion

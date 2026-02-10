@@ -72,6 +72,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         _logger.LogDebug("Getting personality for character {CharacterId}", body.CharacterId);
 
+        try
+        {
             var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var data = await store.GetAsync($"{PERSONALITY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
 
@@ -82,6 +84,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             }
 
             return (StatusCodes.OK, MapToPersonalityResponse(data));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting personality for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "GetPersonality",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/get",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -91,6 +109,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         _logger.LogDebug("Setting personality for character {CharacterId}", body.CharacterId);
 
+        try
+        {
             var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
             var existing = await store.GetAsync(key, cancellationToken);
@@ -139,6 +159,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 isNew ? "created" : "updated", body.CharacterId, data.Version);
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting personality for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "SetPersonality",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/set",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -150,6 +186,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Recording experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
+        try
+        {
             var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
             var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
@@ -250,6 +288,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             }
 
             return (StatusCodes.OK, result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error recording experience for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "RecordExperience",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/evolve",
+                details: new { body.CharacterId, body.ExperienceType },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -260,6 +314,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         _logger.LogDebug("Batch getting personalities for {Count} characters", body.CharacterIds.Count);
 
+        try
+        {
             if (body.CharacterIds.Count > _configuration.MaxBatchSize)
             {
                 _logger.LogWarning("Batch get request exceeds maximum of {MaxBatchSize} characters", _configuration.MaxBatchSize);
@@ -293,6 +349,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 personalities.Count, notFound.Count);
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error batch getting personalities");
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "BatchGetPersonalities",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/batch-get",
+                details: new { Count = body.CharacterIds.Count },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -302,6 +374,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         _logger.LogDebug("Deleting personality for character {CharacterId}", body.CharacterId);
 
+        try
+        {
             var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
             var existing = await store.GetAsync(key, cancellationToken);
@@ -326,6 +400,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             _logger.LogInformation("Personality deleted for character {CharacterId}", body.CharacterId);
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting personality for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "DeletePersonality",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/delete",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCodes.InternalServerError;
+        }
     }
 
     // ============================================================================
@@ -339,6 +429,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         _logger.LogDebug("Getting combat preferences for character {CharacterId}", body.CharacterId);
 
+        try
+        {
             var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var data = await store.GetAsync($"{COMBAT_KEY_PREFIX}{body.CharacterId}", cancellationToken);
 
@@ -349,6 +441,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             }
 
             return (StatusCodes.OK, MapToCombatPreferencesResponse(data));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting combat preferences for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "GetCombatPreferences",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/get-combat",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -358,6 +466,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         _logger.LogDebug("Setting combat preferences for character {CharacterId}", body.CharacterId);
 
+        try
+        {
             var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
             var existing = await store.GetAsync(key, cancellationToken);
@@ -410,6 +520,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 isNew ? "created" : "updated", body.CharacterId, data.Version);
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting combat preferences for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "SetCombatPreferences",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/set-combat",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -419,6 +545,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         _logger.LogDebug("Deleting combat preferences for character {CharacterId}", body.CharacterId);
 
+        try
+        {
             var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
             var existing = await store.GetAsync(key, cancellationToken);
@@ -443,6 +571,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             _logger.LogInformation("Combat preferences deleted for character {CharacterId}", body.CharacterId);
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting combat preferences for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "DeleteCombatPreferences",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/delete-combat",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCodes.InternalServerError;
+        }
     }
 
     // ============================================================================
@@ -462,6 +606,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         var personalityDeleted = false;
         var combatPreferencesDeleted = false;
 
+        try
+        {
             // Delete personality traits if they exist
             var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
@@ -514,6 +660,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 CombatPreferencesDeleted = combatPreferencesDeleted,
                 Success = true
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during character cleanup for {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "CleanupByCharacter",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/cleanup-by-character",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -524,6 +686,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Recording combat experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
+        try
+        {
             var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
             var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
@@ -609,6 +773,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             }
 
             return (StatusCodes.OK, result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error recording combat experience for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "EvolveCombatPreferences",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/evolve-combat",
+                details: new { body.CharacterId, body.ExperienceType },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     // ============================================================================
@@ -834,6 +1014,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
+        try
+        {
             var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
 
@@ -867,6 +1049,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 body.CharacterId, response.HasPersonality, response.HasCombatPreferences);
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "GetCompressData",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/get-compress-data",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -882,6 +1080,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         var personalityRestored = false;
         var combatPreferencesRestored = false;
 
+        try
+        {
             // Decompress the archive data
             CharacterPersonalityArchive archiveData;
             try
@@ -969,6 +1169,22 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 CombatPreferencesRestored = combatPreferencesRestored,
                 Success = true
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring archive for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "RestoreFromArchive",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/restore-from-archive",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>

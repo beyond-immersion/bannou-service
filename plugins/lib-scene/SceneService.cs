@@ -119,6 +119,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("CreateScene: sceneId={SceneId}, name={Name}", body.Scene.SceneId, body.Scene.Name);
 
+        try
+        {
             var scene = body.Scene;
             var sceneIdStr = scene.SceneId.ToString();
 
@@ -195,6 +197,15 @@ public partial class SceneService : ISceneService
 
             _logger.LogInformation("CreateScene succeeded: sceneId={SceneId}", scene.SceneId);
             return (StatusCodes.OK, new SceneResponse { Scene = scene });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in CreateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "CreateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/create", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -202,6 +213,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("GetScene: sceneId={SceneId}, resolveReferences={ResolveReferences}", body.SceneId, body.ResolveReferences);
 
+        try
+        {
             var sceneIdStr = body.SceneId.ToString();
 
             // Get index entry to find asset
@@ -236,6 +249,15 @@ public partial class SceneService : ISceneService
             }
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in GetScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "GetScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/get", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -243,6 +265,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("ListScenes: gameId={GameId}, sceneType={SceneType}", body.GameId, body.SceneType);
 
+        try
+        {
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
             var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
 
@@ -340,6 +364,15 @@ public partial class SceneService : ISceneService
                 Offset = offset,
                 Limit = limit
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ListScenes");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "ListScenes", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/list", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -347,6 +380,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("UpdateScene: sceneId={SceneId}", body.Scene.SceneId);
 
+        try
+        {
             var scene = body.Scene;
             var sceneIdStr = scene.SceneId.ToString();
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
@@ -432,6 +467,15 @@ public partial class SceneService : ISceneService
 
             _logger.LogInformation("UpdateScene succeeded: sceneId={SceneId}, version={Version}", scene.SceneId, scene.Version);
             return (StatusCodes.OK, new SceneResponse { Scene = scene });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in UpdateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "UpdateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/update", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -439,6 +483,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("DeleteScene: sceneId={SceneId}", body.SceneId);
 
+        try
+        {
             var sceneIdStr = body.SceneId.ToString();
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
             var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
@@ -489,6 +535,15 @@ public partial class SceneService : ISceneService
                 Deleted = true,
                 SceneId = body.SceneId
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DeleteScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "DeleteScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/delete", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -496,6 +551,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("ValidateScene: sceneId={SceneId}", body.Scene.SceneId);
 
+        try
+        {
             // Structural validation
             var result = _validationService.ValidateStructure(body.Scene, _configuration.MaxNodeCount);
 
@@ -512,6 +569,15 @@ public partial class SceneService : ISceneService
             }
 
             return (StatusCodes.OK, result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ValidateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "ValidateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/validate", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -524,6 +590,8 @@ public partial class SceneService : ISceneService
         _logger.LogDebug("InstantiateScene: sceneAssetId={SceneAssetId}, instanceId={InstanceId}, regionId={RegionId}",
             body.SceneAssetId, body.InstanceId, body.RegionId);
 
+        try
+        {
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
             var sceneAssetIdStr = body.SceneAssetId.ToString();
 
@@ -581,6 +649,15 @@ public partial class SceneService : ISceneService
                 SceneVersion = indexEntry.Version,
                 EventPublished = published
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in InstantiateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "InstantiateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/instantiate", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -588,6 +665,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("DestroyInstance: instanceId={InstanceId}", body.InstanceId);
 
+        try
+        {
             // Publish destroyed event
             // After regeneration from updated schema, SceneAssetId/RegionId will be nullable Guid?
             // and this ?? Guid.Empty workaround can be removed (assign directly from body)
@@ -609,6 +688,15 @@ public partial class SceneService : ISceneService
                 Destroyed = true,
                 EventPublished = published
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DestroyInstance");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "DestroyInstance", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/destroy-instance", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -620,6 +708,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("CheckoutScene: sceneId={SceneId}", body.SceneId);
 
+        try
+        {
             var sceneIdStr = body.SceneId.ToString();
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
             var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
@@ -705,6 +795,15 @@ public partial class SceneService : ISceneService
                 Scene = scene,
                 ExpiresAt = expiresAt
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in CheckoutScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "CheckoutScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/checkout", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -712,6 +811,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("CommitScene: sceneId={SceneId}", body.SceneId);
 
+        try
+        {
             var sceneIdStr = body.SceneId.ToString();
             var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
@@ -784,6 +885,15 @@ public partial class SceneService : ISceneService
                 NewVersion = updateResponse.Scene.Version,
                 Scene = updateResponse.Scene
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in CommitScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "CommitScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/commit", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -791,6 +901,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("DiscardCheckout: sceneId={SceneId}", body.SceneId);
 
+        try
+        {
             var sceneIdStr = body.SceneId.ToString();
             var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
@@ -835,6 +947,15 @@ public partial class SceneService : ISceneService
 
             _logger.LogInformation("DiscardCheckout succeeded: sceneId={SceneId}", body.SceneId);
             return (StatusCodes.OK, new DiscardResponse { Discarded = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DiscardCheckout");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "DiscardCheckout", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/discard", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -842,6 +963,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("HeartbeatCheckout: sceneId={SceneId}", body.SceneId);
 
+        try
+        {
             var sceneIdStr = body.SceneId.ToString();
             var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
 
@@ -889,6 +1012,15 @@ public partial class SceneService : ISceneService
                 NewExpiresAt = newExpiresAt,
                 ExtensionsRemaining = _configuration.MaxCheckoutExtensions - checkout.ExtensionCount
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in HeartbeatCheckout");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "HeartbeatCheckout", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/heartbeat", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -896,6 +1028,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("GetSceneHistory: sceneId={SceneId}", body.SceneId);
 
+        try
+        {
             var sceneIdStr = body.SceneId.ToString();
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
@@ -915,6 +1049,15 @@ public partial class SceneService : ISceneService
                 CurrentVersion = indexEntry.Version,
                 Versions = versions
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in GetSceneHistory");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "GetSceneHistory", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/history", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -927,6 +1070,8 @@ public partial class SceneService : ISceneService
         _logger.LogDebug("RegisterValidationRules: gameId={GameId}, sceneType={SceneType}, ruleCount={RuleCount}",
             body.GameId, body.SceneType, body.Rules.Count);
 
+        try
+        {
             var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(StateStoreDefinitions.Scene);
             var key = $"{VALIDATION_RULES_PREFIX}{body.GameId}:{body.SceneType}";
 
@@ -949,6 +1094,15 @@ public partial class SceneService : ISceneService
                 Registered = true,
                 RuleCount = body.Rules.Count
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in RegisterValidationRules");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "RegisterValidationRules", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/register-validation-rules", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -956,6 +1110,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("GetValidationRules: gameId={GameId}, sceneType={SceneType}", body.GameId, body.SceneType);
 
+        try
+        {
             var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(StateStoreDefinitions.Scene);
             var key = $"{VALIDATION_RULES_PREFIX}{body.GameId}:{body.SceneType}";
 
@@ -967,6 +1123,15 @@ public partial class SceneService : ISceneService
                 SceneType = body.SceneType,
                 Rules = rules ?? new List<ValidationRule>()
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in GetValidationRules");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "GetValidationRules", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/get-validation-rules", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -978,6 +1143,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("SearchScenes: query={Query}", body.Query);
 
+        try
+        {
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
             // Get all scene IDs (with optional game/type filter)
@@ -1042,6 +1209,15 @@ public partial class SceneService : ISceneService
                 Results = pagedResults,
                 Total = results.Count
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in SearchScenes");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "SearchScenes", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/search", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -1049,6 +1225,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("FindReferences: sceneId={SceneId}", body.SceneId);
 
+        try
+        {
             var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
@@ -1090,6 +1268,15 @@ public partial class SceneService : ISceneService
             {
                 ReferencingScenes = references
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in FindReferences");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "FindReferences", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/find-references", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -1097,6 +1284,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("FindAssetUsage: assetId={AssetId}", body.AssetId);
 
+        try
+        {
             var assetIdStr = body.AssetId.ToString();
             var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
@@ -1143,6 +1332,15 @@ public partial class SceneService : ISceneService
             {
                 Usages = usages
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in FindAssetUsage");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "FindAssetUsage", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/find-asset-usage", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -1150,6 +1348,8 @@ public partial class SceneService : ISceneService
     {
         _logger.LogDebug("DuplicateScene: sourceSceneId={SourceSceneId}, newName={NewName}", body.SourceSceneId, body.NewName);
 
+        try
+        {
             var sourceSceneIdStr = body.SourceSceneId.ToString();
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
@@ -1174,6 +1374,15 @@ public partial class SceneService : ISceneService
             // Create via CreateSceneAsync
             var createRequest = new CreateSceneRequest { Scene = newScene };
             return await CreateSceneAsync(createRequest, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DuplicateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "DuplicateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/duplicate", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion

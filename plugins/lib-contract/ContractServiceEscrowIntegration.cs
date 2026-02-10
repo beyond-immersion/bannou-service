@@ -43,6 +43,8 @@ public partial class ContractService
         LockContractRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Locking contract: {ContractId} with guardian: {GuardianId}",
                 body.ContractInstanceId, body.GuardianId);
 
@@ -125,6 +127,12 @@ public partial class ContractService
                 body.ContractInstanceId, body.GuardianId);
             return (StatusCodes.OK, response);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error locking contract: {ContractId}", body.ContractInstanceId);
+            await EmitErrorAsync("LockContract", "post:/contract/lock", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -132,6 +140,8 @@ public partial class ContractService
         UnlockContractRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Unlocking contract: {ContractId}", body.ContractInstanceId);
 
             // Check idempotency
@@ -205,6 +215,12 @@ public partial class ContractService
             _logger.LogInformation("Unlocked contract: {ContractId}", body.ContractInstanceId);
             return (StatusCodes.OK, response);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unlocking contract: {ContractId}", body.ContractInstanceId);
+            await EmitErrorAsync("UnlockContract", "post:/contract/unlock", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -212,6 +228,8 @@ public partial class ContractService
         TransferContractPartyRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Transferring party in contract: {ContractId} from {FromId} to {ToId}",
                 body.ContractInstanceId, body.FromEntityId, body.ToEntityId);
 
@@ -307,6 +325,12 @@ public partial class ContractService
                 body.ContractInstanceId, role);
             return (StatusCodes.OK, response);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error transferring party in contract: {ContractId}", body.ContractInstanceId);
+            await EmitErrorAsync("TransferContractParty", "post:/contract/transfer-party", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
@@ -318,6 +342,8 @@ public partial class ContractService
         RegisterClauseTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Registering clause type: {TypeCode}", body.TypeCode);
 
             // Check if already exists
@@ -369,6 +395,12 @@ public partial class ContractService
                 TypeCode = body.TypeCode
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error registering clause type: {TypeCode}", body.TypeCode);
+            await EmitErrorAsync("RegisterClauseType", "post:/contract/clause-type/register", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -376,6 +408,8 @@ public partial class ContractService
         ListClauseTypesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogDebug("Listing clause types");
 
             // Ensure built-in types are registered
@@ -424,6 +458,12 @@ public partial class ContractService
             {
                 ClauseTypes = summaries
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing clause types");
+            await EmitErrorAsync("ListClauseTypes", "post:/contract/clause-type/list", ex);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -537,6 +577,8 @@ public partial class ContractService
         SetTemplateValuesRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Setting template values on contract: {ContractId}", body.ContractInstanceId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
@@ -583,6 +625,12 @@ public partial class ContractService
                 ValueCount = model.TemplateValues.Count
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting template values on contract: {ContractId}", body.ContractInstanceId);
+            await EmitErrorAsync("SetContractTemplateValues", "post:/contract/instance/set-template-values", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -590,6 +638,8 @@ public partial class ContractService
         CheckAssetRequirementsRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Checking asset requirements for contract: {ContractId}", body.ContractInstanceId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
@@ -635,6 +685,12 @@ public partial class ContractService
                 AllSatisfied = allSatisfied,
                 ByParty = partyStatuses
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking asset requirements for contract: {ContractId}", body.ContractInstanceId);
+            await EmitErrorAsync("CheckAssetRequirements", "post:/contract/instance/check-asset-requirements", ex);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -911,6 +967,8 @@ public partial class ContractService
         ExecuteContractRequest body,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
             _logger.LogInformation("Executing contract: {ContractId}", body.ContractInstanceId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
@@ -1033,6 +1091,12 @@ public partial class ContractService
                 body.ContractInstanceId, distributions.Count);
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing contract: {ContractId}", body.ContractInstanceId);
+            await EmitErrorAsync("ExecuteContract", "post:/contract/instance/execute", ex);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

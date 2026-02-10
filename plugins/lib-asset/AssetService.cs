@@ -95,6 +95,8 @@ public partial class AssetService : IAssetService
         _logger.LogInformation("RequestUpload: filename={Filename}, size={Size}, contentType={ContentType}",
             body.Filename, body.Size, body.ContentType);
 
+        try
+        {
             // Validate request
             if (string.IsNullOrWhiteSpace(body.Filename))
             {
@@ -250,6 +252,21 @@ public partial class AssetService : IAssetService
                 });
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing RequestUpload operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "RequestUpload",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/assets/upload/request",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -260,6 +277,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("CompleteUpload: uploadId={UploadId}", body.UploadId);
 
+        try
+        {
             // Retrieve upload session - check both regular and bundle upload prefixes
             var sessionStore = _stateStoreFactory.GetStore<UploadSession>(StateStoreDefinitions.Asset);
             var session = await sessionStore.GetAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
@@ -433,6 +452,21 @@ public partial class AssetService : IAssetService
             }
 
             return (StatusCodes.OK, assetMetadata);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing CompleteUpload operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "CompleteUpload",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/assets/upload/complete",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -443,6 +477,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("GetAsset: assetId={AssetId}, version={Version}", body.AssetId, body.Version);
 
+        try
+        {
             // Retrieve internal asset record (includes storage details)
             var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
             var internalRecord = await assetStore.GetAsync($"{_configuration.AssetKeyPrefix}{body.AssetId}", cancellationToken).ConfigureAwait(false);
@@ -484,6 +520,21 @@ public partial class AssetService : IAssetService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing GetAsset operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "GetAsset",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/assets/get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -494,6 +545,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("DeleteAsset: assetId={AssetId}, versionId={VersionId}", body.AssetId, body.VersionId);
 
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.AssetId))
             {
                 _logger.LogWarning("DeleteAsset: Missing AssetId");
@@ -560,6 +613,21 @@ public partial class AssetService : IAssetService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing DeleteAsset operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "DeleteAsset",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/assets/delete",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -570,6 +638,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("ListAssetVersions: assetId={AssetId}", body.AssetId);
 
+        try
+        {
             // Retrieve internal asset record to verify it exists and get storage details
             var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
             var internalRecord = await assetStore.GetAsync($"{_configuration.AssetKeyPrefix}{body.AssetId}", cancellationToken).ConfigureAwait(false);
@@ -609,6 +679,21 @@ public partial class AssetService : IAssetService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing ListAssetVersions operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "ListAssetVersions",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/assets/list-versions",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -706,6 +791,20 @@ public partial class AssetService : IAssetService
                 stack: ex.StackTrace);
             return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing SearchAssets operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "SearchAssets",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/assets/search",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -777,6 +876,8 @@ public partial class AssetService : IAssetService
         _logger.LogInformation("CreateBundle: bundleId={BundleId}, assetCount={AssetCount}",
             body.BundleId, body.AssetIds?.Count ?? 0);
 
+        try
+        {
             // Validate request
             if (string.IsNullOrWhiteSpace(body.BundleId))
             {
@@ -969,6 +1070,21 @@ public partial class AssetService : IAssetService
                 Status = CreateBundleResponseStatus.Ready,
                 EstimatedSize = bundleStream.Length
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing CreateBundle operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "CreateBundle",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/create",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -980,6 +1096,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("GetBundle: bundleId={BundleId}, format={Format}", body.BundleId, body.Format);
 
+        try
+        {
             // Validate input
             if (string.IsNullOrWhiteSpace(body.BundleId))
             {
@@ -1107,6 +1225,21 @@ public partial class AssetService : IAssetService
                 AssetCount = bundleMetadata.AssetIds.Count,
                 FromCache = fromCache
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing GetBundle operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "GetBundle",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1117,6 +1250,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("RequestBundleUpload: filename={Filename}, size={Size}", body.Filename, body.Size);
 
+        try
+        {
             // Validate filename
             if (string.IsNullOrWhiteSpace(body.Filename))
             {
@@ -1226,6 +1361,21 @@ public partial class AssetService : IAssetService
             }
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing RequestBundleUpload operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "RequestBundleUpload",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/upload/request",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1237,6 +1387,8 @@ public partial class AssetService : IAssetService
         _logger.LogInformation("CreateMetabundle: metabundleId={MetabundleId}, sourceBundles={SourceBundleCount}, standaloneAssets={StandaloneCount}",
             body.MetabundleId, body.SourceBundleIds?.Count ?? 0, body.StandaloneAssetIds?.Count ?? 0);
 
+        try
+        {
             // Validate request
             if (string.IsNullOrWhiteSpace(body.MetabundleId))
             {
@@ -1642,6 +1794,21 @@ public partial class AssetService : IAssetService
                 SourceBundles = sourceBundleRefs.Select(r => r.ToApiModel()).ToList(),
                 StandaloneAssetCount = standalonesToInclude.Count
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing CreateMetabundle operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "CreateMetabundle",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/metabundle/create",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1653,6 +1820,8 @@ public partial class AssetService : IAssetService
         _logger.LogInformation("ResolveBundles: assetCount={AssetCount}, realm={Realm}, preferMetabundles={PreferMetabundles}",
             body.AssetIds?.Count ?? 0, body.Realm, body.PreferMetabundles);
 
+        try
+        {
             if (body.AssetIds == null || body.AssetIds.Count == 0)
             {
                 return (StatusCodes.BadRequest, null);
@@ -1843,6 +2012,21 @@ public partial class AssetService : IAssetService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing ResolveBundles operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "ResolveBundles",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/resolve",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1853,6 +2037,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("GetJobStatus: jobId={JobId}", body.JobId);
 
+        try
+        {
             if (body.JobId == default)
             {
                 _logger.LogWarning("GetJobStatus: Invalid job ID");
@@ -1927,6 +2113,21 @@ public partial class AssetService : IAssetService
             }
 
             return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing GetJobStatus operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "GetJobStatus",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/job/status",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -1937,6 +2138,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("CancelJob: jobId={JobId}", body.JobId);
 
+        try
+        {
             if (body.JobId == default)
             {
                 _logger.LogWarning("CancelJob: Invalid job ID");
@@ -2021,6 +2224,21 @@ public partial class AssetService : IAssetService
                 Status = CancelJobResponseStatus.Cancelled,
                 Message = $"Job cancelled successfully (was {previousStatus})"
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing CancelJob operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "CancelJob",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/job/cancel",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -2031,6 +2249,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("QueryBundlesByAsset: assetId={AssetId}, realm={Realm}", body.AssetId, body.Realm);
 
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.AssetId))
             {
                 return (StatusCodes.BadRequest, null);
@@ -2091,6 +2311,21 @@ public partial class AssetService : IAssetService
                 Limit = body.Limit,
                 Offset = body.Offset
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing QueryBundlesByAsset operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "QueryBundlesByAsset",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/query/by-asset",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -2102,6 +2337,8 @@ public partial class AssetService : IAssetService
         _logger.LogInformation("BulkGetAssets: assetCount={AssetCount}, includeDownloadUrls={IncludeUrls}",
             body.AssetIds?.Count ?? 0, body.IncludeDownloadUrls);
 
+        try
+        {
             if (body.AssetIds == null || body.AssetIds.Count == 0)
             {
                 return (StatusCodes.BadRequest, null);
@@ -2164,6 +2401,21 @@ public partial class AssetService : IAssetService
                 Assets = assets,
                 NotFound = notFound
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing BulkGetAssets operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "BulkGetAssets",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/assets/bulk-get",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #region Private Helper Methods
@@ -2594,6 +2846,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("UpdateBundle: bundleId={BundleId}", body.BundleId);
 
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("UpdateBundle: Empty bundleId");
@@ -2738,6 +2992,21 @@ public partial class AssetService : IAssetService
                 Changes = changes,
                 UpdatedAt = bundle.UpdatedAt.Value
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UpdateBundle: Unexpected error for bundle {BundleId}", body.BundleId);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "UpdateBundle",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/update",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -2747,6 +3016,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("DeleteBundle: bundleId={BundleId}, permanent={Permanent}", body.BundleId, body.Permanent);
 
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("DeleteBundle: Empty bundleId");
@@ -2858,6 +3129,21 @@ public partial class AssetService : IAssetService
                 DeletedAt = deletedAt,
                 RetentionUntil = retentionUntil
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeleteBundle: Unexpected error for bundle {BundleId}", body.BundleId);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "DeleteBundle",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/delete",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -2867,6 +3153,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("RestoreBundle: bundleId={BundleId}", body.BundleId);
 
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("RestoreBundle: Empty bundleId");
@@ -2948,6 +3236,21 @@ public partial class AssetService : IAssetService
                 RestoredAt = restoredAt,
                 RestoredFromVersion = restoredFromVersion
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RestoreBundle: Unexpected error for bundle {BundleId}", body.BundleId);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "RestoreBundle",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/restore",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -2960,6 +3263,8 @@ public partial class AssetService : IAssetService
         _logger.LogInformation("QueryBundles: owner={Owner}, tags={TagCount}, nameContains={NameContains}",
             body.Owner, body.Tags?.Count ?? 0, body.NameContains);
 
+        try
+        {
             var bundleStore = _stateStoreFactory.GetCacheableStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
 
             // For now, require owner filter for efficient querying
@@ -3102,6 +3407,21 @@ public partial class AssetService : IAssetService
                 Limit = limit,
                 Offset = offset
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "QueryBundles: Unexpected error");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "QueryBundles",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/query",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -3111,6 +3431,8 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("ListBundleVersions: bundleId={BundleId}", body.BundleId);
 
+        try
+        {
             if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("ListBundleVersions: Empty bundleId");
@@ -3174,6 +3496,21 @@ public partial class AssetService : IAssetService
                 Versions = pagedVersions,
                 TotalCount = totalCount
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ListBundleVersions: Unexpected error for bundle {BundleId}", body.BundleId);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "ListBundleVersions",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/list-versions",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>

@@ -143,6 +143,8 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogDebug("Ingesting analytics event for entity {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
+        try
+        {
             var bufferedEvent = new BufferedAnalyticsEvent
             {
                 EventId = Guid.NewGuid(),
@@ -166,6 +168,22 @@ public partial class AnalyticsService : IAnalyticsService
                 EventId = bufferedEvent.EventId,
                 Accepted = true
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error ingesting analytics event");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "IngestEvent",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/event/ingest",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -176,6 +194,8 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogDebug("Ingesting batch of {Count} analytics events", body.Events.Count);
 
+        try
+        {
             var accepted = 0;
             var rejected = 0;
             var errors = new List<string>();
@@ -228,6 +248,22 @@ public partial class AnalyticsService : IAnalyticsService
                 Rejected = rejected,
                 Errors = errors.Count > 0 ? errors : null
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error ingesting batch analytics events");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "IngestEventBatch",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/event/ingest-batch",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -238,6 +274,8 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogInformation("Getting entity summary for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
+        try
+        {
             var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
             var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
 
@@ -257,6 +295,22 @@ public partial class AnalyticsService : IAnalyticsService
                 EventCounts = summary.EventCounts,
                 Aggregates = summary.Aggregates
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting entity summary");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "GetEntitySummary",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/summary/get",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -267,6 +321,8 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogInformation("Querying entity summaries for game service {GameServiceId}", body.GameServiceId);
 
+        try
+        {
             if (body.Limit <= 0)
             {
                 _logger.LogDebug("Invalid limit {Limit} for analytics summary query", body.Limit);
@@ -383,6 +439,22 @@ public partial class AnalyticsService : IAnalyticsService
                 Summaries = mapped,
                 Total = (int)result.TotalCount
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error querying entity summaries");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "QueryEntitySummaries",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/summary/query",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -394,6 +466,8 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Getting skill rating for {EntityType}:{EntityId}, type {RatingType}",
             body.EntityType, body.EntityId, body.RatingType);
 
+        try
+        {
             var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
             var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
 
@@ -429,6 +503,22 @@ public partial class AnalyticsService : IAnalyticsService
                 MatchesPlayed = rating.MatchesPlayed,
                 LastMatchAt = rating.LastMatchAt
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting skill rating");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "GetSkillRating",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/rating/get",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -440,6 +530,8 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Updating skill ratings for match {MatchId} with {Count} participants",
             body.MatchId, body.Results.Count);
 
+        try
+        {
             if (body.Results.Count < 2)
             {
                 return (StatusCodes.BadRequest, null);
@@ -568,6 +660,22 @@ public partial class AnalyticsService : IAnalyticsService
                 MatchId = body.MatchId,
                 UpdatedRatings = updatedRatings
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating skill rating");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "UpdateSkillRating",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/rating/update",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -579,6 +687,8 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Recording controller {Action} event: account {AccountId} -> {EntityType}:{EntityId}",
             body.Action, body.AccountId, body.TargetEntityType, body.TargetEntityId);
 
+        try
+        {
             var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistoryData);
             var eventId = Guid.NewGuid();
             var key = GetControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
@@ -597,6 +707,22 @@ public partial class AnalyticsService : IAnalyticsService
 
             await controllerStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
             return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error recording controller event");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "RecordControllerEvent",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/controller-history/record",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCodes.InternalServerError;
+        }
     }
 
     /// <summary>
@@ -607,6 +733,8 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogInformation("Querying controller history for game service {GameServiceId}", body.GameServiceId);
 
+        try
+        {
             if (body.Limit <= 0)
             {
                 _logger.LogDebug("Invalid limit {Limit} for controller history query", body.Limit);
@@ -709,6 +837,22 @@ public partial class AnalyticsService : IAnalyticsService
             {
                 Events = events
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error querying controller history");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "QueryControllerHistory",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/controller-history/query",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <summary>
@@ -721,6 +865,8 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Cleaning up controller history (dryRun={DryRun}, olderThanDays={OlderThanDays}, gameServiceId={GameServiceId})",
             body.DryRun, body.OlderThanDays, body.GameServiceId);
 
+        try
+        {
             var retentionDays = body.OlderThanDays ?? _configuration.ControllerHistoryRetentionDays;
             if (retentionDays <= 0)
             {
@@ -797,6 +943,22 @@ public partial class AnalyticsService : IAnalyticsService
                 RecordsDeleted = totalDeleted,
                 DryRun = false
             });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up controller history");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "CleanupControllerHistory",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/controller-history/cleanup",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #region Glicko-2 Algorithm Implementation
@@ -993,6 +1155,8 @@ public partial class AnalyticsService : IAnalyticsService
 
     private async Task<bool> EnsureSummaryStoreRedisAsync(CancellationToken cancellationToken)
     {
+        try
+        {
             var backend = _stateStoreFactory.GetBackendType(StateStoreDefinitions.AnalyticsSummary);
             if (backend == StateBackend.Redis)
             {
@@ -1016,6 +1180,22 @@ public partial class AnalyticsService : IAnalyticsService
                 stack: null,
                 cancellationToken: cancellationToken);
             return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to determine analytics summary store backend");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "EnsureSummaryStoreRedis",
+                "analytics_summary_store_lookup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: "state:summary",
+                details: $"store:{StateStoreDefinitions.AnalyticsSummary}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return false;
+        }
     }
 
     private async Task<Guid?> ResolveGameServiceIdAsync(string gameType, CancellationToken cancellationToken)
@@ -1050,6 +1230,8 @@ public partial class AnalyticsService : IAnalyticsService
             }
         }
 
+        try
+        {
             var response = await _gameServiceClient.GetServiceAsync(new GetServiceRequest
             {
                 StubName = stubName
@@ -1074,10 +1256,34 @@ public partial class AnalyticsService : IAnalyticsService
             }
 
             return response.ServiceId;
+        }
+        catch (ApiException ex)
+        {
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game service for game type {GameType}: {Status}", gameType, ex.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game service for game type {GameType}", gameType);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceId",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "game-service",
+                endpoint: "service:game-service/get",
+                details: $"gameType:{gameType}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
     }
 
     private async Task<Guid?> ResolveGameServiceIdForSessionAsync(Guid sessionId, CancellationToken cancellationToken)
     {
+        try
+        {
             var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
             var mappingKey = GetSessionMappingKey(sessionId);
             var mapping = await mappingStore.GetAsync(mappingKey, cancellationToken);
@@ -1085,7 +1291,24 @@ public partial class AnalyticsService : IAnalyticsService
             {
                 return mapping.GameServiceId;
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read game session mapping for session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForSession",
+                "session_mapping_lookup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: "state:summary",
+                details: $"sessionId:{sessionId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+        }
 
+        try
+        {
             var session = await _gameSessionClient.GetGameSessionAsync(new GetGameSessionRequest
             {
                 SessionId = sessionId
@@ -1116,6 +1339,28 @@ public partial class AnalyticsService : IAnalyticsService
             }
 
             return gameServiceId;
+        }
+        catch (ApiException ex)
+        {
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game session {SessionId} for analytics event: {Status}", sessionId, ex.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "game-session",
+                endpoint: "service:game-session/get",
+                details: $"sessionId:{sessionId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
     }
 
     private async Task SaveGameSessionMappingAsync(
@@ -1161,6 +1406,8 @@ public partial class AnalyticsService : IAnalyticsService
             }
         }
 
+        try
+        {
             var realm = await _realmClient.GetRealmAsync(new GetRealmRequest
             {
                 RealmId = realmId
@@ -1185,6 +1432,28 @@ public partial class AnalyticsService : IAnalyticsService
             }
 
             return realm.GameServiceId;
+        }
+        catch (ApiException ex)
+        {
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game service for realm {RealmId}: {Status}", realmId, ex.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game service for realm {RealmId}", realmId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForRealm",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "realm",
+                endpoint: "service:realm/get",
+                details: $"realmId:{realmId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
     }
 
     /// <summary>
@@ -1206,6 +1475,8 @@ public partial class AnalyticsService : IAnalyticsService
             }
         }
 
+        try
+        {
             var character = await _characterClient.GetCharacterAsync(new GetCharacterRequest
             {
                 CharacterId = characterId
@@ -1230,6 +1501,28 @@ public partial class AnalyticsService : IAnalyticsService
             }
 
             return await ResolveGameServiceIdForRealmAsync(character.RealmId, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game service for character {CharacterId}: {Status}", characterId, ex.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game service for character {CharacterId}", characterId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForCharacter",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "character",
+                endpoint: "service:character/get",
+                details: $"characterId:{characterId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
     }
 
     private async Task<bool> BufferAnalyticsEventAsync(
@@ -1251,6 +1544,8 @@ public partial class AnalyticsService : IAnalyticsService
         ICacheableStateStore<object>? bufferIndexStore = null;
         string? eventKey = null;
 
+        try
+        {
             bufferStore = _stateStoreFactory.GetCacheableStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
             bufferIndexStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.AnalyticsSummary);
             eventKey = GetEventBufferEntryKey(bufferedEvent.EventId);
@@ -1269,6 +1564,44 @@ public partial class AnalyticsService : IAnalyticsService
             }
 
             return true;
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                if (bufferStore != null && eventKey != null)
+                {
+                    await bufferStore.DeleteAsync(eventKey, cancellationToken);
+                }
+                if (bufferIndexStore != null && eventKey != null)
+                {
+                    await bufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, eventKey, cancellationToken);
+                }
+            }
+            catch (Exception cleanupException)
+            {
+                _logger.LogError(cleanupException,
+                    "Failed to clean up buffered analytics event {EventId} after error",
+                    bufferedEvent.EventId);
+            }
+
+            _logger.LogError(ex,
+                "Failed to buffer analytics event {EventId} for {EntityType}:{EntityId}",
+                bufferedEvent.EventId,
+                bufferedEvent.EntityType,
+                bufferedEvent.EntityId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "BufferAnalyticsEvent",
+                "analytics_event_buffer_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: "state:summary",
+                details: $"eventId:{bufferedEvent.EventId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return false;
+        }
     }
 
     private async Task FlushBufferedEventsIfNeededAsync(CancellationToken cancellationToken)
@@ -1386,8 +1719,25 @@ public partial class AnalyticsService : IAnalyticsService
             return;
         }
 
+        try
+        {
             var bufferStore = _stateStoreFactory.GetCacheableStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
             await FlushBufferedEventsBatchAsync(bufferIndexStore, bufferStore, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error flushing analytics event buffer");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "FlushBufferedEventsIfNeeded",
+                "analytics_buffer_flush_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: "state:summary",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+        }
     }
 
     private async Task FlushBufferedEventsBatchAsync(

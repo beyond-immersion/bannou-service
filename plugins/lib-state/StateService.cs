@@ -47,6 +47,8 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Getting state from store {StoreName} with key {Key}", body.StoreName, body.Key);
 
+        try
+        {
             if (!_stateStoreFactory.HasStore(body.StoreName))
             {
                 _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
@@ -67,6 +69,8 @@ public partial class StateService : IStateService
                 Value = value,
                 Etag = etag
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get state from store {StoreName} with key {Key}", body.StoreName, body.Key);
             await MessageBus.TryPublishErrorAsync(
@@ -90,6 +94,8 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Saving state to store {StoreName} with key {Key}", body.StoreName, body.Key);
 
+        try
+        {
             if (!_stateStoreFactory.HasStore(body.StoreName))
             {
                 _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
@@ -119,6 +125,8 @@ public partial class StateService : IStateService
             {
                 Etag = newEtag
             });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save state to store {StoreName} with key {Key}", body.StoreName, body.Key);
             await MessageBus.TryPublishErrorAsync(
@@ -142,6 +150,8 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Deleting state from store {StoreName} with key {Key}", body.StoreName, body.Key);
 
+        try
+        {
             if (!_stateStoreFactory.HasStore(body.StoreName))
             {
                 _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
@@ -153,6 +163,8 @@ public partial class StateService : IStateService
 
             _logger.LogDebug("Delete result for key {Key} in store {StoreName}: {Deleted}", body.Key, body.StoreName, deleted);
             return (StatusCodes.OK, new DeleteStateResponse { Deleted = deleted });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete state from store {StoreName} with key {Key}", body.StoreName, body.Key);
             await MessageBus.TryPublishErrorAsync(
@@ -176,6 +188,8 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Querying state from store {StoreName}", body.StoreName);
 
+        try
+        {
             if (!_stateStoreFactory.HasStore(body.StoreName))
             {
                 _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
@@ -198,6 +212,8 @@ public partial class StateService : IStateService
                 _logger.LogWarning("Query not supported for Redis store {StoreName} without search enabled", body.StoreName);
                 return (StatusCodes.BadRequest, null);
             }
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to query state from store {StoreName}", body.StoreName);
             await MessageBus.TryPublishErrorAsync(
@@ -340,6 +356,8 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Bulk getting {Count} keys from store {StoreName}", body.Keys.Count, body.StoreName);
 
+        try
+        {
             if (!_stateStoreFactory.HasStore(body.StoreName))
             {
                 _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
@@ -377,6 +395,8 @@ public partial class StateService : IStateService
                 items.Count(i => i.Found), body.Keys.Count, body.StoreName);
 
             return (StatusCodes.OK, new BulkGetStateResponse { Items = items });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bulk get from store {StoreName}", body.StoreName);
             await MessageBus.TryPublishErrorAsync(
@@ -400,6 +420,8 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Bulk saving {Count} items to store {StoreName}", body.Items.Count, body.StoreName);
 
+        try
+        {
             if (!_stateStoreFactory.HasStore(body.StoreName))
             {
                 _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
@@ -420,6 +442,8 @@ public partial class StateService : IStateService
                 results.Count, body.StoreName);
 
             return (StatusCodes.OK, new BulkSaveStateResponse { Results = results });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bulk save to store {StoreName}", body.StoreName);
             await MessageBus.TryPublishErrorAsync(
@@ -443,6 +467,8 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Bulk checking existence of {Count} keys in store {StoreName}", body.Keys.Count, body.StoreName);
 
+        try
+        {
             if (!_stateStoreFactory.HasStore(body.StoreName))
             {
                 _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
@@ -456,6 +482,8 @@ public partial class StateService : IStateService
                 existingKeys.Count, body.Keys.Count, body.StoreName);
 
             return (StatusCodes.OK, new BulkExistsStateResponse { ExistingKeys = existingKeys.ToList() });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bulk check existence in store {StoreName}", body.StoreName);
             await MessageBus.TryPublishErrorAsync(
@@ -479,6 +507,8 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Bulk deleting {Count} keys from store {StoreName}", body.Keys.Count, body.StoreName);
 
+        try
+        {
             if (!_stateStoreFactory.HasStore(body.StoreName))
             {
                 _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
@@ -492,6 +522,8 @@ public partial class StateService : IStateService
                 deletedCount, body.Keys.Count, body.StoreName);
 
             return (StatusCodes.OK, new BulkDeleteStateResponse { DeletedCount = deletedCount });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bulk delete from store {StoreName}", body.StoreName);
             await MessageBus.TryPublishErrorAsync(
@@ -515,6 +547,8 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Listing state stores with filter {BackendFilter}", body?.BackendFilter);
 
+        try
+        {
             IEnumerable<string> storeNames;
 
             // Get store names, optionally filtered by backend
@@ -556,6 +590,8 @@ public partial class StateService : IStateService
 
             _logger.LogDebug("Listed {Count} state stores (includeStats={IncludeStats})", stores.Count, includeStats);
             return (StatusCodes.OK, new ListStoresResponse { Stores = stores });
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list state stores");
             await MessageBus.TryPublishErrorAsync(
