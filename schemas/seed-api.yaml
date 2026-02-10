@@ -522,6 +522,11 @@ components:
       description: Lifecycle status of a seed.
       enum: [Active, Dormant, Archived]
 
+    PhaseChangeDirection:
+      type: string
+      description: Direction of a phase transition.
+      enum: [Progressed, Regressed]
+
     BondStatus:
       type: string
       description: Lifecycle status of a seed bond.
@@ -842,6 +847,15 @@ components:
             $ref: '#/components/schemas/CapabilityRule'
           nullable: true
           description: Rules for computing capabilities from growth domains.
+        growthDecayEnabled:
+          type: boolean
+          nullable: true
+          description: Whether unused growth domains decay over time for this seed type. Falls back to global config if null.
+        growthDecayRatePerDay:
+          type: number
+          format: float
+          nullable: true
+          description: Daily decay rate for unused domains of this seed type. Falls back to global config if null.
 
     GetSeedTypeRequest:
       type: object
@@ -902,6 +916,15 @@ components:
             $ref: '#/components/schemas/CapabilityRule'
           nullable: true
           description: Updated capability rules.
+        growthDecayEnabled:
+          type: boolean
+          nullable: true
+          description: Whether unused growth domains decay over time for this seed type. Falls back to global config if null.
+        growthDecayRatePerDay:
+          type: number
+          format: float
+          nullable: true
+          description: Daily decay rate for unused domains of this seed type. Falls back to global config if null.
 
     InitiateBondRequest:
       type: object
@@ -1169,6 +1192,15 @@ components:
             $ref: '#/components/schemas/CapabilityRule'
           nullable: true
           description: Capability computation rules.
+        growthDecayEnabled:
+          type: boolean
+          nullable: true
+          description: Whether unused growth domains decay over time for this seed type. Null means using global config.
+        growthDecayRatePerDay:
+          type: number
+          format: float
+          nullable: true
+          description: Daily decay rate for unused domains of this seed type. Null means using global config.
 
     ListSeedTypesResponse:
       type: object

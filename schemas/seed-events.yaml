@@ -202,6 +202,7 @@ components:
         - previousPhase
         - newPhase
         - totalGrowth
+        - direction
       properties:
         eventId:
           type: string
@@ -228,6 +229,9 @@ components:
           type: number
           format: float
           description: Total growth at time of transition
+        direction:
+          $ref: 'seed-api.yaml#/components/schemas/PhaseChangeDirection'
+          description: Whether this was a forward progression or a regression from decay
 
     SeedCapabilityUpdatedEvent:
       type: object

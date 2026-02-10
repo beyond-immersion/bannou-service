@@ -263,6 +263,12 @@ public partial class LicenseBoardClonedEvent
     public System.Guid TargetOwnerId { get; set; } = default!;
 
     /// <summary>
+    /// Realm context for the cloned board (null for realm-agnostic boards)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
+    public System.Guid? TargetRealmId { get; set; } = default!;
+
+    /// <summary>
     /// Game service context for the cloned board
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetGameServiceId")]

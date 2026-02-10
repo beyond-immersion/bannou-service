@@ -23,13 +23,27 @@ x-service-configuration:
       type: boolean
       env: SEED_GROWTH_DECAY_ENABLED
       default: false
-      description: Whether unused growth domains decay over time (per-type configuration deferred to GH issue 352)
+      description: Global toggle for growth domain decay. Per-type overrides can enable or disable decay independently.
     growthDecayRatePerDay:
       type: number
       format: float
       env: SEED_GROWTH_DECAY_RATE_PER_DAY
       default: 0.01
-      description: Daily decay rate applied to unused growth domains when decay is enabled
+      description: Global daily decay rate applied to unused growth domains. Per-type overrides take precedence.
+    decayWorkerIntervalSeconds:
+      type: integer
+      env: SEED_DECAY_WORKER_INTERVAL_SECONDS
+      default: 900
+      minimum: 60
+      maximum: 86400
+      description: Interval in seconds between growth decay worker cycles (default 15 minutes)
+    decayWorkerStartupDelaySeconds:
+      type: integer
+      env: SEED_DECAY_WORKER_STARTUP_DELAY_SECONDS
+      default: 30
+      minimum: 0
+      maximum: 300
+      description: Delay in seconds before the decay worker starts its first cycle
     bondSharedGrowthMultiplier:
       type: number
       format: float

@@ -233,6 +233,11 @@ components:
           type: string
           format: uuid
           description: ID of the entity the board was cloned to
+        targetRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for the cloned board (null for realm-agnostic boards)
         targetGameServiceId:
           type: string
           format: uuid

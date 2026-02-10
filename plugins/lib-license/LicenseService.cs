@@ -2139,7 +2139,20 @@ public partial class LicenseService : ILicenseService
 
     #region Board Clone
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Clones a board's unlock state to a new owner (developer tooling for NPC progression).
+    /// Reads unlock state from the source board, creates a new board for the target owner,
+    /// and bulk-creates item instances for all unlocked licenses. Skips contract execution
+    /// entirely (admin tooling, not gameplay). Publishes both a lifecycle event and a
+    /// custom <c>license-board.cloned</c> event.
+    /// </summary>
+    /// <remarks>
+    /// Implements saga compensation: if item creation fails mid-clone, the already-created
+    /// container is deleted (cascading to any items) before returning an error status.
+    /// </remarks>
+    /// <param name="body">Clone request with source board ID, target owner type/ID, and optional realm override.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Clone result with target board ID and licenses cloned count, or error status.</returns>
     public async Task<(StatusCodes, CloneBoardResponse?)> CloneBoardAsync(
         CloneBoardRequest body,
         CancellationToken cancellationToken)
@@ -2462,6 +2475,7 @@ public partial class LicenseService : ILicenseService
                     TargetBoardId = newBoard.BoardId,
                     TargetOwnerType = newBoard.OwnerType,
                     TargetOwnerId = newBoard.OwnerId,
+                    TargetRealmId = newBoard.RealmId,
                     TargetGameServiceId = newBoard.GameServiceId,
                     LicensesCloned = clonedEntries.Count
                 },
