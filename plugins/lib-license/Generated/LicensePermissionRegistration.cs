@@ -337,6 +337,21 @@ public static class LicensePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/license/board/clone",
+            Method = ServiceEndpointMethod.POST,
+            Description = "cloneBoard",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/license/cleanup-by-owner",
             Method = ServiceEndpointMethod.POST,
             Description = "cleanupByOwner",

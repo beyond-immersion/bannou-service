@@ -25,6 +25,8 @@ public static class LicenseTopics
     public const string LicenseUnlocked = "license.unlocked";
     /// <summary>License unlock failed event topic.</summary>
     public const string LicenseUnlockFailed = "license.unlock-failed";
+    /// <summary>License board cloned event topic.</summary>
+    public const string LicenseBoardCloned = "license-board.cloned";
 }
 
 /// <summary>

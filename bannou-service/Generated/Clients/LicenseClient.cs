@@ -296,6 +296,22 @@ public partial interface ILicenseClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
+    /// Clone a board's unlock state to a new owner
+    /// </summary>
+    /// <remarks>
+    /// Developer-only endpoint for cloning NPC progression. Reads unlock state
+    /// <br/>from a source board, creates a new board for the target owner, and bulk-creates
+    /// <br/>item instances for all unlocked licenses. Skips contracts entirely (admin tooling,
+    /// <br/>not gameplay). Publishes a single license.board.cloned event.
+    /// <br/>Does not publish individual license.unlocked events.
+    /// </remarks>
+    /// <returns>Board cloned successfully</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<CloneBoardResponse> CloneBoardAsync(CloneBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
     /// Cleanup boards referencing a deleted owner
     /// </summary>
     /// <remarks>
@@ -2214,6 +2230,123 @@ public partial class LicenseClient : ILicenseClient, BeyondImmersion.BannouServi
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Board template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clone a board's unlock state to a new owner
+    /// </summary>
+    /// <remarks>
+    /// Developer-only endpoint for cloning NPC progression. Reads unlock state
+    /// <br/>from a source board, creates a new board for the target owner, and bulk-creates
+    /// <br/>item instances for all unlocked licenses. Skips contracts entirely (admin tooling,
+    /// <br/>not gameplay). Publishes a single license.board.cloned event.
+    /// <br/>Does not publish individual license.unlocked events.
+    /// </remarks>
+    /// <returns>Board cloned successfully</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<CloneBoardResponse> CloneBoardAsync(CloneBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "license/board/clone"
+        urlBuilder_.Append("license/board/clone");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<CloneBoardResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Invalid request (owner type not allowed, missing realm for character)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Source board, target owner (character), or template not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    if (status_ == 409)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Target already has a board for this template, or max boards exceeded", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {

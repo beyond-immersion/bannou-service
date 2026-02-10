@@ -1308,6 +1308,100 @@ public partial class BoardStateResponse
 }
 
 /// <summary>
+/// Request to clone a board's unlock state to a new owner (developer tooling)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CloneBoardRequest
+{
+
+    /// <summary>
+    /// Source board instance to clone unlock state from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBoardId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceBoardId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity to clone the board to (must be in template's allowedOwnerTypes)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetOwnerType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TargetOwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the target entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetOwnerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetOwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm context for the cloned board. Required for character owners (auto-resolved from character). For realm owners, must equal targetOwnerId. Null for realm-agnostic boards.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
+    public System.Guid? TargetRealmId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of a board clone operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CloneBoardResponse
+{
+
+    /// <summary>
+    /// Source board that was cloned from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBoardId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceBoardId { get; set; } = default!;
+
+    /// <summary>
+    /// New board instance created for the target
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetBoardId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetBoardId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity the board was cloned to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetOwnerType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TargetOwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity the board was cloned to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetOwnerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetOwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// Inventory container created for the cloned board
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetContainerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetContainerId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of licenses cloned (item instances created)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("licensesCloned")]
+    public int LicensesCloned { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to cleanup all boards for a deleted owner entity
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

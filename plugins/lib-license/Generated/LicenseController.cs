@@ -286,6 +286,22 @@ public interface ILicenseController : BeyondImmersion.BannouService.Controllers.
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedBoardTemplateResponse>> SeedBoardTemplateAsync(SeedBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Clone a board's unlock state to a new owner
+    /// </summary>
+
+    /// <remarks>
+    /// Developer-only endpoint for cloning NPC progression. Reads unlock state
+    /// <br/>from a source board, creates a new board for the target owner, and bulk-creates
+    /// <br/>item instances for all unlocked licenses. Skips contracts entirely (admin tooling,
+    /// <br/>not gameplay). Publishes a single license.board.cloned event.
+    /// <br/>Does not publish individual license.unlocked events.
+    /// </remarks>
+
+    /// <returns>Board cloned successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CloneBoardResponse>> CloneBoardAsync(CloneBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Cleanup boards referencing a deleted owner
     /// </summary>
 
@@ -658,6 +674,26 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.SeedBoardTemplateAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Clone a board's unlock state to a new owner
+    /// </summary>
+    /// <remarks>
+    /// Developer-only endpoint for cloning NPC progression. Reads unlock state
+    /// <br/>from a source board, creates a new board for the target owner, and bulk-creates
+    /// <br/>item instances for all unlocked licenses. Skips contracts entirely (admin tooling,
+    /// <br/>not gameplay). Publishes a single license.board.cloned event.
+    /// <br/>Does not publish individual license.unlocked events.
+    /// </remarks>
+    /// <returns>Board cloned successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("license/board/clone")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CloneBoardResponse>> CloneBoard([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CloneBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CloneBoardAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

@@ -207,6 +207,77 @@ public partial class LicenseUnlockFailedEvent
 
 }
 
+/// <summary>
+/// Published when a board's unlock state is cloned to a new owner (developer tooling)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LicenseBoardClonedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the clone occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Source board that was cloned from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBoardId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceBoardId { get; set; } = default!;
+
+    /// <summary>
+    /// New board instance created for the target
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetBoardId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetBoardId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity the board was cloned to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetOwnerType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TargetOwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity the board was cloned to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetOwnerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetOwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service context for the cloned board
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetGameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetGameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of licenses cloned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("licensesCloned")]
+    public int LicensesCloned { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

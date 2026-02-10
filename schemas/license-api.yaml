@@ -695,6 +695,57 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   # ===========================================================================
+  # Board Clone (1 endpoint)
+  # ===========================================================================
+
+  /license/board/clone:
+    post:
+      operationId: cloneBoard
+      tags:
+      - Board
+      summary: Clone a board's unlock state to a new owner
+      description: |
+        Developer-only endpoint for cloning NPC progression. Reads unlock state
+        from a source board, creates a new board for the target owner, and bulk-creates
+        item instances for all unlocked licenses. Skips contracts entirely (admin tooling,
+        not gameplay). Publishes a single license.board.cloned event.
+        Does not publish individual license.unlocked events.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneBoardRequest'
+      responses:
+        '200':
+          description: Board cloned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloneBoardResponse'
+        '400':
+          description: Invalid request (owner type not allowed, missing realm for character)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Source board, target owner (character), or template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Target already has a board for this template, or max boards exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ===========================================================================
   # Resource Cleanup (1 endpoint)
   # ===========================================================================
 
@@ -1597,6 +1648,71 @@ components:
           items:
             $ref: '#/components/schemas/BoardNodeState'
           description: All license nodes with their current status
+
+    # ==========================================================================
+    # Request/Response Models - Board Clone
+    # ==========================================================================
+
+    CloneBoardRequest:
+      type: object
+      description: Request to clone a board's unlock state to a new owner (developer tooling)
+      additionalProperties: false
+      required:
+      - sourceBoardId
+      - targetOwnerType
+      - targetOwnerId
+      properties:
+        sourceBoardId:
+          type: string
+          format: uuid
+          description: Source board instance to clone unlock state from
+        targetOwnerType:
+          type: string
+          description: Type of entity to clone the board to (must be in template's allowedOwnerTypes)
+        targetOwnerId:
+          type: string
+          format: uuid
+          description: ID of the target entity
+        targetRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for the cloned board. Required for character owners (auto-resolved from character). For realm owners, must equal targetOwnerId. Null for realm-agnostic boards.
+
+    CloneBoardResponse:
+      type: object
+      description: Result of a board clone operation
+      additionalProperties: false
+      required:
+      - sourceBoardId
+      - targetBoardId
+      - targetOwnerType
+      - targetOwnerId
+      - targetContainerId
+      - licensesCloned
+      properties:
+        sourceBoardId:
+          type: string
+          format: uuid
+          description: Source board that was cloned from
+        targetBoardId:
+          type: string
+          format: uuid
+          description: New board instance created for the target
+        targetOwnerType:
+          type: string
+          description: Type of entity the board was cloned to
+        targetOwnerId:
+          type: string
+          format: uuid
+          description: ID of the entity the board was cloned to
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Inventory container created for the cloned board
+        licensesCloned:
+          type: integer
+          description: Number of licenses cloned (item instances created)
 
     # ==========================================================================
     # Request/Response Models - Resource Cleanup

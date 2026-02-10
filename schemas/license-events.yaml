@@ -53,6 +53,11 @@ info:
       event: LicenseUnlockFailedEvent
       description: Published when a license unlock attempt fails
 
+    # Clone events
+    - topic: license-board.cloned
+      event: LicenseBoardClonedEvent
+      description: Published when a board's unlock state is cloned to a new owner (developer tooling)
+
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/license-lifecycle-events.yaml
 x-lifecycle:
@@ -190,3 +195,48 @@ components:
         reason:
           $ref: 'license-api.yaml#/components/schemas/UnlockFailureReason'
           description: Why the unlock attempt failed
+
+    LicenseBoardClonedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a board's unlock state is cloned to a new owner (developer tooling)
+      required:
+      - eventId
+      - timestamp
+      - sourceBoardId
+      - targetBoardId
+      - targetOwnerType
+      - targetOwnerId
+      - targetGameServiceId
+      - licensesCloned
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the clone occurred
+        sourceBoardId:
+          type: string
+          format: uuid
+          description: Source board that was cloned from
+        targetBoardId:
+          type: string
+          format: uuid
+          description: New board instance created for the target
+        targetOwnerType:
+          type: string
+          description: Type of entity the board was cloned to
+        targetOwnerId:
+          type: string
+          format: uuid
+          description: ID of the entity the board was cloned to
+        targetGameServiceId:
+          type: string
+          format: uuid
+          description: Game service context for the cloned board
+        licensesCloned:
+          type: integer
+          description: Number of licenses cloned
