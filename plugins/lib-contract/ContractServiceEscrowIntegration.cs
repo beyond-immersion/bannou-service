@@ -46,80 +46,80 @@ public partial class ContractService
         _logger.LogInformation("Locking contract: {ContractId} with guardian: {GuardianId}",
             body.ContractInstanceId, body.GuardianId);
 
-            // Check idempotency
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        // Check idempotency
+        if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        {
+            var idempotencyKey = $"{IDEMPOTENCY_PREFIX}lock:{body.IdempotencyKey}";
+            var existingResult = await _stateStoreFactory.GetStore<LockContractResponse>(StateStoreDefinitions.Contract)
+                .GetAsync(idempotencyKey, cancellationToken);
+            if (existingResult != null)
             {
-                var idempotencyKey = $"{IDEMPOTENCY_PREFIX}lock:{body.IdempotencyKey}";
-                var existingResult = await _stateStoreFactory.GetStore<LockContractResponse>(StateStoreDefinitions.Contract)
-                    .GetAsync(idempotencyKey, cancellationToken);
-                if (existingResult != null)
-                {
-                    _logger.LogInformation("Returning cached lock result for idempotency key: {Key}", body.IdempotencyKey);
-                    return (StatusCodes.OK, existingResult);
-                }
+                _logger.LogInformation("Returning cached lock result for idempotency key: {Key}", body.IdempotencyKey);
+                return (StatusCodes.OK, existingResult);
             }
+        }
 
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
-            if (model == null)
-            {
-                _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.NotFound, null);
-            }
+        if (model == null)
+        {
+            _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Load template to check if transferable
-            var templateKey = $"{TEMPLATE_PREFIX}{model.TemplateId}";
-            var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                .GetAsync(templateKey, cancellationToken);
+        // Load template to check if transferable
+        var templateKey = $"{TEMPLATE_PREFIX}{model.TemplateId}";
+        var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .GetAsync(templateKey, cancellationToken);
 
-            if (template == null || !template.Transferable)
-            {
-                _logger.LogWarning("Contract template not transferable: {TemplateId}", model.TemplateId);
-                return (StatusCodes.BadRequest, null);
-            }
+        if (template == null || !template.Transferable)
+        {
+            _logger.LogWarning("Contract template not transferable: {TemplateId}", model.TemplateId);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Check if already locked
-            if (model.GuardianId.HasValue)
-            {
-                _logger.LogWarning("Contract already locked: {ContractId} by {GuardianId}",
-                    body.ContractInstanceId, model.GuardianId);
-                return (StatusCodes.Conflict, null);
-            }
+        // Check if already locked
+        if (model.GuardianId.HasValue)
+        {
+            _logger.LogWarning("Contract already locked: {ContractId} by {GuardianId}",
+                body.ContractInstanceId, model.GuardianId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            // Lock the contract
-            var now = DateTimeOffset.UtcNow;
-            model.GuardianId = body.GuardianId;
-            model.GuardianType = body.GuardianType;
-            model.LockedAt = now;
-            model.UpdatedAt = now;
+        // Lock the contract
+        var now = DateTimeOffset.UtcNow;
+        model.GuardianId = body.GuardianId;
+        model.GuardianType = body.GuardianType;
+        model.LockedAt = now;
+        model.UpdatedAt = now;
 
-            var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (savedEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract lock: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.Conflict, null);
-            }
+        var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (savedEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract lock: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            var response = new LockContractResponse
-            {
-                Locked = true,
-                ContractId = body.ContractInstanceId,
-                GuardianId = body.GuardianId,
-                LockedAt = now
-            };
+        var response = new LockContractResponse
+        {
+            Locked = true,
+            ContractId = body.ContractInstanceId,
+            GuardianId = body.GuardianId,
+            LockedAt = now
+        };
 
-            // Cache for idempotency
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
-            {
-                var idempotencyKey = $"{IDEMPOTENCY_PREFIX}lock:{body.IdempotencyKey}";
-                await _stateStoreFactory.GetStore<LockContractResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
-            }
+        // Cache for idempotency
+        if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        {
+            var idempotencyKey = $"{IDEMPOTENCY_PREFIX}lock:{body.IdempotencyKey}";
+            await _stateStoreFactory.GetStore<LockContractResponse>(StateStoreDefinitions.Contract)
+                .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
+        }
 
-            // Publish event
-            await PublishContractLockedEventAsync(model, body.GuardianId, body.GuardianType, cancellationToken);
+        // Publish event
+        await PublishContractLockedEventAsync(model, body.GuardianId, body.GuardianType, cancellationToken);
 
         _logger.LogInformation("Locked contract: {ContractId} under guardian: {GuardianId}",
             body.ContractInstanceId, body.GuardianId);
@@ -133,75 +133,75 @@ public partial class ContractService
     {
         _logger.LogInformation("Unlocking contract: {ContractId}", body.ContractInstanceId);
 
-            // Check idempotency
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        // Check idempotency
+        if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        {
+            var idempotencyKey = $"{IDEMPOTENCY_PREFIX}unlock:{body.IdempotencyKey}";
+            var existingResult = await _stateStoreFactory.GetStore<UnlockContractResponse>(StateStoreDefinitions.Contract)
+                .GetAsync(idempotencyKey, cancellationToken);
+            if (existingResult != null)
             {
-                var idempotencyKey = $"{IDEMPOTENCY_PREFIX}unlock:{body.IdempotencyKey}";
-                var existingResult = await _stateStoreFactory.GetStore<UnlockContractResponse>(StateStoreDefinitions.Contract)
-                    .GetAsync(idempotencyKey, cancellationToken);
-                if (existingResult != null)
-                {
-                    return (StatusCodes.OK, existingResult);
-                }
+                return (StatusCodes.OK, existingResult);
             }
+        }
 
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
-            if (model == null)
-            {
-                _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.NotFound, null);
-            }
+        if (model == null)
+        {
+            _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Check if locked
-            if (!model.GuardianId.HasValue)
-            {
-                _logger.LogWarning("Contract not locked: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.NotFound, null);
-            }
+        // Check if locked
+        if (!model.GuardianId.HasValue)
+        {
+            _logger.LogWarning("Contract not locked: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Verify guardian
-            if (model.GuardianId != body.GuardianId || model.GuardianType != body.GuardianType)
-            {
-                _logger.LogWarning("Not the current guardian for contract: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.Forbidden, null);
-            }
+        // Verify guardian
+        if (model.GuardianId != body.GuardianId || model.GuardianType != body.GuardianType)
+        {
+            _logger.LogWarning("Not the current guardian for contract: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.Forbidden, null);
+        }
 
-            // Unlock the contract
-            var previousGuardianId = model.GuardianId;
-            var previousGuardianType = model.GuardianType;
-            model.GuardianId = null;
-            model.GuardianType = null;
-            model.LockedAt = null;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
+        // Unlock the contract
+        var previousGuardianId = model.GuardianId;
+        var previousGuardianType = model.GuardianType;
+        model.GuardianId = null;
+        model.GuardianType = null;
+        model.LockedAt = null;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (savedEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract unlock: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.Conflict, null);
-            }
+        var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (savedEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract unlock: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            var response = new UnlockContractResponse
-            {
-                Unlocked = true,
-                ContractId = body.ContractInstanceId
-            };
+        var response = new UnlockContractResponse
+        {
+            Unlocked = true,
+            ContractId = body.ContractInstanceId
+        };
 
-            // Cache for idempotency
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
-            {
-                var idempotencyKey = $"{IDEMPOTENCY_PREFIX}unlock:{body.IdempotencyKey}";
-                await _stateStoreFactory.GetStore<UnlockContractResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
-            }
+        // Cache for idempotency
+        if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        {
+            var idempotencyKey = $"{IDEMPOTENCY_PREFIX}unlock:{body.IdempotencyKey}";
+            await _stateStoreFactory.GetStore<UnlockContractResponse>(StateStoreDefinitions.Contract)
+                .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
+        }
 
-            // Publish event
-            await PublishContractUnlockedEventAsync(model, previousGuardianId, previousGuardianType, cancellationToken);
+        // Publish event
+        await PublishContractUnlockedEventAsync(model, previousGuardianId, previousGuardianType, cancellationToken);
 
-            _logger.LogInformation("Unlocked contract: {ContractId}", body.ContractInstanceId);
+        _logger.LogInformation("Unlocked contract: {ContractId}", body.ContractInstanceId);
         return (StatusCodes.OK, response);
     }
 
@@ -213,93 +213,93 @@ public partial class ContractService
         _logger.LogInformation("Transferring party in contract: {ContractId} from {FromId} to {ToId}",
             body.ContractInstanceId, body.FromEntityId, body.ToEntityId);
 
-            // Check idempotency
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        // Check idempotency
+        if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        {
+            var idempotencyKey = $"{IDEMPOTENCY_PREFIX}transfer:{body.IdempotencyKey}";
+            var existingResult = await _stateStoreFactory.GetStore<TransferContractPartyResponse>(StateStoreDefinitions.Contract)
+                .GetAsync(idempotencyKey, cancellationToken);
+            if (existingResult != null)
             {
-                var idempotencyKey = $"{IDEMPOTENCY_PREFIX}transfer:{body.IdempotencyKey}";
-                var existingResult = await _stateStoreFactory.GetStore<TransferContractPartyResponse>(StateStoreDefinitions.Contract)
-                    .GetAsync(idempotencyKey, cancellationToken);
-                if (existingResult != null)
-                {
-                    return (StatusCodes.OK, existingResult);
-                }
+                return (StatusCodes.OK, existingResult);
             }
+        }
 
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
-            if (model == null)
-            {
-                _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.NotFound, null);
-            }
+        if (model == null)
+        {
+            _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Verify contract is locked and caller is guardian
-            if (!model.GuardianId.HasValue)
-            {
-                _logger.LogWarning("Contract not locked: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.Forbidden, null);
-            }
+        // Verify contract is locked and caller is guardian
+        if (!model.GuardianId.HasValue)
+        {
+            _logger.LogWarning("Contract not locked: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.Forbidden, null);
+        }
 
-            if (model.GuardianId != body.GuardianId || model.GuardianType != body.GuardianType)
-            {
-                _logger.LogWarning("Not the current guardian for contract: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.Forbidden, null);
-            }
+        if (model.GuardianId != body.GuardianId || model.GuardianType != body.GuardianType)
+        {
+            _logger.LogWarning("Not the current guardian for contract: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.Forbidden, null);
+        }
 
-            // Find the party to transfer
-            var party = model.Parties?.FirstOrDefault(p =>
-                p.EntityId == body.FromEntityId &&
-                p.EntityType == body.FromEntityType);
+        // Find the party to transfer
+        var party = model.Parties?.FirstOrDefault(p =>
+            p.EntityId == body.FromEntityId &&
+            p.EntityType == body.FromEntityType);
 
-            if (party == null)
-            {
-                _logger.LogWarning("Party not found in contract: {FromEntityId}", body.FromEntityId);
-                return (StatusCodes.BadRequest, null);
-            }
+        if (party == null)
+        {
+            _logger.LogWarning("Party not found in contract: {FromEntityId}", body.FromEntityId);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Transfer the party
-            var previousEntityId = party.EntityId;
-            var previousEntityType = party.EntityType;
-            var role = party.Role;
-            party.EntityId = body.ToEntityId;
-            party.EntityType = body.ToEntityType;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
+        // Transfer the party
+        var previousEntityId = party.EntityId;
+        var previousEntityType = party.EntityType;
+        var role = party.Role;
+        party.EntityId = body.ToEntityId;
+        party.EntityType = body.ToEntityType;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (savedEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract transfer: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.Conflict, null);
-            }
+        var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (savedEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract transfer: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            // Update party indexes (after successful save)
-            var oldPartyIndexKey = $"{PARTY_INDEX_PREFIX}{previousEntityType}:{previousEntityId}";
-            await RemoveFromListAsync(oldPartyIndexKey, body.ContractInstanceId.ToString(), cancellationToken);
-            var newPartyIndexKey = $"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}";
-            await AddToListAsync(newPartyIndexKey, body.ContractInstanceId.ToString(), cancellationToken);
+        // Update party indexes (after successful save)
+        var oldPartyIndexKey = $"{PARTY_INDEX_PREFIX}{previousEntityType}:{previousEntityId}";
+        await RemoveFromListAsync(oldPartyIndexKey, body.ContractInstanceId.ToString(), cancellationToken);
+        var newPartyIndexKey = $"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}";
+        await AddToListAsync(newPartyIndexKey, body.ContractInstanceId.ToString(), cancellationToken);
 
-            var response = new TransferContractPartyResponse
-            {
-                Transferred = true,
-                ContractId = body.ContractInstanceId,
-                Role = role,
-                FromEntityId = body.FromEntityId,
-                ToEntityId = body.ToEntityId
-            };
+        var response = new TransferContractPartyResponse
+        {
+            Transferred = true,
+            ContractId = body.ContractInstanceId,
+            Role = role,
+            FromEntityId = body.FromEntityId,
+            ToEntityId = body.ToEntityId
+        };
 
-            // Cache for idempotency
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
-            {
-                var idempotencyKey = $"{IDEMPOTENCY_PREFIX}transfer:{body.IdempotencyKey}";
-                await _stateStoreFactory.GetStore<TransferContractPartyResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
-            }
+        // Cache for idempotency
+        if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        {
+            var idempotencyKey = $"{IDEMPOTENCY_PREFIX}transfer:{body.IdempotencyKey}";
+            await _stateStoreFactory.GetStore<TransferContractPartyResponse>(StateStoreDefinitions.Contract)
+                .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
+        }
 
-            // Publish event
-            await PublishPartyTransferredEventAsync(model, role, body.FromEntityId, body.FromEntityType,
-                body.ToEntityId, body.ToEntityType, cancellationToken);
+        // Publish event
+        await PublishPartyTransferredEventAsync(model, role, body.FromEntityId, body.FromEntityType,
+            body.ToEntityId, body.ToEntityType, cancellationToken);
 
         _logger.LogInformation("Transferred party in contract: {ContractId}, role: {Role}",
             body.ContractInstanceId, role);
@@ -317,49 +317,49 @@ public partial class ContractService
     {
         _logger.LogInformation("Registering clause type: {TypeCode}", body.TypeCode);
 
-            // Check if already exists
-            var typeKey = $"{CLAUSE_TYPE_PREFIX}{body.TypeCode}";
-            var existing = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
-                .GetAsync(typeKey, cancellationToken);
+        // Check if already exists
+        var typeKey = $"{CLAUSE_TYPE_PREFIX}{body.TypeCode}";
+        var existing = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+            .GetAsync(typeKey, cancellationToken);
 
-            if (existing != null)
+        if (existing != null)
+        {
+            _logger.LogWarning("Clause type already exists: {TypeCode}", body.TypeCode);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var model = new ClauseTypeModel
+        {
+            TypeCode = body.TypeCode,
+            Description = body.Description,
+            Category = body.Category,
+            IsBuiltIn = false,
+            ValidationHandler = body.ValidationHandler != null ? new ClauseHandlerModel
             {
-                _logger.LogWarning("Clause type already exists: {TypeCode}", body.TypeCode);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var model = new ClauseTypeModel
+                Service = body.ValidationHandler.Service,
+                Endpoint = body.ValidationHandler.Endpoint,
+                RequestMapping = body.ValidationHandler.RequestMapping,
+                ResponseMapping = body.ValidationHandler.ResponseMapping
+            } : null,
+            ExecutionHandler = body.ExecutionHandler != null ? new ClauseHandlerModel
             {
-                TypeCode = body.TypeCode,
-                Description = body.Description,
-                Category = body.Category,
-                IsBuiltIn = false,
-                ValidationHandler = body.ValidationHandler != null ? new ClauseHandlerModel
-                {
-                    Service = body.ValidationHandler.Service,
-                    Endpoint = body.ValidationHandler.Endpoint,
-                    RequestMapping = body.ValidationHandler.RequestMapping,
-                    ResponseMapping = body.ValidationHandler.ResponseMapping
-                } : null,
-                ExecutionHandler = body.ExecutionHandler != null ? new ClauseHandlerModel
-                {
-                    Service = body.ExecutionHandler.Service,
-                    Endpoint = body.ExecutionHandler.Endpoint,
-                    RequestMapping = body.ExecutionHandler.RequestMapping,
-                    ResponseMapping = body.ExecutionHandler.ResponseMapping
-                } : null,
-                CreatedAt = DateTimeOffset.UtcNow
-            };
+                Service = body.ExecutionHandler.Service,
+                Endpoint = body.ExecutionHandler.Endpoint,
+                RequestMapping = body.ExecutionHandler.RequestMapping,
+                ResponseMapping = body.ExecutionHandler.ResponseMapping
+            } : null,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
 
-            await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+        await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+            .SaveAsync(typeKey, model, cancellationToken: cancellationToken);
 
-            await AddToListAsync(ALL_CLAUSE_TYPES_KEY, body.TypeCode, cancellationToken);
+        await AddToListAsync(ALL_CLAUSE_TYPES_KEY, body.TypeCode, cancellationToken);
 
-            // Publish event
-            await PublishClauseTypeRegisteredEventAsync(model, cancellationToken);
+        // Publish event
+        await PublishClauseTypeRegisteredEventAsync(model, cancellationToken);
 
-            _logger.LogInformation("Registered clause type: {TypeCode}", body.TypeCode);
+        _logger.LogInformation("Registered clause type: {TypeCode}", body.TypeCode);
         return (StatusCodes.OK, new RegisterClauseTypeResponse
         {
             Registered = true,
@@ -374,47 +374,47 @@ public partial class ContractService
     {
         _logger.LogDebug("Listing clause types");
 
-            // Ensure built-in types are registered
-            await EnsureBuiltInClauseTypesAsync(cancellationToken);
+        // Ensure built-in types are registered
+        await EnsureBuiltInClauseTypesAsync(cancellationToken);
 
-            // Get all type codes
-            var allTypeCodes = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
-                .GetAsync(ALL_CLAUSE_TYPES_KEY, cancellationToken) ?? new List<string>();
+        // Get all type codes
+        var allTypeCodes = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+            .GetAsync(ALL_CLAUSE_TYPES_KEY, cancellationToken) ?? new List<string>();
 
-            var summaries = new List<ClauseTypeSummary>();
+        var summaries = new List<ClauseTypeSummary>();
 
-            foreach (var typeCode in allTypeCodes)
+        foreach (var typeCode in allTypeCodes)
+        {
+            var typeKey = $"{CLAUSE_TYPE_PREFIX}{typeCode}";
+            var model = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+                .GetAsync(typeKey, cancellationToken);
+
+            if (model == null) continue;
+
+            // Apply filters
+            if (body.Category.HasValue)
             {
-                var typeKey = $"{CLAUSE_TYPE_PREFIX}{typeCode}";
-                var model = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
-                    .GetAsync(typeKey, cancellationToken);
-
-                if (model == null) continue;
-
-                // Apply filters
-                if (body.Category.HasValue)
-                {
-                    if (model.Category != body.Category.Value)
-                    {
-                        continue;
-                    }
-                }
-
-                if (body.IncludeBuiltIn == false && model.IsBuiltIn)
+                if (model.Category != body.Category.Value)
                 {
                     continue;
                 }
-
-                summaries.Add(new ClauseTypeSummary
-                {
-                    TypeCode = model.TypeCode,
-                    Description = model.Description,
-                    Category = model.Category,
-                    HasValidationHandler = model.ValidationHandler != null,
-                    HasExecutionHandler = model.ExecutionHandler != null,
-                    IsBuiltIn = model.IsBuiltIn
-                });
             }
+
+            if (body.IncludeBuiltIn == false && model.IsBuiltIn)
+            {
+                continue;
+            }
+
+            summaries.Add(new ClauseTypeSummary
+            {
+                TypeCode = model.TypeCode,
+                Description = model.Description,
+                Category = model.Category,
+                HasValidationHandler = model.ValidationHandler != null,
+                HasExecutionHandler = model.ExecutionHandler != null,
+                IsBuiltIn = model.IsBuiltIn
+            });
+        }
 
         return (StatusCodes.OK, new ListClauseTypesResponse
         {
@@ -534,42 +534,42 @@ public partial class ContractService
     {
         _logger.LogInformation("Setting template values on contract: {ContractId}", body.ContractInstanceId);
 
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
+        var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            .GetAsync(instanceKey, cancellationToken);
 
-            if (model == null)
+        if (model == null)
+        {
+            _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Validate key format (alphanumeric + underscore)
+        foreach (var key in body.TemplateValues.Keys)
+        {
+            if (!TemplateKeyPattern.IsMatch(key))
             {
-                _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.NotFound, null);
+                _logger.LogWarning("Invalid template key format: {Key}", key);
+                return (StatusCodes.BadRequest, null);
             }
+        }
 
-            // Validate key format (alphanumeric + underscore)
-            foreach (var key in body.TemplateValues.Keys)
-            {
-                if (!TemplateKeyPattern.IsMatch(key))
-                {
-                    _logger.LogWarning("Invalid template key format: {Key}", key);
-                    return (StatusCodes.BadRequest, null);
-                }
-            }
+        // Merge with existing values
+        model.TemplateValues ??= new Dictionary<string, string>();
+        foreach (var kvp in body.TemplateValues)
+        {
+            model.TemplateValues[kvp.Key] = kvp.Value;
+        }
+        model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Merge with existing values
-            model.TemplateValues ??= new Dictionary<string, string>();
-            foreach (var kvp in body.TemplateValues)
-            {
-                model.TemplateValues[kvp.Key] = kvp.Value;
-            }
-            model.UpdatedAt = DateTimeOffset.UtcNow;
+        await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+        // Publish event
+        await PublishTemplateValuesSetEventAsync(model, body.TemplateValues.Keys.ToList(), cancellationToken);
 
-            // Publish event
-            await PublishTemplateValuesSetEventAsync(model, body.TemplateValues.Keys.ToList(), cancellationToken);
-
-            _logger.LogInformation("Set {Count} template values on contract: {ContractId}",
-                body.TemplateValues.Count, body.ContractInstanceId);
+        _logger.LogInformation("Set {Count} template values on contract: {ContractId}",
+            body.TemplateValues.Count, body.ContractInstanceId);
 
         return (StatusCodes.OK, new SetTemplateValuesResponse
         {
@@ -586,43 +586,43 @@ public partial class ContractService
     {
         _logger.LogInformation("Checking asset requirements for contract: {ContractId}", body.ContractInstanceId);
 
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
+        var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            .GetAsync(instanceKey, cancellationToken);
 
-            if (model == null)
-            {
-                _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.NotFound, null);
-            }
+        if (model == null)
+        {
+            _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Load template for clause definitions
-            var templateKey = $"{TEMPLATE_PREFIX}{model.TemplateId}";
-            var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                .GetAsync(templateKey, cancellationToken);
+        // Load template for clause definitions
+        var templateKey = $"{TEMPLATE_PREFIX}{model.TemplateId}";
+        var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .GetAsync(templateKey, cancellationToken);
 
-            if (template == null)
-            {
-                _logger.LogError("Template not found for contract: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.InternalServerError, null);
-            }
+        if (template == null)
+        {
+            _logger.LogError("Template not found for contract: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.InternalServerError, null);
+        }
 
-            // Check if there are any asset requirement clauses that need template values
-            var clauses = ParseClausesFromTemplate(template);
-            var hasAssetClauses = clauses.Any(c =>
-                string.Equals(c.Type, "asset_requirement", StringComparison.OrdinalIgnoreCase));
+        // Check if there are any asset requirement clauses that need template values
+        var clauses = ParseClausesFromTemplate(template);
+        var hasAssetClauses = clauses.Any(c =>
+            string.Equals(c.Type, "asset_requirement", StringComparison.OrdinalIgnoreCase));
 
-            // Only require template values if there are asset requirement clauses
-            if (hasAssetClauses && (model.TemplateValues == null || model.TemplateValues.Count == 0))
-            {
-                _logger.LogWarning("Template values not set for contract with asset clauses: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.BadRequest, null);
-            }
+        // Only require template values if there are asset requirement clauses
+        if (hasAssetClauses && (model.TemplateValues == null || model.TemplateValues.Count == 0))
+        {
+            _logger.LogWarning("Template values not set for contract with asset clauses: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Get asset requirement clauses from template's custom terms
-            var partyStatuses = await CheckAssetRequirementClausesAsync(model, template, cancellationToken);
+        // Get asset requirement clauses from template's custom terms
+        var partyStatuses = await CheckAssetRequirementClausesAsync(model, template, cancellationToken);
 
-            var allSatisfied = partyStatuses.All(p => p.Satisfied);
+        var allSatisfied = partyStatuses.All(p => p.Satisfied);
 
         return (StatusCodes.OK, new CheckAssetRequirementsResponse
         {
@@ -906,100 +906,38 @@ public partial class ContractService
     {
         _logger.LogInformation("Executing contract: {ContractId}", body.ContractInstanceId);
 
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
 
-            // Acquire contract lock for execution
-            await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractInstanceId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
-            if (!contractLock.Success)
-            {
-                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.Conflict, null);
-            }
+        // Acquire contract lock for execution
+        await using var contractLock = await _lockProvider.LockAsync(
+            "contract-instance", body.ContractInstanceId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+        if (!contractLock.Success)
+        {
+            _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
-            if (model == null)
-            {
-                _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.NotFound, null);
-            }
+        if (model == null)
+        {
+            _logger.LogWarning("Contract not found: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Check idempotency - return cached result if already executed
-            if (!string.IsNullOrEmpty(model.ExecutionIdempotencyKey) && model.ExecutedAt.HasValue)
-            {
-                _logger.LogInformation("Contract already executed, returning cached result: {ContractId}",
-                    body.ContractInstanceId);
+        // Check idempotency - return cached result if already executed
+        if (!string.IsNullOrEmpty(model.ExecutionIdempotencyKey) && model.ExecutedAt.HasValue)
+        {
+            _logger.LogInformation("Contract already executed, returning cached result: {ContractId}",
+                body.ContractInstanceId);
 
-                return (StatusCodes.OK, new ExecuteContractResponse
-                {
-                    Executed = true,
-                    AlreadyExecuted = true,
-                    ContractId = body.ContractInstanceId,
-                    Distributions = model.ExecutionDistributions?.Select(d => new ClauseDistributionResult
-                    {
-                        ClauseId = Guid.TryParse(d.ClauseId, out var cid) ? cid : Guid.Empty,
-                        ClauseType = d.ClauseType,
-                        AssetType = d.AssetType,
-                        Amount = d.Amount,
-                        Succeeded = d.Succeeded,
-                        FailureReason = d.FailureReason
-                    }).ToList(),
-                    ExecutedAt = model.ExecutedAt
-                });
-            }
-
-            // Also check by idempotency key if provided
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
-            {
-                var idempotencyKey = $"{IDEMPOTENCY_PREFIX}execute:{body.IdempotencyKey}";
-                var existingResult = await _stateStoreFactory.GetStore<ExecuteContractResponse>(StateStoreDefinitions.Contract)
-                    .GetAsync(idempotencyKey, cancellationToken);
-                if (existingResult != null)
-                {
-                    return (StatusCodes.OK, existingResult);
-                }
-            }
-
-            // Verify contract is in fulfilled status
-            if (model.Status != ContractStatus.Fulfilled)
-            {
-                _logger.LogWarning("Contract not in fulfilled status: {ContractId}, status: {Status}",
-                    body.ContractInstanceId, model.Status);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Verify template values are set
-            if (model.TemplateValues == null || model.TemplateValues.Count == 0)
-            {
-                _logger.LogWarning("Template values not set for contract: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Execute clauses via service navigator
-            var distributions = await ExecuteContractClausesAsync(model, cancellationToken);
-
-            // Mark as executed
-            var now = DateTimeOffset.UtcNow;
-            model.ExecutedAt = now;
-            model.ExecutionIdempotencyKey = body.IdempotencyKey ?? Guid.NewGuid().ToString();
-            model.ExecutionDistributions = distributions;
-            model.UpdatedAt = now;
-
-            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var response = new ExecuteContractResponse
+            return (StatusCodes.OK, new ExecuteContractResponse
             {
                 Executed = true,
-                AlreadyExecuted = false,
+                AlreadyExecuted = true,
                 ContractId = body.ContractInstanceId,
-                Distributions = distributions.Select(d => new ClauseDistributionResult
+                Distributions = model.ExecutionDistributions?.Select(d => new ClauseDistributionResult
                 {
                     ClauseId = Guid.TryParse(d.ClauseId, out var cid) ? cid : Guid.Empty,
                     ClauseType = d.ClauseType,
@@ -1008,22 +946,84 @@ public partial class ContractService
                     Succeeded = d.Succeeded,
                     FailureReason = d.FailureReason
                 }).ToList(),
-                ExecutedAt = now
-            };
+                ExecutedAt = model.ExecutedAt
+            });
+        }
 
-            // Cache for idempotency
-            if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        // Also check by idempotency key if provided
+        if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        {
+            var idempotencyKey = $"{IDEMPOTENCY_PREFIX}execute:{body.IdempotencyKey}";
+            var existingResult = await _stateStoreFactory.GetStore<ExecuteContractResponse>(StateStoreDefinitions.Contract)
+                .GetAsync(idempotencyKey, cancellationToken);
+            if (existingResult != null)
             {
-                var idempotencyKey = $"{IDEMPOTENCY_PREFIX}execute:{body.IdempotencyKey}";
-                await _stateStoreFactory.GetStore<ExecuteContractResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
+                return (StatusCodes.OK, existingResult);
             }
+        }
 
-            // Publish event
-            await PublishContractExecutedEventAsync(model, distributions, cancellationToken);
+        // Verify contract is in fulfilled status
+        if (model.Status != ContractStatus.Fulfilled)
+        {
+            _logger.LogWarning("Contract not in fulfilled status: {ContractId}, status: {Status}",
+                body.ContractInstanceId, model.Status);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            _logger.LogInformation("Executed contract: {ContractId} with {Count} distributions",
-                body.ContractInstanceId, distributions.Count);
+        // Verify template values are set
+        if (model.TemplateValues == null || model.TemplateValues.Count == 0)
+        {
+            _logger.LogWarning("Template values not set for contract: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Execute clauses via service navigator
+        var distributions = await ExecuteContractClausesAsync(model, cancellationToken);
+
+        // Mark as executed
+        var now = DateTimeOffset.UtcNow;
+        model.ExecutedAt = now;
+        model.ExecutionIdempotencyKey = body.IdempotencyKey ?? Guid.NewGuid().ToString();
+        model.ExecutionDistributions = distributions;
+        model.UpdatedAt = now;
+
+        var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractInstanceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var response = new ExecuteContractResponse
+        {
+            Executed = true,
+            AlreadyExecuted = false,
+            ContractId = body.ContractInstanceId,
+            Distributions = distributions.Select(d => new ClauseDistributionResult
+            {
+                ClauseId = Guid.TryParse(d.ClauseId, out var cid) ? cid : Guid.Empty,
+                ClauseType = d.ClauseType,
+                AssetType = d.AssetType,
+                Amount = d.Amount,
+                Succeeded = d.Succeeded,
+                FailureReason = d.FailureReason
+            }).ToList(),
+            ExecutedAt = now
+        };
+
+        // Cache for idempotency
+        if (!string.IsNullOrEmpty(body.IdempotencyKey))
+        {
+            var idempotencyKey = $"{IDEMPOTENCY_PREFIX}execute:{body.IdempotencyKey}";
+            await _stateStoreFactory.GetStore<ExecuteContractResponse>(StateStoreDefinitions.Contract)
+                .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
+        }
+
+        // Publish event
+        await PublishContractExecutedEventAsync(model, distributions, cancellationToken);
+
+        _logger.LogInformation("Executed contract: {ContractId} with {Count} distributions",
+            body.ContractInstanceId, distributions.Count);
 
         return (StatusCodes.OK, response);
     }

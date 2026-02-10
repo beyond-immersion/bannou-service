@@ -268,99 +268,99 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-            if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
-            {
-                _logger.LogWarning("GetDocument failed: Either DocumentId or Slug is required");
-                return (StatusCodes.BadRequest, null);
-            }
+        if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
+        {
+            _logger.LogWarning("GetDocument failed: Either DocumentId or Slug is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            var namespaceId = body.Namespace;
-            Guid documentId;
-            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var namespaceId = body.Namespace;
+        Guid documentId;
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
-            // Resolve document ID from slug if provided
-            if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
+        // Resolve document ID from slug if provided
+        if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
+        {
+            documentId = body.DocumentId.Value;
+        }
+        else
+        {
+            // Use slug (already validated as non-empty above)
+            var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{body.Slug}";
+            var resolvedIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+            if (string.IsNullOrEmpty(resolvedIdStr) || !Guid.TryParse(resolvedIdStr, out documentId))
             {
-                documentId = body.DocumentId.Value;
-            }
-            else
-            {
-                // Use slug (already validated as non-empty above)
-                var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{body.Slug}";
-                var resolvedIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
-                if (string.IsNullOrEmpty(resolvedIdStr) || !Guid.TryParse(resolvedIdStr, out documentId))
-                {
-                    _logger.LogDebug("Document with slug {Slug} not found in namespace {Namespace}", body.Slug, namespaceId);
-                    return (StatusCodes.NotFound, null);
-                }
-            }
-
-            // Fetch document from state store
-            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
-            if (storedDoc == null)
-            {
-                _logger.LogDebug("Document {DocumentId} not found in namespace {Namespace}", documentId, namespaceId);
+                _logger.LogDebug("Document with slug {Slug} not found in namespace {Namespace}", body.Slug, namespaceId);
                 return (StatusCodes.NotFound, null);
             }
+        }
 
-            // Build response document
-            var doc = new Document
-            {
-                DocumentId = storedDoc.DocumentId,
-                Namespace = storedDoc.Namespace,
-                Slug = storedDoc.Slug,
-                Title = storedDoc.Title,
-                Category = ParseDocumentCategory(storedDoc.Category),
-                Summary = storedDoc.Summary,
-                VoiceSummary = storedDoc.VoiceSummary,
-                Tags = storedDoc.Tags,
-                RelatedDocuments = storedDoc.RelatedDocuments,
-                Metadata = storedDoc.Metadata ?? new object(),
-                CreatedAt = storedDoc.CreatedAt,
-                UpdatedAt = storedDoc.UpdatedAt
-            };
+        // Fetch document from state store
+        var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+        var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
+        if (storedDoc == null)
+        {
+            _logger.LogDebug("Document {DocumentId} not found in namespace {Namespace}", documentId, namespaceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Include content if requested
-            if (body.IncludeContent)
+        // Build response document
+        var doc = new Document
+        {
+            DocumentId = storedDoc.DocumentId,
+            Namespace = storedDoc.Namespace,
+            Slug = storedDoc.Slug,
+            Title = storedDoc.Title,
+            Category = ParseDocumentCategory(storedDoc.Category),
+            Summary = storedDoc.Summary,
+            VoiceSummary = storedDoc.VoiceSummary,
+            Tags = storedDoc.Tags,
+            RelatedDocuments = storedDoc.RelatedDocuments,
+            Metadata = storedDoc.Metadata ?? new object(),
+            CreatedAt = storedDoc.CreatedAt,
+            UpdatedAt = storedDoc.UpdatedAt
+        };
+
+        // Include content if requested
+        if (body.IncludeContent)
+        {
+            // Content should never be null for a stored document - this is a data integrity issue
+            var content = storedDoc.Content;
+            if (string.IsNullOrEmpty(content))
             {
-                // Content should never be null for a stored document - this is a data integrity issue
-                var content = storedDoc.Content;
-                if (string.IsNullOrEmpty(content))
-                {
-                    _logger.LogError("Document {DocumentId} in namespace {Namespace} has null/empty Content - data integrity issue", documentId, namespaceId);
-                    await _messageBus.TryPublishErrorAsync(
-                        serviceName: "documentation",
-                        operation: "GetDocument",
-                        errorType: "DataIntegrityError",
-                        message: "Stored document has null/empty Content",
-                        details: new { DocumentId = documentId, Namespace = namespaceId },
-                        cancellationToken: cancellationToken);
-                    return (StatusCodes.InternalServerError, null);
-                }
-                // content is guaranteed non-null after the check above
-                doc.Content = body.RenderHtml ? RenderMarkdownToHtml(content) ?? content : content;
+                _logger.LogError("Document {DocumentId} in namespace {Namespace} has null/empty Content - data integrity issue", documentId, namespaceId);
+                await _messageBus.TryPublishErrorAsync(
+                    serviceName: "documentation",
+                    operation: "GetDocument",
+                    errorType: "DataIntegrityError",
+                    message: "Stored document has null/empty Content",
+                    details: new { DocumentId = documentId, Namespace = namespaceId },
+                    cancellationToken: cancellationToken);
+                return (StatusCodes.InternalServerError, null);
             }
+            // content is guaranteed non-null after the check above
+            doc.Content = body.RenderHtml ? RenderMarkdownToHtml(content) ?? content : content;
+        }
 
-            var response = new GetDocumentResponse
-            {
-                Document = doc,
-                ContentFormat = body.IncludeContent
-                    ? (body.RenderHtml ? GetDocumentResponseContentFormat.Html : GetDocumentResponseContentFormat.Markdown)
-                    : GetDocumentResponseContentFormat.None
-            };
+        var response = new GetDocumentResponse
+        {
+            Document = doc,
+            ContentFormat = body.IncludeContent
+                ? (body.RenderHtml ? GetDocumentResponseContentFormat.Html : GetDocumentResponseContentFormat.Markdown)
+                : GetDocumentResponseContentFormat.None
+        };
 
-            // Include related documents if requested
-            var includeRelated = body.IncludeRelated ?? RelatedDepth.None;
-            if (includeRelated != RelatedDepth.None && storedDoc.RelatedDocuments.Count > 0)
-            {
-                response.RelatedDocuments = await GetRelatedDocumentSummariesAsync(
-                    namespaceId,
-                    storedDoc.RelatedDocuments,
-                    includeRelated,
-                    cancellationToken);
-            }
+        // Include related documents if requested
+        var includeRelated = body.IncludeRelated ?? RelatedDepth.None;
+        if (includeRelated != RelatedDepth.None && storedDoc.RelatedDocuments.Count > 0)
+        {
+            response.RelatedDocuments = await GetRelatedDocumentSummariesAsync(
+                namespaceId,
+                storedDoc.RelatedDocuments,
+                includeRelated,
+                cancellationToken);
+        }
 
         _logger.LogDebug("Retrieved document {DocumentId} from namespace {Namespace}", documentId, namespaceId);
         return (StatusCodes.OK, response);
@@ -377,94 +377,94 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-            if (string.IsNullOrWhiteSpace(body.SearchTerm))
+        if (string.IsNullOrWhiteSpace(body.SearchTerm))
+        {
+            _logger.LogWarning("SearchDocumentation failed: SearchTerm is required");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var namespaceId = body.Namespace;
+        var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
+        var categoryFilter = body.Category == default ? null : body.Category.ToString();
+
+        // Check search cache
+        var cacheKey = SearchResultCache.BuildKey(namespaceId, body.SearchTerm, categoryFilter, maxResults);
+        if (_configuration.SearchCacheTtlSeconds > 0 &&
+            _searchCache.TryGet(cacheKey, out var cachedResponse))
+        {
+            return (StatusCodes.OK, cachedResponse);
+        }
+
+        // Perform keyword search using search index
+        var searchResults = await _searchIndexService.SearchAsync(
+            namespaceId,
+            body.SearchTerm,
+            categoryFilter,
+            maxResults,
+            cancellationToken);
+
+        // Build response with document results (track CreatedAt for recency sorting)
+        var resultsWithMetadata = new List<(DocumentResult Result, DateTimeOffset CreatedAt)>();
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        foreach (var result in searchResults)
+        {
+            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{result.DocumentId}";
+            var doc = await docStore.GetAsync(docKey, cancellationToken);
+
+            if (doc != null)
             {
-                _logger.LogWarning("SearchDocumentation failed: SearchTerm is required");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var namespaceId = body.Namespace;
-            var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
-            var categoryFilter = body.Category == default ? null : body.Category.ToString();
-
-            // Check search cache
-            var cacheKey = SearchResultCache.BuildKey(namespaceId, body.SearchTerm, categoryFilter, maxResults);
-            if (_configuration.SearchCacheTtlSeconds > 0 &&
-                _searchCache.TryGet(cacheKey, out var cachedResponse))
-            {
-                return (StatusCodes.OK, cachedResponse);
-            }
-
-            // Perform keyword search using search index
-            var searchResults = await _searchIndexService.SearchAsync(
-                namespaceId,
-                body.SearchTerm,
-                categoryFilter,
-                maxResults,
-                cancellationToken);
-
-            // Build response with document results (track CreatedAt for recency sorting)
-            var resultsWithMetadata = new List<(DocumentResult Result, DateTimeOffset CreatedAt)>();
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
-            foreach (var result in searchResults)
-            {
-                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{result.DocumentId}";
-                var doc = await docStore.GetAsync(docKey, cancellationToken);
-
-                if (doc != null)
+                resultsWithMetadata.Add((new DocumentResult
                 {
-                    resultsWithMetadata.Add((new DocumentResult
-                    {
-                        DocumentId = doc.DocumentId,
-                        Slug = doc.Slug,
-                        Title = doc.Title,
-                        Category = ParseDocumentCategory(doc.Category),
-                        Summary = doc.Summary,
-                        VoiceSummary = doc.VoiceSummary,
-                        RelevanceScore = (float)result.RelevanceScore,
-                        MatchHighlights = new List<string> { GenerateSearchSnippet(doc.Content, body.SearchTerm, _configuration.SearchSnippetLength) }
-                    }, doc.CreatedAt));
-                }
+                    DocumentId = doc.DocumentId,
+                    Slug = doc.Slug,
+                    Title = doc.Title,
+                    Category = ParseDocumentCategory(doc.Category),
+                    Summary = doc.Summary,
+                    VoiceSummary = doc.VoiceSummary,
+                    RelevanceScore = (float)result.RelevanceScore,
+                    MatchHighlights = new List<string> { GenerateSearchSnippet(doc.Content, body.SearchTerm, _configuration.SearchSnippetLength) }
+                }, doc.CreatedAt));
             }
+        }
 
-            // Filter out results below minimum relevance score
-            if (_configuration.MinRelevanceScore > 0)
-            {
-                resultsWithMetadata = resultsWithMetadata
-                    .Where(r => r.Result.RelevanceScore >= _configuration.MinRelevanceScore)
-                    .ToList();
-            }
+        // Filter out results below minimum relevance score
+        if (_configuration.MinRelevanceScore > 0)
+        {
+            resultsWithMetadata = resultsWithMetadata
+                .Where(r => r.Result.RelevanceScore >= _configuration.MinRelevanceScore)
+                .ToList();
+        }
 
-            // Apply sorting based on request
-            IEnumerable<(DocumentResult Result, DateTimeOffset CreatedAt)> sortedResults = body.SortBy switch
-            {
-                SearchDocumentationRequestSortBy.Relevance => resultsWithMetadata, // Already sorted by relevance from search engine
-                SearchDocumentationRequestSortBy.Recency => resultsWithMetadata.OrderByDescending(r => r.CreatedAt),
-                SearchDocumentationRequestSortBy.Alphabetical => resultsWithMetadata.OrderBy(r => r.Result.Title, StringComparer.OrdinalIgnoreCase),
-                _ => resultsWithMetadata
-            };
+        // Apply sorting based on request
+        IEnumerable<(DocumentResult Result, DateTimeOffset CreatedAt)> sortedResults = body.SortBy switch
+        {
+            SearchDocumentationRequestSortBy.Relevance => resultsWithMetadata, // Already sorted by relevance from search engine
+            SearchDocumentationRequestSortBy.Recency => resultsWithMetadata.OrderByDescending(r => r.CreatedAt),
+            SearchDocumentationRequestSortBy.Alphabetical => resultsWithMetadata.OrderBy(r => r.Result.Title, StringComparer.OrdinalIgnoreCase),
+            _ => resultsWithMetadata
+        };
 
-            var finalResults = sortedResults.Select(r => r.Result).ToList();
+        var finalResults = sortedResults.Select(r => r.Result).ToList();
 
-            // Publish analytics event (non-blocking)
-            _ = PublishSearchAnalyticsEventAsync(namespaceId, body.SearchTerm, body.SessionId, finalResults.Count);
+        // Publish analytics event (non-blocking)
+        _ = PublishSearchAnalyticsEventAsync(namespaceId, body.SearchTerm, body.SessionId, finalResults.Count);
 
-            _logger.LogInformation("Search in namespace {Namespace} for '{Term}' returned {Count} results (sorted by {SortBy})",
-                namespaceId, body.SearchTerm, finalResults.Count, body.SortBy);
+        _logger.LogInformation("Search in namespace {Namespace} for '{Term}' returned {Count} results (sorted by {SortBy})",
+            namespaceId, body.SearchTerm, finalResults.Count, body.SortBy);
 
-            var response = new SearchDocumentationResponse
-            {
-                Results = finalResults,
-                TotalResults = finalResults.Count,
-                SearchTerm = body.SearchTerm,
-                Namespace = namespaceId
-            };
+        var response = new SearchDocumentationResponse
+        {
+            Results = finalResults,
+            TotalResults = finalResults.Count,
+            SearchTerm = body.SearchTerm,
+            Namespace = namespaceId
+        };
 
-            // Cache results
-            if (_configuration.SearchCacheTtlSeconds > 0)
-            {
-                _searchCache.Set(cacheKey, response, TimeSpan.FromSeconds(_configuration.SearchCacheTtlSeconds));
-            }
+        // Cache results
+        if (_configuration.SearchCacheTtlSeconds > 0)
+        {
+            _searchCache.Set(cacheKey, response, TimeSpan.FromSeconds(_configuration.SearchCacheTtlSeconds));
+        }
 
         return (StatusCodes.OK, response);
     }
@@ -481,94 +481,94 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-            var namespaceId = body.Namespace;
-            var page = body.Page;
-            var pageSize = body.PageSize;
-            var requestedTags = body.Tags?.ToList() ?? new List<string>();
-            var hasTags = requestedTags.Count > 0;
+        var namespaceId = body.Namespace;
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var requestedTags = body.Tags?.ToList() ?? new List<string>();
+        var hasTags = requestedTags.Count > 0;
 
-            // If filtering by tags or sorting, we need to fetch all documents first, then filter/sort/paginate
-            // Otherwise, use the optimized path
-            var categoryFilter = body.Category == default ? null : body.Category.ToString();
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        // If filtering by tags or sorting, we need to fetch all documents first, then filter/sort/paginate
+        // Otherwise, use the optimized path
+        var categoryFilter = body.Category == default ? null : body.Category.ToString();
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
-            // Fetch more documents if we need to filter/sort (configurable max to prevent memory issues)
-            var fetchLimit = hasTags || body.SortBy != default ? _configuration.MaxFetchLimit : pageSize;
-            var docIds = await _searchIndexService.ListDocumentIdsAsync(
-                namespaceId,
-                categoryFilter,
-                0, // Always start from 0 when sorting/filtering
-                fetchLimit,
-                cancellationToken);
+        // Fetch more documents if we need to filter/sort (configurable max to prevent memory issues)
+        var fetchLimit = hasTags || body.SortBy != default ? _configuration.MaxFetchLimit : pageSize;
+        var docIds = await _searchIndexService.ListDocumentIdsAsync(
+            namespaceId,
+            categoryFilter,
+            0, // Always start from 0 when sorting/filtering
+            fetchLimit,
+            cancellationToken);
 
-            // Fetch document data with metadata for sorting using bulk get (fixes N+1 query pattern)
-            var documentsWithMetadata = new List<(DocumentSummary Summary, StoredDocument Doc)>();
-            if (docIds.Count > 0)
+        // Fetch document data with metadata for sorting using bulk get (fixes N+1 query pattern)
+        var documentsWithMetadata = new List<(DocumentSummary Summary, StoredDocument Doc)>();
+        if (docIds.Count > 0)
+        {
+            var docKeys = docIds.Select(docId => $"{DOC_KEY_PREFIX}{namespaceId}:{docId}").ToList();
+            var bulkResult = await docStore.GetBulkAsync(docKeys, cancellationToken);
+
+            foreach (var (_, doc) in bulkResult)
             {
-                var docKeys = docIds.Select(docId => $"{DOC_KEY_PREFIX}{namespaceId}:{docId}").ToList();
-                var bulkResult = await docStore.GetBulkAsync(docKeys, cancellationToken);
-
-                foreach (var (_, doc) in bulkResult)
+                if (doc != null)
                 {
-                    if (doc != null)
+                    documentsWithMetadata.Add((new DocumentSummary
                     {
-                        documentsWithMetadata.Add((new DocumentSummary
-                        {
-                            DocumentId = doc.DocumentId,
-                            Slug = doc.Slug,
-                            Title = doc.Title,
-                            Category = ParseDocumentCategory(doc.Category),
-                            Summary = doc.Summary,
-                            VoiceSummary = doc.VoiceSummary,
-                            Tags = doc.Tags
-                        }, doc));
-                    }
+                        DocumentId = doc.DocumentId,
+                        Slug = doc.Slug,
+                        Title = doc.Title,
+                        Category = ParseDocumentCategory(doc.Category),
+                        Summary = doc.Summary,
+                        VoiceSummary = doc.VoiceSummary,
+                        Tags = doc.Tags
+                    }, doc));
                 }
             }
+        }
 
-            // Apply tags filter if specified
-            if (hasTags)
+        // Apply tags filter if specified
+        if (hasTags)
+        {
+            documentsWithMetadata = body.TagsMatch switch
             {
-                documentsWithMetadata = body.TagsMatch switch
-                {
-                    ListDocumentsRequestTagsMatch.All => documentsWithMetadata
-                        .Where(d => requestedTags.All(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
-                        .ToList(),
-                    ListDocumentsRequestTagsMatch.Any => documentsWithMetadata
-                        .Where(d => requestedTags.Any(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
-                        .ToList(),
-                    _ => documentsWithMetadata
-                };
-            }
-
-            // Apply sorting
-            IEnumerable<(DocumentSummary Summary, StoredDocument Doc)> sortedDocuments = body.SortBy switch
-            {
-                ListSortField.CreatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
-                    ? documentsWithMetadata.OrderBy(d => d.Doc.CreatedAt)
-                    : documentsWithMetadata.OrderByDescending(d => d.Doc.CreatedAt),
-                ListSortField.UpdatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
-                    ? documentsWithMetadata.OrderBy(d => d.Doc.UpdatedAt)
-                    : documentsWithMetadata.OrderByDescending(d => d.Doc.UpdatedAt),
-                ListSortField.Title => body.SortOrder == ListDocumentsRequestSortOrder.Asc
-                    ? documentsWithMetadata.OrderBy(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase)
-                    : documentsWithMetadata.OrderByDescending(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase),
-                _ => documentsWithMetadata // Default: no additional sorting
+                ListDocumentsRequestTagsMatch.All => documentsWithMetadata
+                    .Where(d => requestedTags.All(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
+                    .ToList(),
+                ListDocumentsRequestTagsMatch.Any => documentsWithMetadata
+                    .Where(d => requestedTags.Any(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
+                    .ToList(),
+                _ => documentsWithMetadata
             };
+        }
 
-            // Get filtered count for pagination
-            var filteredList = sortedDocuments.ToList();
-            var totalCount = filteredList.Count;
+        // Apply sorting
+        IEnumerable<(DocumentSummary Summary, StoredDocument Doc)> sortedDocuments = body.SortBy switch
+        {
+            ListSortField.CreatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                ? documentsWithMetadata.OrderBy(d => d.Doc.CreatedAt)
+                : documentsWithMetadata.OrderByDescending(d => d.Doc.CreatedAt),
+            ListSortField.UpdatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                ? documentsWithMetadata.OrderBy(d => d.Doc.UpdatedAt)
+                : documentsWithMetadata.OrderByDescending(d => d.Doc.UpdatedAt),
+            ListSortField.Title => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                ? documentsWithMetadata.OrderBy(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase)
+                : documentsWithMetadata.OrderByDescending(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase),
+            _ => documentsWithMetadata // Default: no additional sorting
+        };
 
-            // Apply pagination
-            var skip = (page - 1) * pageSize;
-            var documents = filteredList.Skip(skip).Take(pageSize).Select(d => d.Summary).ToList();
+        // Get filtered count for pagination
+        var filteredList = sortedDocuments.ToList();
+        var totalCount = filteredList.Count;
 
-            // Calculate total pages
-            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        // Apply pagination
+        var skip = (page - 1) * pageSize;
+        var documents = filteredList.Skip(skip).Take(pageSize).Select(d => d.Summary).ToList();
 
-            _logger.LogDebug("ListDocuments returned {Count} of {Total} documents in namespace {Namespace} (filtered by tags: {HasTags})",
-                documents.Count, totalCount, namespaceId, hasTags);
+        // Calculate total pages
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+        _logger.LogDebug("ListDocuments returned {Count} of {Total} documents in namespace {Namespace} (filtered by tags: {HasTags})",
+            documents.Count, totalCount, namespaceId, hasTags);
 
         return (StatusCodes.OK, new ListDocumentsResponse
         {
@@ -588,36 +588,36 @@ public partial class DocumentationService : IDocumentationService
         var namespaceId = body.Namespace;
         var maxSuggestions = body.MaxSuggestions;
 
-            // Get related document IDs from search index
-            var relatedIds = await _searchIndexService.GetRelatedSuggestionsAsync(
-                namespaceId,
-                body.SourceValue,
-                maxSuggestions,
-                cancellationToken);
+        // Get related document IDs from search index
+        var relatedIds = await _searchIndexService.GetRelatedSuggestionsAsync(
+            namespaceId,
+            body.SourceValue,
+            maxSuggestions,
+            cancellationToken);
 
-            // Fetch document summaries and build topic suggestions
-            var suggestions = new List<TopicSuggestion>();
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
-            foreach (var docId in relatedIds)
+        // Fetch document summaries and build topic suggestions
+        var suggestions = new List<TopicSuggestion>();
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        foreach (var docId in relatedIds)
+        {
+            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
+            var doc = await docStore.GetAsync(docKey, cancellationToken);
+
+            if (doc != null)
             {
-                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
-                var doc = await docStore.GetAsync(docKey, cancellationToken);
-
-                if (doc != null)
+                suggestions.Add(new TopicSuggestion
                 {
-                    suggestions.Add(new TopicSuggestion
-                    {
-                        DocumentId = doc.DocumentId,
-                        Slug = doc.Slug,
-                        Title = doc.Title,
-                        Category = ParseDocumentCategory(doc.Category),
-                        RelevanceReason = DetermineRelevanceReason(body.SuggestionSource, body.SourceValue, doc)
-                    });
-                }
+                    DocumentId = doc.DocumentId,
+                    Slug = doc.Slug,
+                    Title = doc.Title,
+                    Category = ParseDocumentCategory(doc.Category),
+                    RelevanceReason = DetermineRelevanceReason(body.SuggestionSource, body.SourceValue, doc)
+                });
             }
+        }
 
-            _logger.LogDebug("SuggestRelatedTopics for '{Source}' returned {Count} suggestions",
-                body.SourceValue, suggestions.Count);
+        _logger.LogDebug("SuggestRelatedTopics for '{Source}' returned {Count} suggestions",
+            body.SourceValue, suggestions.Count);
 
         return (StatusCodes.OK, new SuggestRelatedResponse
         {
@@ -637,98 +637,98 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-            if (string.IsNullOrWhiteSpace(body.Slug))
-            {
-                _logger.LogWarning("CreateDocument failed: Slug is required");
-                return (StatusCodes.BadRequest, null);
-            }
+        if (string.IsNullOrWhiteSpace(body.Slug))
+        {
+            _logger.LogWarning("CreateDocument failed: Slug is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (string.IsNullOrWhiteSpace(body.Title))
-            {
-                _logger.LogWarning("CreateDocument failed: Title is required");
-                return (StatusCodes.BadRequest, null);
-            }
+        if (string.IsNullOrWhiteSpace(body.Title))
+        {
+            _logger.LogWarning("CreateDocument failed: Title is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Validate content size against configuration limit
-            if (body.Content != null && System.Text.Encoding.UTF8.GetByteCount(body.Content) > _configuration.MaxContentSizeBytes)
-            {
-                _logger.LogWarning("CreateDocument failed: Content size exceeds maximum of {MaxBytes} bytes",
-                    _configuration.MaxContentSizeBytes);
-                return (StatusCodes.BadRequest, null);
-            }
+        // Validate content size against configuration limit
+        if (body.Content != null && System.Text.Encoding.UTF8.GetByteCount(body.Content) > _configuration.MaxContentSizeBytes)
+        {
+            _logger.LogWarning("CreateDocument failed: Content size exceeds maximum of {MaxBytes} bytes",
+                _configuration.MaxContentSizeBytes);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Check if namespace is bound to a repository (403 for manual modifications)
-            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
-            if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
-            {
-                _logger.LogWarning("CreateDocument rejected: namespace {Namespace} is bound to repository", body.Namespace);
-                return (StatusCodes.Forbidden, null);
-            }
+        // Check if namespace is bound to a repository (403 for manual modifications)
+        var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+        if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+        {
+            _logger.LogWarning("CreateDocument rejected: namespace {Namespace} is bound to repository", body.Namespace);
+            return (StatusCodes.Forbidden, null);
+        }
 
-            var namespaceId = body.Namespace;
-            var slug = body.Slug;
-            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var namespaceId = body.Namespace;
+        var slug = body.Slug;
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
-            // Check if slug already exists in this namespace
-            var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
-            var existingDocIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
-            if (!string.IsNullOrEmpty(existingDocIdStr))
-            {
-                _logger.LogWarning("Document with slug {Slug} already exists in namespace {Namespace}", slug, namespaceId);
-                return (StatusCodes.Conflict, null);
-            }
+        // Check if slug already exists in this namespace
+        var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
+        var existingDocIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+        if (!string.IsNullOrEmpty(existingDocIdStr))
+        {
+            _logger.LogWarning("Document with slug {Slug} already exists in namespace {Namespace}", slug, namespaceId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            // Generate new document ID and timestamps
-            var documentId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
+        // Generate new document ID and timestamps
+        var documentId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
 
-            // Create stored document model
-            var storedDoc = new StoredDocument
-            {
-                DocumentId = documentId,
-                Namespace = namespaceId,
-                Slug = slug,
-                Title = body.Title,
-                Category = body.Category.ToString(),
-                Content = body.Content,
-                Summary = body.Summary,
-                VoiceSummary = TruncateVoiceSummary(body.VoiceSummary),
-                Tags = body.Tags?.ToList() ?? [],
-                RelatedDocuments = body.RelatedDocuments?.ToList() ?? [],
-                Metadata = body.Metadata,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
+        // Create stored document model
+        var storedDoc = new StoredDocument
+        {
+            DocumentId = documentId,
+            Namespace = namespaceId,
+            Slug = slug,
+            Title = body.Title,
+            Category = body.Category.ToString(),
+            Content = body.Content,
+            Summary = body.Summary,
+            VoiceSummary = TruncateVoiceSummary(body.VoiceSummary),
+            Tags = body.Tags?.ToList() ?? [],
+            RelatedDocuments = body.RelatedDocuments?.ToList() ?? [],
+            Metadata = body.Metadata,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
 
-            // Ensure search index exists BEFORE saving (Redis Search only auto-indexes new documents)
-            await _searchIndexService.EnsureIndexExistsAsync(namespaceId, cancellationToken);
+        // Ensure search index exists BEFORE saving (Redis Search only auto-indexes new documents)
+        await _searchIndexService.EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
-            // Save document to state store
-            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
+        // Save document to state store
+        var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+        await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
 
-            // Create slug index entry
-            await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
+        // Create slug index entry
+        await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
 
-            // Add to namespace document list
-            await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
+        // Add to namespace document list
+        await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
 
-            // Index for search
-            _searchIndexService.IndexDocument(
-                namespaceId,
-                documentId,
-                storedDoc.Title,
-                storedDoc.Slug,
-                storedDoc.Content,
-                storedDoc.Category,
-                storedDoc.Tags);
+        // Index for search
+        _searchIndexService.IndexDocument(
+            namespaceId,
+            documentId,
+            storedDoc.Title,
+            storedDoc.Slug,
+            storedDoc.Content,
+            storedDoc.Category,
+            storedDoc.Tags);
 
-            // Publish lifecycle event
-            await PublishDocumentCreatedEventAsync(storedDoc, cancellationToken);
+        // Publish lifecycle event
+        await PublishDocumentCreatedEventAsync(storedDoc, cancellationToken);
 
-            _logger.LogInformation("Created document {DocumentId} with slug {Slug} in namespace {Namespace}",
-                documentId, slug, namespaceId);
+        _logger.LogInformation("Created document {DocumentId} with slug {Slug} in namespace {Namespace}",
+            documentId, slug, namespaceId);
 
         return (StatusCodes.OK, new CreateDocumentResponse
         {
@@ -745,138 +745,138 @@ public partial class DocumentationService : IDocumentationService
         var namespaceId = body.Namespace;
         var documentId = body.DocumentId;
 
-            if (documentId == Guid.Empty)
+        if (documentId == Guid.Empty)
+        {
+            _logger.LogWarning("UpdateDocument requires documentId");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check if namespace is bound to a repository (403 for manual modifications)
+        var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
+        if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+        {
+            _logger.LogWarning("UpdateDocument rejected: namespace {Namespace} is bound to repository", namespaceId);
+            return (StatusCodes.Forbidden, null);
+        }
+
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+
+        // Fetch existing document
+        var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+        var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
+        if (storedDoc == null)
+        {
+            _logger.LogDebug("Document {DocumentId} not found in namespace {Namespace}", documentId, namespaceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var changedFields = new List<string>();
+        var oldSlug = storedDoc.Slug;
+        var now = DateTimeOffset.UtcNow;
+
+        // Apply updates for each provided field
+        if (!string.IsNullOrEmpty(body.Slug) && body.Slug != storedDoc.Slug)
+        {
+            // Check new slug doesn't conflict
+            var newSlugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{body.Slug}";
+            var conflictIdStr = await slugStore.GetAsync(newSlugKey, cancellationToken);
+            if (!string.IsNullOrEmpty(conflictIdStr) && Guid.TryParse(conflictIdStr, out var conflictId) && conflictId != documentId)
             {
-                _logger.LogWarning("UpdateDocument requires documentId");
+                _logger.LogWarning("Slug {Slug} already exists in namespace {Namespace}", body.Slug, namespaceId);
+                return (StatusCodes.Conflict, null);
+            }
+            storedDoc.Slug = body.Slug;
+            changedFields.Add("slug");
+        }
+
+        if (!string.IsNullOrEmpty(body.Title) && body.Title != storedDoc.Title)
+        {
+            storedDoc.Title = body.Title;
+            changedFields.Add("title");
+        }
+
+        if (body.Category.HasValue && body.Category.Value.ToString() != storedDoc.Category)
+        {
+            storedDoc.Category = body.Category.Value.ToString();
+            changedFields.Add("category");
+        }
+
+        if (!string.IsNullOrEmpty(body.Content) && body.Content != storedDoc.Content)
+        {
+            if (System.Text.Encoding.UTF8.GetByteCount(body.Content) > _configuration.MaxContentSizeBytes)
+            {
+                _logger.LogWarning("UpdateDocument failed: Content size exceeds maximum of {MaxBytes} bytes",
+                    _configuration.MaxContentSizeBytes);
                 return (StatusCodes.BadRequest, null);
             }
+            storedDoc.Content = body.Content;
+            changedFields.Add("content");
+        }
 
-            // Check if namespace is bound to a repository (403 for manual modifications)
-            var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
-            if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
-            {
-                _logger.LogWarning("UpdateDocument rejected: namespace {Namespace} is bound to repository", namespaceId);
-                return (StatusCodes.Forbidden, null);
-            }
+        if (body.Summary != null && body.Summary != storedDoc.Summary)
+        {
+            storedDoc.Summary = body.Summary;
+            changedFields.Add("summary");
+        }
 
-            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        if (body.VoiceSummary != null && body.VoiceSummary != storedDoc.VoiceSummary)
+        {
+            storedDoc.VoiceSummary = TruncateVoiceSummary(body.VoiceSummary);
+            changedFields.Add("voiceSummary");
+        }
 
-            // Fetch existing document
-            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
-            if (storedDoc == null)
-            {
-                _logger.LogDebug("Document {DocumentId} not found in namespace {Namespace}", documentId, namespaceId);
-                return (StatusCodes.NotFound, null);
-            }
+        if (body.Tags != null)
+        {
+            storedDoc.Tags = body.Tags.ToList();
+            changedFields.Add("tags");
+        }
 
-            var changedFields = new List<string>();
-            var oldSlug = storedDoc.Slug;
-            var now = DateTimeOffset.UtcNow;
+        if (body.RelatedDocuments != null)
+        {
+            storedDoc.RelatedDocuments = body.RelatedDocuments.ToList();
+            changedFields.Add("relatedDocuments");
+        }
 
-            // Apply updates for each provided field
-            if (!string.IsNullOrEmpty(body.Slug) && body.Slug != storedDoc.Slug)
-            {
-                // Check new slug doesn't conflict
-                var newSlugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{body.Slug}";
-                var conflictIdStr = await slugStore.GetAsync(newSlugKey, cancellationToken);
-                if (!string.IsNullOrEmpty(conflictIdStr) && Guid.TryParse(conflictIdStr, out var conflictId) && conflictId != documentId)
-                {
-                    _logger.LogWarning("Slug {Slug} already exists in namespace {Namespace}", body.Slug, namespaceId);
-                    return (StatusCodes.Conflict, null);
-                }
-                storedDoc.Slug = body.Slug;
-                changedFields.Add("slug");
-            }
+        if (body.Metadata != null)
+        {
+            storedDoc.Metadata = body.Metadata;
+            changedFields.Add("metadata");
+        }
 
-            if (!string.IsNullOrEmpty(body.Title) && body.Title != storedDoc.Title)
-            {
-                storedDoc.Title = body.Title;
-                changedFields.Add("title");
-            }
+        // Update timestamp
+        storedDoc.UpdatedAt = now;
 
-            if (body.Category.HasValue && body.Category.Value.ToString() != storedDoc.Category)
-            {
-                storedDoc.Category = body.Category.Value.ToString();
-                changedFields.Add("category");
-            }
+        // Save updated document
+        await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
 
-            if (!string.IsNullOrEmpty(body.Content) && body.Content != storedDoc.Content)
-            {
-                if (System.Text.Encoding.UTF8.GetByteCount(body.Content) > _configuration.MaxContentSizeBytes)
-                {
-                    _logger.LogWarning("UpdateDocument failed: Content size exceeds maximum of {MaxBytes} bytes",
-                        _configuration.MaxContentSizeBytes);
-                    return (StatusCodes.BadRequest, null);
-                }
-                storedDoc.Content = body.Content;
-                changedFields.Add("content");
-            }
+        // Update slug index if changed
+        if (changedFields.Contains("slug"))
+        {
+            // Remove old slug index
+            var oldSlugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{oldSlug}";
+            await slugStore.DeleteAsync(oldSlugKey, cancellationToken);
 
-            if (body.Summary != null && body.Summary != storedDoc.Summary)
-            {
-                storedDoc.Summary = body.Summary;
-                changedFields.Add("summary");
-            }
+            // Add new slug index
+            var newSlugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
+            await slugStore.SaveAsync(newSlugKey, documentId.ToString(), cancellationToken: cancellationToken);
+        }
 
-            if (body.VoiceSummary != null && body.VoiceSummary != storedDoc.VoiceSummary)
-            {
-                storedDoc.VoiceSummary = TruncateVoiceSummary(body.VoiceSummary);
-                changedFields.Add("voiceSummary");
-            }
+        // Update search index
+        _searchIndexService.IndexDocument(
+            namespaceId,
+            documentId,
+            storedDoc.Title,
+            storedDoc.Slug,
+            storedDoc.Content,
+            storedDoc.Category,
+            storedDoc.Tags);
 
-            if (body.Tags != null)
-            {
-                storedDoc.Tags = body.Tags.ToList();
-                changedFields.Add("tags");
-            }
+        // Publish lifecycle event
+        await PublishDocumentUpdatedEventAsync(storedDoc, changedFields, cancellationToken);
 
-            if (body.RelatedDocuments != null)
-            {
-                storedDoc.RelatedDocuments = body.RelatedDocuments.ToList();
-                changedFields.Add("relatedDocuments");
-            }
-
-            if (body.Metadata != null)
-            {
-                storedDoc.Metadata = body.Metadata;
-                changedFields.Add("metadata");
-            }
-
-            // Update timestamp
-            storedDoc.UpdatedAt = now;
-
-            // Save updated document
-            await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
-
-            // Update slug index if changed
-            if (changedFields.Contains("slug"))
-            {
-                // Remove old slug index
-                var oldSlugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{oldSlug}";
-                await slugStore.DeleteAsync(oldSlugKey, cancellationToken);
-
-                // Add new slug index
-                var newSlugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
-                await slugStore.SaveAsync(newSlugKey, documentId.ToString(), cancellationToken: cancellationToken);
-            }
-
-            // Update search index
-            _searchIndexService.IndexDocument(
-                namespaceId,
-                documentId,
-                storedDoc.Title,
-                storedDoc.Slug,
-                storedDoc.Content,
-                storedDoc.Category,
-                storedDoc.Tags);
-
-            // Publish lifecycle event
-            await PublishDocumentUpdatedEventAsync(storedDoc, changedFields, cancellationToken);
-
-            _logger.LogInformation("Updated document {DocumentId} in namespace {Namespace}, changed fields: {ChangedFields}",
-                documentId, namespaceId, string.Join(", ", changedFields));
+        _logger.LogInformation("Updated document {DocumentId} in namespace {Namespace}, changed fields: {ChangedFields}",
+            documentId, namespaceId, string.Join(", ", changedFields));
 
         return (StatusCodes.OK, new UpdateDocumentResponse
         {
@@ -897,89 +897,89 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-            if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
-            {
-                _logger.LogWarning("DeleteDocument failed: Either DocumentId or Slug is required");
-                return (StatusCodes.BadRequest, null);
-            }
+        if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
+        {
+            _logger.LogWarning("DeleteDocument failed: Either DocumentId or Slug is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Check if namespace is bound to a repository (403 for manual modifications)
-            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
-            if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
-            {
-                _logger.LogWarning("DeleteDocument rejected: namespace {Namespace} is bound to repository", body.Namespace);
-                return (StatusCodes.Forbidden, null);
-            }
+        // Check if namespace is bound to a repository (403 for manual modifications)
+        var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+        if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+        {
+            _logger.LogWarning("DeleteDocument rejected: namespace {Namespace} is bound to repository", body.Namespace);
+            return (StatusCodes.Forbidden, null);
+        }
 
-            var namespaceId = body.Namespace;
-            Guid documentId;
-            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
+        var namespaceId = body.Namespace;
+        Guid documentId;
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
-            // Resolve document ID from slug if provided
-            if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
+        // Resolve document ID from slug if provided
+        if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
+        {
+            documentId = body.DocumentId.Value;
+        }
+        else
+        {
+            // Use slug (already validated as non-empty above)
+            var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{body.Slug}";
+            var resolvedIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+            if (string.IsNullOrEmpty(resolvedIdStr) || !Guid.TryParse(resolvedIdStr, out documentId))
             {
-                documentId = body.DocumentId.Value;
-            }
-            else
-            {
-                // Use slug (already validated as non-empty above)
-                var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{body.Slug}";
-                var resolvedIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
-                if (string.IsNullOrEmpty(resolvedIdStr) || !Guid.TryParse(resolvedIdStr, out documentId))
-                {
-                    _logger.LogDebug("Document with slug {Slug} not found in namespace {Namespace}", body.Slug, namespaceId);
-                    return (StatusCodes.NotFound, null);
-                }
-            }
-
-            // Fetch existing document
-            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
-            if (storedDoc == null)
-            {
-                _logger.LogDebug("Document {DocumentId} not found in namespace {Namespace}", documentId, namespaceId);
+                _logger.LogDebug("Document with slug {Slug} not found in namespace {Namespace}", body.Slug, namespaceId);
                 return (StatusCodes.NotFound, null);
             }
+        }
 
-            var now = DateTimeOffset.UtcNow;
-            var trashcanTtl = TimeSpan.FromDays(_configuration.TrashcanTtlDays);
-            var expiresAt = now.Add(trashcanTtl);
+        // Fetch existing document
+        var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+        var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
+        if (storedDoc == null)
+        {
+            _logger.LogDebug("Document {DocumentId} not found in namespace {Namespace}", documentId, namespaceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Create trashcan entry with TTL metadata
-            var trashedDoc = new TrashedDocument
-            {
-                Document = storedDoc,
-                DeletedAt = now,
-                ExpiresAt = expiresAt
-            };
+        var now = DateTimeOffset.UtcNow;
+        var trashcanTtl = TimeSpan.FromDays(_configuration.TrashcanTtlDays);
+        var expiresAt = now.Add(trashcanTtl);
 
-            // Save to trashcan
-            var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
-            await trashStore.SaveAsync(trashKey, trashedDoc, cancellationToken: cancellationToken);
+        // Create trashcan entry with TTL metadata
+        var trashedDoc = new TrashedDocument
+        {
+            Document = storedDoc,
+            DeletedAt = now,
+            ExpiresAt = expiresAt
+        };
 
-            // Add to trashcan index
-            await AddDocumentToTrashcanIndexAsync(namespaceId, documentId, cancellationToken);
+        // Save to trashcan
+        var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
+        await trashStore.SaveAsync(trashKey, trashedDoc, cancellationToken: cancellationToken);
 
-            // Remove from main storage
-            await docStore.DeleteAsync(docKey, cancellationToken);
+        // Add to trashcan index
+        await AddDocumentToTrashcanIndexAsync(namespaceId, documentId, cancellationToken);
 
-            // Remove slug index
-            var slugKey2 = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
-            await slugStore.DeleteAsync(slugKey2, cancellationToken);
+        // Remove from main storage
+        await docStore.DeleteAsync(docKey, cancellationToken);
 
-            // Remove from namespace document list
-            await RemoveDocumentFromNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
+        // Remove slug index
+        var slugKey2 = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
+        await slugStore.DeleteAsync(slugKey2, cancellationToken);
 
-            // Remove from search index
-            _searchIndexService.RemoveDocument(namespaceId, documentId);
+        // Remove from namespace document list
+        await RemoveDocumentFromNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
 
-            // Publish lifecycle event
-            await PublishDocumentDeletedEventAsync(storedDoc, "User requested deletion", cancellationToken);
+        // Remove from search index
+        _searchIndexService.RemoveDocument(namespaceId, documentId);
 
-            _logger.LogInformation("Soft-deleted document {DocumentId} from namespace {Namespace}, recoverable until {ExpiresAt}",
-                documentId, namespaceId, expiresAt);
+        // Publish lifecycle event
+        await PublishDocumentDeletedEventAsync(storedDoc, "User requested deletion", cancellationToken);
+
+        _logger.LogInformation("Soft-deleted document {DocumentId} from namespace {Namespace}, recoverable until {ExpiresAt}",
+            documentId, namespaceId, expiresAt);
 
         return (StatusCodes.OK, new DeleteDocumentResponse
         {
@@ -999,67 +999,67 @@ public partial class DocumentationService : IDocumentationService
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
         var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
-            // Fetch from trashcan
-            var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
-            var trashedDoc = await trashStore.GetAsync(trashKey, cancellationToken);
-            if (trashedDoc == null)
-            {
-                _logger.LogDebug("Document {DocumentId} not found in trashcan for namespace {Namespace}", documentId, namespaceId);
-                return (StatusCodes.NotFound, null);
-            }
+        // Fetch from trashcan
+        var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
+        var trashedDoc = await trashStore.GetAsync(trashKey, cancellationToken);
+        if (trashedDoc == null)
+        {
+            _logger.LogDebug("Document {DocumentId} not found in trashcan for namespace {Namespace}", documentId, namespaceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Check if expired
-            if (trashedDoc.ExpiresAt < DateTimeOffset.UtcNow)
-            {
-                _logger.LogDebug("Document {DocumentId} has expired and cannot be recovered", documentId);
-                // Cleanup expired item
-                await trashStore.DeleteAsync(trashKey, cancellationToken);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Check if slug is still available
-            var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{trashedDoc.Document.Slug}";
-            var existingSlugIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
-            if (!string.IsNullOrEmpty(existingSlugIdStr))
-            {
-                _logger.LogWarning("Cannot recover document {DocumentId}: slug {Slug} is already in use", documentId, trashedDoc.Document.Slug);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-            var storedDoc = trashedDoc.Document;
-            storedDoc.UpdatedAt = now;
-
-            // Ensure search index exists BEFORE saving (Redis Search only auto-indexes new documents)
-            await _searchIndexService.EnsureIndexExistsAsync(namespaceId, cancellationToken);
-
-            // Restore to main storage
-            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
-
-            // Restore slug index
-            await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
-
-            // Add back to namespace document list
-            await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
-
-            // Re-index for search
-            _searchIndexService.IndexDocument(
-                namespaceId,
-                documentId,
-                storedDoc.Title,
-                storedDoc.Slug,
-                storedDoc.Content,
-                storedDoc.Category,
-                storedDoc.Tags);
-
-            // Remove from trashcan
+        // Check if expired
+        if (trashedDoc.ExpiresAt < DateTimeOffset.UtcNow)
+        {
+            _logger.LogDebug("Document {DocumentId} has expired and cannot be recovered", documentId);
+            // Cleanup expired item
             await trashStore.DeleteAsync(trashKey, cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Remove from trashcan index
-            await RemoveDocumentFromTrashcanIndexAsync(namespaceId, documentId, cancellationToken);
+        // Check if slug is still available
+        var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{trashedDoc.Document.Slug}";
+        var existingSlugIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+        if (!string.IsNullOrEmpty(existingSlugIdStr))
+        {
+            _logger.LogWarning("Cannot recover document {DocumentId}: slug {Slug} is already in use", documentId, trashedDoc.Document.Slug);
+            return (StatusCodes.Conflict, null);
+        }
 
-            _logger.LogInformation("Recovered document {DocumentId} from trashcan in namespace {Namespace}", documentId, namespaceId);
+        var now = DateTimeOffset.UtcNow;
+        var storedDoc = trashedDoc.Document;
+        storedDoc.UpdatedAt = now;
+
+        // Ensure search index exists BEFORE saving (Redis Search only auto-indexes new documents)
+        await _searchIndexService.EnsureIndexExistsAsync(namespaceId, cancellationToken);
+
+        // Restore to main storage
+        var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+        await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
+
+        // Restore slug index
+        await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
+
+        // Add back to namespace document list
+        await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
+
+        // Re-index for search
+        _searchIndexService.IndexDocument(
+            namespaceId,
+            documentId,
+            storedDoc.Title,
+            storedDoc.Slug,
+            storedDoc.Content,
+            storedDoc.Category,
+            storedDoc.Tags);
+
+        // Remove from trashcan
+        await trashStore.DeleteAsync(trashKey, cancellationToken);
+
+        // Remove from trashcan index
+        await RemoveDocumentFromTrashcanIndexAsync(namespaceId, documentId, cancellationToken);
+
+        _logger.LogInformation("Recovered document {DocumentId} from trashcan in namespace {Namespace}", documentId, namespaceId);
 
         return (StatusCodes.OK, new RecoverDocumentResponse
         {
@@ -1078,85 +1078,85 @@ public partial class DocumentationService : IDocumentationService
         var now = DateTimeOffset.UtcNow;
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
-            var batchCounter = 0;
-            foreach (var documentId in body.DocumentIds)
+        var batchCounter = 0;
+        foreach (var documentId in body.DocumentIds)
+        {
+            try
             {
-                try
+                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+                var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
+
+                if (storedDoc == null)
                 {
-                    var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-                    var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
+                    failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = "Document not found" });
+                    continue;
+                }
 
-                    if (storedDoc == null)
+                var changedFields = new List<string>();
+
+                // Apply category update if specified (non-default value)
+                if (body.Category != default)
+                {
+                    storedDoc.Category = body.Category.ToString();
+                    changedFields.Add("category");
+                }
+
+                // Add tags
+                if (body.AddTags != null && body.AddTags.Count > 0)
+                {
+                    foreach (var tag in body.AddTags)
                     {
-                        failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = "Document not found" });
-                        continue;
-                    }
-
-                    var changedFields = new List<string>();
-
-                    // Apply category update if specified (non-default value)
-                    if (body.Category != default)
-                    {
-                        storedDoc.Category = body.Category.ToString();
-                        changedFields.Add("category");
-                    }
-
-                    // Add tags
-                    if (body.AddTags != null && body.AddTags.Count > 0)
-                    {
-                        foreach (var tag in body.AddTags)
+                        if (!storedDoc.Tags.Contains(tag, StringComparer.OrdinalIgnoreCase))
                         {
-                            if (!storedDoc.Tags.Contains(tag, StringComparer.OrdinalIgnoreCase))
-                            {
-                                storedDoc.Tags.Add(tag);
-                            }
+                            storedDoc.Tags.Add(tag);
                         }
-                        changedFields.Add("tags");
                     }
-
-                    // Remove tags
-                    if (body.RemoveTags != null && body.RemoveTags.Count > 0)
-                    {
-                        storedDoc.Tags.RemoveAll(t => body.RemoveTags.Contains(t, StringComparer.OrdinalIgnoreCase));
-                        if (!changedFields.Contains("tags")) changedFields.Add("tags");
-                    }
-
-                    if (changedFields.Count > 0)
-                    {
-                        storedDoc.UpdatedAt = now;
-                        await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
-
-                        // Update search index
-                        _searchIndexService.IndexDocument(
-                            namespaceId,
-                            documentId,
-                            storedDoc.Title,
-                            storedDoc.Slug,
-                            storedDoc.Content,
-                            storedDoc.Category,
-                            storedDoc.Tags);
-
-                        // Publish update event
-                        await PublishDocumentUpdatedEventAsync(storedDoc, changedFields, cancellationToken);
-                    }
-
-                    succeeded.Add(documentId);
+                    changedFields.Add("tags");
                 }
-                catch (Exception ex)
+
+                // Remove tags
+                if (body.RemoveTags != null && body.RemoveTags.Count > 0)
                 {
-                    failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = ex.Message });
+                    storedDoc.Tags.RemoveAll(t => body.RemoveTags.Contains(t, StringComparer.OrdinalIgnoreCase));
+                    if (!changedFields.Contains("tags")) changedFields.Add("tags");
                 }
 
-                batchCounter++;
-                if (batchCounter >= _configuration.BulkOperationBatchSize)
+                if (changedFields.Count > 0)
                 {
-                    batchCounter = 0;
-                    await Task.Yield();
+                    storedDoc.UpdatedAt = now;
+                    await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
+
+                    // Update search index
+                    _searchIndexService.IndexDocument(
+                        namespaceId,
+                        documentId,
+                        storedDoc.Title,
+                        storedDoc.Slug,
+                        storedDoc.Content,
+                        storedDoc.Category,
+                        storedDoc.Tags);
+
+                    // Publish update event
+                    await PublishDocumentUpdatedEventAsync(storedDoc, changedFields, cancellationToken);
                 }
+
+                succeeded.Add(documentId);
+            }
+            catch (Exception ex)
+            {
+                failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = ex.Message });
             }
 
-            _logger.LogInformation("BulkUpdate in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
-                namespaceId, succeeded.Count, failed.Count);
+            batchCounter++;
+            if (batchCounter >= _configuration.BulkOperationBatchSize)
+            {
+                batchCounter = 0;
+                await Task.Yield();
+            }
+        }
+
+        _logger.LogInformation("BulkUpdate in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
+            namespaceId, succeeded.Count, failed.Count);
 
         return (StatusCodes.OK, new BulkUpdateResponse
         {
@@ -1179,67 +1179,67 @@ public partial class DocumentationService : IDocumentationService
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
         var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
-            var batchCounter = 0;
-            foreach (var documentId in body.DocumentIds)
+        var batchCounter = 0;
+        foreach (var documentId in body.DocumentIds)
+        {
+            try
             {
-                try
+                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+                var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
+
+                if (storedDoc == null)
                 {
-                    var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-                    var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
-
-                    if (storedDoc == null)
-                    {
-                        failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = "Document not found" });
-                        continue;
-                    }
-
-                    // Create trashcan entry
-                    var trashedDoc = new TrashedDocument
-                    {
-                        Document = storedDoc,
-                        DeletedAt = now,
-                        ExpiresAt = expiresAt
-                    };
-
-                    var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
-                    await trashStore.SaveAsync(trashKey, trashedDoc, cancellationToken: cancellationToken);
-
-                    // Add to trashcan index
-                    await AddDocumentToTrashcanIndexAsync(namespaceId, documentId, cancellationToken);
-
-                    // Remove from main storage
-                    await docStore.DeleteAsync(docKey, cancellationToken);
-
-                    // Remove slug index
-                    var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
-                    await slugStore.DeleteAsync(slugKey, cancellationToken);
-
-                    // Remove from namespace document list
-                    await RemoveDocumentFromNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
-
-                    // Remove from search index
-                    _searchIndexService.RemoveDocument(namespaceId, documentId);
-
-                    // Publish delete event
-                    await PublishDocumentDeletedEventAsync(storedDoc, "Bulk delete operation", cancellationToken);
-
-                    succeeded.Add(documentId);
-                }
-                catch (Exception ex)
-                {
-                    failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = ex.Message });
+                    failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = "Document not found" });
+                    continue;
                 }
 
-                batchCounter++;
-                if (batchCounter >= _configuration.BulkOperationBatchSize)
+                // Create trashcan entry
+                var trashedDoc = new TrashedDocument
                 {
-                    batchCounter = 0;
-                    await Task.Yield();
-                }
+                    Document = storedDoc,
+                    DeletedAt = now,
+                    ExpiresAt = expiresAt
+                };
+
+                var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
+                await trashStore.SaveAsync(trashKey, trashedDoc, cancellationToken: cancellationToken);
+
+                // Add to trashcan index
+                await AddDocumentToTrashcanIndexAsync(namespaceId, documentId, cancellationToken);
+
+                // Remove from main storage
+                await docStore.DeleteAsync(docKey, cancellationToken);
+
+                // Remove slug index
+                var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
+                await slugStore.DeleteAsync(slugKey, cancellationToken);
+
+                // Remove from namespace document list
+                await RemoveDocumentFromNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
+
+                // Remove from search index
+                _searchIndexService.RemoveDocument(namespaceId, documentId);
+
+                // Publish delete event
+                await PublishDocumentDeletedEventAsync(storedDoc, "Bulk delete operation", cancellationToken);
+
+                succeeded.Add(documentId);
+            }
+            catch (Exception ex)
+            {
+                failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = ex.Message });
             }
 
-            _logger.LogInformation("BulkDelete in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
-                namespaceId, succeeded.Count, failed.Count);
+            batchCounter++;
+            if (batchCounter >= _configuration.BulkOperationBatchSize)
+            {
+                batchCounter = 0;
+                await Task.Yield();
+            }
+        }
+
+        _logger.LogInformation("BulkDelete in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
+            namespaceId, succeeded.Count, failed.Count);
 
         return (StatusCodes.OK, new BulkDeleteResponse
         {
@@ -1259,113 +1259,113 @@ public partial class DocumentationService : IDocumentationService
         var failed = new List<ImportFailure>();
         var now = DateTimeOffset.UtcNow;
 
-            // Check max import limit if configured
-            if (_configuration.MaxImportDocuments > 0 && body.Documents.Count > _configuration.MaxImportDocuments)
-            {
-                _logger.LogWarning("Import request exceeds maximum allowed documents ({Max})", _configuration.MaxImportDocuments);
-                return (StatusCodes.BadRequest, null);
-            }
+        // Check max import limit if configured
+        if (_configuration.MaxImportDocuments > 0 && body.Documents.Count > _configuration.MaxImportDocuments)
+        {
+            _logger.LogWarning("Import request exceeds maximum allowed documents ({Max})", _configuration.MaxImportDocuments);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
-            foreach (var importDoc in body.Documents)
+        foreach (var importDoc in body.Documents)
+        {
+            try
             {
-                try
+                // Validate content size
+                if (importDoc.Content != null &&
+                    System.Text.Encoding.UTF8.GetByteCount(importDoc.Content) > _configuration.MaxContentSizeBytes)
                 {
-                    // Validate content size
-                    if (importDoc.Content != null &&
-                        System.Text.Encoding.UTF8.GetByteCount(importDoc.Content) > _configuration.MaxContentSizeBytes)
+                    failed.Add(new ImportFailure
                     {
-                        failed.Add(new ImportFailure
-                        {
-                            Slug = importDoc.Slug,
-                            Error = $"Content exceeds maximum size of {_configuration.MaxContentSizeBytes} bytes"
-                        });
-                        continue;
-                    }
-
-                    // Check if slug exists
-                    var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{importDoc.Slug}";
-                    var existingDocIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
-
-                    if (!string.IsNullOrEmpty(existingDocIdStr) && Guid.TryParse(existingDocIdStr, out var existingDocId))
-                    {
-                        // Handle conflict based on policy
-                        switch (body.OnConflict)
-                        {
-                            case ImportDocumentationRequestOnConflict.Skip:
-                                skipped++;
-                                continue;
-
-                            case ImportDocumentationRequestOnConflict.Fail:
-                                failed.Add(new ImportFailure { Slug = importDoc.Slug, Error = "Document already exists" });
-                                continue;
-
-                            case ImportDocumentationRequestOnConflict.Update:
-                                // Update existing document
-                                var existingDocKey = $"{DOC_KEY_PREFIX}{namespaceId}:{existingDocId}";
-                                var existingDoc = await docStore.GetAsync(existingDocKey, cancellationToken);
-                                if (existingDoc != null)
-                                {
-                                    existingDoc.Title = importDoc.Title;
-                                    existingDoc.Category = importDoc.Category.ToString();
-                                    existingDoc.Content = importDoc.Content;
-                                    existingDoc.Summary = importDoc.Summary;
-                                    existingDoc.VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary);
-                                    existingDoc.Tags = importDoc.Tags?.ToList() ?? [];
-                                    existingDoc.Metadata = importDoc.Metadata;
-                                    existingDoc.UpdatedAt = now;
-
-                                    await docStore.SaveAsync(existingDocKey, existingDoc, cancellationToken: cancellationToken);
-
-                                    _searchIndexService.IndexDocument(namespaceId, existingDocId, existingDoc.Title, existingDoc.Slug, existingDoc.Content, existingDoc.Category, existingDoc.Tags);
-                                    await PublishDocumentUpdatedEventAsync(existingDoc, new[] { "title", "category", "content", "summary", "tags" }, cancellationToken);
-                                    updated++;
-                                }
-                                continue;
-                        }
-                    }
-
-                    // Create new document
-                    var documentId = Guid.NewGuid();
-                    var storedDoc = new StoredDocument
-                    {
-                        DocumentId = documentId,
-                        Namespace = namespaceId,
                         Slug = importDoc.Slug,
-                        Title = importDoc.Title,
-                        Category = importDoc.Category.ToString(),
-                        Content = importDoc.Content,
-                        Summary = importDoc.Summary,
-                        VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary),
-                        Tags = importDoc.Tags?.ToList() ?? [],
-                        RelatedDocuments = [],
-                        Metadata = importDoc.Metadata,
-                        CreatedAt = now,
-                        UpdatedAt = now
-                    };
-
-                    // Ensure search index exists BEFORE saving (Redis Search only auto-indexes new documents)
-                    await _searchIndexService.EnsureIndexExistsAsync(namespaceId, cancellationToken);
-
-                    var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-                    await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
-                    await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
-                    await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
-
-                    _searchIndexService.IndexDocument(namespaceId, documentId, storedDoc.Title, storedDoc.Slug, storedDoc.Content, storedDoc.Category, storedDoc.Tags);
-                    await PublishDocumentCreatedEventAsync(storedDoc, cancellationToken);
-                    created++;
+                        Error = $"Content exceeds maximum size of {_configuration.MaxContentSizeBytes} bytes"
+                    });
+                    continue;
                 }
-                catch (Exception ex)
+
+                // Check if slug exists
+                var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{importDoc.Slug}";
+                var existingDocIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+
+                if (!string.IsNullOrEmpty(existingDocIdStr) && Guid.TryParse(existingDocIdStr, out var existingDocId))
                 {
-                    failed.Add(new ImportFailure { Slug = importDoc.Slug, Error = ex.Message });
-                }
-            }
+                    // Handle conflict based on policy
+                    switch (body.OnConflict)
+                    {
+                        case ImportDocumentationRequestOnConflict.Skip:
+                            skipped++;
+                            continue;
 
-            _logger.LogInformation("Import in namespace {Namespace}: {Created} created, {Updated} updated, {Skipped} skipped, {Failed} failed",
-                namespaceId, created, updated, skipped, failed.Count);
+                        case ImportDocumentationRequestOnConflict.Fail:
+                            failed.Add(new ImportFailure { Slug = importDoc.Slug, Error = "Document already exists" });
+                            continue;
+
+                        case ImportDocumentationRequestOnConflict.Update:
+                            // Update existing document
+                            var existingDocKey = $"{DOC_KEY_PREFIX}{namespaceId}:{existingDocId}";
+                            var existingDoc = await docStore.GetAsync(existingDocKey, cancellationToken);
+                            if (existingDoc != null)
+                            {
+                                existingDoc.Title = importDoc.Title;
+                                existingDoc.Category = importDoc.Category.ToString();
+                                existingDoc.Content = importDoc.Content;
+                                existingDoc.Summary = importDoc.Summary;
+                                existingDoc.VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary);
+                                existingDoc.Tags = importDoc.Tags?.ToList() ?? [];
+                                existingDoc.Metadata = importDoc.Metadata;
+                                existingDoc.UpdatedAt = now;
+
+                                await docStore.SaveAsync(existingDocKey, existingDoc, cancellationToken: cancellationToken);
+
+                                _searchIndexService.IndexDocument(namespaceId, existingDocId, existingDoc.Title, existingDoc.Slug, existingDoc.Content, existingDoc.Category, existingDoc.Tags);
+                                await PublishDocumentUpdatedEventAsync(existingDoc, new[] { "title", "category", "content", "summary", "tags" }, cancellationToken);
+                                updated++;
+                            }
+                            continue;
+                    }
+                }
+
+                // Create new document
+                var documentId = Guid.NewGuid();
+                var storedDoc = new StoredDocument
+                {
+                    DocumentId = documentId,
+                    Namespace = namespaceId,
+                    Slug = importDoc.Slug,
+                    Title = importDoc.Title,
+                    Category = importDoc.Category.ToString(),
+                    Content = importDoc.Content,
+                    Summary = importDoc.Summary,
+                    VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary),
+                    Tags = importDoc.Tags?.ToList() ?? [],
+                    RelatedDocuments = [],
+                    Metadata = importDoc.Metadata,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                // Ensure search index exists BEFORE saving (Redis Search only auto-indexes new documents)
+                await _searchIndexService.EnsureIndexExistsAsync(namespaceId, cancellationToken);
+
+                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+                await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
+                await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
+                await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
+
+                _searchIndexService.IndexDocument(namespaceId, documentId, storedDoc.Title, storedDoc.Slug, storedDoc.Content, storedDoc.Category, storedDoc.Tags);
+                await PublishDocumentCreatedEventAsync(storedDoc, cancellationToken);
+                created++;
+            }
+            catch (Exception ex)
+            {
+                failed.Add(new ImportFailure { Slug = importDoc.Slug, Error = ex.Message });
+            }
+        }
+
+        _logger.LogInformation("Import in namespace {Namespace}: {Created} created, {Updated} updated, {Skipped} skipped, {Failed} failed",
+            namespaceId, created, updated, skipped, failed.Count);
 
         return (StatusCodes.OK, new ImportDocumentationResponse
         {
@@ -1387,76 +1387,76 @@ public partial class DocumentationService : IDocumentationService
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
-            // Get trashcan items from namespace trashcan list
-            var trashListKey = $"ns-trash:{namespaceId}";
-            var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
+        // Get trashcan items from namespace trashcan list
+        var trashListKey = $"ns-trash:{namespaceId}";
+        var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
 
-            var items = new List<TrashcanItem>();
-            var now = DateTimeOffset.UtcNow;
-            var expiredIds = new List<Guid>();
-            var expiredKeysToDelete = new List<string>();
+        var items = new List<TrashcanItem>();
+        var now = DateTimeOffset.UtcNow;
+        var expiredIds = new List<Guid>();
+        var expiredKeysToDelete = new List<string>();
 
-            // Fetch trashcan items using bulk get (fixes N+1 query pattern)
-            if (trashedDocIds.Count > 0)
+        // Fetch trashcan items using bulk get (fixes N+1 query pattern)
+        if (trashedDocIds.Count > 0)
+        {
+            var trashKeys = trashedDocIds.Select(docId => $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}").ToList();
+            var bulkResult = await trashStore.GetBulkAsync(trashKeys, cancellationToken);
+
+            // Build a lookup for quick access
+            var keyToDocId = trashedDocIds.ToDictionary(
+                docId => $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}",
+                docId => docId);
+
+            foreach (var docId in trashedDocIds)
             {
-                var trashKeys = trashedDocIds.Select(docId => $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}").ToList();
-                var bulkResult = await trashStore.GetBulkAsync(trashKeys, cancellationToken);
+                var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
 
-                // Build a lookup for quick access
-                var keyToDocId = trashedDocIds.ToDictionary(
-                    docId => $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}",
-                    docId => docId);
-
-                foreach (var docId in trashedDocIds)
+                if (!bulkResult.TryGetValue(trashKey, out var trashedDoc) || trashedDoc == null)
                 {
-                    var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
-
-                    if (!bulkResult.TryGetValue(trashKey, out var trashedDoc) || trashedDoc == null)
-                    {
-                        expiredIds.Add(docId);
-                        continue;
-                    }
-
-                    // Check if expired
-                    if (trashedDoc.ExpiresAt < now)
-                    {
-                        expiredIds.Add(docId);
-                        expiredKeysToDelete.Add(trashKey);
-                        continue;
-                    }
-
-                    items.Add(new TrashcanItem
-                    {
-                        DocumentId = trashedDoc.Document.DocumentId,
-                        Slug = trashedDoc.Document.Slug,
-                        Title = trashedDoc.Document.Title,
-                        Category = ParseDocumentCategory(trashedDoc.Document.Category),
-                        DeletedAt = trashedDoc.DeletedAt,
-                        ExpiresAt = trashedDoc.ExpiresAt
-                    });
+                    expiredIds.Add(docId);
+                    continue;
                 }
 
-                // Batch delete expired items
-                if (expiredKeysToDelete.Count > 0)
+                // Check if expired
+                if (trashedDoc.ExpiresAt < now)
                 {
-                    await trashStore.DeleteBulkAsync(expiredKeysToDelete, cancellationToken);
+                    expiredIds.Add(docId);
+                    expiredKeysToDelete.Add(trashKey);
+                    continue;
                 }
+
+                items.Add(new TrashcanItem
+                {
+                    DocumentId = trashedDoc.Document.DocumentId,
+                    Slug = trashedDoc.Document.Slug,
+                    Title = trashedDoc.Document.Title,
+                    Category = ParseDocumentCategory(trashedDoc.Document.Category),
+                    DeletedAt = trashedDoc.DeletedAt,
+                    ExpiresAt = trashedDoc.ExpiresAt
+                });
             }
 
-            // Clean up expired entries from list
-            if (expiredIds.Count > 0)
+            // Batch delete expired items
+            if (expiredKeysToDelete.Count > 0)
             {
-                trashedDocIds.RemoveAll(id => expiredIds.Contains(id));
-                await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+                await trashStore.DeleteBulkAsync(expiredKeysToDelete, cancellationToken);
             }
+        }
 
-            // Apply pagination
-            var totalCount = items.Count;
-            var skip = (page - 1) * pageSize;
-            items = items.OrderByDescending(i => i.DeletedAt).Skip(skip).Take(pageSize).ToList();
+        // Clean up expired entries from list
+        if (expiredIds.Count > 0)
+        {
+            trashedDocIds.RemoveAll(id => expiredIds.Contains(id));
+            await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+        }
 
-            _logger.LogDebug("ListTrashcan returned {Count} of {Total} items in namespace {Namespace}",
-                items.Count, totalCount, namespaceId);
+        // Apply pagination
+        var totalCount = items.Count;
+        var skip = (page - 1) * pageSize;
+        items = items.OrderByDescending(i => i.DeletedAt).Skip(skip).Take(pageSize).ToList();
+
+        _logger.LogDebug("ListTrashcan returned {Count} of {Total} items in namespace {Namespace}",
+            items.Count, totalCount, namespaceId);
 
         return (StatusCodes.OK, new ListTrashcanResponse
         {
@@ -1475,54 +1475,54 @@ public partial class DocumentationService : IDocumentationService
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
-            // Get trashcan list with ETag for optimistic concurrency
-            var trashListKey = $"ns-trash:{namespaceId}";
-            var (trashedDocIds, trashEtag) = await guidListStore.GetWithETagAsync(trashListKey, cancellationToken);
-            trashedDocIds ??= [];
+        // Get trashcan list with ETag for optimistic concurrency
+        var trashListKey = $"ns-trash:{namespaceId}";
+        var (trashedDocIds, trashEtag) = await guidListStore.GetWithETagAsync(trashListKey, cancellationToken);
+        trashedDocIds ??= [];
 
-            // Determine which documents to purge
-            IEnumerable<Guid> docsToPurge;
-            if (body.DocumentIds != null && body.DocumentIds.Count > 0)
+        // Determine which documents to purge
+        IEnumerable<Guid> docsToPurge;
+        if (body.DocumentIds != null && body.DocumentIds.Count > 0)
+        {
+            // Purge specific documents
+            docsToPurge = body.DocumentIds.Where(id => trashedDocIds.Contains(id));
+        }
+        else
+        {
+            // Purge all
+            docsToPurge = trashedDocIds.ToList();
+        }
+
+        // Permanently delete each document
+        foreach (var docId in docsToPurge)
+        {
+            var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
+            await trashStore.DeleteAsync(trashKey, cancellationToken);
+            trashedDocIds.Remove(docId);
+            purgedCount++;
+        }
+
+        // Update trashcan list with optimistic concurrency
+        if (purgedCount > 0)
+        {
+            if (trashedDocIds.Count > 0)
             {
-                // Purge specific documents
-                docsToPurge = body.DocumentIds.Where(id => trashedDocIds.Contains(id));
+                // GetWithETagAsync returns non-null etag when key exists (loaded above);
+                // coalesce satisfies compiler's nullable analysis (will never execute)
+                var saveResult = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, trashEtag ?? string.Empty, cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogWarning("PurgeTrashcan: Concurrent modification on trashcan index for namespace {Namespace}", namespaceId);
+                    return (StatusCodes.Conflict, null);
+                }
             }
             else
             {
-                // Purge all
-                docsToPurge = trashedDocIds.ToList();
+                await guidListStore.DeleteAsync(trashListKey, cancellationToken);
             }
+        }
 
-            // Permanently delete each document
-            foreach (var docId in docsToPurge)
-            {
-                var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
-                await trashStore.DeleteAsync(trashKey, cancellationToken);
-                trashedDocIds.Remove(docId);
-                purgedCount++;
-            }
-
-            // Update trashcan list with optimistic concurrency
-            if (purgedCount > 0)
-            {
-                if (trashedDocIds.Count > 0)
-                {
-                    // GetWithETagAsync returns non-null etag when key exists (loaded above);
-                    // coalesce satisfies compiler's nullable analysis (will never execute)
-                    var saveResult = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, trashEtag ?? string.Empty, cancellationToken);
-                    if (saveResult == null)
-                    {
-                        _logger.LogWarning("PurgeTrashcan: Concurrent modification on trashcan index for namespace {Namespace}", namespaceId);
-                        return (StatusCodes.Conflict, null);
-                    }
-                }
-                else
-                {
-                    await guidListStore.DeleteAsync(trashListKey, cancellationToken);
-                }
-            }
-
-            _logger.LogInformation("Purged {Count} documents from trashcan in namespace {Namespace}", purgedCount, namespaceId);
+        _logger.LogInformation("Purged {Count} documents from trashcan in namespace {Namespace}", purgedCount, namespaceId);
 
         return (StatusCodes.OK, new PurgeTrashcanResponse
         {
@@ -2061,7 +2061,7 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-    _logger.LogInformation("Binding repository {Url} to namespace {Namespace}", body.RepositoryUrl, body.Namespace);
+        _logger.LogInformation("Binding repository {Url} to namespace {Namespace}", body.RepositoryUrl, body.Namespace);
         // Check if namespace already has a binding
         var existingBinding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
         if (existingBinding != null)
@@ -2113,7 +2113,7 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, UnbindRepositoryResponse?)> UnbindRepositoryAsync(UnbindRepositoryRequest body, CancellationToken cancellationToken = default)
     {
 
-    _logger.LogInformation("Unbinding repository from namespace {Namespace}", body.Namespace);
+        _logger.LogInformation("Unbinding repository from namespace {Namespace}", body.Namespace);
         var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
         if (binding == null)
         {
@@ -2168,7 +2168,7 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-    _logger.LogInformation("Manual sync requested for namespace {Namespace}", body.Namespace);
+        _logger.LogInformation("Manual sync requested for namespace {Namespace}", body.Namespace);
         var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
         if (binding == null)
         {
@@ -2322,7 +2322,7 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-    _logger.LogInformation("Creating archive for namespace {Namespace}", body.Namespace);
+        _logger.LogInformation("Creating archive for namespace {Namespace}", body.Namespace);
         // Get all documents in namespace
         var documents = await GetAllNamespaceDocumentsAsync(body.Namespace, cancellationToken);
         if (documents.Count == 0)

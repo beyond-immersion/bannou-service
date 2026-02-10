@@ -947,7 +947,7 @@ public partial class ActorService : IActorService
     /// <summary>
     /// Lists active actors with filtering.
     /// </summary>
-    public async Task<(StatusCodes, ListActorsResponse?)> ListActorsAsync(
+    public Task<(StatusCodes, ListActorsResponse?)> ListActorsAsync(
         ListActorsRequest body,
         CancellationToken cancellationToken)
     {
@@ -984,11 +984,11 @@ public partial class ActorService : IActorService
                 nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null))
             .ToList();
 
-        return (StatusCodes.OK, new ListActorsResponse
+        return Task.FromResult<(StatusCodes, ListActorsResponse?)>((StatusCodes.OK, new ListActorsResponse
         {
             Actors = actors,
             Total = total
-        });
+        }));
     }
 
     #endregion
@@ -998,7 +998,7 @@ public partial class ActorService : IActorService
     /// <summary>
     /// Injects a perception into an actor's perception queue for testing.
     /// </summary>
-    public async Task<(StatusCodes, InjectPerceptionResponse?)> InjectPerceptionAsync(
+    public Task<(StatusCodes, InjectPerceptionResponse?)> InjectPerceptionAsync(
         InjectPerceptionRequest body,
         CancellationToken cancellationToken)
     {
@@ -1006,18 +1006,18 @@ public partial class ActorService : IActorService
 
         if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
         {
-            return (StatusCodes.NotFound, null);
+            return Task.FromResult<(StatusCodes, InjectPerceptionResponse?)>((StatusCodes.NotFound, null));
         }
 
         var queued = runner.InjectPerception(body.Perception);
 
         _logger.LogDebug("Perception injected into actor {ActorId} (queued: {Queued})", body.ActorId, queued);
 
-        return (StatusCodes.OK, new InjectPerceptionResponse
+        return Task.FromResult<(StatusCodes, InjectPerceptionResponse?)>((StatusCodes.OK, new InjectPerceptionResponse
         {
             Queued = queued,
             QueueDepth = runner.PerceptionQueueDepth
-        });
+        }));
     }
 
     #endregion

@@ -370,13 +370,8 @@ public partial class CollectionService : ICollectionService
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
-        var containerOwnerType = MapToContainerOwnerType(ownerType);
-        if (containerOwnerType == null)
-        {
-            throw new InvalidOperationException(
+        var containerOwnerType = MapToContainerOwnerType(ownerType) ?? throw new InvalidOperationException(
                 $"Owner type '{ownerType}' cannot be mapped to a ContainerOwnerType for inventory operations");
-        }
-
         ContainerResponse containerResponse;
         try
         {

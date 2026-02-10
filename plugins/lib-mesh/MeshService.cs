@@ -289,69 +289,69 @@ public partial class MeshService : IMeshService
 
         var endpoints = await _stateManager.GetEndpointsForAppIdAsync(body.AppId, false);
 
+        if (endpoints.Count == 0)
+        {
+            _logger.LogWarning("No healthy endpoints found for app {AppId}", body.AppId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Filter by service name if specified
+        if (!string.IsNullOrEmpty(body.ServiceName))
+        {
+            endpoints = endpoints
+                .Where(e => e.Services?.Contains(body.ServiceName) == true)
+                .ToList();
+
             if (endpoints.Count == 0)
             {
-                _logger.LogWarning("No healthy endpoints found for app {AppId}", body.AppId);
+                _logger.LogWarning(
+                    "No endpoints found for service {ServiceName} on app {AppId}",
+                    body.ServiceName, body.AppId);
                 return (StatusCodes.NotFound, null);
             }
+        }
 
-            // Filter by service name if specified
-            if (!string.IsNullOrEmpty(body.ServiceName))
-            {
-                endpoints = endpoints
-                    .Where(e => e.Services?.Contains(body.ServiceName) == true)
-                    .ToList();
+        // Filter out degraded endpoints (stale heartbeat)
+        var degradationThreshold = DateTimeOffset.UtcNow.AddSeconds(-_configuration.DegradationThresholdSeconds);
+        var healthyEndpoints = endpoints
+            .Where(e => e.LastSeen >= degradationThreshold)
+            .ToList();
 
-                if (endpoints.Count == 0)
-                {
-                    _logger.LogWarning(
-                        "No endpoints found for service {ServiceName} on app {AppId}",
-                        body.ServiceName, body.AppId);
-                    return (StatusCodes.NotFound, null);
-                }
-            }
-
-            // Filter out degraded endpoints (stale heartbeat)
-            var degradationThreshold = DateTimeOffset.UtcNow.AddSeconds(-_configuration.DegradationThresholdSeconds);
-            var healthyEndpoints = endpoints
-                .Where(e => e.LastSeen >= degradationThreshold)
+        // Filter out overloaded endpoints (above load threshold)
+        if (healthyEndpoints.Count > 1)
+        {
+            var underThreshold = healthyEndpoints
+                .Where(e => e.LoadPercent <= _configuration.LoadThresholdPercent)
                 .ToList();
-
-            // Filter out overloaded endpoints (above load threshold)
-            if (healthyEndpoints.Count > 1)
+            if (underThreshold.Count > 0)
             {
-                var underThreshold = healthyEndpoints
-                    .Where(e => e.LoadPercent <= _configuration.LoadThresholdPercent)
-                    .ToList();
-                if (underThreshold.Count > 0)
-                {
-                    healthyEndpoints = underThreshold;
-                }
+                healthyEndpoints = underThreshold;
             }
+        }
 
-            // Fall back to all endpoints if filtering removed everything
-            if (healthyEndpoints.Count == 0)
-            {
-                healthyEndpoints = endpoints;
-            }
+        // Fall back to all endpoints if filtering removed everything
+        if (healthyEndpoints.Count == 0)
+        {
+            healthyEndpoints = endpoints;
+        }
 
-            // Determine effective algorithm (use configured default when null or not specified)
-            var effectiveAlgorithm = body.Algorithm ?? (LoadBalancerAlgorithm)_configuration.DefaultLoadBalancer;
+        // Determine effective algorithm (use configured default when null or not specified)
+        var effectiveAlgorithm = body.Algorithm ?? (LoadBalancerAlgorithm)_configuration.DefaultLoadBalancer;
 
-            // Apply load balancing algorithm
-            var selectedEndpoint = SelectEndpoint(healthyEndpoints, body.AppId, effectiveAlgorithm);
+        // Apply load balancing algorithm
+        var selectedEndpoint = SelectEndpoint(healthyEndpoints, body.AppId, effectiveAlgorithm);
 
-            // Get alternates (other healthy endpoints)
-            var alternates = healthyEndpoints
-                .Where(e => e.InstanceId != selectedEndpoint.InstanceId)
-                .Take(_configuration.MaxTopEndpointsReturned)
-                .ToList();
+        // Get alternates (other healthy endpoints)
+        var alternates = healthyEndpoints
+            .Where(e => e.InstanceId != selectedEndpoint.InstanceId)
+            .Take(_configuration.MaxTopEndpointsReturned)
+            .ToList();
 
-            var response = new GetRouteResponse
-            {
-                Endpoint = selectedEndpoint,
-                Alternates = alternates
-            };
+        var response = new GetRouteResponse
+        {
+            Endpoint = selectedEndpoint,
+            Alternates = alternates
+        };
 
         return (StatusCodes.OK, response);
     }
@@ -407,52 +407,52 @@ public partial class MeshService : IMeshService
 
         var (isHealthy, _, _) = await _stateManager.CheckHealthAsync();
 
-            // Get overall mesh statistics
-            var endpoints = await _stateManager.GetAllEndpointsAsync();
-            var healthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy);
-            var degradedCount = endpoints.Count(e => e.Status == EndpointStatus.Degraded);
-            var unavailableCount = endpoints.Count(e => e.Status == EndpointStatus.Unavailable);
+        // Get overall mesh statistics
+        var endpoints = await _stateManager.GetAllEndpointsAsync();
+        var healthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy);
+        var degradedCount = endpoints.Count(e => e.Status == EndpointStatus.Degraded);
+        var unavailableCount = endpoints.Count(e => e.Status == EndpointStatus.Unavailable);
 
-            // Determine overall status
-            EndpointStatus overallStatus;
-            if (!isHealthy || unavailableCount > healthyCount)
-            {
-                overallStatus = EndpointStatus.Unavailable;
-            }
-            else if (degradedCount > 0 || unavailableCount > 0)
-            {
-                overallStatus = EndpointStatus.Degraded;
-            }
-            else
-            {
-                overallStatus = EndpointStatus.Healthy;
-            }
+        // Determine overall status
+        EndpointStatus overallStatus;
+        if (!isHealthy || unavailableCount > healthyCount)
+        {
+            overallStatus = EndpointStatus.Unavailable;
+        }
+        else if (degradedCount > 0 || unavailableCount > 0)
+        {
+            overallStatus = EndpointStatus.Degraded;
+        }
+        else
+        {
+            overallStatus = EndpointStatus.Healthy;
+        }
 
-            // Calculate uptime
-            var uptime = DateTimeOffset.UtcNow - _serviceStartTime;
-            var uptimeString = FormatUptime(uptime);
+        // Calculate uptime
+        var uptime = DateTimeOffset.UtcNow - _serviceStartTime;
+        var uptimeString = FormatUptime(uptime);
 
-            var response = new MeshHealthResponse
+        var response = new MeshHealthResponse
+        {
+            Status = overallStatus,
+            Summary = new EndpointSummary
             {
-                Status = overallStatus,
-                Summary = new EndpointSummary
-                {
-                    TotalEndpoints = endpoints.Count,
-                    HealthyCount = healthyCount,
-                    DegradedCount = degradedCount,
-                    UnavailableCount = unavailableCount,
-                    UniqueAppIds = endpoints.Select(e => e.AppId).Distinct().Count()
-                },
-                RedisConnected = isHealthy,
-                LastUpdateTime = DateTimeOffset.UtcNow,
-                Uptime = uptimeString
-            };
+                TotalEndpoints = endpoints.Count,
+                HealthyCount = healthyCount,
+                DegradedCount = degradedCount,
+                UnavailableCount = unavailableCount,
+                UniqueAppIds = endpoints.Select(e => e.AppId).Distinct().Count()
+            },
+            RedisConnected = isHealthy,
+            LastUpdateTime = DateTimeOffset.UtcNow,
+            Uptime = uptimeString
+        };
 
-            // Include endpoints if requested
-            if (body.IncludeEndpoints)
-            {
-                response.Endpoints = endpoints;
-            }
+        // Include endpoints if requested
+        if (body.IncludeEndpoints)
+        {
+            response.Endpoints = endpoints;
+        }
 
         return (StatusCodes.OK, response);
     }

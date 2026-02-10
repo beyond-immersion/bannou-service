@@ -215,15 +215,6 @@ public partial class ItemService : IItemService
             _logger.LogDebug("Created item template {TemplateId} code={Code}", templateId, body.Code);
             return (StatusCodes.OK, MapTemplateToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating item template for code {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "CreateItemTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/template/create",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -231,7 +222,6 @@ public partial class ItemService : IItemService
         GetItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var model = await ResolveTemplateAsync(body.TemplateId?.ToString(), body.Code, body.GameId, cancellationToken);
             if (model is null)
@@ -240,15 +230,6 @@ public partial class ItemService : IItemService
             }
             return (StatusCodes.OK, MapTemplateToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting item template");
-            await _messageBus.TryPublishErrorAsync(
-                "item", "GetItemTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/template/get",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -256,7 +237,6 @@ public partial class ItemService : IItemService
         ListItemTemplatesRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
@@ -304,15 +284,6 @@ public partial class ItemService : IItemService
                 TotalCount = totalCount
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing item templates");
-            await _messageBus.TryPublishErrorAsync(
-                "item", "ListItemTemplates", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/template/list",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -320,7 +291,6 @@ public partial class ItemService : IItemService
         UpdateItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
             var model = await templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
@@ -398,15 +368,6 @@ public partial class ItemService : IItemService
             _logger.LogDebug("Updated item template {TemplateId}", body.TemplateId);
             return (StatusCodes.OK, MapTemplateToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating item template {TemplateId}", body.TemplateId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "UpdateItemTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/template/update",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -414,7 +375,6 @@ public partial class ItemService : IItemService
         DeprecateItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
             var model = await templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
@@ -455,15 +415,6 @@ public partial class ItemService : IItemService
             _logger.LogDebug("Deprecated item template {TemplateId}", body.TemplateId);
             return (StatusCodes.OK, MapTemplateToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deprecating item template {TemplateId}", body.TemplateId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "DeprecateItemTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/template/deprecate",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -475,7 +426,6 @@ public partial class ItemService : IItemService
         CreateItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Creating item instance for template {TemplateId} in container {ContainerId}",
                 body.TemplateId, body.ContainerId);
@@ -572,15 +522,6 @@ public partial class ItemService : IItemService
             _logger.LogDebug("Created item instance {InstanceId}", instanceId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating item instance");
-            await _messageBus.TryPublishErrorAsync(
-                "item", "CreateItemInstance", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/instance/create",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -588,7 +529,6 @@ public partial class ItemService : IItemService
         GetItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var model = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
 
@@ -599,15 +539,6 @@ public partial class ItemService : IItemService
 
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting item instance {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "GetItemInstance", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/instance/get",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -615,7 +546,6 @@ public partial class ItemService : IItemService
         ModifyItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Container changes require a lock to prevent race conditions on index updates
             if (body.NewContainerId.HasValue)
@@ -625,15 +555,6 @@ public partial class ItemService : IItemService
 
             // Non-container changes don't need locking
             return await ModifyItemInstanceInternalAsync(body, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error modifying item instance {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "ModifyItemInstance", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/instance/modify",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -757,7 +678,6 @@ public partial class ItemService : IItemService
         BindItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
             var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
@@ -814,15 +734,6 @@ public partial class ItemService : IItemService
             _logger.LogDebug("Bound item {InstanceId} to character {CharacterId}", body.InstanceId, body.CharacterId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error binding item instance {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "BindItemInstance", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/instance/bind",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -830,7 +741,6 @@ public partial class ItemService : IItemService
         UnbindItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
             var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
@@ -886,15 +796,6 @@ public partial class ItemService : IItemService
                 body.InstanceId, previousCharacterId, body.Reason);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error unbinding item instance {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "UnbindItemInstance", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/instance/unbind",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -902,7 +803,6 @@ public partial class ItemService : IItemService
         DestroyItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
             var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
@@ -954,15 +854,6 @@ public partial class ItemService : IItemService
                 TemplateId = model.TemplateId
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error destroying item instance {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "DestroyItemInstance", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/instance/destroy",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -974,7 +865,6 @@ public partial class ItemService : IItemService
         UseItemRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug(
                 "Using item instance {InstanceId} by user {UserId} ({UserType})",
@@ -1158,20 +1048,6 @@ public partial class ItemService : IItemService
                 RemainingQuantity = remainingQuantity
             });
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "API error using item instance {InstanceId}, status {StatusCode}", body.InstanceId, ex.StatusCode);
-            return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error using item instance {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "UseItem", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/use",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1179,7 +1055,6 @@ public partial class ItemService : IItemService
         UseItemStepRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug(
                 "UseItemStep: instance={InstanceId}, user={UserId}, milestone={MilestoneCode}",
@@ -1456,20 +1331,6 @@ public partial class ItemService : IItemService
                 Consumed = consumed
             });
         }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "API error in UseItemStep for instance {InstanceId}, status {StatusCode}", body.InstanceId, ex.StatusCode);
-            return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in UseItemStep for instance {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "UseItemStep", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/use-step",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1479,7 +1340,6 @@ public partial class ItemService : IItemService
         Guid contractInstanceId,
         CancellationToken ct)
     {
-        try
         {
             var response = await _contractClient.GetContractInstanceAsync(
                 new GetContractInstanceRequest { ContractId = contractInstanceId },
@@ -1607,7 +1467,6 @@ public partial class ItemService : IItemService
         object? context,
         CancellationToken ct)
     {
-        try
         {
             // Parse user entity type from string
             if (!TryParseEntityType(userType, out var userEntityType))
@@ -2172,7 +2031,6 @@ public partial class ItemService : IItemService
         ListItemsByContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
 
@@ -2206,15 +2064,6 @@ public partial class ItemService : IItemService
                 WasTruncated = wasTruncated
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing items by container {ContainerId}", body.ContainerId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "ListItemsByContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/instance/list-by-container",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -2222,7 +2071,6 @@ public partial class ItemService : IItemService
         ListItemsByTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
 
@@ -2256,15 +2104,6 @@ public partial class ItemService : IItemService
                 TotalCount = totalCount
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing items by template {TemplateId}", body.TemplateId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "ListItemsByTemplate", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/instance/list-by-template",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -2272,7 +2111,6 @@ public partial class ItemService : IItemService
         BatchGetItemInstancesRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Convert GUIDs to string IDs for bulk lookup
             var instanceIdStrings = body.InstanceIds.Select(id => id.ToString()).ToList();
@@ -2302,15 +2140,6 @@ public partial class ItemService : IItemService
                 Items = items,
                 NotFound = notFound
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error batch getting item instances");
-            await _messageBus.TryPublishErrorAsync(
-                "item", "BatchGetItemInstances", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/instance/batch-get",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 

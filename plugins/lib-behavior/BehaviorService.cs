@@ -479,13 +479,13 @@ public partial class BehaviorService : IBehaviorService
     /// <param name="body">The validation request containing ABML YAML content.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Validation result with errors and warnings.</returns>
-    public async Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
     {
         {
             if (string.IsNullOrWhiteSpace(body.AbmlContent))
             {
                 _logger.LogWarning("ABML validation rejected: content is empty or whitespace");
-                return (StatusCodes.BadRequest, null);
+                return Task.FromResult<(StatusCodes, ValidateAbmlResponse?)>((StatusCodes.BadRequest, null));
             }
 
             _logger.LogDebug("Validating ABML ({ContentLength} bytes)", body.AbmlContent.Length);
@@ -510,13 +510,13 @@ public partial class BehaviorService : IBehaviorService
                 })
                 .ToList();
 
-            return (StatusCodes.OK, new ValidateAbmlResponse
+            return Task.FromResult<(StatusCodes, ValidateAbmlResponse?)>((StatusCodes.OK, new ValidateAbmlResponse
             {
                 IsValid = result.Success,
                 ValidationErrors = validationErrors,
                 SemanticWarnings = result.Warnings.Select(w => w.Message).ToList(),
                 SchemaVersion = "1.0"
-            });
+            }));
         }
     }
 

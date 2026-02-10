@@ -155,7 +155,7 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 
 **Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Deep Dive**: [docs/plugins/COLLECTION.md](plugins/COLLECTION.md)
 
-Universal content unlock and archive system for collectible content.
+The Collection service (L4 GameFeatures) manages universal content unlock and archive systems for collectible content: voice galleries, scene archives, music libraries, bestiaries, recipe books, and custom types. Follows the "items in inventories" pattern: entry templates define what can be collected, collection instances create inventory containers per owner, and granting an entry creates an item instance in that container. Unlike License (which orchestrates contracts for LP deduction), Collection uses direct grants without contract delegation. Features dynamic music track selection based on unlocked tracks and area theme configurations. Internal-only, never internet-facing.
 
 ---
 
