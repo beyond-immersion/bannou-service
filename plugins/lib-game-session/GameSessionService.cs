@@ -177,7 +177,6 @@ public partial class GameSessionService : IGameSessionService
         ListGameSessionsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Listing game sessions - GameType: {GameType}, Status: {Status}",
                 body.GameType, body.Status);
@@ -217,20 +216,6 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Returning {Count} game sessions", sessions.Count);
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to list game sessions");
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "ListGameSessions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/game-session/list",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -240,7 +225,6 @@ public partial class GameSessionService : IGameSessionService
         CreateGameSessionRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var sessionId = Guid.NewGuid();
 
@@ -368,20 +352,6 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Game session {SessionId} created successfully", session.SessionId);
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create game session");
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "CreateGameSession",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/game-session/create",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -391,7 +361,6 @@ public partial class GameSessionService : IGameSessionService
         GetGameSessionRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Getting game session {SessionId}", body.SessionId);
 
@@ -405,20 +374,6 @@ public partial class GameSessionService : IGameSessionService
 
             return (StatusCodes.OK, session);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get game session {SessionId}", body.SessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "GetGameSession",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/game-session/get",
-                details: new { SessionId = body.SessionId },
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -428,7 +383,6 @@ public partial class GameSessionService : IGameSessionService
         JoinGameSessionRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // body.SessionId is the WebSocket session ID (for event delivery)
             // body.GameType determines which lobby to join
@@ -581,20 +535,6 @@ public partial class GameSessionService : IGameSessionService
                 accountId, gameType, lobbyId, clientSessionId);
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to join game {GameType}", body.GameType);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "JoinGameSession",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/game-session/join",
-                details: new { SessionId = body.SessionId },
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -604,7 +544,6 @@ public partial class GameSessionService : IGameSessionService
         GameActionRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // body.SessionId is the WebSocket session ID
             // body.AccountId is the player performing the action
@@ -678,20 +617,6 @@ public partial class GameSessionService : IGameSessionService
                 actionId, lobbyId);
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to perform game action in game {GameType}", body.GameType);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "PerformGameAction",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/game-session/action",
-                details: new { SessionId = body.SessionId, ActionType = body.ActionType.ToString() },
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -701,7 +626,6 @@ public partial class GameSessionService : IGameSessionService
         LeaveGameSessionRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // body.SessionId is the WebSocket session ID
             // body.GameType determines which lobby to leave
@@ -883,20 +807,6 @@ public partial class GameSessionService : IGameSessionService
 
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to leave game {GameType}", body.GameType);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "LeaveGameSession",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/game-session/leave",
-                details: new { SessionId = body.SessionId },
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -908,7 +818,6 @@ public partial class GameSessionService : IGameSessionService
         JoinGameSessionByIdRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var clientSessionId = body.WebSocketSessionId;
             var gameSessionId = body.GameSessionId.ToString();
@@ -1099,20 +1008,6 @@ public partial class GameSessionService : IGameSessionService
                 accountId, gameSessionId, clientSessionId);
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to join game session {GameSessionId}", body.GameSessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "JoinGameSessionById",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/game-session/join-session",
-                details: new { SessionId = body.GameSessionId },
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -1123,7 +1018,6 @@ public partial class GameSessionService : IGameSessionService
         LeaveGameSessionByIdRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var clientSessionId = body.WebSocketSessionId;
             var gameSessionId = body.GameSessionId.ToString();
@@ -1277,20 +1171,6 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Player {AccountId} left game session {GameSessionId}", accountId, gameSessionId);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to leave game session {GameSessionId}", body.GameSessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "LeaveGameSessionById",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/game-session/leave-session",
-                details: new { SessionId = body.GameSessionId },
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -1301,7 +1181,6 @@ public partial class GameSessionService : IGameSessionService
         PublishJoinShortcutRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var targetSessionId = body.TargetWebSocketSessionId;
             var targetSessionIdStr = targetSessionId.ToString();
@@ -1392,20 +1271,6 @@ public partial class GameSessionService : IGameSessionService
                 ShortcutRouteGuid = routeGuid
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish join shortcut for game session {GameSessionId}", body.GameSessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "PublishJoinShortcut",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "client-events",
-                endpoint: "post:/game-session/publish-join-shortcut",
-                details: new { SessionId = body.GameSessionId },
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, new PublishJoinShortcutResponse { Success = false });
-        }
     }
 
     /// <summary>
@@ -1415,7 +1280,6 @@ public partial class GameSessionService : IGameSessionService
         KickPlayerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var sessionId = body.SessionId.ToString();
             var targetAccountId = body.TargetAccountId;
@@ -1518,20 +1382,6 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Player {TargetAccountId} kicked from session {SessionId}", targetAccountId, sessionId);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to kick player from session {SessionId}", body.SessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "KickPlayer",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/game-session/kick",
-                details: new { SessionId = body.SessionId, TargetAccountId = body.TargetAccountId },
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -1541,7 +1391,6 @@ public partial class GameSessionService : IGameSessionService
         ChatMessageRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // body.SessionId is the WebSocket session ID
             // body.AccountId is the sender's account
@@ -1647,20 +1496,6 @@ public partial class GameSessionService : IGameSessionService
             }
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send chat message in game {GameType}", body.GameType);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "SendChatMessage",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "pubsub",
-                endpoint: "post:/game-session/chat",
-                details: new { SessionId = body.SessionId },
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
         }
     }
 

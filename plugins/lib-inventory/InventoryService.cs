@@ -60,7 +60,6 @@ public partial class InventoryService : IInventoryService
         CreateContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Creating container type {ContainerType} for owner {OwnerId}",
                 body.ContainerType, body.OwnerId);
@@ -206,15 +205,6 @@ public partial class InventoryService : IInventoryService
             _logger.LogDebug("Created container {ContainerId} type={Type}", containerId, body.ContainerType);
             return (StatusCodes.OK, MapContainerToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating container");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "CreateContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/create",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -222,7 +212,6 @@ public partial class InventoryService : IInventoryService
         GetContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
             var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
@@ -267,15 +256,6 @@ public partial class InventoryService : IInventoryService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting container {ContainerId}", body.ContainerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "GetContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/get",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -283,7 +263,6 @@ public partial class InventoryService : IInventoryService
         GetOrCreateContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Check if lazy container creation is enabled
             if (!_configuration.EnableLazyContainerCreation)
@@ -325,15 +304,6 @@ public partial class InventoryService : IInventoryService
                 RealmId = body.RealmId
             }, cancellationToken);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in get-or-create container");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "GetOrCreateContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/get-or-create",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -341,7 +311,6 @@ public partial class InventoryService : IInventoryService
         ListContainersRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
@@ -372,15 +341,6 @@ public partial class InventoryService : IInventoryService
                 TotalCount = containers.Count
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing containers for owner {OwnerId}", body.OwnerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "ListContainers", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/list",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -388,7 +348,6 @@ public partial class InventoryService : IInventoryService
         UpdateContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Input validation
             if (body.MaxSlots.HasValue && body.MaxSlots.Value <= 0)
@@ -487,15 +446,6 @@ public partial class InventoryService : IInventoryService
             _logger.LogDebug("Updated container {ContainerId}", body.ContainerId);
             return (StatusCodes.OK, MapContainerToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating container {ContainerId}", body.ContainerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "UpdateContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/update",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -503,7 +453,6 @@ public partial class InventoryService : IInventoryService
         DeleteContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
             var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
@@ -646,15 +595,6 @@ public partial class InventoryService : IInventoryService
                 ItemsHandled = itemCount
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting container {ContainerId}", body.ContainerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "DeleteContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/delete",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -666,7 +606,6 @@ public partial class InventoryService : IInventoryService
         AddItemRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
             var lockOwner = $"add-item-{Guid.NewGuid():N}";
@@ -814,16 +753,6 @@ public partial class InventoryService : IInventoryService
                 SlotY = body.SlotY
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error adding item {InstanceId} to container {ContainerId}",
-                body.InstanceId, body.ContainerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "AddItemToContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/add",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -831,7 +760,6 @@ public partial class InventoryService : IInventoryService
         RemoveItemRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Get item to find its container
             ItemInstanceResponse item;
@@ -919,15 +847,6 @@ public partial class InventoryService : IInventoryService
                 PreviousContainerId = item.ContainerId
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error removing item {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "RemoveItemFromContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/remove",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -935,7 +854,6 @@ public partial class InventoryService : IInventoryService
         MoveItemRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Get item
             ItemInstanceResponse item;
@@ -1040,15 +958,6 @@ public partial class InventoryService : IInventoryService
                 SlotY = body.TargetSlotY
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error moving item {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "MoveItem", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/move",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1056,7 +965,6 @@ public partial class InventoryService : IInventoryService
         TransferItemRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Get item
             ItemInstanceResponse item;
@@ -1194,15 +1102,6 @@ public partial class InventoryService : IInventoryService
                 QuantityTransferred = quantityToTransfer
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error transferring item {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "TransferItem", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/transfer",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1210,7 +1109,6 @@ public partial class InventoryService : IInventoryService
         SplitStackRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Get item first to determine container
             ItemInstanceResponse item;
@@ -1354,15 +1252,6 @@ public partial class InventoryService : IInventoryService
                 NewQuantity = body.Quantity
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error splitting stack {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "SplitStack", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/split",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1370,7 +1259,6 @@ public partial class InventoryService : IInventoryService
         MergeStacksRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Get both items
             ItemInstanceResponse source;
@@ -1586,15 +1474,6 @@ public partial class InventoryService : IInventoryService
                 }
             }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error merging stacks");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "MergeStacks", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/merge",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1606,7 +1485,6 @@ public partial class InventoryService : IInventoryService
         QueryItemsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Get all containers for owner
             var (containersStatus, containersResponse) = await ListContainersAsync(
@@ -1692,15 +1570,6 @@ public partial class InventoryService : IInventoryService
                 TotalCount = totalCount
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying items for owner {OwnerId}", body.OwnerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "QueryItems", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/query",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1708,7 +1577,6 @@ public partial class InventoryService : IInventoryService
         CountItemsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Page through all results to get accurate count
             var allItems = new List<QueryResultItem>();
@@ -1752,15 +1620,6 @@ public partial class InventoryService : IInventoryService
                 StackCount = allItems.Count
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error counting items");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "CountItems", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/count",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1768,7 +1627,6 @@ public partial class InventoryService : IInventoryService
         HasItemsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var results = new List<HasItemResult>();
             var hasAll = true;
@@ -1803,15 +1661,6 @@ public partial class InventoryService : IInventoryService
                 Results = results
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking items");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "HasItems", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/has",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1819,7 +1668,6 @@ public partial class InventoryService : IInventoryService
         FindSpaceRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Get template for constraints
             ItemTemplateResponse template;
@@ -1913,15 +1761,6 @@ public partial class InventoryService : IInventoryService
                 HasSpace = candidates.Count > 0,
                 Candidates = candidates
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error finding space for item");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "FindSpace", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/find-space",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 

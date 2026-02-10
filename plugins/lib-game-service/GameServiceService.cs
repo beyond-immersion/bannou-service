@@ -55,7 +55,6 @@ public partial class GameServiceService : IGameServiceService
         _logger.LogDebug("Listing services (activeOnly={ActiveOnly}, skip={Skip}, take={Take})",
             body.ActiveOnly, body.Skip, body.Take);
 
-        try
         {
             // Get all service IDs from the index
             var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
@@ -97,12 +96,6 @@ public partial class GameServiceService : IGameServiceService
                 paginatedServices.Count, allMatchingServices.Count, body.Skip, body.Take);
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing services");
-            await PublishErrorEventAsync("ListServices", ex.GetType().Name, ex.Message, dependency: "state");
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -118,7 +111,6 @@ public partial class GameServiceService : IGameServiceService
         _logger.LogDebug("Getting service (serviceId={ServiceId}, stubName={StubName})",
             body.ServiceId, body.StubName);
 
-        try
         {
             GameServiceRegistryModel? serviceModel = null;
             var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
@@ -150,12 +142,6 @@ public partial class GameServiceService : IGameServiceService
 
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting service");
-            await PublishErrorEventAsync("GetService", ex.GetType().Name, ex.Message, dependency: "state");
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -172,7 +158,6 @@ public partial class GameServiceService : IGameServiceService
         _logger.LogDebug("Creating service (stubName={StubName}, displayName={DisplayName})",
             body.StubName, body.DisplayName);
 
-        try
         {
             // Validate required fields
             if (string.IsNullOrWhiteSpace(body.StubName))
@@ -232,12 +217,6 @@ public partial class GameServiceService : IGameServiceService
 
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating service");
-            await PublishErrorEventAsync("CreateService", ex.GetType().Name, ex.Message, dependency: "state");
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -253,7 +232,6 @@ public partial class GameServiceService : IGameServiceService
     {
         _logger.LogDebug("Updating service {ServiceId}", body.ServiceId);
 
-        try
         {
             if (body.ServiceId == Guid.Empty)
             {
@@ -313,12 +291,6 @@ public partial class GameServiceService : IGameServiceService
 
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating service {ServiceId}", body.ServiceId);
-            await PublishErrorEventAsync("UpdateService", ex.GetType().Name, ex.Message, dependency: "state");
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -334,7 +306,6 @@ public partial class GameServiceService : IGameServiceService
     {
         _logger.LogDebug("Deleting service {ServiceId}", body.ServiceId);
 
-        try
         {
             if (body.ServiceId == Guid.Empty)
             {
@@ -372,12 +343,6 @@ public partial class GameServiceService : IGameServiceService
             await PublishServiceDeletedEventAsync(serviceModel, body.Reason);
 
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting service {ServiceId}", body.ServiceId);
-            await PublishErrorEventAsync("DeleteService", ex.GetType().Name, ex.Message, dependency: "state");
-            return StatusCodes.InternalServerError;
         }
     }
 
