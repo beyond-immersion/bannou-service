@@ -105,7 +105,6 @@ public partial class ItemService : IItemService
         CreateItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Creating item template with code {Code} for game {GameId}", body.Code, body.GameId);
 
@@ -1340,6 +1339,7 @@ public partial class ItemService : IItemService
         Guid contractInstanceId,
         CancellationToken ct)
     {
+        try
         {
             var response = await _contractClient.GetContractInstanceAsync(
                 new GetContractInstanceRequest { ContractId = contractInstanceId },
@@ -1467,6 +1467,7 @@ public partial class ItemService : IItemService
         object? context,
         CancellationToken ct)
     {
+        try
         {
             // Parse user entity type from string
             if (!TryParseEntityType(userType, out var userEntityType))

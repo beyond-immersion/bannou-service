@@ -132,6 +132,7 @@ public partial class OrchestratorService : IOrchestratorService
             return;
         }
 
+        try
         {
             _lastKnownDeployment = await _stateManager.GetCurrentConfigurationAsync();
 
@@ -2269,6 +2270,7 @@ public partial class OrchestratorService : IOrchestratorService
     {
         var tornDownServices = new List<string>();
 
+        try
         {
             // Get the current deployment configuration - this tells us exactly what we deployed
             var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
