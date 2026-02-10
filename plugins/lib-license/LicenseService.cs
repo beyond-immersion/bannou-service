@@ -40,7 +40,7 @@ public static class LicenseTopics
 /// <para>
 /// <b>SERVICE HIERARCHY (L4 Game Features):</b>
 /// <list type="bullet">
-///   <item>Hard dependencies (constructor injection): IContractClient (L1), ICharacterClient (L2), IInventoryClient (L2), IItemClient (L2), ICurrencyClient (L2), IGameServiceClient (L2), IDistributedLockProvider (L0)</item>
+///   <item>Hard dependencies (constructor injection): IContractClient (L1), ICharacterClient (L2, used for character owner validation), IInventoryClient (L2), IItemClient (L2), ICurrencyClient (L2), IGameServiceClient (L2), IDistributedLockProvider (L0)</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -84,10 +84,61 @@ public partial class LicenseService : ILicenseService
     private static string BuildTemplateKey(Guid boardTemplateId) => $"board-tpl:{boardTemplateId}";
     private static string BuildDefinitionKey(Guid boardTemplateId, string code) => $"lic-def:{boardTemplateId}:{code}";
     private static string BuildBoardKey(Guid boardId) => $"board:{boardId}";
-    private static string BuildBoardByCharacterKey(Guid characterId, Guid boardTemplateId) => $"board-char:{characterId}:{boardTemplateId}";
+    private static string BuildBoardByOwnerKey(string ownerType, Guid ownerId, Guid boardTemplateId) => $"board-owner:{ownerType}:{ownerId}:{boardTemplateId}";
     private static string BuildBoardCacheKey(Guid boardId) => $"cache:{boardId}";
     private static string BuildBoardLockKey(Guid boardId) => $"board:{boardId}";
     private static string BuildTemplateLockKey(Guid boardTemplateId) => $"tpl:{boardTemplateId}";
+
+    #endregion
+
+    #region Owner Type Mapping
+
+    /// <summary>
+    /// Maps an opaque owner type string to ContainerOwnerType for inventory operations.
+    /// Returns null if the owner type has no known mapping.
+    /// </summary>
+    private static ContainerOwnerType? MapToContainerOwnerType(string ownerType) => ownerType switch
+    {
+        "character" => ContainerOwnerType.Character,
+        "account" => ContainerOwnerType.Account,
+        "location" => ContainerOwnerType.Location,
+        "guild" => ContainerOwnerType.Guild,
+        _ => null
+    };
+
+    /// <summary>
+    /// Maps an opaque owner type string to WalletOwnerType for currency operations.
+    /// Returns null if the owner type has no known mapping.
+    /// </summary>
+    private static WalletOwnerType? MapToWalletOwnerType(string ownerType) => ownerType switch
+    {
+        "character" => WalletOwnerType.Character,
+        "account" => WalletOwnerType.Account,
+        "guild" => WalletOwnerType.Guild,
+        "npc" => WalletOwnerType.Npc,
+        _ => null
+    };
+
+    /// <summary>
+    /// Maps an opaque owner type string to EntityType for contract parties.
+    /// Returns null if the owner type has no known mapping.
+    /// </summary>
+    private static EntityType? MapToEntityType(string ownerType) => ownerType switch
+    {
+        "character" => EntityType.Character,
+        "account" => EntityType.Account,
+        "realm" => EntityType.Realm,
+        "guild" => EntityType.Guild,
+        "location" => EntityType.Location,
+        "actor" => EntityType.Actor,
+        _ => null
+    };
+
+    /// <summary>
+    /// Validates that an owner type string does not contain the key separator character.
+    /// </summary>
+    private static bool IsValidOwnerType(string ownerType)
+        => !string.IsNullOrWhiteSpace(ownerType) && !ownerType.Contains(':');
 
     #endregion
 
@@ -168,6 +219,7 @@ public partial class LicenseService : ILicenseService
             StartingNodes = model.StartingNodes.Select(sn => new GridPosition { X = sn.X, Y = sn.Y }).ToList(),
             BoardContractTemplateId = model.BoardContractTemplateId,
             AdjacencyMode = model.AdjacencyMode,
+            AllowedOwnerTypes = model.AllowedOwnerTypes,
             IsActive = model.IsActive,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
@@ -196,7 +248,9 @@ public partial class LicenseService : ILicenseService
         return new BoardResponse
         {
             BoardId = model.BoardId,
-            CharacterId = model.CharacterId,
+            OwnerType = model.OwnerType,
+            OwnerId = model.OwnerId,
+            RealmId = model.RealmId,
             BoardTemplateId = model.BoardTemplateId,
             GameServiceId = model.GameServiceId,
             ContainerId = model.ContainerId,
@@ -316,6 +370,16 @@ public partial class LicenseService : ILicenseService
                 }
             }
 
+            // Validate allowedOwnerTypes all map to known ContainerOwnerType values
+            foreach (var ownerType in body.AllowedOwnerTypes)
+            {
+                if (MapToContainerOwnerType(ownerType) == null)
+                {
+                    _logger.LogWarning("Unknown owner type {OwnerType} in allowedOwnerTypes", ownerType);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+
             // Validate contract template exists
             try
             {
@@ -341,6 +405,7 @@ public partial class LicenseService : ILicenseService
                 StartingNodes = body.StartingNodes.Select(sn => new GridPositionEntry { X = sn.X, Y = sn.Y }).ToList(),
                 BoardContractTemplateId = body.BoardContractTemplateId,
                 AdjacencyMode = body.AdjacencyMode ?? _configuration.DefaultAdjacencyMode,
+                AllowedOwnerTypes = body.AllowedOwnerTypes.ToList(),
                 IsActive = true,
                 CreatedAt = now
             };
@@ -487,6 +552,20 @@ public partial class LicenseService : ILicenseService
             if (body.Name != null) { template.Name = body.Name; changedFields.Add("name"); }
             if (body.Description != null) { template.Description = body.Description; changedFields.Add("description"); }
             if (body.IsActive.HasValue) { template.IsActive = body.IsActive.Value; changedFields.Add("isActive"); }
+            if (body.AllowedOwnerTypes != null)
+            {
+                // Validate all entries map to known ContainerOwnerType
+                foreach (var ownerType in body.AllowedOwnerTypes)
+                {
+                    if (MapToContainerOwnerType(ownerType) == null)
+                    {
+                        _logger.LogWarning("Unknown owner type {OwnerType} in allowedOwnerTypes", ownerType);
+                        return (StatusCodes.BadRequest, null);
+                    }
+                }
+                template.AllowedOwnerTypes = body.AllowedOwnerTypes.ToList();
+                changedFields.Add("allowedOwnerTypes");
+            }
             template.UpdatedAt = DateTimeOffset.UtcNow;
 
             await BoardTemplateStore.SaveAsync(
@@ -935,20 +1014,14 @@ public partial class LicenseService : ILicenseService
         try
         {
             _logger.LogInformation(
-                "Creating board for character {CharacterId} from template {BoardTemplateId}",
-                body.CharacterId, body.BoardTemplateId);
+                "Creating board for owner {OwnerType}:{OwnerId} from template {BoardTemplateId}",
+                body.OwnerType, body.OwnerId, body.BoardTemplateId);
 
-            // Validate character exists
-            try
+            // Validate ownerType format (no key separator characters)
+            if (!IsValidOwnerType(body.OwnerType))
             {
-                await _characterClient.GetCharacterAsync(
-                    new GetCharacterRequest { CharacterId = body.CharacterId },
-                    cancellationToken);
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogWarning("Character {CharacterId} not found", body.CharacterId);
-                return (StatusCodes.NotFound, null);
+                _logger.LogWarning("Invalid owner type format: {OwnerType}", body.OwnerType);
+                return (StatusCodes.BadRequest, null);
             }
 
             // Validate board template exists and is active
@@ -968,6 +1041,19 @@ public partial class LicenseService : ILicenseService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Validate ownerType is in template's allowedOwnerTypes
+            if (!template.AllowedOwnerTypes.Contains(body.OwnerType))
+            {
+                _logger.LogWarning(
+                    "Owner type {OwnerType} not in template's allowedOwnerTypes [{Allowed}]",
+                    body.OwnerType, string.Join(", ", template.AllowedOwnerTypes));
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Map ownerType to ContainerOwnerType (guaranteed to succeed due to template-time validation)
+            var containerOwnerType = MapToContainerOwnerType(body.OwnerType)
+                ?? throw new InvalidOperationException($"Owner type {body.OwnerType} passed template validation but has no ContainerOwnerType mapping");
+
             // Validate game service matches
             if (template.GameServiceId != body.GameServiceId)
             {
@@ -977,29 +1063,59 @@ public partial class LicenseService : ILicenseService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Enforce one board per template per character
+            // Owner-type-aware validation and realm context resolution
+            Guid? resolvedRealmId = body.RealmId;
+
+            if (body.OwnerType == "character")
+            {
+                // For character owners: validate character exists and resolve realm
+                try
+                {
+                    var character = await _characterClient.GetCharacterAsync(
+                        new GetCharacterRequest { CharacterId = body.OwnerId },
+                        cancellationToken);
+
+                    if (body.RealmId.HasValue && body.RealmId.Value != character.RealmId)
+                    {
+                        _logger.LogWarning(
+                            "RealmId {RealmId} does not match character's realm {CharacterRealmId}",
+                            body.RealmId, character.RealmId);
+                        return (StatusCodes.BadRequest, null);
+                    }
+
+                    // Use character's realm if not explicitly provided
+                    resolvedRealmId = character.RealmId;
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    _logger.LogWarning("Character {OwnerId} not found", body.OwnerId);
+                    return (StatusCodes.NotFound, null);
+                }
+            }
+
+            // Enforce one board per template per owner
             var existingBoard = await BoardStore.GetAsync(
-                BuildBoardByCharacterKey(body.CharacterId, body.BoardTemplateId),
+                BuildBoardByOwnerKey(body.OwnerType, body.OwnerId, body.BoardTemplateId),
                 cancellationToken);
 
             if (existingBoard != null)
             {
                 _logger.LogWarning(
-                    "Character {CharacterId} already has a board for template {BoardTemplateId}",
-                    body.CharacterId, body.BoardTemplateId);
+                    "Owner {OwnerType}:{OwnerId} already has a board for template {BoardTemplateId}",
+                    body.OwnerType, body.OwnerId, body.BoardTemplateId);
                 return (StatusCodes.Conflict, null);
             }
 
-            // Enforce MaxBoardsPerCharacter
-            var characterBoards = await BoardStore.QueryAsync(
-                b => b.CharacterId == body.CharacterId,
+            // Enforce MaxBoardsPerOwner
+            var ownerBoards = await BoardStore.QueryAsync(
+                b => b.OwnerType == body.OwnerType && b.OwnerId == body.OwnerId,
                 cancellationToken: cancellationToken);
 
-            if (characterBoards.Count >= _configuration.MaxBoardsPerCharacter)
+            if (ownerBoards.Count >= _configuration.MaxBoardsPerOwner)
             {
                 _logger.LogWarning(
-                    "Character {CharacterId} has reached max boards limit of {Max}",
-                    body.CharacterId, _configuration.MaxBoardsPerCharacter);
+                    "Owner {OwnerType}:{OwnerId} has reached max boards limit of {Max}",
+                    body.OwnerType, body.OwnerId, _configuration.MaxBoardsPerOwner);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -1010,8 +1126,8 @@ public partial class LicenseService : ILicenseService
                 containerResponse = await _inventoryClient.CreateContainerAsync(
                     new CreateContainerRequest
                     {
-                        OwnerId = body.CharacterId,
-                        OwnerType = ContainerOwnerType.Character,
+                        OwnerId = body.OwnerId,
+                        OwnerType = containerOwnerType,
                         ContainerType = "license_board",
                         ConstraintModel = ContainerConstraintModel.SlotOnly,
                         MaxSlots = template.GridWidth * template.GridHeight
@@ -1020,11 +1136,11 @@ public partial class LicenseService : ILicenseService
             }
             catch (ApiException ex)
             {
-                _logger.LogError(ex, "Failed to create inventory container for board (character {CharacterId})", body.CharacterId);
+                _logger.LogError(ex, "Failed to create inventory container for board (owner {OwnerType}:{OwnerId})", body.OwnerType, body.OwnerId);
                 await _messageBus.TryPublishErrorAsync(
                     "license", "CreateBoard", "container_creation_failed", ex.Message,
                     dependency: "inventory", endpoint: "post:/license/board/create",
-                    details: $"CharacterId: {body.CharacterId}", stack: ex.StackTrace,
+                    details: $"OwnerType: {body.OwnerType}, OwnerId: {body.OwnerId}", stack: ex.StackTrace,
                     cancellationToken: cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
@@ -1033,7 +1149,9 @@ public partial class LicenseService : ILicenseService
             var board = new BoardInstanceModel
             {
                 BoardId = Guid.NewGuid(),
-                CharacterId = body.CharacterId,
+                OwnerType = body.OwnerType,
+                OwnerId = body.OwnerId,
+                RealmId = resolvedRealmId,
                 BoardTemplateId = body.BoardTemplateId,
                 GameServiceId = body.GameServiceId,
                 ContainerId = containerResponse.ContainerId,
@@ -1043,9 +1161,9 @@ public partial class LicenseService : ILicenseService
             // Save board instance
             await BoardStore.SaveAsync(BuildBoardKey(board.BoardId), board, cancellationToken: cancellationToken);
 
-            // Save uniqueness key (character + template)
+            // Save uniqueness key (owner + template)
             await BoardStore.SaveAsync(
-                BuildBoardByCharacterKey(board.CharacterId, board.BoardTemplateId),
+                BuildBoardByOwnerKey(board.OwnerType, board.OwnerId, board.BoardTemplateId),
                 board,
                 cancellationToken: cancellationToken);
 
@@ -1061,22 +1179,28 @@ public partial class LicenseService : ILicenseService
                 new StateOptions { Ttl = _configuration.BoardCacheTtlSeconds },
                 cancellationToken);
 
-            // Register character reference with lib-resource for cleanup coordination
-            await RegisterCharacterReferenceAsync(
-                board.BoardId.ToString(),
-                board.CharacterId,
-                cancellationToken);
+            // Register resource reference with lib-resource for cleanup coordination
+            // Day-one: only character owners get reference tracking
+            if (board.OwnerType == "character")
+            {
+                await RegisterCharacterReferenceAsync(
+                    board.BoardId.ToString(),
+                    board.OwnerId,
+                    cancellationToken);
+            }
 
             _logger.LogInformation(
-                "Created board {BoardId} for character {CharacterId} with container {ContainerId}",
-                board.BoardId, board.CharacterId, board.ContainerId);
+                "Created board {BoardId} for owner {OwnerType}:{OwnerId} with container {ContainerId}",
+                board.BoardId, board.OwnerType, board.OwnerId, board.ContainerId);
 
             await _messageBus.TryPublishAsync(
                 "license-board.created",
                 new LicenseBoardCreatedEvent
                 {
                     BoardId = board.BoardId,
-                    CharacterId = board.CharacterId,
+                    OwnerType = board.OwnerType,
+                    OwnerId = board.OwnerId,
+                    RealmId = board.RealmId,
                     BoardTemplateId = board.BoardTemplateId,
                     GameServiceId = board.GameServiceId,
                     ContainerId = board.ContainerId,
@@ -1088,7 +1212,7 @@ public partial class LicenseService : ILicenseService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating board for character {CharacterId}", body.CharacterId);
+            _logger.LogError(ex, "Error creating board for owner {OwnerType}:{OwnerId}", body.OwnerType, body.OwnerId);
             await _messageBus.TryPublishErrorAsync(
                 "license", "CreateBoard", "unexpected_exception", ex.Message,
                 dependency: null, endpoint: "post:/license/board/create",
@@ -1125,8 +1249,8 @@ public partial class LicenseService : ILicenseService
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, ListBoardsByCharacterResponse?)> ListBoardsByCharacterAsync(
-        ListBoardsByCharacterRequest body,
+    public async Task<(StatusCodes, ListBoardsByOwnerResponse?)> ListBoardsByOwnerAsync(
+        ListBoardsByOwnerRequest body,
         CancellationToken cancellationToken)
     {
         try
@@ -1136,27 +1260,27 @@ public partial class LicenseService : ILicenseService
             if (body.GameServiceId.HasValue)
             {
                 boards = await BoardStore.QueryAsync(
-                    b => b.CharacterId == body.CharacterId && b.GameServiceId == body.GameServiceId.Value,
+                    b => b.OwnerType == body.OwnerType && b.OwnerId == body.OwnerId && b.GameServiceId == body.GameServiceId.Value,
                     cancellationToken: cancellationToken);
             }
             else
             {
                 boards = await BoardStore.QueryAsync(
-                    b => b.CharacterId == body.CharacterId,
+                    b => b.OwnerType == body.OwnerType && b.OwnerId == body.OwnerId,
                     cancellationToken: cancellationToken);
             }
 
-            return (StatusCodes.OK, new ListBoardsByCharacterResponse
+            return (StatusCodes.OK, new ListBoardsByOwnerResponse
             {
                 Boards = boards.Select(MapBoardToResponse).ToList()
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error listing boards for character {CharacterId}", body.CharacterId);
+            _logger.LogError(ex, "Error listing boards for owner {OwnerType}:{OwnerId}", body.OwnerType, body.OwnerId);
             await _messageBus.TryPublishErrorAsync(
-                "license", "ListBoardsByCharacter", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/license/board/list-by-character",
+                "license", "ListBoardsByOwner", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/license/board/list-by-owner",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
@@ -1189,11 +1313,14 @@ public partial class LicenseService : ILicenseService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Unregister character reference before deletion
-            await UnregisterCharacterReferenceAsync(
-                board.BoardId.ToString(),
-                board.CharacterId,
-                cancellationToken);
+            // Unregister resource reference before deletion (day-one: character only)
+            if (board.OwnerType == "character")
+            {
+                await UnregisterCharacterReferenceAsync(
+                    board.BoardId.ToString(),
+                    board.OwnerId,
+                    cancellationToken);
+            }
 
             // Delete inventory container (destroys all contained items)
             try
@@ -1210,21 +1337,23 @@ public partial class LicenseService : ILicenseService
             // Delete board records
             await BoardStore.DeleteAsync(BuildBoardKey(board.BoardId), cancellationToken);
             await BoardStore.DeleteAsync(
-                BuildBoardByCharacterKey(board.CharacterId, board.BoardTemplateId),
+                BuildBoardByOwnerKey(board.OwnerType, board.OwnerId, board.BoardTemplateId),
                 cancellationToken);
 
             // Invalidate cache
             await BoardCache.DeleteAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
 
-            _logger.LogInformation("Deleted board {BoardId} for character {CharacterId}",
-                board.BoardId, board.CharacterId);
+            _logger.LogInformation("Deleted board {BoardId} for owner {OwnerType}:{OwnerId}",
+                board.BoardId, board.OwnerType, board.OwnerId);
 
             await _messageBus.TryPublishAsync(
                 "license-board.deleted",
                 new LicenseBoardDeletedEvent
                 {
                     BoardId = board.BoardId,
-                    CharacterId = board.CharacterId,
+                    OwnerType = board.OwnerType,
+                    OwnerId = board.OwnerId,
+                    RealmId = board.RealmId,
                     BoardTemplateId = board.BoardTemplateId,
                     GameServiceId = board.GameServiceId,
                     ContainerId = board.ContainerId,
@@ -1274,7 +1403,6 @@ public partial class LicenseService : ILicenseService
             var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
             if (board == null)
             {
-                // Cannot publish failed event: schema requires characterId but board not found means no character context
                 _logger.LogWarning("Board {BoardId} not found for unlock attempt", body.BoardId);
                 return (StatusCodes.NotFound, null);
             }
@@ -1294,7 +1422,7 @@ public partial class LicenseService : ILicenseService
                 BuildDefinitionKey(board.BoardTemplateId, body.LicenseCode), cancellationToken);
             if (definition == null)
             {
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                await PublishUnlockFailedAsync(body.BoardId, board.OwnerType, board.OwnerId, body.LicenseCode,
                     UnlockFailureReason.LicenseNotFound, cancellationToken);
                 return (StatusCodes.NotFound, null);
             }
@@ -1310,7 +1438,7 @@ public partial class LicenseService : ILicenseService
             var alreadyUnlocked = cache.UnlockedPositions.Any(u => u.Code == body.LicenseCode);
             if (alreadyUnlocked)
             {
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                await PublishUnlockFailedAsync(body.BoardId, board.OwnerType, board.OwnerId, body.LicenseCode,
                     UnlockFailureReason.AlreadyUnlocked, cancellationToken);
                 return (StatusCodes.Conflict, null);
             }
@@ -1326,7 +1454,7 @@ public partial class LicenseService : ILicenseService
 
                 if (!hasAdjacentUnlocked)
                 {
-                    await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    await PublishUnlockFailedAsync(body.BoardId, board.OwnerType, board.OwnerId, body.LicenseCode,
                         UnlockFailureReason.NotAdjacent, cancellationToken);
                     return (StatusCodes.BadRequest, null);
                 }
@@ -1343,34 +1471,26 @@ public partial class LicenseService : ILicenseService
                     _logger.LogInformation(
                         "Prerequisites not met for {Code} on board {BoardId}: missing {Missing}",
                         body.LicenseCode, body.BoardId, string.Join(", ", missingPrereqs));
-                    await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                    await PublishUnlockFailedAsync(body.BoardId, board.OwnerType, board.OwnerId, body.LicenseCode,
                         UnlockFailureReason.PrerequisitesNotMet, cancellationToken);
                     return (StatusCodes.BadRequest, null);
                 }
             }
 
-            // 9. Load character to get realm context for item creation
-            // Moved before item/contract flow per saga ordering: easily-reversible actions first
-            CharacterResponse character;
-            try
+            // 9. Validate realm context is available for item creation
+            if (!board.RealmId.HasValue)
             {
-                character = await _characterClient.GetCharacterAsync(
-                    new GetCharacterRequest { CharacterId = board.CharacterId },
-                    cancellationToken);
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogError(ex, "Character {CharacterId} not found during unlock of {Code} on board {BoardId}",
-                    board.CharacterId, body.LicenseCode, body.BoardId);
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                _logger.LogError("Board {BoardId} has no realm context — cannot create item instances", body.BoardId);
+                await PublishUnlockFailedAsync(body.BoardId, board.OwnerType, board.OwnerId, body.LicenseCode,
                     UnlockFailureReason.ContractFailed, cancellationToken);
-                return (StatusCodes.NotFound, null);
+                return (StatusCodes.BadRequest, null);
             }
 
-            // 10. Create item instance FIRST (easily reversible via DestroyItemInstance)
+            // 9b. Create item instance FIRST (easily reversible via DestroyItemInstance)
+            // Realm context stored on board at creation time — no character load needed.
             // Saga ordering: item creation before contract completion ensures the worst failure
             // mode (LP deducted, no item) cannot occur. If contract fails after item creation,
-            // we compensate by destroying the item — player loses nothing either way.
+            // we compensate by destroying the item — owner loses nothing either way.
             ItemInstanceResponse itemInstance;
             try
             {
@@ -1379,7 +1499,7 @@ public partial class LicenseService : ILicenseService
                     {
                         TemplateId = definition.ItemTemplateId,
                         ContainerId = board.ContainerId,
-                        RealmId = character.RealmId,
+                        RealmId = board.RealmId.Value,
                         Quantity = 1
                     },
                     cancellationToken);
@@ -1388,7 +1508,7 @@ public partial class LicenseService : ILicenseService
             {
                 _logger.LogError(ex, "Item creation failed for unlock of {Code} on board {BoardId} (status {StatusCode})",
                     body.LicenseCode, body.BoardId, ex.StatusCode);
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                await PublishUnlockFailedAsync(body.BoardId, board.OwnerType, board.OwnerId, body.LicenseCode,
                     UnlockFailureReason.ContractFailed, cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
@@ -1396,13 +1516,15 @@ public partial class LicenseService : ILicenseService
             {
                 _logger.LogError(ex, "Unexpected error creating item for unlock of {Code} on board {BoardId}",
                     body.LicenseCode, body.BoardId);
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                await PublishUnlockFailedAsync(body.BoardId, board.OwnerType, board.OwnerId, body.LicenseCode,
                     UnlockFailureReason.ContractFailed, cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // 11. Contract lifecycle — LP deduction via prebound API execution
-            // If this fails, compensate by destroying the item created in step 10
+            // 10. Contract lifecycle — LP deduction via prebound API execution
+            // If this fails, compensate by destroying the item created in step 9
+            var licenseeEntityType = MapToEntityType(board.OwnerType) ?? EntityType.Custom;
+
             Guid contractInstanceId;
             try
             {
@@ -1414,8 +1536,8 @@ public partial class LicenseService : ILicenseService
                         {
                             new ContractPartyInput
                             {
-                                EntityId = board.CharacterId,
-                                EntityType = EntityType.Character,
+                                EntityId = board.OwnerId,
+                                EntityType = licenseeEntityType,
                                 Role = "licensee"
                             },
                             new ContractPartyInput
@@ -1429,10 +1551,11 @@ public partial class LicenseService : ILicenseService
                     cancellationToken);
                 contractInstanceId = contractInstance.ContractId;
 
-                // 11b. Set template values for prebound API execution
+                // 10b. Set template values for prebound API execution
                 var templateValues = new Dictionary<string, string>
                 {
-                    ["characterId"] = board.CharacterId.ToString(),
+                    ["ownerType"] = board.OwnerType,
+                    ["ownerId"] = board.OwnerId.ToString(),
                     ["boardId"] = body.BoardId.ToString(),
                     ["lpCost"] = definition.LpCost.ToString(),
                     ["licenseCode"] = body.LicenseCode,
@@ -1461,18 +1584,18 @@ public partial class LicenseService : ILicenseService
                     },
                     cancellationToken);
 
-                // 11c. Auto-propose the contract
+                // 10c. Auto-propose the contract
                 await _contractClient.ProposeContractInstanceAsync(
                     new ProposeContractInstanceRequest { ContractId = contractInstanceId },
                     cancellationToken);
 
-                // 11d. Auto-consent both parties
+                // 10d. Auto-consent both parties
                 await _contractClient.ConsentToContractAsync(
                     new ConsentToContractRequest
                     {
                         ContractId = contractInstanceId,
-                        PartyEntityId = board.CharacterId,
-                        PartyEntityType = EntityType.Character
+                        PartyEntityId = board.OwnerId,
+                        PartyEntityType = licenseeEntityType
                     },
                     cancellationToken);
 
@@ -1485,7 +1608,7 @@ public partial class LicenseService : ILicenseService
                     },
                     cancellationToken);
 
-                // 11e. Complete the "unlock" milestone (triggers LP deduction via prebound API)
+                // 10e. Complete the "unlock" milestone (triggers LP deduction via prebound API)
                 await _contractClient.CompleteMilestoneAsync(
                     new CompleteMilestoneRequest
                     {
@@ -1500,7 +1623,7 @@ public partial class LicenseService : ILicenseService
                 _logger.LogError(ex, "Contract execution failed for unlock of {Code} on board {BoardId} (status {StatusCode}), compensating by destroying item {ItemInstanceId}",
                     body.LicenseCode, body.BoardId, ex.StatusCode, itemInstance.InstanceId);
                 await CompensateItemCreationAsync(itemInstance.InstanceId, body.BoardId, body.LicenseCode, cancellationToken);
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                await PublishUnlockFailedAsync(body.BoardId, board.OwnerType, board.OwnerId, body.LicenseCode,
                     UnlockFailureReason.ContractFailed, cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
@@ -1509,7 +1632,7 @@ public partial class LicenseService : ILicenseService
                 _logger.LogError(ex, "Contract execution failed for unlock of {Code} on board {BoardId}, compensating by destroying item {ItemInstanceId}",
                     body.LicenseCode, body.BoardId, itemInstance.InstanceId);
                 await CompensateItemCreationAsync(itemInstance.InstanceId, body.BoardId, body.LicenseCode, cancellationToken);
-                await PublishUnlockFailedAsync(body.BoardId, board.CharacterId, body.LicenseCode,
+                await PublishUnlockFailedAsync(body.BoardId, board.OwnerType, board.OwnerId, body.LicenseCode,
                     UnlockFailureReason.ContractFailed, cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
@@ -1557,7 +1680,7 @@ public partial class LicenseService : ILicenseService
                     attempt + 1, body.BoardId);
             }
 
-            // 13. Publish license.unlocked event
+            // 12. Publish license.unlocked event
             await _messageBus.TryPublishAsync(
                 LicenseTopics.LicenseUnlocked,
                 new LicenseUnlockedEvent
@@ -1565,7 +1688,8 @@ public partial class LicenseService : ILicenseService
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     BoardId = body.BoardId,
-                    CharacterId = board.CharacterId,
+                    OwnerType = board.OwnerType,
+                    OwnerId = board.OwnerId,
                     GameServiceId = board.GameServiceId,
                     LicenseCode = body.LicenseCode,
                     Position = new GridPosition { X = definition.PositionX, Y = definition.PositionY },
@@ -1576,10 +1700,10 @@ public partial class LicenseService : ILicenseService
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation(
-                "Unlocked license {Code} at ({X}, {Y}) on board {BoardId} for character {CharacterId}",
-                body.LicenseCode, definition.PositionX, definition.PositionY, body.BoardId, board.CharacterId);
+                "Unlocked license {Code} at ({X}, {Y}) on board {BoardId} for owner {OwnerType}:{OwnerId}",
+                body.LicenseCode, definition.PositionX, definition.PositionY, body.BoardId, board.OwnerType, board.OwnerId);
 
-            // 14. Return success
+            // 13. Return success
             return (StatusCodes.OK, new UnlockLicenseResponse
             {
                 BoardId = body.BoardId,
@@ -1636,7 +1760,7 @@ public partial class LicenseService : ILicenseService
     /// Publishes a license.unlock-failed event.
     /// </summary>
     private async Task PublishUnlockFailedAsync(
-        Guid boardId, Guid characterId, string licenseCode,
+        Guid boardId, string ownerType, Guid ownerId, string licenseCode,
         UnlockFailureReason reason, CancellationToken cancellationToken)
     {
         await _messageBus.TryPublishAsync(
@@ -1646,7 +1770,8 @@ public partial class LicenseService : ILicenseService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 BoardId = boardId,
-                CharacterId = characterId,
+                OwnerType = ownerType,
+                OwnerId = ownerId,
                 LicenseCode = licenseCode,
                 Reason = reason
             },
@@ -1705,37 +1830,41 @@ public partial class LicenseService : ILicenseService
                 prerequisitesMet = definition.Prerequisites.All(p => unlockedCodes.Contains(p));
             }
 
-            // Check LP balance via currency client
+            // Check LP balance via currency client (owner-type-aware)
             double? currentLp = null;
-            var lpSufficient = true;
+            bool? lpSufficient = null;
 
             // LP check is best-effort and advisory only.
             // Actual LP deduction happens in the contract milestone execution (not here).
-            try
+            var walletOwnerType = MapToWalletOwnerType(board.OwnerType);
+            if (walletOwnerType.HasValue)
             {
-                var walletResponse = await _currencyClient.GetOrCreateWalletAsync(
-                    new GetOrCreateWalletRequest
-                    {
-                        OwnerId = board.CharacterId,
-                        OwnerType = WalletOwnerType.Character
-                    },
-                    cancellationToken);
+                try
+                {
+                    var walletResponse = await _currencyClient.GetOrCreateWalletAsync(
+                        new GetOrCreateWalletRequest
+                        {
+                            OwnerId = board.OwnerId,
+                            OwnerType = walletOwnerType.Value
+                        },
+                        cancellationToken);
 
-                // Sum all balances as a simple LP approximation
-                // The contract template defines which specific currency to deduct
-                var totalBalance = walletResponse.Balances.Sum(b => b.Amount);
-                currentLp = totalBalance;
-                lpSufficient = totalBalance >= definition.LpCost;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to check LP balance for character {CharacterId}", board.CharacterId);
-                lpSufficient = false;
+                    // Sum all balances as a simple LP approximation
+                    // The contract template defines which specific currency to deduct
+                    var totalBalance = walletResponse.Balances.Sum(b => b.Amount);
+                    currentLp = totalBalance;
+                    lpSufficient = totalBalance >= definition.LpCost;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to check LP balance for owner {OwnerType}:{OwnerId}", board.OwnerType, board.OwnerId);
+                    lpSufficient = false;
+                }
             }
 
             return (StatusCodes.OK, new CheckUnlockableResponse
             {
-                Unlockable = adjacencyMet && prerequisitesMet && lpSufficient,
+                Unlockable = adjacencyMet && prerequisitesMet && (lpSufficient ?? true),
                 AdjacencyMet = adjacencyMet,
                 PrerequisitesMet = prerequisitesMet,
                 LpSufficient = lpSufficient,
@@ -1827,7 +1956,8 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.OK, new BoardStateResponse
             {
                 BoardId = body.BoardId,
-                CharacterId = board.CharacterId,
+                OwnerType = board.OwnerType,
+                OwnerId = board.OwnerId,
                 BoardTemplateId = board.BoardTemplateId,
                 GridWidth = template.GridWidth,
                 GridHeight = template.GridHeight,
@@ -2008,33 +2138,34 @@ public partial class LicenseService : ILicenseService
     #region Cleanup Operations
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(
-        CleanupByCharacterRequest body,
+    public async Task<(StatusCodes, CleanupByOwnerResponse?)> CleanupByOwnerAsync(
+        CleanupByOwnerRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Cleaning up license boards for deleted character {CharacterId}", body.CharacterId);
+        _logger.LogInformation("Cleaning up license boards for deleted owner {OwnerType}:{OwnerId}", body.OwnerType, body.OwnerId);
 
         var boardsDeleted = 0;
 
         try
         {
             var boards = await BoardStore.QueryAsync(
-                b => b.CharacterId == body.CharacterId,
+                b => b.OwnerType == body.OwnerType && b.OwnerId == body.OwnerId,
                 cancellationToken: cancellationToken);
 
             if (boards.Count == 0)
             {
-                _logger.LogDebug("No license boards found for character {CharacterId}", body.CharacterId);
-                return (StatusCodes.OK, new CleanupByCharacterResponse
+                _logger.LogDebug("No license boards found for owner {OwnerType}:{OwnerId}", body.OwnerType, body.OwnerId);
+                return (StatusCodes.OK, new CleanupByOwnerResponse
                 {
-                    CharacterId = body.CharacterId,
+                    OwnerType = body.OwnerType,
+                    OwnerId = body.OwnerId,
                     BoardsDeleted = 0
                 });
             }
 
             _logger.LogInformation(
-                "Found {BoardCount} license boards to clean up for character {CharacterId}",
-                boards.Count, body.CharacterId);
+                "Found {BoardCount} license boards to clean up for owner {OwnerType}:{OwnerId}",
+                boards.Count, body.OwnerType, body.OwnerId);
 
             foreach (var board in boards)
             {
@@ -2056,9 +2187,9 @@ public partial class LicenseService : ILicenseService
                     BuildBoardKey(board.BoardId),
                     cancellationToken);
 
-                // Delete the character-template uniqueness key
+                // Delete the owner-template uniqueness key
                 await BoardStore.DeleteAsync(
-                    BuildBoardByCharacterKey(board.CharacterId, board.BoardTemplateId),
+                    BuildBoardByOwnerKey(board.OwnerType, board.OwnerId, board.BoardTemplateId),
                     cancellationToken);
 
                 // Invalidate board cache
@@ -2068,31 +2199,32 @@ public partial class LicenseService : ILicenseService
 
                 boardsDeleted++;
 
-                _logger.LogDebug("Deleted board {BoardId} for character {CharacterId}",
-                    board.BoardId, body.CharacterId);
+                _logger.LogDebug("Deleted board {BoardId} for owner {OwnerType}:{OwnerId}",
+                    board.BoardId, body.OwnerType, body.OwnerId);
             }
 
             _logger.LogInformation(
-                "Completed cleanup of {BoardsDeleted} license boards for character {CharacterId}",
-                boardsDeleted, body.CharacterId);
+                "Completed cleanup of {BoardsDeleted} license boards for owner {OwnerType}:{OwnerId}",
+                boardsDeleted, body.OwnerType, body.OwnerId);
 
-            return (StatusCodes.OK, new CleanupByCharacterResponse
+            return (StatusCodes.OK, new CleanupByOwnerResponse
             {
-                CharacterId = body.CharacterId,
+                OwnerType = body.OwnerType,
+                OwnerId = body.OwnerId,
                 BoardsDeleted = boardsDeleted
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error cleaning up license boards for character {CharacterId}", body.CharacterId);
+            _logger.LogError(ex, "Error cleaning up license boards for owner {OwnerType}:{OwnerId}", body.OwnerType, body.OwnerId);
             await _messageBus.TryPublishErrorAsync(
                 "license",
-                "CleanupByCharacter",
+                "CleanupByOwner",
                 "cleanup_failed",
                 ex.Message,
                 dependency: null,
-                endpoint: "post:/license/cleanup-by-character",
-                details: $"CharacterId: {body.CharacterId}, BoardsDeletedSoFar: {boardsDeleted}",
+                endpoint: "post:/license/cleanup-by-owner",
+                details: $"OwnerType: {body.OwnerType}, OwnerId: {body.OwnerId}, BoardsDeletedSoFar: {boardsDeleted}",
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);

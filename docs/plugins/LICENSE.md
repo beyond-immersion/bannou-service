@@ -9,7 +9,7 @@
 
 ## Overview
 
-The License service (L4 GameFeatures) provides grid-based progression boards (skill trees, license boards, tech trees) inspired by Final Fantasy XII's License Board system. It is a thin orchestration layer that combines Inventory (containers for license items), Items (license nodes as item instances), and Contracts (unlock behavior via prebound API execution) to manage character progression across a grid. Internal-only, never internet-facing. See [GitHub Issue #281](https://github.com/BeyondImmersion/bannou-service/issues/281) for the original design specification.
+The License service (L4 GameFeatures) provides grid-based progression boards (skill trees, license boards, tech trees) inspired by Final Fantasy XII's License Board system. It is a thin orchestration layer that combines Inventory (containers for license items), Items (license nodes as item instances), and Contracts (unlock behavior via prebound API execution) to manage entity progression across a grid. Boards support polymorphic ownership via `ownerType` + `ownerId` — characters, accounts, guilds, and locations can all own boards. Internal-only, never internet-facing. See [GitHub Issue #281](https://github.com/BeyondImmersion/bannou-service/issues/281) for the original design specification.
 
 ---
 
@@ -22,7 +22,7 @@ The License service (L4 GameFeatures) provides grid-based progression boards (sk
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events (template/board CRUD) and gameplay events (unlock, unlock-failed) |
 | lib-messaging (`IEventConsumer`) | Event consumer registration (currently unused — cleanup via lib-resource) |
 | lib-contract (`IContractClient`) | Creating contract instances, setting template values, proposing, consenting, and completing milestones during unlock execution (L1 hard dependency) |
-| lib-character (`ICharacterClient`) | Validating character existence during board creation and fetching realm context during unlock (L2 hard dependency) |
+| lib-character (`ICharacterClient`) | Validating character existence and resolving realm context during board creation for character-type owners (L2 hard dependency) |
 | lib-inventory (`IInventoryClient`) | Creating/deleting containers for board instances and reading container contents for cache rebuild (L2 hard dependency) |
 | lib-item (`IItemClient`) | Creating/destroying item instances during unlock flow and compensation (L2 hard dependency) |
 | lib-currency (`ICurrencyClient`) | Advisory LP balance checks in `CheckUnlockable` (L2 hard dependency) |
@@ -58,8 +58,8 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `board:{boardId}` | `BoardInstanceModel` | Character-specific board instance linking character to template with container |
-| `board-char:{characterId}:{boardTemplateId}` | `BoardInstanceModel` | Uniqueness key enforcing one board per template per character (stores same data as `board:{boardId}`) |
+| `board:{boardId}` | `BoardInstanceModel` | Owner-specific board instance linking ownerType+ownerId to template with container and realm context |
+| `board-owner:{ownerType}:{ownerId}:{boardTemplateId}` | `BoardInstanceModel` | Uniqueness key enforcing one board per template per owner (stores same data as `board:{boardId}`) |
 
 ### Store: `license-board-cache` (Backend: Redis)
 
@@ -87,8 +87,8 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | `license-board-template.deleted` | `LicenseBoardTemplateDeletedEvent` | Board template deleted via `DeleteBoardTemplateAsync` |
 | `license-board.created` | `LicenseBoardCreatedEvent` | Board instance created via `CreateBoardAsync` |
 | `license-board.deleted` | `LicenseBoardDeletedEvent` | Board instance deleted via `DeleteBoardAsync` |
-| `license.unlocked` | `LicenseUnlockedEvent` | License successfully unlocked (includes boardId, characterId, licenseCode, position, itemInstanceId, contractInstanceId, lpCost) |
-| `license.unlock-failed` | `LicenseUnlockFailedEvent` | License unlock failed (includes boardId, characterId, licenseCode, reason enum) |
+| `license.unlocked` | `LicenseUnlockedEvent` | License successfully unlocked (includes boardId, ownerType, ownerId, licenseCode, position, itemInstanceId, contractInstanceId, lpCost) |
+| `license.unlock-failed` | `LicenseUnlockFailedEvent` | License unlock failed (includes boardId, ownerType, ownerId, licenseCode, reason enum) |
 
 **Note**: `license-board.updated` is NOT published — boards are immutable after creation. The `LicenseBoardUpdatedEvent` model exists as an unavoidable byproduct of `x-lifecycle` auto-generation but is intentionally excluded from `x-event-publications`.
 
@@ -96,7 +96,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| *(via lib-resource cleanup callback)* | `CleanupByCharacterAsync` | Queries all boards for the deleted character, deletes inventory containers (destroying contained license items), deletes board instance records, deletes character-template uniqueness keys, and invalidates board caches |
+| *(via lib-resource cleanup callback)* | `CleanupByOwnerAsync` | Queries all boards for the deleted owner (by ownerType + ownerId), deletes inventory containers (destroying contained license items), deletes board instance records, deletes owner-template uniqueness keys, and invalidates board caches |
 
 ---
 
@@ -104,7 +104,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `MaxBoardsPerCharacter` | `LICENSE_MAX_BOARDS_PER_CHARACTER` | 10 | Maximum active boards a single character can have; enforced in `CreateBoardAsync` by counting existing boards |
+| `MaxBoardsPerOwner` | `LICENSE_MAX_BOARDS_PER_OWNER` | 10 | Maximum active boards a single owner entity can have; enforced in `CreateBoardAsync` by counting existing boards for the ownerType+ownerId combination |
 | `MaxDefinitionsPerBoard` | `LICENSE_MAX_DEFINITIONS_PER_BOARD` | 200 | Maximum license definitions per board template; enforced in `AddLicenseDefinitionAsync` and `SeedBoardTemplateAsync` |
 | `LockTimeoutSeconds` | `LICENSE_LOCK_TIMEOUT_SECONDS` | 30 | Distributed lock TTL for board and template mutations |
 | `BoardCacheTtlSeconds` | `LICENSE_BOARD_CACHE_TTL_SECONDS` | 300 | Redis TTL for board state cache; cache is rebuilt from inventory on miss |
@@ -123,9 +123,9 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | `IStateStoreFactory` | State store access (5 stores) |
 | `IDistributedLockProvider` | Distributed locks via `license-lock` store |
 | `IMessageBus` | Event publishing |
-| `IEventConsumer` | Event subscription registration (character.deleted) |
+| `IEventConsumer` | Event subscription registration (unused — cleanup via lib-resource) |
 | `IContractClient` | Contract lifecycle operations during unlock |
-| `ICharacterClient` | Character validation and realm context |
+| `ICharacterClient` | Character validation and realm context resolution for character-type owners |
 | `IInventoryClient` | Container CRUD and content queries |
 | `IItemClient` | Item instance creation and destruction (saga compensation) |
 | `ICurrencyClient` | Advisory LP balance checks |
@@ -135,7 +135,11 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 - `IsAdjacent(x1, y1, x2, y2, mode)` - Static method computing grid adjacency for FourWay (Manhattan distance = 1) and EightWay (Chebyshev distance <= 1)
 - `LoadOrRebuildBoardCacheAsync(board, definitions, ct)` - Cache read-through: tries Redis first, on miss rebuilds from inventory container contents by matching item template IDs to definitions
 - `CompensateItemCreationAsync(itemInstanceId, boardId, licenseCode, ct)` - Saga compensation: destroys an item created during unlock if the subsequent contract fails. Publishes error event on compensation failure.
-- `PublishUnlockFailedAsync(boardId, characterId, licenseCode, reason, ct)` - Helper for publishing `license.unlock-failed` events
+- `PublishUnlockFailedAsync(boardId, ownerType, ownerId, licenseCode, reason, ct)` - Helper for publishing `license.unlock-failed` events
+- `MapToContainerOwnerType(ownerType)` - Maps opaque owner type string to `ContainerOwnerType` for inventory operations (character, account, location, guild → mapped; others → null)
+- `MapToWalletOwnerType(ownerType)` - Maps owner type string to `WalletOwnerType` for currency operations (character, account, guild, npc → mapped; others → null)
+- `MapToEntityType(ownerType)` - Maps owner type string to `EntityType` for contract parties (character, account, realm, guild, location, actor → mapped; others → null)
+- `IsValidOwnerType(ownerType)` - Validates owner type string is non-empty and doesn't contain the `:` key separator
 - `MapTemplateToResponse`, `MapDefinitionToResponse`, `MapBoardToResponse` - Static model-to-response mapping helpers
 - `LicenseTopics` - Static class with topic string constants for `license.unlocked` and `license.unlock-failed`
 
@@ -145,7 +149,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 ### Board Template Management (6 endpoints, developer role)
 
-Standard CRUD on board templates with `CreateBoardTemplateAsync` validating game service existence, contract template existence, starting nodes within grid bounds, and defaulting adjacency mode from config. `UpdateBoardTemplateAsync` acquires a template-level distributed lock before mutation and publishes a lifecycle event. `DeleteBoardTemplateAsync` also acquires a template lock, checks for active board instances, and performs a hard delete.
+Standard CRUD on board templates with `CreateBoardTemplateAsync` validating game service existence, contract template existence, starting nodes within grid bounds, `allowedOwnerTypes` mapping to `ContainerOwnerType` (two-gate validation: gate 1 at template creation, gate 2 at board creation), and defaulting adjacency mode from config. `UpdateBoardTemplateAsync` acquires a template-level distributed lock before mutation, validates any updated `allowedOwnerTypes`, and publishes a lifecycle event. `DeleteBoardTemplateAsync` also acquires a template lock, checks for active board instances, and performs a hard delete.
 
 `ListBoardTemplatesAsync` supports paginated listing filtered by `GameServiceId` using `QueryAsync` with configurable page size.
 
@@ -161,13 +165,13 @@ Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLi
 
 ### Board Instance Management (4 endpoints, mixed roles)
 
-`CreateBoardAsync` (user role): Validates character exists, template exists and is active, game service matches, enforces one board per template per character via uniqueness key, enforces `MaxBoardsPerCharacter` limit by counting existing boards. Creates an Inventory container of type `LicenseBoard` and initializes an empty Redis cache entry.
+`CreateBoardAsync` (user role): Validates ownerType format (no `:` separator), validates ownerType is in template's `allowedOwnerTypes`, performs owner-type-specific validation (character owners: validates character exists via ICharacterClient, resolves realm context; other owners: accepts provided realmId). Enforces one board per template per owner via uniqueness key (`board-owner:{ownerType}:{ownerId}:{boardTemplateId}`), enforces `MaxBoardsPerOwner` limit by counting existing boards. Creates an Inventory container with mapped `ContainerOwnerType` and initializes an empty Redis cache entry. Registers character-type owners as resource references via lib-resource.
 
 `GetBoardAsync` (developer role): Simple key lookup.
 
-`ListBoardsByCharacterAsync` (user role): Queries all boards for a character, optionally filtered by game service.
+`ListBoardsByOwnerAsync` (user role): Queries all boards for an owner (by ownerType + ownerId), optionally filtered by game service.
 
-`DeleteBoardAsync` (developer role): Acquires distributed lock, deletes inventory container (which destroys contained items), deletes board record, uniqueness key, and cache entry. Publishes lifecycle event.
+`DeleteBoardAsync` (developer role): Acquires distributed lock, deletes inventory container (which destroys contained items), deletes board record, uniqueness key, and cache entry. Unregisters character-type resource references. Publishes lifecycle event.
 
 ### Gameplay Operations (3 endpoints, user role)
 
@@ -180,14 +184,14 @@ Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLi
 6. Load/rebuild board cache from inventory
 7. Check not already unlocked
 8. Validate adjacency (starting node bypass or adjacent to unlocked node)
-9. Load character for realm context
-10. **Create item instance** in board container (easily reversible — saga ordering)
-11. **Contract lifecycle**: create instance, set template values, propose, consent both parties, complete "unlock" milestone (LP deduction via prebound API). If contract fails, **compensate by destroying the item** from step 10.
+9. Validate realm context available on board (stored at creation time — no character load needed)
+10. **Create item instance** in board container using `board.RealmId` (easily reversible — saga ordering)
+11. **Contract lifecycle**: create instance with `MapToEntityType(board.OwnerType)` for party entity type, set template values (ownerType, ownerId, boardId, lpCost, etc.), propose, consent both parties, complete "unlock" milestone (LP deduction via prebound API). If contract fails, **compensate by destroying the item** from step 10.
 12. Update board cache with optimistic concurrency retry (ETag-based, up to `MaxConcurrencyRetries`)
-13. Publish `license.unlocked` event
+13. Publish `license.unlocked` event (includes ownerType + ownerId)
 14. Return success
 
-**`CheckUnlockableAsync`** - Read-only advisory check. Evaluates adjacency, prerequisites, and LP balance. LP check sums all wallet balances as an approximation; actual LP deduction is handled by the contract template's prebound API execution.
+**`CheckUnlockableAsync`** - Read-only advisory check. Evaluates adjacency, prerequisites, and LP balance. LP check maps `board.OwnerType` via `MapToWalletOwnerType()` — if mappable, sums all wallet balances as an approximation; if unmappable, returns `lpSufficient = null` (not applicable for this owner type). Actual LP deduction is handled by the contract template's prebound API execution.
 
 **`GetBoardStateAsync`** - Computes the full board state including per-node status (`Locked`, `Unlockable`, `Unlocked`). Loads template, all definitions, and cache, then classifies each node based on adjacency to unlocked positions.
 
@@ -212,15 +216,15 @@ Unlock License Flow (under distributed lock, saga-ordered)
   │                    Validation Phase                      │
   │  7. Not already unlocked (cache)                        │
   │  8. Adjacent to unlocked OR starting node               │
+  │  9. Realm context available (stored on board)           │
   └──────────────────────────┬──────────────────────────────┘
-                             │
-                    9. Load character
                              │
                     10. Create item (reversible)
                              │
          ┌───────────────────▼────────────────────┐
          │          IItemClient (L2)               │
          │  Create instance in board container     │
+         │  using board.RealmId                    │
          └───────────────────┬────────────────────┘
                              │
                     11. Contract Flow
@@ -258,14 +262,13 @@ Unlock License Flow (under distributed lock, saga-ordered)
 
 ## Potential Extensions
 
-- **Board reset/respec**: Allow characters to reset all unlocked licenses on a board, returning LP and removing items. Would require a new endpoint, contract template for refund execution, and inventory bulk-delete.
+- **Board reset/respec**: Allow owners to reset all unlocked licenses on a board, returning LP and removing items. Would require a new endpoint, contract template for refund execution, and inventory bulk-delete.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/356 -->
 - **Board sharing/copying**: Developer-only endpoint for cloning NPC progression. Skip contracts (admin tooling), create items directly, publish single `license.board.cloned` event. Design decisions resolved — see [#357](https://github.com/beyond-immersion/bannou-service/issues/357) for details.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/357 -->
-- ~~**Resource reference integration**: Register boards as references to characters via lib-resource for proper cleanup coordination instead of direct event handling.~~ FIXED: Added `x-references` to schema, generated reference tracking helpers, implemented `CleanupByCharacterAsync` endpoint, registered cleanup callbacks in plugin startup, removed direct `character.deleted` event subscription.
+- ~~**Resource reference integration**: Register boards as references to characters via lib-resource for proper cleanup coordination instead of direct event handling.~~ FIXED: Added `x-references` to schema, generated reference tracking helpers, implemented `CleanupByOwnerAsync` endpoint, registered cleanup callbacks in plugin startup, removed direct `character.deleted` event subscription.
 - ~~**Achievement integration**: Publish events when specific board completion thresholds are reached.~~ CLOSED: Not a License concern. License already publishes `license.unlocked` events with all data needed for milestone derivation. Achievement integration belongs in Analytics (Source → Analytics → Achievement pipeline). See [#358](https://github.com/beyond-immersion/bannou-service/issues/358).
-- **Polymorphic ownership**: Replace `characterId` with `ownerType` + `ownerId` to support non-character boards (realm tech trees, account achievement boards, seed progression). Follows established Seed pattern. See [#368](https://github.com/beyond-immersion/bannou-service/issues/368).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/368 -->
+- ~~**Polymorphic ownership**: Replace `characterId` with `ownerType` + `ownerId` to support non-character boards.~~ FIXED: Implemented polymorphic ownership with `ownerType` (opaque string) + `ownerId` (Guid) + `realmId` (nullable). Templates declare `allowedOwnerTypes` with two-gate validation (template creation + board creation). Owner type mapping functions bridge to ContainerOwnerType, WalletOwnerType, and EntityType. Realm context stored at board creation time — no character load during unlock. LP check returns `null` for unmappable owner types. Day-one character x-references via lib-resource; other owner types deferred. See [#368](https://github.com/beyond-immersion/bannou-service/issues/368).
 
 ---
 
@@ -287,13 +290,13 @@ No known bugs at this time.
 
 - **Cache rebuild matching is first-match**: When multiple definitions share the same `ItemTemplateId`, the cache rebuild uses `FirstOrDefault` against unmatched definitions. This means if two definitions use the same item template and both are unlocked, the rebuild assigns them in definition-iteration order, which may not match the original unlock order. This only affects display metadata (timestamps), not correctness.
 
-- **CheckUnlockable LP check is advisory**: The LP balance check sums all wallet balances as an approximation. The actual LP deduction is handled by the contract template's prebound API execution (which knows the specific currency). The advisory check can give false positives (sufficient total balance but wrong currency) or false negatives (sufficient in one currency but low total). On currency service failure, `LpSufficient` defaults to `false` (conservative) rather than `null`, which may mislead callers into thinking the character definitely lacks LP.
+- **CheckUnlockable LP check is advisory and owner-type-aware**: The LP balance check first maps `board.OwnerType` to `WalletOwnerType`. If the mapping exists, it sums all wallet balances as an approximation. If unmappable (e.g., location owners don't have wallets), `lpSufficient` is `null` (not applicable). The actual LP deduction is handled by the contract template's prebound API execution (which knows the specific currency). The advisory check can give false positives (sufficient total balance but wrong currency) or false negatives (sufficient in one currency but low total). On currency service failure, `lpSufficient` defaults to `false` (conservative).
 
 - **Contract flow is synchronous and auto-consented**: The unlock flow creates a contract instance, auto-proposes it, auto-consents both parties, and completes the milestone in a single synchronous sequence. This is intentional -- the contract is used for its prebound API execution (LP deduction, etc.), not for multi-party negotiation. The "licensor" party is the game service entity ID.
 
 - **Delete is hard delete**: `DeleteBoardTemplateAsync` performs `BoardTemplateStore.DeleteAsync()` (hard delete), blocked by active board instances. The `IsActive` flag on `BoardTemplateModel` exists for preventing new board creation from inactive templates, not for soft-delete semantics.
 
-- **One board per template per character**: Enforced via the `board-char:{characterId}:{boardTemplateId}` uniqueness key. A character cannot have two instances of the same board template. This is stored as a full `BoardInstanceModel` duplicate in the same MySQL store.
+- **One board per template per owner**: Enforced via the `board-owner:{ownerType}:{ownerId}:{boardTemplateId}` uniqueness key. An owner entity cannot have two instances of the same board template. This is stored as a full `BoardInstanceModel` duplicate in the same MySQL store.
 
 ### Design Considerations (Requires Planning)
 
@@ -311,4 +314,4 @@ No known bugs at this time.
 | [#356](https://github.com/beyond-immersion/bannou-service/issues/356) | Open (needs game design) | Board reset/respec — refund %, partial vs full, cooldown |
 | [#357](https://github.com/beyond-immersion/bannou-service/issues/357) | Open (design resolved) | Board clone for NPC progression — implementation needed |
 | [#360](https://github.com/beyond-immersion/bannou-service/issues/360) | Fixed | Saga-ordered unlock flow with item-before-contract compensation |
-| [#368](https://github.com/beyond-immersion/bannou-service/issues/368) | Open | Polymorphic ownership (OwnerType + OwnerId) |
+| [#368](https://github.com/beyond-immersion/bannou-service/issues/368) | Fixed | Polymorphic ownership (OwnerType + OwnerId + RealmId) with two-gate validation, owner type mapping, and nullable LP checks |

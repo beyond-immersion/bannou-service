@@ -167,7 +167,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         int gridWidth = 5,
         int gridHeight = 5,
         AdjacencyMode adjacencyMode = AdjacencyMode.EightWay,
-        bool isActive = true)
+        bool isActive = true,
+        List<string>? allowedOwnerTypes = null)
     {
         return new BoardTemplateModel
         {
@@ -180,6 +181,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             StartingNodes = new List<GridPositionEntry> { new GridPositionEntry { X = 0, Y = 0 } },
             BoardContractTemplateId = TestContractTemplateId,
             AdjacencyMode = adjacencyMode,
+            AllowedOwnerTypes = allowedOwnerTypes ?? new List<string> { "character" },
             IsActive = isActive,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -210,14 +212,18 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
     private static BoardInstanceModel CreateTestBoard(
         Guid? boardId = null,
-        Guid? characterId = null,
+        string ownerType = "character",
+        Guid? ownerId = null,
+        Guid? realmId = null,
         Guid? boardTemplateId = null,
         Guid? containerId = null)
     {
         return new BoardInstanceModel
         {
             BoardId = boardId ?? TestBoardId,
-            CharacterId = characterId ?? TestCharacterId,
+            OwnerType = ownerType,
+            OwnerId = ownerId ?? TestCharacterId,
+            RealmId = realmId ?? TestRealmId,
             BoardTemplateId = boardTemplateId ?? TestBoardTemplateId,
             GameServiceId = TestGameServiceId,
             ContainerId = containerId ?? TestContainerId,
@@ -275,10 +281,10 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ContractInstanceResponse { ContractId = contractId });
 
-        // Character fetch (for RealmId)
+        // Character fetch (only needed for character owner type validation in CreateBoard)
         _mockCharacterClient
             .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CharacterResponse { CharacterId = board.CharacterId, RealmId = TestRealmId });
+            .ReturnsAsync(new CharacterResponse { CharacterId = board.OwnerId, RealmId = TestRealmId });
 
         // Item creation succeeds
         _mockItemClient
@@ -309,7 +315,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var config = new LicenseServiceConfiguration();
 
         Assert.NotNull(config);
-        Assert.Equal(10, config.MaxBoardsPerCharacter);
+        Assert.Equal(10, config.MaxBoardsPerOwner);
         Assert.Equal(200, config.MaxDefinitionsPerBoard);
         Assert.Equal(30, config.LockTimeoutSeconds);
         Assert.Equal(300, config.BoardCacheTtlSeconds);
@@ -349,7 +355,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             GridHeight = 5,
             StartingNodes = new List<GridPosition> { new GridPosition { X = 0, Y = 0 } },
             BoardContractTemplateId = TestContractTemplateId,
-            AdjacencyMode = AdjacencyMode.EightWay
+            AdjacencyMode = AdjacencyMode.EightWay,
+            AllowedOwnerTypes = new List<string> { "character" }
         };
 
         // Act
@@ -389,7 +396,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             GridWidth = 5,
             GridHeight = 5,
             StartingNodes = new List<GridPosition> { new GridPosition { X = 0, Y = 0 } },
-            BoardContractTemplateId = TestContractTemplateId
+            BoardContractTemplateId = TestContractTemplateId,
+            AllowedOwnerTypes = new List<string> { "character" }
         };
 
         // Act
@@ -416,7 +424,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             GridWidth = 3,
             GridHeight = 3,
             StartingNodes = new List<GridPosition> { new GridPosition { X = 5, Y = 5 } },
-            BoardContractTemplateId = TestContractTemplateId
+            BoardContractTemplateId = TestContractTemplateId,
+            AllowedOwnerTypes = new List<string> { "character" }
         };
 
         // Act
@@ -446,7 +455,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             GridWidth = 5,
             GridHeight = 5,
             StartingNodes = new List<GridPosition> { new GridPosition { X = 0, Y = 0 } },
-            BoardContractTemplateId = Guid.NewGuid()
+            BoardContractTemplateId = Guid.NewGuid(),
+            AllowedOwnerTypes = new List<string> { "character" }
         };
 
         // Act
@@ -873,7 +883,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                CharacterId = TestCharacterId,
+                OwnerType = "character",
+                OwnerId = TestCharacterId,
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
@@ -882,12 +893,16 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(TestCharacterId, response.CharacterId);
+        Assert.Equal("character", response.OwnerType);
+        Assert.Equal(TestCharacterId, response.OwnerId);
         Assert.Equal(TestBoardTemplateId, response.BoardTemplateId);
         Assert.Equal(newContainerId, response.ContainerId);
 
         Assert.NotNull(savedBoard);
         Assert.Equal(newContainerId, savedBoard.ContainerId);
+        Assert.Equal("character", savedBoard.OwnerType);
+        Assert.Equal(TestCharacterId, savedBoard.OwnerId);
+        Assert.Equal(TestRealmId, savedBoard.RealmId);
 
         Assert.NotNull(savedCache);
         Assert.Empty(savedCache.UnlockedPositions);
@@ -902,7 +917,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     }
 
     [Fact]
-    public async Task CreateBoard_DuplicateTemplatePerCharacter_ReturnsConflict()
+    public async Task CreateBoard_DuplicateTemplatePerOwner_ReturnsConflict()
     {
         // Arrange
         _mockCharacterClient
@@ -912,9 +927,9 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .Setup(s => s.GetAsync($"board-tpl:{TestBoardTemplateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestTemplate());
 
-        // Existing board for this character+template combination
+        // Existing board for this owner+template combination
         _mockBoardStore
-            .Setup(s => s.GetAsync($"board-char:{TestCharacterId}:{TestBoardTemplateId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"board-owner:character:{TestCharacterId}:{TestBoardTemplateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestBoard());
 
         var service = CreateService();
@@ -923,7 +938,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                CharacterId = TestCharacterId,
+                OwnerType = "character",
+                OwnerId = TestCharacterId,
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
@@ -935,10 +951,10 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     }
 
     [Fact]
-    public async Task CreateBoard_ExceedsMaxBoardsPerCharacter_ReturnsConflict()
+    public async Task CreateBoard_ExceedsMaxBoardsPerOwner_ReturnsConflict()
     {
         // Arrange
-        Configuration.MaxBoardsPerCharacter = 1;
+        Configuration.MaxBoardsPerOwner = 1;
         _mockCharacterClient
             .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterResponse { CharacterId = TestCharacterId, RealmId = TestRealmId });
@@ -946,7 +962,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .Setup(s => s.GetAsync($"board-tpl:{TestBoardTemplateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestTemplate());
 
-        // Character already has max boards
+        // Owner already has max boards
         _mockBoardStore
             .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<BoardInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<BoardInstanceModel> { CreateTestBoard(boardId: Guid.NewGuid(), boardTemplateId: Guid.NewGuid()) });
@@ -957,7 +973,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                CharacterId = TestCharacterId,
+                OwnerType = "character",
+                OwnerId = TestCharacterId,
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
@@ -969,12 +986,15 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     }
 
     [Fact]
-    public async Task CreateBoard_InvalidCharacter_ReturnsNotFound()
+    public async Task CreateBoard_InvalidCharacterOwner_ReturnsNotFound()
     {
         // Arrange
         _mockCharacterClient
             .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"board-tpl:{TestBoardTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestTemplate());
 
         var service = CreateService();
 
@@ -982,7 +1002,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                CharacterId = Guid.NewGuid(),
+                OwnerType = "character",
+                OwnerId = Guid.NewGuid(),
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
@@ -1010,7 +1031,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                CharacterId = TestCharacterId,
+                OwnerType = "character",
+                OwnerId = TestCharacterId,
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
@@ -1052,7 +1074,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             s => s.DeleteAsync($"board:{TestBoardId}", It.IsAny<CancellationToken>()),
             Times.Once);
         _mockBoardStore.Verify(
-            s => s.DeleteAsync($"board-char:{TestCharacterId}:{TestBoardTemplateId}", It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync($"board-owner:character:{TestCharacterId}:{TestBoardTemplateId}", It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify cache invalidated
@@ -1292,16 +1314,23 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     [Fact]
     public async Task Unlock_ContractFails_ReturnsErrorAndPublishesFailEvent()
     {
-        // Arrange - starting node, but contract creation throws
+        // Arrange - starting node, item creation succeeds but contract creation throws
         var board = CreateTestBoard();
         var template = CreateTestTemplate();
         var definition = CreateTestDefinition(code: "start_skill", positionX: 0, positionY: 0);
+        var itemInstanceId = Guid.NewGuid();
 
         _mockBoardStore.Setup(s => s.GetAsync($"board:{TestBoardId}", It.IsAny<CancellationToken>())).ReturnsAsync(board);
         _mockTemplateStore.Setup(s => s.GetAsync($"board-tpl:{TestBoardTemplateId}", It.IsAny<CancellationToken>())).ReturnsAsync(template);
         _mockDefinitionStore.Setup(s => s.GetAsync($"lic-def:{TestBoardTemplateId}:start_skill", It.IsAny<CancellationToken>())).ReturnsAsync(definition);
         _mockBoardCache.Setup(s => s.GetAsync($"cache:{TestBoardId}", It.IsAny<CancellationToken>())).ReturnsAsync(CreateTestCache());
 
+        // Item creation succeeds (step 9b — now happens before contract creation)
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = itemInstanceId });
+
+        // Contract creation fails (step 10 — triggers compensation)
         _mockContractClient
             .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("Contract creation failed", 500, null, null, null));
@@ -1320,6 +1349,11 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Verify unlock-failed event was published
         _mockMessageBus.Verify(
             m => m.TryPublishAsync(LicenseTopics.LicenseUnlockFailed, It.IsAny<LicenseUnlockFailedEvent>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify compensation: item was destroyed after contract failure
+        _mockItemClient.Verify(
+            c => c.DestroyItemInstanceAsync(It.Is<DestroyItemInstanceRequest>(r => r.InstanceId == itemInstanceId), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -1380,7 +1414,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Assert
         Assert.NotNull(capturedEvent);
         Assert.Equal(TestBoardId, capturedEvent.BoardId);
-        Assert.Equal(TestCharacterId, capturedEvent.CharacterId);
+        Assert.Equal("character", capturedEvent.OwnerType);
+        Assert.Equal(TestCharacterId, capturedEvent.OwnerId);
         Assert.Equal("start_skill", capturedEvent.LicenseCode);
         Assert.Equal(0, capturedEvent.Position.X);
         Assert.Equal(0, capturedEvent.Position.Y);
@@ -1701,7 +1736,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     #region Cleanup Operations Tests
 
     [Fact]
-    public async Task CleanupByCharacter_CleansUpAllBoards()
+    public async Task CleanupByOwner_CleansUpAllBoards()
     {
         // Arrange
         var board1 = CreateTestBoard(boardId: Guid.NewGuid(), containerId: Guid.NewGuid());
@@ -1712,15 +1747,16 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .ReturnsAsync(new List<BoardInstanceModel> { board1, board2 });
 
         var service = CreateService();
-        var request = new CleanupByCharacterRequest { CharacterId = TestCharacterId };
+        var request = new CleanupByOwnerRequest { OwnerType = "character", OwnerId = TestCharacterId };
 
         // Act
-        var (status, response) = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.CleanupByOwnerAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(TestCharacterId, response.CharacterId);
+        Assert.Equal("character", response.OwnerType);
+        Assert.Equal(TestCharacterId, response.OwnerId);
         Assert.Equal(2, response.BoardsDeleted);
 
         // Verify container cleanup for both boards
@@ -1749,7 +1785,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     }
 
     [Fact]
-    public async Task CleanupByCharacter_NoBoards_ReturnsZeroDeleted()
+    public async Task CleanupByOwner_NoBoards_ReturnsZeroDeleted()
     {
         // Arrange
         _mockBoardStore
@@ -1757,10 +1793,10 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .ReturnsAsync(new List<BoardInstanceModel>());
 
         var service = CreateService();
-        var request = new CleanupByCharacterRequest { CharacterId = TestCharacterId };
+        var request = new CleanupByOwnerRequest { OwnerType = "character", OwnerId = TestCharacterId };
 
         // Act
-        var (status, response) = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.CleanupByOwnerAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
