@@ -49,18 +49,23 @@ public partial class ChatService : IChatService
     private readonly ILogger<ChatService> _logger;
     private readonly ChatServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "chat-statestore";
-
+    /// <summary>
+    /// Creates a new instance of the Chat service.
+    /// </summary>
     public ChatService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<ChatService> logger,
-        ChatServiceConfiguration configuration)
+        ChatServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+
+        // Register event handlers via partial class (ChatServiceEvents.cs)
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

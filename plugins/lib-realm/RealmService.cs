@@ -129,7 +129,6 @@ public partial class RealmService : IRealmService
         ListRealmsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Listing realms with filters - Category: {Category}, IsActive: {IsActive}, IncludeDeprecated: {IncludeDeprecated}",
                 body.Category, body.IsActive, body.IncludeDeprecated);
@@ -190,15 +189,6 @@ public partial class RealmService : IRealmService
                 HasPreviousPage = page > 1
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing realms");
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "ListRealms", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/list",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -208,7 +198,6 @@ public partial class RealmService : IRealmService
         RealmExistsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Checking if realm exists: {RealmId}", body.RealmId);
 
@@ -232,15 +221,6 @@ public partial class RealmService : IRealmService
                 RealmId = model.RealmId
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking realm existence: {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "RealmExists", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/exists",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -251,7 +231,6 @@ public partial class RealmService : IRealmService
         RealmsExistBatchRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Checking existence of {Count} realms", body.RealmIds.Count);
 
@@ -314,15 +293,6 @@ public partial class RealmService : IRealmService
                 DeprecatedRealmIds = deprecatedRealmIds
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking batch realm existence for {Count} realms", body.RealmIds.Count);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "RealmsExistBatch", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/exists-batch",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -336,7 +306,6 @@ public partial class RealmService : IRealmService
         CreateRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Creating realm with code: {Code}", body.Code);
 
@@ -388,15 +357,6 @@ public partial class RealmService : IRealmService
             _logger.LogInformation("Created realm: {RealmId} with code {Code}", realmId, code);
             return (StatusCodes.OK, MapToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating realm: {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "CreateRealm", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/create",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -406,7 +366,6 @@ public partial class RealmService : IRealmService
         UpdateRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Updating realm: {RealmId}", body.RealmId);
 
@@ -465,15 +424,6 @@ public partial class RealmService : IRealmService
             _logger.LogInformation("Updated realm: {RealmId}", body.RealmId);
             return (StatusCodes.OK, MapToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating realm: {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "UpdateRealm", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/update",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -483,7 +433,6 @@ public partial class RealmService : IRealmService
         DeleteRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Deleting realm: {RealmId}", body.RealmId);
 
@@ -576,15 +525,6 @@ public partial class RealmService : IRealmService
             _logger.LogInformation("Deleted realm: {RealmId} ({Code})", body.RealmId, model.Code);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting realm: {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "DeleteRealm", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/delete",
-                details: null, stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     #endregion
@@ -598,7 +538,6 @@ public partial class RealmService : IRealmService
         DeprecateRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Deprecating realm: {RealmId}", body.RealmId);
 
@@ -630,15 +569,6 @@ public partial class RealmService : IRealmService
             _logger.LogInformation("Deprecated realm: {RealmId}", body.RealmId);
             return (StatusCodes.OK, MapToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deprecating realm: {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "DeprecateRealm", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/deprecate",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -648,7 +578,6 @@ public partial class RealmService : IRealmService
         UndeprecateRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Undeprecating realm: {RealmId}", body.RealmId);
 
@@ -680,15 +609,6 @@ public partial class RealmService : IRealmService
             _logger.LogInformation("Undeprecated realm: {RealmId}", body.RealmId);
             return (StatusCodes.OK, MapToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error undeprecating realm: {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "UndeprecateRealm", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/undeprecate",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -704,7 +624,6 @@ public partial class RealmService : IRealmService
         MergeRealmsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Starting realm merge: source {SourceRealmId} into target {TargetRealmId}",
                 body.SourceRealmId, body.TargetRealmId);
@@ -845,16 +764,6 @@ public partial class RealmService : IRealmService
                 dependency: "mesh", endpoint: "post:/realm/merge",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
             return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error during realm merge: source {SourceRealmId} target {TargetRealmId}",
-                body.SourceRealmId, body.TargetRealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "MergeRealms", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/merge",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -1162,7 +1071,6 @@ public partial class RealmService : IRealmService
         SeedRealmsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Seeding {Count} realms, updateExisting: {UpdateExisting}",
                 body.Realms.Count, body.UpdateExisting);
@@ -1253,15 +1161,6 @@ public partial class RealmService : IRealmService
                 Skipped = skipped,
                 Errors = errors
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error seeding realms");
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "SeedRealms", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/seed",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
