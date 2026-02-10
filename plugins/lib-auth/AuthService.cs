@@ -96,7 +96,6 @@ public partial class AuthService : IAuthService
         LoginRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Processing login request for email: {Email}", body.Email);
 
@@ -210,12 +209,6 @@ public partial class AuthService : IAuthService
                 ConnectUrl = EffectiveConnectUrl
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during login for email: {Email}", body.Email);
-            await PublishErrorEventAsync("Login", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -223,7 +216,6 @@ public partial class AuthService : IAuthService
         RegisterRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Processing registration request for username: {Username}", body.Username);
 
@@ -297,12 +289,6 @@ public partial class AuthService : IAuthService
                 ConnectUrl = EffectiveConnectUrl
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during registration for username: {Username}", body.Username);
-            await PublishErrorEventAsync("Register", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -311,7 +297,6 @@ public partial class AuthService : IAuthService
         OAuthCallbackRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Processing OAuth callback for provider: {Provider}", provider);
 
@@ -375,12 +360,6 @@ public partial class AuthService : IAuthService
                 ConnectUrl = EffectiveConnectUrl
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during OAuth callback for provider: {Provider}", provider);
-            await PublishErrorEventAsync("CompleteOAuth", ex.GetType().Name, ex.Message, details: new { Provider = provider.ToString() });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -388,7 +367,6 @@ public partial class AuthService : IAuthService
         SteamVerifyRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Processing Steam Session Ticket verification");
 
@@ -459,12 +437,6 @@ public partial class AuthService : IAuthService
                 ConnectUrl = EffectiveConnectUrl
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during Steam authentication verification");
-            await PublishErrorEventAsync("VerifySteamAuth", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -473,7 +445,6 @@ public partial class AuthService : IAuthService
         RefreshRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Processing token refresh request");
 
@@ -539,12 +510,6 @@ public partial class AuthService : IAuthService
                 ConnectUrl = EffectiveConnectUrl
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during token refresh");
-            await PublishErrorEventAsync("RefreshToken", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
 
@@ -555,7 +520,6 @@ public partial class AuthService : IAuthService
         string? state,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Initializing OAuth for provider: {Provider}", provider);
 
@@ -571,12 +535,6 @@ public partial class AuthService : IAuthService
             _logger.LogDebug("Generated OAuth URL for {Provider}", provider);
             return (StatusCodes.OK, new InitOAuthResponse { AuthorizationUrl = new Uri(authUrl) });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error initializing OAuth for provider: {Provider}", provider);
-            await PublishErrorEventAsync("InitOAuth", ex.GetType().Name, ex.Message, details: new { Provider = provider.ToString() });
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -585,7 +543,6 @@ public partial class AuthService : IAuthService
         LogoutRequest? body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Processing logout request. AllSessions: {AllSessions}", body?.AllSessions ?? false);
 
@@ -715,12 +672,6 @@ public partial class AuthService : IAuthService
 
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during logout");
-            await PublishErrorEventAsync("Logout", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -729,7 +680,6 @@ public partial class AuthService : IAuthService
         TerminateSessionRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var sessionId = body.SessionId;
             _logger.LogInformation("Terminating session: {SessionId}", sessionId);
@@ -792,12 +742,6 @@ public partial class AuthService : IAuthService
             _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error terminating session: {SessionId}", body.SessionId);
-            await PublishErrorEventAsync("TerminateSession", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -805,7 +749,6 @@ public partial class AuthService : IAuthService
         PasswordResetRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Processing password reset request for email: {Email}", body.Email);
 
@@ -880,12 +823,6 @@ public partial class AuthService : IAuthService
             // Always return success to prevent email enumeration attacks
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error requesting password reset for email: {Email}", body.Email);
-            await PublishErrorEventAsync("RequestPasswordReset", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -916,7 +853,6 @@ public partial class AuthService : IAuthService
         PasswordResetConfirmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogInformation("Processing password reset confirmation");
 
@@ -965,12 +901,6 @@ public partial class AuthService : IAuthService
 
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error confirming password reset");
-            await PublishErrorEventAsync("ConfirmPasswordReset", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -988,7 +918,6 @@ public partial class AuthService : IAuthService
         string jwt,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Sessions requested");
 
@@ -1018,12 +947,6 @@ public partial class AuthService : IAuthService
             {
                 Sessions = sessions
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting sessions");
-            await PublishErrorEventAsync("GetSessions", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -1148,7 +1071,6 @@ public partial class AuthService : IAuthService
         string jwt,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Validate JWT and extract account
             var (validateStatus, validation) = await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
@@ -1200,12 +1122,6 @@ public partial class AuthService : IAuthService
                 RecoveryCodes = recoveryCodes
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during MFA setup");
-            await PublishErrorEventAsync("SetupMfa", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc/>
@@ -1214,7 +1130,6 @@ public partial class AuthService : IAuthService
         MfaEnableRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Validate JWT
             var (validateStatus, validation) = await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
@@ -1260,12 +1175,6 @@ public partial class AuthService : IAuthService
 
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during MFA enable");
-            await PublishErrorEventAsync("EnableMfa", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -1274,7 +1183,6 @@ public partial class AuthService : IAuthService
         MfaDisableRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Validate JWT
             var (validateStatus, validation) = await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
@@ -1344,12 +1252,6 @@ public partial class AuthService : IAuthService
 
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during MFA disable");
-            await PublishErrorEventAsync("DisableMfa", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -1357,7 +1259,6 @@ public partial class AuthService : IAuthService
         AdminDisableMfaRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Get account
             AccountResponse account;
@@ -1391,12 +1292,6 @@ public partial class AuthService : IAuthService
 
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during admin MFA disable for account {AccountId}", body.AccountId);
-            await PublishErrorEventAsync("AdminDisableMfa", ex.GetType().Name, ex.Message);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <inheritdoc/>
@@ -1404,7 +1299,6 @@ public partial class AuthService : IAuthService
         MfaVerifyRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Consume challenge token (single-use)
             var accountId = await _mfaService.ConsumeMfaChallengeAsync(body.ChallengeToken, cancellationToken);
@@ -1522,12 +1416,6 @@ public partial class AuthService : IAuthService
                 ConnectUrl = EffectiveConnectUrl
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during MFA verification");
-            await PublishErrorEventAsync("VerifyMfa", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -1637,69 +1525,61 @@ public partial class AuthService : IAuthService
     /// </summary>
     public async Task PropagateRoleChangesAsync(Guid accountId, List<string> newRoles, CancellationToken cancellationToken)
     {
-        try
+        _logger.LogInformation("Propagating role changes for account {AccountId}: {Roles}",
+            accountId, string.Join(", ", newRoles));
+
+        var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
+
+        var sessionKeys = await sessionIndexStore.GetAsync($"account-sessions:{accountId}", cancellationToken);
+
+        if (sessionKeys == null || !sessionKeys.Any())
         {
-            _logger.LogInformation("Propagating role changes for account {AccountId}: {Roles}",
-                accountId, string.Join(", ", newRoles));
+            _logger.LogDebug("No sessions found for account {AccountId} to propagate role changes", accountId);
+            return;
+        }
 
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-
-            var sessionKeys = await sessionIndexStore.GetAsync($"account-sessions:{accountId}", cancellationToken);
-
-            if (sessionKeys == null || !sessionKeys.Any())
+        foreach (var sessionKey in sessionKeys)
+        {
+            try
             {
-                _logger.LogDebug("No sessions found for account {AccountId} to propagate role changes", accountId);
-                return;
-            }
+                var session = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
-            foreach (var sessionKey in sessionKeys)
-            {
-                try
+                if (session != null)
                 {
-                    var session = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
+                    session.Roles = newRoles;
 
-                    if (session != null)
+                    // Preserve remaining TTL so sessions still expire on schedule
+                    var remainingSeconds = (int)(session.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+                    if (remainingSeconds <= 0)
                     {
-                        session.Roles = newRoles;
-
-                        // Preserve remaining TTL so sessions still expire on schedule
-                        var remainingSeconds = (int)(session.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
-                        if (remainingSeconds <= 0)
-                        {
-                            _logger.LogDebug("Session {SessionKey} already expired, skipping role update", sessionKey);
-                            continue;
-                        }
-
-                        await sessionStore.SaveAsync($"session:{sessionKey}", session,
-                            new StateOptions { Ttl = remainingSeconds }, cancellationToken);
-
-                        // Publish session.updated event for Permission service
-                        await _sessionService.PublishSessionUpdatedEventAsync(
-                            accountId,
-                            session.SessionId,
-                            newRoles,
-                            session.Authorizations,
-                            SessionUpdatedEventReason.RoleChanged,
-                            cancellationToken);
-
-                        _logger.LogDebug("Updated roles for session {SessionKey}", sessionKey);
+                        _logger.LogDebug("Session {SessionKey} already expired, skipping role update", sessionKey);
+                        continue;
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to update roles for session {SessionKey}", sessionKey);
+
+                    await sessionStore.SaveAsync($"session:{sessionKey}", session,
+                        new StateOptions { Ttl = remainingSeconds }, cancellationToken);
+
+                    // Publish session.updated event for Permission service
+                    await _sessionService.PublishSessionUpdatedEventAsync(
+                        accountId,
+                        session.SessionId,
+                        newRoles,
+                        session.Authorizations,
+                        SessionUpdatedEventReason.RoleChanged,
+                        cancellationToken);
+
+                    _logger.LogDebug("Updated roles for session {SessionKey}", sessionKey);
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to update roles for session {SessionKey}", sessionKey);
+            }
+        }
 
-            _logger.LogInformation("Propagated role changes to {Count} sessions for account {AccountId}",
-                sessionKeys.Count, accountId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to propagate role changes for account {AccountId}", accountId);
-            throw;
-        }
+        _logger.LogInformation("Propagated role changes to {Count} sessions for account {AccountId}",
+            sessionKeys.Count, accountId);
     }
 
     #endregion

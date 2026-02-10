@@ -143,7 +143,6 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogDebug("Ingesting analytics event for entity {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        try
         {
             var bufferedEvent = new BufferedAnalyticsEvent
             {
@@ -169,21 +168,6 @@ public partial class AnalyticsService : IAnalyticsService
                 Accepted = true
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error ingesting analytics event");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "IngestEvent",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/analytics/event/ingest",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -194,7 +178,6 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogDebug("Ingesting batch of {Count} analytics events", body.Events.Count);
 
-        try
         {
             var accepted = 0;
             var rejected = 0;
@@ -249,21 +232,6 @@ public partial class AnalyticsService : IAnalyticsService
                 Errors = errors.Count > 0 ? errors : null
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error ingesting batch analytics events");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "IngestEventBatch",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/analytics/event/ingest-batch",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -274,7 +242,6 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogInformation("Getting entity summary for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        try
         {
             var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
             var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
@@ -296,21 +263,6 @@ public partial class AnalyticsService : IAnalyticsService
                 Aggregates = summary.Aggregates
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting entity summary");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "GetEntitySummary",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/analytics/summary/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -321,7 +273,6 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogInformation("Querying entity summaries for game service {GameServiceId}", body.GameServiceId);
 
-        try
         {
             if (body.Limit <= 0)
             {
@@ -440,21 +391,6 @@ public partial class AnalyticsService : IAnalyticsService
                 Total = (int)result.TotalCount
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying entity summaries");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "QueryEntitySummaries",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/analytics/summary/query",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -466,7 +402,6 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Getting skill rating for {EntityType}:{EntityId}, type {RatingType}",
             body.EntityType, body.EntityId, body.RatingType);
 
-        try
         {
             var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
             var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
@@ -504,21 +439,6 @@ public partial class AnalyticsService : IAnalyticsService
                 LastMatchAt = rating.LastMatchAt
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting skill rating");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "GetSkillRating",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/analytics/rating/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -530,7 +450,6 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Updating skill ratings for match {MatchId} with {Count} participants",
             body.MatchId, body.Results.Count);
 
-        try
         {
             if (body.Results.Count < 2)
             {
@@ -661,21 +580,6 @@ public partial class AnalyticsService : IAnalyticsService
                 UpdatedRatings = updatedRatings
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating skill rating");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "UpdateSkillRating",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/analytics/rating/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -687,7 +591,6 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Recording controller {Action} event: account {AccountId} -> {EntityType}:{EntityId}",
             body.Action, body.AccountId, body.TargetEntityType, body.TargetEntityId);
 
-        try
         {
             var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistoryData);
             var eventId = Guid.NewGuid();
@@ -708,21 +611,6 @@ public partial class AnalyticsService : IAnalyticsService
             await controllerStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
             return StatusCodes.OK;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording controller event");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "RecordControllerEvent",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/analytics/controller-history/record",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
     }
 
     /// <summary>
@@ -733,7 +621,6 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogInformation("Querying controller history for game service {GameServiceId}", body.GameServiceId);
 
-        try
         {
             if (body.Limit <= 0)
             {
@@ -838,21 +725,6 @@ public partial class AnalyticsService : IAnalyticsService
                 Events = events
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error querying controller history");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "QueryControllerHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/analytics/controller-history/query",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -865,7 +737,6 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Cleaning up controller history (dryRun={DryRun}, olderThanDays={OlderThanDays}, gameServiceId={GameServiceId})",
             body.DryRun, body.OlderThanDays, body.GameServiceId);
 
-        try
         {
             var retentionDays = body.OlderThanDays ?? _configuration.ControllerHistoryRetentionDays;
             if (retentionDays <= 0)
@@ -943,21 +814,6 @@ public partial class AnalyticsService : IAnalyticsService
                 RecordsDeleted = totalDeleted,
                 DryRun = false
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error cleaning up controller history");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "CleanupControllerHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/analytics/controller-history/cleanup",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
