@@ -54,9 +54,9 @@ public class SpeciesServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Number of records to process per page during seed operations
-    /// Environment variable: SPECIES_SEED_PAGE_SIZE
+    /// Number of characters to process per page during species merge character migration
+    /// Environment variable: SPECIES_MERGE_PAGE_SIZE
     /// </summary>
-    public int SeedPageSize { get; set; } = 100;
+    public int MergePageSize { get; set; } = 100;
 
 }

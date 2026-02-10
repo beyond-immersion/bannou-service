@@ -87,18 +87,26 @@ public partial class SpeciesService : ISpeciesService
     }
 
     /// <summary>
-    /// Validates multiple realms and returns lists of invalid and deprecated realm IDs.
+    /// Validates multiple realms in parallel and returns lists of invalid and deprecated realm IDs.
     /// </summary>
     private async Task<(List<Guid> invalidRealms, List<Guid> deprecatedRealms)> ValidateRealmsAsync(
         IEnumerable<Guid> realmIds,
         CancellationToken cancellationToken)
     {
+        var realmIdList = realmIds.ToList();
+        var validationTasks = realmIdList.Select(async realmId =>
+        {
+            var (exists, isActive) = await ValidateRealmAsync(realmId, cancellationToken);
+            return (realmId, exists, isActive);
+        });
+
+        var results = await Task.WhenAll(validationTasks);
+
         var invalidRealms = new List<Guid>();
         var deprecatedRealms = new List<Guid>();
 
-        foreach (var realmId in realmIds)
+        foreach (var (realmId, exists, isActive) in results)
         {
-            var (exists, isActive) = await ValidateRealmAsync(realmId, cancellationToken);
             if (!exists)
             {
                 invalidRealms.Add(realmId);
@@ -451,48 +459,11 @@ public partial class SpeciesService : ISpeciesService
             }
 
             // Track changed fields and apply updates
-            var changedFields = new List<string>();
-
-            if (body.Name != null && body.Name != model.Name)
-            {
-                model.Name = body.Name;
-                changedFields.Add("name");
-            }
-            if (body.Description != null && body.Description != model.Description)
-            {
-                model.Description = body.Description;
-                changedFields.Add("description");
-            }
-            if (body.Category != null && body.Category != model.Category)
-            {
-                model.Category = body.Category;
-                changedFields.Add("category");
-            }
-            if (body.IsPlayable.HasValue && body.IsPlayable.Value != model.IsPlayable)
-            {
-                model.IsPlayable = body.IsPlayable.Value;
-                changedFields.Add("isPlayable");
-            }
-            if (body.BaseLifespan.HasValue && body.BaseLifespan != model.BaseLifespan)
-            {
-                model.BaseLifespan = body.BaseLifespan;
-                changedFields.Add("baseLifespan");
-            }
-            if (body.MaturityAge.HasValue && body.MaturityAge != model.MaturityAge)
-            {
-                model.MaturityAge = body.MaturityAge;
-                changedFields.Add("maturityAge");
-            }
-            if (body.TraitModifiers != null)
-            {
-                model.TraitModifiers = body.TraitModifiers;
-                changedFields.Add("traitModifiers");
-            }
-            if (body.Metadata != null)
-            {
-                model.Metadata = body.Metadata;
-                changedFields.Add("metadata");
-            }
+            var changedFields = ApplySpeciesFieldUpdates(
+                model,
+                body.Name, body.Description, body.Category,
+                body.IsPlayable, body.BaseLifespan, body.MaturityAge,
+                body.TraitModifiers, body.Metadata);
 
             if (changedFields.Count > 0)
             {
@@ -785,49 +756,11 @@ public partial class SpeciesService : ISpeciesService
 
                             if (existingModel != null)
                             {
-                                // Track changed fields
-                                var changedFields = new List<string>();
-
-                                if (seedSpecies.Name != existingModel.Name)
-                                {
-                                    existingModel.Name = seedSpecies.Name;
-                                    changedFields.Add("name");
-                                }
-                                if (seedSpecies.Description != null && seedSpecies.Description != existingModel.Description)
-                                {
-                                    existingModel.Description = seedSpecies.Description;
-                                    changedFields.Add("description");
-                                }
-                                if (seedSpecies.Category != null && seedSpecies.Category != existingModel.Category)
-                                {
-                                    existingModel.Category = seedSpecies.Category;
-                                    changedFields.Add("category");
-                                }
-                                if (seedSpecies.IsPlayable != existingModel.IsPlayable)
-                                {
-                                    existingModel.IsPlayable = seedSpecies.IsPlayable;
-                                    changedFields.Add("isPlayable");
-                                }
-                                if (seedSpecies.BaseLifespan != existingModel.BaseLifespan)
-                                {
-                                    existingModel.BaseLifespan = seedSpecies.BaseLifespan;
-                                    changedFields.Add("baseLifespan");
-                                }
-                                if (seedSpecies.MaturityAge != existingModel.MaturityAge)
-                                {
-                                    existingModel.MaturityAge = seedSpecies.MaturityAge;
-                                    changedFields.Add("maturityAge");
-                                }
-                                if (seedSpecies.TraitModifiers != null)
-                                {
-                                    existingModel.TraitModifiers = seedSpecies.TraitModifiers;
-                                    changedFields.Add("traitModifiers");
-                                }
-                                if (seedSpecies.Metadata != null)
-                                {
-                                    existingModel.Metadata = seedSpecies.Metadata;
-                                    changedFields.Add("metadata");
-                                }
+                                var changedFields = ApplySpeciesFieldUpdates(
+                                    existingModel,
+                                    seedSpecies.Name, seedSpecies.Description, seedSpecies.Category,
+                                    seedSpecies.IsPlayable, seedSpecies.BaseLifespan, seedSpecies.MaturityAge,
+                                    seedSpecies.TraitModifiers, seedSpecies.Metadata);
 
                                 if (changedFields.Count > 0)
                                 {
@@ -1073,7 +1006,7 @@ public partial class SpeciesService : ISpeciesService
             var migratedCount = 0;
             var failedCount = 0;
             var page = 1;
-            var pageSize = _configuration.SeedPageSize;
+            var pageSize = _configuration.MergePageSize;
             var hasMorePages = true;
 
             while (hasMorePages)
@@ -1205,6 +1138,68 @@ public partial class SpeciesService : ISpeciesService
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Applies field updates to an existing species model and returns the list of changed field names.
+    /// Used by both UpdateSpeciesAsync and SeedSpeciesAsync (updateExisting path) to avoid
+    /// duplicating change-tracking logic.
+    /// </summary>
+    private static List<string> ApplySpeciesFieldUpdates(
+        SpeciesModel model,
+        string? name,
+        string? description,
+        string? category,
+        bool? isPlayable,
+        int? baseLifespan,
+        int? maturityAge,
+        object? traitModifiers,
+        object? metadata)
+    {
+        var changedFields = new List<string>();
+
+        if (name != null && name != model.Name)
+        {
+            model.Name = name;
+            changedFields.Add("name");
+        }
+        if (description != null && description != model.Description)
+        {
+            model.Description = description;
+            changedFields.Add("description");
+        }
+        if (category != null && category != model.Category)
+        {
+            model.Category = category;
+            changedFields.Add("category");
+        }
+        if (isPlayable.HasValue && isPlayable.Value != model.IsPlayable)
+        {
+            model.IsPlayable = isPlayable.Value;
+            changedFields.Add("isPlayable");
+        }
+        if (baseLifespan.HasValue && baseLifespan != model.BaseLifespan)
+        {
+            model.BaseLifespan = baseLifespan;
+            changedFields.Add("baseLifespan");
+        }
+        if (maturityAge.HasValue && maturityAge != model.MaturityAge)
+        {
+            model.MaturityAge = maturityAge;
+            changedFields.Add("maturityAge");
+        }
+        if (traitModifiers != null)
+        {
+            model.TraitModifiers = traitModifiers;
+            changedFields.Add("traitModifiers");
+        }
+        if (metadata != null)
+        {
+            model.Metadata = metadata;
+            changedFields.Add("metadata");
+        }
+
+        return changedFields;
+    }
 
     private async Task<List<SpeciesModel>> LoadSpeciesByIdsAsync(List<Guid> speciesIds, CancellationToken cancellationToken)
     {

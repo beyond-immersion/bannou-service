@@ -68,7 +68,7 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `SeedPageSize` | `SPECIES_SEED_PAGE_SIZE` | `100` | Batch size for paginated character migration during merge |
+| `MergePageSize` | `SPECIES_MERGE_PAGE_SIZE` | `100` | Batch size for paginated character migration during merge |
 
 ---
 
@@ -77,7 +77,7 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<SpeciesService>` | Scoped | Structured logging |
-| `SpeciesServiceConfiguration` | Singleton | Config properties (SeedPageSize) |
+| `SpeciesServiceConfiguration` | Singleton | Config properties (MergePageSize) |
 | `IStateStoreFactory` | Singleton | MySQL state store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Singleton | Event handler registration (no active handlers - species has no event subscriptions) |
@@ -150,7 +150,7 @@ Deprecation & Merge Flow
        ├── Validate: source is deprecated, target exists
        │
        ├── Paginated character migration loop:
-       │    ├── ListCharacters(speciesId=source, page, pageSize=SeedPageSize)
+       │    ├── ListCharacters(speciesId=source, page, pageSize=MergePageSize)
        │    ├── For each character:
        │    │    └── UpdateCharacter(speciesId=target)
        │    │         ├── Success → migratedCount++
@@ -206,6 +206,7 @@ State Store Layout
 3. **Lifecycle stages**: Age-based lifecycle stages (child, adolescent, adult, elder) with trait modifiers per stage.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/371 -->
 4. **Population tracking**: Track active character counts per species per realm for game balance analytics.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/372 -->
 
 ---
 
@@ -223,23 +224,29 @@ None currently identified.
 
 3. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.
 
+4. **All-species list loaded in full**: `ListSpecies` and `ListSpeciesByRealm` load all matching species IDs via `GetBulkAsync` then filter and paginate in-memory. Acceptable because species are admin-created definitions (typically <100 per deployment). If a game had thousands of species, this would need migration to `IJsonQueryableStateStore<T>.JsonQueryPagedAsync()` for server-side filtering.
+
+5. **Seed operation not transactional**: Each species in the seed batch is created independently. A partial failure leaves some species created and others not. This is the universal Bannou seed pattern — lib-state doesn't expose cross-key transactions, cross-service calls make transactions infeasible, and idempotent recovery via `updateExisting` flag is the intended approach. Re-run the seed to recover from partial failures.
+
+6. **TraitModifiers and Metadata stored as untyped objects**: Both `traitModifiers` and `metadata` are `type: object, additionalProperties: true` in the schema and `object?` in the internal model. No schema validation on structure. This is intentional: Species is L2 GameFoundation and must be game-agnostic. Different games define different trait systems (e.g., strength/dexterity vs magic affinity axes). Defining a fixed schema would couple L2 to game-specific designs. Per IMPLEMENTATION TENETS (Type Safety), this falls under the "Intentionally Generic Services" exception for hierarchy isolation.
+
 ### Design Considerations
 
-1. **All-species list loaded in full**: `ListSpecies` loads all species IDs from the `all-species` key, then uses `GetBulkAsync` to load all in one call. The full list is loaded into memory for filtering and pagination rather than using server-side filtering.
+1. **No distributed locks**: Species operations don't use distributed locks. Concurrent create operations with the same code could race on the code index (unlikely in practice, codes are admin-created).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/373 -->
 
-2. **No distributed locks**: Species operations don't use distributed locks. Concurrent create operations with the same code could race on the code index (unlikely in practice, codes are admin-created).
+2. ~~**Seed operation not transactional**~~: **FIXED** (2026-02-10) - Not a gap; this is the universal Bannou seed pattern (confirmed across Location, Realm, Relationship, Species). lib-state doesn't expose cross-key transactions, cross-service calls make transactions infeasible, and idempotent recovery via `updateExisting` flag is the intended approach. Moved to Intentional Quirks.
 
-3. **Seed operation not transactional**: Each species in the seed batch is created independently. A partial failure leaves some species created and others not. No rollback mechanism.
+3. **Merge without distributed lock on character list**: The paginated character migration reads and updates characters without locking. A new character created during merge could be missed.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/373 -->
 
-4. **Merge without distributed lock on character list**: The paginated character migration reads and updates characters without locking. A new character created during merge could be missed.
+4. ~~**TraitModifiers stored as untyped object**~~: **FIXED** (2026-02-10) - Not a gap; this is intentional design for L2 game-generic services. Different games define different trait systems, so trait modifiers must remain opaque JSON (`type: object, additionalProperties: true`). Same pattern as Metadata field. Moved to Intentional Quirks.
 
-5. **TraitModifiers stored as untyped object**: No schema validation on trait modifier structure. Game-specific data stored as arbitrary JSON.
+5. ~~**Realm validation is sequential**~~: **FIXED** (2026-02-10) - `ValidateRealmsAsync` now uses `Task.WhenAll` to validate all realms in parallel. All realm validation calls execute concurrently instead of sequentially.
 
-6. **Realm validation is sequential**: `ValidateRealmsAsync` iterates through each realm ID and calls `ValidateRealmAsync` sequentially. For N realms, N sequential API calls.
+6. ~~**Seed with updateExisting duplicates change tracking logic**~~: **FIXED** (2026-02-10) - Extracted shared `ApplySpeciesFieldUpdates` helper method. Both `UpdateSpeciesAsync` and `SeedSpeciesAsync` (updateExisting path) now call the same method for field comparison and change tracking.
 
-7. **Seed with updateExisting duplicates change tracking logic**: Seed duplicates the same `changedFields` tracking pattern from `UpdateSpeciesAsync`. Changes to update logic need to be made in both places.
-
-8. **Configuration property naming**: `SeedPageSize` is only used for character migration page size during merge operations (not for seed pagination - seed doesn't paginate). The name is misleading since it's actually a merge operation setting.
+7. ~~**Configuration property naming**~~: **FIXED** (2026-02-10) - Renamed `SeedPageSize` to `MergePageSize` with env var `SPECIES_MERGE_PAGE_SIZE`. Updated description to accurately reflect its use for character migration during merge operations.
 
 ---
 
@@ -250,3 +257,9 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **Seed realm code resolution** (2026-02-10): `SeedSpeciesAsync` now resolves `realmCodes` via `IRealmClient.GetRealmByCodeAsync`. Unresolvable codes are skipped with warning logs.
+- **All-species list in-memory load** (2026-02-10): Moved from Design Considerations to Intentional Quirks. In-memory approach is acceptable for admin-created species (<100 typical).
+- **Seed operation not transactional** (2026-02-10): Moved from Design Considerations to Intentional Quirks. Universal Bannou seed pattern; idempotent recovery via `updateExisting` is the intended approach.
+- **TraitModifiers stored as untyped object** (2026-02-10): Moved from Design Considerations to Intentional Quirks. Intentional L2 game-generic design per IMPLEMENTATION TENETS Type Safety exception for hierarchy isolation.
+- **Realm validation is sequential** (2026-02-10): Refactored `ValidateRealmsAsync` to use `Task.WhenAll` for parallel realm validation.
+- **Seed with updateExisting duplicates change tracking logic** (2026-02-10): Extracted `ApplySpeciesFieldUpdates` helper. Both `UpdateSpeciesAsync` and `SeedSpeciesAsync` now share the same field comparison logic.
+- **Configuration property naming** (2026-02-10): Renamed `SeedPageSize` → `MergePageSize` (env: `SPECIES_MERGE_PAGE_SIZE`). Name and description now accurately reflect its use for character migration page size during merge.
