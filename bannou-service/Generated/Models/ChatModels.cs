@@ -170,6 +170,29 @@ public enum ContractRoomAction
 #pragma warning restore CS1591
 
 /// <summary>
+/// Reason why a chat room was locked
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ChatRoomLockReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ContractBreachDetected")]
+    ContractBreachDetected = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ContractTerminated")]
+    ContractTerminated = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ContractExpired")]
+    ContractExpired = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Manual")]
+    Manual = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Validation rules applied to messages in rooms of this type
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -205,18 +228,6 @@ public partial class ValidatorConfig
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("jsonSchema")]
     public string? JsonSchema { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -315,18 +326,6 @@ public partial class RegisterRoomTypeRequest
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -349,18 +348,6 @@ public partial class GetRoomTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     public System.Guid? GameServiceId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -402,18 +389,6 @@ public partial class ListRoomTypesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = 20;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -492,18 +467,6 @@ public partial class UpdateRoomTypeRequest
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -526,18 +489,6 @@ public partial class DeprecateRoomTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     public System.Guid? GameServiceId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -659,18 +610,6 @@ public partial class RoomTypeResponse
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -705,18 +644,6 @@ public partial class ListRoomTypesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -793,18 +720,6 @@ public partial class CreateRoomRequest
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -821,18 +736,6 @@ public partial class GetRoomRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -874,18 +777,6 @@ public partial class ListRoomsRequest
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = 20;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -921,18 +812,6 @@ public partial class UpdateRoomRequest
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -950,18 +829,6 @@ public partial class DeleteRoomRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -978,18 +845,6 @@ public partial class ArchiveRoomRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1075,18 +930,6 @@ public partial class ChatRoomResponse
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1121,18 +964,6 @@ public partial class ListRoomsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1176,18 +1007,6 @@ public partial class JoinRoomRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ChatParticipantRole? Role { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1205,18 +1024,6 @@ public partial class LeaveRoomRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1233,18 +1040,6 @@ public partial class ListParticipantsRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1304,18 +1099,6 @@ public partial class ParticipantInfo
     [System.Text.Json.Serialization.JsonPropertyName("isMuted")]
     public bool IsMuted { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1340,18 +1123,6 @@ public partial class ParticipantsResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ParticipantInfo> Participants { get; set; } = new System.Collections.ObjectModel.Collection<ParticipantInfo>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1383,18 +1154,6 @@ public partial class KickParticipantRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     public string? Reason { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1433,18 +1192,6 @@ public partial class BanParticipantRequest
     [System.Text.Json.Serialization.JsonPropertyName("durationMinutes")]
     public int? DurationMinutes { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1469,18 +1216,6 @@ public partial class UnbanParticipantRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetSessionId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1513,18 +1248,6 @@ public partial class MuteParticipantRequest
     [System.Text.Json.Serialization.JsonPropertyName("durationMinutes")]
     public int? DurationMinutes { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1552,6 +1275,7 @@ public partial class SendMessageContent
     /// Sentiment intensity 0.0-1.0 (for Sentiment format rooms)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sentimentIntensity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float? SentimentIntensity { get; set; } = default!;
 
     /// <summary>
@@ -1571,18 +1295,6 @@ public partial class SendMessageContent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customPayload")]
     public string? CustomPayload { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1627,18 +1339,6 @@ public partial class SendMessageRequest
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1663,18 +1363,6 @@ public partial class SendMessageBatchRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<BatchMessageEntry> Messages { get; set; } = new System.Collections.ObjectModel.Collection<BatchMessageEntry>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1711,18 +1399,6 @@ public partial class BatchMessageEntry
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1737,18 +1413,6 @@ public partial class SendMessageBatchResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("messageCount")]
     public int MessageCount { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1821,18 +1485,6 @@ public partial class ChatMessageResponse
     [System.Text.Json.Serialization.JsonPropertyName("isPinned")]
     public bool IsPinned { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1861,18 +1513,6 @@ public partial class MessageHistoryRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
     public int Limit { get; set; } = 50;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1903,18 +1543,6 @@ public partial class MessageHistoryResponse
     [System.Text.Json.Serialization.JsonPropertyName("nextCursor")]
     public string? NextCursor { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1939,18 +1567,6 @@ public partial class DeleteMessageRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid MessageId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1977,18 +1593,6 @@ public partial class PinMessageRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid MessageId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2013,18 +1617,6 @@ public partial class UnpinMessageRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid MessageId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2057,18 +1649,6 @@ public partial class SearchMessagesRequest
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
     public int Limit { get; set; } = 20;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2091,18 +1671,6 @@ public partial class SearchMessagesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalMatches")]
     public int TotalMatches { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2138,18 +1706,6 @@ public partial class AdminListRoomsRequest
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = 50;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2158,18 +1714,6 @@ public partial class AdminListRoomsRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AdminGetStatsRequest
 {
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2216,18 +1760,6 @@ public partial class AdminStatsResponse
     [System.Text.Json.Serialization.JsonPropertyName("totalRoomTypes")]
     public int TotalRoomTypes { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -2236,18 +1768,6 @@ public partial class AdminStatsResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AdminForceCleanupRequest
 {
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2275,18 +1795,6 @@ public partial class AdminCleanupResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedRooms")]
     public int DeletedRooms { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
 
 }
 

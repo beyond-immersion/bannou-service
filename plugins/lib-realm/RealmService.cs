@@ -74,7 +74,6 @@ public partial class RealmService : IRealmService
         GetRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Getting realm by ID: {RealmId}", body.RealmId);
 
@@ -89,15 +88,6 @@ public partial class RealmService : IRealmService
 
             return (StatusCodes.OK, MapToResponse(model));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting realm: {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "GetRealm", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/get",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -107,7 +97,6 @@ public partial class RealmService : IRealmService
         GetRealmByCodeRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             _logger.LogDebug("Getting realm by code: {Code}", body.Code);
 
@@ -130,15 +119,6 @@ public partial class RealmService : IRealmService
             }
 
             return (StatusCodes.OK, MapToResponse(model));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting realm by code: {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "GetRealmByCode", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/realm/get-by-code",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 

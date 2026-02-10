@@ -136,21 +136,6 @@ paths: {}  # Events don't have HTTP paths
 components:
   schemas:
     # =========================================================================
-    # Events-Only Enums
-    # =========================================================================
-
-    ChatRoomLockReason:
-      type: string
-      description: >
-        Reason why a chat room was locked. Used in ChatRoomLockedEvent
-        to distinguish between contract-triggered and manual lock actions.
-      enum:
-        - ContractBreachDetected
-        - ContractTerminated
-        - ContractExpired
-        - Manual
-
-    # =========================================================================
     # Participant Events
     # =========================================================================
 
@@ -432,13 +417,16 @@ components:
           $ref: 'chat-api.yaml#/components/schemas/MessageFormat'
           description: Message format type (determines which optional fields are populated)
         sentimentCategory:
-          $ref: 'common-api.yaml#/components/schemas/SentimentCategory'
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/SentimentCategory'
           nullable: true
           description: Sentiment category (populated only for Sentiment format messages)
         sentimentIntensity:
           type: number
           format: float
           nullable: true
+          minimum: 0.0
+          maximum: 1.0
           description: Sentiment intensity from 0.0 to 1.0 (populated only for Sentiment format messages)
         emojiCode:
           type: string
@@ -504,7 +492,7 @@ components:
           format: uuid
           description: Room that was locked
         reason:
-          $ref: '#/components/schemas/ChatRoomLockReason'
+          $ref: 'chat-api.yaml#/components/schemas/ChatRoomLockReason'
           description: Reason the room was locked
 
     ChatRoomArchivedEvent:

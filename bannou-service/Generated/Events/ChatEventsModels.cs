@@ -48,30 +48,6 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Reason why a chat room was locked. Used in ChatRoomLockedEvent to distinguish between contract-triggered and manual lock actions.
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ChatRoomLockReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ContractBreachDetected")]
-    ContractBreachDetected = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ContractTerminated")]
-    ContractTerminated = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ContractExpired")]
-    ContractExpired = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Manual")]
-    Manual = 3,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Published when a participant joins a chat room
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -500,6 +476,7 @@ public partial class ChatMessageSentEvent
     /// Sentiment intensity from 0.0 to 1.0 (populated only for Sentiment format messages)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sentimentIntensity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float? SentimentIntensity { get; set; } = default!;
 
     /// <summary>

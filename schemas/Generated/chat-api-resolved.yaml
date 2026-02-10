@@ -17,7 +17,7 @@ info:
 x-service-layer: AppFoundation
 
 servers:
-  - url: http://localhost:5012
+- url: http://localhost:5012
 
 paths:
   # ==========================================================================
@@ -34,7 +34,7 @@ paths:
         on startup. Custom types are added via this endpoint. Returns conflict
         if code already exists for the given game service scope.
       x-permissions:
-        - role: developer
+      - role: developer
       requestBody:
         required: true
         content:
@@ -55,7 +55,7 @@ paths:
       summary: Get room type by code
       description: Returns the room type definition for the specified code and optional game service scope.
       x-permissions:
-        - role: developer
+      - role: developer
       requestBody:
         required: true
         content:
@@ -76,7 +76,7 @@ paths:
       summary: List room types with filters
       description: Returns room types matching the specified filters with pagination.
       x-permissions:
-        - role: developer
+      - role: developer
       requestBody:
         required: true
         content:
@@ -97,7 +97,7 @@ paths:
       summary: Update a room type definition
       description: Updates mutable fields of a room type definition. Cannot change code or message format.
       x-permissions:
-        - role: developer
+      - role: developer
       requestBody:
         required: true
         content:
@@ -116,9 +116,10 @@ paths:
     post:
       operationId: DeprecateRoomType
       summary: Soft-deprecate a room type
-      description: Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be created with this type.
+      description: Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be 
+        created with this type.
       x-permissions:
-        - role: developer
+      - role: developer
       requestBody:
         required: true
         content:
@@ -146,7 +147,7 @@ paths:
         a governing contract that drives room lifecycle (lock, archive, delete)
         on contract state changes.
       x-permissions:
-        - role: user
+      - role: user
       requestBody:
         required: true
         content:
@@ -167,7 +168,7 @@ paths:
       summary: Get room by ID
       description: Returns the chat room metadata for the specified room ID.
       x-permissions:
-        - role: user
+      - role: user
       requestBody:
         required: true
         content:
@@ -188,7 +189,7 @@ paths:
       summary: List rooms with filters
       description: Returns rooms matching the specified filters with pagination.
       x-permissions:
-        - role: user
+      - role: user
       requestBody:
         required: true
         content:
@@ -209,9 +210,9 @@ paths:
       summary: Update room settings
       description: Updates mutable room settings. Caller must be the room owner.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -230,11 +231,12 @@ paths:
     post:
       operationId: DeleteRoom
       summary: Delete a room
-      description: Deletes a room, removing all participants and messages. Caller must be the room owner or the room must be empty.
+      description: Deletes a room, removing all participants and messages. Caller must be the room owner or the room 
+        must be empty.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -253,11 +255,12 @@ paths:
     post:
       operationId: ArchiveRoom
       summary: Archive a room to Resource
-      description: Archives a persistent room via lib-resource, preserving message history and metadata. Room is marked as archived after successful archival.
+      description: Archives a persistent room via lib-resource, preserving message history and metadata. Room is marked 
+        as archived after successful archival.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -285,7 +288,7 @@ paths:
         or Manual mode, the room is created on-the-fly if it does not yet exist.
         Returns conflict if the room is full or forbidden if the caller is banned.
       x-permissions:
-        - role: user
+      - role: user
       requestBody:
         required: true
         content:
@@ -306,9 +309,9 @@ paths:
       summary: Leave a chat room
       description: Removes the caller from the room. If the owner leaves, promotes the next moderator or oldest member.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -329,9 +332,9 @@ paths:
       summary: List room participants
       description: Returns all current participants in the room with their roles and status.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -352,9 +355,9 @@ paths:
       summary: Remove a participant from the room
       description: Kicks a participant from the room. Caller must be Owner or Moderator with higher role than target.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -373,11 +376,12 @@ paths:
     post:
       operationId: BanParticipant
       summary: Ban a participant from the room
-      description: Bans a participant. If currently in the room, they are kicked first. Optionally set a duration; null means permanent.
+      description: Bans a participant. If currently in the room, they are kicked first. Optionally set a duration; null 
+        means permanent.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -398,9 +402,9 @@ paths:
       summary: Unban a participant
       description: Removes a ban record for a participant. Caller must be Owner or Moderator.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -419,11 +423,12 @@ paths:
     post:
       operationId: MuteParticipant
       summary: Mute a participant
-      description: Mutes a participant, preventing them from sending messages. Optionally set a duration; null means permanent.
+      description: Mutes a participant, preventing them from sending messages. Optionally set a duration; null means 
+        permanent.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -452,9 +457,9 @@ paths:
         companion rooms, the room is created and the sender auto-joined if
         the room does not yet exist.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -473,9 +478,10 @@ paths:
     post:
       operationId: SendMessageBatch
       summary: Send multiple messages
-      description: Sends multiple messages to a room atomically. Intended for bulk sentiment pushes from higher-layer services.
+      description: Sends multiple messages to a room atomically. Intended for bulk sentiment pushes from higher-layer 
+        services.
       x-permissions:
-        - role: developer
+      - role: developer
       requestBody:
         required: true
         content:
@@ -494,11 +500,12 @@ paths:
     post:
       operationId: GetMessageHistory
       summary: Get message history
-      description: Returns paginated message history for a room, ordered by timestamp descending. Uses cursor-based pagination.
+      description: Returns paginated message history for a room, ordered by timestamp descending. Uses cursor-based 
+        pagination.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -519,9 +526,9 @@ paths:
       summary: Delete a message
       description: Deletes a specific message. Caller must be the message sender, room Owner, or Moderator.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -540,11 +547,12 @@ paths:
     post:
       operationId: PinMessage
       summary: Pin a message
-      description: Pins a message in the room. Caller must be Owner or Moderator. Returns conflict if max pinned messages reached.
+      description: Pins a message in the room. Caller must be Owner or Moderator. Returns conflict if max pinned 
+        messages reached.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -565,9 +573,9 @@ paths:
       summary: Unpin a message
       description: Unpins a previously pinned message. Caller must be Owner or Moderator.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -586,11 +594,12 @@ paths:
     post:
       operationId: SearchMessages
       summary: Full-text search in persistent rooms
-      description: Searches message content in persistent rooms using MySQL full-text search. Not available for ephemeral rooms.
+      description: Searches message content in persistent rooms using MySQL full-text search. Not available for 
+        ephemeral rooms.
       x-permissions:
-        - role: user
-          states:
-            chat: in_room
+      - role: user
+        states:
+          chat: in_room
       requestBody:
         required: true
         content:
@@ -613,9 +622,10 @@ paths:
     post:
       operationId: AdminListRooms
       summary: List all rooms system-wide
-      description: Returns all rooms across the system for administrative purposes. Supports filtering by status and type.
+      description: Returns all rooms across the system for administrative purposes. Supports filtering by status and 
+        type.
       x-permissions:
-        - role: developer
+      - role: developer
       requestBody:
         required: true
         content:
@@ -636,7 +646,7 @@ paths:
       summary: Room and message statistics
       description: Returns system-wide chat statistics for monitoring and debugging.
       x-permissions:
-        - role: developer
+      - role: developer
       requestBody:
         required: true
         content:
@@ -657,7 +667,7 @@ paths:
       summary: Force cleanup of idle rooms
       description: Triggers an immediate idle room cleanup cycle, bypassing the normal interval.
       x-permissions:
-        - role: developer
+      - role: developer
       requestBody:
         required: true
         content:
@@ -682,59 +692,59 @@ components:
       type: string
       description: Determines what kind of content a room accepts
       enum:
-        - Text
-        - Sentiment
-        - Emoji
-        - Custom
+      - Text
+      - Sentiment
+      - Emoji
+      - Custom
 
     PersistenceMode:
       type: string
       description: Whether room messages are stored in Redis (TTL) or MySQL (durable)
       enum:
-        - Ephemeral
-        - Persistent
+      - Ephemeral
+      - Persistent
 
     RoomTypeStatus:
       type: string
       description: Lifecycle status of a room type definition
       enum:
-        - Active
-        - Deprecated
+      - Active
+      - Deprecated
 
     ChatRoomStatus:
       type: string
       description: Current state of a chat room
       enum:
-        - Active
-        - Locked
-        - Archived
+      - Active
+      - Locked
+      - Archived
 
     ChatParticipantRole:
       type: string
       description: Participant role within a chat room determining moderation privileges
       enum:
-        - Owner
-        - Moderator
-        - Member
-        - ReadOnly
+      - Owner
+      - Moderator
+      - Member
+      - ReadOnly
 
     ContractRoomAction:
       type: string
       description: Action to take on a contract-governed room when contract state changes
       enum:
-        - Continue
-        - Lock
-        - Archive
-        - Delete
+      - Continue
+      - Lock
+      - Archive
+      - Delete
 
     ChatRoomLockReason:
       type: string
       description: Reason why a chat room was locked
       enum:
-        - ContractBreachDetected
-        - ContractTerminated
-        - ContractExpired
-        - Manual
+      - ContractBreachDetected
+      - ContractTerminated
+      - ContractExpired
+      - Manual
 
     # ==========================================================================
     # Validator Config (shared across request/response)
@@ -781,11 +791,11 @@ components:
       additionalProperties: false
       description: Request to register a new room type definition
       required:
-        - code
-        - displayName
-        - messageFormat
-        - persistenceMode
-        - allowAnonymousSenders
+      - code
+      - displayName
+      - messageFormat
+      - persistenceMode
+      - allowAnonymousSenders
       properties:
         code:
           type: string
@@ -807,7 +817,7 @@ components:
           description: Content format this room type accepts
         validatorConfig:
           allOf:
-            - $ref: '#/components/schemas/ValidatorConfig'
+          - $ref: '#/components/schemas/ValidatorConfig'
           nullable: true
           description: Validation rules for messages (null uses format defaults)
         persistenceMode:
@@ -843,7 +853,7 @@ components:
       additionalProperties: false
       description: Request to retrieve a room type by code
       required:
-        - code
+      - code
       properties:
         code:
           type: string
@@ -866,12 +876,12 @@ components:
           description: Filter by game service scope
         messageFormat:
           allOf:
-            - $ref: '#/components/schemas/MessageFormat'
+          - $ref: '#/components/schemas/MessageFormat'
           nullable: true
           description: Filter by message format
         status:
           allOf:
-            - $ref: '#/components/schemas/RoomTypeStatus'
+          - $ref: '#/components/schemas/RoomTypeStatus'
           nullable: true
           description: Filter by status
         page:
@@ -888,7 +898,7 @@ components:
       additionalProperties: false
       description: Request to update room type properties (null fields left unchanged)
       required:
-        - code
+      - code
       properties:
         code:
           type: string
@@ -908,7 +918,7 @@ components:
           description: Updated description
         validatorConfig:
           allOf:
-            - $ref: '#/components/schemas/ValidatorConfig'
+          - $ref: '#/components/schemas/ValidatorConfig'
           nullable: true
           description: Updated validation rules
         defaultMaxParticipants:
@@ -942,7 +952,7 @@ components:
       additionalProperties: false
       description: Request to deprecate a room type (prevents new room creation)
       required:
-        - code
+      - code
       properties:
         code:
           type: string
@@ -958,13 +968,13 @@ components:
       additionalProperties: false
       description: Room type definition with current configuration and status
       required:
-        - code
-        - displayName
-        - messageFormat
-        - persistenceMode
-        - allowAnonymousSenders
-        - status
-        - createdAt
+      - code
+      - displayName
+      - messageFormat
+      - persistenceMode
+      - allowAnonymousSenders
+      - status
+      - createdAt
       properties:
         code:
           type: string
@@ -986,7 +996,7 @@ components:
           description: Content format accepted by this room type
         validatorConfig:
           allOf:
-            - $ref: '#/components/schemas/ValidatorConfig'
+          - $ref: '#/components/schemas/ValidatorConfig'
           nullable: true
           description: Active validation rules
         persistenceMode:
@@ -1034,10 +1044,10 @@ components:
       additionalProperties: false
       description: Paginated list of room type definitions
       required:
-        - items
-        - totalCount
-        - page
-        - pageSize
+      - items
+      - totalCount
+      - page
+      - pageSize
       properties:
         items:
           type: array
@@ -1063,7 +1073,7 @@ components:
       additionalProperties: false
       description: Request to create a new chat room
       required:
-        - roomTypeCode
+      - roomTypeCode
       properties:
         roomTypeCode:
           type: string
@@ -1088,22 +1098,22 @@ components:
           description: Participant limit override (null uses type default)
         contractFulfilledAction:
           allOf:
-            - $ref: '#/components/schemas/ContractRoomAction'
+          - $ref: '#/components/schemas/ContractRoomAction'
           nullable: true
           description: Action when governing contract is fulfilled (null uses service default)
         contractBreachAction:
           allOf:
-            - $ref: '#/components/schemas/ContractRoomAction'
+          - $ref: '#/components/schemas/ContractRoomAction'
           nullable: true
           description: Action when governing contract is breached (null uses service default)
         contractTerminatedAction:
           allOf:
-            - $ref: '#/components/schemas/ContractRoomAction'
+          - $ref: '#/components/schemas/ContractRoomAction'
           nullable: true
           description: Action when governing contract is terminated (null uses service default)
         contractExpiredAction:
           allOf:
-            - $ref: '#/components/schemas/ContractRoomAction'
+          - $ref: '#/components/schemas/ContractRoomAction'
           nullable: true
           description: Action when governing contract expires (null uses service default)
         metadata:
@@ -1116,7 +1126,7 @@ components:
       additionalProperties: false
       description: Request to retrieve a room by ID
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -1139,7 +1149,7 @@ components:
           description: Filter by Connect session ID
         status:
           allOf:
-            - $ref: '#/components/schemas/ChatRoomStatus'
+          - $ref: '#/components/schemas/ChatRoomStatus'
           nullable: true
           description: Filter by room status
         page:
@@ -1156,7 +1166,7 @@ components:
       additionalProperties: false
       description: Request to update room properties (null fields left unchanged)
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -1180,7 +1190,7 @@ components:
       additionalProperties: false
       description: Request to permanently delete a room and all its messages
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -1192,7 +1202,7 @@ components:
       additionalProperties: false
       description: Request to archive a room (makes it read-only)
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -1204,12 +1214,12 @@ components:
       additionalProperties: false
       description: Chat room details including status and participant count
       required:
-        - roomId
-        - roomTypeCode
-        - status
-        - participantCount
-        - isArchived
-        - createdAt
+      - roomId
+      - roomTypeCode
+      - status
+      - participantCount
+      - isArchived
+      - createdAt
       properties:
         roomId:
           type: string
@@ -1259,10 +1269,10 @@ components:
       additionalProperties: false
       description: Paginated list of chat rooms
       required:
-        - items
-        - totalCount
-        - page
-        - pageSize
+      - items
+      - totalCount
+      - page
+      - pageSize
       properties:
         items:
           type: array
@@ -1288,7 +1298,7 @@ components:
       additionalProperties: false
       description: Request to join a chat room as a participant
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -1309,7 +1319,7 @@ components:
           description: Human-readable display name
         role:
           allOf:
-            - $ref: '#/components/schemas/ChatParticipantRole'
+          - $ref: '#/components/schemas/ChatParticipantRole'
           nullable: true
           description: Requested role (defaults to Member if not specified)
 
@@ -1318,7 +1328,7 @@ components:
       additionalProperties: false
       description: Request to leave a chat room
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -1330,7 +1340,7 @@ components:
       additionalProperties: false
       description: Request to list participants in a room
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -1342,10 +1352,10 @@ components:
       additionalProperties: false
       description: Details about a chat room participant
       required:
-        - sessionId
-        - role
-        - joinedAt
-        - isMuted
+      - sessionId
+      - role
+      - joinedAt
+      - isMuted
       properties:
         sessionId:
           type: string
@@ -1380,8 +1390,8 @@ components:
       additionalProperties: false
       description: List of participants in a room
       required:
-        - roomId
-        - participants
+      - roomId
+      - participants
       properties:
         roomId:
           type: string
@@ -1398,8 +1408,8 @@ components:
       additionalProperties: false
       description: Request to remove a participant from a room
       required:
-        - roomId
-        - targetSessionId
+      - roomId
+      - targetSessionId
       properties:
         roomId:
           type: string
@@ -1419,8 +1429,8 @@ components:
       additionalProperties: false
       description: Request to ban a participant from a room
       required:
-        - roomId
-        - targetSessionId
+      - roomId
+      - targetSessionId
       properties:
         roomId:
           type: string
@@ -1444,8 +1454,8 @@ components:
       additionalProperties: false
       description: Request to remove a ban for a participant
       required:
-        - roomId
-        - targetSessionId
+      - roomId
+      - targetSessionId
       properties:
         roomId:
           type: string
@@ -1461,8 +1471,8 @@ components:
       additionalProperties: false
       description: Request to mute a participant in a room
       required:
-        - roomId
-        - targetSessionId
+      - roomId
+      - targetSessionId
       properties:
         roomId:
           type: string
@@ -1494,7 +1504,7 @@ components:
           description: Text content (for Text format rooms)
         sentimentCategory:
           allOf:
-            - $ref: 'common-api.yaml#/components/schemas/SentimentCategory'
+          - $ref: '#/components/schemas/SentimentCategory'
           nullable: true
           description: Sentiment category (for Sentiment format rooms)
         sentimentIntensity:
@@ -1523,8 +1533,8 @@ components:
       additionalProperties: false
       description: Request to send a message to a chat room
       required:
-        - roomId
-        - content
+      - roomId
+      - content
       properties:
         roomId:
           type: string
@@ -1552,8 +1562,8 @@ components:
       additionalProperties: false
       description: Request to send multiple messages to a room atomically
       required:
-        - roomId
-        - messages
+      - roomId
+      - messages
       properties:
         roomId:
           type: string
@@ -1570,7 +1580,7 @@ components:
       additionalProperties: false
       description: Individual message entry in a batch send operation
       required:
-        - content
+      - content
       properties:
         content:
           $ref: '#/components/schemas/SendMessageContent'
@@ -1594,7 +1604,7 @@ components:
       additionalProperties: false
       description: Result of a batch message send operation
       required:
-        - messageCount
+      - messageCount
       properties:
         messageCount:
           type: integer
@@ -1605,11 +1615,11 @@ components:
       additionalProperties: false
       description: A chat message with metadata and content
       required:
-        - messageId
-        - roomId
-        - timestamp
-        - roomTypeCode
-        - isPinned
+      - messageId
+      - roomId
+      - timestamp
+      - roomTypeCode
+      - isPinned
       properties:
         messageId:
           type: string
@@ -1641,7 +1651,7 @@ components:
           description: Room type code for this message
         content:
           allOf:
-            - $ref: '#/components/schemas/SendMessageContent'
+          - $ref: '#/components/schemas/SendMessageContent'
           nullable: true
           description: Message content (null for deleted messages)
         isPinned:
@@ -1653,7 +1663,7 @@ components:
       additionalProperties: false
       description: Request to retrieve message history for a room with cursor pagination
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -1673,8 +1683,8 @@ components:
       additionalProperties: false
       description: Paginated message history with cursor for next page
       required:
-        - messages
-        - hasMore
+      - messages
+      - hasMore
       properties:
         messages:
           type: array
@@ -1694,8 +1704,8 @@ components:
       additionalProperties: false
       description: Request to delete a message from a room
       required:
-        - roomId
-        - messageId
+      - roomId
+      - messageId
       properties:
         roomId:
           type: string
@@ -1711,8 +1721,8 @@ components:
       additionalProperties: false
       description: Request to pin a message in a room
       required:
-        - roomId
-        - messageId
+      - roomId
+      - messageId
       properties:
         roomId:
           type: string
@@ -1728,8 +1738,8 @@ components:
       additionalProperties: false
       description: Request to unpin a message in a room
       required:
-        - roomId
-        - messageId
+      - roomId
+      - messageId
       properties:
         roomId:
           type: string
@@ -1745,8 +1755,8 @@ components:
       additionalProperties: false
       description: Request to full-text search messages in a persistent room
       required:
-        - roomId
-        - query
+      - roomId
+      - query
       properties:
         roomId:
           type: string
@@ -1765,8 +1775,8 @@ components:
       additionalProperties: false
       description: Full-text search results with total match count
       required:
-        - messages
-        - totalMatches
+      - messages
+      - totalMatches
       properties:
         messages:
           type: array
@@ -1792,7 +1802,7 @@ components:
           description: Filter by room type
         status:
           allOf:
-            - $ref: '#/components/schemas/ChatRoomStatus'
+          - $ref: '#/components/schemas/ChatRoomStatus'
           nullable: true
           description: Filter by status
         page:
@@ -1815,12 +1825,12 @@ components:
       additionalProperties: false
       description: System-wide chat statistics for admin monitoring
       required:
-        - totalRooms
-        - activeRooms
-        - lockedRooms
-        - archivedRooms
-        - totalParticipants
-        - totalRoomTypes
+      - totalRooms
+      - activeRooms
+      - lockedRooms
+      - archivedRooms
+      - totalParticipants
+      - totalRoomTypes
       properties:
         totalRooms:
           type: integer
@@ -1852,9 +1862,9 @@ components:
       additionalProperties: false
       description: Result of admin-triggered idle room cleanup
       required:
-        - cleanedRooms
-        - archivedRooms
-        - deletedRooms
+      - cleanedRooms
+      - archivedRooms
+      - deletedRooms
       properties:
         cleanedRooms:
           type: integer
@@ -1865,3 +1875,26 @@ components:
         deletedRooms:
           type: integer
           description: Number of rooms deleted
+    SentimentCategory:
+      type: string
+      description: >
+        Standardized sentiment categories for anonymous audience and reaction data.
+        Used by lib-chat for sentiment room messages and lib-stream for platform
+        audience processing. Designed for privacy-safe communication where text
+        content is inappropriate or unnecessary.
+      enum:
+      - Excited
+      - Supportive
+      - Critical
+      - Curious
+      - Surprised
+      - Amused
+      - Bored
+      - Hostile
+
+    # ==========================================================================
+    # Archive Base Types
+    # ==========================================================================
+
+x-inlined-types:
+- SentimentCategory
