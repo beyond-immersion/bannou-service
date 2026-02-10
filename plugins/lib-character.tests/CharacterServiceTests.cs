@@ -238,7 +238,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     }
 
     [Fact]
-    public async Task GetCharacterAsync_WhenStoreFails_ShouldReturnInternalServerError()
+    public async Task GetCharacterAsync_WhenStoreFails_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -248,12 +248,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store unavailable"));
 
-        // Act
-        var (status, response) = await service.GetCharacterAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.GetCharacterAsync(request));
     }
 
     #endregion
@@ -1205,16 +1201,12 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
-        // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.ServiceUnavailable, status);
-        Assert.Null(response);
+        // Act & Assert - ApiException propagates to generated controller which returns 503
+        await Assert.ThrowsAsync<ApiException>(() => service.GetCompressDataAsync(request, CancellationToken.None));
     }
 
     [Fact]
-    public async Task GetCompressDataAsync_Exception_ReturnsInternalServerError()
+    public async Task GetCompressDataAsync_Exception_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -1227,12 +1219,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
-        // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetCompressDataAsync(request, CancellationToken.None));
     }
 
     [Fact]

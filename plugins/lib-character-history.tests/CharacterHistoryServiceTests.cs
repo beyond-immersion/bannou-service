@@ -1295,27 +1295,8 @@ public class CharacterHistoryServiceTests
 
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
-        // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-
-        // Verify error event was published
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "character-history",
-            "GetCompressData",
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string?>(),
-            It.IsAny<string?>(),
-            It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(),
-            It.IsAny<string?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.GetCompressDataAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -1564,27 +1545,8 @@ public class CharacterHistoryServiceTests
             Data = compressedData
         };
 
-        // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-
-        // Verify error event was published
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "character-history",
-            "RestoreFromArchive",
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string?>(),
-            It.IsAny<string?>(),
-            It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(),
-            It.IsAny<string?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.RestoreFromArchiveAsync(request, CancellationToken.None));
     }
 
     /// <summary>

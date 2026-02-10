@@ -379,7 +379,7 @@ public partial class CollectionService : ICollectionService
                 new CreateContainerRequest
                 {
                     OwnerId = ownerId,
-                    OwnerType = containerOwnerType.Value,
+                    OwnerType = containerOwnerType,
                     ContainerType = $"collection_{collectionType.ToString().ToLowerInvariant()}",
                     ConstraintModel = ContainerConstraintModel.Unlimited
                 },

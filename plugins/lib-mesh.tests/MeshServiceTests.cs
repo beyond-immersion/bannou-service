@@ -122,37 +122,18 @@ public class MeshServiceTests
     }
 
     [Fact]
-    public async Task GetEndpointsAsync_WhenRedisThrows_ShouldReturnInternalServerError()
+    public async Task GetEndpointsAsync_WhenRedisThrows_ShouldThrow()
     {
         // Arrange
         _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync(It.IsAny<string>(), It.IsAny<bool>()))
             .ThrowsAsync(new Exception("Redis connection failed"));
 
-        _mockMessageBus
-            .Setup(m => m.TryPublishErrorAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string?>(),
-                It.IsAny<string?>(),
-                It.IsAny<ServiceErrorEventSeverity>(),
-                It.IsAny<object?>(),
-                It.IsAny<string?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         var service = CreateService();
         var request = new GetEndpointsRequest { AppId = "bannou" };
 
-        // Act
-        var (statusCode, response) = await service.GetEndpointsAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, statusCode);
-        Assert.Null(response);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.GetEndpointsAsync(request, CancellationToken.None));
     }
 
     #endregion

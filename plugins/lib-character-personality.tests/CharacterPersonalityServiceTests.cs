@@ -236,7 +236,7 @@ public class CharacterPersonalityServiceTests
     }
 
     [Fact]
-    public async Task GetPersonalityAsync_WhenStateStoreThrows_ShouldReturnInternalServerError()
+    public async Task GetPersonalityAsync_WhenStateStoreThrows_ShouldThrow()
     {
         // Arrange
         var characterId = Guid.NewGuid();
@@ -248,27 +248,8 @@ public class CharacterPersonalityServiceTests
         var service = CreateService();
         var request = new GetPersonalityRequest { CharacterId = characterId };
 
-        // Act
-        var (status, response) = await service.GetPersonalityAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-
-        // Verify error event was published
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "character-personality",
-            "GetPersonality",
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string?>(),
-            It.IsAny<string?>(),
-            It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(),
-            It.IsAny<string?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.GetPersonalityAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -377,12 +358,8 @@ public class CharacterPersonalityServiceTests
             Traits = new List<TraitValue> { new() { Axis = TraitAxis.OPENNESS, Value = 0.5f } }
         };
 
-        // Act
-        var (status, response) = await service.SetPersonalityAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.SetPersonalityAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -1691,27 +1668,8 @@ public class CharacterPersonalityServiceTests
         var service = CreateService();
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
-        // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-
-        // Verify error event was published
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "character-personality",
-            "GetCompressData",
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string?>(),
-            It.IsAny<string?>(),
-            It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(),
-            It.IsAny<string?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.GetCompressDataAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -1953,27 +1911,8 @@ public class CharacterPersonalityServiceTests
             Data = compressedData
         };
 
-        // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-
-        // Verify error event was published
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "character-personality",
-            "RestoreFromArchive",
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string?>(),
-            It.IsAny<string?>(),
-            It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(),
-            It.IsAny<string?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.RestoreFromArchiveAsync(request, CancellationToken.None));
     }
 
     [Fact]

@@ -239,7 +239,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     }
 
     [Fact]
-    public async Task CreateGameSessionAsync_WhenStateStoreFails_ShouldReturnInternalServerError()
+    public async Task CreateGameSessionAsync_WhenStateStoreFails_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -254,12 +254,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store connection failed"));
 
-        // Act
-        var (status, response) = await service.CreateGameSessionAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.CreateGameSessionAsync(request));
     }
 
     #endregion
@@ -321,7 +317,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     }
 
     [Fact]
-    public async Task GetGameSessionAsync_WhenStateStoreFails_ShouldReturnInternalServerError()
+    public async Task GetGameSessionAsync_WhenStateStoreFails_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -331,12 +327,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store unavailable"));
 
-        // Act
-        var (status, response) = await service.GetGameSessionAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.GetGameSessionAsync(request));
     }
 
     #endregion

@@ -2165,7 +2165,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     }
 
     [Fact]
-    public async Task GetCompressDataAsync_ExceptionThrown_ReturnsInternalServerError()
+    public async Task GetCompressDataAsync_ExceptionThrown_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -2178,12 +2178,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
-        // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetCompressDataAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -2572,12 +2568,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             Data = CompressArchiveData(archiveData)
         };
 
-        // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RestoreFromArchiveAsync(request, CancellationToken.None));
     }
 
     #endregion
