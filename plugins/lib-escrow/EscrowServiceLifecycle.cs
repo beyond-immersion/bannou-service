@@ -17,7 +17,6 @@ public partial class EscrowService
         CreateEscrowRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             if (body.Parties == null || body.Parties.Count < 2 || body.Parties.Count > _configuration.MaxParties)
             {
@@ -262,12 +261,6 @@ public partial class EscrowService
                 throw; // Re-throw to be caught by outer catch
             }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create escrow");
-            await EmitErrorAsync("CreateEscrow", ex.Message, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -277,7 +270,6 @@ public partial class EscrowService
         GetEscrowRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
             var agreementModel = await AgreementStore.GetAsync(agreementKey, cancellationToken);
@@ -292,12 +284,6 @@ public partial class EscrowService
                 Escrow = MapToApiModel(agreementModel)
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("GetEscrow", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -307,7 +293,6 @@ public partial class EscrowService
         ListEscrowsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var results = new List<EscrowAgreement>();
             var limit = body.Limit ?? _configuration.DefaultListLimit;
@@ -376,12 +361,6 @@ public partial class EscrowService
                 TotalCount = totalCount
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to list escrows");
-            await EmitErrorAsync("ListEscrows", ex.Message, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -391,7 +370,6 @@ public partial class EscrowService
         GetMyTokenRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
             var agreementModel = await AgreementStore.GetAsync(agreementKey, cancellationToken);
@@ -441,12 +419,6 @@ public partial class EscrowService
                 TokenUsed = tokenUsed,
                 TokenUsedAt = tokenUsedAt
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get token for escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("GetMyToken", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 

@@ -18,7 +18,6 @@ public partial class EscrowService
         DepositRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             // Check idempotency (outside retry loop - read-only check)
             var idempotencyKey = GetIdempotencyKey(body.IdempotencyKey);
@@ -286,12 +285,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to process deposit for escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("Deposit", ex.Message, new { body.EscrowId, body.PartyId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -301,7 +294,6 @@ public partial class EscrowService
         ValidateDepositRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var validationErrors = new List<string>();
             var warnings = new List<string>();
@@ -344,12 +336,6 @@ public partial class EscrowService
                 Warnings = warnings.Count > 0 ? warnings : new List<string>()
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to validate deposit for escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("ValidateDeposit", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -359,7 +345,6 @@ public partial class EscrowService
         GetDepositStatusRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
             var agreementModel = await AgreementStore.GetAsync(agreementKey, cancellationToken);
@@ -391,12 +376,6 @@ public partial class EscrowService
                 DepositToken = party?.DepositToken,
                 DepositDeadline = expectedDeposit?.DepositDeadline
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get deposit status for escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("GetDepositStatus", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 }

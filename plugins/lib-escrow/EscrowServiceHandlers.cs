@@ -15,7 +15,6 @@ public partial class EscrowService
         RegisterHandlerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var handlerKey = GetHandlerKey(body.AssetType);
             var existing = await HandlerStore.GetAsync(handlerKey, cancellationToken);
@@ -54,12 +53,6 @@ public partial class EscrowService
                 Registered = true
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to register handler for asset type {AssetType}", body.AssetType);
-            await EmitErrorAsync("RegisterHandler", ex.Message, new { body.AssetType, body.PluginId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -69,7 +62,6 @@ public partial class EscrowService
         ListHandlersRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var allHandlers = await HandlerStore.QueryAsync(h => true, cancellationToken);
 
@@ -93,12 +85,6 @@ public partial class EscrowService
                 Handlers = handlerInfos
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to list asset handlers");
-            await EmitErrorAsync("ListHandlers", ex.Message, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -108,7 +94,6 @@ public partial class EscrowService
         DeregisterHandlerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var handlerKey = GetHandlerKey(body.AssetType);
             var existing = await HandlerStore.GetAsync(handlerKey, cancellationToken);
@@ -138,12 +123,6 @@ public partial class EscrowService
             {
                 Deregistered = true
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to deregister handler for asset type {AssetType}", body.AssetType);
-            await EmitErrorAsync("DeregisterHandler", ex.Message, new { body.AssetType }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 }

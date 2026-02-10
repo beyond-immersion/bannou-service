@@ -16,7 +16,6 @@ public partial class EscrowService
         VerifyConditionRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -168,12 +167,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to verify condition for escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("VerifyCondition", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -184,7 +177,6 @@ public partial class EscrowService
         ValidateEscrowRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -306,12 +298,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to validate escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("ValidateEscrow", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -322,7 +308,6 @@ public partial class EscrowService
         ReaffirmRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -447,12 +432,6 @@ public partial class EscrowService
             _logger.LogWarning("Failed to reaffirm escrow {EscrowId} after {MaxRetries} attempts due to concurrent modifications",
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to reaffirm escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("Reaffirm", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 }

@@ -17,7 +17,6 @@ public partial class EscrowService
         ConsentRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -285,12 +284,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to record consent for escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("RecordConsent", ex.Message, new { body.EscrowId, body.PartyId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -300,7 +293,6 @@ public partial class EscrowService
         GetConsentStatusRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
             var agreementModel = await AgreementStore.GetAsync(agreementKey, cancellationToken);
@@ -352,12 +344,6 @@ public partial class EscrowService
                 CanRelease = releaseConsents >= requiredConsents,
                 CanRefund = hasRefundConsent
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get consent status for escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("GetConsentStatus", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 }

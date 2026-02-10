@@ -20,7 +20,6 @@ public partial class EscrowService
         ReleaseRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -215,12 +214,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to release escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("Release", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -231,7 +224,6 @@ public partial class EscrowService
         RefundRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -343,12 +335,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to refund escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("Refund", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -359,7 +345,6 @@ public partial class EscrowService
         CancelRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -457,12 +442,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to cancel escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("Cancel", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -473,7 +452,6 @@ public partial class EscrowService
         DisputeRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -570,12 +548,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to dispute escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("Dispute", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -586,7 +558,6 @@ public partial class EscrowService
         ResolveRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -740,12 +711,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to resolve escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("Resolve", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -757,7 +722,6 @@ public partial class EscrowService
         ConfirmReleaseRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -885,12 +849,6 @@ public partial class EscrowService
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to confirm release for escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("ConfirmRelease", ex.Message, new { body.EscrowId, body.PartyId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -902,7 +860,6 @@ public partial class EscrowService
         ConfirmRefundRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
@@ -1022,12 +979,6 @@ public partial class EscrowService
             _logger.LogWarning("Failed to confirm refund for escrow {EscrowId} after {MaxRetries} attempts",
                 body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to confirm refund for escrow {EscrowId}", body.EscrowId);
-            await EmitErrorAsync("ConfirmRefund", ex.Message, new { body.EscrowId, body.PartyId }, cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
