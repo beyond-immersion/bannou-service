@@ -116,8 +116,33 @@ public partial class TelemetryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TelemetryHealthResponse>> Health([Microsoft.AspNetCore.Mvc.FromBody] TelemetryHealthRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.HealthAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.HealthAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TelemetryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:telemetry/health");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TelemetryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:telemetry/health");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "telemetry",
+                "Health",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:telemetry/health",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -132,8 +157,33 @@ public partial class TelemetryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TelemetryStatusResponse>> Status([Microsoft.AspNetCore.Mvc.FromBody] TelemetryStatusRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.StatusAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.StatusAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TelemetryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:telemetry/status");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TelemetryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:telemetry/status");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "telemetry",
+                "Status",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:telemetry/status",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
 }

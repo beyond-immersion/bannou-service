@@ -311,8 +311,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ComposeResponse>> Compose([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ComposeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ComposeAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ComposeAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/compose");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/compose");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "Compose",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/compose",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -328,8 +353,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetPlanResponse>> GetPlan([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetPlanAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetPlanAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/plan/get");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/plan/get");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "GetPlan",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/plan/get",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -345,8 +395,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListPlansResponse>> ListPlans([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListPlansRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListPlansAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListPlansAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/plan/list");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/plan/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "ListPlans",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/plan/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -363,8 +438,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> CreateScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CreateScenarioDefinitionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CreateScenarioDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/create");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/create");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "CreateScenarioDefinition",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/create",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -380,8 +480,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioDefinitionResponse>> GetScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetScenarioDefinitionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetScenarioDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/get");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/get");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "GetScenarioDefinition",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/get",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -397,8 +522,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListScenarioDefinitionsResponse>> ListScenarioDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListScenarioDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListScenarioDefinitionsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListScenarioDefinitionsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/list");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "ListScenarioDefinitions",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -414,8 +564,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> UpdateScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateScenarioDefinitionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UpdateScenarioDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/update");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/update");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "UpdateScenarioDefinition",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/update",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -431,8 +606,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeprecateScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var statusCode = await _implementation.DeprecateScenarioDefinitionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        try
+        {
+
+            var statusCode = await _implementation.DeprecateScenarioDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/deprecate");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/deprecate");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "DeprecateScenarioDefinition",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/deprecate",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -451,8 +651,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindAvailableScenariosResponse>> FindAvailableScenarios([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] FindAvailableScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.FindAvailableScenariosAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.FindAvailableScenariosAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/find-available");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/find-available");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "FindAvailableScenarios",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/find-available",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -469,8 +694,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TestScenarioResponse>> TestScenarioTrigger([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TestScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.TestScenarioTriggerAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.TestScenarioTriggerAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/test");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/test");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "TestScenarioTrigger",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/test",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -486,8 +736,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EvaluateFitResponse>> EvaluateScenarioFit([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EvaluateFitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.EvaluateScenarioFitAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.EvaluateScenarioFitAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/evaluate-fit");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/evaluate-fit");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "EvaluateScenarioFit",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/evaluate-fit",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -507,8 +782,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TriggerScenarioResponse>> TriggerScenario([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TriggerScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.TriggerScenarioAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.TriggerScenarioAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/trigger");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/trigger");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "TriggerScenario",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/trigger",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -523,8 +823,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetActiveScenariosResponse>> GetActiveScenarios([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetActiveScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetActiveScenariosAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetActiveScenariosAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/get-active");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/get-active");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "GetActiveScenarios",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/get-active",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -539,8 +864,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioHistoryResponse>> GetScenarioHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetScenarioHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetScenarioHistoryAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetScenarioHistoryAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/get-history");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/scenario/get-history");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "GetScenarioHistory",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/scenario/get-history",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -556,8 +906,33 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StorylineArchive>> GetCompressData([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/get-compress-data");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/get-compress-data");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "GetCompressData",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/get-compress-data",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
 }

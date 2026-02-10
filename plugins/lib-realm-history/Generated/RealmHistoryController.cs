@@ -254,8 +254,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistoricalParticipation>> RecordRealmParticipation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RecordRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RecordRealmParticipationAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RecordRealmParticipationAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/record-participation");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/record-participation");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "RecordRealmParticipation",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/record-participation",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -271,8 +296,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmParticipationListResponse>> GetRealmParticipation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetRealmParticipationAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetRealmParticipationAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/get-participation");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/get-participation");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "GetRealmParticipation",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/get-participation",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -288,8 +338,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmParticipationListResponse>> GetRealmEventParticipants([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmEventParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetRealmEventParticipantsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetRealmEventParticipantsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/get-event-participants");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/get-event-participants");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "GetRealmEventParticipants",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/get-event-participants",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -305,8 +380,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealmParticipation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var statusCode = await _implementation.DeleteRealmParticipationAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        try
+        {
+
+            var statusCode = await _implementation.DeleteRealmParticipationAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/delete-participation");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/delete-participation");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "DeleteRealmParticipation",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/delete-participation",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -323,8 +423,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> GetRealmLore([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetRealmLoreAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetRealmLoreAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/get-lore");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/get-lore");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "GetRealmLore",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/get-lore",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -340,8 +465,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> SetRealmLore([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.SetRealmLoreAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.SetRealmLoreAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/set-lore");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/set-lore");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "SetRealmLore",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/set-lore",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -357,8 +507,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> AddRealmLoreElement([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddRealmLoreElementRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.AddRealmLoreElementAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.AddRealmLoreElementAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/add-lore-element");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/add-lore-element");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "AddRealmLoreElement",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/add-lore-element",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -374,8 +549,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealmLore([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var statusCode = await _implementation.DeleteRealmLoreAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        try
+        {
+
+            var statusCode = await _implementation.DeleteRealmLoreAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/delete-lore");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/delete-lore");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "DeleteRealmLore",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/delete-lore",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -391,8 +591,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAllRealmHistoryResponse>> DeleteAllRealmHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteAllRealmHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteAllRealmHistoryAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeleteAllRealmHistoryAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/delete-all");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/delete-all");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "DeleteAllRealmHistory",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/delete-all",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -408,8 +633,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistorySummaryResponse>> SummarizeRealmHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SummarizeRealmHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.SummarizeRealmHistoryAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.SummarizeRealmHistoryAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/summarize");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/summarize");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "SummarizeRealmHistory",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/summarize",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -426,8 +676,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistoryArchive>> GetCompressData([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/get-compress-data");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/get-compress-data");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "GetCompressData",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/get-compress-data",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -444,8 +719,33 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RestoreFromArchiveAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RestoreFromArchiveAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm-history/restore-from-archive");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmHistoryController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:realm-history/restore-from-archive");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "realm-history",
+                "RestoreFromArchive",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:realm-history/restore-from-archive",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
 }

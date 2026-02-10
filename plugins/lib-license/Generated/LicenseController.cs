@@ -365,8 +365,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> CreateBoardTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CreateBoardTemplateAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CreateBoardTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board-template/create");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board-template/create");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "CreateBoardTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board-template/create",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -381,8 +406,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> GetBoardTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetBoardTemplateAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetBoardTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board-template/get");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board-template/get");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "GetBoardTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board-template/get",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -397,8 +447,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardTemplatesResponse>> ListBoardTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBoardTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListBoardTemplatesAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListBoardTemplatesAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board-template/list");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board-template/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "ListBoardTemplates",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board-template/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -414,8 +489,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> UpdateBoardTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateBoardTemplateAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UpdateBoardTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board-template/update");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board-template/update");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "UpdateBoardTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board-template/update",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -431,8 +531,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardTemplateResponse>> DeleteBoardTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteBoardTemplateAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeleteBoardTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board-template/delete");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board-template/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "DeleteBoardTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board-template/delete",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -450,8 +575,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> AddLicenseDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.AddLicenseDefinitionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.AddLicenseDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/definition/add");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/definition/add");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "AddLicenseDefinition",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/definition/add",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -466,8 +616,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> GetLicenseDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetLicenseDefinitionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetLicenseDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/definition/get");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/definition/get");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "GetLicenseDefinition",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/definition/get",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -482,8 +657,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListLicenseDefinitionsResponse>> ListLicenseDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListLicenseDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListLicenseDefinitionsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListLicenseDefinitionsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/definition/list");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/definition/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "ListLicenseDefinitions",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/definition/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -499,8 +699,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> UpdateLicenseDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateLicenseDefinitionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UpdateLicenseDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/definition/update");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/definition/update");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "UpdateLicenseDefinition",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/definition/update",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -516,8 +741,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LicenseDefinitionResponse>> RemoveLicenseDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveLicenseDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RemoveLicenseDefinitionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RemoveLicenseDefinitionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/definition/remove");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/definition/remove");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "RemoveLicenseDefinition",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/definition/remove",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -536,8 +786,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> CreateBoard([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CreateBoardAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CreateBoardAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board/create");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board/create");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "CreateBoard",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board/create",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -552,8 +827,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> GetBoard([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetBoardAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetBoardAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board/get");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board/get");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "GetBoard",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board/get",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -568,8 +868,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBoardsByOwnerResponse>> ListBoardsByOwner([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBoardsByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListBoardsByOwnerAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListBoardsByOwnerAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board/list-by-owner");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board/list-by-owner");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "ListBoardsByOwner",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board/list-by-owner",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -585,8 +910,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardResponse>> DeleteBoard([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteBoardAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeleteBoardAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board/delete");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "DeleteBoard",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board/delete",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -605,8 +955,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockLicenseResponse>> UnlockLicense([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnlockLicenseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UnlockLicenseAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UnlockLicenseAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/unlock");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/unlock");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "UnlockLicense",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/unlock",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -623,8 +998,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckUnlockableResponse>> CheckUnlockable([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CheckUnlockableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CheckUnlockableAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CheckUnlockableAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/check-unlockable");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/check-unlockable");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "CheckUnlockable",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/check-unlockable",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -641,8 +1041,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BoardStateResponse>> GetBoardState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BoardStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetBoardStateAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetBoardStateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board-state");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board-state");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "GetBoardState",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board-state",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -658,8 +1083,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedBoardTemplateResponse>> SeedBoardTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedBoardTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.SeedBoardTemplateAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.SeedBoardTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board-template/seed");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board-template/seed");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "SeedBoardTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board-template/seed",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -678,8 +1128,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CloneBoardResponse>> CloneBoard([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CloneBoardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CloneBoardAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CloneBoardAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/board/clone");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/board/clone");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "CloneBoard",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/board/clone",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -698,8 +1173,33 @@ public partial class LicenseController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByOwnerResponse>> CleanupByOwner([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CleanupByOwnerAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CleanupByOwnerAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:license/cleanup-by-owner");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LicenseController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:license/cleanup-by-owner");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "license",
+                "CleanupByOwner",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:license/cleanup-by-owner",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
 }

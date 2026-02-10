@@ -2143,7 +2143,8 @@ public partial class SeedController
                 "allowedOwnerTypes",
                 "growthPhases",
                 "bondCardinality",
-                "bondPermanent"
+                "bondPermanent",
+                "isDeprecated"
             ],
             "properties": {
                 "seedTypeCode": {
@@ -2212,6 +2213,21 @@ public partial class SeedController
                     "type": "number",
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this seed type is deprecated and cannot be used for new seeds."
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this seed type was deprecated."
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation."
                 }
             }
         },
@@ -2371,7 +2387,8 @@ public partial class SeedController
                 "allowedOwnerTypes",
                 "growthPhases",
                 "bondCardinality",
-                "bondPermanent"
+                "bondPermanent",
+                "isDeprecated"
             ],
             "properties": {
                 "seedTypeCode": {
@@ -2440,6 +2457,21 @@ public partial class SeedController
                     "type": "number",
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this seed type is deprecated and cannot be used for new seeds."
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this seed type was deprecated."
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation."
                 }
             }
         },
@@ -2570,6 +2602,11 @@ public partial class SeedController
                     "type": "string",
                     "format": "uuid",
                     "description": "Game service to list seed types for."
+                },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include deprecated seed types in the response."
                 }
             }
         }
@@ -2610,7 +2647,8 @@ public partial class SeedController
                 "allowedOwnerTypes",
                 "growthPhases",
                 "bondCardinality",
-                "bondPermanent"
+                "bondPermanent",
+                "isDeprecated"
             ],
             "properties": {
                 "seedTypeCode": {
@@ -2679,6 +2717,21 @@ public partial class SeedController
                     "type": "number",
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this seed type is deprecated and cannot be used for new seeds."
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this seed type was deprecated."
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation."
                 }
             }
         },
@@ -2941,7 +2994,8 @@ public partial class SeedController
                 "allowedOwnerTypes",
                 "growthPhases",
                 "bondCardinality",
-                "bondPermanent"
+                "bondPermanent",
+                "isDeprecated"
             ],
             "properties": {
                 "seedTypeCode": {
@@ -3010,6 +3064,21 @@ public partial class SeedController
                     "type": "number",
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this seed type is deprecated and cannot be used for new seeds."
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this seed type was deprecated."
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation."
                 }
             }
         },
@@ -3119,6 +3188,589 @@ public partial class SeedController
             _UpdateSeedType_Info,
             _UpdateSeedType_RequestSchema,
             _UpdateSeedType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeprecateSeedType
+
+    private static readonly string _DeprecateSeedType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeprecateSeedTypeRequest",
+    "$defs": {
+        "DeprecateSeedTypeRequest": {
+            "type": "object",
+            "description": "Request to deprecate a seed type, preventing new seed creation.",
+            "additionalProperties": false,
+            "required": [
+                "seedTypeCode",
+                "gameServiceId"
+            ],
+            "properties": {
+                "seedTypeCode": {
+                    "type": "string",
+                    "description": "The seed type to deprecate."
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The game service scope."
+                },
+                "reason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Optional reason for deprecation (for audit purposes)."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateSeedType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SeedTypeResponse",
+    "$defs": {
+        "SeedTypeResponse": {
+            "type": "object",
+            "description": "Full seed type definition response.",
+            "required": [
+                "seedTypeCode",
+                "gameServiceId",
+                "displayName",
+                "description",
+                "maxPerOwner",
+                "allowedOwnerTypes",
+                "growthPhases",
+                "bondCardinality",
+                "bondPermanent",
+                "isDeprecated"
+            ],
+            "properties": {
+                "seedTypeCode": {
+                    "type": "string",
+                    "description": "Unique type code."
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service scope."
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable name."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Type description."
+                },
+                "maxPerOwner": {
+                    "type": "integer",
+                    "description": "Maximum seeds of this type per owner."
+                },
+                "allowedOwnerTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Allowed owner entity types."
+                },
+                "growthPhases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/GrowthPhaseDefinition"
+                    },
+                    "description": "Phase definitions with thresholds."
+                },
+                "bondCardinality": {
+                    "type": "integer",
+                    "description": "Bond participant limit."
+                },
+                "bondPermanent": {
+                    "type": "boolean",
+                    "description": "Whether bonds of this type are permanent."
+                },
+                "capabilityRules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CapabilityRule"
+                    },
+                    "nullable": true,
+                    "description": "Capability computation rules."
+                },
+                "growthDecayEnabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether unused growth domains decay over time for this seed type. Null means using global config."
+                },
+                "growthDecayRatePerDay": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Daily decay rate for unused domains of this seed type. Null means using global config."
+                },
+                "sameOwnerGrowthMultiplier": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this seed type is deprecated and cannot be used for new seeds."
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this seed type was deprecated."
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation."
+                }
+            }
+        },
+        "GrowthPhaseDefinition": {
+            "type": "object",
+            "description": "Defines a growth phase with its threshold.",
+            "required": [
+                "phaseCode",
+                "displayName",
+                "minTotalGrowth"
+            ],
+            "properties": {
+                "phaseCode": {
+                    "type": "string",
+                    "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable phase label."
+                },
+                "minTotalGrowth": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Minimum total growth to enter this phase."
+                }
+            }
+        },
+        "CapabilityRule": {
+            "type": "object",
+            "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
+            "required": [
+                "capabilityCode",
+                "domain",
+                "unlockThreshold",
+                "fidelityFormula"
+            ],
+            "properties": {
+                "capabilityCode": {
+                    "type": "string",
+                    "description": "Unique capability identifier (e.g., \"combat.stance\")."
+                },
+                "domain": {
+                    "type": "string",
+                    "description": "Which growth domain this capability maps to."
+                },
+                "unlockThreshold": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Minimum domain depth to unlock this capability."
+                },
+                "fidelityFormula": {
+                    "type": "string",
+                    "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateSeedType_Info = """
+{
+    "summary": "Deprecate a seed type",
+    "description": "Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "DeprecateSeedType"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeprecateSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateSeedType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Seed",
+            "POST",
+            "/seed/type/deprecate",
+            _DeprecateSeedType_Info));
+
+    /// <summary>Returns request schema for DeprecateSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateSeedType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/type/deprecate",
+            "request-schema",
+            _DeprecateSeedType_RequestSchema));
+
+    /// <summary>Returns response schema for DeprecateSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateSeedType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/type/deprecate",
+            "response-schema",
+            _DeprecateSeedType_ResponseSchema));
+
+    /// <summary>Returns full schema for DeprecateSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateSeedType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/type/deprecate",
+            _DeprecateSeedType_Info,
+            _DeprecateSeedType_RequestSchema,
+            _DeprecateSeedType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UndeprecateSeedType
+
+    private static readonly string _UndeprecateSeedType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UndeprecateSeedTypeRequest",
+    "$defs": {
+        "UndeprecateSeedTypeRequest": {
+            "type": "object",
+            "description": "Request to restore a deprecated seed type to active status.",
+            "additionalProperties": false,
+            "required": [
+                "seedTypeCode",
+                "gameServiceId"
+            ],
+            "properties": {
+                "seedTypeCode": {
+                    "type": "string",
+                    "description": "The seed type to restore."
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The game service scope."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UndeprecateSeedType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SeedTypeResponse",
+    "$defs": {
+        "SeedTypeResponse": {
+            "type": "object",
+            "description": "Full seed type definition response.",
+            "required": [
+                "seedTypeCode",
+                "gameServiceId",
+                "displayName",
+                "description",
+                "maxPerOwner",
+                "allowedOwnerTypes",
+                "growthPhases",
+                "bondCardinality",
+                "bondPermanent",
+                "isDeprecated"
+            ],
+            "properties": {
+                "seedTypeCode": {
+                    "type": "string",
+                    "description": "Unique type code."
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service scope."
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable name."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Type description."
+                },
+                "maxPerOwner": {
+                    "type": "integer",
+                    "description": "Maximum seeds of this type per owner."
+                },
+                "allowedOwnerTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Allowed owner entity types."
+                },
+                "growthPhases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/GrowthPhaseDefinition"
+                    },
+                    "description": "Phase definitions with thresholds."
+                },
+                "bondCardinality": {
+                    "type": "integer",
+                    "description": "Bond participant limit."
+                },
+                "bondPermanent": {
+                    "type": "boolean",
+                    "description": "Whether bonds of this type are permanent."
+                },
+                "capabilityRules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CapabilityRule"
+                    },
+                    "nullable": true,
+                    "description": "Capability computation rules."
+                },
+                "growthDecayEnabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether unused growth domains decay over time for this seed type. Null means using global config."
+                },
+                "growthDecayRatePerDay": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Daily decay rate for unused domains of this seed type. Null means using global config."
+                },
+                "sameOwnerGrowthMultiplier": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this seed type is deprecated and cannot be used for new seeds."
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this seed type was deprecated."
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation."
+                }
+            }
+        },
+        "GrowthPhaseDefinition": {
+            "type": "object",
+            "description": "Defines a growth phase with its threshold.",
+            "required": [
+                "phaseCode",
+                "displayName",
+                "minTotalGrowth"
+            ],
+            "properties": {
+                "phaseCode": {
+                    "type": "string",
+                    "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable phase label."
+                },
+                "minTotalGrowth": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Minimum total growth to enter this phase."
+                }
+            }
+        },
+        "CapabilityRule": {
+            "type": "object",
+            "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
+            "required": [
+                "capabilityCode",
+                "domain",
+                "unlockThreshold",
+                "fidelityFormula"
+            ],
+            "properties": {
+                "capabilityCode": {
+                    "type": "string",
+                    "description": "Unique capability identifier (e.g., \"combat.stance\")."
+                },
+                "domain": {
+                    "type": "string",
+                    "description": "Which growth domain this capability maps to."
+                },
+                "unlockThreshold": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Minimum domain depth to unlock this capability."
+                },
+                "fidelityFormula": {
+                    "type": "string",
+                    "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UndeprecateSeedType_Info = """
+{
+    "summary": "Restore a deprecated seed type",
+    "description": "Removes deprecated status from a seed type, allowing new seeds of this type to be created again.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "UndeprecateSeedType"
+}
+""";
+
+    /// <summary>Returns endpoint information for UndeprecateSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/undeprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateSeedType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Seed",
+            "POST",
+            "/seed/type/undeprecate",
+            _UndeprecateSeedType_Info));
+
+    /// <summary>Returns request schema for UndeprecateSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/undeprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateSeedType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/type/undeprecate",
+            "request-schema",
+            _UndeprecateSeedType_RequestSchema));
+
+    /// <summary>Returns response schema for UndeprecateSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/undeprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateSeedType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/type/undeprecate",
+            "response-schema",
+            _UndeprecateSeedType_ResponseSchema));
+
+    /// <summary>Returns full schema for UndeprecateSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/undeprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateSeedType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/type/undeprecate",
+            _UndeprecateSeedType_Info,
+            _UndeprecateSeedType_RequestSchema,
+            _UndeprecateSeedType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteSeedType
+
+    private static readonly string _DeleteSeedType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteSeedTypeRequest",
+    "$defs": {
+        "DeleteSeedTypeRequest": {
+            "type": "object",
+            "description": "Request to hard-delete a deprecated seed type with no remaining non-archived seeds.",
+            "additionalProperties": false,
+            "required": [
+                "seedTypeCode",
+                "gameServiceId"
+            ],
+            "properties": {
+                "seedTypeCode": {
+                    "type": "string",
+                    "description": "The seed type to delete."
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The game service scope."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteSeedType_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeleteSeedType_Info = """
+{
+    "summary": "Delete a seed type",
+    "description": "Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "DeleteSeedType"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteSeedType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Seed",
+            "POST",
+            "/seed/type/delete",
+            _DeleteSeedType_Info));
+
+    /// <summary>Returns request schema for DeleteSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteSeedType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/type/delete",
+            "request-schema",
+            _DeleteSeedType_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteSeedType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/type/delete",
+            "response-schema",
+            _DeleteSeedType_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteSeedType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/type/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteSeedType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/type/delete",
+            _DeleteSeedType_Info,
+            _DeleteSeedType_RequestSchema,
+            _DeleteSeedType_ResponseSchema));
 
     #endregion
 

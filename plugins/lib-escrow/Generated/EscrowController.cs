@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Escrow;
 
@@ -395,7 +380,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.CreateEscrowAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/create");
@@ -436,7 +421,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.GetEscrowAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/get");
@@ -477,7 +462,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ListEscrowsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/list");
@@ -521,7 +506,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.GetMyTokenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/get-my-token");
@@ -566,7 +551,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.DepositAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/deposit");
@@ -607,7 +592,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ValidateDepositAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/deposit/validate");
@@ -648,7 +633,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.GetDepositStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/deposit/status");
@@ -689,7 +674,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.RecordConsentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/consent");
@@ -730,7 +715,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.GetConsentStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/consent/status");
@@ -773,7 +758,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ReleaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/release");
@@ -814,7 +799,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.RefundAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/refund");
@@ -855,7 +840,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.CancelAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/cancel");
@@ -896,7 +881,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.DisputeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/dispute");
@@ -938,7 +923,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ConfirmReleaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/confirm-release");
@@ -980,7 +965,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ConfirmRefundAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/confirm-refund");
@@ -1021,7 +1006,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ResolveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/resolve");
@@ -1063,7 +1048,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.VerifyConditionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/verify-condition");
@@ -1104,7 +1089,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ValidateEscrowAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/validate");
@@ -1145,7 +1130,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ReaffirmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/reaffirm");
@@ -1186,7 +1171,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.RegisterHandlerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/handler/register");
@@ -1227,7 +1212,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ListHandlersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/handler/list");
@@ -1268,7 +1253,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.DeregisterHandlerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/handler/deregister");

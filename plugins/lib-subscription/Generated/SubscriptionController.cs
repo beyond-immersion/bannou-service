@@ -179,8 +179,33 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionListResponse>> GetAccountSubscriptions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAccountSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetAccountSubscriptionsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetAccountSubscriptionsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/account/list");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:subscription/account/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "subscription",
+                "GetAccountSubscriptions",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:subscription/account/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -200,8 +225,33 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuerySubscriptionsResponse>> QueryCurrentSubscriptions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.QueryCurrentSubscriptionsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.QueryCurrentSubscriptionsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/query");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:subscription/query");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "subscription",
+                "QueryCurrentSubscriptions",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:subscription/query",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -213,8 +263,33 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> GetSubscription([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetSubscriptionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetSubscriptionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/get");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:subscription/get");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "subscription",
+                "GetSubscription",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:subscription/get",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -229,8 +304,33 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> CreateSubscription([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CreateSubscriptionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CreateSubscriptionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/create");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:subscription/create");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "subscription",
+                "CreateSubscription",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:subscription/create",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -245,8 +345,33 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> UpdateSubscription([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateSubscriptionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UpdateSubscriptionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/update");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:subscription/update");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "subscription",
+                "UpdateSubscription",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:subscription/update",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -262,8 +387,33 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> CancelSubscription([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CancelSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CancelSubscriptionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CancelSubscriptionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/cancel");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:subscription/cancel");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "subscription",
+                "CancelSubscription",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:subscription/cancel",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -278,8 +428,33 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionInfo>> RenewSubscription([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RenewSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RenewSubscriptionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RenewSubscriptionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/renew");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:subscription/renew");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "subscription",
+                "RenewSubscription",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:subscription/renew",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
     }
 
 }

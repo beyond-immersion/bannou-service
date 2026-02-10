@@ -206,7 +206,7 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 {%-               endif -%}
 {%             endif -%}
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller{% if hasControllerOnlyMethods %}Base{% endif %}>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "{{ operation.HttpMethodUpper | downcase }}:{{ operation.Path }}");

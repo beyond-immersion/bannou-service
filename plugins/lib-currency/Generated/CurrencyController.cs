@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Currency;
 
@@ -529,7 +514,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.CreateCurrencyDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/definition/create");
@@ -571,7 +556,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetCurrencyDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/definition/get");
@@ -613,7 +598,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.ListCurrencyDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/definition/list");
@@ -655,7 +640,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.UpdateCurrencyDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/definition/update");
@@ -697,7 +682,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.CreateWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/wallet/create");
@@ -739,7 +724,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/wallet/get");
@@ -781,7 +766,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetOrCreateWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/wallet/get-or-create");
@@ -823,7 +808,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.FreezeWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/wallet/freeze");
@@ -864,7 +849,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.UnfreezeWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/wallet/unfreeze");
@@ -906,7 +891,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.CloseWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/wallet/close");
@@ -949,7 +934,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetBalanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/balance/get");
@@ -991,7 +976,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.BatchGetBalancesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/balance/batch-get");
@@ -1033,7 +1018,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.CreditCurrencyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/credit");
@@ -1075,7 +1060,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.DebitCurrencyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/debit");
@@ -1117,7 +1102,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.TransferCurrencyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/transfer");
@@ -1159,7 +1144,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.BatchCreditCurrencyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/batch-credit");
@@ -1201,7 +1186,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.CalculateConversionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/convert/calculate");
@@ -1243,7 +1228,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.ExecuteConversionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/convert/execute");
@@ -1285,7 +1270,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetExchangeRateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/exchange-rate/get");
@@ -1327,7 +1312,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.UpdateExchangeRateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/exchange-rate/update");
@@ -1368,7 +1353,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetTransactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/transaction/get");
@@ -1410,7 +1395,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetTransactionHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/transaction/history");
@@ -1452,7 +1437,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetTransactionsByReferenceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/transaction/by-reference");
@@ -1494,7 +1479,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetGlobalSupplyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/stats/global-supply");
@@ -1536,7 +1521,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetWalletDistributionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/stats/wallet-distribution");
@@ -1578,7 +1563,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.EscrowDepositAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/escrow/deposit");
@@ -1620,7 +1605,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.EscrowReleaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/escrow/release");
@@ -1662,7 +1647,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.EscrowRefundAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/escrow/refund");
@@ -1705,7 +1690,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.CreateHoldAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/hold/create");
@@ -1747,7 +1732,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.CaptureHoldAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/hold/capture");
@@ -1789,7 +1774,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.ReleaseHoldAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/hold/release");
@@ -1830,7 +1815,7 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
             var (statusCode, result) = await _implementation.GetHoldAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/hold/get");

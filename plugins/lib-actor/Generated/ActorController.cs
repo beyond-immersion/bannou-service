@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Actor;
 
@@ -298,7 +283,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.CreateActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/create");
@@ -336,7 +321,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.GetActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/get");
@@ -374,7 +359,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ListActorTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/list");
@@ -412,7 +397,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.UpdateActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/update");
@@ -450,7 +435,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.DeleteActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/delete");
@@ -488,7 +473,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.SpawnActorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/spawn");
@@ -531,7 +516,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.GetActorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/get");
@@ -569,7 +554,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.StopActorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/stop");
@@ -613,7 +598,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/cleanup-by-character");
@@ -651,7 +636,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.ListActorsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/list");
@@ -694,7 +679,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.InjectPerceptionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/inject-perception");
@@ -743,7 +728,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.QueryOptionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/query-options");
@@ -786,7 +771,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var statusCode = await _implementation.StartEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/encounter/start");
@@ -828,7 +813,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.UpdateEncounterPhaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/encounter/update-phase");
@@ -870,7 +855,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.EndEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/encounter/end");
@@ -912,7 +897,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             var (statusCode, result) = await _implementation.GetEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/encounter/get");

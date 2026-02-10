@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Documentation;
 
@@ -469,7 +454,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.QueryDocumentationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/query");
@@ -511,7 +496,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.GetDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/get");
@@ -553,7 +538,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.SearchDocumentationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/search");
@@ -595,7 +580,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.ListDocumentsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/list");
@@ -637,7 +622,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.SuggestRelatedTopicsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/suggest");
@@ -675,7 +660,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.CreateDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/create");
@@ -713,7 +698,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.UpdateDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/update");
@@ -755,7 +740,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.DeleteDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/delete");
@@ -797,7 +782,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.RecoverDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/recover");
@@ -839,7 +824,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.BulkUpdateDocumentsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/bulk-update");
@@ -881,7 +866,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.BulkDeleteDocumentsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/bulk-delete");
@@ -923,7 +908,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.ImportDocumentationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/import");
@@ -965,7 +950,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.ListTrashcanAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/trashcan");
@@ -1007,7 +992,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.PurgeTrashcanAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/purge");
@@ -1049,7 +1034,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.GetNamespaceStatsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/stats");
@@ -1092,7 +1077,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.BindRepositoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/bind");
@@ -1134,7 +1119,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.UnbindRepositoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/unbind");
@@ -1176,7 +1161,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.SyncRepositoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/sync");
@@ -1217,7 +1202,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.GetRepositoryStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/status");
@@ -1258,7 +1243,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.ListRepositoryBindingsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/list");
@@ -1299,7 +1284,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.UpdateRepositoryBindingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/update");
@@ -1341,7 +1326,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.CreateDocumentationArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/archive/create");
@@ -1382,7 +1367,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.ListDocumentationArchivesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/archive/list");
@@ -1424,7 +1409,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.RestoreDocumentationArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/archive/restore");
@@ -1465,7 +1450,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             var (statusCode, result) = await _implementation.DeleteDocumentationArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
-        catch (BeyondImmersion.BannouService.ApiException ex_)
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/archive/delete");
