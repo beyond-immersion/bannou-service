@@ -115,47 +115,45 @@ public partial class DocumentationService : IDocumentationService
     {
         var namespaceId = ns ?? "bannou";
         _logger.LogDebug("ViewDocumentBySlug: slug={Slug}, namespace={Namespace}", slug, namespaceId);
-        try
+        // Look up document ID from slug index
+        var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var documentIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+        if (string.IsNullOrEmpty(documentIdStr) || !Guid.TryParse(documentIdStr, out var documentId))
         {
-            // Look up document ID from slug index
-            var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
-            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
-            var documentIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
-            if (string.IsNullOrEmpty(documentIdStr) || !Guid.TryParse(documentIdStr, out var documentId))
-            {
-                _logger.LogDebug("Document with slug {Slug} not found in namespace {Namespace}", slug, namespaceId);
-                return (StatusCodes.NotFound, null);
-            }
+            _logger.LogDebug("Document with slug {Slug} not found in namespace {Namespace}", slug, namespaceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Fetch document content
-            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
-            var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
-            if (storedDoc == null)
-            {
-                _logger.LogWarning("Document {DocumentId} found in slug index but not in store for namespace {Namespace}", documentId, namespaceId);
-                return (StatusCodes.NotFound, null);
-            }
+        // Fetch document content
+        var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
+        if (storedDoc == null)
+        {
+            _logger.LogWarning("Document {DocumentId} found in slug index but not in store for namespace {Namespace}", documentId, namespaceId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Content should never be null for a stored document - this is a data integrity issue
-            if (string.IsNullOrEmpty(storedDoc.Content))
-            {
-                _logger.LogError("Document {DocumentId} in namespace {Namespace} has null/empty Content - data integrity issue", documentId, namespaceId);
-                await _messageBus.TryPublishErrorAsync(
-                    serviceName: "documentation",
-                    operation: "BrowseDocument",
-                    errorType: "DataIntegrityError",
-                    message: "Stored document has null/empty Content",
-                    details: new { DocumentId = documentId, Namespace = namespaceId, Slug = slug },
-                    cancellationToken: cancellationToken);
-                return (StatusCodes.InternalServerError, null);
-            }
+        // Content should never be null for a stored document - this is a data integrity issue
+        if (string.IsNullOrEmpty(storedDoc.Content))
+        {
+            _logger.LogError("Document {DocumentId} in namespace {Namespace} has null/empty Content - data integrity issue", documentId, namespaceId);
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "documentation",
+                operation: "BrowseDocument",
+                errorType: "DataIntegrityError",
+                message: "Stored document has null/empty Content",
+                details: new { DocumentId = documentId, Namespace = namespaceId, Slug = slug },
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
 
-            // Render markdown to HTML for browser display
-            var htmlContent = RenderMarkdownToHtml(storedDoc.Content);
+        // Render markdown to HTML for browser display
+        var htmlContent = RenderMarkdownToHtml(storedDoc.Content);
 
-            // Build simple HTML page (in production, use proper templating)
-            var html = $@"<!DOCTYPE html>
+        // Build simple HTML page (in production, use proper templating)
+        var html = $@"<!DOCTYPE html>
 <html lang=""en"">
 <head>
     <meta charset=""UTF-8"">
@@ -183,95 +181,79 @@ public partial class DocumentationService : IDocumentationService
 </body>
 </html>";
 
-            _logger.LogDebug("Rendered document {Slug} in namespace {Namespace} as HTML", slug, namespaceId);
-            return (StatusCodes.OK, html);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in ViewDocumentBySlug");
-            await _messageBus.TryPublishErrorAsync("documentation", "ViewDocumentBySlug", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        _logger.LogDebug("Rendered document {Slug} in namespace {Namespace} as HTML", slug, namespaceId);
+        return (StatusCodes.OK, html);
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, QueryDocumentationResponse?)> QueryDocumentationAsync(QueryDocumentationRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("QueryDocumentation: namespace={Namespace}, query={Query}", body.Namespace, body.Query);
-        try
+        // Input validation
+        if (string.IsNullOrWhiteSpace(body.Namespace))
         {
-            // Input validation
-            if (string.IsNullOrWhiteSpace(body.Namespace))
+            _logger.LogWarning("QueryDocumentation failed: Namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (string.IsNullOrWhiteSpace(body.Query))
+        {
+            _logger.LogWarning("QueryDocumentation failed: Query is required");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var namespaceId = body.Namespace;
+        var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
+        var minRelevance = Math.Max(body.MinRelevanceScore, _configuration.MinRelevanceScore);
+
+        // Perform natural language query using search index
+        // Pass category as string for filtering (or null if default enum value)
+        var categoryFilter = body.Category == default ? null : body.Category.ToString();
+        var searchResults = await _searchIndexService.QueryAsync(
+            namespaceId,
+            body.Query,
+            categoryFilter,
+            maxResults,
+            minRelevance,
+            cancellationToken);
+
+        // Build response with document results
+        var results = new List<DocumentResult>();
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        foreach (var result in searchResults)
+        {
+            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{result.DocumentId}";
+            var doc = await docStore.GetAsync(docKey, cancellationToken);
+
+            if (doc != null)
             {
-                _logger.LogWarning("QueryDocumentation failed: Namespace is required");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (string.IsNullOrWhiteSpace(body.Query))
-            {
-                _logger.LogWarning("QueryDocumentation failed: Query is required");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var namespaceId = body.Namespace;
-            var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
-            var minRelevance = Math.Max(body.MinRelevanceScore, _configuration.MinRelevanceScore);
-
-            // Perform natural language query using search index
-            // Pass category as string for filtering (or null if default enum value)
-            var categoryFilter = body.Category == default ? null : body.Category.ToString();
-            var searchResults = await _searchIndexService.QueryAsync(
-                namespaceId,
-                body.Query,
-                categoryFilter,
-                maxResults,
-                minRelevance,
-                cancellationToken);
-
-            // Build response with document results
-            var results = new List<DocumentResult>();
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
-            foreach (var result in searchResults)
-            {
-                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{result.DocumentId}";
-                var doc = await docStore.GetAsync(docKey, cancellationToken);
-
-                if (doc != null)
+                results.Add(new DocumentResult
                 {
-                    results.Add(new DocumentResult
-                    {
-                        DocumentId = doc.DocumentId,
-                        Slug = doc.Slug,
-                        Title = doc.Title,
-                        Category = ParseDocumentCategory(doc.Category),
-                        Summary = doc.Summary,
-                        VoiceSummary = doc.VoiceSummary,
-                        RelevanceScore = (float)result.RelevanceScore
-                    });
-                }
+                    DocumentId = doc.DocumentId,
+                    Slug = doc.Slug,
+                    Title = doc.Title,
+                    Category = ParseDocumentCategory(doc.Category),
+                    Summary = doc.Summary,
+                    VoiceSummary = doc.VoiceSummary,
+                    RelevanceScore = (float)result.RelevanceScore
+                });
             }
-
-            // Publish analytics event (non-blocking)
-            var topResult = results.FirstOrDefault();
-            _ = PublishQueryAnalyticsEventAsync(namespaceId, body.Query, body.SessionId, results.Count,
-                topResult?.DocumentId, topResult?.RelevanceScore);
-
-            _logger.LogInformation("Query in namespace {Namespace} returned {Count} results", namespaceId, results.Count);
-
-            return (StatusCodes.OK, new QueryDocumentationResponse
-            {
-                Results = results,
-                TotalResults = results.Count,
-                Query = body.Query,
-                Namespace = namespaceId
-            });
         }
-        catch (Exception ex)
+
+        // Publish analytics event (non-blocking)
+        var topResult = results.FirstOrDefault();
+        _ = PublishQueryAnalyticsEventAsync(namespaceId, body.Query, body.SessionId, results.Count,
+            topResult?.DocumentId, topResult?.RelevanceScore);
+
+        _logger.LogInformation("Query in namespace {Namespace} returned {Count} results", namespaceId, results.Count);
+
+        return (StatusCodes.OK, new QueryDocumentationResponse
         {
-            _logger.LogError(ex, "Error in QueryDocumentation");
-            await _messageBus.TryPublishErrorAsync("documentation", "QueryDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Results = results,
+            TotalResults = results.Count,
+            Query = body.Query,
+            Namespace = namespaceId
+        });
     }
 
     /// <inheritdoc />
@@ -279,14 +261,12 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("GetDocument: namespace={Namespace}, documentId={DocumentId}, slug={Slug}",
             body.Namespace, body.DocumentId, body.Slug);
-        try
+        // Input validation
+        if (string.IsNullOrWhiteSpace(body.Namespace))
         {
-            // Input validation
-            if (string.IsNullOrWhiteSpace(body.Namespace))
-            {
-                _logger.LogWarning("GetDocument failed: Namespace is required");
-                return (StatusCodes.BadRequest, null);
-            }
+            _logger.LogWarning("GetDocument failed: Namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
             if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
             {
@@ -382,29 +362,20 @@ public partial class DocumentationService : IDocumentationService
                     cancellationToken);
             }
 
-            _logger.LogDebug("Retrieved document {DocumentId} from namespace {Namespace}", documentId, namespaceId);
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in GetDocument");
-            await _messageBus.TryPublishErrorAsync("documentation", "GetDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        _logger.LogDebug("Retrieved document {DocumentId} from namespace {Namespace}", documentId, namespaceId);
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, SearchDocumentationResponse?)> SearchDocumentationAsync(SearchDocumentationRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("SearchDocumentation: namespace={Namespace}, term={Term}", body.Namespace, body.SearchTerm);
-        try
+        // Input validation
+        if (string.IsNullOrWhiteSpace(body.Namespace))
         {
-            // Input validation
-            if (string.IsNullOrWhiteSpace(body.Namespace))
-            {
-                _logger.LogWarning("SearchDocumentation failed: Namespace is required");
-                return (StatusCodes.BadRequest, null);
-            }
+            _logger.LogWarning("SearchDocumentation failed: Namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
             if (string.IsNullOrWhiteSpace(body.SearchTerm))
             {
@@ -495,14 +466,7 @@ public partial class DocumentationService : IDocumentationService
                 _searchCache.Set(cacheKey, response, TimeSpan.FromSeconds(_configuration.SearchCacheTtlSeconds));
             }
 
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in SearchDocumentation");
-            await _messageBus.TryPublishErrorAsync("documentation", "SearchDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc />
@@ -510,14 +474,12 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("ListDocuments: namespace={Namespace}, category={Category}, sortBy={SortBy}, sortOrder={SortOrder}",
             body.Namespace, body.Category, body.SortBy, body.SortOrder);
-        try
+        // Input validation
+        if (string.IsNullOrWhiteSpace(body.Namespace))
         {
-            // Input validation
-            if (string.IsNullOrWhiteSpace(body.Namespace))
-            {
-                _logger.LogWarning("ListDocuments failed: Namespace is required");
-                return (StatusCodes.BadRequest, null);
-            }
+            _logger.LogWarning("ListDocuments failed: Namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
             var namespaceId = body.Namespace;
             var page = body.Page;
@@ -608,32 +570,23 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogDebug("ListDocuments returned {Count} of {Total} documents in namespace {Namespace} (filtered by tags: {HasTags})",
                 documents.Count, totalCount, namespaceId, hasTags);
 
-            return (StatusCodes.OK, new ListDocumentsResponse
-            {
-                Documents = documents,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                TotalPages = totalPages,
-                Namespace = namespaceId
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new ListDocumentsResponse
         {
-            _logger.LogError(ex, "Error in ListDocuments");
-            await _messageBus.TryPublishErrorAsync("documentation", "ListDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Documents = documents,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            Namespace = namespaceId
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, SuggestRelatedResponse?)> SuggestRelatedTopicsAsync(SuggestRelatedRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("SuggestRelatedTopics: namespace={Namespace}, source={SourceValue}", body.Namespace, body.SourceValue);
-        try
-        {
-            var namespaceId = body.Namespace;
-            var maxSuggestions = body.MaxSuggestions;
+        var namespaceId = body.Namespace;
+        var maxSuggestions = body.MaxSuggestions;
 
             // Get related document IDs from search index
             var relatedIds = await _searchIndexService.GetRelatedSuggestionsAsync(
@@ -666,32 +619,23 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogDebug("SuggestRelatedTopics for '{Source}' returned {Count} suggestions",
                 body.SourceValue, suggestions.Count);
 
-            return (StatusCodes.OK, new SuggestRelatedResponse
-            {
-                Suggestions = suggestions,
-                Namespace = namespaceId
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new SuggestRelatedResponse
         {
-            _logger.LogError(ex, "Error in SuggestRelatedTopics");
-            await _messageBus.TryPublishErrorAsync("documentation", "SuggestRelatedTopics", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Suggestions = suggestions,
+            Namespace = namespaceId
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, CreateDocumentResponse?)> CreateDocumentAsync(CreateDocumentRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("CreateDocument: namespace={Namespace}, slug={Slug}", body.Namespace, body.Slug);
-        try
+        // Input validation
+        if (string.IsNullOrWhiteSpace(body.Namespace))
         {
-            // Input validation
-            if (string.IsNullOrWhiteSpace(body.Namespace))
-            {
-                _logger.LogWarning("CreateDocument failed: Namespace is required");
-                return (StatusCodes.BadRequest, null);
-            }
+            _logger.LogWarning("CreateDocument failed: Namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
             if (string.IsNullOrWhiteSpace(body.Slug))
             {
@@ -786,29 +730,20 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogInformation("Created document {DocumentId} with slug {Slug} in namespace {Namespace}",
                 documentId, slug, namespaceId);
 
-            return (StatusCodes.OK, new CreateDocumentResponse
-            {
-                DocumentId = documentId,
-                Slug = slug,
-                CreatedAt = now
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new CreateDocumentResponse
         {
-            _logger.LogError(ex, "Error in CreateDocument");
-            await _messageBus.TryPublishErrorAsync("documentation", "CreateDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            DocumentId = documentId,
+            Slug = slug,
+            CreatedAt = now
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, UpdateDocumentResponse?)> UpdateDocumentAsync(UpdateDocumentRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("UpdateDocument: namespace={Namespace}, documentId={DocumentId}", body.Namespace, body.DocumentId);
-        try
-        {
-            var namespaceId = body.Namespace;
-            var documentId = body.DocumentId;
+        var namespaceId = body.Namespace;
+        var documentId = body.DocumentId;
 
             if (documentId == Guid.Empty)
             {
@@ -943,18 +878,11 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogInformation("Updated document {DocumentId} in namespace {Namespace}, changed fields: {ChangedFields}",
                 documentId, namespaceId, string.Join(", ", changedFields));
 
-            return (StatusCodes.OK, new UpdateDocumentResponse
-            {
-                DocumentId = documentId,
-                UpdatedAt = now
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new UpdateDocumentResponse
         {
-            _logger.LogError(ex, "Error in UpdateDocument");
-            await _messageBus.TryPublishErrorAsync("documentation", "UpdateDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            DocumentId = documentId,
+            UpdatedAt = now
+        });
     }
 
     /// <inheritdoc />
@@ -962,14 +890,12 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("DeleteDocument: namespace={Namespace}, documentId={DocumentId}, slug={Slug}",
             body.Namespace, body.DocumentId, body.Slug);
-        try
+        // Input validation
+        if (string.IsNullOrWhiteSpace(body.Namespace))
         {
-            // Input validation
-            if (string.IsNullOrWhiteSpace(body.Namespace))
-            {
-                _logger.LogWarning("DeleteDocument failed: Namespace is required");
-                return (StatusCodes.BadRequest, null);
-            }
+            _logger.LogWarning("DeleteDocument failed: Namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
             if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
             {
@@ -1055,32 +981,23 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogInformation("Soft-deleted document {DocumentId} from namespace {Namespace}, recoverable until {ExpiresAt}",
                 documentId, namespaceId, expiresAt);
 
-            return (StatusCodes.OK, new DeleteDocumentResponse
-            {
-                DocumentId = documentId,
-                DeletedAt = now,
-                RecoverableUntil = expiresAt
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new DeleteDocumentResponse
         {
-            _logger.LogError(ex, "Error in DeleteDocument");
-            await _messageBus.TryPublishErrorAsync("documentation", "DeleteDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            DocumentId = documentId,
+            DeletedAt = now,
+            RecoverableUntil = expiresAt
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, RecoverDocumentResponse?)> RecoverDocumentAsync(RecoverDocumentRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("RecoverDocument: namespace={Namespace}, documentId={DocumentId}", body.Namespace, body.DocumentId);
-        try
-        {
-            var namespaceId = body.Namespace;
-            var documentId = body.DocumentId;
-            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
+        var namespaceId = body.Namespace;
+        var documentId = body.DocumentId;
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
             // Fetch from trashcan
             var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
@@ -1144,31 +1061,22 @@ public partial class DocumentationService : IDocumentationService
 
             _logger.LogInformation("Recovered document {DocumentId} from trashcan in namespace {Namespace}", documentId, namespaceId);
 
-            return (StatusCodes.OK, new RecoverDocumentResponse
-            {
-                DocumentId = documentId,
-                RecoveredAt = now
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new RecoverDocumentResponse
         {
-            _logger.LogError(ex, "Error in RecoverDocument");
-            await _messageBus.TryPublishErrorAsync("documentation", "RecoverDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            DocumentId = documentId,
+            RecoveredAt = now
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, BulkUpdateResponse?)> BulkUpdateDocumentsAsync(BulkUpdateRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("BulkUpdateDocuments: namespace={Namespace}, count={Count}", body.Namespace, body.DocumentIds.Count);
-        try
-        {
-            var namespaceId = body.Namespace;
-            var succeeded = new List<Guid>();
-            var failed = new List<BulkOperationFailure>();
-            var now = DateTimeOffset.UtcNow;
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var namespaceId = body.Namespace;
+        var succeeded = new List<Guid>();
+        var failed = new List<BulkOperationFailure>();
+        var now = DateTimeOffset.UtcNow;
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
             var batchCounter = 0;
             foreach (var documentId in body.DocumentIds)
@@ -1250,35 +1158,26 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogInformation("BulkUpdate in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
                 namespaceId, succeeded.Count, failed.Count);
 
-            return (StatusCodes.OK, new BulkUpdateResponse
-            {
-                Succeeded = succeeded,
-                Failed = failed
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new BulkUpdateResponse
         {
-            _logger.LogError(ex, "Error in BulkUpdateDocuments");
-            await _messageBus.TryPublishErrorAsync("documentation", "BulkUpdateDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Succeeded = succeeded,
+            Failed = failed
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, BulkDeleteResponse?)> BulkDeleteDocumentsAsync(BulkDeleteRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("BulkDeleteDocuments: namespace={Namespace}, count={Count}", body.Namespace, body.DocumentIds.Count);
-        try
-        {
-            var namespaceId = body.Namespace;
-            var succeeded = new List<Guid>();
-            var failed = new List<BulkOperationFailure>();
-            var now = DateTimeOffset.UtcNow;
-            var trashcanTtl = TimeSpan.FromDays(_configuration.TrashcanTtlDays);
-            var expiresAt = now.Add(trashcanTtl);
-            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
+        var namespaceId = body.Namespace;
+        var succeeded = new List<Guid>();
+        var failed = new List<BulkOperationFailure>();
+        var now = DateTimeOffset.UtcNow;
+        var trashcanTtl = TimeSpan.FromDays(_configuration.TrashcanTtlDays);
+        var expiresAt = now.Add(trashcanTtl);
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
             var batchCounter = 0;
             foreach (var documentId in body.DocumentIds)
@@ -1342,32 +1241,23 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogInformation("BulkDelete in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
                 namespaceId, succeeded.Count, failed.Count);
 
-            return (StatusCodes.OK, new BulkDeleteResponse
-            {
-                Succeeded = succeeded,
-                Failed = failed
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new BulkDeleteResponse
         {
-            _logger.LogError(ex, "Error in BulkDeleteDocuments");
-            await _messageBus.TryPublishErrorAsync("documentation", "BulkDeleteDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Succeeded = succeeded,
+            Failed = failed
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ImportDocumentationResponse?)> ImportDocumentationAsync(ImportDocumentationRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("ImportDocumentation: namespace={Namespace}, count={Count}", body.Namespace, body.Documents.Count);
-        try
-        {
-            var namespaceId = body.Namespace;
-            var created = 0;
-            var updated = 0;
-            var skipped = 0;
-            var failed = new List<ImportFailure>();
-            var now = DateTimeOffset.UtcNow;
+        var namespaceId = body.Namespace;
+        var created = 0;
+        var updated = 0;
+        var skipped = 0;
+        var failed = new List<ImportFailure>();
+        var now = DateTimeOffset.UtcNow;
 
             // Check max import limit if configured
             if (_configuration.MaxImportDocuments > 0 && body.Documents.Count > _configuration.MaxImportDocuments)
@@ -1477,34 +1367,25 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogInformation("Import in namespace {Namespace}: {Created} created, {Updated} updated, {Skipped} skipped, {Failed} failed",
                 namespaceId, created, updated, skipped, failed.Count);
 
-            return (StatusCodes.OK, new ImportDocumentationResponse
-            {
-                Namespace = namespaceId,
-                Created = created,
-                Updated = updated,
-                Skipped = skipped,
-                Failed = failed
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new ImportDocumentationResponse
         {
-            _logger.LogError(ex, "Error in ImportDocumentation");
-            await _messageBus.TryPublishErrorAsync("documentation", "ImportDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Namespace = namespaceId,
+            Created = created,
+            Updated = updated,
+            Skipped = skipped,
+            Failed = failed
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ListTrashcanResponse?)> ListTrashcanAsync(ListTrashcanRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("ListTrashcan: namespace={Namespace}", body.Namespace);
-        try
-        {
-            var namespaceId = body.Namespace;
-            var page = body.Page;
-            var pageSize = body.PageSize;
-            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
+        var namespaceId = body.Namespace;
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+        var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
             // Get trashcan items from namespace trashcan list
             var trashListKey = $"ns-trash:{namespaceId}";
@@ -1577,31 +1458,22 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogDebug("ListTrashcan returned {Count} of {Total} items in namespace {Namespace}",
                 items.Count, totalCount, namespaceId);
 
-            return (StatusCodes.OK, new ListTrashcanResponse
-            {
-                Namespace = namespaceId,
-                Items = items,
-                TotalCount = totalCount
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new ListTrashcanResponse
         {
-            _logger.LogError(ex, "Error in ListTrashcan");
-            await _messageBus.TryPublishErrorAsync("documentation", "ListTrashcan", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Namespace = namespaceId,
+            Items = items,
+            TotalCount = totalCount
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, PurgeTrashcanResponse?)> PurgeTrashcanAsync(PurgeTrashcanRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("PurgeTrashcan: namespace={Namespace}", body.Namespace);
-        try
-        {
-            var namespaceId = body.Namespace;
-            var purgedCount = 0;
-            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
+        var namespaceId = body.Namespace;
+        var purgedCount = 0;
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+        var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
             // Get trashcan list with ETag for optimistic concurrency
             var trashListKey = $"ns-trash:{namespaceId}";
@@ -1652,84 +1524,68 @@ public partial class DocumentationService : IDocumentationService
 
             _logger.LogInformation("Purged {Count} documents from trashcan in namespace {Namespace}", purgedCount, namespaceId);
 
-            return (StatusCodes.OK, new PurgeTrashcanResponse
-            {
-                PurgedCount = purgedCount
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new PurgeTrashcanResponse
         {
-            _logger.LogError(ex, "Error in PurgeTrashcan");
-            await _messageBus.TryPublishErrorAsync("documentation", "PurgeTrashcan", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            PurgedCount = purgedCount
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, NamespaceStatsResponse?)> GetNamespaceStatsAsync(GetNamespaceStatsRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("GetNamespaceStats: namespace={Namespace}", body.Namespace);
-        try
+        var namespaceId = body.Namespace;
+        var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+
+        // Get stats from search index
+        var searchStats = await _searchIndexService.GetNamespaceStatsAsync(namespaceId, cancellationToken);
+
+        // Get trashcan count (trashcan uses List<Guid> for ordered, duplicate-allowing semantics)
+        var trashListKey = $"ns-trash:{namespaceId}";
+        var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
+
+        // Calculate total content size (approximate from document count)
+        // In production, this could be tracked more precisely
+        var estimatedContentSize = searchStats.TotalDocuments * 10000; // ~10KB average per document
+
+        // Find last updated document
+        var lastUpdated = DateTimeOffset.MinValue;
+        var docListKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
+        var docIds = await guidSetStore.GetAsync(docListKey, cancellationToken) ?? [];
+
+        if (docIds.Count > 0)
         {
-            var namespaceId = body.Namespace;
-            var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
-            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
-
-            // Get stats from search index
-            var searchStats = await _searchIndexService.GetNamespaceStatsAsync(namespaceId, cancellationToken);
-
-            // Get trashcan count (trashcan uses List<Guid> for ordered, duplicate-allowing semantics)
-            var trashListKey = $"ns-trash:{namespaceId}";
-            var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
-
-            // Calculate total content size (approximate from document count)
-            // In production, this could be tracked more precisely
-            var estimatedContentSize = searchStats.TotalDocuments * 10000; // ~10KB average per document
-
-            // Find last updated document
-            var lastUpdated = DateTimeOffset.MinValue;
-            var docListKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-            var docIds = await guidSetStore.GetAsync(docListKey, cancellationToken) ?? [];
-
-            if (docIds.Count > 0)
+            // Sample recent documents to find last updated (configurable sample size)
+            foreach (var docId in docIds.Take(_configuration.StatsSampleSize))
             {
-                // Sample recent documents to find last updated (configurable sample size)
-                foreach (var docId in docIds.Take(_configuration.StatsSampleSize))
+                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
+                var doc = await docStore.GetAsync(docKey, cancellationToken);
+                if (doc != null && doc.UpdatedAt > lastUpdated)
                 {
-                    var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
-                    var doc = await docStore.GetAsync(docKey, cancellationToken);
-                    if (doc != null && doc.UpdatedAt > lastUpdated)
-                    {
-                        lastUpdated = doc.UpdatedAt;
-                    }
+                    lastUpdated = doc.UpdatedAt;
                 }
             }
-
-            // Convert category counts from string keys to proper format
-            var categoryCounts = searchStats.DocumentsByCategory.ToDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value);
-
-            _logger.LogDebug("GetNamespaceStats for {Namespace}: {DocumentCount} documents, {TrashcanCount} in trashcan",
-                namespaceId, searchStats.TotalDocuments, trashedDocIds.Count);
-
-            return (StatusCodes.OK, new NamespaceStatsResponse
-            {
-                Namespace = namespaceId,
-                DocumentCount = searchStats.TotalDocuments,
-                CategoryCounts = categoryCounts,
-                TrashcanCount = trashedDocIds.Count,
-                TotalContentSizeBytes = estimatedContentSize,
-                LastUpdated = lastUpdated == DateTimeOffset.MinValue ? DateTimeOffset.UtcNow : lastUpdated
-            });
         }
-        catch (Exception ex)
+
+        // Convert category counts from string keys to proper format
+        var categoryCounts = searchStats.DocumentsByCategory.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value);
+
+        _logger.LogDebug("GetNamespaceStats for {Namespace}: {DocumentCount} documents, {TrashcanCount} in trashcan",
+            namespaceId, searchStats.TotalDocuments, trashedDocIds.Count);
+
+        return (StatusCodes.OK, new NamespaceStatsResponse
         {
-            _logger.LogError(ex, "Error in GetNamespaceStats");
-            await _messageBus.TryPublishErrorAsync("documentation", "GetNamespaceStats", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Namespace = namespaceId,
+            DocumentCount = searchStats.TotalDocuments,
+            CategoryCounts = categoryCounts,
+            TrashcanCount = trashedDocIds.Count,
+            TotalContentSizeBytes = estimatedContentSize,
+            LastUpdated = lastUpdated == DateTimeOffset.MinValue ? DateTimeOffset.UtcNow : lastUpdated
+        });
     }
 
     #region Helper Methods
@@ -2205,121 +2061,101 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        _logger.LogInformation("Binding repository {Url} to namespace {Namespace}", body.RepositoryUrl, body.Namespace);
-
-        try
+    _logger.LogInformation("Binding repository {Url} to namespace {Namespace}", body.RepositoryUrl, body.Namespace);
+        // Check if namespace already has a binding
+        var existingBinding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+        if (existingBinding != null)
         {
-            // Check if namespace already has a binding
-            var existingBinding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
-            if (existingBinding != null)
-            {
-                _logger.LogWarning("Namespace {Namespace} already has a repository binding", body.Namespace);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Create binding record
-            var binding = new Models.RepositoryBinding
-            {
-                BindingId = Guid.NewGuid(),
-                Namespace = body.Namespace,
-                RepositoryUrl = body.RepositoryUrl,
-                Branch = body.Branch ?? "main",
-                Status = Models.BindingStatusInternal.Pending,
-                SyncEnabled = true,
-                SyncIntervalMinutes = body.SyncIntervalMinutes,
-                FilePatterns = body.FilePatterns?.ToList() ?? ["**/*.md"],
-                ExcludePatterns = body.ExcludePatterns?.ToList() ?? [".git/**", ".obsidian/**", "node_modules/**"],
-                CategoryMapping = body.CategoryMapping?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? [],
-                DefaultCategory = body.DefaultCategory.ToString(),
-                ArchiveEnabled = body.ArchiveEnabled,
-                ArchiveOnSync = body.ArchiveOnSync,
-                CreatedAt = DateTimeOffset.UtcNow,
-                Owner = body.Owner
-            };
-
-            // Save binding
-            await SaveBindingAsync(binding, cancellationToken);
-
-            // Publish binding created event
-            await TryPublishBindingCreatedEventAsync(binding, cancellationToken);
-
-            _logger.LogInformation("Created repository binding {BindingId} for namespace {Namespace}", binding.BindingId, body.Namespace);
-
-            return (StatusCodes.OK, new BindRepositoryResponse
-            {
-                BindingId = binding.BindingId,
-                Namespace = binding.Namespace,
-                RepositoryUrl = binding.RepositoryUrl,
-                Branch = binding.Branch,
-                Status = MapBindingStatus(binding.Status),
-                CreatedAt = binding.CreatedAt
-            });
+            _logger.LogWarning("Namespace {Namespace} already has a repository binding", body.Namespace);
+            return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
+
+        // Create binding record
+        var binding = new Models.RepositoryBinding
         {
-            _logger.LogError(ex, "Failed to bind repository to namespace {Namespace}", body.Namespace);
-            await _messageBus.TryPublishErrorAsync("documentation", "BindRepository", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            BindingId = Guid.NewGuid(),
+            Namespace = body.Namespace,
+            RepositoryUrl = body.RepositoryUrl,
+            Branch = body.Branch ?? "main",
+            Status = Models.BindingStatusInternal.Pending,
+            SyncEnabled = true,
+            SyncIntervalMinutes = body.SyncIntervalMinutes,
+            FilePatterns = body.FilePatterns?.ToList() ?? ["**/*.md"],
+            ExcludePatterns = body.ExcludePatterns?.ToList() ?? [".git/**", ".obsidian/**", "node_modules/**"],
+            CategoryMapping = body.CategoryMapping?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? [],
+            DefaultCategory = body.DefaultCategory.ToString(),
+            ArchiveEnabled = body.ArchiveEnabled,
+            ArchiveOnSync = body.ArchiveOnSync,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Owner = body.Owner
+        };
+
+        // Save binding
+        await SaveBindingAsync(binding, cancellationToken);
+
+        // Publish binding created event
+        await TryPublishBindingCreatedEventAsync(binding, cancellationToken);
+
+        _logger.LogInformation("Created repository binding {BindingId} for namespace {Namespace}", binding.BindingId, body.Namespace);
+
+        return (StatusCodes.OK, new BindRepositoryResponse
+        {
+            BindingId = binding.BindingId,
+            Namespace = binding.Namespace,
+            RepositoryUrl = binding.RepositoryUrl,
+            Branch = binding.Branch,
+            Status = MapBindingStatus(binding.Status),
+            CreatedAt = binding.CreatedAt
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, UnbindRepositoryResponse?)> UnbindRepositoryAsync(UnbindRepositoryRequest body, CancellationToken cancellationToken = default)
     {
 
-        _logger.LogInformation("Unbinding repository from namespace {Namespace}", body.Namespace);
-
-        try
+    _logger.LogInformation("Unbinding repository from namespace {Namespace}", body.Namespace);
+        var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+        if (binding == null)
         {
-            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
-            if (binding == null)
-            {
-                _logger.LogWarning("No repository binding found for namespace {Namespace}", body.Namespace);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var documentsDeleted = 0;
-
-            // Optionally delete all documents
-            if (body.DeleteDocuments)
-            {
-                documentsDeleted = await DeleteAllNamespaceDocumentsAsync(body.Namespace, cancellationToken);
-            }
-
-            // Delete binding
-            var bindingKey = $"{BINDING_KEY_PREFIX}{body.Namespace}";
-            var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
-            await bindingStore.DeleteAsync(bindingKey, cancellationToken);
-
-            // Remove from bindings registry
-            var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
-            var registry = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken);
-            if (registry != null && registry.Remove(body.Namespace))
-            {
-                await registryStore.SaveAsync(BINDINGS_REGISTRY_KEY, registry, cancellationToken: cancellationToken);
-            }
-
-            // Cleanup local repository
-            var localPath = GetLocalRepositoryPath(binding.BindingId);
-            await _gitSyncService.CleanupRepositoryAsync(localPath, cancellationToken);
-
-            // Publish binding removed event
-            await TryPublishBindingRemovedEventAsync(binding, documentsDeleted, cancellationToken);
-
-            _logger.LogInformation("Removed repository binding from namespace {Namespace}, deleted {Count} documents", body.Namespace, documentsDeleted);
-
-            return (StatusCodes.OK, new UnbindRepositoryResponse
-            {
-                Namespace = body.Namespace,
-                DocumentsDeleted = documentsDeleted
-            });
+            _logger.LogWarning("No repository binding found for namespace {Namespace}", body.Namespace);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var documentsDeleted = 0;
+
+        // Optionally delete all documents
+        if (body.DeleteDocuments)
         {
-            _logger.LogError(ex, "Failed to unbind repository from namespace {Namespace}", body.Namespace);
-            await _messageBus.TryPublishErrorAsync("documentation", "UnbindRepository", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            documentsDeleted = await DeleteAllNamespaceDocumentsAsync(body.Namespace, cancellationToken);
         }
+
+        // Delete binding
+        var bindingKey = $"{BINDING_KEY_PREFIX}{body.Namespace}";
+        var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
+        await bindingStore.DeleteAsync(bindingKey, cancellationToken);
+
+        // Remove from bindings registry
+        var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
+        var registry = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken);
+        if (registry != null && registry.Remove(body.Namespace))
+        {
+            await registryStore.SaveAsync(BINDINGS_REGISTRY_KEY, registry, cancellationToken: cancellationToken);
+        }
+
+        // Cleanup local repository
+        var localPath = GetLocalRepositoryPath(binding.BindingId);
+        await _gitSyncService.CleanupRepositoryAsync(localPath, cancellationToken);
+
+        // Publish binding removed event
+        await TryPublishBindingRemovedEventAsync(binding, documentsDeleted, cancellationToken);
+
+        _logger.LogInformation("Removed repository binding from namespace {Namespace}, deleted {Count} documents", body.Namespace, documentsDeleted);
+
+        return (StatusCodes.OK, new UnbindRepositoryResponse
+        {
+            Namespace = body.Namespace,
+            DocumentsDeleted = documentsDeleted
+        });
     }
 
     /// <inheritdoc />
@@ -2332,188 +2168,148 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        _logger.LogInformation("Manual sync requested for namespace {Namespace}", body.Namespace);
-
-        try
+    _logger.LogInformation("Manual sync requested for namespace {Namespace}", body.Namespace);
+        var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+        if (binding == null)
         {
-            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
-            if (binding == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Execute sync
-            var result = await ExecuteSyncAsync(binding, body.Force, SyncTrigger.Manual, cancellationToken);
-
-            return (StatusCodes.OK, new SyncRepositoryResponse
-            {
-                SyncId = result.SyncId,
-                Status = MapSyncStatus(result.Status),
-                CommitHash = result.CommitHash,
-                DocumentsCreated = result.DocumentsCreated,
-                DocumentsUpdated = result.DocumentsUpdated,
-                DocumentsDeleted = result.DocumentsDeleted,
-                DocumentsFailed = 0,
-                DurationMs = result.DurationMs,
-                ErrorMessage = result.ErrorMessage
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Execute sync
+        var result = await ExecuteSyncAsync(binding, body.Force, SyncTrigger.Manual, cancellationToken);
+
+        return (StatusCodes.OK, new SyncRepositoryResponse
         {
-            _logger.LogError(ex, "Failed to sync repository for namespace {Namespace}", body.Namespace);
-            await _messageBus.TryPublishErrorAsync("documentation", "SyncRepository", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            SyncId = result.SyncId,
+            Status = MapSyncStatus(result.Status),
+            CommitHash = result.CommitHash,
+            DocumentsCreated = result.DocumentsCreated,
+            DocumentsUpdated = result.DocumentsUpdated,
+            DocumentsDeleted = result.DocumentsDeleted,
+            DocumentsFailed = 0,
+            DurationMs = result.DurationMs,
+            ErrorMessage = result.ErrorMessage
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, RepositoryStatusResponse?)> GetRepositoryStatusAsync(RepositoryStatusRequest body, CancellationToken cancellationToken = default)
     {
-
-        try
+        var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+        if (binding == null)
         {
-            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
-            if (binding == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
+            return (StatusCodes.NotFound, null);
+        }
 
-            var response = new RepositoryStatusResponse
+        var response = new RepositoryStatusResponse
+        {
+            Binding = MapToBindingInfo(binding)
+        };
+
+        // Add last sync info if available
+        if (binding.LastSyncAt.HasValue)
+        {
+            response.LastSync = new SyncInfo
             {
-                Binding = MapToBindingInfo(binding)
+                SyncId = Guid.Empty, // Not tracked per-sync currently
+                Status = binding.Status == Models.BindingStatusInternal.Error ? SyncStatus.Failed : SyncStatus.Success,
+                TriggeredBy = SyncTrigger.Scheduled,
+                StartedAt = binding.LastSyncAt.Value,
+                CompletedAt = binding.LastSyncAt.Value,
+                CommitHash = binding.LastCommitHash,
+                DocumentsProcessed = binding.DocumentCount
             };
-
-            // Add last sync info if available
-            if (binding.LastSyncAt.HasValue)
-            {
-                response.LastSync = new SyncInfo
-                {
-                    SyncId = Guid.Empty, // Not tracked per-sync currently
-                    Status = binding.Status == Models.BindingStatusInternal.Error ? SyncStatus.Failed : SyncStatus.Success,
-                    TriggeredBy = SyncTrigger.Scheduled,
-                    StartedAt = binding.LastSyncAt.Value,
-                    CompletedAt = binding.LastSyncAt.Value,
-                    CommitHash = binding.LastCommitHash,
-                    DocumentsProcessed = binding.DocumentCount
-                };
-            }
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get repository status for namespace {Namespace}", body.Namespace);
-            await _messageBus.TryPublishErrorAsync("documentation", "GetRepositoryStatus", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ListRepositoryBindingsResponse?)> ListRepositoryBindingsAsync(ListRepositoryBindingsRequest body, CancellationToken cancellationToken = default)
     {
+        var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
 
-        try
+        // Get all binding namespace IDs from registry
+        var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
+        var bindingNamespaces = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken) ?? [];
+
+        var allBindings = new List<Models.RepositoryBinding>();
+        foreach (var namespaceId in bindingNamespaces)
         {
-            var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
-
-            // Get all binding namespace IDs from registry
-            var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
-            var bindingNamespaces = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken) ?? [];
-
-            var allBindings = new List<Models.RepositoryBinding>();
-            foreach (var namespaceId in bindingNamespaces)
+            var bindingKey = $"{BINDING_KEY_PREFIX}{namespaceId}";
+            var binding = await bindingStore.GetAsync(bindingKey, cancellationToken);
+            if (binding != null)
             {
-                var bindingKey = $"{BINDING_KEY_PREFIX}{namespaceId}";
-                var binding = await bindingStore.GetAsync(bindingKey, cancellationToken);
-                if (binding != null)
-                {
-                    allBindings.Add(binding);
-                }
+                allBindings.Add(binding);
             }
-
-            // Filter by status if specified (default enum value means no filter)
-            var filteredBindings = allBindings.AsEnumerable();
-            if (body.Status != default)
-            {
-                var targetStatus = MapToInternalBindingStatus(body.Status);
-                filteredBindings = filteredBindings.Where(b => b.Status == targetStatus);
-            }
-
-            var totalCount = filteredBindings.Count();
-            var paginatedBindings = filteredBindings
-                .Skip(body.Offset)
-                .Take(body.Limit)
-                .Select(MapToBindingInfo)
-                .ToList();
-
-            return (StatusCodes.OK, new ListRepositoryBindingsResponse
-            {
-                Bindings = paginatedBindings,
-                Total = totalCount
-            });
         }
-        catch (Exception ex)
+
+        // Filter by status if specified (default enum value means no filter)
+        var filteredBindings = allBindings.AsEnumerable();
+        if (body.Status != default)
         {
-            _logger.LogError(ex, "Failed to list repository bindings");
-            await _messageBus.TryPublishErrorAsync("documentation", "ListRepositoryBindings", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            var targetStatus = MapToInternalBindingStatus(body.Status);
+            filteredBindings = filteredBindings.Where(b => b.Status == targetStatus);
         }
+
+        var totalCount = filteredBindings.Count();
+        var paginatedBindings = filteredBindings
+            .Skip(body.Offset)
+            .Take(body.Limit)
+            .Select(MapToBindingInfo)
+            .ToList();
+
+        return (StatusCodes.OK, new ListRepositoryBindingsResponse
+        {
+            Bindings = paginatedBindings,
+            Total = totalCount
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, UpdateRepositoryBindingResponse?)> UpdateRepositoryBindingAsync(UpdateRepositoryBindingRequest body, CancellationToken cancellationToken = default)
     {
-
-        try
+        var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+        if (binding == null)
         {
-            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
-            if (binding == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Update binding properties
-            binding.SyncEnabled = body.SyncEnabled;
-            binding.SyncIntervalMinutes = body.SyncIntervalMinutes;
-
-            if (body.FilePatterns != null)
-            {
-                binding.FilePatterns = body.FilePatterns.ToList();
-            }
-
-            if (body.ExcludePatterns != null)
-            {
-                binding.ExcludePatterns = body.ExcludePatterns.ToList();
-            }
-
-            if (body.CategoryMapping != null)
-            {
-                binding.CategoryMapping = body.CategoryMapping.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-            }
-
-            if (body.DefaultCategory != default)
-            {
-                binding.DefaultCategory = body.DefaultCategory.ToString();
-            }
-
-            binding.ArchiveEnabled = body.ArchiveEnabled;
-            binding.ArchiveOnSync = body.ArchiveOnSync;
-
-            await SaveBindingAsync(binding, cancellationToken);
-
-            _logger.LogInformation("Updated repository binding for namespace {Namespace}", body.Namespace);
-
-            return (StatusCodes.OK, new UpdateRepositoryBindingResponse
-            {
-                Binding = MapToBindingInfo(binding)
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Update binding properties
+        binding.SyncEnabled = body.SyncEnabled;
+        binding.SyncIntervalMinutes = body.SyncIntervalMinutes;
+
+        if (body.FilePatterns != null)
         {
-            _logger.LogError(ex, "Failed to update repository binding for namespace {Namespace}", body.Namespace);
-            await _messageBus.TryPublishErrorAsync("documentation", "UpdateRepositoryBinding", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            binding.FilePatterns = body.FilePatterns.ToList();
         }
+
+        if (body.ExcludePatterns != null)
+        {
+            binding.ExcludePatterns = body.ExcludePatterns.ToList();
+        }
+
+        if (body.CategoryMapping != null)
+        {
+            binding.CategoryMapping = body.CategoryMapping.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+        if (body.DefaultCategory != default)
+        {
+            binding.DefaultCategory = body.DefaultCategory.ToString();
+        }
+
+        binding.ArchiveEnabled = body.ArchiveEnabled;
+        binding.ArchiveOnSync = body.ArchiveOnSync;
+
+        await SaveBindingAsync(binding, cancellationToken);
+
+        _logger.LogInformation("Updated repository binding for namespace {Namespace}", body.Namespace);
+
+        return (StatusCodes.OK, new UpdateRepositoryBindingResponse
+        {
+            Binding = MapToBindingInfo(binding)
+        });
     }
 
     /// <inheritdoc />
@@ -2526,89 +2322,79 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        _logger.LogInformation("Creating archive for namespace {Namespace}", body.Namespace);
-
-        try
+    _logger.LogInformation("Creating archive for namespace {Namespace}", body.Namespace);
+        // Get all documents in namespace
+        var documents = await GetAllNamespaceDocumentsAsync(body.Namespace, cancellationToken);
+        if (documents.Count == 0)
         {
-            // Get all documents in namespace
-            var documents = await GetAllNamespaceDocumentsAsync(body.Namespace, cancellationToken);
-            if (documents.Count == 0)
-            {
-                _logger.LogWarning("No documents found in namespace {Namespace} to archive", body.Namespace);
-                return (StatusCodes.NotFound, null);
-            }
+            _logger.LogWarning("No documents found in namespace {Namespace} to archive", body.Namespace);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Create archive bundle (JSON format for simplicity)
-            var archiveId = Guid.NewGuid();
-            var bundleData = await CreateArchiveBundleAsync(body.Namespace, documents, cancellationToken);
+        // Create archive bundle (JSON format for simplicity)
+        var archiveId = Guid.NewGuid();
+        var bundleData = await CreateArchiveBundleAsync(body.Namespace, documents, cancellationToken);
 
-            // Store archive record
-            var archive = new Models.DocumentationArchive
-            {
-                ArchiveId = archiveId,
-                Namespace = body.Namespace,
-                DocumentCount = documents.Count,
-                SizeBytes = bundleData.Length,
-                CreatedAt = DateTimeOffset.UtcNow,
-                Owner = body.Owner,
-                Description = body.Description,
-                CommitHash = await GetCurrentCommitHashForNamespaceAsync(body.Namespace, cancellationToken)
-            };
+        // Store archive record
+        var archive = new Models.DocumentationArchive
+        {
+            ArchiveId = archiveId,
+            Namespace = body.Namespace,
+            DocumentCount = documents.Count,
+            SizeBytes = bundleData.Length,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Owner = body.Owner,
+            Description = body.Description,
+            CommitHash = await GetCurrentCommitHashForNamespaceAsync(body.Namespace, cancellationToken)
+        };
 
-            // Upload the bundle to Asset Service
+        // Upload the bundle to Asset Service
+        {
+            try
             {
-                try
+                var uploadResponse = await _assetClient.RequestBundleUploadAsync(new BundleUploadRequest
                 {
-                    var uploadResponse = await _assetClient.RequestBundleUploadAsync(new BundleUploadRequest
-                    {
-                        Owner = body.Owner,
-                        Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
-                        Size = bundleData.Length
-                    }, cancellationToken);
+                    Owner = body.Owner,
+                    Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
+                    Size = bundleData.Length
+                }, cancellationToken);
 
-                    // Upload to pre-signed URL
-                    using var httpClient = _httpClientFactory.CreateClient();
-                    using var content = new ByteArrayContent(bundleData);
-                    content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                    var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl.ToString(), content, cancellationToken);
+                // Upload to pre-signed URL
+                using var httpClient = _httpClientFactory.CreateClient();
+                using var content = new ByteArrayContent(bundleData);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl.ToString(), content, cancellationToken);
 
-                    if (uploadResult.IsSuccessStatusCode)
-                    {
-                        archive.BundleAssetId = uploadResponse.UploadId;
-                        _logger.LogInformation("Archive bundle uploaded to Asset Service: {BundleId}", archive.BundleAssetId);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to upload archive bundle to Asset Service: {StatusCode}", uploadResult.StatusCode);
-                    }
+                if (uploadResult.IsSuccessStatusCode)
+                {
+                    archive.BundleAssetId = uploadResponse.UploadId;
+                    _logger.LogInformation("Archive bundle uploaded to Asset Service: {BundleId}", archive.BundleAssetId);
                 }
-                catch (Exception ex)
+                else
                 {
-                    _logger.LogWarning(ex, "Asset Service integration failed, archive stored without bundle upload");
+                    _logger.LogWarning("Failed to upload archive bundle to Asset Service: {StatusCode}", uploadResult.StatusCode);
                 }
             }
-
-            // Save archive record to state store
-            await SaveArchiveAsync(archive, cancellationToken);
-
-            // Publish archive created event
-            await TryPublishArchiveCreatedEventAsync(archive, cancellationToken);
-
-            return (StatusCodes.OK, new CreateArchiveResponse
+            catch (Exception ex)
             {
-                ArchiveId = archiveId,
-                Namespace = body.Namespace,
-                DocumentCount = documents.Count,
-                SizeBytes = bundleData.Length,
-                CreatedAt = archive.CreatedAt
-            });
+                _logger.LogWarning(ex, "Asset Service integration failed, archive stored without bundle upload");
+            }
         }
-        catch (Exception ex)
+
+        // Save archive record to state store
+        await SaveArchiveAsync(archive, cancellationToken);
+
+        // Publish archive created event
+        await TryPublishArchiveCreatedEventAsync(archive, cancellationToken);
+
+        return (StatusCodes.OK, new CreateArchiveResponse
         {
-            _logger.LogError(ex, "Failed to create archive for namespace {Namespace}", body.Namespace);
-            await _messageBus.TryPublishErrorAsync("documentation", "CreateDocumentationArchive", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            ArchiveId = archiveId,
+            Namespace = body.Namespace,
+            DocumentCount = documents.Count,
+            SizeBytes = bundleData.Length,
+            CreatedAt = archive.CreatedAt
+        });
     }
 
     /// <inheritdoc />
@@ -2621,41 +2407,32 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        try
-        {
-            var archives = await GetArchivesForNamespaceAsync(body.Namespace, cancellationToken);
-            var offset = body.Offset;
-            var limit = body.Limit;
+        var archives = await GetArchivesForNamespaceAsync(body.Namespace, cancellationToken);
+        var offset = body.Offset;
+        var limit = body.Limit;
 
-            var pagedArchives = archives
-                .OrderByDescending(a => a.CreatedAt)
-                .Skip(offset)
-                .Take(limit)
-                .Select(a => new ArchiveInfo
-                {
-                    ArchiveId = a.ArchiveId,
-                    Namespace = a.Namespace,
-                    CreatedAt = a.CreatedAt,
-                    Owner = a.Owner,
-                    DocumentCount = a.DocumentCount,
-                    SizeBytes = (int)Math.Min(a.SizeBytes, int.MaxValue),
-                    Description = a.Description,
-                    CommitHash = a.CommitHash
-                })
-                .ToList();
-
-            return (StatusCodes.OK, new ListArchivesResponse
+        var pagedArchives = archives
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip(offset)
+            .Take(limit)
+            .Select(a => new ArchiveInfo
             {
-                Archives = pagedArchives,
-                Total = archives.Count
-            });
-        }
-        catch (Exception ex)
+                ArchiveId = a.ArchiveId,
+                Namespace = a.Namespace,
+                CreatedAt = a.CreatedAt,
+                Owner = a.Owner,
+                DocumentCount = a.DocumentCount,
+                SizeBytes = (int)Math.Min(a.SizeBytes, int.MaxValue),
+                Description = a.Description,
+                CommitHash = a.CommitHash
+            })
+            .ToList();
+
+        return (StatusCodes.OK, new ListArchivesResponse
         {
-            _logger.LogError(ex, "Failed to list archives for namespace {Namespace}", body.Namespace);
-            await _messageBus.TryPublishErrorAsync("documentation", "ListDocumentationArchives", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Archives = pagedArchives,
+            Total = archives.Count
+        });
     }
 
     /// <inheritdoc />
@@ -2668,69 +2445,60 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        try
+        // Get archive metadata
+        var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
+        if (archive == null)
         {
-            // Get archive metadata
-            var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
-            if (archive == null)
+            _logger.LogWarning("Archive {ArchiveId} not found", body.ArchiveId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        _logger.LogInformation("Restoring archive {ArchiveId} for namespace {Namespace}", body.ArchiveId, archive.Namespace);
+
+        // Check if namespace is bound to a repository
+        var binding = await GetBindingForNamespaceAsync(archive.Namespace, cancellationToken);
+        if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+        {
+            _logger.LogWarning("Cannot restore to bound namespace {Namespace}", archive.Namespace);
+            return (StatusCodes.Forbidden, null);
+        }
+
+        int documentsRestored = 0;
+
+        // Download and restore from bundle if we have one
+        if (archive.BundleAssetId != Guid.Empty)
+        {
+            try
             {
-                _logger.LogWarning("Archive {ArchiveId} not found", body.ArchiveId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            _logger.LogInformation("Restoring archive {ArchiveId} for namespace {Namespace}", body.ArchiveId, archive.Namespace);
-
-            // Check if namespace is bound to a repository
-            var binding = await GetBindingForNamespaceAsync(archive.Namespace, cancellationToken);
-            if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
-            {
-                _logger.LogWarning("Cannot restore to bound namespace {Namespace}", archive.Namespace);
-                return (StatusCodes.Forbidden, null);
-            }
-
-            int documentsRestored = 0;
-
-            // Download and restore from bundle if we have one
-            if (archive.BundleAssetId != Guid.Empty)
-            {
-                try
+                var bundleResponse = await _assetClient.GetBundleAsync(new GetBundleRequest
                 {
-                    var bundleResponse = await _assetClient.GetBundleAsync(new GetBundleRequest
-                    {
-                        BundleId = archive.BundleAssetId.ToString()
-                    }, cancellationToken);
+                    BundleId = archive.BundleAssetId.ToString()
+                }, cancellationToken);
 
-                    if (bundleResponse.DownloadUrl != null)
-                    {
-                        using var httpClient = _httpClientFactory.CreateClient();
-                        var bundleData = await httpClient.GetByteArrayAsync(bundleResponse.DownloadUrl.ToString(), cancellationToken);
-                        documentsRestored = await RestoreFromBundleAsync(archive.Namespace, bundleData, cancellationToken);
-                    }
-                }
-                catch (ApiException ex) when (ex.StatusCode == 404)
+                if (bundleResponse.DownloadUrl != null)
                 {
-                    _logger.LogWarning("Archive bundle {BundleId} not found in Asset Service", archive.BundleAssetId);
-                    return (StatusCodes.NotFound, null);
+                    using var httpClient = _httpClientFactory.CreateClient();
+                    var bundleData = await httpClient.GetByteArrayAsync(bundleResponse.DownloadUrl.ToString(), cancellationToken);
+                    documentsRestored = await RestoreFromBundleAsync(archive.Namespace, bundleData, cancellationToken);
                 }
             }
-            else
+            catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                _logger.LogWarning("Cannot restore archive {ArchiveId} - no bundle data available", body.ArchiveId);
+                _logger.LogWarning("Archive bundle {BundleId} not found in Asset Service", archive.BundleAssetId);
                 return (StatusCodes.NotFound, null);
             }
-
-            return (StatusCodes.OK, new RestoreArchiveResponse
-            {
-                Namespace = archive.Namespace,
-                DocumentsRestored = documentsRestored
-            });
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Failed to restore archive {ArchiveId}", body.ArchiveId);
-            await _messageBus.TryPublishErrorAsync("documentation", "RestoreDocumentationArchive", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Cannot restore archive {ArchiveId} - no bundle data available", body.ArchiveId);
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, new RestoreArchiveResponse
+        {
+            Namespace = archive.Namespace,
+            DocumentsRestored = documentsRestored
+        });
     }
 
     /// <inheritdoc />
@@ -2743,35 +2511,26 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        try
+        // Get archive metadata
+        var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
+        if (archive == null)
         {
-            // Get archive metadata
-            var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
-            if (archive == null)
-            {
-                _logger.LogWarning("Archive {ArchiveId} not found", body.ArchiveId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            _logger.LogInformation("Deleting archive {ArchiveId} for namespace {Namespace}", body.ArchiveId, archive.Namespace);
-
-            // Delete archive record from state store
-            await DeleteArchiveAsync(archive, cancellationToken);
-
-            // Note: We don't delete the bundle from Asset Service as it may be used for other purposes
-            // or the Asset Service may have its own retention policies
-
-            return (StatusCodes.OK, new DeleteArchiveResponse
-            {
-                Deleted = true
-            });
+            _logger.LogWarning("Archive {ArchiveId} not found", body.ArchiveId);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        _logger.LogInformation("Deleting archive {ArchiveId} for namespace {Namespace}", body.ArchiveId, archive.Namespace);
+
+        // Delete archive record from state store
+        await DeleteArchiveAsync(archive, cancellationToken);
+
+        // Note: We don't delete the bundle from Asset Service as it may be used for other purposes
+        // or the Asset Service may have its own retention policies
+
+        return (StatusCodes.OK, new DeleteArchiveResponse
         {
-            _logger.LogError(ex, "Failed to delete archive {ArchiveId}", body.ArchiveId);
-            await _messageBus.TryPublishErrorAsync("documentation", "DeleteDocumentationArchive", "unexpected_exception", ex.Message, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Deleted = true
+        });
     }
 
     #region Repository Binding Helpers

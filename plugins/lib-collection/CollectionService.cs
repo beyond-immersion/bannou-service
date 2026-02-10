@@ -1,6 +1,10 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -10,8 +14,26 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Collection;
 
 /// <summary>
+/// Topic constants for collection events.
+/// </summary>
+public static class CollectionTopics
+{
+    /// <summary>Entry unlocked event topic.</summary>
+    public const string EntryUnlocked = "collection.entry-unlocked";
+    /// <summary>Entry grant failed event topic.</summary>
+    public const string EntryGrantFailed = "collection.entry-grant-failed";
+    /// <summary>Milestone reached event topic.</summary>
+    public const string MilestoneReached = "collection.milestone-reached";
+    /// <summary>Discovery advanced event topic.</summary>
+    public const string DiscoveryAdvanced = "collection.discovery-advanced";
+}
+
+/// <summary>
 /// Implementation of the Collection service.
-/// This class contains the business logic for all Collection operations.
+/// Manages collectible content (voice galleries, scene archives, music libraries, bestiaries, etc.)
+/// using the items-in-inventories pattern: entry templates define what can be collected,
+/// collection instances create inventory containers per owner, and granting an entry
+/// creates an item instance in that container.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -19,13 +41,10 @@ namespace BeyondImmersion.BannouService.Collection;
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
 /// </para>
 /// <para>
-/// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
+/// <b>SERVICE HIERARCHY (L4 Game Features):</b>
 /// <list type="bullet">
-///   <item><b>Type Safety:</b> Internal POCOs MUST use proper C# types (enums, Guids, DateTimeOffset) - never string representations. No Enum.Parse in business logic.</item>
-///   <item><b>Configuration:</b> ALL config properties in CollectionServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
-///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
-///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
-///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
+///   <item>Hard dependencies (constructor injection): IInventoryClient (L2), IItemClient (L2), IGameServiceClient (L2), IDistributedLockProvider (L0)</item>
+///   <item>No owner-specific client dependencies: owner validation is caller-responsibility (Seed pattern)</item>
 /// </list>
 /// </para>
 /// <para>
@@ -48,1339 +67,1950 @@ public partial class CollectionService : ICollectionService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CollectionService> _logger;
     private readonly CollectionServiceConfiguration _configuration;
+    private readonly IInventoryClient _inventoryClient;
+    private readonly IItemClient _itemClient;
+    private readonly IGameServiceClient _gameServiceClient;
+    private readonly IDistributedLockProvider _lockProvider;
 
-    private const string STATE_STORE = "collection-statestore";
+    #region State Store Accessors
 
+    private IQueryableStateStore<EntryTemplateModel>? _entryTemplateStore;
+    private IQueryableStateStore<EntryTemplateModel> EntryTemplateStore =>
+        _entryTemplateStore ??= _stateStoreFactory.GetQueryableStore<EntryTemplateModel>(StateStoreDefinitions.CollectionEntryTemplates);
+
+    private IQueryableStateStore<CollectionInstanceModel>? _collectionStore;
+    private IQueryableStateStore<CollectionInstanceModel> CollectionStore =>
+        _collectionStore ??= _stateStoreFactory.GetQueryableStore<CollectionInstanceModel>(StateStoreDefinitions.CollectionInstances);
+
+    private IQueryableStateStore<AreaMusicConfigModel>? _areaMusicStore;
+    private IQueryableStateStore<AreaMusicConfigModel> AreaMusicStore =>
+        _areaMusicStore ??= _stateStoreFactory.GetQueryableStore<AreaMusicConfigModel>(StateStoreDefinitions.CollectionAreaMusicConfigs);
+
+    private IStateStore<CollectionCacheModel>? _collectionCache;
+    private IStateStore<CollectionCacheModel> CollectionCache =>
+        _collectionCache ??= _stateStoreFactory.GetStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
+
+    #endregion
+
+    #region Key Building
+
+    private static string BuildTemplateKey(Guid entryTemplateId) => $"tpl:{entryTemplateId}";
+    private static string BuildTemplateByCodeKey(Guid gameServiceId, CollectionType collectionType, string code) =>
+        $"tpl:{gameServiceId}:{collectionType}:{code}";
+    private static string BuildCollectionKey(Guid collectionId) => $"col:{collectionId}";
+    private static string BuildCollectionByOwnerKey(Guid ownerId, string ownerType, Guid gameServiceId, CollectionType collectionType) =>
+        $"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}";
+    private static string BuildAreaMusicKey(Guid areaConfigId) => $"amc:{areaConfigId}";
+    private static string BuildAreaMusicByCodeKey(Guid gameServiceId, string areaCode) => $"amc:{gameServiceId}:{areaCode}";
+    private static string BuildCacheKey(Guid collectionId) => $"cache:{collectionId}";
+
+    #endregion
+
+    #region Owner Type Mapping
+
+    /// <summary>
+    /// Maps an opaque owner type string to ContainerOwnerType for inventory operations.
+    /// Returns null if the owner type has no known mapping.
+    /// </summary>
+    private static ContainerOwnerType? MapToContainerOwnerType(string ownerType) => ownerType switch
+    {
+        "character" => ContainerOwnerType.Character,
+        "account" => ContainerOwnerType.Account,
+        "location" => ContainerOwnerType.Location,
+        "guild" => ContainerOwnerType.Guild,
+        _ => null
+    };
+
+    /// <summary>
+    /// Validates that an owner type string does not contain the key separator character.
+    /// </summary>
+    private static bool IsValidOwnerType(string ownerType)
+        => !string.IsNullOrWhiteSpace(ownerType) && !ownerType.Contains(':');
+
+    #endregion
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CollectionService"/> class.
+    /// </summary>
+    /// <param name="messageBus">Message bus for event publishing.</param>
+    /// <param name="stateStoreFactory">State store factory for persistence.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Service configuration.</param>
+    /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
+    /// <param name="inventoryClient">Inventory client for collection containers (L2 hard dependency).</param>
+    /// <param name="itemClient">Item client for entry item instances (L2 hard dependency).</param>
+    /// <param name="gameServiceClient">Game service client for validation (L2 hard dependency).</param>
+    /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
     public CollectionService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<CollectionService> logger,
-        CollectionServiceConfiguration configuration)
+        CollectionServiceConfiguration configuration,
+        IEventConsumer eventConsumer,
+        IInventoryClient inventoryClient,
+        IItemClient itemClient,
+        IGameServiceClient gameServiceClient,
+        IDistributedLockProvider lockProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _inventoryClient = inventoryClient;
+        _itemClient = itemClient;
+        _gameServiceClient = gameServiceClient;
+        _lockProvider = lockProvider;
+
+        RegisterEventConsumers(eventConsumer);
+    }
+
+    #region Model Mapping Helpers
+
+    /// <summary>
+    /// Maps an internal entry template model to the API response type.
+    /// </summary>
+    private static EntryTemplateResponse MapTemplateToResponse(EntryTemplateModel model)
+    {
+        return new EntryTemplateResponse
+        {
+            EntryTemplateId = model.EntryTemplateId,
+            Code = model.Code,
+            CollectionType = model.CollectionType,
+            GameServiceId = model.GameServiceId,
+            DisplayName = model.DisplayName,
+            Category = model.Category,
+            Tags = model.Tags,
+            AssetId = model.AssetId,
+            ThumbnailAssetId = model.ThumbnailAssetId,
+            UnlockHint = model.UnlockHint,
+            HideWhenLocked = model.HideWhenLocked,
+            ItemTemplateId = model.ItemTemplateId,
+            DiscoveryLevels = model.DiscoveryLevels?.Select(dl => new DiscoveryLevel
+            {
+                Level = dl.Level,
+                Reveals = dl.Reveals.ToList()
+            }).ToList(),
+            Themes = model.Themes,
+            Duration = model.Duration,
+            LoopPoint = model.LoopPoint,
+            Composer = model.Composer,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt
+        };
     }
 
     /// <summary>
-    /// Implementation of CreateEntryTemplate operation.
-    /// TODO: Implement business logic for this method.
+    /// Maps an internal collection instance model to the API response type.
     /// </summary>
-    public async Task<(StatusCodes, EntryTemplateResponse?)> CreateEntryTemplateAsync(CreateEntryTemplateRequest body, CancellationToken cancellationToken)
+    private static CollectionResponse MapCollectionToResponse(CollectionInstanceModel model, int entryCount)
     {
-        _logger.LogInformation("Executing CreateEntryTemplate operation");
-
-        try
+        return new CollectionResponse
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CreateEntryTemplate not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing CreateEntryTemplate operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "CreateEntryTemplate",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/entry-template/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
+            CollectionId = model.CollectionId,
+            OwnerId = model.OwnerId,
+            OwnerType = model.OwnerType,
+            CollectionType = model.CollectionType,
+            GameServiceId = model.GameServiceId,
+            ContainerId = model.ContainerId,
+            EntryCount = entryCount,
+            CreatedAt = model.CreatedAt
+        };
     }
 
     /// <summary>
-    /// Implementation of GetEntryTemplate operation.
-    /// TODO: Implement business logic for this method.
+    /// Maps an internal area music config model to the API response type.
     /// </summary>
-    public async Task<(StatusCodes, EntryTemplateResponse?)> GetEntryTemplateAsync(GetEntryTemplateRequest body, CancellationToken cancellationToken)
+    private static AreaMusicConfigResponse MapAreaMusicToResponse(AreaMusicConfigModel model)
     {
-        _logger.LogInformation("Executing GetEntryTemplate operation");
-
-        try
+        return new AreaMusicConfigResponse
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetEntryTemplate not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetEntryTemplate operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "GetEntryTemplate",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/entry-template/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
+            AreaConfigId = model.AreaConfigId,
+            AreaCode = model.AreaCode,
+            GameServiceId = model.GameServiceId,
+            Themes = model.Themes.ToList(),
+            DefaultTrackCode = model.DefaultTrackCode,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt
+        };
     }
 
     /// <summary>
-    /// Implementation of ListEntryTemplates operation.
-    /// TODO: Implement business logic for this method.
+    /// Maps an unlocked entry record and its template to the API response type.
     /// </summary>
-    public async Task<(StatusCodes, ListEntryTemplatesResponse?)> ListEntryTemplatesAsync(ListEntryTemplatesRequest body, CancellationToken cancellationToken)
+    private static UnlockedEntryResponse MapUnlockedEntryToResponse(UnlockedEntryRecord record, EntryTemplateModel template)
     {
-        _logger.LogInformation("Executing ListEntryTemplates operation");
+        return new UnlockedEntryResponse
+        {
+            EntryTemplateId = record.EntryTemplateId,
+            Code = record.Code,
+            DisplayName = template.DisplayName,
+            Category = template.Category,
+            Tags = template.Tags,
+            ItemInstanceId = record.ItemInstanceId,
+            UnlockedAt = record.UnlockedAt,
+            Metadata = record.Metadata != null ? new EntryMetadata
+            {
+                UnlockedIn = record.Metadata.UnlockedIn,
+                UnlockedDuring = record.Metadata.UnlockedDuring,
+                PlayCount = record.Metadata.PlayCount,
+                LastAccessedAt = record.Metadata.LastAccessedAt,
+                Favorited = record.Metadata.Favorited,
+                DiscoveryLevel = record.Metadata.DiscoveryLevel,
+                KillCount = record.Metadata.KillCount,
+                CustomData = record.Metadata.CustomData != null
+                    ? new Dictionary<string, object>(record.Metadata.CustomData)
+                    : null
+            } : new EntryMetadata()
+        };
+    }
 
+    #endregion
+
+    #region Cache Reconciliation
+
+    /// <summary>
+    /// Loads or rebuilds the collection cache. Tries Redis cache first; on miss,
+    /// queries inventory container contents as the authoritative source and rebuilds the cache.
+    /// </summary>
+    private async Task<CollectionCacheModel> LoadOrRebuildCollectionCacheAsync(
+        CollectionInstanceModel collection,
+        CancellationToken cancellationToken)
+    {
+        var cache = await CollectionCache.GetAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
+        if (cache != null)
+        {
+            return cache;
+        }
+
+        _logger.LogInformation("Collection cache miss for collection {CollectionId}, rebuilding from inventory",
+            collection.CollectionId);
+
+        var containerContents = await _inventoryClient.GetContainerAsync(
+            new GetContainerRequest { ContainerId = collection.ContainerId, IncludeContents = true },
+            cancellationToken);
+
+        // Load all entry templates for this collection type + game service to match items
+        var templates = await EntryTemplateStore.QueryAsync(
+            t => t.CollectionType == collection.CollectionType && t.GameServiceId == collection.GameServiceId,
+            cancellationToken: cancellationToken);
+
+        var templatesByItemTemplateId = templates
+            .GroupBy(t => t.ItemTemplateId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var unlockedEntries = new List<UnlockedEntryRecord>();
+        foreach (var item in containerContents.Items)
+        {
+            if (templatesByItemTemplateId.TryGetValue(item.TemplateId, out var matchingTemplates))
+            {
+                var matchedTemplate = matchingTemplates.FirstOrDefault(t =>
+                    !unlockedEntries.Any(u => u.Code == t.Code));
+
+                if (matchedTemplate != null)
+                {
+                    unlockedEntries.Add(new UnlockedEntryRecord
+                    {
+                        Code = matchedTemplate.Code,
+                        EntryTemplateId = matchedTemplate.EntryTemplateId,
+                        ItemInstanceId = item.InstanceId,
+                        UnlockedAt = collection.CreatedAt, // Best approximation when rebuilding
+                        Metadata = new EntryMetadataModel()
+                    });
+                }
+            }
+        }
+
+        cache = new CollectionCacheModel
+        {
+            CollectionId = collection.CollectionId,
+            UnlockedEntries = unlockedEntries,
+            LastUpdated = DateTimeOffset.UtcNow
+        };
+
+        await CollectionCache.SaveAsync(
+            BuildCacheKey(collection.CollectionId),
+            cache,
+            new StateOptions { Ttl = _configuration.CollectionCacheTtlSeconds },
+            cancellationToken);
+
+        return cache;
+    }
+
+    #endregion
+
+    #region Collection Auto-Create Helper
+
+    /// <summary>
+    /// Creates a new collection instance with an inventory container.
+    /// Shared logic used by both CreateCollectionAsync and GrantEntryAsync (auto-create).
+    /// </summary>
+    private async Task<CollectionInstanceModel> CreateCollectionInternalAsync(
+        Guid ownerId,
+        string ownerType,
+        CollectionType collectionType,
+        Guid gameServiceId,
+        CancellationToken cancellationToken)
+    {
+        var containerOwnerType = MapToContainerOwnerType(ownerType);
+        if (containerOwnerType == null)
+        {
+            throw new InvalidOperationException(
+                $"Owner type '{ownerType}' cannot be mapped to a ContainerOwnerType for inventory operations");
+        }
+
+        var containerResponse = await _inventoryClient.CreateContainerAsync(
+            new CreateContainerRequest
+            {
+                OwnerId = ownerId,
+                OwnerType = containerOwnerType.Value,
+                ContainerType = $"collection_{collectionType.ToString().ToLowerInvariant()}",
+                ConstraintModel = ContainerConstraintModel.Unlimited
+            },
+            cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+        var instance = new CollectionInstanceModel
+        {
+            CollectionId = Guid.NewGuid(),
+            OwnerId = ownerId,
+            OwnerType = ownerType,
+            CollectionType = collectionType,
+            GameServiceId = gameServiceId,
+            ContainerId = containerResponse.ContainerId,
+            CreatedAt = now
+        };
+
+        await CollectionStore.SaveAsync(
+            BuildCollectionKey(instance.CollectionId),
+            instance,
+            cancellationToken: cancellationToken);
+
+        await CollectionStore.SaveAsync(
+            BuildCollectionByOwnerKey(ownerId, ownerType, gameServiceId, collectionType),
+            instance,
+            cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync(
+            "collection.created",
+            new CollectionCreatedEvent
+            {
+                CollectionId = instance.CollectionId,
+                OwnerId = instance.OwnerId,
+                OwnerType = instance.OwnerType,
+                CollectionType = instance.CollectionType,
+                GameServiceId = instance.GameServiceId,
+                ContainerId = instance.ContainerId,
+                CreatedAt = instance.CreatedAt
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Created collection {CollectionId} of type {CollectionType} for {OwnerType} {OwnerId}",
+            instance.CollectionId, collectionType, ownerType, ownerId);
+
+        return instance;
+    }
+
+    #endregion
+
+    #region Milestone Checking
+
+    /// <summary>
+    /// Checks completion percentage and publishes milestone events at 25%, 50%, 75%, 100%.
+    /// </summary>
+    private async Task CheckAndPublishMilestonesAsync(
+        CollectionInstanceModel collection,
+        int unlockedCount,
+        int totalCount,
+        CancellationToken cancellationToken)
+    {
+        if (totalCount == 0) return;
+
+        var percentage = (double)unlockedCount / totalCount * 100.0;
+        var milestones = new[] { 25.0, 50.0, 75.0, 100.0 };
+
+        foreach (var milestone in milestones)
+        {
+            // Check if we just crossed this milestone (previous count was below, current is at or above)
+            var previousPercentage = (double)(unlockedCount - 1) / totalCount * 100.0;
+            if (previousPercentage < milestone && percentage >= milestone)
+            {
+                await _messageBus.TryPublishAsync(
+                    CollectionTopics.MilestoneReached,
+                    new CollectionMilestoneReachedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        CollectionId = collection.CollectionId,
+                        OwnerId = collection.OwnerId,
+                        OwnerType = collection.OwnerType,
+                        CollectionType = collection.CollectionType,
+                        GameServiceId = collection.GameServiceId,
+                        Milestone = $"{(int)milestone}%",
+                        CompletionPercentage = percentage
+                    },
+                    cancellationToken: cancellationToken);
+
+                _logger.LogInformation(
+                    "Collection {CollectionId} reached {Milestone} milestone ({Percentage:F1}%)",
+                    collection.CollectionId, $"{(int)milestone}%", percentage);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Entry Template Management
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, EntryTemplateResponse?)> CreateEntryTemplateAsync(
+        CreateEntryTemplateRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation(
+            "Creating entry template {Code} for collection type {CollectionType} in game service {GameServiceId}",
+            body.Code, body.CollectionType, body.GameServiceId);
+
+        // Validate game service exists
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListEntryTemplates not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId },
+                cancellationToken);
         }
-        catch (Exception ex)
+        catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            _logger.LogError(ex, "Error executing ListEntryTemplates operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "ListEntryTemplates",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/entry-template/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Validate item template exists
+        try
+        {
+            await _itemClient.GetItemTemplateAsync(
+                new GetItemTemplateRequest { TemplateId = body.ItemTemplateId },
+                cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogWarning("Item template {ItemTemplateId} not found", body.ItemTemplateId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check code uniqueness within collection type + game service
+        var existing = await EntryTemplateStore.GetAsync(
+            BuildTemplateByCodeKey(body.GameServiceId, body.CollectionType, body.Code),
+            cancellationToken);
+
+        if (existing != null)
+        {
+            _logger.LogWarning(
+                "Entry template with code {Code} already exists for type {CollectionType} in game {GameServiceId}",
+                body.Code, body.CollectionType, body.GameServiceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var template = new EntryTemplateModel
+        {
+            EntryTemplateId = Guid.NewGuid(),
+            Code = body.Code,
+            CollectionType = body.CollectionType,
+            GameServiceId = body.GameServiceId,
+            DisplayName = body.DisplayName,
+            Category = body.Category,
+            Tags = body.Tags?.ToList(),
+            AssetId = body.AssetId,
+            ThumbnailAssetId = body.ThumbnailAssetId,
+            UnlockHint = body.UnlockHint,
+            HideWhenLocked = body.HideWhenLocked,
+            ItemTemplateId = body.ItemTemplateId,
+            DiscoveryLevels = body.DiscoveryLevels?.Select(dl => new DiscoveryLevelEntry
+            {
+                Level = dl.Level,
+                Reveals = dl.Reveals.ToList()
+            }).ToList(),
+            Themes = body.Themes?.ToList(),
+            Duration = body.Duration,
+            LoopPoint = body.LoopPoint,
+            Composer = body.Composer,
+            CreatedAt = now
+        };
+
+        // Save by ID
+        await EntryTemplateStore.SaveAsync(
+            BuildTemplateKey(template.EntryTemplateId),
+            template,
+            cancellationToken: cancellationToken);
+
+        // Save by code lookup key
+        await EntryTemplateStore.SaveAsync(
+            BuildTemplateByCodeKey(template.GameServiceId, template.CollectionType, template.Code),
+            template,
+            cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync(
+            "collection-entry-template.created",
+            new CollectionEntryTemplateCreatedEvent
+            {
+                EntryTemplateId = template.EntryTemplateId,
+                Code = template.Code,
+                CollectionType = template.CollectionType,
+                GameServiceId = template.GameServiceId,
+                DisplayName = template.DisplayName,
+                Category = template.Category,
+                HideWhenLocked = template.HideWhenLocked,
+                ItemTemplateId = template.ItemTemplateId,
+                CreatedAt = template.CreatedAt,
+                UpdatedAt = template.UpdatedAt
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Created entry template {EntryTemplateId}", template.EntryTemplateId);
+
+        return (StatusCodes.OK, MapTemplateToResponse(template));
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, EntryTemplateResponse?)> GetEntryTemplateAsync(
+        GetEntryTemplateRequest body,
+        CancellationToken cancellationToken)
+    {
+        var template = await EntryTemplateStore.GetAsync(
+            BuildTemplateKey(body.EntryTemplateId),
+            cancellationToken);
+
+        if (template == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        return (StatusCodes.OK, MapTemplateToResponse(template));
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListEntryTemplatesResponse?)> ListEntryTemplatesAsync(
+        ListEntryTemplatesRequest body,
+        CancellationToken cancellationToken)
+    {
+        var pageSize = _configuration.DefaultPageSize;
+
+        var results = await EntryTemplateStore.QueryAsync(
+            t => t.CollectionType == body.CollectionType && t.GameServiceId == body.GameServiceId,
+            cancellationToken: cancellationToken);
+
+        // Apply optional category filter
+        IEnumerable<EntryTemplateModel> filtered = results;
+        if (!string.IsNullOrEmpty(body.Category))
+        {
+            filtered = results.Where(t => t.Category == body.Category);
+        }
+
+        var allItems = filtered.ToList();
+
+        // Cursor-based pagination using index offset
+        var startIndex = 0;
+        if (!string.IsNullOrEmpty(body.Cursor) && int.TryParse(body.Cursor, out var cursorIndex))
+        {
+            startIndex = cursorIndex;
+        }
+
+        var paged = allItems.Skip(startIndex).Take(pageSize + 1).ToList();
+        var hasMore = paged.Count > pageSize;
+        var items = paged.Take(pageSize).ToList();
+
+        return (StatusCodes.OK, new ListEntryTemplatesResponse
+        {
+            Templates = items.Select(MapTemplateToResponse).ToList(),
+            NextCursor = hasMore ? (startIndex + pageSize).ToString() : null,
+            HasMore = hasMore
+        });
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, EntryTemplateResponse?)> UpdateEntryTemplateAsync(
+        UpdateEntryTemplateRequest body,
+        CancellationToken cancellationToken)
+    {
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.CollectionLock,
+            $"tpl:{body.EntryTemplateId}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockHandle.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for entry template {EntryTemplateId}", body.EntryTemplateId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var template = await EntryTemplateStore.GetAsync(
+            BuildTemplateKey(body.EntryTemplateId),
+            cancellationToken);
+
+        if (template == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var changedFields = new List<string>();
+        var now = DateTimeOffset.UtcNow;
+
+        if (body.DisplayName != null)
+        {
+            template.DisplayName = body.DisplayName;
+            changedFields.Add("displayName");
+        }
+        if (body.Category != null)
+        {
+            template.Category = body.Category;
+            changedFields.Add("category");
+        }
+        if (body.Tags != null)
+        {
+            template.Tags = body.Tags.ToList();
+            changedFields.Add("tags");
+        }
+        if (body.AssetId != null)
+        {
+            template.AssetId = body.AssetId;
+            changedFields.Add("assetId");
+        }
+        if (body.ThumbnailAssetId != null)
+        {
+            template.ThumbnailAssetId = body.ThumbnailAssetId;
+            changedFields.Add("thumbnailAssetId");
+        }
+        if (body.UnlockHint != null)
+        {
+            template.UnlockHint = body.UnlockHint;
+            changedFields.Add("unlockHint");
+        }
+        if (body.Themes != null)
+        {
+            template.Themes = body.Themes.ToList();
+            changedFields.Add("themes");
+        }
+        if (body.Duration != null)
+        {
+            template.Duration = body.Duration;
+            changedFields.Add("duration");
+        }
+        if (body.LoopPoint != null)
+        {
+            template.LoopPoint = body.LoopPoint;
+            changedFields.Add("loopPoint");
+        }
+        if (body.Composer != null)
+        {
+            template.Composer = body.Composer;
+            changedFields.Add("composer");
+        }
+
+        if (changedFields.Count == 0)
+        {
+            return (StatusCodes.OK, MapTemplateToResponse(template));
+        }
+
+        template.UpdatedAt = now;
+
+        await EntryTemplateStore.SaveAsync(
+            BuildTemplateKey(template.EntryTemplateId),
+            template,
+            cancellationToken: cancellationToken);
+
+        await EntryTemplateStore.SaveAsync(
+            BuildTemplateByCodeKey(template.GameServiceId, template.CollectionType, template.Code),
+            template,
+            cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync(
+            "collection-entry-template.updated",
+            new CollectionEntryTemplateUpdatedEvent
+            {
+                EntryTemplateId = template.EntryTemplateId,
+                Code = template.Code,
+                CollectionType = template.CollectionType,
+                GameServiceId = template.GameServiceId,
+                DisplayName = template.DisplayName,
+                Category = template.Category,
+                HideWhenLocked = template.HideWhenLocked,
+                ItemTemplateId = template.ItemTemplateId,
+                CreatedAt = template.CreatedAt,
+                UpdatedAt = template.UpdatedAt,
+                ChangedFields = changedFields
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Updated entry template {EntryTemplateId}, fields: {ChangedFields}",
+            template.EntryTemplateId, string.Join(", ", changedFields));
+
+        return (StatusCodes.OK, MapTemplateToResponse(template));
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, EntryTemplateResponse?)> DeleteEntryTemplateAsync(
+        DeleteEntryTemplateRequest body,
+        CancellationToken cancellationToken)
+    {
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.CollectionLock,
+            $"tpl:{body.EntryTemplateId}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockHandle.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for entry template {EntryTemplateId}", body.EntryTemplateId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var template = await EntryTemplateStore.GetAsync(
+            BuildTemplateKey(body.EntryTemplateId),
+            cancellationToken);
+
+        if (template == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        await EntryTemplateStore.DeleteAsync(
+            BuildTemplateKey(template.EntryTemplateId),
+            cancellationToken);
+
+        await EntryTemplateStore.DeleteAsync(
+            BuildTemplateByCodeKey(template.GameServiceId, template.CollectionType, template.Code),
+            cancellationToken);
+
+        await _messageBus.TryPublishAsync(
+            "collection-entry-template.deleted",
+            new CollectionEntryTemplateDeletedEvent
+            {
+                EntryTemplateId = template.EntryTemplateId,
+                Code = template.Code,
+                CollectionType = template.CollectionType,
+                GameServiceId = template.GameServiceId,
+                DisplayName = template.DisplayName,
+                Category = template.Category,
+                HideWhenLocked = template.HideWhenLocked,
+                ItemTemplateId = template.ItemTemplateId,
+                CreatedAt = template.CreatedAt,
+                UpdatedAt = template.UpdatedAt
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Deleted entry template {EntryTemplateId}", template.EntryTemplateId);
+
+        return (StatusCodes.OK, MapTemplateToResponse(template));
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, SeedEntryTemplatesResponse?)> SeedEntryTemplatesAsync(
+        SeedEntryTemplatesRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Seeding {Count} entry templates", body.Templates.Count);
+
+        var created = 0;
+        var skipped = 0;
+
+        foreach (var templateRequest in body.Templates)
+        {
+            var existingByCode = await EntryTemplateStore.GetAsync(
+                BuildTemplateByCodeKey(templateRequest.GameServiceId, templateRequest.CollectionType, templateRequest.Code),
+                cancellationToken);
+
+            if (existingByCode != null)
+            {
+                skipped++;
+                continue;
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var template = new EntryTemplateModel
+            {
+                EntryTemplateId = Guid.NewGuid(),
+                Code = templateRequest.Code,
+                CollectionType = templateRequest.CollectionType,
+                GameServiceId = templateRequest.GameServiceId,
+                DisplayName = templateRequest.DisplayName,
+                Category = templateRequest.Category,
+                Tags = templateRequest.Tags?.ToList(),
+                AssetId = templateRequest.AssetId,
+                ThumbnailAssetId = templateRequest.ThumbnailAssetId,
+                UnlockHint = templateRequest.UnlockHint,
+                HideWhenLocked = templateRequest.HideWhenLocked,
+                ItemTemplateId = templateRequest.ItemTemplateId,
+                DiscoveryLevels = templateRequest.DiscoveryLevels?.Select(dl => new DiscoveryLevelEntry
+                {
+                    Level = dl.Level,
+                    Reveals = dl.Reveals.ToList()
+                }).ToList(),
+                Themes = templateRequest.Themes?.ToList(),
+                Duration = templateRequest.Duration,
+                LoopPoint = templateRequest.LoopPoint,
+                Composer = templateRequest.Composer,
+                CreatedAt = now
+            };
+
+            await EntryTemplateStore.SaveAsync(
+                BuildTemplateKey(template.EntryTemplateId),
+                template,
+                cancellationToken: cancellationToken);
+
+            await EntryTemplateStore.SaveAsync(
+                BuildTemplateByCodeKey(template.GameServiceId, template.CollectionType, template.Code),
+                template,
+                cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishAsync(
+                "collection-entry-template.created",
+                new CollectionEntryTemplateCreatedEvent
+                {
+                    EntryTemplateId = template.EntryTemplateId,
+                    Code = template.Code,
+                    CollectionType = template.CollectionType,
+                    GameServiceId = template.GameServiceId,
+                    DisplayName = template.DisplayName,
+                    Category = template.Category,
+                    HideWhenLocked = template.HideWhenLocked,
+                    ItemTemplateId = template.ItemTemplateId,
+                    CreatedAt = template.CreatedAt,
+                    UpdatedAt = template.UpdatedAt
+                },
+                cancellationToken: cancellationToken);
+
+            created++;
+        }
+
+        _logger.LogInformation("Seed complete: {Created} created, {Skipped} skipped", created, skipped);
+
+        return (StatusCodes.OK, new SeedEntryTemplatesResponse
+        {
+            Created = created,
+            Skipped = skipped
+        });
+    }
+
+    #endregion
+
+    #region Collection Instance Management
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CollectionResponse?)> CreateCollectionAsync(
+        CreateCollectionRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation(
+            "Creating collection of type {CollectionType} for {OwnerType} {OwnerId} in game {GameServiceId}",
+            body.CollectionType, body.OwnerType, body.OwnerId, body.GameServiceId);
+
+        if (!IsValidOwnerType(body.OwnerType))
+        {
+            _logger.LogWarning("Invalid owner type {OwnerType}", body.OwnerType);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (MapToContainerOwnerType(body.OwnerType) == null)
+        {
+            _logger.LogWarning("Owner type {OwnerType} cannot be mapped to inventory ContainerOwnerType", body.OwnerType);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Validate game service exists
+        try
+        {
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId },
+                cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check uniqueness: one collection per type per game per owner
+        var existingCollection = await CollectionStore.GetAsync(
+            BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
+            cancellationToken);
+
+        if (existingCollection != null)
+        {
+            _logger.LogWarning(
+                "Collection of type {CollectionType} already exists for {OwnerType} {OwnerId} in game {GameServiceId}",
+                body.CollectionType, body.OwnerType, body.OwnerId, body.GameServiceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check max collections per owner
+        var ownerCollections = await CollectionStore.QueryAsync(
+            c => c.OwnerId == body.OwnerId && c.OwnerType == body.OwnerType,
+            cancellationToken: cancellationToken);
+
+        if (ownerCollections.Count >= _configuration.MaxCollectionsPerOwner)
+        {
+            _logger.LogWarning(
+                "Owner {OwnerType} {OwnerId} has reached max collections limit of {Max}",
+                body.OwnerType, body.OwnerId, _configuration.MaxCollectionsPerOwner);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var instance = await CreateCollectionInternalAsync(
+            body.OwnerId, body.OwnerType, body.CollectionType, body.GameServiceId, cancellationToken);
+
+        return (StatusCodes.OK, MapCollectionToResponse(instance, 0));
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CollectionResponse?)> GetCollectionAsync(
+        GetCollectionRequest body,
+        CancellationToken cancellationToken)
+    {
+        var collection = await CollectionStore.GetAsync(
+            BuildCollectionKey(body.CollectionId),
+            cancellationToken);
+
+        if (collection == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+        return (StatusCodes.OK, MapCollectionToResponse(collection, cache.UnlockedEntries.Count));
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListCollectionsResponse?)> ListCollectionsAsync(
+        ListCollectionsRequest body,
+        CancellationToken cancellationToken)
+    {
+        var collections = await CollectionStore.QueryAsync(
+            c => c.OwnerId == body.OwnerId && c.OwnerType == body.OwnerType,
+            cancellationToken: cancellationToken);
+
+        // Apply optional game service filter
+        IEnumerable<CollectionInstanceModel> filtered = collections;
+        if (body.GameServiceId.HasValue)
+        {
+            filtered = collections.Where(c => c.GameServiceId == body.GameServiceId.Value);
+        }
+
+        var results = new List<CollectionResponse>();
+        foreach (var collection in filtered)
+        {
+            // Try to load cache for entry count; use 0 if cache doesn't exist
+            // (GetCollection will rebuild on demand)
+            var cache = await CollectionCache.GetAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
+            var entryCount = cache?.UnlockedEntries.Count ?? 0;
+            results.Add(MapCollectionToResponse(collection, entryCount));
+        }
+
+        return (StatusCodes.OK, new ListCollectionsResponse
+        {
+            Collections = results
+        });
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CollectionResponse?)> DeleteCollectionAsync(
+        DeleteCollectionRequest body,
+        CancellationToken cancellationToken)
+    {
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.CollectionLock,
+            $"col:{body.CollectionId}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockHandle.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for collection {CollectionId}", body.CollectionId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var collection = await CollectionStore.GetAsync(
+            BuildCollectionKey(body.CollectionId),
+            cancellationToken);
+
+        if (collection == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Delete inventory container (which also deletes contained items)
+        try
+        {
+            await _inventoryClient.DeleteContainerAsync(
+                new DeleteContainerRequest { ContainerId = collection.ContainerId },
+                cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogWarning("Container {ContainerId} already deleted", collection.ContainerId);
+        }
+
+        // Delete cache
+        await CollectionCache.DeleteAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
+
+        // Delete collection instance records
+        await CollectionStore.DeleteAsync(BuildCollectionKey(collection.CollectionId), cancellationToken);
+        await CollectionStore.DeleteAsync(
+            BuildCollectionByOwnerKey(collection.OwnerId, collection.OwnerType, collection.GameServiceId, collection.CollectionType),
+            cancellationToken);
+
+        await _messageBus.TryPublishAsync(
+            "collection.deleted",
+            new CollectionDeletedEvent
+            {
+                CollectionId = collection.CollectionId,
+                OwnerId = collection.OwnerId,
+                OwnerType = collection.OwnerType,
+                CollectionType = collection.CollectionType,
+                GameServiceId = collection.GameServiceId,
+                ContainerId = collection.ContainerId,
+                CreatedAt = collection.CreatedAt
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Deleted collection {CollectionId}", collection.CollectionId);
+
+        return (StatusCodes.OK, MapCollectionToResponse(collection, 0));
+    }
+
+    #endregion
+
+    #region Entry Operations
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GrantEntryResponse?)> GrantEntryAsync(
+        GrantEntryRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation(
+            "Granting entry {EntryCode} of type {CollectionType} to {OwnerType} {OwnerId}",
+            body.EntryCode, body.CollectionType, body.OwnerType, body.OwnerId);
+
+        if (!IsValidOwnerType(body.OwnerType))
+        {
+            _logger.LogWarning("Invalid owner type {OwnerType}", body.OwnerType);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (MapToContainerOwnerType(body.OwnerType) == null)
+        {
+            _logger.LogWarning("Owner type {OwnerType} cannot be mapped to inventory ContainerOwnerType", body.OwnerType);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Look up entry template by code
+        var template = await EntryTemplateStore.GetAsync(
+            BuildTemplateByCodeKey(body.GameServiceId, body.CollectionType, body.EntryCode),
+            cancellationToken);
+
+        if (template == null)
+        {
+            _logger.LogWarning(
+                "Entry template with code {EntryCode} not found for type {CollectionType} in game {GameServiceId}",
+                body.EntryCode, body.CollectionType, body.GameServiceId);
+
+            await _messageBus.TryPublishAsync(
+                CollectionTopics.EntryGrantFailed,
+                new CollectionEntryGrantFailedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    OwnerId = body.OwnerId,
+                    OwnerType = body.OwnerType,
+                    EntryCode = body.EntryCode,
+                    Reason = GrantFailureReason.EntryNotFound
+                },
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Find or auto-create collection
+        var collection = await CollectionStore.GetAsync(
+            BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
+            cancellationToken);
+
+        if (collection == null)
+        {
+            // Auto-create collection (and inventory container)
+            _logger.LogInformation(
+                "Auto-creating collection of type {CollectionType} for {OwnerType} {OwnerId}",
+                body.CollectionType, body.OwnerType, body.OwnerId);
+
+            collection = await CreateCollectionInternalAsync(
+                body.OwnerId, body.OwnerType, body.CollectionType, body.GameServiceId, cancellationToken);
+        }
+
+        // Lock the collection for the grant operation
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.CollectionLock,
+            $"col:{collection.CollectionId}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockHandle.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for collection {CollectionId}", collection.CollectionId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Load cache inside lock
+        var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+
+        // Idempotency check: already unlocked → return existing
+        var existingEntry = cache.UnlockedEntries.FirstOrDefault(e => e.Code == body.EntryCode);
+        if (existingEntry != null)
+        {
+            _logger.LogInformation(
+                "Entry {EntryCode} already unlocked in collection {CollectionId}",
+                body.EntryCode, collection.CollectionId);
+
+            return (StatusCodes.OK, new GrantEntryResponse
+            {
+                EntryTemplateId = existingEntry.EntryTemplateId,
+                Code = existingEntry.Code,
+                CollectionId = collection.CollectionId,
+                ItemInstanceId = existingEntry.ItemInstanceId,
+                AlreadyUnlocked = true,
+                UnlockedAt = existingEntry.UnlockedAt
+            });
+        }
+
+        // Check max entries limit
+        if (cache.UnlockedEntries.Count >= _configuration.MaxEntriesPerCollection)
+        {
+            _logger.LogWarning(
+                "Collection {CollectionId} has reached max entries limit of {Max}",
+                collection.CollectionId, _configuration.MaxEntriesPerCollection);
+
+            await _messageBus.TryPublishAsync(
+                CollectionTopics.EntryGrantFailed,
+                new CollectionEntryGrantFailedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    CollectionId = collection.CollectionId,
+                    OwnerId = body.OwnerId,
+                    OwnerType = body.OwnerType,
+                    EntryCode = body.EntryCode,
+                    Reason = GrantFailureReason.MaxEntriesReached
+                },
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Create item instance in the collection's inventory container
+        // Collection items are metadata tokens tracking unlocks, not physical game items.
+        // RealmId is required by the Item service for partitioning; using GameServiceId
+        // as the partition key since collections are scoped to game services.
+        ItemInstanceResponse itemResponse;
+        try
+        {
+            itemResponse = await _itemClient.CreateItemInstanceAsync(
+                new CreateItemInstanceRequest
+                {
+                    TemplateId = template.ItemTemplateId,
+                    ContainerId = collection.ContainerId,
+                    RealmId = body.GameServiceId,
+                    Quantity = 1
+                },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex,
+                "Failed to create item instance for entry {EntryCode} in collection {CollectionId}",
+                body.EntryCode, collection.CollectionId);
+
+            await _messageBus.TryPublishAsync(
+                CollectionTopics.EntryGrantFailed,
+                new CollectionEntryGrantFailedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    CollectionId = collection.CollectionId,
+                    OwnerId = body.OwnerId,
+                    OwnerType = body.OwnerType,
+                    EntryCode = body.EntryCode,
+                    Reason = GrantFailureReason.ItemCreationFailed
+                },
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var newEntry = new UnlockedEntryRecord
+        {
+            Code = template.Code,
+            EntryTemplateId = template.EntryTemplateId,
+            ItemInstanceId = itemResponse.InstanceId,
+            UnlockedAt = now,
+            Metadata = body.Metadata != null ? new EntryMetadataModel
+            {
+                UnlockedIn = body.Metadata.UnlockedIn,
+                UnlockedDuring = body.Metadata.UnlockedDuring,
+                PlayCount = body.Metadata.PlayCount,
+                LastAccessedAt = body.Metadata.LastAccessedAt,
+                Favorited = body.Metadata.Favorited,
+                DiscoveryLevel = body.Metadata.DiscoveryLevel,
+                KillCount = body.Metadata.KillCount,
+                CustomData = body.Metadata.CustomData != null
+                    ? new Dictionary<string, object> { { "data", body.Metadata.CustomData } }
+                    : null
+            } : new EntryMetadataModel()
+        };
+
+        // Update cache with ETag-based optimistic concurrency
+        for (var retry = 0; retry < _configuration.MaxConcurrencyRetries; retry++)
+        {
+            var (cachedValue, etag) = await CollectionCache.GetWithETagAsync(
+                BuildCacheKey(collection.CollectionId), cancellationToken);
+
+            var cacheToUpdate = cachedValue ?? cache;
+            cacheToUpdate.UnlockedEntries.Add(newEntry);
+            cacheToUpdate.LastUpdated = now;
+
+            if (etag != null)
+            {
+                var newEtag = await CollectionCache.TrySaveAsync(
+                    BuildCacheKey(collection.CollectionId),
+                    cacheToUpdate,
+                    etag,
+                    cancellationToken);
+
+                if (newEtag != null) break;
+
+                _logger.LogDebug("Cache ETag conflict on retry {Retry} for collection {CollectionId}",
+                    retry, collection.CollectionId);
+            }
+            else
+            {
+                await CollectionCache.SaveAsync(
+                    BuildCacheKey(collection.CollectionId),
+                    cacheToUpdate,
+                    new StateOptions { Ttl = _configuration.CollectionCacheTtlSeconds },
+                    cancellationToken);
+                break;
+            }
+        }
+
+        // Publish entry-unlocked event
+        await _messageBus.TryPublishAsync(
+            CollectionTopics.EntryUnlocked,
+            new CollectionEntryUnlockedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                CollectionId = collection.CollectionId,
+                OwnerId = collection.OwnerId,
+                OwnerType = collection.OwnerType,
+                GameServiceId = collection.GameServiceId,
+                CollectionType = collection.CollectionType,
+                EntryCode = template.Code,
+                DisplayName = template.DisplayName,
+                Category = template.Category,
+                IsFirstGlobal = false // Would require global tracking to determine
+            },
+            cancellationToken: cancellationToken);
+
+        // Check and publish milestones
+        var totalTemplates = await EntryTemplateStore.QueryAsync(
+            t => t.CollectionType == collection.CollectionType && t.GameServiceId == collection.GameServiceId,
+            cancellationToken: cancellationToken);
+
+        await CheckAndPublishMilestonesAsync(
+            collection,
+            cache.UnlockedEntries.Count,
+            totalTemplates.Count,
+            cancellationToken);
+
+        _logger.LogInformation(
+            "Granted entry {EntryCode} to collection {CollectionId}, item instance {ItemInstanceId}",
+            body.EntryCode, collection.CollectionId, itemResponse.InstanceId);
+
+        return (StatusCodes.OK, new GrantEntryResponse
+        {
+            EntryTemplateId = template.EntryTemplateId,
+            Code = template.Code,
+            CollectionId = collection.CollectionId,
+            ItemInstanceId = itemResponse.InstanceId,
+            AlreadyUnlocked = false,
+            UnlockedAt = now
+        });
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, HasEntryResponse?)> HasEntryAsync(
+        HasEntryRequest body,
+        CancellationToken cancellationToken)
+    {
+        var collection = await CollectionStore.GetAsync(
+            BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
+            cancellationToken);
+
+        if (collection == null)
+        {
+            return (StatusCodes.OK, new HasEntryResponse { HasEntry = false });
+        }
+
+        var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+        var entry = cache.UnlockedEntries.FirstOrDefault(e => e.Code == body.EntryCode);
+
+        return (StatusCodes.OK, new HasEntryResponse
+        {
+            HasEntry = entry != null,
+            UnlockedAt = entry?.UnlockedAt
+        });
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, QueryEntriesResponse?)> QueryEntriesAsync(
+        QueryEntriesRequest body,
+        CancellationToken cancellationToken)
+    {
+        var collection = await CollectionStore.GetAsync(
+            BuildCollectionKey(body.CollectionId),
+            cancellationToken);
+
+        if (collection == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+
+        // Load all templates for this collection to enrich responses
+        var templates = await EntryTemplateStore.QueryAsync(
+            t => t.CollectionType == collection.CollectionType && t.GameServiceId == collection.GameServiceId,
+            cancellationToken: cancellationToken);
+
+        var templatesByCode = templates.ToDictionary(t => t.Code);
+
+        // Filter entries
+        IEnumerable<UnlockedEntryRecord> filtered = cache.UnlockedEntries;
+
+        if (!string.IsNullOrEmpty(body.Category))
+        {
+            filtered = filtered.Where(e =>
+                templatesByCode.TryGetValue(e.Code, out var tpl) && tpl.Category == body.Category);
+        }
+
+        if (body.Tags != null && body.Tags.Count > 0)
+        {
+            var requestedTags = body.Tags.ToHashSet();
+            filtered = filtered.Where(e =>
+                templatesByCode.TryGetValue(e.Code, out var tpl) &&
+                tpl.Tags != null &&
+                tpl.Tags.Any(tag => requestedTags.Contains(tag)));
+        }
+
+        var allEntries = filtered.ToList();
+
+        // Cursor-based pagination
+        var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
+        var startIndex = 0;
+        if (!string.IsNullOrEmpty(body.Cursor) && int.TryParse(body.Cursor, out var cursorIndex))
+        {
+            startIndex = cursorIndex;
+        }
+
+        var paged = allEntries.Skip(startIndex).Take(pageSize + 1).ToList();
+        var hasMore = paged.Count > pageSize;
+        var items = paged.Take(pageSize).ToList();
+
+        var responseEntries = new List<UnlockedEntryResponse>();
+        foreach (var entry in items)
+        {
+            if (templatesByCode.TryGetValue(entry.Code, out var tpl))
+            {
+                responseEntries.Add(MapUnlockedEntryToResponse(entry, tpl));
+            }
+        }
+
+        return (StatusCodes.OK, new QueryEntriesResponse
+        {
+            Entries = responseEntries,
+            NextCursor = hasMore ? (startIndex + pageSize).ToString() : null,
+            HasMore = hasMore
+        });
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, UnlockedEntryResponse?)> UpdateEntryMetadataAsync(
+        UpdateEntryMetadataRequest body,
+        CancellationToken cancellationToken)
+    {
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.CollectionLock,
+            $"col:{body.CollectionId}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockHandle.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for collection {CollectionId}", body.CollectionId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var collection = await CollectionStore.GetAsync(
+            BuildCollectionKey(body.CollectionId),
+            cancellationToken);
+
+        if (collection == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+        var entry = cache.UnlockedEntries.FirstOrDefault(e => e.Code == body.EntryCode);
+
+        if (entry == null)
+        {
+            _logger.LogWarning(
+                "Entry {EntryCode} not found in collection {CollectionId}",
+                body.EntryCode, body.CollectionId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Ensure metadata exists
+        entry.Metadata ??= new EntryMetadataModel();
+
+        if (body.PlayCount.HasValue)
+        {
+            entry.Metadata.PlayCount = body.PlayCount.Value;
+            entry.Metadata.LastAccessedAt = DateTimeOffset.UtcNow;
+        }
+        if (body.KillCount.HasValue)
+        {
+            entry.Metadata.KillCount = body.KillCount.Value;
+        }
+        if (body.Favorited.HasValue)
+        {
+            entry.Metadata.Favorited = body.Favorited.Value;
+        }
+        if (body.DiscoveryLevel.HasValue)
+        {
+            entry.Metadata.DiscoveryLevel = body.DiscoveryLevel.Value;
+        }
+
+        cache.LastUpdated = DateTimeOffset.UtcNow;
+
+        // Save cache with ETag-based optimistic concurrency
+        for (var retry = 0; retry < _configuration.MaxConcurrencyRetries; retry++)
+        {
+            var (_, etag) = await CollectionCache.GetWithETagAsync(
+                BuildCacheKey(collection.CollectionId), cancellationToken);
+
+            if (etag != null)
+            {
+                var newEtag = await CollectionCache.TrySaveAsync(
+                    BuildCacheKey(collection.CollectionId),
+                    cache,
+                    etag,
+                    cancellationToken);
+
+                if (newEtag != null) break;
+
+                _logger.LogDebug("Cache ETag conflict on retry {Retry} for collection {CollectionId}",
+                    retry, collection.CollectionId);
+
+                // Reload cache on conflict
+                cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+                entry = cache.UnlockedEntries.FirstOrDefault(e => e.Code == body.EntryCode);
+                if (entry == null) return (StatusCodes.NotFound, null);
+            }
+            else
+            {
+                await CollectionCache.SaveAsync(
+                    BuildCacheKey(collection.CollectionId),
+                    cache,
+                    new StateOptions { Ttl = _configuration.CollectionCacheTtlSeconds },
+                    cancellationToken);
+                break;
+            }
+        }
+
+        // Load template for response enrichment
+        var template = await EntryTemplateStore.GetAsync(
+            BuildTemplateByCodeKey(collection.GameServiceId, collection.CollectionType, body.EntryCode),
+            cancellationToken);
+
+        if (template == null)
+        {
+            // Template was deleted but entry still exists in cache; return minimal response
+            return (StatusCodes.OK, new UnlockedEntryResponse
+            {
+                EntryTemplateId = entry.EntryTemplateId,
+                Code = entry.Code,
+                DisplayName = entry.Code,
+                ItemInstanceId = entry.ItemInstanceId,
+                UnlockedAt = entry.UnlockedAt
+            });
+        }
+
+        return (StatusCodes.OK, MapUnlockedEntryToResponse(entry, template));
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CompletionStatsResponse?)> GetCompletionStatsAsync(
+        GetCompletionStatsRequest body,
+        CancellationToken cancellationToken)
+    {
+        // Count total templates for this collection type + game
+        var allTemplates = await EntryTemplateStore.QueryAsync(
+            t => t.CollectionType == body.CollectionType && t.GameServiceId == body.GameServiceId,
+            cancellationToken: cancellationToken);
+
+        var totalEntries = allTemplates.Count;
+
+        // Find the collection
+        var collection = await CollectionStore.GetAsync(
+            BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
+            cancellationToken);
+
+        var unlockedCount = 0;
+        var unlockedCodes = new HashSet<string>();
+
+        if (collection != null)
+        {
+            var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+            unlockedCount = cache.UnlockedEntries.Count;
+            foreach (var entry in cache.UnlockedEntries)
+            {
+                unlockedCodes.Add(entry.Code);
+            }
+        }
+
+        var completionPercentage = totalEntries > 0
+            ? (double)unlockedCount / totalEntries * 100.0
+            : 0.0;
+
+        // Break down by category
+        var byCategory = new Dictionary<string, CategoryStats>();
+        var categoryGroups = allTemplates
+            .Where(t => t.Category != null)
+            .GroupBy(t => t.Category);
+
+        foreach (var group in categoryGroups)
+        {
+            var categoryName = group.Key;
+            if (categoryName == null) continue;
+
+            var categoryTotal = group.Count();
+            var categoryUnlocked = group.Count(t => unlockedCodes.Contains(t.Code));
+            var categoryPercentage = categoryTotal > 0
+                ? (double)categoryUnlocked / categoryTotal * 100.0
+                : 0.0;
+
+            byCategory[categoryName] = new CategoryStats
+            {
+                Total = categoryTotal,
+                Unlocked = categoryUnlocked,
+                Percentage = categoryPercentage
+            };
+        }
+
+        return (StatusCodes.OK, new CompletionStatsResponse
+        {
+            CollectionType = body.CollectionType,
+            TotalEntries = totalEntries,
+            UnlockedEntries = unlockedCount,
+            CompletionPercentage = completionPercentage,
+            ByCategory = byCategory.Count > 0 ? byCategory : null
+        });
+    }
+
+    #endregion
+
+    #region Music Operations
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, MusicTrackSelectionResponse?)> SelectTrackForAreaAsync(
+        SelectTrackForAreaRequest body,
+        CancellationToken cancellationToken)
+    {
+        // Load area config
+        var areaConfig = await AreaMusicStore.GetAsync(
+            BuildAreaMusicByCodeKey(body.GameServiceId, body.AreaCode),
+            cancellationToken);
+
+        if (areaConfig == null)
+        {
+            _logger.LogWarning(
+                "No area music config for area {AreaCode} in game {GameServiceId}",
+                body.AreaCode, body.GameServiceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Find the owner's music library collection
+        var collection = await CollectionStore.GetAsync(
+            BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, CollectionType.MusicLibrary),
+            cancellationToken);
+
+        if (collection == null)
+        {
+            // No music library; return default track
+            return await BuildDefaultTrackResponseAsync(
+                areaConfig, body.GameServiceId, cancellationToken);
+        }
+
+        var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+
+        if (cache.UnlockedEntries.Count == 0)
+        {
+            return await BuildDefaultTrackResponseAsync(
+                areaConfig, body.GameServiceId, cancellationToken);
+        }
+
+        // Load music templates for matching
+        var musicTemplates = await EntryTemplateStore.QueryAsync(
+            t => t.CollectionType == CollectionType.MusicLibrary && t.GameServiceId == body.GameServiceId,
+            cancellationToken: cancellationToken);
+
+        var templatesByCode = musicTemplates.ToDictionary(t => t.Code);
+        var areaThemes = areaConfig.Themes.ToHashSet();
+
+        // Build weighted candidate list based on theme overlap
+        var candidates = new List<(EntryTemplateModel Template, List<string> MatchedThemes, int Weight)>();
+
+        foreach (var entry in cache.UnlockedEntries)
+        {
+            if (!templatesByCode.TryGetValue(entry.Code, out var tpl)) continue;
+            if (tpl.Themes == null || tpl.Themes.Count == 0) continue;
+
+            var matchedThemes = tpl.Themes.Where(t => areaThemes.Contains(t)).ToList();
+            if (matchedThemes.Count > 0)
+            {
+                candidates.Add((tpl, matchedThemes, matchedThemes.Count));
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            return await BuildDefaultTrackResponseAsync(
+                areaConfig, body.GameServiceId, cancellationToken);
+        }
+
+        // Weighted random selection
+        var totalWeight = candidates.Sum(c => c.Weight);
+        var randomValue = Random.Shared.Next(totalWeight);
+        var cumulative = 0;
+        (EntryTemplateModel Template, List<string> MatchedThemes, int Weight) selected = candidates[0];
+
+        foreach (var candidate in candidates)
+        {
+            cumulative += candidate.Weight;
+            if (randomValue < cumulative)
+            {
+                selected = candidate;
+                break;
+            }
+        }
+
+        return (StatusCodes.OK, new MusicTrackSelectionResponse
+        {
+            TrackCode = selected.Template.Code,
+            DisplayName = selected.Template.DisplayName,
+            Composer = selected.Template.Composer,
+            AssetId = selected.Template.AssetId,
+            Duration = selected.Template.Duration,
+            LoopPoint = selected.Template.LoopPoint,
+            Themes = selected.Template.Themes?.ToList(),
+            MatchedThemes = selected.MatchedThemes
+        });
     }
 
     /// <summary>
-    /// Implementation of UpdateEntryTemplate operation.
-    /// TODO: Implement business logic for this method.
+    /// Builds a response using the area config's default track.
     /// </summary>
-    public async Task<(StatusCodes, EntryTemplateResponse?)> UpdateEntryTemplateAsync(UpdateEntryTemplateRequest body, CancellationToken cancellationToken)
+    private async Task<(StatusCodes, MusicTrackSelectionResponse?)> BuildDefaultTrackResponseAsync(
+        AreaMusicConfigModel areaConfig,
+        Guid gameServiceId,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing UpdateEntryTemplate operation");
+        var defaultTemplate = await EntryTemplateStore.GetAsync(
+            BuildTemplateByCodeKey(gameServiceId, CollectionType.MusicLibrary, areaConfig.DefaultTrackCode),
+            cancellationToken);
 
-        try
+        if (defaultTemplate == null)
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UpdateEntryTemplate not yet implemented");
+            _logger.LogWarning(
+                "Default track {DefaultTrackCode} not found for area {AreaCode}",
+                areaConfig.DefaultTrackCode, areaConfig.AreaCode);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new MusicTrackSelectionResponse
         {
-            _logger.LogError(ex, "Error executing UpdateEntryTemplate operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "UpdateEntryTemplate",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/entry-template/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
+            TrackCode = defaultTemplate.Code,
+            DisplayName = defaultTemplate.DisplayName,
+            Composer = defaultTemplate.Composer,
+            AssetId = defaultTemplate.AssetId,
+            Duration = defaultTemplate.Duration,
+            LoopPoint = defaultTemplate.LoopPoint,
+            Themes = defaultTemplate.Themes?.ToList(),
+            MatchedThemes = new List<string>()
+        });
     }
 
-    /// <summary>
-    /// Implementation of DeleteEntryTemplate operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, EntryTemplateResponse?)> DeleteEntryTemplateAsync(DeleteEntryTemplateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, AreaMusicConfigResponse?)> SetAreaMusicConfigAsync(
+        SetAreaMusicConfigRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing DeleteEntryTemplate operation");
+        _logger.LogInformation(
+            "Setting area music config for area {AreaCode} in game {GameServiceId}",
+            body.AreaCode, body.GameServiceId);
 
+        // Validate game service exists
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeleteEntryTemplate not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId },
+                cancellationToken);
         }
-        catch (Exception ex)
+        catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            _logger.LogError(ex, "Error executing DeleteEntryTemplate operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "DeleteEntryTemplate",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/entry-template/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Validate default track template exists
+        var defaultTrack = await EntryTemplateStore.GetAsync(
+            BuildTemplateByCodeKey(body.GameServiceId, CollectionType.MusicLibrary, body.DefaultTrackCode),
+            cancellationToken);
+
+        if (defaultTrack == null)
+        {
+            _logger.LogWarning(
+                "Default track template {DefaultTrackCode} not found for music library in game {GameServiceId}",
+                body.DefaultTrackCode, body.GameServiceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        // Check for existing config (upsert)
+        var existing = await AreaMusicStore.GetAsync(
+            BuildAreaMusicByCodeKey(body.GameServiceId, body.AreaCode),
+            cancellationToken);
+
+        AreaMusicConfigModel config;
+        if (existing != null)
+        {
+            existing.Themes = body.Themes.ToList();
+            existing.DefaultTrackCode = body.DefaultTrackCode;
+            existing.UpdatedAt = now;
+            config = existing;
+        }
+        else
+        {
+            config = new AreaMusicConfigModel
+            {
+                AreaConfigId = Guid.NewGuid(),
+                AreaCode = body.AreaCode,
+                GameServiceId = body.GameServiceId,
+                Themes = body.Themes.ToList(),
+                DefaultTrackCode = body.DefaultTrackCode,
+                CreatedAt = now
+            };
+        }
+
+        await AreaMusicStore.SaveAsync(
+            BuildAreaMusicKey(config.AreaConfigId),
+            config,
+            cancellationToken: cancellationToken);
+
+        await AreaMusicStore.SaveAsync(
+            BuildAreaMusicByCodeKey(config.GameServiceId, config.AreaCode),
+            config,
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Set area music config {AreaConfigId} for area {AreaCode}",
+            config.AreaConfigId, config.AreaCode);
+
+        return (StatusCodes.OK, MapAreaMusicToResponse(config));
     }
 
-    /// <summary>
-    /// Implementation of SeedEntryTemplates operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, SeedEntryTemplatesResponse?)> SeedEntryTemplatesAsync(SeedEntryTemplatesRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, AreaMusicConfigResponse?)> GetAreaMusicConfigAsync(
+        GetAreaMusicConfigRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing SeedEntryTemplates operation");
+        var config = await AreaMusicStore.GetAsync(
+            BuildAreaMusicByCodeKey(body.GameServiceId, body.AreaCode),
+            cancellationToken);
 
-        try
+        if (config == null)
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method SeedEntryTemplates not yet implemented");
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing SeedEntryTemplates operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "SeedEntryTemplates",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/entry-template/seed",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
+        return (StatusCodes.OK, MapAreaMusicToResponse(config));
     }
 
-    /// <summary>
-    /// Implementation of CreateCollection operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, CollectionResponse?)> CreateCollectionAsync(CreateCollectionRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListAreaMusicConfigsResponse?)> ListAreaMusicConfigsAsync(
+        ListAreaMusicConfigsRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing CreateCollection operation");
+        var configs = await AreaMusicStore.QueryAsync(
+            c => c.GameServiceId == body.GameServiceId,
+            cancellationToken: cancellationToken);
 
-        try
+        return (StatusCodes.OK, new ListAreaMusicConfigsResponse
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CreateCollection not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing CreateCollection operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "CreateCollection",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
+            Configs = configs.Select(MapAreaMusicToResponse).ToList()
+        });
     }
 
-    /// <summary>
-    /// Implementation of GetCollection operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, CollectionResponse?)> GetCollectionAsync(GetCollectionRequest body, CancellationToken cancellationToken)
+    #endregion
+
+    #region Discovery
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, AdvanceDiscoveryResponse?)> AdvanceDiscoveryAsync(
+        AdvanceDiscoveryRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetCollection operation");
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.CollectionLock,
+            $"col:{body.CollectionId}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
 
-        try
+        if (!lockHandle.Success)
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetCollection not yet implemented");
+            _logger.LogWarning("Failed to acquire lock for collection {CollectionId}", body.CollectionId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
+        var collection = await CollectionStore.GetAsync(
+            BuildCollectionKey(body.CollectionId),
+            cancellationToken);
+
+        if (collection == null)
         {
-            _logger.LogError(ex, "Error executing GetCollection operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "GetCollection",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.NotFound, null);
         }
+
+        var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+
+        // Find the unlocked entry
+        var entry = cache.UnlockedEntries.FirstOrDefault(e => e.Code == body.EntryCode);
+        if (entry == null)
+        {
+            _logger.LogWarning(
+                "Entry {EntryCode} not unlocked in collection {CollectionId}",
+                body.EntryCode, body.CollectionId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Load template to check discovery levels
+        var template = await EntryTemplateStore.GetAsync(
+            BuildTemplateByCodeKey(collection.GameServiceId, collection.CollectionType, body.EntryCode),
+            cancellationToken);
+
+        if (template == null)
+        {
+            _logger.LogWarning("Entry template for code {EntryCode} not found", body.EntryCode);
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (template.DiscoveryLevels == null || template.DiscoveryLevels.Count == 0)
+        {
+            _logger.LogWarning("Entry template {EntryCode} has no discovery levels defined", body.EntryCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        entry.Metadata ??= new EntryMetadataModel();
+        var currentLevel = entry.Metadata.DiscoveryLevel;
+        var nextLevel = currentLevel + 1;
+
+        var nextLevelDef = template.DiscoveryLevels.FirstOrDefault(dl => dl.Level == nextLevel);
+        if (nextLevelDef == null)
+        {
+            _logger.LogWarning(
+                "Entry {EntryCode} is already at max discovery level {CurrentLevel}",
+                body.EntryCode, currentLevel);
+            return (StatusCodes.Conflict, null);
+        }
+
+        entry.Metadata.DiscoveryLevel = nextLevel;
+        cache.LastUpdated = DateTimeOffset.UtcNow;
+
+        // Save cache with ETag-based optimistic concurrency
+        for (var retry = 0; retry < _configuration.MaxConcurrencyRetries; retry++)
+        {
+            var (_, etag) = await CollectionCache.GetWithETagAsync(
+                BuildCacheKey(collection.CollectionId), cancellationToken);
+
+            if (etag != null)
+            {
+                var newEtag = await CollectionCache.TrySaveAsync(
+                    BuildCacheKey(collection.CollectionId),
+                    cache,
+                    etag,
+                    cancellationToken);
+
+                if (newEtag != null) break;
+
+                _logger.LogDebug("Cache ETag conflict on retry {Retry} for collection {CollectionId}",
+                    retry, collection.CollectionId);
+            }
+            else
+            {
+                await CollectionCache.SaveAsync(
+                    BuildCacheKey(collection.CollectionId),
+                    cache,
+                    new StateOptions { Ttl = _configuration.CollectionCacheTtlSeconds },
+                    cancellationToken);
+                break;
+            }
+        }
+
+        // Publish discovery advanced event
+        await _messageBus.TryPublishAsync(
+            CollectionTopics.DiscoveryAdvanced,
+            new CollectionDiscoveryAdvancedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                CollectionId = collection.CollectionId,
+                OwnerId = collection.OwnerId,
+                OwnerType = collection.OwnerType,
+                EntryCode = body.EntryCode,
+                NewLevel = nextLevel,
+                Reveals = nextLevelDef.Reveals.ToList()
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Advanced discovery for entry {EntryCode} in collection {CollectionId} to level {NewLevel}",
+            body.EntryCode, body.CollectionId, nextLevel);
+
+        return (StatusCodes.OK, new AdvanceDiscoveryResponse
+        {
+            EntryCode = body.EntryCode,
+            NewLevel = nextLevel,
+            Reveals = nextLevelDef.Reveals.ToList()
+        });
     }
 
-    /// <summary>
-    /// Implementation of ListCollections operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListCollectionsResponse?)> ListCollectionsAsync(ListCollectionsRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing ListCollections operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListCollections not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ListCollections operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "ListCollections",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of DeleteCollection operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, CollectionResponse?)> DeleteCollectionAsync(DeleteCollectionRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing DeleteCollection operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeleteCollection not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing DeleteCollection operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "DeleteCollection",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of GrantEntry operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, GrantEntryResponse?)> GrantEntryAsync(GrantEntryRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing GrantEntry operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GrantEntry not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GrantEntry operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "GrantEntry",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/grant",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of HasEntry operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, HasEntryResponse?)> HasEntryAsync(HasEntryRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing HasEntry operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method HasEntry not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing HasEntry operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "HasEntry",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/has",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of QueryEntries operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, QueryEntriesResponse?)> QueryEntriesAsync(QueryEntriesRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing QueryEntries operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method QueryEntries not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing QueryEntries operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "QueryEntries",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/query",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of UpdateEntryMetadata operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, UnlockedEntryResponse?)> UpdateEntryMetadataAsync(UpdateEntryMetadataRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing UpdateEntryMetadata operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UpdateEntryMetadata not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing UpdateEntryMetadata operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "UpdateEntryMetadata",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/update-metadata",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of GetCompletionStats operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, CompletionStatsResponse?)> GetCompletionStatsAsync(GetCompletionStatsRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing GetCompletionStats operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetCompletionStats not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetCompletionStats operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "GetCompletionStats",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/stats",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of SelectTrackForArea operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, MusicTrackSelectionResponse?)> SelectTrackForAreaAsync(SelectTrackForAreaRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing SelectTrackForArea operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method SelectTrackForArea not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing SelectTrackForArea operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "SelectTrackForArea",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/music/select-for-area",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of SetAreaMusicConfig operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, AreaMusicConfigResponse?)> SetAreaMusicConfigAsync(SetAreaMusicConfigRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing SetAreaMusicConfig operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method SetAreaMusicConfig not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing SetAreaMusicConfig operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "SetAreaMusicConfig",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/music/area-config/set",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of GetAreaMusicConfig operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, AreaMusicConfigResponse?)> GetAreaMusicConfigAsync(GetAreaMusicConfigRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing GetAreaMusicConfig operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetAreaMusicConfig not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetAreaMusicConfig operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "GetAreaMusicConfig",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/music/area-config/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of ListAreaMusicConfigs operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListAreaMusicConfigsResponse?)> ListAreaMusicConfigsAsync(ListAreaMusicConfigsRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing ListAreaMusicConfigs operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListAreaMusicConfigs not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ListAreaMusicConfigs operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "ListAreaMusicConfigs",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/music/area-config/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of AdvanceDiscovery operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, AdvanceDiscoveryResponse?)> AdvanceDiscoveryAsync(AdvanceDiscoveryRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing AdvanceDiscovery operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method AdvanceDiscovery not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing AdvanceDiscovery operation");
-            await _messageBus.TryPublishErrorAsync(
-                "collection",
-                "AdvanceDiscovery",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/collection/discovery/advance",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
+    #endregion
 }

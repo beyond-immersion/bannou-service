@@ -215,123 +215,114 @@ public partial class ContractService : IContractService
         CreateContractTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogInformation("Creating contract template with code: {Code}", body.Code);
+
+        // Check if template code already exists
+        var codeIndexKey = $"{TEMPLATE_CODE_INDEX}{body.Code}";
+        var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract)
+            .GetAsync(codeIndexKey, cancellationToken);
+
+        if (!string.IsNullOrEmpty(existingId))
         {
-            _logger.LogInformation("Creating contract template with code: {Code}", body.Code);
+            _logger.LogWarning("Template with code already exists: {Code}", body.Code);
+            return (StatusCodes.Conflict, null);
+        }
 
-            // Check if template code already exists
-            var codeIndexKey = $"{TEMPLATE_CODE_INDEX}{body.Code}";
-            var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract)
-                .GetAsync(codeIndexKey, cancellationToken);
+        // Validate milestone count against configuration limit
+        if (body.Milestones?.Count > _configuration.MaxMilestonesPerTemplate)
+        {
+            _logger.LogWarning("Template milestone count {Count} exceeds maximum {Max}",
+                body.Milestones.Count, _configuration.MaxMilestonesPerTemplate);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (!string.IsNullOrEmpty(existingId))
+        // Validate prebound API count per milestone and deadline format
+        if (body.Milestones != null)
+        {
+            foreach (var milestone in body.Milestones)
             {
-                _logger.LogWarning("Template with code already exists: {Code}", body.Code);
-                return (StatusCodes.Conflict, null);
-            }
+                var onCompleteCount = milestone.OnComplete?.Count ?? 0;
+                var onExpireCount = milestone.OnExpire?.Count ?? 0;
 
-            // Validate milestone count against configuration limit
-            if (body.Milestones?.Count > _configuration.MaxMilestonesPerTemplate)
-            {
-                _logger.LogWarning("Template milestone count {Count} exceeds maximum {Max}",
-                    body.Milestones.Count, _configuration.MaxMilestonesPerTemplate);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate prebound API count per milestone and deadline format
-            if (body.Milestones != null)
-            {
-                foreach (var milestone in body.Milestones)
+                if (onCompleteCount > _configuration.MaxPreboundApisPerMilestone ||
+                    onExpireCount > _configuration.MaxPreboundApisPerMilestone)
                 {
-                    var onCompleteCount = milestone.OnComplete?.Count ?? 0;
-                    var onExpireCount = milestone.OnExpire?.Count ?? 0;
+                    _logger.LogWarning(
+                        "Milestone {Code} exceeds prebound API limit: onComplete={OnComplete}, onExpire={OnExpire}, max={Max}",
+                        milestone.Code, onCompleteCount, onExpireCount, _configuration.MaxPreboundApisPerMilestone);
+                    return (StatusCodes.BadRequest, null);
+                }
 
-                    if (onCompleteCount > _configuration.MaxPreboundApisPerMilestone ||
-                        onExpireCount > _configuration.MaxPreboundApisPerMilestone)
-                    {
-                        _logger.LogWarning(
-                            "Milestone {Code} exceeds prebound API limit: onComplete={OnComplete}, onExpire={OnExpire}, max={Max}",
-                            milestone.Code, onCompleteCount, onExpireCount, _configuration.MaxPreboundApisPerMilestone);
-                        return (StatusCodes.BadRequest, null);
-                    }
-
-                    // Validate deadline format if specified (ISO 8601 duration)
-                    if (!string.IsNullOrEmpty(milestone.Deadline) && ParseIsoDuration(milestone.Deadline) == null)
-                    {
-                        _logger.LogWarning(
-                            "Milestone {Code} has invalid deadline format: {Deadline}. Expected ISO 8601 duration (e.g., P10D, PT2H)",
-                            milestone.Code, milestone.Deadline);
-                        return (StatusCodes.BadRequest, null);
-                    }
+                // Validate deadline format if specified (ISO 8601 duration)
+                if (!string.IsNullOrEmpty(milestone.Deadline) && ParseIsoDuration(milestone.Deadline) == null)
+                {
+                    _logger.LogWarning(
+                        "Milestone {Code} has invalid deadline format: {Deadline}. Expected ISO 8601 duration (e.g., P10D, PT2H)",
+                        milestone.Code, milestone.Deadline);
+                    return (StatusCodes.BadRequest, null);
                 }
             }
-
-            var templateId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            var model = new ContractTemplateModel
-            {
-                TemplateId = templateId,
-                Code = body.Code,
-                Name = body.Name,
-                Description = body.Description,
-                RealmId = body.RealmId,
-                MinParties = body.MinParties,
-                MaxParties = body.MaxParties,
-                PartyRoles = body.PartyRoles?.Select(r => new PartyRoleModel
-                {
-                    Role = r.Role,
-                    MinCount = r.MinCount,
-                    MaxCount = r.MaxCount,
-                    AllowedEntityTypes = r.AllowedEntityTypes?.ToList()
-                }).ToList() ?? new List<PartyRoleModel>(),
-                DefaultTerms = MapTermsToModel(body.DefaultTerms),
-                Milestones = body.Milestones?.Select(m => new MilestoneDefinitionModel
-                {
-                    Code = m.Code,
-                    Name = m.Name,
-                    Description = m.Description,
-                    Sequence = m.Sequence,
-                    Required = m.Required,
-                    Deadline = m.Deadline,
-                    DeadlineBehavior = m.DeadlineBehavior,
-                    OnComplete = m.OnComplete?.Select(MapPreboundApiToModel).ToList(),
-                    OnExpire = m.OnExpire?.Select(MapPreboundApiToModel).ToList()
-                }).ToList(),
-                DefaultEnforcementMode = body.DefaultEnforcementMode != default
-                    ? body.DefaultEnforcementMode
-                    : _configuration.DefaultEnforcementMode,
-                Transferable = body.Transferable,
-                GameMetadata = body.GameMetadata,
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            // Save template
-            var templateKey = $"{TEMPLATE_PREFIX}{templateId}";
-            await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
-
-            // Save code index
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract)
-                .SaveAsync(codeIndexKey, templateId.ToString(), cancellationToken: cancellationToken);
-
-            // Add to all templates list
-            await AddToListAsync(ALL_TEMPLATES_KEY, templateId.ToString(), cancellationToken);
-
-            // Publish event
-            await PublishTemplateCreatedEventAsync(model, cancellationToken);
-
-            _logger.LogInformation("Created contract template: {TemplateId} with code {Code}", templateId, body.Code);
-            return (StatusCodes.OK, MapTemplateToResponse(model));
         }
-        catch (Exception ex)
+
+        var templateId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var model = new ContractTemplateModel
         {
-            _logger.LogError(ex, "Error creating contract template");
-            await EmitErrorAsync("CreateContractTemplate", "post:/contract/template/create", ex);
-            return (StatusCodes.InternalServerError, null);
-        }
+            TemplateId = templateId,
+            Code = body.Code,
+            Name = body.Name,
+            Description = body.Description,
+            RealmId = body.RealmId,
+            MinParties = body.MinParties,
+            MaxParties = body.MaxParties,
+            PartyRoles = body.PartyRoles?.Select(r => new PartyRoleModel
+            {
+                Role = r.Role,
+                MinCount = r.MinCount,
+                MaxCount = r.MaxCount,
+                AllowedEntityTypes = r.AllowedEntityTypes?.ToList()
+            }).ToList() ?? new List<PartyRoleModel>(),
+            DefaultTerms = MapTermsToModel(body.DefaultTerms),
+            Milestones = body.Milestones?.Select(m => new MilestoneDefinitionModel
+            {
+                Code = m.Code,
+                Name = m.Name,
+                Description = m.Description,
+                Sequence = m.Sequence,
+                Required = m.Required,
+                Deadline = m.Deadline,
+                DeadlineBehavior = m.DeadlineBehavior,
+                OnComplete = m.OnComplete?.Select(MapPreboundApiToModel).ToList(),
+                OnExpire = m.OnExpire?.Select(MapPreboundApiToModel).ToList()
+            }).ToList(),
+            DefaultEnforcementMode = body.DefaultEnforcementMode != default
+                ? body.DefaultEnforcementMode
+                : _configuration.DefaultEnforcementMode,
+            Transferable = body.Transferable,
+            GameMetadata = body.GameMetadata,
+            IsActive = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Save template
+        var templateKey = $"{TEMPLATE_PREFIX}{templateId}";
+        await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
+
+        // Save code index
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract)
+            .SaveAsync(codeIndexKey, templateId.ToString(), cancellationToken: cancellationToken);
+
+        // Add to all templates list
+        await AddToListAsync(ALL_TEMPLATES_KEY, templateId.ToString(), cancellationToken);
+
+        // Publish event
+        await PublishTemplateCreatedEventAsync(model, cancellationToken);
+
+        _logger.LogInformation("Created contract template: {TemplateId} with code {Code}", templateId, body.Code);
+        return (StatusCodes.OK, MapTemplateToResponse(model));
     }
 
     /// <inheritdoc/>
