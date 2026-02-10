@@ -160,9 +160,11 @@ x-lifecycle:
 ```
 
 **Generated output** (`schemas/Generated/{service}-lifecycle-events.yaml`):
-- `EntityNameCreatedEvent` - Full entity data on creation
+- `EntityNameCreatedEvent` - Full entity data (sensitive fields excluded)
 - `EntityNameUpdatedEvent` - Full entity data + `changedFields` array
-- `EntityNameDeletedEvent` - Entity ID + `deletedReason`
+- `EntityNameDeletedEvent` - Full entity data + nullable `deletedReason`
+
+All three events carry the complete model so consumers can react without needing a follow-up lookup.
 
 If `resource_mapping` is specified, each generated event includes `x-resource-mapping` for Puppetmaster watch subscriptions.
 
@@ -190,7 +192,7 @@ PersonalityUpdatedEvent:
 
 ### x-event-subscriptions (Event Handler Generation)
 
-Defined in `{service}-events.yaml`, generates event subscription handlers.
+Defined in `{service}-events.yaml` under `info:`, declares events this service consumes and generates subscription handler scaffolding.
 
 ```yaml
 info:
@@ -201,10 +203,33 @@ info:
 ```
 
 - `topic`: RabbitMQ routing key
-- `event`: Event model class name
+- `event`: Event model class name (must exist in a `components/schemas` section — either in this file or a referenced lifecycle events file)
 - `handler`: Handler method name (without `Async` suffix)
 
 **Generated output**: `{Service}EventsController.cs` (handlers) and `{Service}ServiceEvents.cs` (registration template).
+
+### x-event-publications (Event Publication Registry)
+
+Defined in `{service}-events.yaml` under `info:`, declares all events this service publishes. Used by `generate-resource-mappings.py` to resolve topics for `x-resource-mapping` entries, and serves as the authoritative registry of what a service emits.
+
+```yaml
+info:
+  x-event-publications:
+    - topic: character.created
+      event: CharacterCreatedEvent
+      description: Published when a new character is created
+    - topic: character.realm.joined
+      event: CharacterRealmJoinedEvent
+      description: Published when a character joins a realm
+```
+
+- `topic`: RabbitMQ routing key (must match what the service publishes via `IMessageBus`)
+- `event`: Event model class name (must exist in `components/schemas` or generated lifecycle events)
+- `description`: Human-readable purpose
+
+**Both lifecycle and custom events should be listed.** Lifecycle events (from `x-lifecycle`) are auto-generated but should still appear in `x-event-publications` so the full event catalog is in one place. Custom events defined in `components/schemas` must also be listed here.
+
+**Does not generate code directly** — this is a declarative registry. Other generators (resource mappings, documentation) read it to resolve event topics.
 
 ### x-service-layer (Service Hierarchy Layer)
 
@@ -371,6 +396,78 @@ EncounterRecordedEvent:
 - `type: array`, `type: object` → `{{propertyName}}` (unquoted, pre-serialized JSON)
 
 **Generated output** (`lib-{service}/Generated/{Service}EventTemplates.cs`): Static class with `EventTemplate` fields and `RegisterAll(IEventTemplateRegistry)` method. Call from `OnRunningAsync`.
+
+### x-controller-only (Manual Controller Implementation)
+
+Defined on **individual operations** in `{service}-api.yaml`, marks endpoints that require a manually-written controller method instead of the auto-generated pass-through to the service interface. The endpoint is excluded from `I{Service}Service` and the generated implementation stub; the developer must provide a partial `{Service}Controller.cs` class with the method override.
+
+```yaml
+paths:
+  /connect:
+    get:
+      x-controller-only: true
+      summary: WebSocket upgrade endpoint
+```
+
+**When to use**: Endpoints that need direct access to `HttpContext` (WebSocket upgrade, file streaming, OAuth redirects) rather than the standard request/response model.
+
+**Legacy alias**: `x-manual-implementation: true` has the same effect and is still supported in `auth-api.yaml` and `documentation-api.yaml`. Prefer `x-controller-only` for new schemas.
+
+**Generated behavior**: `generate-controller.sh` detects the flag and creates a partial controller template if one doesn't exist. `generate-interface.sh` and `generate-implementation.sh` skip the marked endpoint.
+
+### x-from-authorization (Authorization Header Parameter)
+
+Defined on **parameters** in `{service}-api.yaml`, marks a parameter that is extracted from the Authorization header rather than the request body. Used exclusively by auth-related endpoints where the JWT token is both the credential and a request parameter.
+
+```yaml
+parameters:
+  - name: jwt
+    in: header
+    required: true
+    x-from-authorization: bearer
+    schema:
+      type: string
+```
+
+**Generated behavior**: `generate-client.sh` strips these parameters from the generated service client (since service-to-service calls use a different auth mechanism). The parameter is only relevant for direct HTTP calls from external clients.
+
+### x-client-event (Server-to-Client Push Event)
+
+Defined on **schema objects** in `{service}-client-events.yaml`, marks a schema as a server-to-client WebSocket push event. These events are published via `IClientEventPublisher` (not `IMessageBus`) and delivered to connected clients through per-session RabbitMQ queues managed by Connect.
+
+```yaml
+MatchFoundEvent:
+  x-client-event: true
+  type: object
+  additionalProperties: false
+  required: [eventName, matchId]
+  properties:
+    eventName:
+      type: string
+      default: match.found
+```
+
+**Used by generators**: `generate-client-event-groups.py` (groups events by service for typed subscription API), `generate-client-event-registry.py` (C# type→eventName mapping), `generate-client-event-registry-ts.py` (TypeScript registry), `generate-unreal-types.py` (Unreal Engine event types).
+
+**Related**: `x-internal: true` can be added alongside `x-client-event: true` to mark events that are used internally by the Connect/Permission infrastructure but should not be exposed to game client SDKs (e.g., `CapabilityManifestEvent`).
+
+### x-sdk-type (External SDK Type Mapping)
+
+Defined on **schema objects** in `{service}-api.yaml`, maps an OpenAPI schema type to an existing C# type from an external SDK. Instead of generating a duplicate C# class, NSwag excludes the type and the generated code references the SDK type directly.
+
+```yaml
+components:
+  schemas:
+    PitchClass:
+      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass
+      type: string
+      enum: [C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B]
+      description: Musical pitch class from MusicTheory SDK
+```
+
+**Currently used by**: `music-api.yaml` (MusicTheory SDK types) and `storyline-api.yaml` (StorylineTheory/StorylineStoryteller SDK types).
+
+**Generated behavior**: `extract-sdk-types.py` scans for `x-sdk-type` markers and outputs exclusion lists. `generate-models.sh` and `generate-config.sh` consume these to exclude SDK types from NSwag generation and add the SDK namespace `using` statements.
 
 ### Service Hierarchy Compliance
 
@@ -754,7 +851,7 @@ Before submitting schema changes, verify:
 
 **Configuration**: Every property has `env` with `{SERVICE}_{PROPERTY}` naming. No `type: object`. Enums via `$ref`. Single-line descriptions only.
 
-**Events**: Only canonical definitions (no cross-service `$ref`). Lifecycle events via `x-lifecycle`. Subscriptions via `x-event-subscriptions`.
+**Events**: Only canonical definitions (no cross-service `$ref`). Lifecycle events via `x-lifecycle`. Subscriptions via `x-event-subscriptions`. All published events listed in `x-event-publications` (lifecycle + custom).
 
 **Type References**: ALL enums/complex objects use `$ref` to `-api.yaml`. x-lifecycle model fields use `$ref` for objects/enums. All `$ref` paths sibling-relative (no `../`).
 
