@@ -197,7 +197,7 @@ public partial class LicenseService : ILicenseService
         if (dx == 0 && dy == 0) return false; // Same position
 
         return mode switch
-        try
+        {
             AdjacencyMode.FourWay => dx + dy == 1,
             AdjacencyMode.EightWay => dx <= 1 && dy <= 1,
             _ => dx <= 1 && dy <= 1 // Default to eight-way
@@ -1582,6 +1582,7 @@ public partial class LicenseService : ILicenseService
     private async Task CompensateItemCreationAsync(
         Guid itemInstanceId, Guid boardId, string licenseCode, CancellationToken cancellationToken)
     {
+        try
         {
             await _itemClient.DestroyItemInstanceAsync(
                 new DestroyItemInstanceRequest { InstanceId = itemInstanceId },

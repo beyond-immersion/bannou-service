@@ -2,7 +2,7 @@
 
 > **Category**: Architecture & Design
 > **When to Reference**: Before starting any new service, feature, or significant code change
-> **Tenets**: T4, T5, T6, T13, T15, T18
+> **Tenets**: T4, T5, T6, T13, T15, T18, T27, T28
 
 These tenets define the architectural foundation of Bannou. Understanding them is prerequisite to any development work.
 
@@ -353,6 +353,234 @@ When a package changes license, pin to the last permissive version with XML comm
 
 ---
 
+## Tenet 27: Cross-Service Communication Discipline (MANDATORY)
+
+**Rule**: Bannou has three mechanisms for cross-service communication. Each has exactly one valid use case. Using the wrong mechanism creates invisible coupling, loses error feedback, or wastes infrastructure.
+
+### The Three Mechanisms
+
+| Mechanism | What It Is | Valid Use |
+|-----------|-----------|-----------|
+| **Direct API call** (lib-mesh) | Synchronous request/response via generated clients | Higher layer calling lower layer for a specific outcome |
+| **DI Provider/Listener interface** | In-process interface discovered via `IEnumerable<T>` | Lower layer exchanging data with optional higher layers |
+| **Broadcast event** (lib-messaging) | Async fire-and-forget notification | Announcing state changes to unknown/external consumers |
+
+### When to Use What
+
+**Higher → Lower (L4 calling L2, L2 calling L1, etc.)**: Use **direct API calls**. The service hierarchy already permits this direction. The caller gets synchronous validation, error handling, and confirmation. Never publish an event when you could call the API directly.
+
+```csharp
+// CORRECT: L4 (Collection) calls L2 (Seed) directly — valid hierarchy direction
+var (status, response) = await _seedClient.RecordGrowthAsync(new RecordGrowthRequest
+{
+    SeedId = seedId,
+    Entries = domainEntries
+}, ct);
+
+// FORBIDDEN: Publishing to a lower layer's event topic as a disguised API call
+await _messageBus.PublishAsync("seed.growth.contributed", new SeedGrowthContributedEvent { ... });
+```
+
+**Lower → Higher (L2 notifying L4, L1 notifying L3, etc.)**: Use **DI Listener interfaces** for targeted, in-process notifications to co-located consumers. Use **broadcast events** for notifying unknown/external/distributed consumers.
+
+```csharp
+// CORRECT: L2 (Seed) notifies L4 listeners via DI interface
+foreach (var listener in _evolutionListeners)
+{
+    if (listener.InterestedSeedTypes.Count == 0
+        || listener.InterestedSeedTypes.Contains(seedTypeCode))
+        await listener.OnGrowthRecordedAsync(notification, ct);
+}
+
+// ALSO CORRECT: Broadcasting state change for unknown consumers
+await _messageBus.PublishAsync("seed.phase.changed", phaseChangedEvent);
+```
+
+**Announcement to unknown consumers**: Use **broadcast events**. These are "something happened" notifications that any service may subscribe to. The publisher does not know or care who is listening.
+
+### The Inverted Subscription Anti-Pattern (FORBIDDEN)
+
+**Never define event schemas for the purpose of receiving data from services that could call your API directly.** This pattern — where a foundational service defines an event topic, subscribes to it, and waits for higher-layer services to publish to it — is a disguised API call with worse guarantees:
+
+- No synchronous confirmation (publisher doesn't know if it worked)
+- No validation feedback (malformed data silently dropped)
+- RabbitMQ serialization overhead for in-process communication
+- Fire-and-forget semantics for operations that require reliability
+
+```csharp
+// ANTI-PATTERN: L2 defines event, L4 publishes to it — this is just a bad API call
+// In seed-events.yaml: defines seed.growth.contributed
+// In lib-collection: await _messageBus.PublishAsync("seed.growth.contributed", ...)
+// In lib-seed: subscribes to seed.growth.contributed and processes growth
+
+// CORRECT: L4 calls L2's API directly
+// In lib-collection: await _seedClient.RecordGrowthAsync(request, ct)
+```
+
+### Lower-Layer Event Subscriptions to Higher Layers (FORBIDDEN)
+
+A lower-layer service must NEVER subscribe to events published by a higher-layer service, even for cache invalidation. This creates a conceptual dependency — the lower layer's correctness depends on whether the higher layer is enabled and publishing events.
+
+When a lower-layer service uses DI Provider interfaces (`IVariableProviderFactory`, `IBehaviorDocumentProvider`, etc.) to pull data from optional higher layers, the **provider owns the cache**. The provider implementation (registered by the L4 plugin) handles its own cache management and invalidation by subscribing to its own service's events internally. The lower-layer consumer just calls the interface and gets fresh data.
+
+```csharp
+// FORBIDDEN: Actor (L2) subscribing to CharacterPersonality (L4) events
+// In actor-events.yaml: x-event-subscriptions for personality.evolved
+// Actor invalidates cache when personality changes
+
+// CORRECT: PersonalityProviderFactory (L4) manages its own cache internally
+// Actor just calls IVariableProviderFactory.CreateAsync() and gets current data
+// PersonalityProviderFactory subscribes to personality.evolved within its own L4 plugin
+```
+
+### DI Interface Pattern Reference
+
+Five established provider/listener patterns exist (interfaces in `bannou-service/Providers/`):
+
+| Interface | Direction | Purpose |
+|-----------|-----------|---------|
+| `IVariableProviderFactory` | L4 → L2 (data pull) | Actor pulls character data from L4 providers |
+| `IPrerequisiteProviderFactory` | L4 → L2 (data pull) | Quest pulls prerequisite checks from L4 providers |
+| `IBehaviorDocumentProvider` | L4 → L2 (data pull) | Actor pulls behavior docs from L4 providers |
+| `ISeededResourceProvider` | L4 → L1 (data pull) | Resource pulls compression data from L4 providers |
+| `ISeedEvolutionListener` | L2 → L4 (notification push) | Seed pushes evolution notifications to L4 listeners |
+
+All follow the same shape: interface defined in shared code (`bannou-service/Providers/`), higher-layer implements and registers as Singleton, lower-layer discovers via `IEnumerable<T>` with graceful degradation on failure.
+
+### Startup Registration via DI Discovery (PERMITTED)
+
+For services that need to register configuration or metadata at startup (e.g., permission matrices), a DI provider interface discovered at initialization is preferred over publishing registration events:
+
+```csharp
+// CORRECT: Permission discovers registrants via DI at startup
+public class PermissionService
+{
+    public PermissionService(IEnumerable<IPermissionRegistrant> registrants, ...)
+    {
+        foreach (var registrant in registrants)
+            RegisterPermissionMatrix(registrant.GetMatrix());
+    }
+}
+
+// ANTI-PATTERN: Services publish registration events that Permission subscribes to
+await _messageBus.PublishAsync("permission.service-registered", registrationEvent);
+```
+
+### Summary Decision Table
+
+| Scenario | Mechanism | Example |
+|----------|-----------|---------|
+| L4 needs L2 to do something | Direct API call | Collection calls `ISeedClient.RecordGrowthAsync()` |
+| L4 needs to register with L1 | DI Provider interface | Service implements `IPermissionRegistrant` |
+| L2 needs data from optional L4 | DI Provider interface | Actor uses `IVariableProviderFactory` |
+| L2 needs to notify optional L4 | DI Listener interface | Seed uses `ISeedEvolutionListener` |
+| Something happened, anyone can react | Broadcast event | `seed.phase.changed`, `character.created` |
+
+---
+
+## Tenet 28: Resource-Managed Cleanup (MANDATORY)
+
+**Rule**: When a foundational resource (L1/L2) is deleted, all dependent data in higher layers MUST be cleaned up through **lib-resource** — never through lifecycle event subscriptions. Plugins must not subscribe to `*.deleted` or `*.lifecycle.*` events from other plugins for the purpose of destroying their own dependent data.
+
+### Why This Matters
+
+Event-based cleanup (`character.deleted` → L4 subscriber deletes its own data) has fundamental reliability problems:
+
+1. **No ordering** — cleanup may execute after the resource is already gone, or race with other cleanup
+2. **No blocking** — events can't prevent deletion when references still exist (RESTRICT policy impossible)
+3. **No confirmation** — publisher doesn't know if cleanup succeeded or silently failed
+4. **Invisible coupling** — subscribers are hidden; auditing what depends on what requires reading every event schema
+5. **Missed events** — RabbitMQ failures, service restarts, or deployment gaps can lose deletion events permanently
+
+lib-resource solves all five problems with centralized reference tracking, coordinated callback execution, and explicit cleanup policies (CASCADE, RESTRICT, DETACH).
+
+### The Pattern
+
+**Step 1**: Higher-layer services register references via lib-resource API when creating dependent data:
+
+```csharp
+// L4 (Character-Encounter) creates encounter data referencing a character
+await _resourceClient.RegisterReferenceAsync(new RegisterReferenceRequest
+{
+    ResourceType = "character",
+    ResourceId = characterId,
+    SourceType = "character-encounter",
+    SourceId = encounterId
+}, ct);
+```
+
+**Step 2**: Higher-layer services implement cleanup callbacks via `ISeededResourceProvider`:
+
+```csharp
+// L4 provides cleanup logic that lib-resource calls during deletion
+public class EncounterResourceProvider : ISeededResourceProvider
+{
+    public string SourceType => "character-encounter";
+
+    public async Task CleanupReferencesAsync(
+        string resourceType, Guid resourceId, CancellationToken ct)
+    {
+        await DeleteEncountersForCharacterAsync(resourceId, ct);
+    }
+}
+```
+
+**Step 3**: When the foundational resource is deleted, lib-resource coordinates cleanup:
+
+```csharp
+// L2 (Character) asks lib-resource to coordinate deletion
+var result = await _resourceClient.ExecuteCleanupAsync(new ExecuteCleanupRequest
+{
+    ResourceType = "character",
+    ResourceId = characterId,
+    Policy = CleanupPolicy.Cascade
+}, ct);
+```
+
+### What This Replaces
+
+| Before (FORBIDDEN) | After (REQUIRED) |
+|---------------------|-------------------|
+| Character-Encounter subscribes to `character.deleted` | Character-Encounter registers with lib-resource, implements `ISeededResourceProvider` |
+| Any L4 plugin subscribes to L2 `*.deleted` for destruction | L4 registers references and cleanup with lib-resource |
+
+### Events Are Still Valid for Live State Reactions
+
+Not all responses to state changes are "cleanup." Some are operational reactions to live state that don't involve destroying dependent data. These remain event-appropriate:
+
+| Reaction Type | Mechanism | Example |
+|---------------|-----------|---------|
+| **Dependent data destruction** | lib-resource (MANDATORY) | Delete encounter records when character is deleted |
+| **Cache invalidation** | Broadcast event (acceptable) | Invalidate analytics cache when character is updated |
+| **Live session management** | Broadcast event (acceptable) | Auth invalidates live sessions when account is deleted |
+| **State synchronization** | Broadcast event (acceptable) | Permission recompiles manifests when roles change |
+
+**The test**: "If this event were lost, would data integrity be violated?" If yes → lib-resource. If no (cache rebuilds, sessions expire naturally, state converges eventually) → events are acceptable.
+
+### Account Privacy Exception
+
+Account resources (L1) are **exempt from lib-resource registration**. We do not track or compile historical reference data about accounts beyond what Analytics stores for its specific purpose. This is a deliberate privacy decision — the system should not maintain a centralized record of everything that references an account.
+
+Auth's subscription to `account.deleted` for session invalidation is acceptable because:
+
+1. It's L1→L1 (same layer, not cross-layer cleanup)
+2. Sessions are live ephemeral state, not persistent dependent data
+3. Sessions expire naturally via TTL regardless — the event accelerates invalidation, it doesn't provide the only path to cleanup
+4. No data integrity violation if the event is lost (sessions time out)
+
+This exception does not extend to other L1 resources. It is specific to Account due to the privacy constraint.
+
+### Enforcement
+
+When adding a new service that stores data keyed by another service's entity:
+
+1. Register references with lib-resource API when creating dependent data
+2. Implement `ISeededResourceProvider` for cleanup callbacks
+3. Do NOT add `x-event-subscriptions` for the parent entity's `*.deleted` event
+4. Do NOT add event handler methods for parent entity deletion
+
+---
+
 ## Quick Reference: Foundation Violations
 
 | Violation | Tenet | Fix |
@@ -370,9 +598,17 @@ When a package changes license, pin to the last permissive version with XML comm
 | Missing x-permissions on endpoint | T13 | Add to schema (even if empty array) |
 | Designing browser-facing without justification | T15 | Use POST-only WebSocket pattern |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
+| Publishing event to lower-layer's topic instead of calling API | T27 | Use generated client directly (hierarchy permits the call) |
+| Lower-layer subscribing to higher-layer events | T27 | Use DI Provider/Listener interface in `bannou-service/Providers/` |
+| Publishing registration events at startup | T27 | Use DI Provider interface discovered via `IEnumerable<T>` |
+| Defining event schema to receive data from callers | T27 | Remove event; expose API endpoint; callers use generated client |
+| Lower-layer caching higher-layer data with event invalidation | T27 | Provider owns its cache; lower layer calls provider interface |
+| Subscribing to `*.deleted` for dependent data cleanup | T28 | Register with lib-resource; implement `ISeededResourceProvider` |
+| Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
+| Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
 
 > **Schema-related violations** (editing Generated/ files, wrong env var format, missing description, etc.) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
 
 ---
 
-*This document covers tenets T4, T5, T6, T13, T15, T18. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*
+*This document covers tenets T4, T5, T6, T13, T15, T18, T27, T28. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*

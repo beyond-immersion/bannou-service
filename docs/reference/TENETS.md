@@ -1,7 +1,7 @@
 # Bannou Service Development Tenets
 
-> **Version**: 7.0
-> **Last Updated**: 2026-02-01
+> **Version**: 8.0
+> **Last Updated**: 2026-02-11
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document is the authoritative index for Bannou development standards. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
@@ -15,7 +15,7 @@ This document is the authoritative index for Bannou development standards. All s
 When documenting tenet compliance in source code comments, **NEVER use specific tenet numbers** (e.g., "T9", "Tenet 21", "TENET T4"). Tenet numbers change over time as tenets are added, removed, or reorganized.
 
 **Instead, use category names:**
-- `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18
+- `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18, T27, T28
 - `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
 - `SERVICE HIERARCHY` - for Tenet 2 (service layer dependencies)
@@ -161,7 +161,7 @@ public class ActorService  // Layer 4
 
 ### Reference Counting the Right Way
 
-If a foundational service needs to know about references from higher layers (for cleanup eligibility), use **event-driven reference registration** - higher-layer services publish reference events, and the foundational service consumes them. See [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md) for the full pattern.
+If a foundational service needs to know about references from higher layers (for cleanup eligibility), higher-layer services call **lib-resource's API directly** to register/unregister references, and lib-resource coordinates cleanup with policies (CASCADE/RESTRICT/DETACH). See [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md) for the full pattern and T27/T28 in [FOUNDATION.md](tenets/FOUNDATION.md) for the communication and cleanup rules.
 
 ---
 
@@ -173,7 +173,7 @@ Tenets are organized into categories based on when they're needed:
 |----------|--------|-------------------|
 | [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
 | [**Service Hierarchy**](SERVICE-HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
-| [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18 | Before starting any new service or feature |
+| [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28 | Before starting any new service or feature |
 | [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
@@ -193,6 +193,8 @@ Tenets are organized into categories based on when they're needed:
 | **T13** | X-Permissions Usage | All endpoints declare x-permissions; enforced for WebSocket clients |
 | **T15** | Browser-Facing Endpoints | GET/path-params only for OAuth, Website, WebSocket upgrade (exceptional) |
 | **T18** | Licensing Requirements | MIT/BSD/Apache only; GPL forbidden for linked code |
+| **T27** | Cross-Service Communication Discipline | Direct API for higher→lower; DI interfaces for lower↔higher; events for broadcast only; inverted subscriptions forbidden |
+| **T28** | Resource-Managed Cleanup | Dependent data cleanup via lib-resource only; never subscribe to lifecycle events for destruction; Account exempt for privacy |
 
 ---
 
@@ -246,9 +248,9 @@ Tenets are organized into categories based on when they're needed:
 | Shared type defined in events schema | T1 | Move type to `-api.yaml`, use `$ref` in events |
 | API schema `$ref` to events schema | T1 | Reverse the dependency - API is source of truth |
 | Events `$ref` to different service's API | T1 | Use common schema or duplicate the type |
-| Layer 2 service depending on Layer 3 | T2 | Remove dependency; use events instead (see [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md)) |
-| Layer 2 service depending on Layer 4 | T2 | Remove dependency; higher layer should publish events |
-| Foundation service calling extension client | T2 | Invert the dependency; extension consumes foundation events |
+| Layer 2 service depending on Layer 3 | T2 | Remove dependency; use DI Provider/Listener interfaces (see T27) |
+| Layer 2 service depending on Layer 4 | T2 | Remove dependency; use DI Provider/Listener interfaces (see T27) |
+| Foundation service calling extension client | T2 | Invert with DI interfaces; extension implements provider, foundation discovers via `IEnumerable<T>` |
 | Circular service dependencies | T2 | Restructure to respect layer hierarchy |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
@@ -303,6 +305,14 @@ Tenets are organized into categories based on when they're needed:
 | Service is `x-references` target but doesn't call `ExecuteCleanupAsync` | T1 | Add Resource cleanup to delete flow (see SCHEMA-RULES.md) |
 | Event handlers duplicate `x-references` cleanup callbacks | T1 | Remove event handlers; use Resource pattern only |
 | Adding event cleanup when `x-references` callbacks exist | T1 | Fix producer to call `ExecuteCleanupAsync` instead |
+| Publishing event to lower-layer's topic instead of calling API | T27 | Use generated client directly (hierarchy permits the call) |
+| Lower-layer subscribing to higher-layer events | T27 | Use DI Provider/Listener interface in `bannou-service/Providers/` |
+| Publishing registration events at startup | T27 | Use DI Provider interface discovered via `IEnumerable<T>` |
+| Defining event schema to receive data from callers | T27 | Remove event; expose API endpoint; callers use generated client |
+| Lower-layer caching higher-layer data and subscribing to invalidation events | T27 | Provider owns its cache; lower layer calls provider interface for fresh data |
+| Subscribing to `*.deleted` for dependent data cleanup | T28 | Register with lib-resource; implement cleanup callback via `ISeededResourceProvider` |
+| Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
+| Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
 
 ---
 

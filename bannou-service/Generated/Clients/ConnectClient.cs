@@ -26,6 +26,21 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Connect;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -117,6 +132,26 @@ public partial interface IConnectClient
     /// <param name="body">Optional connection parameters</param>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Permission-gated proxy for endpoint metadata
+    /// </summary>
+    /// <remarks>
+    /// Accepts a full meta endpoint path (e.g., "/account/get/meta/info"),
+    /// <br/>validates the caller's JWT, looks up their active WebSocket session
+    /// <br/>via the JWT's sessionKey, checks the session's capability mappings
+    /// <br/>for the underlying endpoint, and proxies the internal meta GET
+    /// <br/>request if authorized. Returns the meta endpoint response directly.
+    /// <br/>
+    /// <br/>Requires an active WebSocket connection -- the session's compiled
+    /// <br/>capability mappings in Connect's in-memory connection state are the
+    /// <br/>permission source, exactly as for WebSocket meta requests.
+    /// </remarks>
+    /// <returns>Meta endpoint response</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<GetEndpointMetaResponse> GetEndpointMetaAsync(GetEndpointMetaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -529,8 +564,12 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
             methodPath_))
         {
 
+            if (connection == null)
+                throw new System.ArgumentNullException("connection");
             request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
 
+            if (upgrade == null)
+                throw new System.ArgumentNullException("upgrade");
             request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
 
             if (authorization == null)
@@ -637,8 +676,12 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
             methodPath_))
         {
 
+            if (connection == null)
+                throw new System.ArgumentNullException("connection");
             request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
 
+            if (upgrade == null)
+                throw new System.ArgumentNullException("upgrade");
             request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
 
             if (authorization == null)
@@ -697,6 +740,115 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
                     {
 
                         return;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Permission-gated proxy for endpoint metadata
+    /// </summary>
+    /// <remarks>
+    /// Accepts a full meta endpoint path (e.g., "/account/get/meta/info"),
+    /// <br/>validates the caller's JWT, looks up their active WebSocket session
+    /// <br/>via the JWT's sessionKey, checks the session's capability mappings
+    /// <br/>for the underlying endpoint, and proxies the internal meta GET
+    /// <br/>request if authorized. Returns the meta endpoint response directly.
+    /// <br/>
+    /// <br/>Requires an active WebSocket connection -- the session's compiled
+    /// <br/>capability mappings in Connect's in-memory connection state are the
+    /// <br/>permission source, exactly as for WebSocket meta requests.
+    /// </remarks>
+    /// <returns>Meta endpoint response</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<GetEndpointMetaResponse> GetEndpointMetaAsync(GetEndpointMetaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "connect/get-endpoint-meta"
+        urlBuilder_.Append("connect/get-endpoint-meta");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<GetEndpointMetaResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 401)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid or missing JWT, or no active WebSocket session", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 403)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Session lacks permission for the underlying endpoint", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Endpoint or meta type not found", status_, responseText_, headers_, null);
                     }
                     else
                     {

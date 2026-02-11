@@ -237,6 +237,43 @@ paths:
         '500':
           description: Internal server error
 
+  /connect/get-endpoint-meta:
+    post:
+      summary: Permission-gated proxy for endpoint metadata
+      operationId: GetEndpointMeta
+      tags:
+      - Meta Proxy
+      description: |
+        Accepts a full meta endpoint path (e.g., "/account/get/meta/info"),
+        validates the caller's JWT, looks up their active WebSocket session
+        via the JWT's sessionKey, checks the session's capability mappings
+        for the underlying endpoint, and proxies the internal meta GET
+        request if authorized. Returns the meta endpoint response directly.
+
+        Requires an active WebSocket connection -- the session's compiled
+        capability mappings in Connect's in-memory connection state are the
+        permission source, exactly as for WebSocket meta requests.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEndpointMetaRequest'
+      responses:
+        '200':
+          description: Meta endpoint response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEndpointMetaResponse'
+        '401':
+          description: Invalid or missing JWT, or no active WebSocket session
+        '403':
+          description: Session lacks permission for the underlying endpoint
+        '404':
+          description: Endpoint or meta type not found
+
   /connect/get-account-sessions:
     post:
       summary: Get all active WebSocket sessions for an account
@@ -280,6 +317,55 @@ paths:
 
 components:
   schemas:
+    # Meta Proxy Models
+    GetEndpointMetaRequest:
+      type: object
+      description: Request to proxy a meta endpoint call with permission validation
+      additionalProperties: false
+      required:
+      - path
+      properties:
+        path:
+          type: string
+          description: Full meta endpoint path including meta type suffix (e.g., "/account/get/meta/info" or "/character/create/meta/request-schema"). Connect parses the service name, base endpoint, and meta type from this path.
+
+    GetEndpointMetaResponse:
+      type: object
+      description: Meta endpoint response mirroring the internal MetaResponse structure
+      additionalProperties: false
+      required:
+      - metaType
+      - serviceName
+      - method
+      - path
+      - data
+      - generatedAt
+      - schemaVersion
+      properties:
+        metaType:
+          type: string
+          description: Type of metadata returned (endpoint-info, request-schema, response-schema, full-schema)
+        serviceName:
+          type: string
+          description: Service name that owns this endpoint (e.g., "Account")
+        method:
+          type: string
+          description: HTTP method for the endpoint (e.g., "POST")
+        path:
+          type: string
+          description: Endpoint path (e.g., "/account/get")
+        data:
+          type: object
+          additionalProperties: true
+          description: Metadata payload whose structure varies by metaType (endpoint-info returns summary/tags/operationId, request-schema and response-schema return JSON Schema objects, full-schema returns all three combined)
+        generatedAt:
+          type: string
+          format: date-time
+          description: When this response was generated (UTC)
+        schemaVersion:
+          type: string
+          description: Schema version (assembly version) for cache invalidation
+
     # Request Models for POST-only pattern
     GetAccountSessionsRequest:
       type: object

@@ -1,5 +1,5 @@
 using BeyondImmersion.BannouService.Chat;
-using BeyondImmersion.BannouService.Common;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;

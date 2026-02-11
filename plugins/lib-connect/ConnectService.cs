@@ -7,9 +7,11 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Helpers;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Meta;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -282,6 +284,158 @@ public partial class ConnectService : IConnectService, IDisposable
                 return (StatusCodes.ServiceUnavailable, errorResponse);
             }
         }
+    }
+
+    /// <summary>
+    /// Permission-gated proxy for endpoint metadata over HTTP.
+    /// Validates the caller's JWT, looks up their active WebSocket session via the JWT's sessionKey,
+    /// checks the session's capability mappings for the underlying endpoint, and proxies the internal
+    /// meta GET request if authorized. Returns the meta endpoint response directly.
+    /// Requires an active WebSocket connection -- the session's compiled capability mappings in
+    /// Connect's in-memory connection state are the permission source, exactly as for WebSocket meta requests.
+    /// </summary>
+    public async Task<(StatusCodes, GetEndpointMetaResponse?)> GetEndpointMetaAsync(
+        GetEndpointMetaRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        // Step 1: Extract JWT from the HTTP request Authorization header
+        // ConnectService is Singleton, so resolve IHttpContextAccessor from a scope
+        string? authorization;
+        await using (var httpScope = _serviceScopeFactory.CreateAsyncScope())
+        {
+            var httpContextAccessor = httpScope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
+            authorization = httpContextAccessor.HttpContext?.Request.Headers.Authorization.ToString();
+        }
+
+        if (string.IsNullOrEmpty(authorization) ||
+            !authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("GetEndpointMeta: Missing or invalid Authorization header");
+            return (StatusCodes.Unauthorized, null);
+        }
+
+        var token = authorization.Substring(7);
+
+        // Step 2: Validate JWT via Auth service to get the sessionKey
+        var authClient = (AuthClient)_authClient;
+        var validationResponse = await authClient
+            .WithAuthorization(token)
+            .ValidateTokenAsync(cancellationToken);
+
+        if (validationResponse == null || !validationResponse.Valid || validationResponse.SessionKey == Guid.Empty)
+        {
+            _logger.LogWarning("GetEndpointMeta: JWT validation failed");
+            return (StatusCodes.Unauthorized, null);
+        }
+
+        var sessionKey = validationResponse.SessionKey.ToString();
+
+        // Step 3: Look up the existing WebSocket connection using the sessionKey
+        var connection = _connectionManager.GetConnection(sessionKey);
+        if (connection == null)
+        {
+            _logger.LogWarning("GetEndpointMeta: No active WebSocket connection for session {SessionKey}", sessionKey);
+            return (StatusCodes.Unauthorized, null);
+        }
+
+        var connectionState = connection.ConnectionState;
+
+        // Step 4: Parse the meta path to extract service name, base endpoint, and meta type
+        // Expected format: "/account/get/meta/info" or "/character/create/meta/request-schema"
+        var metaMarkerIndex = body.Path.IndexOf("/meta/", StringComparison.OrdinalIgnoreCase);
+        if (metaMarkerIndex < 0)
+        {
+            _logger.LogWarning("GetEndpointMeta: Path missing /meta/ segment: {Path}", body.Path);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var basePath = body.Path[..metaMarkerIndex];
+        var metaSuffix = body.Path[(metaMarkerIndex + 6)..]; // Skip "/meta/"
+
+        // Validate meta suffix
+        if (metaSuffix != "info" && metaSuffix != "request-schema" &&
+            metaSuffix != "response-schema" && metaSuffix != "schema")
+        {
+            _logger.LogWarning("GetEndpointMeta: Invalid meta type suffix: {MetaSuffix}", metaSuffix);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Extract service name from the first path segment (e.g., "/account/get" -> "account")
+        var pathWithoutLeadingSlash = basePath.TrimStart('/');
+        var firstSlash = pathWithoutLeadingSlash.IndexOf('/');
+        if (firstSlash < 0)
+        {
+            _logger.LogWarning("GetEndpointMeta: Cannot extract service name from path: {BasePath}", basePath);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var serviceName = pathWithoutLeadingSlash[..firstSlash];
+
+        // Step 5: Check capability mappings -- same check used by ProxyInternalRequestAsync and WebSocket routing
+        // Key format: "serviceName:/path" (no HTTP method in key -- all WebSocket endpoints are POST)
+        var endpointKey = $"{serviceName}:{basePath}";
+        if (!connectionState.HasServiceMapping(endpointKey))
+        {
+            _logger.LogWarning("GetEndpointMeta: Session {SessionKey} lacks access to {EndpointKey}",
+                sessionKey, endpointKey);
+            return (StatusCodes.Forbidden, null);
+        }
+
+        // Step 6: Proxy the meta GET request via ServiceNavigator -- same routing as HandleMetaRequestAsync
+        var metaPath = $"{basePath}/meta/{metaSuffix}";
+        RawApiResult? apiResult;
+
+        try
+        {
+            await using var scope = _serviceScopeFactory.CreateAsyncScope();
+            var navigator = scope.ServiceProvider.GetRequiredService<IServiceNavigator>();
+
+            apiResult = await navigator.ExecuteRawApiAsync(
+                serviceName,
+                metaPath,
+                ReadOnlyMemory<byte>.Empty,
+                HttpMethod.Get,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetEndpointMeta: Service invocation failed for {Service} {MetaPath}",
+                serviceName, metaPath);
+            await PublishErrorEventAsync("GetEndpointMeta", ex.GetType().Name, ex.Message,
+                dependency: serviceName, details: new { MetaPath = metaPath });
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+
+        if (apiResult == null || !apiResult.IsSuccess || string.IsNullOrEmpty(apiResult.ResponseBody))
+        {
+            _logger.LogWarning("GetEndpointMeta: Meta endpoint returned non-success for {MetaPath}: {StatusCode}",
+                metaPath, apiResult?.StatusCode);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Step 7: Deserialize the internal MetaResponse and map to the generated response type
+        var metaResponse = BannouJson.Deserialize<MetaResponse>(apiResult.ResponseBody);
+        if (metaResponse == null)
+        {
+            _logger.LogError("GetEndpointMeta: Failed to deserialize MetaResponse from {MetaPath}", metaPath);
+            await PublishErrorEventAsync("GetEndpointMeta", "deserialization_error",
+                "Failed to deserialize MetaResponse", dependency: serviceName,
+                details: new { MetaPath = metaPath });
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+
+        var response = new GetEndpointMetaResponse
+        {
+            MetaType = metaResponse.MetaType,
+            ServiceName = metaResponse.ServiceName,
+            Method = metaResponse.Method,
+            Path = metaResponse.Path,
+            Data = metaResponse.Data,
+            GeneratedAt = metaResponse.GeneratedAt,
+            SchemaVersion = metaResponse.SchemaVersion
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     // REMOVED: PublishServiceMappingUpdateAsync - Service mapping events belong to Orchestrator
@@ -1333,6 +1487,17 @@ public partial class ConnectService : IConnectService, IDisposable
         var serviceName = routeInfo.ServiceName[..firstColon];
         var originalPath = routeInfo.ServiceName[(firstColon + 1)..];
         const string httpMethod = "POST"; // All WebSocket-routed endpoints are POST
+
+        // Explicit permission check: verify the base endpoint is in the client's service mappings
+        // routeInfo.ServiceName is already in "serviceName:/path" format -- the same key used by HasServiceMapping
+        if (!connectionState.HasServiceMapping(routeInfo.ServiceName))
+        {
+            _logger.LogWarning("Meta request denied: session {SessionId} lacks access to {EndpointKey}",
+                sessionId, routeInfo.ServiceName);
+            var unauthorizedResponse = BinaryMessage.CreateResponse(message, ResponseCodes.Unauthorized);
+            await _connectionManager.SendMessageAsync(sessionId, unauthorizedResponse, cancellationToken);
+            return;
+        }
 
         // Determine meta type from Channel field
         var metaType = (MetaType)message.Channel;

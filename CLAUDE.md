@@ -51,6 +51,25 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ---
 
+## ⛔ CODE GENERATION SCRIPTS ARE FROZEN ⛔
+
+**The `scripts/` directory contains the code generation pipeline. These scripts are NEVER to be modified by an agent without EXPLICIT user instructions to change code generation behavior.**
+
+**What this covers**: ALL files in `scripts/` — shell scripts (`generate-*.sh`, `common.sh`), Python scripts (`generate-*.py`, `resolve-*.py`, `extract-*.py`, `embed-*.py`), and NSwag templates (`templates/nswag/`).
+
+**Why this rule exists**: An agent once changed namespace strings across 4 generation scripts in a single commit, silently breaking all 48 services. The agent believed `.Common` was the correct namespace for common types when it was actually `.BannouService` — a mistake that cascaded into 22 compile errors and hours of debugging. Generation scripts are the foundation of the entire codebase; a wrong namespace, output path, or exclusion rule breaks everything downstream.
+
+**Rules**:
+1. **NEVER modify generation scripts** unless the user explicitly says "change the code generation to..."
+2. **NEVER "fix" what you think is wrong** in generation scripts — present your concern and wait
+3. **NEVER change**: namespace strings, output paths, exclusion lists, NSwag parameters, post-processing logic, or file naming conventions
+4. **If generation output looks wrong**: the bug is almost certainly in a SCHEMA file, not in the generation scripts. Fix the schema first.
+5. **If you must propose a script change**: show the EXACT diff, explain WHY, and wait for explicit approval
+
+**The generation pipeline is correct until proven otherwise. Schemas are the source of truth; scripts are the transformation layer.**
+
+---
+
 ## Core Architecture Reference
 
 @docs/reference/TENETS.md

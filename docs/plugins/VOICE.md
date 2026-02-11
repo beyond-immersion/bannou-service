@@ -2,7 +2,7 @@
 
 > **Plugin**: lib-voice
 > **Schema**: schemas/voice-api.yaml
-> **Version**: 1.1.0
+> **Version**: 2.0.0
 > **State Store**: voice-statestore (Redis)
 
 ---
@@ -111,8 +111,10 @@ This plugin does not consume external events (`x-event-subscriptions: []`).
 | `KamailioSipPort` | `VOICE_KAMAILIO_SIP_PORT` | `5060` | Kamailio SIP signaling port for client registration |
 | `RtpEngineHost` | `VOICE_RTPENGINE_HOST` | `"localhost"` | RTPEngine server address |
 | `RtpEnginePort` | `VOICE_RTPENGINE_PORT` | `22222` | RTPEngine ng protocol port |
+| `RtpEngineTimeoutSeconds` | `VOICE_RTPENGINE_TIMEOUT_SECONDS` | `5` | Timeout in seconds for RTPEngine UDP requests (range 1-60) |
 | `KamailioRequestTimeoutSeconds` | `VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS` | `5` | Kamailio HTTP timeout |
 | `SipCredentialExpirationHours` | `VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS` | `24` | Hours until SIP credentials expire |
+| `EvictionWorkerInitialDelaySeconds` | `VOICE_EVICTION_WORKER_INITIAL_DELAY_SECONDS` | `10` | Seconds to wait after startup before the first eviction cycle (range 0-120) |
 | `ParticipantHeartbeatTimeoutSeconds` | `VOICE_PARTICIPANT_HEARTBEAT_TIMEOUT_SECONDS` | `60` | Seconds of missed heartbeats before participant is evicted |
 | `ParticipantEvictionCheckIntervalSeconds` | `VOICE_PARTICIPANT_EVICTION_CHECK_INTERVAL_SECONDS` | `15` | How often background worker checks for stale participants |
 | `BroadcastConsentTimeoutSeconds` | `VOICE_BROADCAST_CONSENT_TIMEOUT_SECONDS` | `30` | Seconds to wait for all participants before auto-declining |
@@ -259,7 +261,7 @@ None identified.
 
 3. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
 
-4. **Hardcoded fallbacks in coordinators**: `P2PCoordinator` returns 6 as fallback for `P2PMaxParticipants`, `ScaledTierCoordinator` returns 100 for `ScaledMaxParticipants`. These differ from schema defaults (8 and 100). Should either throw for invalid config or use schema defaults consistently.
+4. **Hardcoded fallbacks in coordinators**: `P2PCoordinator` returns 6 as fallback for `P2PMaxParticipants`, `ScaledTierCoordinator` returns 100 for `ScaledMaxParticipants`. These differ from schema defaults (8 and 100). Additionally, `ScaledTierCoordinator.GetStunServers()` falls back to a hardcoded `"stun:stun.l.google.com:19302"` when config is empty, while `VoiceService.JoinVoiceRoomAsync` throws `InvalidOperationException` if `StunServers` is null. Should either throw for invalid config or use schema defaults consistently.
 
 5. **Kamailio health check path assumption**: `KamailioClient.IsHealthyAsync` assumes a `/health` endpoint exists by replacing `/RPC` in the configured endpoint URL. This may not work for all Kamailio deployments.
 
@@ -272,5 +274,4 @@ None identified.
 | Date | Issue | Gap | Status |
 |------|-------|-----|--------|
 | 2026-01-31 | [#195](https://github.com/beyond-immersion/bannou-service/issues/195) | RTPEngine publish/subscribe methods unused in scaled tier | Needs Design |
-| 2026-02-01 | [#238](https://github.com/beyond-immersion/bannou-service/issues/238) | Service-to-service events stub | **Resolved** (L3 redesign: 8 service events now published) |
 | 2026-02-01 | [#258](https://github.com/beyond-immersion/bannou-service/issues/258) | RTP server pool allocation with load-based selection | Needs Design |

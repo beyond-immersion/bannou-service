@@ -1,6 +1,6 @@
 using BeyondImmersion.Bannou.Chat.ClientEvents;
 using BeyondImmersion.BannouService.Chat;
-using BeyondImmersion.BannouService.Common;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;

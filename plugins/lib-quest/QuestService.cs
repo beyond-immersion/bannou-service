@@ -177,7 +177,7 @@ public partial class QuestService : IQuestService
         CreateQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        {
             _logger.LogDebug("Creating quest definition with code {Code}", body.Code);
 
         // Validate code format (uppercase, underscores)
@@ -1537,6 +1537,7 @@ public partial class QuestService : IQuestService
             return null;
         }
 
+        try
         {
             // Get currency definition by code
             CurrencyDefinitionResponse currencyDef;
@@ -1658,6 +1659,7 @@ public partial class QuestService : IQuestService
 
         var requiredQuantity = prereq.MinAmount ?? 1;
 
+        try
         {
             // Get item template by code
             ItemTemplateResponse template;
@@ -2274,7 +2276,6 @@ public partial class QuestService : IQuestService
     {
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
-        try
         {
             // Get character quest index for fast lookup
             var indexKey = BuildCharacterIndexKey(body.CharacterId);

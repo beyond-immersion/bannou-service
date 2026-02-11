@@ -25,10 +25,107 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Connect;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Connect;
 
 using System = global::System;
+
+/// <summary>
+/// Request to proxy a meta endpoint call with permission validation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetEndpointMetaRequest
+{
+
+    /// <summary>
+    /// Full meta endpoint path including meta type suffix (e.g., "/account/get/meta/info" or "/character/create/meta/request-schema"). Connect parses the service name, base endpoint, and meta type from this path.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("path")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Path { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Meta endpoint response mirroring the internal MetaResponse structure
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetEndpointMetaResponse
+{
+
+    /// <summary>
+    /// Type of metadata returned (endpoint-info, request-schema, response-schema, full-schema)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metaType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetaType { get; set; } = default!;
+
+    /// <summary>
+    /// Service name that owns this endpoint (e.g., "Account")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP method for the endpoint (e.g., "POST")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("method")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Method { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint path (e.g., "/account/get")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("path")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Path { get; set; } = default!;
+
+    /// <summary>
+    /// Metadata payload whose structure varies by metaType (endpoint-info returns summary/tags/operationId, request-schema and response-schema return JSON Schema objects, full-schema returns all three combined)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("data")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public object Data { get; set; } = new object();
+
+    /// <summary>
+    /// When this response was generated (UTC)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Schema version (assembly version) for cache invalidation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SchemaVersion { get; set; } = default!;
+
+}
 
 /// <summary>
 /// Request to get all active WebSocket sessions for an account

@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Common;
+using BeyondImmersion.BannouService;
 
 namespace BeyondImmersion.BannouService.Chat;
 

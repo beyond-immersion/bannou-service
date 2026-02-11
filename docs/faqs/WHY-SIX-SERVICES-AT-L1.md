@@ -36,8 +36,6 @@ These change at different rates and for different reasons:
 - Auth changes when you add a new OAuth provider, change JWT expiration policy, or add MFA support. These are security-boundary changes.
 - Permission changes when any service adds new endpoints, when the state machine adds new states (in_game, in_match, in_call), or when the RBAC matrix is restructured. These are capability-boundary changes.
 
-More critically, Permission has a fundamentally different interaction pattern. It **receives** registration events from every service in the system. It is the only L1 service that dynamically discovers capabilities from all other services at runtime. Auth does not need this -- it validates tokens and manages sessions. Merging them would mean the service that receives hostile internet traffic also processes internal service registration events from every plugin. The operational surface becomes unnecessarily large.
-
 Permission also has a unique relationship with Connect: it pushes compiled capability manifests to per-session RabbitMQ queues. This push-model interaction is specific to Permission and has nothing to do with authentication. In a merged service, the JWT validation path and the capability push path would share failure modes -- a bug in capability compilation could affect token validation, and vice versa.
 
 ---
@@ -75,7 +73,7 @@ The problems compound:
 
 ## The Design Principle
 
-The L1 services are not six services because someone liked the number six. They are six services because there are six distinct concerns at the application foundation layer, each with:
+The L1 services solve six distinct concerns at the application foundation layer, each with:
 
 - A clear, single responsibility
 - A distinct trust boundary (internet-facing vs. internal-only)
