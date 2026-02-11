@@ -95,10 +95,8 @@ public partial class AssetService : IAssetService
         _logger.LogInformation("RequestUpload: filename={Filename}, size={Size}, contentType={ContentType}",
             body.Filename, body.Size, body.ContentType);
 
-        try
-        {
-            // Validate request
-            if (string.IsNullOrWhiteSpace(body.Filename))
+        // Validate request
+        if (string.IsNullOrWhiteSpace(body.Filename))
             {
                 _logger.LogWarning("RequestUpload: Empty filename");
                 return (StatusCodes.BadRequest, null);
@@ -252,21 +250,6 @@ public partial class AssetService : IAssetService
                 });
 
             return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing RequestUpload operation");
-            await _messageBus.TryPublishErrorAsync(
-                "asset",
-                "RequestUpload",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/assets/upload/request",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>

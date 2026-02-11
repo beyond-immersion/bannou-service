@@ -679,93 +679,82 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedTypeResponse?)> UpdateSeedTypeAsync(UpdateSeedTypeRequest body, CancellationToken cancellationToken)
     {
-        try
+        var lockOwner = $"update-type-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
+            lockOwner, 30, cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            var lockOwner = $"update-type-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
-                lockOwner, 30, cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                return (StatusCodes.Conflict, null);
-            }
-
-            var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
-            var seedType = await store.GetAsync(key, cancellationToken);
-
-            if (seedType == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var phasesChanged = body.GrowthPhases != null;
-            var capabilityRulesChanged = body.CapabilityRules != null;
-
-            if (body.DisplayName != null)
-                seedType.DisplayName = body.DisplayName;
-            if (body.Description != null)
-                seedType.Description = body.Description;
-            if (body.MaxPerOwner.HasValue)
-                seedType.MaxPerOwner = body.MaxPerOwner.Value;
-            if (body.GrowthPhases != null)
-                seedType.GrowthPhases = body.GrowthPhases.ToList();
-            if (body.CapabilityRules != null)
-                seedType.CapabilityRules = body.CapabilityRules.ToList();
-            if (body.GrowthDecayEnabled.HasValue)
-                seedType.GrowthDecayEnabled = body.GrowthDecayEnabled;
-            if (body.GrowthDecayRatePerDay.HasValue)
-                seedType.GrowthDecayRatePerDay = body.GrowthDecayRatePerDay;
-            if (body.SameOwnerGrowthMultiplier.HasValue)
-                seedType.SameOwnerGrowthMultiplier = body.SameOwnerGrowthMultiplier.Value;
-
-            await store.SaveAsync(key, seedType, cancellationToken: cancellationToken);
-
-            // Recompute affected seeds when phase thresholds or capability rules change
-            if (phasesChanged || capabilityRulesChanged)
-            {
-                await RecomputeSeedsForTypeAsync(seedType, phasesChanged, cancellationToken);
-            }
-
-            var changedFields = new List<string>();
-            if (body.DisplayName != null) changedFields.Add("displayName");
-            if (body.Description != null) changedFields.Add("description");
-            if (body.MaxPerOwner.HasValue) changedFields.Add("maxPerOwner");
-            if (body.GrowthPhases != null) changedFields.Add("growthPhases");
-            if (body.CapabilityRules != null) changedFields.Add("capabilityRules");
-            if (body.GrowthDecayEnabled.HasValue) changedFields.Add("growthDecayEnabled");
-            if (body.GrowthDecayRatePerDay.HasValue) changedFields.Add("growthDecayRatePerDay");
-            if (body.SameOwnerGrowthMultiplier.HasValue) changedFields.Add("sameOwnerGrowthMultiplier");
-
-            await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SeedTypeCode = seedType.SeedTypeCode,
-                GameServiceId = seedType.GameServiceId,
-                DisplayName = seedType.DisplayName,
-                Description = seedType.Description,
-                MaxPerOwner = seedType.MaxPerOwner,
-                BondCardinality = seedType.BondCardinality,
-                BondPermanent = seedType.BondPermanent,
-                SameOwnerGrowthMultiplier = seedType.SameOwnerGrowthMultiplier,
-                IsDeprecated = seedType.IsDeprecated,
-                DeprecatedAt = seedType.DeprecatedAt,
-                DeprecationReason = seedType.DeprecationReason,
-                ChangedFields = changedFields
-            }, cancellationToken: cancellationToken);
-
-            return (StatusCodes.OK, MapTypeToResponse(seedType));
+            return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
+
+        var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var seedType = await store.GetAsync(key, cancellationToken);
+
+        if (seedType == null)
         {
-            _logger.LogError(ex, "Error updating seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "UpdateSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/update", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        var phasesChanged = body.GrowthPhases != null;
+        var capabilityRulesChanged = body.CapabilityRules != null;
+
+        if (body.DisplayName != null)
+            seedType.DisplayName = body.DisplayName;
+        if (body.Description != null)
+            seedType.Description = body.Description;
+        if (body.MaxPerOwner.HasValue)
+            seedType.MaxPerOwner = body.MaxPerOwner.Value;
+        if (body.GrowthPhases != null)
+            seedType.GrowthPhases = body.GrowthPhases.ToList();
+        if (body.CapabilityRules != null)
+            seedType.CapabilityRules = body.CapabilityRules.ToList();
+        if (body.GrowthDecayEnabled.HasValue)
+            seedType.GrowthDecayEnabled = body.GrowthDecayEnabled;
+        if (body.GrowthDecayRatePerDay.HasValue)
+            seedType.GrowthDecayRatePerDay = body.GrowthDecayRatePerDay;
+        if (body.SameOwnerGrowthMultiplier.HasValue)
+            seedType.SameOwnerGrowthMultiplier = body.SameOwnerGrowthMultiplier.Value;
+
+        await store.SaveAsync(key, seedType, cancellationToken: cancellationToken);
+
+        // Recompute affected seeds when phase thresholds or capability rules change
+        if (phasesChanged || capabilityRulesChanged)
+        {
+            await RecomputeSeedsForTypeAsync(seedType, phasesChanged, cancellationToken);
+        }
+
+        var changedFields = new List<string>();
+        if (body.DisplayName != null) changedFields.Add("displayName");
+        if (body.Description != null) changedFields.Add("description");
+        if (body.MaxPerOwner.HasValue) changedFields.Add("maxPerOwner");
+        if (body.GrowthPhases != null) changedFields.Add("growthPhases");
+        if (body.CapabilityRules != null) changedFields.Add("capabilityRules");
+        if (body.GrowthDecayEnabled.HasValue) changedFields.Add("growthDecayEnabled");
+        if (body.GrowthDecayRatePerDay.HasValue) changedFields.Add("growthDecayRatePerDay");
+        if (body.SameOwnerGrowthMultiplier.HasValue) changedFields.Add("sameOwnerGrowthMultiplier");
+
+        await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedTypeCode = seedType.SeedTypeCode,
+            GameServiceId = seedType.GameServiceId,
+            DisplayName = seedType.DisplayName,
+            Description = seedType.Description,
+            MaxPerOwner = seedType.MaxPerOwner,
+            BondCardinality = seedType.BondCardinality,
+            BondPermanent = seedType.BondPermanent,
+            SameOwnerGrowthMultiplier = seedType.SameOwnerGrowthMultiplier,
+            IsDeprecated = seedType.IsDeprecated,
+            DeprecatedAt = seedType.DeprecatedAt,
+            DeprecationReason = seedType.DeprecationReason,
+            ChangedFields = changedFields
+        }, cancellationToken: cancellationToken);
+
+        return (StatusCodes.OK, MapTypeToResponse(seedType));
     }
 
     /// <summary>
@@ -777,59 +766,48 @@ public partial class SeedService : ISeedService
         _logger.LogDebug("Deprecating seed type {SeedTypeCode} for game service {GameServiceId}",
             body.SeedTypeCode, body.GameServiceId);
 
-        try
+        var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var model = await store.GetAsync(key, cancellationToken);
+
+        if (model == null)
         {
-            var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
-            var model = await store.GetAsync(key, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogDebug("Seed type not found for deprecation: {SeedTypeCode}", body.SeedTypeCode);
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (model.IsDeprecated)
-            {
-                _logger.LogDebug("Seed type already deprecated: {SeedTypeCode}", body.SeedTypeCode);
-                return (StatusCodes.Conflict, null);
-            }
-
-            model.IsDeprecated = true;
-            model.DeprecatedAt = DateTimeOffset.UtcNow;
-            model.DeprecationReason = body.Reason;
-
-            await store.SaveAsync(key, model, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SeedTypeCode = model.SeedTypeCode,
-                GameServiceId = model.GameServiceId,
-                DisplayName = model.DisplayName,
-                Description = model.Description,
-                MaxPerOwner = model.MaxPerOwner,
-                BondCardinality = model.BondCardinality,
-                BondPermanent = model.BondPermanent,
-                SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                DeprecationReason = model.DeprecationReason,
-                ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Deprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
-            return (StatusCodes.OK, MapTypeToResponse(model));
+            _logger.LogDebug("Seed type not found for deprecation: {SeedTypeCode}", body.SeedTypeCode);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (model.IsDeprecated)
         {
-            _logger.LogError(ex, "Error deprecating seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "DeprecateSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/deprecate", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("Seed type already deprecated: {SeedTypeCode}", body.SeedTypeCode);
+            return (StatusCodes.Conflict, null);
         }
+
+        model.IsDeprecated = true;
+        model.DeprecatedAt = DateTimeOffset.UtcNow;
+        model.DeprecationReason = body.Reason;
+
+        await store.SaveAsync(key, model, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedTypeCode = model.SeedTypeCode,
+            GameServiceId = model.GameServiceId,
+            DisplayName = model.DisplayName,
+            Description = model.Description,
+            MaxPerOwner = model.MaxPerOwner,
+            BondCardinality = model.BondCardinality,
+            BondPermanent = model.BondPermanent,
+            SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Deprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
+        return (StatusCodes.OK, MapTypeToResponse(model));
     }
 
     /// <summary>
@@ -840,59 +818,48 @@ public partial class SeedService : ISeedService
         _logger.LogDebug("Undeprecating seed type {SeedTypeCode} for game service {GameServiceId}",
             body.SeedTypeCode, body.GameServiceId);
 
-        try
+        var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var model = await store.GetAsync(key, cancellationToken);
+
+        if (model == null)
         {
-            var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
-            var model = await store.GetAsync(key, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogDebug("Seed type not found for undeprecation: {SeedTypeCode}", body.SeedTypeCode);
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (!model.IsDeprecated)
-            {
-                _logger.LogDebug("Seed type not deprecated: {SeedTypeCode}", body.SeedTypeCode);
-                return (StatusCodes.Conflict, null);
-            }
-
-            model.IsDeprecated = false;
-            model.DeprecatedAt = null;
-            model.DeprecationReason = null;
-
-            await store.SaveAsync(key, model, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SeedTypeCode = model.SeedTypeCode,
-                GameServiceId = model.GameServiceId,
-                DisplayName = model.DisplayName,
-                Description = model.Description,
-                MaxPerOwner = model.MaxPerOwner,
-                BondCardinality = model.BondCardinality,
-                BondPermanent = model.BondPermanent,
-                SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                DeprecationReason = model.DeprecationReason,
-                ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Undeprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
-            return (StatusCodes.OK, MapTypeToResponse(model));
+            _logger.LogDebug("Seed type not found for undeprecation: {SeedTypeCode}", body.SeedTypeCode);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (!model.IsDeprecated)
         {
-            _logger.LogError(ex, "Error undeprecating seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "UndeprecateSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/undeprecate", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("Seed type not deprecated: {SeedTypeCode}", body.SeedTypeCode);
+            return (StatusCodes.Conflict, null);
         }
+
+        model.IsDeprecated = false;
+        model.DeprecatedAt = null;
+        model.DeprecationReason = null;
+
+        await store.SaveAsync(key, model, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedTypeCode = model.SeedTypeCode,
+            GameServiceId = model.GameServiceId,
+            DisplayName = model.DisplayName,
+            Description = model.Description,
+            MaxPerOwner = model.MaxPerOwner,
+            BondCardinality = model.BondCardinality,
+            BondPermanent = model.BondPermanent,
+            SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" }
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Undeprecated seed type: {SeedTypeCode}", body.SeedTypeCode);
+        return (StatusCodes.OK, MapTypeToResponse(model));
     }
 
     /// <summary>
@@ -903,82 +870,71 @@ public partial class SeedService : ISeedService
         _logger.LogDebug("Deleting seed type {SeedTypeCode} for game service {GameServiceId}",
             body.SeedTypeCode, body.GameServiceId);
 
-        try
+        var lockOwner = $"delete-type-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
+            lockOwner, 30, cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            var lockOwner = $"delete-type-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
-                lockOwner, 30, cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                return StatusCodes.Conflict;
-            }
-
-            var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
-            var model = await typeStore.GetAsync(key, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogDebug("Seed type not found for deletion: {SeedTypeCode}", body.SeedTypeCode);
-                return StatusCodes.NotFound;
-            }
-
-            if (!model.IsDeprecated)
-            {
-                _logger.LogDebug("Cannot delete non-deprecated seed type {SeedTypeCode}: must deprecate first", body.SeedTypeCode);
-                return StatusCodes.BadRequest;
-            }
-
-            // Check for non-archived seeds of this type (same-service JSON query)
-            var seedStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
-            var conditions = new List<QueryCondition>
-            {
-                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = model.SeedTypeCode },
-                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = model.GameServiceId.ToString() },
-                new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() },
-                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
-            };
-            var existing = await seedStore.JsonQueryPagedAsync(conditions, 0, 1, null, cancellationToken);
-
-            if (existing.TotalCount > 0)
-            {
-                _logger.LogDebug("Cannot delete seed type {SeedTypeCode}: {Count} non-archived seeds exist",
-                    body.SeedTypeCode, existing.TotalCount);
-                return StatusCodes.Conflict;
-            }
-
-            await typeStore.DeleteAsync(key, cancellationToken);
-
-            await _messageBus.TryPublishAsync("seed-type.deleted", new SeedTypeDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SeedTypeCode = model.SeedTypeCode,
-                GameServiceId = model.GameServiceId,
-                DisplayName = model.DisplayName,
-                Description = model.Description,
-                MaxPerOwner = model.MaxPerOwner,
-                BondCardinality = model.BondCardinality,
-                BondPermanent = model.BondPermanent,
-                SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                DeprecationReason = model.DeprecationReason
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Deleted seed type: {SeedTypeCode}", body.SeedTypeCode);
-            return StatusCodes.OK;
+            return StatusCodes.Conflict;
         }
-        catch (Exception ex)
+
+        var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var model = await typeStore.GetAsync(key, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogError(ex, "Error deleting seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "DeleteSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/delete", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            _logger.LogDebug("Seed type not found for deletion: {SeedTypeCode}", body.SeedTypeCode);
+            return StatusCodes.NotFound;
         }
+
+        if (!model.IsDeprecated)
+        {
+            _logger.LogDebug("Cannot delete non-deprecated seed type {SeedTypeCode}: must deprecate first", body.SeedTypeCode);
+            return StatusCodes.BadRequest;
+        }
+
+        // Check for non-archived seeds of this type (same-service JSON query)
+        var seedStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
+        var conditions = new List<QueryCondition>
+        {
+            new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = model.SeedTypeCode },
+            new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = model.GameServiceId.ToString() },
+            new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() },
+            new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
+        };
+        var existing = await seedStore.JsonQueryPagedAsync(conditions, 0, 1, null, cancellationToken);
+
+        if (existing.TotalCount > 0)
+        {
+            _logger.LogDebug("Cannot delete seed type {SeedTypeCode}: {Count} non-archived seeds exist",
+                body.SeedTypeCode, existing.TotalCount);
+            return StatusCodes.Conflict;
+        }
+
+        await typeStore.DeleteAsync(key, cancellationToken);
+
+        await _messageBus.TryPublishAsync("seed-type.deleted", new SeedTypeDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedTypeCode = model.SeedTypeCode,
+            GameServiceId = model.GameServiceId,
+            DisplayName = model.DisplayName,
+            Description = model.Description,
+            MaxPerOwner = model.MaxPerOwner,
+            BondCardinality = model.BondCardinality,
+            BondPermanent = model.BondPermanent,
+            SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Deleted seed type: {SeedTypeCode}", body.SeedTypeCode);
+        return StatusCodes.OK;
     }
 
     // ========================================================================
@@ -993,102 +949,91 @@ public partial class SeedService : ISeedService
         _logger.LogInformation("Initiating bond between seeds {InitiatorId} and {TargetId}",
             body.InitiatorSeedId, body.TargetSeedId);
 
-        try
+        // Lock both seeds in deterministic order to prevent deadlocks and race conditions
+        var orderedIds = new[] { body.InitiatorSeedId, body.TargetSeedId }.OrderBy(id => id).ToArray();
+        var lockOwner = $"bond-{Guid.NewGuid():N}";
+
+        await using var lockFirst = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, orderedIds[0].ToString(), lockOwner, 10, cancellationToken);
+        if (!lockFirst.Success)
         {
-            // Lock both seeds in deterministic order to prevent deadlocks and race conditions
-            var orderedIds = new[] { body.InitiatorSeedId, body.TargetSeedId }.OrderBy(id => id).ToArray();
-            var lockOwner = $"bond-{Guid.NewGuid():N}";
+            return (StatusCodes.Conflict, null);
+        }
 
-            await using var lockFirst = await _lockProvider.LockAsync(
-                StateStoreDefinitions.SeedLock, orderedIds[0].ToString(), lockOwner, 10, cancellationToken);
-            if (!lockFirst.Success)
+        await using var lockSecond = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, orderedIds[1].ToString(), lockOwner, 10, cancellationToken);
+        if (!lockSecond.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var initiator = await seedStore.GetAsync($"seed:{body.InitiatorSeedId}", cancellationToken);
+        var target = await seedStore.GetAsync($"seed:{body.TargetSeedId}", cancellationToken);
+
+        if (initiator == null || target == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (initiator.SeedTypeCode != target.SeedTypeCode)
+        {
+            _logger.LogWarning("Cannot bond seeds of different types: {TypeA} vs {TypeB}",
+                initiator.SeedTypeCode, target.SeedTypeCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check seed type allows bonding
+        var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var seedType = await typeStore.GetAsync(
+            $"type:{initiator.GameServiceId}:{initiator.SeedTypeCode}", cancellationToken);
+
+        if (seedType == null || seedType.BondCardinality < 1)
+        {
+            _logger.LogWarning("Seed type {SeedTypeCode} does not support bonding", initiator.SeedTypeCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check neither seed is already bonded
+        if (initiator.BondId.HasValue || target.BondId.HasValue)
+        {
+            _logger.LogWarning("One or both seeds are already bonded");
+            return (StatusCodes.Conflict, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var bond = new SeedBondModel
+        {
+            BondId = Guid.NewGuid(),
+            SeedTypeCode = initiator.SeedTypeCode,
+            Participants = new List<BondParticipantEntry>
             {
-                return (StatusCodes.Conflict, null);
-            }
-
-            await using var lockSecond = await _lockProvider.LockAsync(
-                StateStoreDefinitions.SeedLock, orderedIds[1].ToString(), lockOwner, 10, cancellationToken);
-            if (!lockSecond.Success)
-            {
-                return (StatusCodes.Conflict, null);
-            }
-
-            var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-            var initiator = await seedStore.GetAsync($"seed:{body.InitiatorSeedId}", cancellationToken);
-            var target = await seedStore.GetAsync($"seed:{body.TargetSeedId}", cancellationToken);
-
-            if (initiator == null || target == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (initiator.SeedTypeCode != target.SeedTypeCode)
-            {
-                _logger.LogWarning("Cannot bond seeds of different types: {TypeA} vs {TypeB}",
-                    initiator.SeedTypeCode, target.SeedTypeCode);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Check seed type allows bonding
-            var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var seedType = await typeStore.GetAsync(
-                $"type:{initiator.GameServiceId}:{initiator.SeedTypeCode}", cancellationToken);
-
-            if (seedType == null || seedType.BondCardinality < 1)
-            {
-                _logger.LogWarning("Seed type {SeedTypeCode} does not support bonding", initiator.SeedTypeCode);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Check neither seed is already bonded
-            if (initiator.BondId.HasValue || target.BondId.HasValue)
-            {
-                _logger.LogWarning("One or both seeds are already bonded");
-                return (StatusCodes.Conflict, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-            var bond = new SeedBondModel
-            {
-                BondId = Guid.NewGuid(),
-                SeedTypeCode = initiator.SeedTypeCode,
-                Participants = new List<BondParticipantEntry>
+                new()
                 {
-                    new()
-                    {
-                        SeedId = body.InitiatorSeedId,
-                        JoinedAt = now,
-                        Role = "initiator",
-                        Confirmed = true
-                    },
-                    new()
-                    {
-                        SeedId = body.TargetSeedId,
-                        JoinedAt = now,
-                        Role = null,
-                        Confirmed = false
-                    }
+                    SeedId = body.InitiatorSeedId,
+                    JoinedAt = now,
+                    Role = "initiator",
+                    Confirmed = true
                 },
-                CreatedAt = now,
-                Status = BondStatus.PendingConfirmation,
-                BondStrength = 0f,
-                SharedGrowth = 0f,
-                Permanent = seedType.BondPermanent
-            };
+                new()
+                {
+                    SeedId = body.TargetSeedId,
+                    JoinedAt = now,
+                    Role = null,
+                    Confirmed = false
+                }
+            },
+            CreatedAt = now,
+            Status = BondStatus.PendingConfirmation,
+            BondStrength = 0f,
+            SharedGrowth = 0f,
+            Permanent = seedType.BondPermanent
+        };
 
-            var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
-            await bondStore.SaveAsync($"bond:{bond.BondId}", bond, cancellationToken: cancellationToken);
+        var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
+        await bondStore.SaveAsync($"bond:{bond.BondId}", bond, cancellationToken: cancellationToken);
 
-            return (StatusCodes.OK, MapBondToResponse(bond));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error initiating bond");
-            await _messageBus.TryPublishErrorAsync("seed", "InitiateBond", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/initiate", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, MapBondToResponse(bond));
     }
 
     /// <summary>
@@ -1096,79 +1041,68 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, BondResponse?)> ConfirmBondAsync(ConfirmBondRequest body, CancellationToken cancellationToken)
     {
-        try
+        var lockOwner = $"confirm-bond-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, $"bond:{body.BondId}", lockOwner, 10, cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            var lockOwner = $"confirm-bond-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.SeedLock, $"bond:{body.BondId}", lockOwner, 10, cancellationToken);
+            return (StatusCodes.Conflict, null);
+        }
 
-            if (!lockResponse.Success)
+        var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
+        var bondKey = $"bond:{body.BondId}";
+        var bond = await bondStore.GetAsync(bondKey, cancellationToken);
+
+        if (bond == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (bond.Status != BondStatus.PendingConfirmation)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var participant = bond.Participants.FirstOrDefault(p => p.SeedId == body.ConfirmingSeedId);
+        if (participant == null)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        participant.Confirmed = true;
+
+        // Check if all participants have confirmed
+        var allConfirmed = bond.Participants.All(p => p.Confirmed);
+        if (allConfirmed)
+        {
+            bond.Status = BondStatus.Active;
+
+            // Update seeds with bond reference
+            var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+            foreach (var p in bond.Participants)
             {
-                return (StatusCodes.Conflict, null);
-            }
-
-            var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
-            var bondKey = $"bond:{body.BondId}";
-            var bond = await bondStore.GetAsync(bondKey, cancellationToken);
-
-            if (bond == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (bond.Status != BondStatus.PendingConfirmation)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var participant = bond.Participants.FirstOrDefault(p => p.SeedId == body.ConfirmingSeedId);
-            if (participant == null)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            participant.Confirmed = true;
-
-            // Check if all participants have confirmed
-            var allConfirmed = bond.Participants.All(p => p.Confirmed);
-            if (allConfirmed)
-            {
-                bond.Status = BondStatus.Active;
-
-                // Update seeds with bond reference
-                var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-                foreach (var p in bond.Participants)
+                var seed = await seedStore.GetAsync($"seed:{p.SeedId}", cancellationToken);
+                if (seed != null)
                 {
-                    var seed = await seedStore.GetAsync($"seed:{p.SeedId}", cancellationToken);
-                    if (seed != null)
-                    {
-                        seed.BondId = bond.BondId;
-                        await seedStore.SaveAsync($"seed:{seed.SeedId}", seed, cancellationToken: cancellationToken);
-                    }
+                    seed.BondId = bond.BondId;
+                    await seedStore.SaveAsync($"seed:{seed.SeedId}", seed, cancellationToken: cancellationToken);
                 }
-
-                await _messageBus.TryPublishAsync("seed.bond.formed", new SeedBondFormedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    BondId = bond.BondId,
-                    SeedTypeCode = bond.SeedTypeCode,
-                    ParticipantSeedIds = bond.Participants.Select(p => p.SeedId).ToList()
-                }, cancellationToken: cancellationToken);
             }
 
-            await bondStore.SaveAsync(bondKey, bond, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("seed.bond.formed", new SeedBondFormedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                BondId = bond.BondId,
+                SeedTypeCode = bond.SeedTypeCode,
+                ParticipantSeedIds = bond.Participants.Select(p => p.SeedId).ToList()
+            }, cancellationToken: cancellationToken);
+        }
 
-            return (StatusCodes.OK, MapBondToResponse(bond));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error confirming bond {BondId}", body.BondId);
-            await _messageBus.TryPublishErrorAsync("seed", "ConfirmBond", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/confirm", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+        await bondStore.SaveAsync(bondKey, bond, cancellationToken: cancellationToken);
+
+        return (StatusCodes.OK, MapBondToResponse(bond));
     }
 
     /// <summary>
@@ -1176,26 +1110,15 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, BondResponse?)> GetBondAsync(GetBondRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
-            var store = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
-            var bond = await store.GetAsync($"bond:{body.BondId}", cancellationToken);
+        var store = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
+        var bond = await store.GetAsync($"bond:{body.BondId}", cancellationToken);
 
-            if (bond == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapBondToResponse(bond));
-        }
-        catch (Exception ex)
+        if (bond == null)
         {
-            _logger.LogError(ex, "Error getting bond {BondId}", body.BondId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetBond", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/get", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapBondToResponse(bond));
     }
 
     /// <summary>
@@ -1203,39 +1126,28 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, BondResponse?)> GetBondForSeedAsync(GetBondForSeedRequest body, CancellationToken cancellationToken)
     {
-        try
+        var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
+
+        if (seed == null)
         {
-            var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-            var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
-
-            if (seed == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (!seed.BondId.HasValue)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
-            var bond = await bondStore.GetAsync($"bond:{seed.BondId.Value}", cancellationToken);
-
-            if (bond == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapBondToResponse(bond));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (!seed.BondId.HasValue)
         {
-            _logger.LogError(ex, "Error getting bond for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetBondForSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/get-for-seed", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
+        var bond = await bondStore.GetAsync($"bond:{seed.BondId.Value}", cancellationToken);
+
+        if (bond == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        return (StatusCodes.OK, MapBondToResponse(bond));
     }
 
     /// <summary>
@@ -1243,55 +1155,44 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, BondPartnersResponse?)> GetBondPartnersAsync(GetBondPartnersRequest body, CancellationToken cancellationToken)
     {
-        try
+        var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
+
+        if (seed == null || !seed.BondId.HasValue)
         {
-            var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-            var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (seed == null || !seed.BondId.HasValue)
+        var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
+        var bond = await bondStore.GetAsync($"bond:{seed.BondId.Value}", cancellationToken);
+
+        if (bond == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var partners = new List<PartnerSummary>();
+        foreach (var participant in bond.Participants.Where(p => p.SeedId != body.SeedId))
+        {
+            var partnerSeed = await seedStore.GetAsync($"seed:{participant.SeedId}", cancellationToken);
+            if (partnerSeed != null)
             {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var bondStore = _stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
-            var bond = await bondStore.GetAsync($"bond:{seed.BondId.Value}", cancellationToken);
-
-            if (bond == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var partners = new List<PartnerSummary>();
-            foreach (var participant in bond.Participants.Where(p => p.SeedId != body.SeedId))
-            {
-                var partnerSeed = await seedStore.GetAsync($"seed:{participant.SeedId}", cancellationToken);
-                if (partnerSeed != null)
+                partners.Add(new PartnerSummary
                 {
-                    partners.Add(new PartnerSummary
-                    {
-                        SeedId = partnerSeed.SeedId,
-                        OwnerId = partnerSeed.OwnerId,
-                        OwnerType = partnerSeed.OwnerType,
-                        GrowthPhase = partnerSeed.GrowthPhase,
-                        Status = partnerSeed.Status
-                    });
-                }
+                    SeedId = partnerSeed.SeedId,
+                    OwnerId = partnerSeed.OwnerId,
+                    OwnerType = partnerSeed.OwnerType,
+                    GrowthPhase = partnerSeed.GrowthPhase,
+                    Status = partnerSeed.Status
+                });
             }
+        }
 
-            return (StatusCodes.OK, new BondPartnersResponse
-            {
-                BondId = bond.BondId,
-                Partners = partners
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new BondPartnersResponse
         {
-            _logger.LogError(ex, "Error getting bond partners for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetBondPartners", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/bond/get-partners", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            BondId = bond.BondId,
+            Partners = partners
+        });
     }
 
     // ========================================================================

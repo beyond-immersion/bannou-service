@@ -184,55 +184,37 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting participation for realm {RealmId}", body.RealmId);
 
-        try
+        var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
+            StateStoreDefinitions.RealmHistory);
+
+        var conditions = BuildRealmParticipationQueryConditions(
+            "$.RealmId", body.RealmId,
+            eventCategory: body.EventCategory,
+            minimumImpact: body.MinimumImpact,
+            role: null);
+
+        var sortSpec = new JsonSortSpec { Path = "$.EventDateUnix", Descending = true };
+        var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
+
+        var result = await jsonStore.JsonQueryPagedAsync(
+            conditions, skip, take, sortSpec, cancellationToken);
+
+        var participations = result.Items
+            .Select(item => MapToRealmHistoricalParticipation(item.Value))
+            .ToList();
+
+        var paginatedResult = PaginationHelper.CreateResult(
+            participations, (int)result.TotalCount, body.Page, body.PageSize);
+
+        return (StatusCodes.OK, new RealmParticipationListResponse
         {
-            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
-                StateStoreDefinitions.RealmHistory);
-
-            var conditions = BuildRealmParticipationQueryConditions(
-                "$.RealmId", body.RealmId,
-                eventCategory: body.EventCategory,
-                minimumImpact: body.MinimumImpact,
-                role: null);
-
-            var sortSpec = new JsonSortSpec { Path = "$.EventDateUnix", Descending = true };
-            var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
-
-            var result = await jsonStore.JsonQueryPagedAsync(
-                conditions, skip, take, sortSpec, cancellationToken);
-
-            var participations = result.Items
-                .Select(item => MapToRealmHistoricalParticipation(item.Value))
-                .ToList();
-
-            var paginatedResult = PaginationHelper.CreateResult(
-                participations, (int)result.TotalCount, body.Page, body.PageSize);
-
-            return (StatusCodes.OK, new RealmParticipationListResponse
-            {
-                Participations = paginatedResult.Items.ToList(),
-                TotalCount = paginatedResult.TotalCount,
-                Page = paginatedResult.Page,
-                PageSize = paginatedResult.PageSize,
-                HasNextPage = paginatedResult.HasNextPage,
-                HasPreviousPage = paginatedResult.HasPreviousPage
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting participation for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "GetRealmParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/get-participation",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Participations = paginatedResult.Items.ToList(),
+            TotalCount = paginatedResult.TotalCount,
+            Page = paginatedResult.Page,
+            PageSize = paginatedResult.PageSize,
+            HasNextPage = paginatedResult.HasNextPage,
+            HasPreviousPage = paginatedResult.HasPreviousPage
+        });
     }
 
     /// <summary>
@@ -245,55 +227,37 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting participants for event {EventId}", body.EventId);
 
-        try
+        var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
+            StateStoreDefinitions.RealmHistory);
+
+        var conditions = BuildRealmParticipationQueryConditions(
+            "$.EventId", body.EventId,
+            eventCategory: null,
+            minimumImpact: null,
+            role: body.Role);
+
+        var sortSpec = new JsonSortSpec { Path = "$.Impact", Descending = true };
+        var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
+
+        var result = await jsonStore.JsonQueryPagedAsync(
+            conditions, skip, take, sortSpec, cancellationToken);
+
+        var participations = result.Items
+            .Select(item => MapToRealmHistoricalParticipation(item.Value))
+            .ToList();
+
+        var paginatedResult = PaginationHelper.CreateResult(
+            participations, (int)result.TotalCount, body.Page, body.PageSize);
+
+        return (StatusCodes.OK, new RealmParticipationListResponse
         {
-            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
-                StateStoreDefinitions.RealmHistory);
-
-            var conditions = BuildRealmParticipationQueryConditions(
-                "$.EventId", body.EventId,
-                eventCategory: null,
-                minimumImpact: null,
-                role: body.Role);
-
-            var sortSpec = new JsonSortSpec { Path = "$.Impact", Descending = true };
-            var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
-
-            var result = await jsonStore.JsonQueryPagedAsync(
-                conditions, skip, take, sortSpec, cancellationToken);
-
-            var participations = result.Items
-                .Select(item => MapToRealmHistoricalParticipation(item.Value))
-                .ToList();
-
-            var paginatedResult = PaginationHelper.CreateResult(
-                participations, (int)result.TotalCount, body.Page, body.PageSize);
-
-            return (StatusCodes.OK, new RealmParticipationListResponse
-            {
-                Participations = paginatedResult.Items.ToList(),
-                TotalCount = paginatedResult.TotalCount,
-                Page = paginatedResult.Page,
-                PageSize = paginatedResult.PageSize,
-                HasNextPage = paginatedResult.HasNextPage,
-                HasPreviousPage = paginatedResult.HasPreviousPage
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting participants for event {EventId}", body.EventId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "GetRealmEventParticipants",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/get-event-participants",
-                details: new { body.EventId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Participations = paginatedResult.Items.ToList(),
+            TotalCount = paginatedResult.TotalCount,
+            Page = paginatedResult.Page,
+            PageSize = paginatedResult.PageSize,
+            HasNextPage = paginatedResult.HasNextPage,
+            HasPreviousPage = paginatedResult.HasPreviousPage
+        });
     }
 
     /// <summary>
@@ -305,61 +269,43 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Deleting participation {ParticipationId}", body.ParticipationId);
 
-        try
+        // First get the record to know the keys for index cleanup
+        var data = await _participationHelper.GetRecordAsync(body.ParticipationId.ToString(), cancellationToken);
+
+        if (data == null)
         {
-            // First get the record to know the keys for index cleanup
-            var data = await _participationHelper.GetRecordAsync(body.ParticipationId.ToString(), cancellationToken);
-
-            if (data == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            // Unregister realm reference before deletion
-            await UnregisterRealmReferenceAsync(body.ParticipationId.ToString(), data.RealmId, cancellationToken);
-
-            // Use helper to remove record and update both indices
-            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
-            var removeResult = await _participationHelper.RemoveRecordAsync(
-                body.ParticipationId.ToString(),
-                data.RealmId.ToString(),
-                data.EventId.ToString(),
-                cancellationToken);
-
-            if (!removeResult.LockAcquired)
-            {
-                _logger.LogWarning("Failed to acquire lock for participation {ParticipationId} deletion", body.ParticipationId);
-                return StatusCodes.Conflict;
-            }
-
-            // Publish typed event per FOUNDATION TENETS
-            await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new RealmParticipationDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                ParticipationId = body.ParticipationId,
-                RealmId = data.RealmId,
-                HistoricalEventId = data.EventId
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogDebug("Deleted participation {ParticipationId}", body.ParticipationId);
-            return StatusCodes.OK;
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
+
+        // Unregister realm reference before deletion
+        await UnregisterRealmReferenceAsync(body.ParticipationId.ToString(), data.RealmId, cancellationToken);
+
+        // Use helper to remove record and update both indices
+        // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+        var removeResult = await _participationHelper.RemoveRecordAsync(
+            body.ParticipationId.ToString(),
+            data.RealmId.ToString(),
+            data.EventId.ToString(),
+            cancellationToken);
+
+        if (!removeResult.LockAcquired)
         {
-            _logger.LogError(ex, "Error deleting participation {ParticipationId}", body.ParticipationId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "DeleteRealmParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/delete-participation",
-                details: new { body.ParticipationId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            _logger.LogWarning("Failed to acquire lock for participation {ParticipationId} deletion", body.ParticipationId);
+            return StatusCodes.Conflict;
         }
+
+        // Publish typed event per FOUNDATION TENETS
+        await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new RealmParticipationDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ParticipationId = body.ParticipationId,
+            RealmId = data.RealmId,
+            HistoricalEventId = data.EventId
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogDebug("Deleted participation {ParticipationId}", body.ParticipationId);
+        return StatusCodes.OK;
     }
 
     // ============================================================================
@@ -375,53 +321,35 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting lore for realm {RealmId}", body.RealmId);
 
-        try
+        var loreData = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+
+        if (loreData == null)
         {
-            var loreData = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
-
-            if (loreData == null)
-            {
-                _logger.LogDebug("No lore found for realm {RealmId}", body.RealmId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var elements = loreData.Elements
-                .Select(MapToRealmLoreElement)
-                .ToList();
-
-            // Apply filters
-            if (body.ElementTypes != null && body.ElementTypes.Count > 0)
-            {
-                elements = elements.Where(e => body.ElementTypes.Contains(e.ElementType)).ToList();
-            }
-            if (body.MinimumStrength.HasValue)
-            {
-                elements = elements.Where(e => e.Strength >= body.MinimumStrength.Value).ToList();
-            }
-
-            return (StatusCodes.OK, new RealmLoreResponse
-            {
-                RealmId = body.RealmId,
-                Elements = elements,
-                CreatedAt = TimestampHelper.FromUnixSeconds(loreData.CreatedAtUnix),
-                UpdatedAt = TimestampHelper.FromUnixSeconds(loreData.UpdatedAtUnix)
-            });
+            _logger.LogDebug("No lore found for realm {RealmId}", body.RealmId);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var elements = loreData.Elements
+            .Select(MapToRealmLoreElement)
+            .ToList();
+
+        // Apply filters
+        if (body.ElementTypes != null && body.ElementTypes.Count > 0)
         {
-            _logger.LogError(ex, "Error getting lore for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "GetRealmLore",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/get-lore",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            elements = elements.Where(e => body.ElementTypes.Contains(e.ElementType)).ToList();
         }
+        if (body.MinimumStrength.HasValue)
+        {
+            elements = elements.Where(e => e.Strength >= body.MinimumStrength.Value).ToList();
+        }
+
+        return (StatusCodes.OK, new RealmLoreResponse
+        {
+            RealmId = body.RealmId,
+            Elements = elements,
+            CreatedAt = TimestampHelper.FromUnixSeconds(loreData.CreatedAtUnix),
+            UpdatedAt = TimestampHelper.FromUnixSeconds(loreData.UpdatedAtUnix)
+        });
     }
 
     /// <summary>
@@ -434,14 +362,43 @@ public partial class RealmHistoryService : IRealmHistoryService
         _logger.LogDebug("Setting lore for realm {RealmId}, replaceExisting={ReplaceExisting}",
             body.RealmId, body.ReplaceExisting);
 
-        try
-        {
-            var elementDataList = body.Elements.Select(MapToRealmLoreElementData).ToList();
-            var maxElements = _configuration.MaxLoreElements;
+        var elementDataList = body.Elements.Select(MapToRealmLoreElementData).ToList();
+        var maxElements = _configuration.MaxLoreElements;
 
-            if (body.ReplaceExisting)
+        if (body.ReplaceExisting)
+        {
+            // Replace mode: the final count equals the input count
+            if (elementDataList.Count > maxElements)
             {
-                // Replace mode: the final count equals the input count
+                _logger.LogWarning(
+                    "SetLore rejected for realm {RealmId}: {Count} elements exceeds limit of {Limit}",
+                    body.RealmId, elementDataList.Count, maxElements);
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+        else
+        {
+            // Merge mode: calculate post-merge count (existing + truly new elements)
+            var existing = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+            if (existing != null)
+            {
+                var existingElements = existing.Elements;
+                var newElementCount = elementDataList.Count(newEl =>
+                    !existingElements.Any(e =>
+                        e.ElementType == newEl.ElementType && e.Key == newEl.Key));
+                var postMergeCount = existingElements.Count + newElementCount;
+
+                if (postMergeCount > maxElements)
+                {
+                    _logger.LogWarning(
+                        "SetLore merge rejected for realm {RealmId}: post-merge count {PostMerge} exceeds limit of {Limit} (existing={Existing}, new={New})",
+                        body.RealmId, postMergeCount, maxElements, existingElements.Count, newElementCount);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+            else
+            {
+                // No existing lore: the final count equals the input count
                 if (elementDataList.Count > maxElements)
                 {
                     _logger.LogWarning(
@@ -450,110 +407,63 @@ public partial class RealmHistoryService : IRealmHistoryService
                     return (StatusCodes.BadRequest, null);
                 }
             }
-            else
-            {
-                // Merge mode: calculate post-merge count (existing + truly new elements)
-                var existing = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
-                if (existing != null)
-                {
-                    var existingElements = existing.Elements;
-                    var newElementCount = elementDataList.Count(newEl =>
-                        !existingElements.Any(e =>
-                            e.ElementType == newEl.ElementType && e.Key == newEl.Key));
-                    var postMergeCount = existingElements.Count + newElementCount;
-
-                    if (postMergeCount > maxElements)
-                    {
-                        _logger.LogWarning(
-                            "SetLore merge rejected for realm {RealmId}: post-merge count {PostMerge} exceeds limit of {Limit} (existing={Existing}, new={New})",
-                            body.RealmId, postMergeCount, maxElements, existingElements.Count, newElementCount);
-                        return (StatusCodes.BadRequest, null);
-                    }
-                }
-                else
-                {
-                    // No existing lore: the final count equals the input count
-                    if (elementDataList.Count > maxElements)
-                    {
-                        _logger.LogWarning(
-                            "SetLore rejected for realm {RealmId}: {Count} elements exceeds limit of {Limit}",
-                            body.RealmId, elementDataList.Count, maxElements);
-                        return (StatusCodes.BadRequest, null);
-                    }
-                }
-            }
-
-            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
-            var lockResult = await _loreHelper.SetAsync(
-                body.RealmId.ToString(),
-                elementDataList,
-                body.ReplaceExisting,
-                cancellationToken);
-
-            if (!lockResult.LockAcquired)
-            {
-                _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore set", body.RealmId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var result = lockResult.Value
-                ?? throw new InvalidOperationException("Lock acquired but lore set result is null");
-
-            var response = new RealmLoreResponse
-            {
-                RealmId = body.RealmId,
-                Elements = result.Backstory.Elements.Select(MapToRealmLoreElement).ToList(),
-                CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
-                UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
-            };
-
-            // Publish typed event per FOUNDATION TENETS
-            var now = DateTimeOffset.UtcNow;
-            if (result.IsNew)
-            {
-                await _messageBus.TryPublishAsync(LORE_CREATED_TOPIC, new RealmLoreCreatedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    RealmId = body.RealmId,
-                    ElementCount = result.Backstory.Elements.Count
-                }, cancellationToken: cancellationToken);
-
-                // Register realm reference with lib-resource for cleanup coordination (only on new lore)
-                await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
-            }
-            else
-            {
-                await _messageBus.TryPublishAsync(LORE_UPDATED_TOPIC, new RealmLoreUpdatedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    RealmId = body.RealmId,
-                    ElementCount = result.Backstory.Elements.Count,
-                    ReplaceExisting = body.ReplaceExisting
-                }, cancellationToken: cancellationToken);
-            }
-
-            _logger.LogDebug("Lore {Action} for realm {RealmId}, {Count} elements",
-                result.IsNew ? "created" : "updated", body.RealmId, result.Backstory.Elements.Count);
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+        var lockResult = await _loreHelper.SetAsync(
+            body.RealmId.ToString(),
+            elementDataList,
+            body.ReplaceExisting,
+            cancellationToken);
+
+        if (!lockResult.LockAcquired)
         {
-            _logger.LogError(ex, "Error setting lore for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "SetRealmLore",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/set-lore",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore set", body.RealmId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var result = lockResult.Value
+            ?? throw new InvalidOperationException("Lock acquired but lore set result is null");
+
+        var response = new RealmLoreResponse
+        {
+            RealmId = body.RealmId,
+            Elements = result.Backstory.Elements.Select(MapToRealmLoreElement).ToList(),
+            CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
+            UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
+        };
+
+        // Publish typed event per FOUNDATION TENETS
+        var now = DateTimeOffset.UtcNow;
+        if (result.IsNew)
+        {
+            await _messageBus.TryPublishAsync(LORE_CREATED_TOPIC, new RealmLoreCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RealmId = body.RealmId,
+                ElementCount = result.Backstory.Elements.Count
+            }, cancellationToken: cancellationToken);
+
+            // Register realm reference with lib-resource for cleanup coordination (only on new lore)
+            await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
+        }
+        else
+        {
+            await _messageBus.TryPublishAsync(LORE_UPDATED_TOPIC, new RealmLoreUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RealmId = body.RealmId,
+                ElementCount = result.Backstory.Elements.Count,
+                ReplaceExisting = body.ReplaceExisting
+            }, cancellationToken: cancellationToken);
+        }
+
+        _logger.LogDebug("Lore {Action} for realm {RealmId}, {Count} elements",
+            result.IsNew ? "created" : "updated", body.RealmId, result.Backstory.Elements.Count);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -566,96 +476,78 @@ public partial class RealmHistoryService : IRealmHistoryService
         _logger.LogDebug("Adding lore element for realm {RealmId}, type={ElementType}, key={Key}",
             body.RealmId, body.Element.ElementType, body.Element.Key);
 
-        try
+        var elementData = MapToRealmLoreElementData(body.Element);
+
+        // Validate element count limit (only for truly new elements, not updates)
+        var existing = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+        if (existing != null)
         {
-            var elementData = MapToRealmLoreElementData(body.Element);
+            var isUpdate = existing.Elements.Any(e =>
+                e.ElementType == elementData.ElementType && e.Key == elementData.Key);
 
-            // Validate element count limit (only for truly new elements, not updates)
-            var existing = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
-            if (existing != null)
+            if (!isUpdate && existing.Elements.Count >= _configuration.MaxLoreElements)
             {
-                var isUpdate = existing.Elements.Any(e =>
-                    e.ElementType == elementData.ElementType && e.Key == elementData.Key);
-
-                if (!isUpdate && existing.Elements.Count >= _configuration.MaxLoreElements)
-                {
-                    _logger.LogWarning(
-                        "AddLoreElement rejected for realm {RealmId}: {Count} elements already at limit of {Limit}",
-                        body.RealmId, existing.Elements.Count, _configuration.MaxLoreElements);
-                    return (StatusCodes.BadRequest, null);
-                }
+                _logger.LogWarning(
+                    "AddLoreElement rejected for realm {RealmId}: {Count} elements already at limit of {Limit}",
+                    body.RealmId, existing.Elements.Count, _configuration.MaxLoreElements);
+                return (StatusCodes.BadRequest, null);
             }
+        }
 
-            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
-            var lockResult = await _loreHelper.AddElementAsync(
-                body.RealmId.ToString(),
-                elementData,
-                cancellationToken);
+        // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+        var lockResult = await _loreHelper.AddElementAsync(
+            body.RealmId.ToString(),
+            elementData,
+            cancellationToken);
 
-            if (!lockResult.LockAcquired)
+        if (!lockResult.LockAcquired)
+        {
+            _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore element add", body.RealmId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var result = lockResult.Value
+            ?? throw new InvalidOperationException("Lock acquired but lore add element result is null");
+
+        var response = new RealmLoreResponse
+        {
+            RealmId = body.RealmId,
+            Elements = result.Backstory.Elements.Select(MapToRealmLoreElement).ToList(),
+            CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
+            UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
+        };
+
+        // Publish typed event per FOUNDATION TENETS
+        var now = DateTimeOffset.UtcNow;
+        if (result.IsNew)
+        {
+            await _messageBus.TryPublishAsync(LORE_CREATED_TOPIC, new RealmLoreCreatedEvent
             {
-                _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore element add", body.RealmId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var result = lockResult.Value
-                ?? throw new InvalidOperationException("Lock acquired but lore add element result is null");
-
-            var response = new RealmLoreResponse
-            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
                 RealmId = body.RealmId,
-                Elements = result.Backstory.Elements.Select(MapToRealmLoreElement).ToList(),
-                CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
-                UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
-            };
+                ElementCount = result.Backstory.Elements.Count
+            }, cancellationToken: cancellationToken);
 
-            // Publish typed event per FOUNDATION TENETS
-            var now = DateTimeOffset.UtcNow;
-            if (result.IsNew)
-            {
-                await _messageBus.TryPublishAsync(LORE_CREATED_TOPIC, new RealmLoreCreatedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    RealmId = body.RealmId,
-                    ElementCount = result.Backstory.Elements.Count
-                }, cancellationToken: cancellationToken);
-
-                // Register realm reference with lib-resource for cleanup coordination (only on new lore)
-                await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
-            }
-            else
-            {
-                await _messageBus.TryPublishAsync(LORE_UPDATED_TOPIC, new RealmLoreUpdatedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    RealmId = body.RealmId,
-                    ElementCount = result.Backstory.Elements.Count,
-                    ReplaceExisting = false
-                }, cancellationToken: cancellationToken);
-            }
-
-            _logger.LogDebug("Lore element {Action} for realm {RealmId}, now {Count} elements",
-                result.IsNew ? "created" : "added", body.RealmId, result.Backstory.Elements.Count);
-
-            return (StatusCodes.OK, response);
+            // Register realm reference with lib-resource for cleanup coordination (only on new lore)
+            await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Error adding lore element for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "AddRealmLoreElement",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/add-lore-element",
-                details: new { body.RealmId, body.Element.ElementType, body.Element.Key },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            await _messageBus.TryPublishAsync(LORE_UPDATED_TOPIC, new RealmLoreUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RealmId = body.RealmId,
+                ElementCount = result.Backstory.Elements.Count,
+                ReplaceExisting = false
+            }, cancellationToken: cancellationToken);
         }
+
+        _logger.LogDebug("Lore element {Action} for realm {RealmId}, now {Count} elements",
+            result.IsNew ? "created" : "added", body.RealmId, result.Backstory.Elements.Count);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -667,51 +559,33 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Deleting lore for realm {RealmId}", body.RealmId);
 
-        try
+        // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+        var lockResult = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);
+
+        if (!lockResult.LockAcquired)
         {
-            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
-            var lockResult = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);
-
-            if (!lockResult.LockAcquired)
-            {
-                _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore deletion", body.RealmId);
-                return StatusCodes.Conflict;
-            }
-
-            if (!lockResult.Value)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            // Unregister realm reference for lore
-            await UnregisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
-
-            // Publish typed event per FOUNDATION TENETS
-            await _messageBus.TryPublishAsync(LORE_DELETED_TOPIC, new RealmLoreDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RealmId = body.RealmId
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogDebug("Deleted lore for realm {RealmId}", body.RealmId);
-            return StatusCodes.OK;
+            _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore deletion", body.RealmId);
+            return StatusCodes.Conflict;
         }
-        catch (Exception ex)
+
+        if (!lockResult.Value)
         {
-            _logger.LogError(ex, "Error deleting lore for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "DeleteRealmLore",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/delete-lore",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            return StatusCodes.NotFound;
         }
+
+        // Unregister realm reference for lore
+        await UnregisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
+
+        // Publish typed event per FOUNDATION TENETS
+        await _messageBus.TryPublishAsync(LORE_DELETED_TOPIC, new RealmLoreDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RealmId = body.RealmId
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogDebug("Deleted lore for realm {RealmId}", body.RealmId);
+        return StatusCodes.OK;
     }
 
     // ============================================================================
@@ -727,89 +601,71 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Deleting all history for realm {RealmId}", body.RealmId);
 
-        try
+        // Get all participations first to unregister their realm references
+        var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+            body.RealmId.ToString(),
+            cancellationToken);
+
+        // Unregister all realm references for participations
+        foreach (var record in participationRecords)
         {
-            // Get all participations first to unregister their realm references
-            var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
-                body.RealmId.ToString(),
-                cancellationToken);
-
-            // Unregister all realm references for participations
-            foreach (var record in participationRecords)
-            {
-                await UnregisterRealmReferenceAsync(record.ParticipationId.ToString(), body.RealmId, cancellationToken);
-            }
-
-            // Use helper to delete all participations and update event indices
-            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
-            var participationLockResult = await _participationHelper.RemoveAllByPrimaryKeyAsync(
-                body.RealmId.ToString(),
-                record => record.EventId.ToString(),
-                cancellationToken);
-
-            if (!participationLockResult.LockAcquired)
-            {
-                _logger.LogWarning("Failed to acquire lock for realm {RealmId} participation bulk deletion", body.RealmId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var participationsDeleted = participationLockResult.Value;
-
-            // Check if lore exists to unregister its reference
-            var existingLore = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
-            if (existingLore != null)
-            {
-                await UnregisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
-            }
-
-            // Use helper to delete lore
-            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
-            var loreLockResult = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);
-
-            if (!loreLockResult.LockAcquired)
-            {
-                _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore deletion during history purge", body.RealmId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var loreDeleted = loreLockResult.Value;
-
-            // Publish typed event per FOUNDATION TENETS
-            await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new RealmHistoryDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RealmId = body.RealmId,
-                ParticipationsDeleted = participationsDeleted,
-                LoreDeleted = loreDeleted
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogDebug(
-                "Deleted all history for realm {RealmId}: {ParticipationsDeleted} participations, lore={LoreDeleted}",
-                body.RealmId, participationsDeleted, loreDeleted);
-
-            return (StatusCodes.OK, new DeleteAllRealmHistoryResponse
-            {
-                RealmId = body.RealmId,
-                ParticipationsDeleted = participationsDeleted,
-                LoreDeleted = loreDeleted
-            });
+            await UnregisterRealmReferenceAsync(record.ParticipationId.ToString(), body.RealmId, cancellationToken);
         }
-        catch (Exception ex)
+
+        // Use helper to delete all participations and update event indices
+        // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+        var participationLockResult = await _participationHelper.RemoveAllByPrimaryKeyAsync(
+            body.RealmId.ToString(),
+            record => record.EventId.ToString(),
+            cancellationToken);
+
+        if (!participationLockResult.LockAcquired)
         {
-            _logger.LogError(ex, "Error deleting all history for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "DeleteAllRealmHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/delete-all",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Failed to acquire lock for realm {RealmId} participation bulk deletion", body.RealmId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var participationsDeleted = participationLockResult.Value;
+
+        // Check if lore exists to unregister its reference
+        var existingLore = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+        if (existingLore != null)
+        {
+            await UnregisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
+        }
+
+        // Use helper to delete lore
+        // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+        var loreLockResult = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);
+
+        if (!loreLockResult.LockAcquired)
+        {
+            _logger.LogWarning("Failed to acquire lock for realm {RealmId} lore deletion during history purge", body.RealmId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var loreDeleted = loreLockResult.Value;
+
+        // Publish typed event per FOUNDATION TENETS
+        await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new RealmHistoryDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RealmId = body.RealmId,
+            ParticipationsDeleted = participationsDeleted,
+            LoreDeleted = loreDeleted
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogDebug(
+            "Deleted all history for realm {RealmId}: {ParticipationsDeleted} participations, lore={LoreDeleted}",
+            body.RealmId, participationsDeleted, loreDeleted);
+
+        return (StatusCodes.OK, new DeleteAllRealmHistoryResponse
+        {
+            RealmId = body.RealmId,
+            ParticipationsDeleted = participationsDeleted,
+            LoreDeleted = loreDeleted
+        });
     }
 
     /// <summary>
@@ -821,80 +677,62 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Summarizing history for realm {RealmId}", body.RealmId);
 
-        try
+        var keyLorePoints = new List<string>();
+        var majorHistoricalEvents = new List<string>();
+
+        // Get lore and create summaries using helper
+        var loreData = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+
+        if (loreData != null)
         {
-            var keyLorePoints = new List<string>();
-            var majorHistoricalEvents = new List<string>();
+            // Sort by strength and take top N
+            var topElements = loreData.Elements
+                .OrderByDescending(e => e.Strength)
+                .Take(body.MaxLorePoints);
 
-            // Get lore and create summaries using helper
-            var loreData = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
-
-            if (loreData != null)
+            foreach (var element in topElements)
             {
-                // Sort by strength and take top N
-                var topElements = loreData.Elements
-                    .OrderByDescending(e => e.Strength)
-                    .Take(body.MaxLorePoints);
-
-                foreach (var element in topElements)
+                var summary = GenerateLoreSummary(element);
+                if (!string.IsNullOrEmpty(summary))
                 {
-                    var summary = GenerateLoreSummary(element);
-                    if (!string.IsNullOrEmpty(summary))
-                    {
-                        keyLorePoints.Add(summary);
-                    }
+                    keyLorePoints.Add(summary);
                 }
             }
+        }
 
-            // Get participation and create summaries using helper
-            var participations = await _participationHelper.GetRecordsByPrimaryKeyAsync(
-                body.RealmId.ToString(),
-                cancellationToken);
+        // Get participation and create summaries using helper
+        var participations = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+            body.RealmId.ToString(),
+            cancellationToken);
 
-            if (participations.Count > 0)
+        if (participations.Count > 0)
+        {
+            // Sort by impact and take top N
+            var topParticipations = participations
+                .OrderByDescending(p => p.Impact)
+                .Take(body.MaxHistoricalEvents);
+
+            foreach (var participation in topParticipations)
             {
-                // Sort by impact and take top N
-                var topParticipations = participations
-                    .OrderByDescending(p => p.Impact)
-                    .Take(body.MaxHistoricalEvents);
-
-                foreach (var participation in topParticipations)
+                var summary = GenerateEventSummary(participation);
+                if (!string.IsNullOrEmpty(summary))
                 {
-                    var summary = GenerateEventSummary(participation);
-                    if (!string.IsNullOrEmpty(summary))
-                    {
-                        majorHistoricalEvents.Add(summary);
-                    }
+                    majorHistoricalEvents.Add(summary);
                 }
             }
-
-            var response = new RealmHistorySummaryResponse
-            {
-                RealmId = body.RealmId,
-                KeyLorePoints = keyLorePoints,
-                MajorHistoricalEvents = majorHistoricalEvents
-            };
-
-            _logger.LogDebug("Generated history summary for realm {RealmId}: {LoreCount} lore points, {EventCount} historical events",
-                body.RealmId, keyLorePoints.Count, majorHistoricalEvents.Count);
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        var response = new RealmHistorySummaryResponse
         {
-            _logger.LogError(ex, "Error summarizing history for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "SummarizeRealmHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/summarize",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            RealmId = body.RealmId,
+            KeyLorePoints = keyLorePoints,
+            MajorHistoricalEvents = majorHistoricalEvents
+        };
+
+        _logger.LogDebug("Generated history summary for realm {RealmId}: {LoreCount} lore points, {EventCount} historical events",
+            body.RealmId, keyLorePoints.Count, majorHistoricalEvents.Count);
+
+        return (StatusCodes.OK, response);
     }
 
     // ============================================================================
@@ -911,80 +749,62 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting compress data for realm {RealmId}", body.RealmId);
 
-        try
+        // Get participations using helper
+        var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+            body.RealmId.ToString(),
+            cancellationToken);
+
+        var participations = participationRecords
+            .Select(MapToRealmHistoricalParticipation)
+            .OrderByDescending(p => p.EventDate)
+            .ToList();
+
+        // Get lore using helper
+        var loreData = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+
+        RealmLoreResponse? loreResponse = null;
+        if (loreData != null)
         {
-            // Get participations using helper
-            var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
-                body.RealmId.ToString(),
-                cancellationToken);
-
-            var participations = participationRecords
-                .Select(MapToRealmHistoricalParticipation)
-                .OrderByDescending(p => p.EventDate)
-                .ToList();
-
-            // Get lore using helper
-            var loreData = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
-
-            RealmLoreResponse? loreResponse = null;
-            if (loreData != null)
+            loreResponse = new RealmLoreResponse
             {
-                loreResponse = new RealmLoreResponse
-                {
-                    RealmId = body.RealmId,
-                    Elements = loreData.Elements.Select(MapToRealmLoreElement).ToList(),
-                    CreatedAt = TimestampHelper.FromUnixSeconds(loreData.CreatedAtUnix),
-                    UpdatedAt = TimestampHelper.FromUnixSeconds(loreData.UpdatedAtUnix)
-                };
-            }
-
-            // Return 404 only if BOTH are missing
-            if (participations.Count == 0 && loreData == null)
-            {
-                _logger.LogDebug("No history data found for realm {RealmId}", body.RealmId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Generate text summaries for the archive
-            var summaries = GenerateSummariesForArchive(body.RealmId, participations, loreData);
-
-            var response = new RealmHistoryArchive
-            {
-                // ResourceArchiveBase fields
-                ResourceId = body.RealmId,
-                ResourceType = "realm-history",
-                ArchivedAt = DateTimeOffset.UtcNow,
-                SchemaVersion = 1,
-                // Service-specific fields
                 RealmId = body.RealmId,
-                HasParticipations = participations.Count > 0,
-                Participations = participations,
-                HasLore = loreData != null,
-                LoreElements = loreResponse != null ? new List<RealmLoreResponse> { loreResponse } : new List<RealmLoreResponse>(),
-                Summaries = summaries
+                Elements = loreData.Elements.Select(MapToRealmLoreElement).ToList(),
+                CreatedAt = TimestampHelper.FromUnixSeconds(loreData.CreatedAtUnix),
+                UpdatedAt = TimestampHelper.FromUnixSeconds(loreData.UpdatedAtUnix)
             };
-
-            _logger.LogInformation(
-                "Compress data retrieved for realm {RealmId}: participations={ParticipationCount}, hasLore={HasLore}",
-                body.RealmId, participations.Count, response.HasLore);
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        // Return 404 only if BOTH are missing
+        if (participations.Count == 0 && loreData == null)
         {
-            _logger.LogError(ex, "Error getting compress data for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "GetCompressData",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/get-compress-data",
-                details: new { body.RealmId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("No history data found for realm {RealmId}", body.RealmId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Generate text summaries for the archive
+        var summaries = GenerateSummariesForArchive(body.RealmId, participations, loreData);
+
+        var response = new RealmHistoryArchive
+        {
+            // ResourceArchiveBase fields
+            ResourceId = body.RealmId,
+            ResourceType = "realm-history",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
+            RealmId = body.RealmId,
+            HasParticipations = participations.Count > 0,
+            Participations = participations,
+            HasLore = loreData != null,
+            LoreElements = loreResponse != null ? new List<RealmLoreResponse> { loreResponse } : new List<RealmLoreResponse>(),
+            Summaries = summaries
+        };
+
+        _logger.LogInformation(
+            "Compress data retrieved for realm {RealmId}: participations={ParticipationCount}, hasLore={HasLore}",
+            body.RealmId, participations.Count, response.HasLore);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -1000,122 +820,104 @@ public partial class RealmHistoryService : IRealmHistoryService
         var participationsRestored = 0;
         var loreRestored = 0;
 
+        // Decompress the archive data
+        RealmHistoryArchive archiveData;
         try
         {
-            // Decompress the archive data
-            RealmHistoryArchive archiveData;
-            try
-            {
-                var compressedBytes = Convert.FromBase64String(body.Data);
-                var jsonData = DecompressJsonData(compressedBytes);
-                archiveData = BannouJson.Deserialize<RealmHistoryArchive>(jsonData)
-                    ?? throw new InvalidOperationException("Deserialized archive data is null");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to decompress archive data for realm {RealmId}", body.RealmId);
-                return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
-                {
-                    RealmId = body.RealmId,
-                    ParticipationsRestored = 0,
-                    LoreRestored = 0,
-                    Success = false,
-                    ErrorMessage = $"Invalid archive data: {ex.Message}"
-                });
-            }
-
-            // Restore participations
-            if (archiveData.HasParticipations && archiveData.Participations.Count > 0)
-            {
-                foreach (var participation in archiveData.Participations)
-                {
-                    var participationData = new RealmParticipationData
-                    {
-                        ParticipationId = participation.ParticipationId,
-                        RealmId = participation.RealmId,
-                        EventId = participation.EventId,
-                        EventName = participation.EventName,
-                        EventCategory = participation.EventCategory,
-                        Role = participation.Role,
-                        EventDateUnix = participation.EventDate.ToUnixTimeSeconds(),
-                        Impact = participation.Impact,
-                        Metadata = participation.Metadata,
-                        CreatedAtUnix = participation.CreatedAt.ToUnixTimeSeconds()
-                    };
-
-                    // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
-                    var addResult = await _participationHelper.AddRecordAsync(
-                        participationData,
-                        participation.ParticipationId.ToString(),
-                        participation.RealmId.ToString(),
-                        participation.EventId.ToString(),
-                        cancellationToken);
-
-                    if (!addResult.LockAcquired)
-                    {
-                        _logger.LogWarning("Failed to acquire lock during archive restoration for realm {RealmId}", body.RealmId);
-                        return (StatusCodes.Conflict, null);
-                    }
-
-                    // Re-register realm reference
-                    await RegisterRealmReferenceAsync(participation.ParticipationId.ToString(), participation.RealmId, cancellationToken);
-
-                    participationsRestored++;
-                }
-            }
-
-            // Restore lore
-            if (archiveData.HasLore && archiveData.LoreElements.Count > 0)
-            {
-                // Aggregate all elements from all lore responses
-                var allElements = archiveData.LoreElements.SelectMany(lr => lr.Elements).ToList();
-                var elementDataList = allElements.Select(MapToRealmLoreElementData).ToList();
-                // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
-                var setResult = await _loreHelper.SetAsync(
-                    body.RealmId.ToString(),
-                    elementDataList,
-                    replaceExisting: true,
-                    cancellationToken);
-
-                if (!setResult.LockAcquired)
-                {
-                    _logger.LogWarning("Failed to acquire lock during lore restoration for realm {RealmId}", body.RealmId);
-                    return (StatusCodes.Conflict, null);
-                }
-
-                // Re-register realm reference for lore
-                await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
-
-                loreRestored = elementDataList.Count;
-            }
-
-            _logger.LogInformation(
-                "Restored history data for realm {RealmId}: {ParticipationsRestored} participations, lore={LoreRestored}",
-                body.RealmId, participationsRestored, loreRestored);
-
-            return (StatusCodes.OK, new RestoreFromArchiveResponse
-            {
-                RealmId = body.RealmId,
-                ParticipationsRestored = participationsRestored,
-                LoreRestored = loreRestored,
-                Success = true
-            });
+            var compressedBytes = Convert.FromBase64String(body.Data);
+            var jsonData = DecompressJsonData(compressedBytes);
+            archiveData = BannouJson.Deserialize<RealmHistoryArchive>(jsonData)
+                ?? throw new InvalidOperationException("Deserialized archive data is null");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error restoring history data from archive for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "RestoreFromArchive",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/restore-from-archive",
-                details: new { body.RealmId, participationsRestored, loreRestored },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning(ex, "Failed to decompress archive data for realm {RealmId}", body.RealmId);
+            return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
+            {
+                RealmId = body.RealmId,
+                ParticipationsRestored = 0,
+                LoreRestored = 0,
+                Success = false,
+                ErrorMessage = $"Invalid archive data: {ex.Message}"
+            });
         }
+
+        // Restore participations
+        if (archiveData.HasParticipations && archiveData.Participations.Count > 0)
+        {
+            foreach (var participation in archiveData.Participations)
+            {
+                var participationData = new RealmParticipationData
+                {
+                    ParticipationId = participation.ParticipationId,
+                    RealmId = participation.RealmId,
+                    EventId = participation.EventId,
+                    EventName = participation.EventName,
+                    EventCategory = participation.EventCategory,
+                    Role = participation.Role,
+                    EventDateUnix = participation.EventDate.ToUnixTimeSeconds(),
+                    Impact = participation.Impact,
+                    Metadata = participation.Metadata,
+                    CreatedAtUnix = participation.CreatedAt.ToUnixTimeSeconds()
+                };
+
+                // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+                var addResult = await _participationHelper.AddRecordAsync(
+                    participationData,
+                    participation.ParticipationId.ToString(),
+                    participation.RealmId.ToString(),
+                    participation.EventId.ToString(),
+                    cancellationToken);
+
+                if (!addResult.LockAcquired)
+                {
+                    _logger.LogWarning("Failed to acquire lock during archive restoration for realm {RealmId}", body.RealmId);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                // Re-register realm reference
+                await RegisterRealmReferenceAsync(participation.ParticipationId.ToString(), participation.RealmId, cancellationToken);
+
+                participationsRestored++;
+            }
+        }
+
+        // Restore lore
+        if (archiveData.HasLore && archiveData.LoreElements.Count > 0)
+        {
+            // Aggregate all elements from all lore responses
+            var allElements = archiveData.LoreElements.SelectMany(lr => lr.Elements).ToList();
+            var elementDataList = allElements.Select(MapToRealmLoreElementData).ToList();
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var setResult = await _loreHelper.SetAsync(
+                body.RealmId.ToString(),
+                elementDataList,
+                replaceExisting: true,
+                cancellationToken);
+
+            if (!setResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock during lore restoration for realm {RealmId}", body.RealmId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Re-register realm reference for lore
+            await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
+
+            loreRestored = elementDataList.Count;
+        }
+
+        _logger.LogInformation(
+            "Restored history data for realm {RealmId}: {ParticipationsRestored} participations, lore={LoreRestored}",
+            body.RealmId, participationsRestored, loreRestored);
+
+        return (StatusCodes.OK, new RestoreFromArchiveResponse
+        {
+            RealmId = body.RealmId,
+            ParticipationsRestored = participationsRestored,
+            LoreRestored = loreRestored,
+            Success = true
+        });
     }
 
     private RealmHistorySummaryResponse GenerateSummariesForArchive(
