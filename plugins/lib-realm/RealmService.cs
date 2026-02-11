@@ -755,16 +755,6 @@ public partial class RealmService : IRealmService
                 SourceDeleted = sourceDeleted
             });
         }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "Service error during realm merge: source {SourceRealmId} target {TargetRealmId}",
-                body.SourceRealmId, body.TargetRealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm", "MergeRealms", "service_error", ex.Message,
-                dependency: "mesh", endpoint: "post:/realm/merge",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return ((StatusCodes)ex.StatusCode, null);
-        }
     }
 
     /// <summary>

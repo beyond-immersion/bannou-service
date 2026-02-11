@@ -197,7 +197,7 @@ public partial class LicenseService : ILicenseService
         if (dx == 0 && dy == 0) return false; // Same position
 
         return mode switch
-        {
+        try
             AdjacencyMode.FourWay => dx + dy == 1,
             AdjacencyMode.EightWay => dx <= 1 && dy <= 1,
             _ => dx <= 1 && dy <= 1 // Default to eight-way
@@ -1973,7 +1973,6 @@ public partial class LicenseService : ILicenseService
         CloneBoardRequest body,
         CancellationToken cancellationToken)
     {
-        try
         {
             _logger.LogInformation(
                 "Cloning board {SourceBoardId} to owner {TargetOwnerType}:{TargetOwnerId}",

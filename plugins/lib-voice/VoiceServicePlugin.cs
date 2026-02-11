@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Voice;
@@ -49,6 +50,10 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
             return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger, messageBus, timeoutSeconds: 5);
         });
         Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, KamailioClient, RtpEngineClient)");
+
+        // Register background worker for participant eviction, empty room cleanup, and consent timeout
+        services.AddHostedService<ParticipantEvictionWorker>();
+        Logger?.LogDebug("Registered ParticipantEvictionWorker background service");
 
         Logger?.LogInformation("Voice service dependencies configured");
     }

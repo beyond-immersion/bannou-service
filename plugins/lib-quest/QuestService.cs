@@ -177,7 +177,7 @@ public partial class QuestService : IQuestService
         CreateQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        {
+        try
             _logger.LogDebug("Creating quest definition with code {Code}", body.Code);
 
             // Validate code format (uppercase, underscores)
@@ -1658,7 +1658,6 @@ public partial class QuestService : IQuestService
 
         var requiredQuantity = prereq.MinAmount ?? 1;
 
-        try
         {
             // Get item template by code
             ItemTemplateResponse template;
