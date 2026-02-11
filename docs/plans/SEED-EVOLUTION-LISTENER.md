@@ -68,6 +68,25 @@ New file following the established provider pattern (see IVariableProviderFactor
 **XML Documentation style**: Follow the established header/remarks/example pattern from IVariableProviderFactory.cs. Include:
 - Top-of-file `// =====` banner comment explaining the pattern
 - `<remarks>` block with bullet list explaining the dependency inversion
+- **DISTRIBUTED DEPLOYMENT WARNING** in a `<remarks>` section on the interface:
+  ```csharp
+  /// <remarks>
+  /// <para><strong>DISTRIBUTED DEPLOYMENT NOTE</strong>: Listeners are LOCAL-ONLY fan-out.
+  /// Only listeners co-located on the same node where the seed mutation occurs are called.
+  /// In a multi-node deployment, nodes that do not process the seed API request will NOT
+  /// have their listeners invoked.</para>
+  ///
+  /// <para>This is safe when the listener's reaction writes to distributed state (Redis, MySQL)
+  /// because all nodes read from the same distributed store. It is NOT safe if the listener
+  /// maintains local in-memory state that must be consistent across nodes.</para>
+  ///
+  /// <para>If your consumer requires per-node awareness (e.g., local cache invalidation on
+  /// every node), you MUST ALSO subscribe to the corresponding seed broadcast events
+  /// (<c>seed.growth.updated</c>, <c>seed.phase.changed</c>, <c>seed.capability.updated</c>)
+  /// via IEventConsumer. Listeners are an in-process optimization for co-located services,
+  /// not a replacement for distributed event subscriptions.</para>
+  /// </remarks>
+  ```
 - `<code>` example showing a minimal implementation (a StatusSeedEvolutionListener sketch)
 
 **Namespace**: `BeyondImmersion.BannouService.Providers` (same as all other provider interfaces).

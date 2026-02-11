@@ -1,6 +1,6 @@
 # Bannou Service Hierarchy
 
-> **Version**: 2.6
+> **Version**: 2.7
 > **Last Updated**: 2026-02-11
 > **Scope**: All Bannou service plugins and their inter-dependencies
 
@@ -695,6 +695,78 @@ Both patterns (Variable Provider and Prerequisite Provider) follow the same prin
 
 ---
 
+## DI Provider vs Listener: Distributed Safety (MANDATORY)
+
+The DI inversion patterns above come in two forms: **Providers** (pull) and **Listeners** (push). They have fundamentally different behavior in distributed multi-node deployments and MUST NOT be treated as interchangeable.
+
+### The Core Distinction
+
+| Mechanism | Direction | Distributed? | How It Works |
+|-----------|-----------|-------------|--------------|
+| **DI Provider** (pull) | L4 data → L2 consumer | **Always safe** | Consumer initiates request on whichever node needs data. The provider runs co-located but reads from distributed state. |
+| **DI Listener** (push) | L2 notification → L4 consumer | **Local-only fan-out** | Producer calls co-located listeners after a mutation. Only listeners on the node that processed the API request are called. Other nodes are NOT notified. |
+| **Events** (IMessageBus) | Broadcast | **Always safe** | RabbitMQ delivers to all subscribers on all nodes. Genuine distributed fan-out. |
+
+### Why Providers Are Always Safe
+
+Provider patterns (IVariableProviderFactory, IPrerequisiteProviderFactory, IBehaviorDocumentProvider, ISeededResourceProvider) are **pull-based**. The consumer initiates the call on the node where the data is needed. Even though the provider implementation runs locally (same process), it reads from distributed state stores (Redis/MySQL). There is no node-affinity problem because every node can pull the same data.
+
+```
+Node A: ActorRunner calls IVariableProviderFactory → reads from Redis → gets latest data ✓
+Node B: ActorRunner calls IVariableProviderFactory → reads from Redis → gets latest data ✓
+```
+
+### Why Listeners Are Local-Only
+
+Listener patterns (ISeedEvolutionListener, ICollectionUnlockListener) are **push-based**. The producing service (Seed, Collection) calls listeners after a mutation. But DI only knows about services registered in the **same process**. In a distributed deployment:
+
+```
+Node A processes seed growth API → dispatches to co-located listeners → ✓ local listeners fire
+Node B has same listeners registered → NOT called → ✗ no notification
+Node C has same listeners registered → NOT called → ✗ no notification
+```
+
+### The Safety Test
+
+> **"If this listener fires on Node A but never fires on Node B, is the system in a consistent state?"**
+
+- **YES → Safe**: The listener writes to distributed state (Redis/MySQL). All nodes read from the same store. Node B will see the updated state on its next read even though its listener never fired.
+- **NO → Broken**: The listener updates local in-memory state. Node B's local state is stale. This creates silent inconsistencies.
+
+### Current DI Inversion Patterns
+
+| Pattern | Direction | Type | Distributed-Safe? | Why |
+|---------|-----------|------|--------------------|-----|
+| `IVariableProviderFactory` | L4→L2 pull | Provider | Always safe | Consumer initiates; reads distributed state |
+| `IPrerequisiteProviderFactory` | L4→L2 pull | Provider | Always safe | Consumer initiates; reads distributed state |
+| `IBehaviorDocumentProvider` | L4→L2 pull | Provider | Always safe | Consumer initiates; reads distributed state |
+| `ISeededResourceProvider` | L4→L1 pull | Provider | Always safe | Consumer initiates; reads distributed state |
+| `ISeedEvolutionListener` | L2→L4 push | Listener | Safe\* | \*Only when reaction writes to distributed state |
+| `ICollectionUnlockListener` | L2→L4 push | Listener | Safe\* | \*Only when reaction writes to distributed state |
+
+### Rules for Listener Patterns
+
+1. **Listeners are an optimization, not a replacement for events.** The producing service MUST still publish broadcast events via IMessageBus. Listeners dispatch AFTER events are published.
+
+2. **Listener reactions MUST write to distributed state.** If a listener needs to update something, that "something" must be in Redis or MySQL — never local in-memory state that other nodes also maintain.
+
+3. **If per-node awareness is required** (e.g., invalidating a `ConcurrentDictionary` cache on every node), the consumer MUST subscribe to the broadcast event via IEventConsumer. The DI listener alone is insufficient.
+
+4. **Document the safety envelope.** Every listener interface MUST include a `<remarks>` block in its XML documentation that warns about local-only fan-out and states the distributed safety requirements.
+
+5. **Never assume listeners replace event subscriptions.** A consumer that needs both fast local notification AND guaranteed distributed delivery should use both: the listener for the fast path, the event subscription as the distributed guarantee.
+
+### When to Use Each Pattern
+
+| Need | Use |
+|------|-----|
+| L2 needs data from L4 at runtime | **Provider** (pull) — always safe |
+| L2 wants to notify L4 of mutations | **Listener** (push) + events — listener is optimization |
+| Any service needs to react to another's state changes | **Events** (IMessageBus) — distributed guarantee |
+| L4 needs to invalidate local cache across all nodes | **Events only** — listeners cannot reach other nodes |
+
+---
+
 ## Dependency Handling Patterns (MANDATORY)
 
 The hierarchy dictates not just WHAT services can depend on, but HOW those dependencies should be handled in code. This prevents silent degradation that hides deployment configuration errors.
@@ -896,6 +968,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | 2026-02-03 | 2.4 | Added ServiceHierarchyValidator documentation. Updated to reflect layer-based loading is now implemented (not future). Updated diagram to show 6 layers including L5 Extensions. Removed outdated "Current Limitation" notes. |
 | 2026-02-06 | 2.5 | Moved Actor from L4 to L2 (Game Foundation). Added Variable Provider Factory pattern documentation for how L2 services can receive data from L4 services without hierarchy violations. |
 | 2026-02-11 | 2.6 | Moved Collection from L4 to L2 (Game Foundation). Collection's dependencies are all L2 (Inventory, Item, GameService) and it provides foundational content unlock infrastructure consumed by L4 services via the ICollectionUnlockListener DI provider pattern. |
+| 2026-02-11 | 2.7 | Added "DI Provider vs Listener: Distributed Safety" section documenting the fundamental distinction between pull-based Providers (always distributed-safe) and push-based Listeners (local-only fan-out). Includes safety test, pattern classification table, and rules for when each is appropriate. |
 
 ---
 

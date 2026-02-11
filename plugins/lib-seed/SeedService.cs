@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,7 @@ public partial class SeedService : ISeedService
     private readonly SeedServiceConfiguration _configuration;
     private readonly IEventConsumer _eventConsumer;
     private readonly IGameServiceClient _gameServiceClient;
+    private readonly IReadOnlyList<ISeedEvolutionListener> _evolutionListeners;
 
     /// <summary>
     /// Creates a new instance of the SeedService.
@@ -37,7 +39,8 @@ public partial class SeedService : ISeedService
         ILogger<SeedService> logger,
         SeedServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        IGameServiceClient gameServiceClient)
+        IGameServiceClient gameServiceClient,
+        IEnumerable<ISeedEvolutionListener> evolutionListeners)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -46,8 +49,14 @@ public partial class SeedService : ISeedService
         _configuration = configuration;
         _eventConsumer = eventConsumer;
         _gameServiceClient = gameServiceClient;
+        _evolutionListeners = evolutionListeners.ToList();
 
         RegisterEventConsumers(_eventConsumer);
+
+        _logger.LogInformation(
+            "Seed service initialized with {Count} evolution listeners: {Listeners}",
+            _evolutionListeners.Count,
+            string.Join(", ", _evolutionListeners.Select(l => l.GetType().Name)));
     }
 
     // ========================================================================
@@ -1275,6 +1284,7 @@ public partial class SeedService : ISeedService
 
         // Record growth in each domain using per-domain tracking
         var now = DateTimeOffset.UtcNow;
+        var domainChanges = new List<DomainChange>(entries.Length);
         foreach (var (domain, amount) in entries)
         {
             var adjustedAmount = amount * multiplier;
@@ -1288,6 +1298,8 @@ public partial class SeedService : ISeedService
                 LastActivityAt = now,
                 PeakDepth = Math.Max(entry?.PeakDepth ?? 0f, newDepth)
             };
+
+            domainChanges.Add(new DomainChange(domain, previousDepth, newDepth));
 
             await _messageBus.TryPublishAsync("seed.growth.updated", new SeedGrowthUpdatedEvent
             {
@@ -1304,6 +1316,15 @@ public partial class SeedService : ISeedService
         }
 
         await growthStore.SaveAsync($"growth:{seedId}", growth, cancellationToken: cancellationToken);
+
+        // Dispatch growth notification to evolution listeners
+        await SeedEvolutionDispatcher.DispatchGrowthRecordedAsync(
+            _evolutionListeners, seed.SeedTypeCode,
+            new SeedGrowthNotification(
+                seed.SeedId, seed.SeedTypeCode, seed.OwnerId, seed.OwnerType,
+                domainChanges, growth.Domains.Values.Sum(d => d.Depth),
+                CrossPollinated: false, Source: source),
+            _logger, cancellationToken);
 
         // Reset partner's decay timer for exact domains when permanently bonded
         if (bond is { Status: BondStatus.Active, Permanent: true })
@@ -1366,6 +1387,14 @@ public partial class SeedService : ISeedService
                 TotalGrowth = newTotalGrowth,
                 Direction = PhaseChangeDirection.Progressed
             }, cancellationToken: cancellationToken);
+
+            // Dispatch phase change notification to evolution listeners
+            await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(
+                _evolutionListeners, seed.SeedTypeCode,
+                new SeedPhaseNotification(
+                    seed.SeedId, seed.SeedTypeCode, seed.OwnerId, seed.OwnerType,
+                    previousPhase, seed.GrowthPhase, newTotalGrowth, Progressed: true),
+                _logger, cancellationToken);
         }
 
         // Invalidate capability cache so next read recomputes
@@ -1454,6 +1483,7 @@ public partial class SeedService : ISeedService
         growth ??= new SeedGrowthModel { SeedId = siblingSeedId, Domains = new() };
 
         var now = DateTimeOffset.UtcNow;
+        var crossDomainChanges = new List<DomainChange>(entries.Length);
         foreach (var (domain, amount) in entries)
         {
             var entry = growth.Domains.GetValueOrDefault(domain);
@@ -1466,6 +1496,8 @@ public partial class SeedService : ISeedService
                 LastActivityAt = now,
                 PeakDepth = Math.Max(entry?.PeakDepth ?? 0f, newDepth)
             };
+
+            crossDomainChanges.Add(new DomainChange(domain, previousDepth, newDepth));
 
             await _messageBus.TryPublishAsync("seed.growth.updated", new SeedGrowthUpdatedEvent
             {
@@ -1482,6 +1514,15 @@ public partial class SeedService : ISeedService
         }
 
         await growthStore.SaveAsync($"growth:{siblingSeedId}", growth, cancellationToken: cancellationToken);
+
+        // Dispatch cross-pollinated growth notification to evolution listeners
+        await SeedEvolutionDispatcher.DispatchGrowthRecordedAsync(
+            _evolutionListeners, seedType.SeedTypeCode,
+            new SeedGrowthNotification(
+                seed.SeedId, seedType.SeedTypeCode, seed.OwnerId, seed.OwnerType,
+                crossDomainChanges, growth.Domains.Values.Sum(d => d.Depth),
+                CrossPollinated: true, Source: "cross-pollination"),
+            _logger, cancellationToken);
 
         // Update seed total growth and check phase transition
         var newTotalGrowth = growth.Domains.Values.Sum(d => d.Depth);
@@ -1510,6 +1551,14 @@ public partial class SeedService : ISeedService
                 TotalGrowth = newTotalGrowth,
                 Direction = PhaseChangeDirection.Progressed
             }, cancellationToken: cancellationToken);
+
+            // Dispatch phase change notification to evolution listeners
+            await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(
+                _evolutionListeners, seedType.SeedTypeCode,
+                new SeedPhaseNotification(
+                    seed.SeedId, seedType.SeedTypeCode, seed.OwnerId, seed.OwnerType,
+                    previousPhase, seed.GrowthPhase, newTotalGrowth, Progressed: true),
+                _logger, cancellationToken);
         }
 
         // Invalidate capability cache
@@ -1575,6 +1624,15 @@ public partial class SeedService : ISeedService
                             TotalGrowth = seed.TotalGrowth,
                             Direction = direction
                         }, cancellationToken: cancellationToken);
+
+                        // Dispatch phase change notification to evolution listeners
+                        await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(
+                            _evolutionListeners, seed.SeedTypeCode,
+                            new SeedPhaseNotification(
+                                seed.SeedId, seed.SeedTypeCode, seed.OwnerId, seed.OwnerType,
+                                previousPhase, seed.GrowthPhase, seed.TotalGrowth,
+                                Progressed: direction == PhaseChangeDirection.Progressed),
+                            _logger, cancellationToken);
                     }
                 }
 

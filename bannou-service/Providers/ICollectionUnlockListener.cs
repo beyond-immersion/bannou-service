@@ -27,6 +27,15 @@ namespace BeyondImmersion.BannouService.Providers;
 /// for external/distributed consumers (analytics, achievements, etc.).
 /// </para>
 /// <para>
+/// <b>DISTRIBUTED SAFETY — LOCAL-ONLY FAN-OUT:</b> This is a push-based Listener pattern.
+/// In multi-node deployments, only listeners on the node that processed the API request
+/// are called. Other nodes are NOT notified via this interface. This is safe because
+/// listener reactions write to distributed state (Redis/MySQL), so all nodes see the
+/// updated state on their next read. If per-node awareness is required (e.g., invalidating
+/// a local cache on every node), the consumer MUST subscribe to the broadcast event via
+/// <c>IEventConsumer</c> instead. See SERVICE-HIERARCHY.md §"DI Provider vs Listener".
+/// </para>
+/// <para>
 /// <b>Example Implementation</b>:
 /// </para>
 /// <code>
