@@ -216,6 +216,7 @@ public partial class MappingService : IMappingService
 
     private static (bool valid, Guid channelId, DateTimeOffset expiresAt) ParseAuthorityToken(string token)
     {
+        try
         {
             var decoded = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(token));
             var parts = decoded.Split(':');
@@ -1809,6 +1810,7 @@ public partial class MappingService : IMappingService
 
     private async Task<string?> UploadLargePayloadToAssetAsync(byte[] data, string filename, Guid regionId, CancellationToken cancellationToken)
     {
+        try
         {
             var uploadRequest = new UploadRequest
             {
@@ -2257,6 +2259,7 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Handling ingest event for channel {ChannelId} with {Count} payloads",
             channelId, evt.Payloads.Count);
 
+        try
         {
             // Get channel info first (needed for NonAuthorityHandling check)
             var channelKey = BuildChannelKey(channelId);

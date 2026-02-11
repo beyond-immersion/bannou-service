@@ -1020,30 +1020,16 @@ public partial class LicenseService : ILicenseService
             }
 
             // Create inventory container (slot_only, maxSlots = gridWidth * gridHeight)
-            ContainerResponse containerResponse;
-            try
-            {
-                containerResponse = await _inventoryClient.CreateContainerAsync(
-                    new CreateContainerRequest
-                    {
-                        OwnerId = body.OwnerId,
-                        OwnerType = containerOwnerType,
-                        ContainerType = "license_board",
-                        ConstraintModel = ContainerConstraintModel.SlotOnly,
-                        MaxSlots = template.GridWidth * template.GridHeight
-                    },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Failed to create inventory container for board (owner {OwnerType}:{OwnerId})", body.OwnerType, body.OwnerId);
-                await _messageBus.TryPublishErrorAsync(
-                    "license", "CreateBoard", "container_creation_failed", ex.Message,
-                    dependency: "inventory", endpoint: "post:/license/board/create",
-                    details: $"OwnerType: {body.OwnerType}, OwnerId: {body.OwnerId}", stack: ex.StackTrace,
-                    cancellationToken: cancellationToken);
-                return (StatusCodes.InternalServerError, null);
-            }
+            var containerResponse = await _inventoryClient.CreateContainerAsync(
+                new CreateContainerRequest
+                {
+                    OwnerId = body.OwnerId,
+                    OwnerType = containerOwnerType,
+                    ContainerType = "license_board",
+                    ConstraintModel = ContainerConstraintModel.SlotOnly,
+                    MaxSlots = template.GridWidth * template.GridHeight
+                },
+                cancellationToken);
 
             var now = DateTimeOffset.UtcNow;
             var board = new BoardInstanceModel
@@ -2094,32 +2080,16 @@ public partial class LicenseService : ILicenseService
             var definitionsByCode = allDefinitions.ToDictionary(d => d.Code);
 
             // 10. Create inventory container for target board
-            ContainerResponse containerResponse;
-            try
-            {
-                containerResponse = await _inventoryClient.CreateContainerAsync(
-                    new CreateContainerRequest
-                    {
-                        OwnerId = body.TargetOwnerId,
-                        OwnerType = containerOwnerType,
-                        ContainerType = "license_board",
-                        ConstraintModel = ContainerConstraintModel.SlotOnly,
-                        MaxSlots = template.GridWidth * template.GridHeight
-                    },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex,
-                    "Failed to create inventory container for cloned board (target {OwnerType}:{OwnerId})",
-                    body.TargetOwnerType, body.TargetOwnerId);
-                await _messageBus.TryPublishErrorAsync(
-                    "license", "CloneBoard", "container_creation_failed", ex.Message,
-                    dependency: "inventory", endpoint: "post:/license/board/clone",
-                    details: $"TargetOwnerType: {body.TargetOwnerType}, TargetOwnerId: {body.TargetOwnerId}",
-                    stack: ex.StackTrace, cancellationToken: cancellationToken);
-                return (StatusCodes.InternalServerError, null);
-            }
+            var containerResponse = await _inventoryClient.CreateContainerAsync(
+                new CreateContainerRequest
+                {
+                    OwnerId = body.TargetOwnerId,
+                    OwnerType = containerOwnerType,
+                    ContainerType = "license_board",
+                    ConstraintModel = ContainerConstraintModel.SlotOnly,
+                    MaxSlots = template.GridWidth * template.GridHeight
+                },
+                cancellationToken);
 
             // 11. Validate realm context for item creation (required when cloning unlocked licenses)
             var effectiveRealmId = resolvedRealmId ?? sourceBoard.RealmId;

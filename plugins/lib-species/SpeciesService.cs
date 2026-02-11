@@ -67,6 +67,7 @@ public partial class SpeciesService : ISpeciesService
     /// </summary>
     private async Task<(bool exists, bool isActive)> ValidateRealmAsync(Guid realmId, CancellationToken cancellationToken)
     {
+        try
         {
             var response = await _realmClient.RealmExistsAsync(
                 new RealmExistsRequest { RealmId = realmId },
@@ -1147,6 +1148,7 @@ public partial class SpeciesService : ISpeciesService
     /// </summary>
     private async Task PublishSpeciesCreatedEventAsync(SpeciesModel model, CancellationToken cancellationToken)
     {
+        try
         {
             var eventModel = new SpeciesCreatedEvent
             {
@@ -1185,6 +1187,7 @@ public partial class SpeciesService : ISpeciesService
     /// </summary>
     private async Task PublishSpeciesUpdatedEventAsync(SpeciesModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
+        try
         {
             var eventModel = new SpeciesUpdatedEvent
             {
@@ -1224,6 +1227,7 @@ public partial class SpeciesService : ISpeciesService
     /// </summary>
     private async Task PublishSpeciesDeletedEventAsync(SpeciesModel model, string? deletedReason, CancellationToken cancellationToken)
     {
+        try
         {
             var eventModel = new SpeciesDeletedEvent
             {
@@ -1266,6 +1270,7 @@ public partial class SpeciesService : ISpeciesService
         int migratedCharacterCount,
         CancellationToken cancellationToken)
     {
+        try
         {
             var eventModel = new SpeciesMergedEvent
             {

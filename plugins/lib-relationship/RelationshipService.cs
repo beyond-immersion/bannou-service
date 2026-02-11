@@ -282,77 +282,77 @@ public partial class RelationshipService : IRelationshipService
     {
         _logger.LogDebug("Listing relationships by type: {RelationshipTypeId}", body.RelationshipTypeId);
 
-            // Get all relationship IDs for this type from the type index
-            var typeIndexKey = BuildTypeIndexKey(body.RelationshipTypeId);
-            var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
-                .GetAsync(typeIndexKey, cancellationToken) ?? new List<Guid>();
+        // Get all relationship IDs for this type from the type index
+        var typeIndexKey = BuildTypeIndexKey(body.RelationshipTypeId);
+        var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+            .GetAsync(typeIndexKey, cancellationToken) ?? new List<Guid>();
 
-            if (relationshipIds.Count == 0)
+        if (relationshipIds.Count == 0)
+        {
+            return (StatusCodes.OK, CreateEmptyListResponse(body.Page, body.PageSize));
+        }
+
+        // Bulk load all relationships
+        var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
+        var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+            .GetBulkAsync(keys, cancellationToken);
+
+        var relationships = new List<RelationshipModel>();
+        foreach (var (key, model) in bulkResults)
+        {
+            if (model == null)
             {
-                return (StatusCodes.OK, CreateEmptyListResponse(body.Page, body.PageSize));
+                _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                await EmitDataInconsistencyErrorAsync("ListRelationshipsByType", key, body.RelationshipTypeId);
+                continue;
             }
+            relationships.Add(model);
+        }
 
-            // Bulk load all relationships
-            var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
-                .GetBulkAsync(keys, cancellationToken);
+        // Apply filters
+        var filtered = relationships.AsEnumerable();
 
-            var relationships = new List<RelationshipModel>();
-            foreach (var (key, model) in bulkResults)
-            {
-                if (model == null)
-                {
-                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
-                    await EmitDataInconsistencyErrorAsync("ListRelationshipsByType", key, body.RelationshipTypeId);
-                    continue;
-                }
-                relationships.Add(model);
-            }
+        // Filter out ended relationships by default
+        if (body.IncludeEnded != true)
+        {
+            filtered = filtered.Where(r => !r.EndedAt.HasValue);
+        }
 
-            // Apply filters
-            var filtered = relationships.AsEnumerable();
+        // Filter by entity1 type
+        if (body.Entity1Type.HasValue)
+        {
+            var entity1Type = body.Entity1Type.Value;
+            filtered = filtered.Where(r => r.Entity1Type == entity1Type);
+        }
 
-            // Filter out ended relationships by default
-            if (body.IncludeEnded != true)
-            {
-                filtered = filtered.Where(r => !r.EndedAt.HasValue);
-            }
+        // Filter by entity2 type
+        if (body.Entity2Type.HasValue)
+        {
+            var entity2Type = body.Entity2Type.Value;
+            filtered = filtered.Where(r => r.Entity2Type == entity2Type);
+        }
 
-            // Filter by entity1 type
-            if (body.Entity1Type.HasValue)
-            {
-                var entity1Type = body.Entity1Type.Value;
-                filtered = filtered.Where(r => r.Entity1Type == entity1Type);
-            }
+        // Apply pagination
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var totalCount = filtered.Count();
+        var pagedResults = filtered
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
 
-            // Filter by entity2 type
-            if (body.Entity2Type.HasValue)
-            {
-                var entity2Type = body.Entity2Type.Value;
-                filtered = filtered.Where(r => r.Entity2Type == entity2Type);
-            }
+        var responses = pagedResults.Select(MapToResponse).ToList();
 
-            // Apply pagination
-            var page = body.Page;
-            var pageSize = body.PageSize;
-            var totalCount = filtered.Count();
-            var pagedResults = filtered
-                .OrderByDescending(r => r.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            var responses = pagedResults.Select(MapToResponse).ToList();
-
-            return (StatusCodes.OK, new RelationshipListResponse
-            {
-                Relationships = responses,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                HasNextPage = (page * pageSize) < totalCount,
-                HasPreviousPage = page > 1
-            });
+        return (StatusCodes.OK, new RelationshipListResponse
+        {
+            Relationships = responses,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = (page * pageSize) < totalCount,
+            HasPreviousPage = page > 1
+        });
     }
 
     #endregion
@@ -1980,6 +1980,7 @@ public partial class RelationshipService : IRelationshipService
         int migratedCount, int failedCount, bool sourceDeleted,
         CancellationToken cancellationToken)
     {
+        try
         {
             var eventModel = new RelationshipTypeMergedEvent
             {
@@ -2446,6 +2447,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task PublishRelationshipTypeCreatedEventAsync(RelationshipTypeModel model, CancellationToken cancellationToken)
     {
+        try
         {
             var eventModel = new RelationshipTypeCreatedEvent
             {
@@ -2469,6 +2471,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task PublishRelationshipTypeUpdatedEventAsync(RelationshipTypeModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
+        try
         {
             var eventModel = new RelationshipTypeUpdatedEvent
             {
@@ -2503,6 +2506,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task PublishRelationshipTypeDeletedEventAsync(RelationshipTypeModel model, CancellationToken cancellationToken)
     {
+        try
         {
             var eventModel = new RelationshipTypeDeletedEvent
             {

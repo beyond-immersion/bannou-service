@@ -140,6 +140,7 @@ public partial class StorylineService : IStorylineService
         _logger.LogDebug("Composing storyline for {SeedCount} seeds, goal {Goal}",
             body.SeedSources.Count, body.Goal);
 
+        try
         {
             // Validate request
             if (body.SeedSources.Count == 0)
@@ -1151,6 +1152,7 @@ public partial class StorylineService : IStorylineService
                 FailureReason = null
             });
         }
+    }
 
     /// <summary>
     /// Gets active scenario executions for a character.
@@ -2077,6 +2079,7 @@ public partial class StorylineService : IStorylineService
         IDictionary<string, Guid>? additionalParticipants,
         CancellationToken cancellationToken)
     {
+        try
         {
             switch (mutation.MutationType)
             {
@@ -2305,6 +2308,7 @@ public partial class StorylineService : IStorylineService
         Guid characterId,
         CancellationToken cancellationToken)
     {
+        try
         {
             // Soft L4 dependency - graceful degradation
             var client = _serviceProvider.GetService<Quest.IQuestClient>();
@@ -2399,6 +2403,7 @@ public partial class StorylineService : IStorylineService
     {
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
+        try
         {
             // Query all scenario executions for this character
             var allExecutions = await _scenarioExecutionStore.QueryAsync(
