@@ -13,8 +13,9 @@ info:
     - Status: activated, archived
     - Bond: formed between seeds
 
-    **Consumed Events**:
-    - collection.entry-unlocked: Collection entry unlocks drive seed growth via tag-prefix mapping
+    **Cross-Service Integration**:
+    - Collection entry unlocks drive seed growth via ICollectionUnlockListener DI provider pattern
+      (in-process, guaranteed delivery; see bannou-service/Providers/ICollectionUnlockListener.cs)
 
     **Topic Naming**: Uses dot-separated format (seed.phase.changed).
 
@@ -24,10 +25,6 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
-  x-event-subscriptions:
-    - topic: collection.entry-unlocked
-      event: CollectionEntryUnlockedEvent
-      handler: HandleCollectionEntryUnlocked
   x-event-publications:
     # Seed lifecycle events (auto-generated from x-lifecycle)
     - topic: seed.created

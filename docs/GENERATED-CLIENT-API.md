@@ -602,6 +602,15 @@ Universal content unlock and archive system for collectible content.
 | `ListCollectionsAsync` | `ListCollectionsRequest` | `ListCollectionsResponse` | List all collections for an owner |
 | `DeleteCollectionAsync` | `DeleteCollectionRequest` | `CollectionResponse` | Delete a collection and its inventory container |
 
+### Content
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SelectcontentforareaAsync` | `SelectContentForAreaRequest` | `ContentSelectionResponse` | Select content for an area based on unlocked library |
+| `SetareacontentconfigAsync` | `SetAreaContentConfigRequest` | `AreaContentConfigResponse` | Set area-to-theme mapping |
+| `GetAreacontentconfigAsync` | `GetAreaContentConfigRequest` | `AreaContentConfigResponse` | Get area content config |
+| `ListAreacontentconfigsAsync` | `ListAreaContentConfigsRequest` | `ListAreaContentConfigsResponse` | List area configs for a game service |
+
 ### Discovery
 
 | Method | Request | Response | Summary |
@@ -628,15 +637,6 @@ Universal content unlock and archive system for collectible content.
 | `UpdateEntrytemplateAsync` | `UpdateEntryTemplateRequest` | `EntryTemplateResponse` | Update an entry template |
 | `DeleteEntrytemplateAsync` | `DeleteEntryTemplateRequest` | `EntryTemplateResponse` | Delete an entry template |
 | `SeedentrytemplatesAsync` | `SeedEntryTemplatesRequest` | `SeedEntryTemplatesResponse` | Bulk seed entry templates |
-
-### Music
-
-| Method | Request | Response | Summary |
-|--------|---------|----------|---------|
-| `SelecttrackforareaAsync` | `SelectTrackForAreaRequest` | `MusicTrackSelectionResponse` | Select a track for an area based on unlocked library |
-| `SetareamusicconfigAsync` | `SetAreaMusicConfigRequest` | `AreaMusicConfigResponse` | Set area-to-theme mapping |
-| `GetAreamusicconfigAsync` | `GetAreaMusicConfigRequest` | `AreaMusicConfigResponse` | Get area music config |
-| `ListAreamusicconfigsAsync` | `ListAreaMusicConfigsRequest` | `ListAreaMusicConfigsResponse` | List area configs for a game service |
 
 ---
 

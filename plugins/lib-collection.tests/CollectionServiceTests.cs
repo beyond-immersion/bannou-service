@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -149,7 +150,8 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockInventoryClient.Object,
         _mockItemClient.Object,
         _mockGameServiceClient.Object,
-        _mockLockProvider.Object);
+        _mockLockProvider.Object,
+        Enumerable.Empty<ICollectionUnlockListener>());
 
     private static EntryTemplateModel CreateTestTemplate(
         Guid? entryTemplateId = null,

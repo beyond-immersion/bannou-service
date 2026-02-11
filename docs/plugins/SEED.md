@@ -9,7 +9,7 @@
 
 ## Overview
 
-Generic progressive growth primitive (L2 GameFoundation) for game entities. Seeds start empty and grow by accumulating metadata across named domains, progressively gaining capabilities at configurable thresholds. Seeds are polymorphically owned (accounts, actors, realms, characters, relationships) and agnostic to what they represent -- guardian spirits, dungeon cores, combat archetypes, crafting specializations, and governance roles are all equally valid seed types. Seed types are string codes (not enums), allowing new types without schema changes. Each seed type defines its own growth phase labels, capability computation rules, and bond semantics. Consumers register seed types via API, contribute growth via events, and query capability manifests to gate actions.
+Generic progressive growth primitive (L2 GameFoundation) for game entities. Seeds start empty and grow by accumulating metadata across named domains, progressively gaining capabilities at configurable thresholds. Seeds are polymorphically owned (accounts, actors, realms, characters, relationships) and agnostic to what they represent -- guardian spirits, dungeon cores, combat archetypes, crafting specializations, and governance roles are all equally valid seed types. Seed types are string codes (not enums), allowing new types without schema changes. Each seed type defines its own growth phase labels, capability computation rules, and bond semantics. Consumers register seed types via API, contribute growth via the record API or DI provider listeners (e.g., Collection→Seed pipeline), and query capability manifests to gate actions.
 
 ---
 
@@ -20,7 +20,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | lib-state (`IStateStoreFactory`) | Persistence for seeds, growth data, type definitions, bonds (MySQL); capability cache (Redis); distributed locks (Redis) |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for growth recording, seed activation, and seed updates |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle and growth events; error event publication |
-| lib-messaging (`IEventConsumer`) | Consuming `seed.growth.contributed` events from external services |
+| `ICollectionUnlockListener` (DI provider) | `SeedCollectionUnlockListener` registered as singleton; receives Collection entry unlock notifications via in-process DI dispatch for guaranteed delivery |
 | lib-game-service (`IGameServiceClient`) | Validates game service existence during seed creation and type registration (L2 hard dependency) |
 
 ---
@@ -29,9 +29,10 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 | Dependent | Relationship |
 |-----------|-------------|
+| lib-collection (L2) | Collection dispatches entry unlock notifications to `SeedCollectionUnlockListener` via `ICollectionUnlockListener` DI interface; listener matches entry tags against seed type `collectionGrowthMappings` to drive growth |
 | lib-gardener (planned, L4) | First consumer -- creates `guardian` seeds for player accounts, contributes growth, queries capability manifests for UX module gating, manages seed bonds as the pair system |
 | Dungeon plugin (planned, L4) | Will create `dungeon_core` and `dungeon_master` seeds for actor/character entities |
-| Any future L4 consumer | Registers seed types via `seed/type/register`, contributes growth via `seed.growth.contributed` event, queries manifests via `seed/capability/get-manifest` |
+| Any future L4 consumer | Registers seed types via `seed/type/register`, contributes growth via `seed/growth/record`, queries manifests via `seed/capability/get-manifest` |
 
 ---
 
@@ -98,9 +99,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 ### Consumed Events
 
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `seed.growth.contributed` | `HandleGrowthContributedAsync` | External services report growth to a seed; calls `RecordGrowthInternalAsync` with `CancellationToken.None` |
+No event subscriptions. The Collection→Seed growth pipeline uses the `ICollectionUnlockListener` DI provider pattern for guaranteed in-process delivery instead of event bus subscriptions. See `SeedCollectionUnlockListener.cs`.
 
 ---
 
@@ -130,7 +129,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `IStateStoreFactory` | State store access for MySQL and Redis stores |
 | `IMessageBus` | Event publishing and error event publication |
 | `IDistributedLockProvider` | Distributed locks for mutation operations |
-| `IEventConsumer` | Event subscription registration for `seed.growth.contributed` |
+| `SeedCollectionUnlockListener` | Implements `ICollectionUnlockListener` (registered as singleton); matches entry tags against seed type `collectionGrowthMappings` to drive growth |
 | `IGameServiceClient` | Validates game service existence during seed creation and type registration |
 | `SeedDecayWorkerService` | Background `HostedService` that periodically applies exponential decay to growth domains; disabled when `GrowthDecayEnabled` is false |
 

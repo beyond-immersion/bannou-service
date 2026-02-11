@@ -52,7 +52,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES` | int | `60` | Default expiration time in minutes for actor memories |
 | `ACTOR_DEFAULT_TICK_INTERVAL_MS` | int | `100` | Default behavior loop interval in milliseconds |
 | `ACTOR_DEPLOYMENT_MODE` | string | `bannou` | Actor deployment mode: bannou (local dev), pool-per-type, sh... |
-| `ACTOR_ENCOUNTER_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached encounter data |
 | `ACTOR_ERROR_RETRY_DELAY_MS` | int | `1000` | Delay in milliseconds before retrying after behavior loop er... |
 | `ACTOR_EVENT_BRAIN_DEFAULT_URGENCY` | double | `0.8` | Default urgency for Event Brain instruction perceptions (0.0... |
 | `ACTOR_GOAP_MAX_PLAN_DEPTH` | int | `10` | Maximum depth for GOAP planning search |
@@ -62,7 +61,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `30` | Mark node unhealthy after this many seconds without heartbea... |
 | `ACTOR_LOCAL_MODE_APP_ID` | string | `bannou` | App ID used when running in local/bannou deployment mode |
 | `ACTOR_LOCAL_MODE_NODE_ID` | string | `bannou-local` | Node ID used when running in local/bannou deployment mode |
-| `ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY` | int | `50` | Maximum encounter results returned per query |
 | `ACTOR_MAX_POOL_NODES` | int | `10` | Maximum pool nodes allowed (auto-scale mode) |
 | `ACTOR_MEMORY_STORE_MAX_RETRIES` | int | `3` | Maximum retry attempts for memory store operations |
 | `ACTOR_MIN_POOL_NODES` | int | `1` | Minimum pool nodes to maintain (auto-scale mode) |
@@ -70,7 +68,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_PERCEPTION_FILTER_THRESHOLD` | double | `0.1` | Minimum urgency for perception to be processed (0.0-1.0) |
 | `ACTOR_PERCEPTION_MEMORY_THRESHOLD` | double | `0.7` | Minimum urgency for perception to become a memory (0.0-1.0) |
 | `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
-| `ACTOR_PERSONALITY_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached personality data |
 | `ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS` | int | `15` | Interval in seconds between pool health check operations |
 | `ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before pool health monitor starts checking ... |
 | `ACTOR_POOL_NODE_APP_ID` | string | **REQUIRED** | Mesh app-id for routing commands to this pool node. Required... |
@@ -79,13 +76,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_POOL_NODE_IMAGE` | string | `bannou-actor-pool:latest` | Docker image for pool nodes (pool-per-type, shared-pool, aut... |
 | `ACTOR_POOL_NODE_TYPE` | string | `shared` | Pool type this node belongs to: shared, npc-brain, event-coo... |
 | `ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS` | int | `5000` | Default max age in milliseconds for cached query options |
-| `ACTOR_QUEST_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached quest data |
 | `ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS` | int | `100` | Interval in milliseconds for checking scheduled events |
 | `ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY` | double | `0.7` | Default urgency value for scheduled event perceptions (0.0-1... |
 | `ACTOR_SHORT_TERM_MEMORY_MINUTES` | int | `5` | Expiration time in minutes for short-term memories from high... |
 | `ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS` | int | `50` | Base delay in milliseconds between state persistence retry a... |
 | `ACTOR_STOP_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for graceful actor stop operations |
-| `ACTOR_STORYLINE_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached storyline participation data |
 
 ### Analytics
 
@@ -1032,9 +1027,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 775
+- **Total properties**: 770
 - **Required (no default)**: 51
-- **Optional (has default)**: 724
+- **Optional (has default)**: 719
 
 ## Environment Variable Naming Convention
 

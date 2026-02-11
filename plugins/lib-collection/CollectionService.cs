@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,10 +42,11 @@ public static class CollectionTopics
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
 /// </para>
 /// <para>
-/// <b>SERVICE HIERARCHY (L4 Game Features):</b>
+/// <b>SERVICE HIERARCHY (L2 Game Foundation):</b>
 /// <list type="bullet">
 ///   <item>Hard dependencies (constructor injection): IInventoryClient (L2), IItemClient (L2), IGameServiceClient (L2), IDistributedLockProvider (L0)</item>
-///   <item>No owner-specific client dependencies: owner validation is caller-responsibility (Seed pattern)</item>
+///   <item>DI listeners (ICollectionUnlockListener): Seed (L2) receives in-process unlock notifications for growth pipeline</item>
+///   <item>No owner-specific client dependencies: owner validation is caller-responsibility</item>
 /// </list>
 /// </para>
 /// <para>
@@ -71,6 +73,7 @@ public partial class CollectionService : ICollectionService
     private readonly IItemClient _itemClient;
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IReadOnlyList<ICollectionUnlockListener> _unlockListeners;
 
     #region State Store Accessors
 
@@ -130,6 +133,49 @@ public partial class CollectionService : ICollectionService
 
     #endregion
 
+    #region Unlock Listener Dispatch
+
+    /// <summary>
+    /// Dispatches unlock notifications to all registered DI listeners.
+    /// Listener failures are logged as warnings and never affect the grant operation.
+    /// </summary>
+    private async Task DispatchUnlockListenersAsync(
+        CollectionInstanceModel collection,
+        EntryTemplateModel template,
+        UnlockedEntryRecord entry,
+        CancellationToken ct)
+    {
+        if (_unlockListeners.Count == 0) return;
+
+        var notification = new CollectionUnlockNotification(
+            CollectionId: collection.CollectionId,
+            OwnerId: collection.OwnerId,
+            OwnerType: collection.OwnerType,
+            GameServiceId: collection.GameServiceId,
+            CollectionType: collection.CollectionType,
+            EntryCode: template.Code,
+            DisplayName: template.DisplayName,
+            Category: template.Category,
+            Tags: template.Tags,
+            DiscoveryLevel: entry.Metadata?.DiscoveryLevel ?? 0);
+
+        foreach (var listener in _unlockListeners)
+        {
+            try
+            {
+                await listener.OnEntryUnlockedAsync(notification, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Unlock listener {Listener} failed for entry {EntryCode} in collection {CollectionId}",
+                    listener.GetType().Name, template.Code, collection.CollectionId);
+            }
+        }
+    }
+
+    #endregion
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CollectionService"/> class.
     /// </summary>
@@ -142,6 +188,7 @@ public partial class CollectionService : ICollectionService
     /// <param name="itemClient">Item client for entry item instances (L2 hard dependency).</param>
     /// <param name="gameServiceClient">Game service client for validation (L2 hard dependency).</param>
     /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
+    /// <param name="unlockListeners">DI-discovered listeners for entry unlock notifications (e.g., Seed growth pipeline).</param>
     public CollectionService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -151,7 +198,8 @@ public partial class CollectionService : ICollectionService
         IInventoryClient inventoryClient,
         IItemClient itemClient,
         IGameServiceClient gameServiceClient,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        IEnumerable<ICollectionUnlockListener> unlockListeners)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -161,8 +209,15 @@ public partial class CollectionService : ICollectionService
         _itemClient = itemClient;
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
+        _unlockListeners = unlockListeners.ToList();
 
         RegisterEventConsumers(eventConsumer);
+
+        if (_unlockListeners.Count > 0)
+        {
+            _logger.LogInformation("Collection service initialized with {Count} unlock listeners: {Listeners}",
+                _unlockListeners.Count, string.Join(", ", _unlockListeners.Select(l => l.GetType().Name)));
+        }
     }
 
     #region Model Mapping Helpers
@@ -1377,7 +1432,7 @@ public partial class CollectionService : ICollectionService
             }
         }
 
-        // Publish entry-unlocked event
+        // Publish entry-unlocked event (for external/distributed consumers)
         await _messageBus.TryPublishAsync(
             CollectionTopics.EntryUnlocked,
             new CollectionEntryUnlockedEvent
@@ -1396,6 +1451,9 @@ public partial class CollectionService : ICollectionService
                 IsFirstGlobal = false // Would require global tracking to determine
             },
             cancellationToken: cancellationToken);
+
+        // Dispatch to in-process unlock listeners (e.g., Seed growth pipeline)
+        await DispatchUnlockListenersAsync(collection, template, newEntry, cancellationToken);
 
         // Check and publish milestones
         var totalTemplates = await EntryTemplateStore.QueryAsync(

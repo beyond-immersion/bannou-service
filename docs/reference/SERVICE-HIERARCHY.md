@@ -1,7 +1,7 @@
 # Bannou Service Hierarchy
 
-> **Version**: 2.5
-> **Last Updated**: 2026-02-06
+> **Version**: 2.6
+> **Last Updated**: 2026-02-11
 > **Scope**: All Bannou service plugins and their inter-dependencies
 
 This document defines the authoritative service dependency hierarchy for Bannou. Services are organized into five layers based on their **domain** (application vs game) and **optionality** (foundation vs feature). Dependencies may only flow downward.
@@ -147,6 +147,7 @@ These services provide the core game infrastructure - worlds, characters, specie
 | **actor** | NPC brains, behavior execution runtime |
 | **quest** | Objective-based progression system |
 | **seed** | Generic progressive growth primitives |
+| **collection** | Universal content unlock and archive system |
 
 **Rules**:
 - May depend on Layer 0, Layer 1, and other L2 services
@@ -214,7 +215,6 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 | **character-encounter** | Memorable interactions tracking |
 | **realm-history** | Realm historical events, lore |
 | **license** | Grid-based progression boards via itemized contracts |
-| **collection** | Universal content unlock and archive system (bestiaries, music galleries, scene archives) |
 | **storyline** | Seeded narrative generation from compressed archives |
 
 **Analytics Note**: Analytics is classified as L4 not because it *depends* on game services, but because it *observes* them via event subscriptions. It subscribes to events from L2 services (game-session) and L4 services (character-history, realm-history) for aggregation. Unlike typical L4 services:
@@ -868,9 +868,9 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 |-------|----------|
 | **L0** | state, messaging, mesh (required); telemetry (optional)† |
 | **L1** | account, auth, connect, permission, contract, resource |
-| **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest, seed |
+| **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest, seed, collection |
 | **L3** | asset, orchestrator, documentation, website, voice |
-| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history, license, collection, storyline |
+| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history, license, storyline |
 | **L5** | (reserved for third-party plugins and internal meta-services) |
 
 † Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.
@@ -895,6 +895,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | 2026-02-03 | 2.3 | Added schema-first layer declaration via `x-service-layer` in API schemas. Added `ServiceLayer` enum to `BannouServiceAttribute`. PluginLoader now sorts by layer for deterministic cross-layer dependency resolution. Added L5 (Extensions) layer for third-party plugins. |
 | 2026-02-03 | 2.4 | Added ServiceHierarchyValidator documentation. Updated to reflect layer-based loading is now implemented (not future). Updated diagram to show 6 layers including L5 Extensions. Removed outdated "Current Limitation" notes. |
 | 2026-02-06 | 2.5 | Moved Actor from L4 to L2 (Game Foundation). Added Variable Provider Factory pattern documentation for how L2 services can receive data from L4 services without hierarchy violations. |
+| 2026-02-11 | 2.6 | Moved Collection from L4 to L2 (Game Foundation). Collection's dependencies are all L2 (Inventory, Item, GameService) and it provides foundational content unlock infrastructure consumed by L4 services via the ICollectionUnlockListener DI provider pattern. |
 
 ---
 

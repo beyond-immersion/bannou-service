@@ -109,8 +109,5 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<ContractMilestoneCompletedEvent>("contract.milestone.completed");
         EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
         EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
-
-        // From seed-events.yaml
-        EventSubscriptionRegistry.Register<CollectionEntryUnlockedEvent>("collection.entry-unlocked");
     }
 }

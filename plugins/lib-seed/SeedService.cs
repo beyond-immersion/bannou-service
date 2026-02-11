@@ -606,7 +606,17 @@ public partial class SeedService : ISeedService
             CapabilityRules = body.CapabilityRules?.ToList(),
             GrowthDecayEnabled = body.GrowthDecayEnabled,
             GrowthDecayRatePerDay = body.GrowthDecayRatePerDay,
-            SameOwnerGrowthMultiplier = body.SameOwnerGrowthMultiplier
+            SameOwnerGrowthMultiplier = body.SameOwnerGrowthMultiplier,
+            CollectionGrowthMappings = body.CollectionGrowthMappings?.Select(m => new CollectionGrowthMappingModel
+            {
+                CollectionType = m.CollectionType,
+                DomainMappings = m.DomainMappings.Select(d => new CollectionDomainMappingModel
+                {
+                    TagPrefix = d.TagPrefix,
+                    BaseAmount = d.BaseAmount,
+                    DiscoveryBonusPerLevel = d.DiscoveryBonusPerLevel
+                }).ToList()
+            }).ToList()
         };
 
         await store.SaveAsync(key, model, cancellationToken: cancellationToken);
@@ -717,6 +727,17 @@ public partial class SeedService : ISeedService
             seedType.GrowthDecayRatePerDay = body.GrowthDecayRatePerDay;
         if (body.SameOwnerGrowthMultiplier.HasValue)
             seedType.SameOwnerGrowthMultiplier = body.SameOwnerGrowthMultiplier.Value;
+        if (body.CollectionGrowthMappings != null)
+            seedType.CollectionGrowthMappings = body.CollectionGrowthMappings.Select(m => new CollectionGrowthMappingModel
+            {
+                CollectionType = m.CollectionType,
+                DomainMappings = m.DomainMappings.Select(d => new CollectionDomainMappingModel
+                {
+                    TagPrefix = d.TagPrefix,
+                    BaseAmount = d.BaseAmount,
+                    DiscoveryBonusPerLevel = d.DiscoveryBonusPerLevel
+                }).ToList()
+            }).ToList();
 
         await store.SaveAsync(key, seedType, cancellationToken: cancellationToken);
 
@@ -1727,6 +1748,16 @@ public partial class SeedService : ISeedService
         GrowthDecayEnabled = model.GrowthDecayEnabled,
         GrowthDecayRatePerDay = model.GrowthDecayRatePerDay,
         SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+        CollectionGrowthMappings = model.CollectionGrowthMappings?.Select(m => new CollectionGrowthMapping
+        {
+            CollectionType = m.CollectionType,
+            DomainMappings = m.DomainMappings.Select(d => new CollectionDomainMapping
+            {
+                TagPrefix = d.TagPrefix,
+                BaseAmount = d.BaseAmount,
+                DiscoveryBonusPerLevel = d.DiscoveryBonusPerLevel
+            }).ToList()
+        }).ToList(),
         IsDeprecated = model.IsDeprecated,
         DeprecatedAt = model.DeprecatedAt,
         DeprecationReason = model.DeprecationReason

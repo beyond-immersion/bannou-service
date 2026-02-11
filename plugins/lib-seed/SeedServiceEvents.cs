@@ -1,7 +1,4 @@
-using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging;
-using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Seed;
 
@@ -9,6 +6,13 @@ namespace BeyondImmersion.BannouService.Seed;
 /// Partial class for SeedService event handling.
 /// Contains event consumer registration and handler implementations.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>Collection→Seed growth pipeline</b> uses the DI provider pattern
+/// (ICollectionUnlockListener) instead of event subscriptions for guaranteed
+/// in-process delivery. See SeedCollectionUnlockListener.cs.
+/// </para>
+/// </remarks>
 public partial class SeedService
 {
     /// <summary>
@@ -18,40 +22,8 @@ public partial class SeedService
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
-        eventConsumer.RegisterHandler<ISeedService, SeedGrowthContributedEvent>(
-            "seed.growth.contributed",
-            async (svc, evt) => await ((SeedService)svc).HandleGrowthContributedAsync(evt));
-
-    }
-
-    /// <summary>
-    /// Handles seed.growth.contributed events by recording growth to the specified domain.
-    /// </summary>
-    /// <param name="evt">The event data.</param>
-    public async Task HandleGrowthContributedAsync(SeedGrowthContributedEvent evt)
-    {
-        _logger.LogInformation("Processing growth contribution for seed {SeedId}, domain {Domain}, amount {Amount}",
-            evt.SeedId, evt.Domain, evt.Amount);
-
-        try
-        {
-            var (status, _) = await RecordGrowthInternalAsync(
-                evt.SeedId,
-                new[] { (evt.Domain, evt.Amount) },
-                evt.Source,
-                CancellationToken.None);
-
-            if (status != StatusCodes.OK)
-            {
-                _logger.LogWarning("Growth contribution for seed {SeedId} returned {Status}", evt.SeedId, status);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to process growth contribution for seed {SeedId}", evt.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "HandleGrowthContributed", "event_processing_failed",
-                ex.Message, dependency: null, endpoint: "event:seed.growth.contributed",
-                details: null, stack: ex.StackTrace, cancellationToken: CancellationToken.None);
-        }
+        // No event subscriptions registered.
+        // Collection→Seed growth pipeline uses ICollectionUnlockListener (DI provider pattern)
+        // for guaranteed in-process delivery instead of event bus subscriptions.
     }
 }

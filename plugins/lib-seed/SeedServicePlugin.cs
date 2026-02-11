@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,9 @@ public class SeedServicePlugin : BaseBannouPlugin
 
         // Background worker for applying growth decay to seed domains
         services.AddHostedService<SeedDecayWorkerService>();
+
+        // Register Collection→Seed DI provider for in-process growth notifications
+        services.AddSingleton<ICollectionUnlockListener, SeedCollectionUnlockListener>();
 
         Logger?.LogDebug("Service dependencies configured");
     }

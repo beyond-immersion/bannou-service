@@ -133,6 +133,9 @@ internal class SeedTypeDefinitionModel
     /// <summary>Per-type decay rate override. Null = use global config.</summary>
     public float? GrowthDecayRatePerDay { get; set; }
 
+    /// <summary>Mappings from collection types/tags to growth domains for the Collection→Seed pipeline.</summary>
+    public List<CollectionGrowthMappingModel>? CollectionGrowthMappings { get; set; }
+
     /// <summary>Whether this seed type is deprecated and cannot be used for new seeds.</summary>
     public bool IsDeprecated { get; set; }
 
@@ -141,6 +144,33 @@ internal class SeedTypeDefinitionModel
 
     /// <summary>Optional reason for deprecation.</summary>
     public string? DeprecationReason { get; set; }
+}
+
+/// <summary>
+/// Maps a collection type to growth domain rules for the Collection→Seed DI pipeline.
+/// </summary>
+internal class CollectionGrowthMappingModel
+{
+    /// <summary>Collection type code to match (e.g., "bestiary", "music_library").</summary>
+    public string CollectionType { get; set; } = string.Empty;
+
+    /// <summary>Domain mappings from entry tags to growth domains.</summary>
+    public List<CollectionDomainMappingModel> DomainMappings { get; set; } = new();
+}
+
+/// <summary>
+/// Maps a tag prefix on collection entries to a seed growth domain with configurable amounts.
+/// </summary>
+internal class CollectionDomainMappingModel
+{
+    /// <summary>Tag prefix to match against entry tags (e.g., "combat:" matches "combat:melee").</summary>
+    public string TagPrefix { get; set; } = string.Empty;
+
+    /// <summary>Base growth amount recorded per matching entry unlock.</summary>
+    public float BaseAmount { get; set; }
+
+    /// <summary>Additional growth per discovery level advancement. Null = no bonus.</summary>
+    public float? DiscoveryBonusPerLevel { get; set; }
 }
 
 /// <summary>

@@ -3,17 +3,17 @@
 > **Plugin**: lib-collection
 > **Schema**: schemas/collection-api.yaml
 > **Version**: 1.0.0
-> **State Store**: collection-entry-templates (MySQL), collection-instances (MySQL), collection-area-music-configs (MySQL), collection-cache (Redis), collection-lock (Redis)
+> **State Store**: collection-entry-templates (MySQL), collection-instances (MySQL), collection-area-content-configs (MySQL), collection-cache (Redis), collection-lock (Redis)
 
 ## Overview
 
-The Collection service (L4 GameFeatures) manages universal content unlock and archive systems for collectible content: voice galleries, scene archives, music libraries, bestiaries, recipe books, and custom types. Follows the "items in inventories" pattern: entry templates define what can be collected, collection instances create inventory containers per owner, and granting an entry creates an item instance in that container. Unlike License (which orchestrates contracts for LP deduction), Collection uses direct grants without contract delegation. Features dynamic music track selection based on unlocked tracks and area theme configurations. Internal-only, never internet-facing.
+The Collection service (L2 GameFoundation) manages universal content unlock and archive systems for collectible content: voice galleries, scene archives, music libraries, bestiaries, recipe books, and custom types. Follows the "items in inventories" pattern: entry templates define what can be collected, collection instances create inventory containers per owner, and granting an entry creates an item instance in that container. Unlike License (which orchestrates contracts for LP deduction), Collection uses direct grants without contract delegation. Features dynamic content selection based on unlocked entries and area theme configurations. Collection types are opaque strings (not enums), allowing new types without schema changes. Dispatches unlock notifications to registered `ICollectionUnlockListener` implementations via DI for guaranteed in-process delivery (e.g., Seed growth pipeline). Internal-only, never internet-facing.
 
 ## Dependencies (What This Plugin Relies On)
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Persistence for entry templates (MySQL), collection instances (MySQL), area music configs (MySQL), collection cache (Redis), distributed locks (Redis) |
+| lib-state (`IStateStoreFactory`) | Persistence for entry templates (MySQL), collection instances (MySQL), area content configs (MySQL), collection cache (Redis), distributed locks (Redis) |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events, entry-unlocked, grant-failed, milestone-reached, discovery-advanced events; error event publishing in cleanup |
 | lib-inventory (`IInventoryClient`) | Creating unlimited containers for collections, deleting containers on collection deletion, reading container contents for cache rebuilds (L2 hard dependency) |
 | lib-item (`IItemClient`) | Creating item instances when entries are granted, validating item template existence for entry templates (L2 hard dependency) |
@@ -25,7 +25,7 @@ The Collection service (L4 GameFeatures) manages universal content unlock and ar
 
 | Dependent | Relationship |
 |-----------|-------------|
-| *(none currently)* | No other plugins consume Collection events or inject `ICollectionClient` |
+| lib-seed (`SeedCollectionUnlockListener`) | Implements `ICollectionUnlockListener` to drive seed growth from collection entry unlocks via tag-prefix matching against seed type `collectionGrowthMappings` |
 
 ## State Storage
 
@@ -45,13 +45,13 @@ The Collection service (L4 GameFeatures) manages universal content unlock and ar
 | `col:{collectionId}` | `CollectionInstanceModel` | Primary lookup by ID |
 | `col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}` | `CollectionInstanceModel` | Owner+type uniqueness lookup |
 
-### Area Music Config Store
-**Store**: `collection-area-music-configs` (Backend: MySQL)
+### Area Content Config Store
+**Store**: `collection-area-content-configs` (Backend: MySQL)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `amc:{areaConfigId}` | `AreaMusicConfigModel` | Primary lookup by ID |
-| `amc:{gameServiceId}:{areaCode}` | `AreaMusicConfigModel` | Area code lookup within game |
+| `acc:{areaConfigId}` | `AreaContentConfigModel` | Primary lookup by ID |
+| `acc:{gameServiceId}:{collectionType}:{areaCode}` | `AreaContentConfigModel` | Area code lookup within game + collection type |
 
 ### Collection Cache
 **Store**: `collection-cache` (Backend: Redis, prefix: `collection:state`)
@@ -112,6 +112,7 @@ Used for template update/delete, collection delete, grant, metadata update, and 
 | `IItemClient` | Item template validation and instance creation (L2) |
 | `IGameServiceClient` | Game service existence validation (L2) |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
+| `IEnumerable<ICollectionUnlockListener>` | DI-discovered listeners notified on entry unlock (e.g., SeedCollectionUnlockListener) |
 
 No helper services or background workers. All logic in `CollectionService.cs`, with events in `CollectionServiceEvents.cs` and models in `CollectionServiceModels.cs`.
 
@@ -142,11 +143,11 @@ Standard CRUD on entry templates with code-uniqueness enforcement per collection
 - **UpdateMetadata**: Acquires lock, updates metadata fields (playCount, killCount, favorited, discoveryLevel) with ETag concurrency.
 - **GetCompletionStats**: Calculates total/unlocked/percentage with per-category breakdown.
 
-### Music Operations (4 endpoints)
+### Content Selection Operations (4 endpoints)
 
-- **SelectTrackForArea**: Loads area config themes, finds matching unlocked tracks from owner's music library, performs weighted random selection (weight = number of matching themes). Falls back to default track.
-- **SetAreaMusicConfig**: Upsert area-to-theme mapping. Validates game service and default track template existence.
-- **GetAreaMusicConfig** / **ListAreaMusicConfigs**: Read operations for area configs.
+- **SelectContentForArea**: Loads area config themes, finds matching unlocked entries from owner's collection of the specified type, performs weighted random selection (weight = number of matching themes). Falls back to default entry.
+- **SetAreaContentConfig**: Upsert area-to-theme mapping per collection type. Validates game service and default entry template existence.
+- **GetAreaContentConfig** / **ListAreaContentConfigs**: Read operations for area configs, scoped by collection type.
 
 ### Discovery (1 endpoint)
 
@@ -188,10 +189,10 @@ Standard CRUD on entry templates with code-uniqueness enforcement per collection
 │  │      └─ metadata         │                                        │
 │  └──────────────────────────┘                                        │
 │                                                                      │
-│  AreaMusicStore (MySQL)                                              │
+│  AreaContentStore (MySQL)                                            │
 │  ┌─────────────────────────┐  ┌─────────────────────────────────┐   │
-│  │ amc:{configId}          │  │ amc:{gameId}:{areaCode}         │   │
-│  │ → AreaMusicConfigModel  │  │ → AreaMusicConfigModel (same)   │   │
+│  │ acc:{configId}          │  │ acc:{gameId}:{type}:{areaCode}  │   │
+│  │ → AreaContentConfigModel│  │ → AreaContentConfigModel (same) │   │
 │  └─────────────────────────┘  └─────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────────┘
 ```

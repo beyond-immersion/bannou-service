@@ -1533,89 +1533,9 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
     #endregion
 
-    #region Event Handler Tests
-
-    [Fact]
-    public async Task HandleGrowthContributed_ValidEvent_RecordsGrowth()
-    {
-        // Arrange
-        var service = CreateService();
-        var seedId = Guid.NewGuid();
-        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
-        var seedType = CreateTestSeedType();
-
-        _mockSeedStore
-            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(seed);
-        _mockGrowthStore
-            .Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((SeedGrowthModel?)null);
-        _mockTypeStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(seedType);
-        _mockGrowthStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
-                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
-        _mockSeedStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
-                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
-
-        var evt = new SeedGrowthContributedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            SeedId = seedId,
-            Domain = "combat.melee",
-            Amount = 5f,
-            Source = "character-encounter"
-        };
-
-        // Act
-        await service.HandleGrowthContributedAsync(evt);
-
-        // Assert - growth was saved
-        _mockGrowthStore.Verify(s => s.SaveAsync(
-            $"growth:{seedId}",
-            It.Is<SeedGrowthModel>(g => g.Domains.ContainsKey("combat.melee")),
-            It.IsAny<StateOptions?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task HandleGrowthContributed_SeedNotFound_LogsWarning()
-    {
-        // Arrange
-        var service = CreateService();
-        var seedId = Guid.NewGuid();
-
-        _mockSeedStore
-            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((SeedModel?)null);
-
-        var evt = new SeedGrowthContributedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            SeedId = seedId,
-            Domain = "combat.melee",
-            Amount = 5f,
-            Source = "character-encounter"
-        };
-
-        // Act
-        await service.HandleGrowthContributedAsync(evt);
-
-        // Assert - no growth saved (seed not found)
-        _mockGrowthStore.Verify(s => s.SaveAsync(
-            It.IsAny<string>(),
-            It.IsAny<SeedGrowthModel>(),
-            It.IsAny<StateOptions?>(),
-            It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    #endregion
+    // Event handler tests for seed.growth.contributed removed.
+    // Collection→Seed growth pipeline now uses ICollectionUnlockListener DI provider pattern.
+    // See SeedCollectionUnlockListener for the implementation.
 
     #region Cross-Pollination Tests
 
