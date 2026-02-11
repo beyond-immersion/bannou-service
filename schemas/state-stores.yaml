@@ -871,10 +871,10 @@ x-state-stores:
     service: Collection
     purpose: Per-owner collection containers linking entities to collection types
 
-  collection-area-music-configs:
+  collection-area-content-configs:
     backend: mysql
     service: Collection
-    purpose: Area-to-theme mappings for dynamic music track selection
+    purpose: Area-to-theme mappings for dynamic content selection
 
   collection-cache:
     backend: redis

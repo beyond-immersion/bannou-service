@@ -28,10 +28,7 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<LeaderboardRankChangedEvent>("leaderboard.rank.changed");
 
         // From actor-events.yaml
-        EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
-        EventSubscriptionRegistry.Register<PersonalityEvolvedEvent>("personality.evolved");
-        EventSubscriptionRegistry.Register<CombatPreferencesEvolvedEvent>("combat-preferences.evolved");
         EventSubscriptionRegistry.Register<PoolNodeRegisteredEvent>("actor.pool-node.registered");
         EventSubscriptionRegistry.Register<PoolNodeHeartbeatEvent>("actor.pool-node.heartbeat");
         EventSubscriptionRegistry.Register<PoolNodeDrainingEvent>("actor.pool-node.draining");
@@ -106,6 +103,7 @@ public static class EventSubscriptionRegistration
 
         // From puppetmaster-events.yaml
         EventSubscriptionRegistry.Register<RealmCreatedEvent>("realm.created");
+        EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
 
         // From quest-events.yaml
         EventSubscriptionRegistry.Register<ContractMilestoneCompletedEvent>("contract.milestone.completed");
@@ -113,6 +111,6 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
 
         // From seed-events.yaml
-        EventSubscriptionRegistry.Register<SeedGrowthContributedEvent>("seed.growth.contributed");
+        EventSubscriptionRegistry.Register<CollectionEntryUnlockedEvent>("collection.entry-unlocked");
     }
 }

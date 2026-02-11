@@ -38,8 +38,8 @@ internal class EntryTemplateModel
     /// <summary>Unique code within this collection type and game service.</summary>
     public string Code { get; set; } = string.Empty;
 
-    /// <summary>Type of collection this entry belongs to.</summary>
-    public CollectionType CollectionType { get; set; }
+    /// <summary>Type of collection this entry belongs to (opaque string code).</summary>
+    public string CollectionType { get; set; } = string.Empty;
 
     /// <summary>Game service this entry template is scoped to.</summary>
     public Guid GameServiceId { get; set; }
@@ -105,8 +105,8 @@ internal class CollectionInstanceModel
     /// <summary>Entity type discriminator (e.g., account, character).</summary>
     public string OwnerType { get; set; } = string.Empty;
 
-    /// <summary>Type of collection content.</summary>
-    public CollectionType CollectionType { get; set; }
+    /// <summary>Type of collection content (opaque string code).</summary>
+    public string CollectionType { get; set; } = string.Empty;
 
     /// <summary>Game service this collection is scoped to.</summary>
     public Guid GameServiceId { get; set; }
@@ -135,25 +135,28 @@ internal class CollectionCacheModel
 }
 
 /// <summary>
-/// Internal storage model for area-to-music-theme mappings.
-/// Used by the music selection algorithm to match tracks to areas.
+/// Internal storage model for area-to-theme content mappings.
+/// Used by the content selection algorithm to match entries to areas.
 /// </summary>
-internal class AreaMusicConfigModel
+internal class AreaContentConfigModel
 {
     /// <summary>Unique identifier for the area config.</summary>
     public Guid AreaConfigId { get; set; }
 
-    /// <summary>Area code (unique per game service).</summary>
+    /// <summary>Area code (unique per game service and collection type).</summary>
     public string AreaCode { get; set; } = string.Empty;
 
     /// <summary>Game service this area config belongs to.</summary>
     public Guid GameServiceId { get; set; }
 
-    /// <summary>Theme tags for this area (matched against music entry themes).</summary>
+    /// <summary>Collection type this area config applies to.</summary>
+    public string CollectionType { get; set; } = string.Empty;
+
+    /// <summary>Theme tags for this area (matched against collection entry themes).</summary>
     public List<string> Themes { get; set; } = new();
 
-    /// <summary>Default track code to use when no matches are found.</summary>
-    public string DefaultTrackCode { get; set; } = string.Empty;
+    /// <summary>Default entry code to use when no matches are found.</summary>
+    public string DefaultEntryCode { get; set; } = string.Empty;
 
     /// <summary>When this area config was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }

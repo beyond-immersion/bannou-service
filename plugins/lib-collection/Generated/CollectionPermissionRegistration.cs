@@ -272,9 +272,9 @@ public static class CollectionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/collection/music/select-for-area",
+            Path = "/collection/content/select-for-area",
             Method = ServiceEndpointMethod.POST,
-            Description = "selectTrackForArea",
+            Description = "selectContentForArea",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -287,9 +287,9 @@ public static class CollectionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/collection/music/area-config/set",
+            Path = "/collection/content/area-config/set",
             Method = ServiceEndpointMethod.POST,
-            Description = "setAreaMusicConfig",
+            Description = "setAreaContentConfig",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -302,9 +302,9 @@ public static class CollectionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/collection/music/area-config/get",
+            Path = "/collection/content/area-config/get",
             Method = ServiceEndpointMethod.POST,
-            Description = "getAreaMusicConfig",
+            Description = "getAreaContentConfig",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -317,9 +317,9 @@ public static class CollectionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/collection/music/area-config/list",
+            Path = "/collection/content/area-config/list",
             Method = ServiceEndpointMethod.POST,
-            Description = "listAreaMusicConfigs",
+            Description = "listAreaContentConfigs",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

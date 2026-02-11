@@ -5,9 +5,11 @@ info:
   description: |
     Universal content unlock and archive system for collectible content.
 
-    lib-collection manages "experience, unlock, access" patterns for voice galleries,
-    scene archives, music libraries, bestiaries, recipe books, and more. Content
-    unlocks on first experience and becomes available for replay or rotation.
+    lib-collection (L2 GameFoundation) manages "experience, unlock, access" patterns
+    for voice galleries, scene archives, bestiaries, recipe books, and any custom
+    collection type. Content unlocks on first experience and becomes available for
+    replay or rotation. Collection types are opaque string codes — new types can be
+    added without schema changes.
 
     Follows the "items in inventories" pattern: entry templates define what can be
     collected, collection instances create inventory containers per owner, and
@@ -20,8 +22,8 @@ info:
     "character") — NOT enums, per SCHEMA-RULES.md guidance on not enumerating
     entity types from other layers. Owner validation is caller-responsibility.
 
-    **Key Feature**: Dynamic music selection based on unlocked tracks and area themes
-    (weighted random from library).
+    **Key Feature**: Dynamic content selection based on unlocked entries and area
+    theme configurations (weighted random from library).
 
     **POST-Only API Pattern**: This API uses POST for all operations to support
     zero-copy WebSocket routing. Path parameters are passed in request bodies.
@@ -31,7 +33,7 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
-x-service-layer: GameFeatures
+x-service-layer: GameFoundation
 
 servers:
 - url: http://localhost:5012
@@ -453,19 +455,19 @@ paths:
           description: Collection not found
 
   # ===========================================================================
-  # Music Operations (4 endpoints)
+  # Content Selection Operations (4 endpoints)
   # ===========================================================================
 
-  /collection/music/select-for-area:
+  /collection/content/select-for-area:
     post:
-      operationId: selectTrackForArea
+      operationId: selectContentForArea
       tags:
-      - Music
-      summary: Select a track for an area based on unlocked library
+      - Content
+      summary: Select content for an area based on unlocked library
       description: |
-        Select a music track for an area based on the owner's unlocked music library
+        Select a content entry for an area based on the owner's unlocked collection
         and area theme configuration. Uses weighted random selection based on theme overlap.
-        Falls back to the area's default track if no matches are found.
+        Falls back to the area's default entry if no matches are found.
       x-permissions:
       - role: user
         states: {}
@@ -474,24 +476,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SelectTrackForAreaRequest'
+              $ref: '#/components/schemas/SelectContentForAreaRequest'
       responses:
         '200':
-          description: Track selected successfully
+          description: Content selected successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MusicTrackSelectionResponse'
+                $ref: '#/components/schemas/ContentSelectionResponse'
         '404':
-          description: Area config not found or no music library collection exists
+          description: Area config not found or no matching collection exists
 
-  /collection/music/area-config/set:
+  /collection/content/area-config/set:
     post:
-      operationId: setAreaMusicConfig
+      operationId: setAreaContentConfig
       tags:
-      - Music
+      - Content
       summary: Set area-to-theme mapping
-      description: Create or update an area music configuration that maps an area code to themes and a default track.
+      description: Create or update an area content configuration that maps an area code to themes and a default entry.
       x-permissions:
       - role: developer
         states: {}
@@ -500,24 +502,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SetAreaMusicConfigRequest'
+              $ref: '#/components/schemas/SetAreaContentConfigRequest'
       responses:
         '200':
-          description: Area music config saved successfully
+          description: Area content config saved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AreaMusicConfigResponse'
+                $ref: '#/components/schemas/AreaContentConfigResponse'
         '404':
-          description: Game service or default track template not found
+          description: Game service or default entry template not found
 
-  /collection/music/area-config/get:
+  /collection/content/area-config/get:
     post:
-      operationId: getAreaMusicConfig
+      operationId: getAreaContentConfig
       tags:
-      - Music
-      summary: Get area music config
-      description: Get the music configuration for a specific area and game service.
+      - Content
+      summary: Get area content config
+      description: Get the content configuration for a specific area and game service.
       x-permissions:
       - role: user
         states: {}
@@ -526,24 +528,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GetAreaMusicConfigRequest'
+              $ref: '#/components/schemas/GetAreaContentConfigRequest'
       responses:
         '200':
-          description: Area music config retrieved successfully
+          description: Area content config retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AreaMusicConfigResponse'
+                $ref: '#/components/schemas/AreaContentConfigResponse'
         '404':
-          description: Area music config not found
+          description: Area content config not found
 
-  /collection/music/area-config/list:
+  /collection/content/area-config/list:
     post:
-      operationId: listAreaMusicConfigs
+      operationId: listAreaContentConfigs
       tags:
-      - Music
+      - Content
       summary: List area configs for a game service
-      description: List all area music configurations for a game service.
+      description: List all area content configurations for a game service.
       x-permissions:
       - role: developer
         states: {}
@@ -552,14 +554,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ListAreaMusicConfigsRequest'
+              $ref: '#/components/schemas/ListAreaContentConfigsRequest'
       responses:
         '200':
-          description: Area music configs retrieved successfully
+          description: Area content configs retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListAreaMusicConfigsResponse'
+                $ref: '#/components/schemas/ListAreaContentConfigsResponse'
 
   # ===========================================================================
   # Discovery (1 endpoint)
@@ -605,22 +607,11 @@ components:
     CollectionType:
       type: string
       description: |
-        Type of collection content.
-        - voice_gallery: Voice recordings and dialogue clips
-        - scene_archive: Cutscenes and cinematics
-        - ending_gallery: Game endings and conclusions
-        - music_library: Music tracks for dynamic playback
-        - bestiary: Monster and creature encyclopedia
-        - recipe_book: Crafting recipes and formulas
-        - custom: User-defined collection type
-      enum:
-      - voice_gallery
-      - scene_archive
-      - ending_gallery
-      - music_library
-      - bestiary
-      - recipe_book
-      - custom
+        Opaque string code identifying the type of collection content.
+        Collection types are game-defined and extensible — new types can be
+        registered without schema changes. Common conventions include
+        voice_gallery, scene_archive, music_library, bestiary, recipe_book,
+        but any string code is valid.
 
     GrantFailureReason:
       type: string
@@ -770,7 +761,7 @@ components:
           nullable: true
           items:
             type: string
-          description: Theme tags for music entries (e.g., battle, peaceful, forest)
+          description: Theme tags for content selection matching (e.g., battle, peaceful, forest)
         duration:
           type: string
           nullable: true
@@ -778,11 +769,11 @@ components:
         loopPoint:
           type: string
           nullable: true
-          description: Loop point for music entries (ISO 8601 duration or timestamp)
+          description: Loop point for seamless playback (ISO 8601 duration or timestamp)
         composer:
           type: string
           nullable: true
-          description: Composer or creator name for music entries
+          description: Composer or creator name
 
     GetEntryTemplateRequest:
       type: object
@@ -1503,23 +1494,24 @@ components:
           description: Completion percentage for this category
 
     # ==========================================================================
-    # Request/Response Models - Music Operations
+    # Request/Response Models - Content Selection Operations
     # ==========================================================================
 
-    SelectTrackForAreaRequest:
+    SelectContentForAreaRequest:
       type: object
-      description: Request to select a music track for an area
+      description: Request to select content for an area based on unlocked collection
       additionalProperties: false
       required:
       - ownerId
       - ownerType
       - gameServiceId
+      - collectionType
       - areaCode
       properties:
         ownerId:
           type: string
           format: uuid
-          description: Entity whose music library to search
+          description: Entity whose collection to search
         ownerType:
           type: string
           description: Entity type discriminator
@@ -1527,87 +1519,91 @@ components:
           type: string
           format: uuid
           description: Game service scope
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection to select content from
         areaCode:
           type: string
-          description: Area code to select music for
+          description: Area code to select content for
 
-    MusicTrackSelectionResponse:
+    ContentSelectionResponse:
       type: object
-      description: Selected music track for an area
+      description: Selected content entry for an area
       additionalProperties: false
       required:
-      - trackCode
+      - entryCode
       - displayName
       - matchedThemes
       properties:
-        trackCode:
+        entryCode:
           type: string
-          description: Code of the selected track
+          description: Code of the selected entry
         displayName:
           type: string
-          description: Display name of the selected track
-        composer:
+          description: Display name of the selected entry
+        category:
           type: string
           nullable: true
-          description: Composer of the selected track
+          description: Category of the selected entry
         assetId:
           type: string
           nullable: true
-          description: Asset identifier for the track audio
-        duration:
+          description: Primary asset identifier for the entry
+        thumbnailAssetId:
           type: string
           nullable: true
-          description: Duration of the track
-        loopPoint:
-          type: string
-          nullable: true
-          description: Loop point for seamless playback
+          description: Thumbnail asset identifier for the entry
         themes:
           type: array
           nullable: true
           items:
             type: string
-          description: Theme tags of the selected track
+          description: Theme tags of the selected entry
         matchedThemes:
           type: array
           items:
             type: string
           description: Themes that matched the area configuration
 
-    SetAreaMusicConfigRequest:
+    SetAreaContentConfigRequest:
       type: object
-      description: Request to create or update an area music configuration
+      description: Request to create or update an area content configuration
       additionalProperties: false
       required:
       - areaCode
       - gameServiceId
+      - collectionType
       - themes
-      - defaultTrackCode
+      - defaultEntryCode
       properties:
         areaCode:
           type: string
-          description: Area code to configure (unique per game service)
+          description: Area code to configure (unique per game service and collection type)
         gameServiceId:
           type: string
           format: uuid
           description: Game service this area config belongs to
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection this area config applies to
         themes:
           type: array
           items:
             type: string
           minItems: 1
-          description: Theme tags for this area (matched against music entry themes)
-        defaultTrackCode:
+          description: Theme tags for this area (matched against collection entry themes)
+        defaultEntryCode:
           type: string
-          description: Default track code to use when no matches are found
+          description: Default entry code to use when no matches are found
 
-    GetAreaMusicConfigRequest:
+    GetAreaContentConfigRequest:
       type: object
-      description: Request to get an area music config
+      description: Request to get an area content config
       additionalProperties: false
       required:
       - areaCode
       - gameServiceId
+      - collectionType
       properties:
         areaCode:
           type: string
@@ -1616,29 +1612,37 @@ components:
           type: string
           format: uuid
           description: Game service scope
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection
 
-    ListAreaMusicConfigsRequest:
+    ListAreaContentConfigsRequest:
       type: object
-      description: Request to list area music configs for a game service
+      description: Request to list area content configs for a game service
       additionalProperties: false
       required:
       - gameServiceId
+      - collectionType
       properties:
         gameServiceId:
           type: string
           format: uuid
           description: Game service to list area configs for
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection to list configs for
 
-    AreaMusicConfigResponse:
+    AreaContentConfigResponse:
       type: object
-      description: Area music configuration
+      description: Area content configuration
       additionalProperties: false
       required:
       - areaConfigId
       - areaCode
       - gameServiceId
+      - collectionType
       - themes
-      - defaultTrackCode
+      - defaultEntryCode
       - createdAt
       properties:
         areaConfigId:
@@ -1652,14 +1656,17 @@ components:
           type: string
           format: uuid
           description: Game service this area config belongs to
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection this config applies to
         themes:
           type: array
           items:
             type: string
           description: Theme tags for this area
-        defaultTrackCode:
+        defaultEntryCode:
           type: string
-          description: Default track code
+          description: Default entry code
         createdAt:
           type: string
           format: date-time
@@ -1670,9 +1677,9 @@ components:
           nullable: true
           description: When this area config was last updated
 
-    ListAreaMusicConfigsResponse:
+    ListAreaContentConfigsResponse:
       type: object
-      description: List of area music configurations
+      description: List of area content configurations
       additionalProperties: false
       required:
       - configs
@@ -1680,8 +1687,8 @@ components:
         configs:
           type: array
           items:
-            $ref: '#/components/schemas/AreaMusicConfigResponse'
-          description: Area music configurations for this game service
+            $ref: '#/components/schemas/AreaContentConfigResponse'
+          description: Area content configurations for this game service
 
     # ==========================================================================
     # Request/Response Models - Discovery

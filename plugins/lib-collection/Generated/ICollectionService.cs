@@ -105,24 +105,24 @@ public partial interface ICollectionService : IBannouService
         Task<(StatusCodes, CompletionStatsResponse?)> GetCompletionStatsAsync(GetCompletionStatsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// SelectTrackForArea operation
+        /// SelectContentForArea operation
         /// </summary>
-        Task<(StatusCodes, MusicTrackSelectionResponse?)> SelectTrackForAreaAsync(SelectTrackForAreaRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, ContentSelectionResponse?)> SelectContentForAreaAsync(SelectContentForAreaRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// SetAreaMusicConfig operation
+        /// SetAreaContentConfig operation
         /// </summary>
-        Task<(StatusCodes, AreaMusicConfigResponse?)> SetAreaMusicConfigAsync(SetAreaMusicConfigRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, AreaContentConfigResponse?)> SetAreaContentConfigAsync(SetAreaContentConfigRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetAreaMusicConfig operation
+        /// GetAreaContentConfig operation
         /// </summary>
-        Task<(StatusCodes, AreaMusicConfigResponse?)> GetAreaMusicConfigAsync(GetAreaMusicConfigRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, AreaContentConfigResponse?)> GetAreaContentConfigAsync(GetAreaContentConfigRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// ListAreaMusicConfigs operation
+        /// ListAreaContentConfigs operation
         /// </summary>
-        Task<(StatusCodes, ListAreaMusicConfigsResponse?)> ListAreaMusicConfigsAsync(ListAreaMusicConfigsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, ListAreaContentConfigsResponse?)> ListAreaContentConfigsAsync(ListAreaContentConfigsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// AdvanceDiscovery operation

@@ -25,50 +25,25 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Collection;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Collection;
 
 using System = global::System;
-
-/// <summary>
-/// Type of collection content.
-/// <br/>- voice_gallery: Voice recordings and dialogue clips
-/// <br/>- scene_archive: Cutscenes and cinematics
-/// <br/>- ending_gallery: Game endings and conclusions
-/// <br/>- music_library: Music tracks for dynamic playback
-/// <br/>- bestiary: Monster and creature encyclopedia
-/// <br/>- recipe_book: Crafting recipes and formulas
-/// <br/>- custom: User-defined collection type
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CollectionType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"voice_gallery")]
-    VoiceGallery = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"scene_archive")]
-    SceneArchive = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ending_gallery")]
-    EndingGallery = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"music_library")]
-    MusicLibrary = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"bestiary")]
-    Bestiary = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"recipe_book")]
-    RecipeBook = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 6,
-
-}
-#pragma warning restore CS1591
 
 /// <summary>
 /// Reason why a grant attempt failed.
@@ -205,8 +180,7 @@ public partial class CreateEntryTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CollectionType CollectionType { get; set; } = default!;
+    public string CollectionType { get; set; } = default!;
 
     /// <summary>
     /// Game service this entry template is scoped to
@@ -275,7 +249,7 @@ public partial class CreateEntryTemplateRequest
     public System.Collections.Generic.ICollection<DiscoveryLevel>? DiscoveryLevels { get; set; } = default!;
 
     /// <summary>
-    /// Theme tags for music entries (e.g., battle, peaceful, forest)
+    /// Theme tags for content selection matching (e.g., battle, peaceful, forest)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("themes")]
     public System.Collections.Generic.ICollection<string>? Themes { get; set; } = default!;
@@ -287,13 +261,13 @@ public partial class CreateEntryTemplateRequest
     public string? Duration { get; set; } = default!;
 
     /// <summary>
-    /// Loop point for music entries (ISO 8601 duration or timestamp)
+    /// Loop point for seamless playback (ISO 8601 duration or timestamp)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loopPoint")]
     public string? LoopPoint { get; set; } = default!;
 
     /// <summary>
-    /// Composer or creator name for music entries
+    /// Composer or creator name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("composer")]
     public string? Composer { get; set; } = default!;
@@ -330,8 +304,7 @@ public partial class ListEntryTemplatesRequest
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CollectionType CollectionType { get; set; } = default!;
+    public string CollectionType { get; set; } = default!;
 
     /// <summary>
     /// Filter by game service
@@ -514,8 +487,7 @@ public partial class EntryTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CollectionType CollectionType { get; set; } = default!;
+    public string CollectionType { get; set; } = default!;
 
     /// <summary>
     /// Game service this entry template is scoped to
@@ -702,8 +674,7 @@ public partial class CreateCollectionRequest
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CollectionType CollectionType { get; set; } = default!;
+    public string CollectionType { get; set; } = default!;
 
     /// <summary>
     /// Game service this collection is scoped to
@@ -817,8 +788,7 @@ public partial class CollectionResponse
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CollectionType CollectionType { get; set; } = default!;
+    public string CollectionType { get; set; } = default!;
 
     /// <summary>
     /// Game service this collection is scoped to
@@ -914,8 +884,7 @@ public partial class GrantEntryRequest
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CollectionType CollectionType { get; set; } = default!;
+    public string CollectionType { get; set; } = default!;
 
     /// <summary>
     /// Optional initial metadata for the unlocked entry
@@ -1025,8 +994,7 @@ public partial class HasEntryRequest
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CollectionType CollectionType { get; set; } = default!;
+    public string CollectionType { get; set; } = default!;
 
 }
 
@@ -1281,8 +1249,7 @@ public partial class GetCompletionStatsRequest
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CollectionType CollectionType { get; set; } = default!;
+    public string CollectionType { get; set; } = default!;
 
 }
 
@@ -1299,8 +1266,7 @@ public partial class CompletionStatsResponse
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CollectionType CollectionType { get; set; } = default!;
+    public string CollectionType { get; set; } = default!;
 
     /// <summary>
     /// Total number of entry templates available
@@ -1356,14 +1322,14 @@ public partial class CategoryStats
 }
 
 /// <summary>
-/// Request to select a music track for an area
+/// Request to select content for an area based on unlocked collection
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SelectTrackForAreaRequest
+public partial class SelectContentForAreaRequest
 {
 
     /// <summary>
-    /// Entity whose music library to search
+    /// Entity whose collection to search
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1387,7 +1353,15 @@ public partial class SelectTrackForAreaRequest
     public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Area code to select music for
+    /// Type of collection to select content from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CollectionType { get; set; } = default!;
+
+    /// <summary>
+    /// Area code to select content for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1397,22 +1371,22 @@ public partial class SelectTrackForAreaRequest
 }
 
 /// <summary>
-/// Selected music track for an area
+/// Selected content entry for an area
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MusicTrackSelectionResponse
+public partial class ContentSelectionResponse
 {
 
     /// <summary>
-    /// Code of the selected track
+    /// Code of the selected entry
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("trackCode")]
+    [System.Text.Json.Serialization.JsonPropertyName("entryCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TrackCode { get; set; } = default!;
+    public string EntryCode { get; set; } = default!;
 
     /// <summary>
-    /// Display name of the selected track
+    /// Display name of the selected entry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1420,31 +1394,25 @@ public partial class MusicTrackSelectionResponse
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
-    /// Composer of the selected track
+    /// Category of the selected entry
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("composer")]
-    public string? Composer { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
 
     /// <summary>
-    /// Asset identifier for the track audio
+    /// Primary asset identifier for the entry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     public string? AssetId { get; set; } = default!;
 
     /// <summary>
-    /// Duration of the track
+    /// Thumbnail asset identifier for the entry
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("duration")]
-    public string? Duration { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("thumbnailAssetId")]
+    public string? ThumbnailAssetId { get; set; } = default!;
 
     /// <summary>
-    /// Loop point for seamless playback
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("loopPoint")]
-    public string? LoopPoint { get; set; } = default!;
-
-    /// <summary>
-    /// Theme tags of the selected track
+    /// Theme tags of the selected entry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("themes")]
     public System.Collections.Generic.ICollection<string>? Themes { get; set; } = default!;
@@ -1460,14 +1428,14 @@ public partial class MusicTrackSelectionResponse
 }
 
 /// <summary>
-/// Request to create or update an area music configuration
+/// Request to create or update an area content configuration
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SetAreaMusicConfigRequest
+public partial class SetAreaContentConfigRequest
 {
 
     /// <summary>
-    /// Area code to configure (unique per game service)
+    /// Area code to configure (unique per game service and collection type)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1483,7 +1451,15 @@ public partial class SetAreaMusicConfigRequest
     public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Theme tags for this area (matched against music entry themes)
+    /// Type of collection this area config applies to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CollectionType { get; set; } = default!;
+
+    /// <summary>
+    /// Theme tags for this area (matched against collection entry themes)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("themes")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -1492,20 +1468,20 @@ public partial class SetAreaMusicConfigRequest
     public System.Collections.Generic.ICollection<string> Themes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
-    /// Default track code to use when no matches are found
+    /// Default entry code to use when no matches are found
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("defaultTrackCode")]
+    [System.Text.Json.Serialization.JsonPropertyName("defaultEntryCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string DefaultTrackCode { get; set; } = default!;
+    public string DefaultEntryCode { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Request to get an area music config
+/// Request to get an area content config
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GetAreaMusicConfigRequest
+public partial class GetAreaContentConfigRequest
 {
 
     /// <summary>
@@ -1524,13 +1500,21 @@ public partial class GetAreaMusicConfigRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid GameServiceId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of collection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CollectionType { get; set; } = default!;
+
 }
 
 /// <summary>
-/// Request to list area music configs for a game service
+/// Request to list area content configs for a game service
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ListAreaMusicConfigsRequest
+public partial class ListAreaContentConfigsRequest
 {
 
     /// <summary>
@@ -1541,13 +1525,21 @@ public partial class ListAreaMusicConfigsRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid GameServiceId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of collection to list configs for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CollectionType { get; set; } = default!;
+
 }
 
 /// <summary>
-/// Area music configuration
+/// Area content configuration
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AreaMusicConfigResponse
+public partial class AreaContentConfigResponse
 {
 
     /// <summary>
@@ -1575,6 +1567,14 @@ public partial class AreaMusicConfigResponse
     public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
+    /// Type of collection this config applies to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CollectionType { get; set; } = default!;
+
+    /// <summary>
     /// Theme tags for this area
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("themes")]
@@ -1583,12 +1583,12 @@ public partial class AreaMusicConfigResponse
     public System.Collections.Generic.ICollection<string> Themes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
-    /// Default track code
+    /// Default entry code
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("defaultTrackCode")]
+    [System.Text.Json.Serialization.JsonPropertyName("defaultEntryCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string DefaultTrackCode { get; set; } = default!;
+    public string DefaultEntryCode { get; set; } = default!;
 
     /// <summary>
     /// When this area config was created
@@ -1607,19 +1607,19 @@ public partial class AreaMusicConfigResponse
 }
 
 /// <summary>
-/// List of area music configurations
+/// List of area content configurations
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ListAreaMusicConfigsResponse
+public partial class ListAreaContentConfigsResponse
 {
 
     /// <summary>
-    /// Area music configurations for this game service
+    /// Area content configurations for this game service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("configs")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<AreaMusicConfigResponse> Configs { get; set; } = new System.Collections.ObjectModel.Collection<AreaMusicConfigResponse>();
+    public System.Collections.Generic.ICollection<AreaContentConfigResponse> Configs { get; set; } = new System.Collections.ObjectModel.Collection<AreaContentConfigResponse>();
 
 }
 

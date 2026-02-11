@@ -40,7 +40,7 @@ This document lists all state store components used in Bannou.
 | `chat-room-types` | MySQL | Chat | Room type definitions (durable, queryable by code/gameServiceId) |
 | `chat-rooms` | MySQL | Chat | Chat room records (durable, queryable by type/session/status) |
 | `chat-rooms-cache` | Redis | Chat | Active room state cache (participant lists, room metadata) |
-| `collection-area-music-configs` | MySQL | Collection | Area-to-theme mappings for dynamic music track selection |
+| `collection-area-content-configs` | MySQL | Collection | Area-to-theme mappings for dynamic content selection |
 | `collection-cache` | Redis | Collection | Collection state cache (unlocked entries per collection) |
 | `collection-entry-templates` | MySQL | Collection | Entry template definitions per collection type and game service |
 | `collection-instances` | MySQL | Collection | Per-owner collection containers linking entities to collection types |

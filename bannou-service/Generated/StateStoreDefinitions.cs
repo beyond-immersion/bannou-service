@@ -110,8 +110,8 @@ public static class StateStoreDefinitions
     public const string ChatRoomsCache = "chat-rooms-cache";
 
     // Collection Service
-    /// <summary>Area-to-theme mappings for dynamic music track selection</summary>
-    public const string CollectionAreaMusicConfigs = "collection-area-music-configs";
+    /// <summary>Area-to-theme mappings for dynamic content selection</summary>
+    public const string CollectionAreaContentConfigs = "collection-area-content-configs";
     /// <summary>Collection state cache (unlocked entries per collection)</summary>
     public const string CollectionCache = "collection-cache";
     /// <summary>Entry template definitions per collection type and game service</summary>
@@ -417,7 +417,7 @@ public static class StateStoreDefinitions
             [ChatRoomTypes] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_room_types" },
             [ChatRooms] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_rooms" },
             [ChatRoomsCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "chat:room" },
-            [CollectionAreaMusicConfigs] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_area_music_configs" },
+            [CollectionAreaContentConfigs] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_area_content_configs" },
             [CollectionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "collection:state" },
             [CollectionEntryTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_entry_templates" },
             [CollectionInstances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_instances" },
@@ -561,7 +561,7 @@ public static class StateStoreDefinitions
             [ChatRoomTypes] = new StoreMetadata("Chat", "Room type definitions (durable, queryable by code/gameServiceId)", "mysql"),
             [ChatRooms] = new StoreMetadata("Chat", "Chat room records (durable, queryable by type/session/status)", "mysql"),
             [ChatRoomsCache] = new StoreMetadata("Chat", "Active room state cache (participant lists, room metadata)", "redis"),
-            [CollectionAreaMusicConfigs] = new StoreMetadata("Collection", "Area-to-theme mappings for dynamic music track selection", "mysql"),
+            [CollectionAreaContentConfigs] = new StoreMetadata("Collection", "Area-to-theme mappings for dynamic content selection", "mysql"),
             [CollectionCache] = new StoreMetadata("Collection", "Collection state cache (unlocked entries per collection)", "redis"),
             [CollectionEntryTemplates] = new StoreMetadata("Collection", "Entry template definitions per collection type and game service", "mysql"),
             [CollectionInstances] = new StoreMetadata("Collection", "Per-owner collection containers linking entities to collection types", "mysql"),

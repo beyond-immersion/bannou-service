@@ -28,7 +28,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     // Store mocks
     private readonly Mock<IQueryableStateStore<EntryTemplateModel>> _mockTemplateStore;
     private readonly Mock<IQueryableStateStore<CollectionInstanceModel>> _mockCollectionStore;
-    private readonly Mock<IQueryableStateStore<AreaMusicConfigModel>> _mockAreaMusicStore;
+    private readonly Mock<IQueryableStateStore<AreaContentConfigModel>> _mockAreaContentStore;
     private readonly Mock<IStateStore<CollectionCacheModel>> _mockCollectionCache;
 
     // Client mocks
@@ -60,7 +60,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Initialize store mocks
         _mockTemplateStore = new Mock<IQueryableStateStore<EntryTemplateModel>>();
         _mockCollectionStore = new Mock<IQueryableStateStore<CollectionInstanceModel>>();
-        _mockAreaMusicStore = new Mock<IQueryableStateStore<AreaMusicConfigModel>>();
+        _mockAreaContentStore = new Mock<IQueryableStateStore<AreaContentConfigModel>>();
         _mockCollectionCache = new Mock<IStateStore<CollectionCacheModel>>();
 
         // Initialize client mocks
@@ -76,8 +76,8 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .Setup(f => f.GetQueryableStore<CollectionInstanceModel>(StateStoreDefinitions.CollectionInstances))
             .Returns(_mockCollectionStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetQueryableStore<AreaMusicConfigModel>(StateStoreDefinitions.CollectionAreaMusicConfigs))
-            .Returns(_mockAreaMusicStore.Object);
+            .Setup(f => f.GetQueryableStore<AreaContentConfigModel>(StateStoreDefinitions.CollectionAreaContentConfigs))
+            .Returns(_mockAreaContentStore.Object);
         _mockStateStoreFactory
             .Setup(f => f.GetStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache))
             .Returns(_mockCollectionCache.Object);
@@ -89,8 +89,8 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockCollectionStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CollectionInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
-        _mockAreaMusicStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AreaMusicConfigModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockAreaContentStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AreaContentConfigModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockCollectionCache
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CollectionCacheModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -106,7 +106,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockCollectionCache
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _mockAreaMusicStore
+        _mockAreaContentStore
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -117,9 +117,9 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockCollectionStore
             .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<CollectionInstanceModel>());
-        _mockAreaMusicStore
-            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<AreaMusicConfigModel, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<AreaMusicConfigModel>());
+        _mockAreaContentStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<AreaContentConfigModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AreaContentConfigModel>());
 
         // Default publish behavior (both overloads)
         _mockMessageBus
@@ -154,7 +154,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     private static EntryTemplateModel CreateTestTemplate(
         Guid? entryTemplateId = null,
         string code = "boss_dragon",
-        CollectionType collectionType = CollectionType.Bestiary,
+        string collectionType = "bestiary",
         Guid? gameServiceId = null,
         string displayName = "Dragon Boss",
         string? category = "boss",
@@ -183,7 +183,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Guid? collectionId = null,
         Guid? ownerId = null,
         string ownerType = "character",
-        CollectionType collectionType = CollectionType.Bestiary,
+        string collectionType = "bestiary",
         Guid? gameServiceId = null,
         Guid? containerId = null)
     {
@@ -211,14 +211,14 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
     }
 
-    private static AreaMusicConfigModel CreateTestAreaConfig(
+    private static AreaContentConfigModel CreateTestAreaConfig(
         Guid? areaConfigId = null,
         string areaCode = "enchanted_forest",
         Guid? gameServiceId = null,
         List<string>? themes = null,
         string defaultTrackCode = "forest_ambient")
     {
-        return new AreaMusicConfigModel
+        return new AreaContentConfigModel
         {
             AreaConfigId = areaConfigId ?? TestAreaConfigId,
             AreaCode = areaCode,
@@ -1538,8 +1538,8 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Assert.Equal("forest_ambient", response.DefaultTrackCode);
 
         // Verify saved twice (by ID and by code key)
-        _mockAreaMusicStore.Verify(
-            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AreaMusicConfigModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+        _mockAreaContentStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AreaContentConfigModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
     }
 
@@ -1562,7 +1562,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Existing config
         var existingConfig = CreateTestAreaConfig();
-        _mockAreaMusicStore
+        _mockAreaContentStore
             .Setup(s => s.GetAsync(
                 $"amc:{TestGameServiceId}:enchanted_forest",
                 It.IsAny<CancellationToken>()))
@@ -1593,7 +1593,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     {
         // Arrange
         var config = CreateTestAreaConfig();
-        _mockAreaMusicStore
+        _mockAreaContentStore
             .Setup(s => s.GetAsync(
                 $"amc:{TestGameServiceId}:enchanted_forest",
                 It.IsAny<CancellationToken>()))
@@ -1639,7 +1639,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     {
         // Arrange
         var areaConfig = CreateTestAreaConfig();
-        _mockAreaMusicStore
+        _mockAreaContentStore
             .Setup(s => s.GetAsync(
                 $"amc:{TestGameServiceId}:enchanted_forest",
                 It.IsAny<CancellationToken>()))
@@ -1684,7 +1684,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     {
         // Arrange
         var areaConfig = CreateTestAreaConfig(themes: new List<string> { "forest", "peaceful", "magical" });
-        _mockAreaMusicStore
+        _mockAreaContentStore
             .Setup(s => s.GetAsync(
                 $"amc:{TestGameServiceId}:enchanted_forest",
                 It.IsAny<CancellationToken>()))

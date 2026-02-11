@@ -14,7 +14,7 @@ info:
     - Bond: formed between seeds
 
     **Consumed Events**:
-    - seed.growth.contributed: External services report growth gains
+    - collection.entry-unlocked: Collection entry unlocks drive seed growth via tag-prefix mapping
 
     **Topic Naming**: Uses dot-separated format (seed.phase.changed).
 
@@ -25,9 +25,9 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
-    - topic: seed.growth.contributed
-      event: SeedGrowthContributedEvent
-      handler: HandleGrowthContributed
+    - topic: collection.entry-unlocked
+      event: CollectionEntryUnlockedEvent
+      handler: HandleCollectionEntryUnlocked
   x-event-publications:
     # Seed lifecycle events (auto-generated from x-lifecycle)
     - topic: seed.created
@@ -115,58 +115,6 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
-    # =========================================================================
-    # Consumed Event (published by external services, consumed by Seed)
-    # =========================================================================
-    SeedGrowthContributedEvent:
-      type: object
-      additionalProperties: false
-      description: >
-        Published by any consuming service to contribute growth to a seed.
-        Follows the same pattern as Resource reference tracking -- Seed defines
-        the event schema, any service publishes to it.
-      required:
-        - eventId
-        - timestamp
-        - seedId
-        - domain
-        - amount
-        - source
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the growth contribution occurred
-        seedId:
-          type: string
-          format: uuid
-          description: The seed to contribute growth to
-        domain:
-          type: string
-          description: Dot-separated domain path (e.g., "combat.melee.sword")
-        amount:
-          type: number
-          format: float
-          description: Amount of growth to add
-        source:
-          type: string
-          description: Identifier of the contributing service (e.g., "character-encounter")
-        sourceEventId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Optional reference to the originating event
-        context:
-          type: object
-          additionalProperties:
-            type: string
-          nullable: true
-          description: Additional context for auditing (key-value string pairs)
-
     # =========================================================================
     # Custom Published Events (non-lifecycle)
     # =========================================================================

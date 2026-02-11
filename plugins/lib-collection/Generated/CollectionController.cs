@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Collection;
 
@@ -219,54 +234,54 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompletionStatsResponse>> GetCompletionStatsAsync(GetCompletionStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Select a track for an area based on unlocked library
+    /// Select content for an area based on unlocked library
     /// </summary>
 
     /// <remarks>
-    /// Select a music track for an area based on the owner's unlocked music library
+    /// Select a content entry for an area based on the owner's unlocked collection
     /// <br/>and area theme configuration. Uses weighted random selection based on theme overlap.
-    /// <br/>Falls back to the area's default track if no matches are found.
+    /// <br/>Falls back to the area's default entry if no matches are found.
     /// </remarks>
 
-    /// <returns>Track selected successfully</returns>
+    /// <returns>Content selected successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MusicTrackSelectionResponse>> SelectTrackForAreaAsync(SelectTrackForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContentSelectionResponse>> SelectContentForAreaAsync(SelectContentForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Set area-to-theme mapping
     /// </summary>
 
     /// <remarks>
-    /// Create or update an area music configuration that maps an area code to themes and a default track.
+    /// Create or update an area content configuration that maps an area code to themes and a default entry.
     /// </remarks>
 
-    /// <returns>Area music config saved successfully</returns>
+    /// <returns>Area content config saved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaMusicConfigResponse>> SetAreaMusicConfigAsync(SetAreaMusicConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> SetAreaContentConfigAsync(SetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Get area music config
+    /// Get area content config
     /// </summary>
 
     /// <remarks>
-    /// Get the music configuration for a specific area and game service.
+    /// Get the content configuration for a specific area and game service.
     /// </remarks>
 
-    /// <returns>Area music config retrieved successfully</returns>
+    /// <returns>Area content config retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaMusicConfigResponse>> GetAreaMusicConfigAsync(GetAreaMusicConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> GetAreaContentConfigAsync(GetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// List area configs for a game service
     /// </summary>
 
     /// <remarks>
-    /// List all area music configurations for a game service.
+    /// List all area content configurations for a game service.
     /// </remarks>
 
-    /// <returns>Area music configs retrieved successfully</returns>
+    /// <returns>Area content configs retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAreaMusicConfigsResponse>> ListAreaMusicConfigsAsync(ListAreaMusicConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAreaContentConfigsResponse>> ListAreaContentConfigsAsync(ListAreaContentConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Advance progressive discovery level
@@ -954,42 +969,42 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     }
 
     /// <summary>
-    /// Select a track for an area based on unlocked library
+    /// Select content for an area based on unlocked library
     /// </summary>
     /// <remarks>
-    /// Select a music track for an area based on the owner's unlocked music library
+    /// Select a content entry for an area based on the owner's unlocked collection
     /// <br/>and area theme configuration. Uses weighted random selection based on theme overlap.
-    /// <br/>Falls back to the area's default track if no matches are found.
+    /// <br/>Falls back to the area's default entry if no matches are found.
     /// </remarks>
-    /// <returns>Track selected successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/music/select-for-area")]
+    /// <returns>Content selected successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/content/select-for-area")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MusicTrackSelectionResponse>> SelectTrackForArea([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SelectTrackForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContentSelectionResponse>> SelectContentForArea([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SelectContentForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         try
         {
 
-            var (statusCode, result) = await _implementation.SelectTrackForAreaAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.SelectContentForAreaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/music/select-for-area");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/content/select-for-area");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/music/select-for-area");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/content/select-for-area");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "collection",
-                "SelectTrackForArea",
+                "SelectContentForArea",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:collection/music/select-for-area",
+                endpoint: "post:collection/content/select-for-area",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);
@@ -1000,37 +1015,37 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     /// Set area-to-theme mapping
     /// </summary>
     /// <remarks>
-    /// Create or update an area music configuration that maps an area code to themes and a default track.
+    /// Create or update an area content configuration that maps an area code to themes and a default entry.
     /// </remarks>
-    /// <returns>Area music config saved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/music/area-config/set")]
+    /// <returns>Area content config saved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/content/area-config/set")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaMusicConfigResponse>> SetAreaMusicConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetAreaMusicConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> SetAreaContentConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         try
         {
 
-            var (statusCode, result) = await _implementation.SetAreaMusicConfigAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.SetAreaContentConfigAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/music/area-config/set");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/content/area-config/set");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/music/area-config/set");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/content/area-config/set");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "collection",
-                "SetAreaMusicConfig",
+                "SetAreaContentConfig",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:collection/music/area-config/set",
+                endpoint: "post:collection/content/area-config/set",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);
@@ -1038,40 +1053,40 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     }
 
     /// <summary>
-    /// Get area music config
+    /// Get area content config
     /// </summary>
     /// <remarks>
-    /// Get the music configuration for a specific area and game service.
+    /// Get the content configuration for a specific area and game service.
     /// </remarks>
-    /// <returns>Area music config retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/music/area-config/get")]
+    /// <returns>Area content config retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/content/area-config/get")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaMusicConfigResponse>> GetAreaMusicConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAreaMusicConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> GetAreaContentConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         try
         {
 
-            var (statusCode, result) = await _implementation.GetAreaMusicConfigAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.GetAreaContentConfigAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/music/area-config/get");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/content/area-config/get");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/music/area-config/get");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/content/area-config/get");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "collection",
-                "GetAreaMusicConfig",
+                "GetAreaContentConfig",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:collection/music/area-config/get",
+                endpoint: "post:collection/content/area-config/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);
@@ -1082,37 +1097,37 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     /// List area configs for a game service
     /// </summary>
     /// <remarks>
-    /// List all area music configurations for a game service.
+    /// List all area content configurations for a game service.
     /// </remarks>
-    /// <returns>Area music configs retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/music/area-config/list")]
+    /// <returns>Area content configs retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/content/area-config/list")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAreaMusicConfigsResponse>> ListAreaMusicConfigs([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListAreaMusicConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAreaContentConfigsResponse>> ListAreaContentConfigs([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListAreaContentConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         try
         {
 
-            var (statusCode, result) = await _implementation.ListAreaMusicConfigsAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.ListAreaContentConfigsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/music/area-config/list");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/content/area-config/list");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/music/area-config/list");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/content/area-config/list");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "collection",
-                "ListAreaMusicConfigs",
+                "ListAreaContentConfigs",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:collection/music/area-config/list",
+                endpoint: "post:collection/content/area-config/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);

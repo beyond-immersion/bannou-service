@@ -60,7 +60,7 @@ public static class CollectionTopics
 /// </list>
 /// </para>
 /// </remarks>
-[BannouService("collection", typeof(ICollectionService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
+[BannouService("collection", typeof(ICollectionService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class CollectionService : ICollectionService
 {
     private readonly IMessageBus _messageBus;
@@ -82,9 +82,9 @@ public partial class CollectionService : ICollectionService
     private IQueryableStateStore<CollectionInstanceModel> CollectionStore =>
         _collectionStore ??= _stateStoreFactory.GetQueryableStore<CollectionInstanceModel>(StateStoreDefinitions.CollectionInstances);
 
-    private IQueryableStateStore<AreaMusicConfigModel>? _areaMusicStore;
-    private IQueryableStateStore<AreaMusicConfigModel> AreaMusicStore =>
-        _areaMusicStore ??= _stateStoreFactory.GetQueryableStore<AreaMusicConfigModel>(StateStoreDefinitions.CollectionAreaMusicConfigs);
+    private IQueryableStateStore<AreaContentConfigModel>? _areaContentStore;
+    private IQueryableStateStore<AreaContentConfigModel> AreaContentStore =>
+        _areaContentStore ??= _stateStoreFactory.GetQueryableStore<AreaContentConfigModel>(StateStoreDefinitions.CollectionAreaContentConfigs);
 
     private IStateStore<CollectionCacheModel>? _collectionCache;
     private IStateStore<CollectionCacheModel> CollectionCache =>
@@ -95,13 +95,14 @@ public partial class CollectionService : ICollectionService
     #region Key Building
 
     private static string BuildTemplateKey(Guid entryTemplateId) => $"tpl:{entryTemplateId}";
-    private static string BuildTemplateByCodeKey(Guid gameServiceId, CollectionType collectionType, string code) =>
+    private static string BuildTemplateByCodeKey(Guid gameServiceId, string collectionType, string code) =>
         $"tpl:{gameServiceId}:{collectionType}:{code}";
     private static string BuildCollectionKey(Guid collectionId) => $"col:{collectionId}";
-    private static string BuildCollectionByOwnerKey(Guid ownerId, string ownerType, Guid gameServiceId, CollectionType collectionType) =>
+    private static string BuildCollectionByOwnerKey(Guid ownerId, string ownerType, Guid gameServiceId, string collectionType) =>
         $"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}";
-    private static string BuildAreaMusicKey(Guid areaConfigId) => $"amc:{areaConfigId}";
-    private static string BuildAreaMusicByCodeKey(Guid gameServiceId, string areaCode) => $"amc:{gameServiceId}:{areaCode}";
+    private static string BuildAreaContentKey(Guid areaConfigId) => $"acc:{areaConfigId}";
+    private static string BuildAreaContentByCodeKey(Guid gameServiceId, string collectionType, string areaCode) =>
+        $"acc:{gameServiceId}:{collectionType}:{areaCode}";
     private static string BuildCacheKey(Guid collectionId) => $"cache:{collectionId}";
 
     #endregion
@@ -218,17 +219,18 @@ public partial class CollectionService : ICollectionService
     }
 
     /// <summary>
-    /// Maps an internal area music config model to the API response type.
+    /// Maps an internal area content config model to the API response type.
     /// </summary>
-    private static AreaMusicConfigResponse MapAreaMusicToResponse(AreaMusicConfigModel model)
+    private static AreaContentConfigResponse MapAreaContentToResponse(AreaContentConfigModel model)
     {
-        return new AreaMusicConfigResponse
+        return new AreaContentConfigResponse
         {
             AreaConfigId = model.AreaConfigId,
             AreaCode = model.AreaCode,
             GameServiceId = model.GameServiceId,
+            CollectionType = model.CollectionType,
             Themes = model.Themes.ToList(),
-            DefaultTrackCode = model.DefaultTrackCode,
+            DefaultEntryCode = model.DefaultEntryCode,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
@@ -366,7 +368,7 @@ public partial class CollectionService : ICollectionService
     private async Task<CollectionInstanceModel> CreateCollectionInternalAsync(
         Guid ownerId,
         string ownerType,
-        CollectionType collectionType,
+        string collectionType,
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
@@ -380,7 +382,7 @@ public partial class CollectionService : ICollectionService
                 {
                     OwnerId = ownerId,
                     OwnerType = containerOwnerType,
-                    ContainerType = $"collection_{collectionType.ToString().ToLowerInvariant()}",
+                    ContainerType = $"collection_{collectionType}",
                     ConstraintModel = ContainerConstraintModel.Unlimited
                 },
                 cancellationToken);
@@ -1390,6 +1392,7 @@ public partial class CollectionService : ICollectionService
                 EntryCode = template.Code,
                 DisplayName = template.DisplayName,
                 Category = template.Category,
+                Tags = template.Tags,
                 IsFirstGlobal = false // Would require global tracking to determine
             },
             cancellationToken: cancellationToken);
@@ -1704,52 +1707,52 @@ public partial class CollectionService : ICollectionService
 
     #endregion
 
-    #region Music Operations
+    #region Content Selection Operations
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, MusicTrackSelectionResponse?)> SelectTrackForAreaAsync(
-        SelectTrackForAreaRequest body,
+    public async Task<(StatusCodes, ContentSelectionResponse?)> SelectContentForAreaAsync(
+        SelectContentForAreaRequest body,
         CancellationToken cancellationToken)
     {
         // Load area config
-        var areaConfig = await AreaMusicStore.GetAsync(
-            BuildAreaMusicByCodeKey(body.GameServiceId, body.AreaCode),
+        var areaConfig = await AreaContentStore.GetAsync(
+            BuildAreaContentByCodeKey(body.GameServiceId, body.CollectionType, body.AreaCode),
             cancellationToken);
 
         if (areaConfig == null)
         {
             _logger.LogWarning(
-                "No area music config for area {AreaCode} in game {GameServiceId}",
-                body.AreaCode, body.GameServiceId);
+                "No area content config for area {AreaCode} type {CollectionType} in game {GameServiceId}",
+                body.AreaCode, body.CollectionType, body.GameServiceId);
             return (StatusCodes.NotFound, null);
         }
 
-        // Find the owner's music library collection
+        // Find the owner's collection of this type
         var collection = await CollectionStore.GetAsync(
-            BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, CollectionType.MusicLibrary),
+            BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
             cancellationToken);
 
         if (collection == null)
         {
-            // No music library; return default track
-            return await BuildDefaultTrackResponseAsync(
-                areaConfig, body.GameServiceId, cancellationToken);
+            // No collection; return default entry
+            return await BuildDefaultContentResponseAsync(
+                areaConfig, body.GameServiceId, body.CollectionType, cancellationToken);
         }
 
         var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
 
         if (cache.UnlockedEntries.Count == 0)
         {
-            return await BuildDefaultTrackResponseAsync(
-                areaConfig, body.GameServiceId, cancellationToken);
+            return await BuildDefaultContentResponseAsync(
+                areaConfig, body.GameServiceId, body.CollectionType, cancellationToken);
         }
 
-        // Load music templates for matching
-        var musicTemplates = await EntryTemplateStore.QueryAsync(
-            t => t.CollectionType == CollectionType.MusicLibrary && t.GameServiceId == body.GameServiceId,
+        // Load templates for matching
+        var templates = await EntryTemplateStore.QueryAsync(
+            t => t.CollectionType == body.CollectionType && t.GameServiceId == body.GameServiceId,
             cancellationToken: cancellationToken);
 
-        var templatesByCode = musicTemplates.ToDictionary(t => t.Code);
+        var templatesByCode = templates.ToDictionary(t => t.Code);
         var areaThemes = areaConfig.Themes.ToHashSet();
 
         // Build weighted candidate list based on theme overlap
@@ -1769,8 +1772,8 @@ public partial class CollectionService : ICollectionService
 
         if (candidates.Count == 0)
         {
-            return await BuildDefaultTrackResponseAsync(
-                areaConfig, body.GameServiceId, cancellationToken);
+            return await BuildDefaultContentResponseAsync(
+                areaConfig, body.GameServiceId, body.CollectionType, cancellationToken);
         }
 
         // Weighted random selection
@@ -1789,60 +1792,59 @@ public partial class CollectionService : ICollectionService
             }
         }
 
-        return (StatusCodes.OK, new MusicTrackSelectionResponse
+        return (StatusCodes.OK, new ContentSelectionResponse
         {
-            TrackCode = selected.Template.Code,
+            EntryCode = selected.Template.Code,
             DisplayName = selected.Template.DisplayName,
-            Composer = selected.Template.Composer,
+            Category = selected.Template.Category,
             AssetId = selected.Template.AssetId,
-            Duration = selected.Template.Duration,
-            LoopPoint = selected.Template.LoopPoint,
+            ThumbnailAssetId = selected.Template.ThumbnailAssetId,
             Themes = selected.Template.Themes?.ToList(),
             MatchedThemes = selected.MatchedThemes
         });
     }
 
     /// <summary>
-    /// Builds a response using the area config's default track.
+    /// Builds a response using the area config's default entry.
     /// </summary>
-    private async Task<(StatusCodes, MusicTrackSelectionResponse?)> BuildDefaultTrackResponseAsync(
-        AreaMusicConfigModel areaConfig,
+    private async Task<(StatusCodes, ContentSelectionResponse?)> BuildDefaultContentResponseAsync(
+        AreaContentConfigModel areaConfig,
         Guid gameServiceId,
+        string collectionType,
         CancellationToken cancellationToken)
     {
         var defaultTemplate = await EntryTemplateStore.GetAsync(
-            BuildTemplateByCodeKey(gameServiceId, CollectionType.MusicLibrary, areaConfig.DefaultTrackCode),
+            BuildTemplateByCodeKey(gameServiceId, collectionType, areaConfig.DefaultEntryCode),
             cancellationToken);
 
         if (defaultTemplate == null)
         {
             _logger.LogWarning(
-                "Default track {DefaultTrackCode} not found for area {AreaCode}",
-                areaConfig.DefaultTrackCode, areaConfig.AreaCode);
+                "Default entry {DefaultEntryCode} not found for area {AreaCode}",
+                areaConfig.DefaultEntryCode, areaConfig.AreaCode);
             return (StatusCodes.NotFound, null);
         }
 
-        return (StatusCodes.OK, new MusicTrackSelectionResponse
+        return (StatusCodes.OK, new ContentSelectionResponse
         {
-            TrackCode = defaultTemplate.Code,
+            EntryCode = defaultTemplate.Code,
             DisplayName = defaultTemplate.DisplayName,
-            Composer = defaultTemplate.Composer,
+            Category = defaultTemplate.Category,
             AssetId = defaultTemplate.AssetId,
-            Duration = defaultTemplate.Duration,
-            LoopPoint = defaultTemplate.LoopPoint,
+            ThumbnailAssetId = defaultTemplate.ThumbnailAssetId,
             Themes = defaultTemplate.Themes?.ToList(),
             MatchedThemes = new List<string>()
         });
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, AreaMusicConfigResponse?)> SetAreaMusicConfigAsync(
-        SetAreaMusicConfigRequest body,
+    public async Task<(StatusCodes, AreaContentConfigResponse?)> SetAreaContentConfigAsync(
+        SetAreaContentConfigRequest body,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Setting area music config for area {AreaCode} in game {GameServiceId}",
-            body.AreaCode, body.GameServiceId);
+            "Setting area content config for area {AreaCode} type {CollectionType} in game {GameServiceId}",
+            body.AreaCode, body.CollectionType, body.GameServiceId);
 
         // Validate game service exists
         try
@@ -1857,71 +1859,72 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.NotFound, null);
         }
 
-        // Validate default track template exists
-        var defaultTrack = await EntryTemplateStore.GetAsync(
-            BuildTemplateByCodeKey(body.GameServiceId, CollectionType.MusicLibrary, body.DefaultTrackCode),
+        // Validate default entry template exists
+        var defaultEntry = await EntryTemplateStore.GetAsync(
+            BuildTemplateByCodeKey(body.GameServiceId, body.CollectionType, body.DefaultEntryCode),
             cancellationToken);
 
-        if (defaultTrack == null)
+        if (defaultEntry == null)
         {
             _logger.LogWarning(
-                "Default track template {DefaultTrackCode} not found for music library in game {GameServiceId}",
-                body.DefaultTrackCode, body.GameServiceId);
+                "Default entry template {DefaultEntryCode} not found for collection type {CollectionType} in game {GameServiceId}",
+                body.DefaultEntryCode, body.CollectionType, body.GameServiceId);
             return (StatusCodes.NotFound, null);
         }
 
         var now = DateTimeOffset.UtcNow;
 
         // Check for existing config (upsert)
-        var existing = await AreaMusicStore.GetAsync(
-            BuildAreaMusicByCodeKey(body.GameServiceId, body.AreaCode),
+        var existing = await AreaContentStore.GetAsync(
+            BuildAreaContentByCodeKey(body.GameServiceId, body.CollectionType, body.AreaCode),
             cancellationToken);
 
-        AreaMusicConfigModel config;
+        AreaContentConfigModel config;
         if (existing != null)
         {
             existing.Themes = body.Themes.ToList();
-            existing.DefaultTrackCode = body.DefaultTrackCode;
+            existing.DefaultEntryCode = body.DefaultEntryCode;
             existing.UpdatedAt = now;
             config = existing;
         }
         else
         {
-            config = new AreaMusicConfigModel
+            config = new AreaContentConfigModel
             {
                 AreaConfigId = Guid.NewGuid(),
                 AreaCode = body.AreaCode,
                 GameServiceId = body.GameServiceId,
+                CollectionType = body.CollectionType,
                 Themes = body.Themes.ToList(),
-                DefaultTrackCode = body.DefaultTrackCode,
+                DefaultEntryCode = body.DefaultEntryCode,
                 CreatedAt = now
             };
         }
 
-        await AreaMusicStore.SaveAsync(
-            BuildAreaMusicKey(config.AreaConfigId),
+        await AreaContentStore.SaveAsync(
+            BuildAreaContentKey(config.AreaConfigId),
             config,
             cancellationToken: cancellationToken);
 
-        await AreaMusicStore.SaveAsync(
-            BuildAreaMusicByCodeKey(config.GameServiceId, config.AreaCode),
+        await AreaContentStore.SaveAsync(
+            BuildAreaContentByCodeKey(config.GameServiceId, config.CollectionType, config.AreaCode),
             config,
             cancellationToken: cancellationToken);
 
         _logger.LogInformation(
-            "Set area music config {AreaConfigId} for area {AreaCode}",
-            config.AreaConfigId, config.AreaCode);
+            "Set area content config {AreaConfigId} for area {AreaCode} type {CollectionType}",
+            config.AreaConfigId, config.AreaCode, config.CollectionType);
 
-        return (StatusCodes.OK, MapAreaMusicToResponse(config));
+        return (StatusCodes.OK, MapAreaContentToResponse(config));
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, AreaMusicConfigResponse?)> GetAreaMusicConfigAsync(
-        GetAreaMusicConfigRequest body,
+    public async Task<(StatusCodes, AreaContentConfigResponse?)> GetAreaContentConfigAsync(
+        GetAreaContentConfigRequest body,
         CancellationToken cancellationToken)
     {
-        var config = await AreaMusicStore.GetAsync(
-            BuildAreaMusicByCodeKey(body.GameServiceId, body.AreaCode),
+        var config = await AreaContentStore.GetAsync(
+            BuildAreaContentByCodeKey(body.GameServiceId, body.CollectionType, body.AreaCode),
             cancellationToken);
 
         if (config == null)
@@ -1929,21 +1932,21 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.NotFound, null);
         }
 
-        return (StatusCodes.OK, MapAreaMusicToResponse(config));
+        return (StatusCodes.OK, MapAreaContentToResponse(config));
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, ListAreaMusicConfigsResponse?)> ListAreaMusicConfigsAsync(
-        ListAreaMusicConfigsRequest body,
+    public async Task<(StatusCodes, ListAreaContentConfigsResponse?)> ListAreaContentConfigsAsync(
+        ListAreaContentConfigsRequest body,
         CancellationToken cancellationToken)
     {
-        var configs = await AreaMusicStore.QueryAsync(
-            c => c.GameServiceId == body.GameServiceId,
+        var configs = await AreaContentStore.QueryAsync(
+            c => c.GameServiceId == body.GameServiceId && c.CollectionType == body.CollectionType,
             cancellationToken: cancellationToken);
 
-        return (StatusCodes.OK, new ListAreaMusicConfigsResponse
+        return (StatusCodes.OK, new ListAreaContentConfigsResponse
         {
-            Configs = configs.Select(MapAreaMusicToResponse).ToList()
+            Configs = configs.Select(MapAreaContentToResponse).ToList()
         });
     }
 

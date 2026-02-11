@@ -26,6 +26,21 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Collection;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Collection;
 
@@ -229,16 +244,16 @@ public partial interface ICollectionClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Select a track for an area based on unlocked library
+    /// Select content for an area based on unlocked library
     /// </summary>
     /// <remarks>
-    /// Select a music track for an area based on the owner's unlocked music library
+    /// Select a content entry for an area based on the owner's unlocked collection
     /// <br/>and area theme configuration. Uses weighted random selection based on theme overlap.
-    /// <br/>Falls back to the area's default track if no matches are found.
+    /// <br/>Falls back to the area's default entry if no matches are found.
     /// </remarks>
-    /// <returns>Track selected successfully</returns>
+    /// <returns>Content selected successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<MusicTrackSelectionResponse> SelectTrackForAreaAsync(SelectTrackForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<ContentSelectionResponse> SelectContentForAreaAsync(SelectContentForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -246,23 +261,23 @@ public partial interface ICollectionClient
     /// Set area-to-theme mapping
     /// </summary>
     /// <remarks>
-    /// Create or update an area music configuration that maps an area code to themes and a default track.
+    /// Create or update an area content configuration that maps an area code to themes and a default entry.
     /// </remarks>
-    /// <returns>Area music config saved successfully</returns>
+    /// <returns>Area content config saved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AreaMusicConfigResponse> SetAreaMusicConfigAsync(SetAreaMusicConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AreaContentConfigResponse> SetAreaContentConfigAsync(SetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get area music config
+    /// Get area content config
     /// </summary>
     /// <remarks>
-    /// Get the music configuration for a specific area and game service.
+    /// Get the content configuration for a specific area and game service.
     /// </remarks>
-    /// <returns>Area music config retrieved successfully</returns>
+    /// <returns>Area content config retrieved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AreaMusicConfigResponse> GetAreaMusicConfigAsync(GetAreaMusicConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AreaContentConfigResponse> GetAreaContentConfigAsync(GetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -270,11 +285,11 @@ public partial interface ICollectionClient
     /// List area configs for a game service
     /// </summary>
     /// <remarks>
-    /// List all area music configurations for a game service.
+    /// List all area content configurations for a game service.
     /// </remarks>
-    /// <returns>Area music configs retrieved successfully</returns>
+    /// <returns>Area content configs retrieved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ListAreaMusicConfigsResponse> ListAreaMusicConfigsAsync(ListAreaMusicConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<ListAreaContentConfigsResponse> ListAreaContentConfigsAsync(ListAreaContentConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -1780,24 +1795,24 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Select a track for an area based on unlocked library
+    /// Select content for an area based on unlocked library
     /// </summary>
     /// <remarks>
-    /// Select a music track for an area based on the owner's unlocked music library
+    /// Select a content entry for an area based on the owner's unlocked collection
     /// <br/>and area theme configuration. Uses weighted random selection based on theme overlap.
-    /// <br/>Falls back to the area's default track if no matches are found.
+    /// <br/>Falls back to the area's default entry if no matches are found.
     /// </remarks>
-    /// <returns>Track selected successfully</returns>
+    /// <returns>Content selected successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<MusicTrackSelectionResponse> SelectTrackForAreaAsync(SelectTrackForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<ContentSelectionResponse> SelectContentForAreaAsync(SelectContentForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "collection/music/select-for-area"
-        urlBuilder_.Append("collection/music/select-for-area");
+        // Operation Path: "collection/content/select-for-area"
+        urlBuilder_.Append("collection/content/select-for-area");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -1835,7 +1850,7 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<MusicTrackSelectionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<ContentSelectionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -1846,7 +1861,7 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Area config not found or no music library collection exists", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Area config not found or no matching collection exists", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1874,19 +1889,19 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
     /// Set area-to-theme mapping
     /// </summary>
     /// <remarks>
-    /// Create or update an area music configuration that maps an area code to themes and a default track.
+    /// Create or update an area content configuration that maps an area code to themes and a default entry.
     /// </remarks>
-    /// <returns>Area music config saved successfully</returns>
+    /// <returns>Area content config saved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AreaMusicConfigResponse> SetAreaMusicConfigAsync(SetAreaMusicConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AreaContentConfigResponse> SetAreaContentConfigAsync(SetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "collection/music/area-config/set"
-        urlBuilder_.Append("collection/music/area-config/set");
+        // Operation Path: "collection/content/area-config/set"
+        urlBuilder_.Append("collection/content/area-config/set");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -1924,7 +1939,7 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<AreaMusicConfigResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<AreaContentConfigResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -1935,7 +1950,7 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Game service or default track template not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Game service or default entry template not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1960,22 +1975,22 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get area music config
+    /// Get area content config
     /// </summary>
     /// <remarks>
-    /// Get the music configuration for a specific area and game service.
+    /// Get the content configuration for a specific area and game service.
     /// </remarks>
-    /// <returns>Area music config retrieved successfully</returns>
+    /// <returns>Area content config retrieved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AreaMusicConfigResponse> GetAreaMusicConfigAsync(GetAreaMusicConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AreaContentConfigResponse> GetAreaContentConfigAsync(GetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "collection/music/area-config/get"
-        urlBuilder_.Append("collection/music/area-config/get");
+        // Operation Path: "collection/content/area-config/get"
+        urlBuilder_.Append("collection/content/area-config/get");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -2013,7 +2028,7 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<AreaMusicConfigResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<AreaContentConfigResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -2024,7 +2039,7 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Area music config not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Area content config not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -2052,19 +2067,19 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
     /// List area configs for a game service
     /// </summary>
     /// <remarks>
-    /// List all area music configurations for a game service.
+    /// List all area content configurations for a game service.
     /// </remarks>
-    /// <returns>Area music configs retrieved successfully</returns>
+    /// <returns>Area content configs retrieved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ListAreaMusicConfigsResponse> ListAreaMusicConfigsAsync(ListAreaMusicConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<ListAreaContentConfigsResponse> ListAreaContentConfigsAsync(ListAreaContentConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "collection/music/area-config/list"
-        urlBuilder_.Append("collection/music/area-config/list");
+        // Operation Path: "collection/content/area-config/list"
+        urlBuilder_.Append("collection/content/area-config/list");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -2102,7 +2117,7 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ListAreaMusicConfigsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<ListAreaContentConfigsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);

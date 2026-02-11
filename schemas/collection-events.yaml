@@ -157,6 +157,12 @@ components:
           type: string
           nullable: true
           description: Category of the unlocked entry
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Tags from the entry template for downstream consumer matching (e.g., seed growth domain mapping)
         isFirstGlobal:
           type: boolean
           description: Whether this is the first time any owner has unlocked this entry
