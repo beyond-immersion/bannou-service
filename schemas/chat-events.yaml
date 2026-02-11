@@ -108,7 +108,7 @@ x-lifecycle:
       roomTypeCode: { type: string, required: true, description: "Room type code that determines message format and validation rules" }
       sessionId: { type: string, format: uuid, nullable: true, description: "Connect session ID if this is a companion room" }
       contractId: { type: string, format: uuid, nullable: true, description: "Governing contract instance ID if contract-bound" }
-      displayName: { type: string, required: true, description: "Human-readable room display name" }
+      displayName: { type: string, nullable: true, description: "Human-readable room display name" }
       status: { $ref: 'chat-api.yaml#/components/schemas/ChatRoomStatus', required: true, description: "Current room lifecycle status" }
       participantCount: { type: integer, required: true, description: "Current number of participants in the room" }
       maxParticipants: { type: integer, required: true, description: "Maximum allowed participants in the room" }

@@ -741,6 +741,7 @@ components:
       type: string
       description: Reason why a chat room was locked
       enum:
+      - ContractFulfilled
       - ContractBreachDetected
       - ContractTerminated
       - ContractExpired

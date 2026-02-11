@@ -177,17 +177,20 @@ public enum ContractRoomAction
 public enum ChatRoomLockReason
 {
 
+    [System.Runtime.Serialization.EnumMember(Value = @"ContractFulfilled")]
+    ContractFulfilled = 0,
+
     [System.Runtime.Serialization.EnumMember(Value = @"ContractBreachDetected")]
-    ContractBreachDetected = 0,
+    ContractBreachDetected = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"ContractTerminated")]
-    ContractTerminated = 1,
+    ContractTerminated = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"ContractExpired")]
-    ContractExpired = 2,
+    ContractExpired = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"Manual")]
-    Manual = 3,
+    Manual = 4,
 
 }
 #pragma warning restore CS1591

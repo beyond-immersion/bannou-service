@@ -58,7 +58,7 @@ public partial class ChatService
             foreach (var room in rooms)
             {
                 var action = room.ContractFulfilledAction ?? _configuration.DefaultContractFulfilledAction;
-                await ExecuteContractRoomActionAsync(room, action, ChatRoomLockReason.Manual, CancellationToken.None);
+                await ExecuteContractRoomActionAsync(room, action, ChatRoomLockReason.ContractFulfilled, CancellationToken.None);
             }
         }
         catch (Exception ex)

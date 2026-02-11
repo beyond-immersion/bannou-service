@@ -11,8 +11,8 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.State;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -44,7 +44,6 @@ public partial class ChatService : IChatService
     private const string TypeKeyPrefix = "type:";
     private const string RoomKeyPrefix = "room:";
     private const string BanKeyPrefix = "ban:";
-    private const int LockExpirySeconds = 15;
 
     private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
@@ -54,14 +53,13 @@ public partial class ChatService : IChatService
     private readonly IContractClient _contractClient;
     private readonly IResourceClient _resourceClient;
     private readonly IPermissionClient _permissionClient;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IJsonQueryableStateStore<ChatRoomTypeModel> _roomTypeStore;
     private readonly IJsonQueryableStateStore<ChatRoomModel> _roomStore;
     private readonly IStateStore<ChatRoomModel> _roomCache;
     private readonly IJsonQueryableStateStore<ChatMessageModel> _messageStore;
     private readonly IStateStore<ChatMessageModel> _messageBuffer;
-    private readonly IStateStore<List<ChatParticipantModel>> _participantStore;
+    private readonly ICacheableStateStore<ChatParticipantModel> _participantStore;
     private readonly IJsonQueryableStateStore<ChatBanModel> _banStore;
 
     /// <summary>
@@ -77,8 +75,7 @@ public partial class ChatService : IChatService
         IEventConsumer eventConsumer,
         IContractClient contractClient,
         IResourceClient resourceClient,
-        IPermissionClient permissionClient,
-        IHttpContextAccessor httpContextAccessor)
+        IPermissionClient permissionClient)
     {
         _messageBus = messageBus;
         _clientEventPublisher = clientEventPublisher;
@@ -88,14 +85,13 @@ public partial class ChatService : IChatService
         _contractClient = contractClient;
         _resourceClient = resourceClient;
         _permissionClient = permissionClient;
-        _httpContextAccessor = httpContextAccessor;
 
         _roomTypeStore = stateStoreFactory.GetJsonQueryableStore<ChatRoomTypeModel>(StateStoreDefinitions.ChatRoomTypes);
         _roomStore = stateStoreFactory.GetJsonQueryableStore<ChatRoomModel>(StateStoreDefinitions.ChatRooms);
         _roomCache = stateStoreFactory.GetStore<ChatRoomModel>(StateStoreDefinitions.ChatRoomsCache);
         _messageStore = stateStoreFactory.GetJsonQueryableStore<ChatMessageModel>(StateStoreDefinitions.ChatMessages);
         _messageBuffer = stateStoreFactory.GetStore<ChatMessageModel>(StateStoreDefinitions.ChatMessagesEphemeral);
-        _participantStore = stateStoreFactory.GetStore<List<ChatParticipantModel>>(StateStoreDefinitions.ChatParticipants);
+        _participantStore = stateStoreFactory.GetCacheableStore<ChatParticipantModel>(StateStoreDefinitions.ChatParticipants);
         _banStore = stateStoreFactory.GetJsonQueryableStore<ChatBanModel>(StateStoreDefinitions.ChatBans);
 
         RegisterEventConsumers(eventConsumer);
@@ -295,7 +291,7 @@ public partial class ChatService : IChatService
 
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, $"type:{body.Code}",
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -368,7 +364,7 @@ public partial class ChatService : IChatService
 
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, $"type:{body.Code}",
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -469,7 +465,6 @@ public partial class ChatService : IChatService
                 ContractTerminatedAction = body.ContractTerminatedAction,
                 ContractExpiredAction = body.ContractExpiredAction,
                 IsArchived = false,
-                ParticipantCount = 0,
                 Metadata = body.Metadata,
                 CreatedAt = now,
                 LastActivityAt = now,
@@ -478,9 +473,6 @@ public partial class ChatService : IChatService
             var roomKey = $"{RoomKeyPrefix}{roomId}";
             await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
             await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
-
-            // Initialize empty participant list
-            await _participantStore.SaveAsync(roomId.ToString(), new List<ChatParticipantModel>(), cancellationToken: cancellationToken);
 
             var effectiveMax = GetEffectiveMaxParticipants(model, roomType);
 
@@ -492,7 +484,7 @@ public partial class ChatService : IChatService
                 RoomTypeCode = model.RoomTypeCode,
                 SessionId = model.SessionId,
                 ContractId = model.ContractId,
-                DisplayName = model.DisplayName ?? string.Empty,
+                DisplayName = model.DisplayName,
                 Status = model.Status,
                 ParticipantCount = 0,
                 MaxParticipants = effectiveMax,
@@ -501,7 +493,7 @@ public partial class ChatService : IChatService
             }, cancellationToken);
 
             _logger.LogInformation("Created chat room {RoomId} of type {RoomTypeCode}", roomId, body.RoomTypeCode);
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            return (StatusCodes.OK, MapToRoomResponse(model, 0));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -523,7 +515,8 @@ public partial class ChatService : IChatService
             {
                 return (StatusCodes.NotFound, null);
             }
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            var count = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+            return (StatusCodes.OK, MapToRoomResponse(model, count));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -564,7 +557,12 @@ public partial class ChatService : IChatService
                 new JsonSortSpec { Path = "$.CreatedAt", Descending = true },
                 cancellationToken);
 
-            var items = result.Items.Select(r => MapToRoomResponse(r.Value)).ToList();
+            var items = new List<ChatRoomResponse>();
+            foreach (var r in result.Items)
+            {
+                var count = await GetParticipantCountAsync(r.Value.RoomId, cancellationToken);
+                items.Add(MapToRoomResponse(r.Value, count));
+            }
 
             return (StatusCodes.OK, new ListRoomsResponse
             {
@@ -593,7 +591,7 @@ public partial class ChatService : IChatService
 
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -613,6 +611,7 @@ public partial class ChatService : IChatService
             await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
             await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
+            var participantCount = await GetParticipantCountAsync(model.RoomId, cancellationToken);
             await _messageBus.TryPublishAsync("chat-room.updated", new ChatRoomUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -621,16 +620,16 @@ public partial class ChatService : IChatService
                 RoomTypeCode = model.RoomTypeCode,
                 SessionId = model.SessionId,
                 ContractId = model.ContractId,
-                DisplayName = model.DisplayName ?? string.Empty,
+                DisplayName = model.DisplayName,
                 Status = model.Status,
-                ParticipantCount = model.ParticipantCount,
+                ParticipantCount = (int)participantCount,
                 MaxParticipants = GetEffectiveMaxParticipants(model, null),
                 IsArchived = model.IsArchived,
                 CreatedAt = model.CreatedAt,
                 ChangedFields = changedFields,
             }, cancellationToken);
 
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            return (StatusCodes.OK, MapToRoomResponse(model, participantCount));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -649,7 +648,7 @@ public partial class ChatService : IChatService
         {
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -681,11 +680,11 @@ public partial class ChatService : IChatService
             }
 
             // Clean up participant and message data
-            await _participantStore.DeleteAsync(body.RoomId.ToString(), cancellationToken);
+            await DeleteAllParticipantsAsync(body.RoomId, cancellationToken);
             await _roomStore.DeleteAsync(roomKey, cancellationToken);
             await _roomCache.DeleteAsync(roomKey, cancellationToken);
 
-            var snapshot = MapToRoomResponse(model);
+            var snapshot = MapToRoomResponse(model, 0);
 
             await _messageBus.TryPublishAsync("chat-room.deleted", new ChatRoomDeletedEvent
             {
@@ -695,9 +694,9 @@ public partial class ChatService : IChatService
                 RoomTypeCode = model.RoomTypeCode,
                 SessionId = model.SessionId,
                 ContractId = model.ContractId,
-                DisplayName = model.DisplayName ?? string.Empty,
+                DisplayName = model.DisplayName,
                 Status = model.Status,
-                ParticipantCount = model.ParticipantCount,
+                ParticipantCount = 0,
                 MaxParticipants = GetEffectiveMaxParticipants(model, null),
                 IsArchived = model.IsArchived,
                 CreatedAt = model.CreatedAt,
@@ -724,7 +723,7 @@ public partial class ChatService : IChatService
         {
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -739,7 +738,8 @@ public partial class ChatService : IChatService
 
             if (model.IsArchived)
             {
-                return (StatusCodes.OK, MapToRoomResponse(model));
+                var existingCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+                return (StatusCodes.OK, MapToRoomResponse(model, existingCount));
             }
 
             // Archive via Resource service
@@ -772,7 +772,8 @@ public partial class ChatService : IChatService
             }, cancellationToken);
 
             _logger.LogInformation("Archived chat room {RoomId} with archive {ArchiveId}", body.RoomId, archiveId);
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            var archiveCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+            return (StatusCodes.OK, MapToRoomResponse(model, archiveCount));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -801,7 +802,7 @@ public partial class ChatService : IChatService
 
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -836,7 +837,7 @@ public partial class ChatService : IChatService
             // Check if already a participant
             if (participants.Any(p => p.SessionId == callerSessionId.Value))
             {
-                return (StatusCodes.OK, MapToRoomResponse(model));
+                return (StatusCodes.OK, MapToRoomResponse(model, participants.Count));
             }
 
             // Check capacity
@@ -859,14 +860,10 @@ public partial class ChatService : IChatService
                 JoinedAt = now,
                 LastActivityAt = now,
                 IsMuted = false,
-                MinuteWindowStart = now,
             };
 
-            participants.Add(participant);
-            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+            await SaveParticipantAsync(body.RoomId, participant, cancellationToken);
 
-            // Update denormalized count
-            model.ParticipantCount = participants.Count;
             model.LastActivityAt = now;
             await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
             await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
@@ -903,7 +900,8 @@ public partial class ChatService : IChatService
             }, cancellationToken);
 
             _logger.LogInformation("Session {SessionId} joined room {RoomId}", callerSessionId, body.RoomId);
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            var joinCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+            return (StatusCodes.OK, MapToRoomResponse(model, joinCount));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -928,7 +926,7 @@ public partial class ChatService : IChatService
 
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -948,24 +946,28 @@ public partial class ChatService : IChatService
                 return (StatusCodes.NotFound, null);
             }
 
-            participants.Remove(leaving);
+            await RemoveParticipantAsync(body.RoomId, callerSessionId.Value, cancellationToken);
 
             // If Owner leaves, promote next Moderator or oldest Member
-            if (leaving.Role == ChatParticipantRole.Owner && participants.Count > 0)
+            if (leaving.Role == ChatParticipantRole.Owner)
             {
-                var newOwner = participants.FirstOrDefault(p => p.Role == ChatParticipantRole.Moderator)
-                    ?? participants.OrderBy(p => p.JoinedAt).First();
-                newOwner.Role = ChatParticipantRole.Owner;
+                var remaining = await GetParticipantsAsync(body.RoomId, cancellationToken);
+                if (remaining.Count > 0)
+                {
+                    var newOwner = remaining.FirstOrDefault(p => p.Role == ChatParticipantRole.Moderator)
+                        ?? remaining.OrderBy(p => p.JoinedAt).First();
+                    newOwner.Role = ChatParticipantRole.Owner;
+                    await SaveParticipantAsync(body.RoomId, newOwner, cancellationToken);
+                }
             }
 
-            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
-
-            model.ParticipantCount = participants.Count;
             model.LastActivityAt = DateTimeOffset.UtcNow;
             await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
             await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
             await ClearParticipantPermissionStateAsync(callerSessionId.Value, cancellationToken);
+
+            var remainingParticipants = await GetParticipantsAsync(body.RoomId, cancellationToken);
 
             await _messageBus.TryPublishAsync("chat.participant.left", new ChatParticipantLeftEvent
             {
@@ -973,10 +975,10 @@ public partial class ChatService : IChatService
                 Timestamp = DateTimeOffset.UtcNow,
                 RoomId = body.RoomId,
                 ParticipantSessionId = callerSessionId.Value,
-                RemainingCount = participants.Count,
+                RemainingCount = remainingParticipants.Count,
             }, cancellationToken);
 
-            var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+            var sessionIds = remainingParticipants.Select(p => p.SessionId.ToString()).ToList();
             if (sessionIds.Count > 0)
             {
                 await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatParticipantLeftClientEvent
@@ -984,11 +986,12 @@ public partial class ChatService : IChatService
                     RoomId = body.RoomId,
                     ParticipantSessionId = callerSessionId.Value,
                     DisplayName = leaving.DisplayName,
-                    RemainingCount = participants.Count,
+                    RemainingCount = remainingParticipants.Count,
                 }, cancellationToken);
             }
 
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            var leaveCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+            return (StatusCodes.OK, MapToRoomResponse(model, leaveCount));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -1053,7 +1056,7 @@ public partial class ChatService : IChatService
 
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -1085,10 +1088,8 @@ public partial class ChatService : IChatService
                 return (StatusCodes.Forbidden, null);
             }
 
-            participants.Remove(target);
-            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+            await RemoveParticipantAsync(body.RoomId, body.TargetSessionId, cancellationToken);
 
-            model.ParticipantCount = participants.Count;
             model.LastActivityAt = DateTimeOffset.UtcNow;
             await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
             await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
@@ -1114,7 +1115,8 @@ public partial class ChatService : IChatService
                 Reason = body.Reason,
             }, cancellationToken);
 
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            var kickCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+            return (StatusCodes.OK, MapToRoomResponse(model, kickCount));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -1139,7 +1141,7 @@ public partial class ChatService : IChatService
 
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -1175,13 +1177,10 @@ public partial class ChatService : IChatService
             await _banStore.SaveAsync(banKey, ban, cancellationToken: cancellationToken);
 
             // Kick if currently present
-            var target = participants.FirstOrDefault(p => p.SessionId == body.TargetSessionId);
+            var target = await GetParticipantAsync(body.RoomId, body.TargetSessionId, cancellationToken);
             if (target != null)
             {
-                participants.Remove(target);
-                await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
-
-                model.ParticipantCount = participants.Count;
+                await RemoveParticipantAsync(body.RoomId, body.TargetSessionId, cancellationToken);
                 await ClearParticipantPermissionStateAsync(body.TargetSessionId, cancellationToken);
             }
 
@@ -1209,7 +1208,8 @@ public partial class ChatService : IChatService
                 Reason = body.Reason,
             }, cancellationToken);
 
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            var banCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+            return (StatusCodes.OK, MapToRoomResponse(model, banCount));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -1241,7 +1241,8 @@ public partial class ChatService : IChatService
                 return (StatusCodes.NotFound, null);
             }
 
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            var unbanCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+            return (StatusCodes.OK, MapToRoomResponse(model, unbanCount));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -1266,7 +1267,7 @@ public partial class ChatService : IChatService
 
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -1286,7 +1287,7 @@ public partial class ChatService : IChatService
                 return (StatusCodes.Forbidden, null);
             }
 
-            var target = participants.FirstOrDefault(p => p.SessionId == body.TargetSessionId);
+            var target = await GetParticipantAsync(body.RoomId, body.TargetSessionId, cancellationToken);
             if (target == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -1295,7 +1296,7 @@ public partial class ChatService : IChatService
             var now = DateTimeOffset.UtcNow;
             target.IsMuted = true;
             target.MutedUntil = body.DurationMinutes.HasValue ? now.AddMinutes(body.DurationMinutes.Value) : null;
-            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+            await SaveParticipantAsync(body.RoomId, target, cancellationToken);
 
             await _messageBus.TryPublishAsync("chat.participant.muted", new ChatParticipantMutedEvent
             {
@@ -1316,7 +1317,8 @@ public partial class ChatService : IChatService
                 DurationMinutes = body.DurationMinutes,
             }, cancellationToken);
 
-            return (StatusCodes.OK, MapToRoomResponse(model));
+            var muteCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+            return (StatusCodes.OK, MapToRoomResponse(model, muteCount));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -1354,8 +1356,7 @@ public partial class ChatService : IChatService
                 return (StatusCodes.Forbidden, null);
             }
 
-            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
-            var sender = participants.FirstOrDefault(p => p.SessionId == callerSessionId.Value);
+            var sender = await GetParticipantAsync(body.RoomId, callerSessionId.Value, cancellationToken);
             if (sender == null)
             {
                 return (StatusCodes.Forbidden, null);
@@ -1395,22 +1396,19 @@ public partial class ChatService : IChatService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Check rate limit
+            // Check rate limit using atomic Redis counter with 60s TTL
             var effectiveRateLimit = GetEffectiveRateLimit(roomType);
             var now = DateTimeOffset.UtcNow;
-            if (now - sender.MinuteWindowStart > TimeSpan.FromMinutes(1))
+            var rateLimitKey = $"rate:{body.RoomId}:{callerSessionId.Value}";
+            var currentCount = await _participantStore.IncrementAsync(
+                rateLimitKey, 1, new StateOptions { Ttl = 60 }, cancellationToken);
+            if (currentCount > effectiveRateLimit)
             {
-                sender.MessagesSentThisMinute = 0;
-                sender.MinuteWindowStart = now;
-            }
-            if (sender.MessagesSentThisMinute >= effectiveRateLimit)
-            {
-                return (StatusCodes.Conflict, null);
+                return (StatusCodes.BadRequest, null);
             }
 
-            sender.MessagesSentThisMinute++;
             sender.LastActivityAt = now;
-            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+            await SaveParticipantAsync(body.RoomId, sender, cancellationToken);
 
             // Create message
             var messageId = Guid.NewGuid();
@@ -1469,6 +1467,7 @@ public partial class ChatService : IChatService
             }, cancellationToken);
 
             // Broadcast to participants (includes full content for rendering)
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
             var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
             await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedEvent
             {
@@ -1737,7 +1736,7 @@ public partial class ChatService : IChatService
         {
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
-                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 return (StatusCodes.Conflict, null);
@@ -1753,7 +1752,11 @@ public partial class ChatService : IChatService
             if (message.IsPinned)
             {
                 var model2 = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
-                return (StatusCodes.OK, MapToMessageResponse(message, model2?.RoomTypeCode ?? string.Empty));
+                if (model2 == null)
+                {
+                    return (StatusCodes.NotFound, null);
+                }
+                return (StatusCodes.OK, MapToMessageResponse(message, model2.RoomTypeCode));
             }
 
             // Check max pinned messages
@@ -1772,6 +1775,10 @@ public partial class ChatService : IChatService
             await _messageStore.SaveAsync(msgKey, message, cancellationToken: cancellationToken);
 
             var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
             var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
             var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
             await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessagePinnedEvent
@@ -1781,7 +1788,7 @@ public partial class ChatService : IChatService
                 IsPinned = true,
             }, cancellationToken);
 
-            return (StatusCodes.OK, MapToMessageResponse(message, model?.RoomTypeCode ?? string.Empty));
+            return (StatusCodes.OK, MapToMessageResponse(message, model.RoomTypeCode));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -1809,6 +1816,10 @@ public partial class ChatService : IChatService
             await _messageStore.SaveAsync(msgKey, message, cancellationToken: cancellationToken);
 
             var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
             var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
             var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
             await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessagePinnedEvent
@@ -1818,7 +1829,7 @@ public partial class ChatService : IChatService
                 IsPinned = false,
             }, cancellationToken);
 
-            return (StatusCodes.OK, MapToMessageResponse(message, model?.RoomTypeCode ?? string.Empty));
+            return (StatusCodes.OK, MapToMessageResponse(message, model.RoomTypeCode));
         }
         catch (ApiException) { throw; }
         catch (Exception ex)
@@ -1905,7 +1916,12 @@ public partial class ChatService : IChatService
                 new JsonSortSpec { Path = "$.CreatedAt", Descending = true },
                 cancellationToken);
 
-            var items = result.Items.Select(r => MapToRoomResponse(r.Value)).ToList();
+            var items = new List<ChatRoomResponse>();
+            foreach (var r in result.Items)
+            {
+                var count = await GetParticipantCountAsync(r.Value.RoomId, cancellationToken);
+                items.Add(MapToRoomResponse(r.Value, count));
+            }
 
             return (StatusCodes.OK, new ListRoomsResponse
             {
@@ -1960,10 +1976,13 @@ public partial class ChatService : IChatService
             };
             var totalRoomTypes = await _roomTypeStore.JsonCountAsync(typeConditions, cancellationToken);
 
-            // Sum participant counts from rooms
-            var participantSum = await _roomStore.JsonAggregateAsync(
-                "$.ParticipantCount", JsonAggregation.Sum, allRoomsConditions, cancellationToken);
-            var totalParticipants = Convert.ToInt32(participantSum ?? 0);
+            // Sum participant counts across all rooms via hash counts
+            var allRooms = await _roomStore.JsonQueryPagedAsync(allRoomsConditions, 0, 1000, cancellationToken: cancellationToken);
+            var totalParticipants = 0L;
+            foreach (var r in allRooms.Items)
+            {
+                totalParticipants += await GetParticipantCountAsync(r.Value.RoomId, cancellationToken);
+            }
 
             return (StatusCodes.OK, new AdminStatsResponse
             {
@@ -1971,7 +1990,7 @@ public partial class ChatService : IChatService
                 ActiveRooms = (int)activeRooms,
                 LockedRooms = (int)lockedRooms,
                 ArchivedRooms = (int)archivedRooms,
-                TotalParticipants = totalParticipants,
+                TotalParticipants = (int)totalParticipants,
                 TotalRoomTypes = (int)totalRoomTypes,
             });
         }
@@ -2063,7 +2082,7 @@ public partial class ChatService : IChatService
                 {
                     await ClearParticipantPermissionStateAsync(p.SessionId, cancellationToken);
                 }
-                await _participantStore.DeleteAsync(room.RoomId.ToString(), cancellationToken);
+                await DeleteAllParticipantsAsync(room.RoomId, cancellationToken);
                 await _roomStore.DeleteAsync(roomKey, cancellationToken);
                 await _roomCache.DeleteAsync(roomKey, cancellationToken);
 
@@ -2073,7 +2092,7 @@ public partial class ChatService : IChatService
                     Timestamp = DateTimeOffset.UtcNow,
                     RoomId = room.RoomId,
                     RoomTypeCode = room.RoomTypeCode,
-                    DisplayName = room.DisplayName ?? string.Empty,
+                    DisplayName = room.DisplayName,
                     Status = room.Status,
                     ParticipantCount = 0,
                     IsArchived = room.IsArchived,
@@ -2176,7 +2195,7 @@ public partial class ChatService : IChatService
                     }
                 }
 
-                await _participantStore.DeleteAsync(room.RoomId.ToString(), ct);
+                await DeleteAllParticipantsAsync(room.RoomId, ct);
                 await _roomStore.DeleteAsync(roomKey, ct);
                 await _roomCache.DeleteAsync(roomKey, ct);
 
@@ -2186,9 +2205,9 @@ public partial class ChatService : IChatService
                     Timestamp = DateTimeOffset.UtcNow,
                     RoomId = room.RoomId,
                     RoomTypeCode = room.RoomTypeCode,
-                    DisplayName = room.DisplayName ?? string.Empty,
+                    DisplayName = room.DisplayName,
                     Status = room.Status,
-                    ParticipantCount = room.ParticipantCount,
+                    ParticipantCount = 0,
                     IsArchived = room.IsArchived,
                     CreatedAt = room.CreatedAt,
                     DeletedReason = "Contract action",
@@ -2244,13 +2263,35 @@ public partial class ChatService : IChatService
 
     private async Task<List<ChatParticipantModel>> GetParticipantsAsync(Guid roomId, CancellationToken ct)
     {
-        var participants = await _participantStore.GetAsync(roomId.ToString(), ct);
-        return participants ?? new List<ChatParticipantModel>();
+        var hash = await _participantStore.HashGetAllAsync<ChatParticipantModel>(roomId.ToString(), ct);
+        return hash.Values.ToList();
     }
 
-    private async Task SaveParticipantsAsync(Guid roomId, List<ChatParticipantModel> participants, CancellationToken ct)
+    private async Task<ChatParticipantModel?> GetParticipantAsync(Guid roomId, Guid sessionId, CancellationToken ct)
     {
-        await _participantStore.SaveAsync(roomId.ToString(), participants, cancellationToken: ct);
+        return await _participantStore.HashGetAsync<ChatParticipantModel>(
+            roomId.ToString(), sessionId.ToString(), ct);
+    }
+
+    private async Task SaveParticipantAsync(Guid roomId, ChatParticipantModel participant, CancellationToken ct)
+    {
+        await _participantStore.HashSetAsync(
+            roomId.ToString(), participant.SessionId.ToString(), participant, cancellationToken: ct);
+    }
+
+    private async Task RemoveParticipantAsync(Guid roomId, Guid sessionId, CancellationToken ct)
+    {
+        await _participantStore.HashDeleteAsync(roomId.ToString(), sessionId.ToString(), ct);
+    }
+
+    private async Task<long> GetParticipantCountAsync(Guid roomId, CancellationToken ct)
+    {
+        return await _participantStore.HashCountAsync(roomId.ToString(), ct);
+    }
+
+    private async Task DeleteAllParticipantsAsync(Guid roomId, CancellationToken ct)
+    {
+        await _participantStore.DeleteAsync(roomId.ToString(), ct);
     }
 
     private static string? ValidateMessageContent(SendMessageContent content, ChatRoomTypeModel roomType)
@@ -2332,8 +2373,8 @@ public partial class ChatService : IChatService
 
     private Guid? GetCallerSessionId()
     {
-        var sessionIdHeader = _httpContextAccessor.HttpContext?.Request.Headers["X-Session-Id"].FirstOrDefault();
-        if (string.IsNullOrEmpty(sessionIdHeader) || !Guid.TryParse(sessionIdHeader, out var sessionId))
+        if (string.IsNullOrEmpty(ServiceRequestContext.SessionId) ||
+            !Guid.TryParse(ServiceRequestContext.SessionId, out var sessionId))
         {
             return null;
         }
@@ -2408,7 +2449,7 @@ public partial class ChatService : IChatService
         UpdatedAt = model.UpdatedAt,
     };
 
-    private static ChatRoomResponse MapToRoomResponse(ChatRoomModel model) => new()
+    private static ChatRoomResponse MapToRoomResponse(ChatRoomModel model, long participantCount) => new()
     {
         RoomId = model.RoomId,
         RoomTypeCode = model.RoomTypeCode,
@@ -2416,7 +2457,7 @@ public partial class ChatService : IChatService
         ContractId = model.ContractId,
         DisplayName = model.DisplayName,
         Status = model.Status,
-        ParticipantCount = model.ParticipantCount,
+        ParticipantCount = (int)participantCount,
         MaxParticipants = model.MaxParticipants,
         IsArchived = model.IsArchived,
         CreatedAt = model.CreatedAt,

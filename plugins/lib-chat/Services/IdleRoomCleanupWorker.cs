@@ -64,7 +64,7 @@ public class IdleRoomCleanupWorker : BackgroundService
         // Initial delay before first cycle to let the system stabilize
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.IdleRoomCleanupStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

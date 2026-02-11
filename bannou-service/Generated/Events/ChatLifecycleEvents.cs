@@ -93,9 +93,7 @@ public partial class ChatRoomCreatedEvent : BaseServiceEvent
     /// Human-readable room display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Current room lifecycle status
@@ -181,9 +179,7 @@ public partial class ChatRoomUpdatedEvent : BaseServiceEvent
     /// Human-readable room display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Current room lifecycle status
@@ -277,9 +273,7 @@ public partial class ChatRoomDeletedEvent : BaseServiceEvent
     /// Human-readable room display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Current room lifecycle status

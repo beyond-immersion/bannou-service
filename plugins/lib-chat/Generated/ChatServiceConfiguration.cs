@@ -54,13 +54,6 @@ public class ChatServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Default message retention for persistent rooms when room type does not specify
-    /// Environment variable: CHAT_DEFAULT_RETENTION_DAYS
-    /// </summary>
-    [ConfigRange(Minimum = 1, Maximum = 3650)]
-    public int DefaultRetentionDays { get; set; } = 30;
-
-    /// <summary>
     /// Maximum custom room types per game service
     /// Environment variable: CHAT_MAX_ROOM_TYPES_PER_GAME_SERVICE
     /// </summary>
@@ -139,5 +132,19 @@ public class ChatServiceConfiguration : IServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 10, Maximum = 200)]
     public int MessageHistoryPageSize { get; set; } = 50;
+
+    /// <summary>
+    /// Distributed lock expiry for chat room and participant mutations
+    /// Environment variable: CHAT_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int LockExpirySeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Initial delay before the idle room cleanup worker begins its first cycle
+    /// Environment variable: CHAT_IDLE_ROOM_CLEANUP_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int IdleRoomCleanupStartupDelaySeconds { get; set; } = 30;
 
 }

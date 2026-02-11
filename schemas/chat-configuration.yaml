@@ -14,14 +14,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    DefaultRetentionDays:
-      type: integer
-      env: CHAT_DEFAULT_RETENTION_DAYS
-      default: 30
-      minimum: 1
-      maximum: 3650
-      description: Default message retention for persistent rooms when room type does not specify
-
     MaxRoomTypesPerGameService:
       type: integer
       env: CHAT_MAX_ROOM_TYPES_PER_GAME_SERVICE
@@ -109,3 +101,19 @@ x-service-configuration:
       minimum: 10
       maximum: 200
       description: Default page size for message history queries
+
+    LockExpirySeconds:
+      type: integer
+      env: CHAT_LOCK_EXPIRY_SECONDS
+      default: 15
+      minimum: 5
+      maximum: 300
+      description: Distributed lock expiry for chat room and participant mutations
+
+    IdleRoomCleanupStartupDelaySeconds:
+      type: integer
+      env: CHAT_IDLE_ROOM_CLEANUP_STARTUP_DELAY_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 300
+      description: Initial delay before the idle room cleanup worker begins its first cycle
