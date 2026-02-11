@@ -313,58 +313,48 @@ public partial class ChatService : IChatService
     public async Task<(StatusCodes, RoomTypeResponse?)> DeprecateRoomTypeAsync(
         DeprecateRoomTypeRequest body, CancellationToken cancellationToken)
     {
-        try
+        var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
+
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.ChatLock, $"type:{body.Code}",
+            Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
+        if (!lockResponse.Success)
         {
-            var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
+            return (StatusCodes.Conflict, null);
+        }
 
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.ChatLock, $"type:{body.Code}",
-                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
-            if (!lockResponse.Success)
-            {
-                return (StatusCodes.Conflict, null);
-            }
+        var model = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
 
-            var model = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (model.Status == RoomTypeStatus.Deprecated)
-            {
-                return (StatusCodes.OK, MapToRoomTypeResponse(model));
-            }
-
-            model.Status = RoomTypeStatus.Deprecated;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-            await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("chat-room-type.updated", new ChatRoomTypeUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = model.UpdatedAt.Value,
-                Code = model.Code,
-                GameServiceId = model.GameServiceId,
-                DisplayName = model.DisplayName,
-                MessageFormat = model.MessageFormat,
-                PersistenceMode = model.PersistenceMode,
-                AllowAnonymousSenders = model.AllowAnonymousSenders,
-                Status = model.Status,
-                CreatedAt = model.CreatedAt,
-                ChangedFields = new List<string> { "Status" },
-            }, cancellationToken);
-
-            _logger.LogInformation("Deprecated room type {Code}", body.Code);
+        if (model.Status == RoomTypeStatus.Deprecated)
+        {
             return (StatusCodes.OK, MapToRoomTypeResponse(model));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
+
+        model.Status = RoomTypeStatus.Deprecated;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+        await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("chat-room-type.updated", new ChatRoomTypeUpdatedEvent
         {
-            _logger.LogError(ex, "Failed to deprecate room type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync("chat", "DeprecateRoomType", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+            EventId = Guid.NewGuid(),
+            Timestamp = model.UpdatedAt.Value,
+            Code = model.Code,
+            GameServiceId = model.GameServiceId,
+            DisplayName = model.DisplayName,
+            MessageFormat = model.MessageFormat,
+            PersistenceMode = model.PersistenceMode,
+            AllowAnonymousSenders = model.AllowAnonymousSenders,
+            Status = model.Status,
+            CreatedAt = model.CreatedAt,
+            ChangedFields = new List<string> { "Status" },
+        }, cancellationToken);
+
+        _logger.LogInformation("Deprecated room type {Code}", body.Code);
+        return (StatusCodes.OK, MapToRoomTypeResponse(model));
     }
 
     // ============================================================================
@@ -375,118 +365,97 @@ public partial class ChatService : IChatService
     public async Task<(StatusCodes, ChatRoomResponse?)> CreateRoomAsync(
         CreateRoomRequest body, CancellationToken cancellationToken)
     {
-        try
+        // Validate room type exists and is active
+        var roomType = await FindRoomTypeByCodeAsync(body.RoomTypeCode, cancellationToken);
+        if (roomType == null)
         {
-            // Validate room type exists and is active
-            var roomType = await FindRoomTypeByCodeAsync(body.RoomTypeCode, cancellationToken);
-            if (roomType == null)
+            _logger.LogWarning("Room type not found: {Code}", body.RoomTypeCode);
+            return (StatusCodes.NotFound, null);
+        }
+        if (roomType.Status == RoomTypeStatus.Deprecated)
+        {
+            _logger.LogWarning("Cannot create room with deprecated type: {Code}", body.RoomTypeCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Validate contract if provided
+        if (body.ContractId.HasValue)
+        {
+            try
             {
-                _logger.LogWarning("Room type not found: {Code}", body.RoomTypeCode);
+                await _contractClient.GetContractInstanceAsync(new GetContractInstanceRequest { ContractId = body.ContractId.Value }, cancellationToken);
+            }
+            catch (ApiException apiEx) when (apiEx.StatusCode == 404)
+            {
+                _logger.LogWarning("Contract {ContractId} not found", body.ContractId);
                 return (StatusCodes.NotFound, null);
             }
-            if (roomType.Status == RoomTypeStatus.Deprecated)
-            {
-                _logger.LogWarning("Cannot create room with deprecated type: {Code}", body.RoomTypeCode);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate contract if provided
-            if (body.ContractId.HasValue)
-            {
-                try
-                {
-                    await _contractClient.GetContractInstanceAsync(new GetContractInstanceRequest { ContractId = body.ContractId.Value }, cancellationToken);
-                }
-                catch (ApiException apiEx) when (apiEx.StatusCode == 404)
-                {
-                    _logger.LogWarning("Contract {ContractId} not found", body.ContractId);
-                    return (StatusCodes.NotFound, null);
-                }
-            }
-
-            var now = DateTimeOffset.UtcNow;
-            var roomId = Guid.NewGuid();
-            var model = new ChatRoomModel
-            {
-                RoomId = roomId,
-                RoomTypeCode = body.RoomTypeCode,
-                SessionId = body.SessionId,
-                ContractId = body.ContractId,
-                DisplayName = body.DisplayName,
-                Status = ChatRoomStatus.Active,
-                MaxParticipants = body.MaxParticipants,
-                ContractFulfilledAction = body.ContractFulfilledAction,
-                ContractBreachAction = body.ContractBreachAction,
-                ContractTerminatedAction = body.ContractTerminatedAction,
-                ContractExpiredAction = body.ContractExpiredAction,
-                IsArchived = false,
-                Metadata = body.Metadata,
-                CreatedAt = now,
-                LastActivityAt = now,
-            };
-
-            var roomKey = $"{RoomKeyPrefix}{roomId}";
-            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
-            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
-
-            var effectiveMax = GetEffectiveMaxParticipants(model, roomType);
-
-            await _messageBus.TryPublishAsync("chat-room.created", new ChatRoomCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                RoomId = roomId,
-                RoomTypeCode = model.RoomTypeCode,
-                SessionId = model.SessionId,
-                ContractId = model.ContractId,
-                DisplayName = model.DisplayName,
-                Status = model.Status,
-                ParticipantCount = 0,
-                MaxParticipants = effectiveMax,
-                IsArchived = false,
-                CreatedAt = now,
-            }, cancellationToken);
-
-            _logger.LogInformation("Created chat room {RoomId} of type {RoomTypeCode}", roomId, body.RoomTypeCode);
-            return (StatusCodes.OK, MapToRoomResponse(model, 0));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
+
+        var now = DateTimeOffset.UtcNow;
+        var roomId = Guid.NewGuid();
+        var model = new ChatRoomModel
         {
-            _logger.LogError(ex, "Failed to create room of type {RoomTypeCode}", body.RoomTypeCode);
-            await _messageBus.TryPublishErrorAsync("chat", "CreateRoom", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+            RoomId = roomId,
+            RoomTypeCode = body.RoomTypeCode,
+            SessionId = body.SessionId,
+            ContractId = body.ContractId,
+            DisplayName = body.DisplayName,
+            Status = ChatRoomStatus.Active,
+            MaxParticipants = body.MaxParticipants,
+            ContractFulfilledAction = body.ContractFulfilledAction,
+            ContractBreachAction = body.ContractBreachAction,
+            ContractTerminatedAction = body.ContractTerminatedAction,
+            ContractExpiredAction = body.ContractExpiredAction,
+            IsArchived = false,
+            Metadata = body.Metadata,
+            CreatedAt = now,
+            LastActivityAt = now,
+        };
+
+        var roomKey = $"{RoomKeyPrefix}{roomId}";
+        await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+        await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+        var effectiveMax = GetEffectiveMaxParticipants(model, roomType);
+
+        await _messageBus.TryPublishAsync("chat-room.created", new ChatRoomCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            RoomId = roomId,
+            RoomTypeCode = model.RoomTypeCode,
+            SessionId = model.SessionId,
+            ContractId = model.ContractId,
+            DisplayName = model.DisplayName,
+            Status = model.Status,
+            ParticipantCount = 0,
+            MaxParticipants = effectiveMax,
+            IsArchived = false,
+            CreatedAt = now,
+        }, cancellationToken);
+
+        _logger.LogInformation("Created chat room {RoomId} of type {RoomTypeCode}", roomId, body.RoomTypeCode);
+        return (StatusCodes.OK, MapToRoomResponse(model, 0));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatRoomResponse?)> GetRoomAsync(
         GetRoomRequest body, CancellationToken cancellationToken)
     {
-        try
+        var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+        if (model == null)
         {
-            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-            var count = await GetParticipantCountAsync(body.RoomId, cancellationToken);
-            return (StatusCodes.OK, MapToRoomResponse(model, count));
+            return (StatusCodes.NotFound, null);
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "GetRoom", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+        var count = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+        return (StatusCodes.OK, MapToRoomResponse(model, count));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ListRoomsResponse?)> ListRoomsAsync(
         ListRoomsRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var conditions = new List<QueryCondition>
             {
@@ -527,20 +496,12 @@ public partial class ChatService : IChatService
                 PageSize = body.PageSize,
             });
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to list rooms");
-            await _messageBus.TryPublishErrorAsync("chat", "ListRooms", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatRoomResponse?)> UpdateRoomAsync(
         UpdateRoomRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
 
@@ -586,20 +547,12 @@ public partial class ChatService : IChatService
 
             return (StatusCodes.OK, MapToRoomResponse(model, participantCount));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to update room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "UpdateRoom", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatRoomResponse?)> DeleteRoomAsync(
         DeleteRoomRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
@@ -661,20 +614,12 @@ public partial class ChatService : IChatService
             _logger.LogInformation("Deleted chat room {RoomId}", body.RoomId);
             return (StatusCodes.OK, snapshot);
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to delete room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "DeleteRoom", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatRoomResponse?)> ArchiveRoomAsync(
         ArchiveRoomRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
@@ -730,13 +675,6 @@ public partial class ChatService : IChatService
             var archiveCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
             return (StatusCodes.OK, MapToRoomResponse(model, archiveCount));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to archive room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "ArchiveRoom", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -747,7 +685,6 @@ public partial class ChatService : IChatService
     public async Task<(StatusCodes, ChatRoomResponse?)> JoinRoomAsync(
         JoinRoomRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var callerSessionId = GetCallerSessionId();
             if (callerSessionId == null)
@@ -858,20 +795,12 @@ public partial class ChatService : IChatService
             var joinCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
             return (StatusCodes.OK, MapToRoomResponse(model, joinCount));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to join room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "JoinRoom", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatRoomResponse?)> LeaveRoomAsync(
         LeaveRoomRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var callerSessionId = GetCallerSessionId();
             if (callerSessionId == null)
@@ -948,20 +877,12 @@ public partial class ChatService : IChatService
             var leaveCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
             return (StatusCodes.OK, MapToRoomResponse(model, leaveCount));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to leave room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "LeaveRoom", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ParticipantsResponse?)> ListParticipantsAsync(
         ListParticipantsRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
             var room = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
@@ -988,20 +909,12 @@ public partial class ChatService : IChatService
                 Participants = infos,
             });
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to list participants for room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "ListParticipants", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatRoomResponse?)> KickParticipantAsync(
         KickParticipantRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var callerSessionId = GetCallerSessionId();
             if (callerSessionId == null)
@@ -1073,20 +986,12 @@ public partial class ChatService : IChatService
             var kickCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
             return (StatusCodes.OK, MapToRoomResponse(model, kickCount));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to kick participant from room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "KickParticipant", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatRoomResponse?)> BanParticipantAsync(
         BanParticipantRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var callerSessionId = GetCallerSessionId();
             if (callerSessionId == null)
@@ -1166,20 +1071,12 @@ public partial class ChatService : IChatService
             var banCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
             return (StatusCodes.OK, MapToRoomResponse(model, banCount));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to ban participant from room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "BanParticipant", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatRoomResponse?)> UnbanParticipantAsync(
         UnbanParticipantRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var banKey = $"{BanKeyPrefix}{body.RoomId}:{body.TargetSessionId}";
             var ban = await _banStore.GetAsync(banKey, cancellationToken);
@@ -1199,20 +1096,12 @@ public partial class ChatService : IChatService
             var unbanCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
             return (StatusCodes.OK, MapToRoomResponse(model, unbanCount));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to unban participant from room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "UnbanParticipant", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatRoomResponse?)> MuteParticipantAsync(
         MuteParticipantRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var callerSessionId = GetCallerSessionId();
             if (callerSessionId == null)
@@ -1275,13 +1164,6 @@ public partial class ChatService : IChatService
             var muteCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
             return (StatusCodes.OK, MapToRoomResponse(model, muteCount));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to mute participant in room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "MuteParticipant", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -1292,7 +1174,6 @@ public partial class ChatService : IChatService
     public async Task<(StatusCodes, ChatMessageResponse?)> SendMessageAsync(
         SendMessageRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var callerSessionId = GetCallerSessionId();
             if (callerSessionId == null)
@@ -1442,20 +1323,12 @@ public partial class ChatService : IChatService
 
             return (StatusCodes.OK, MapToMessageResponse(message, model.RoomTypeCode));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send message to room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "SendMessage", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, SendMessageBatchResponse?)> SendMessageBatchAsync(
         SendMessageBatchRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
             if (model == null)
@@ -1543,20 +1416,12 @@ public partial class ChatService : IChatService
 
             return (StatusCodes.OK, new SendMessageBatchResponse { MessageCount = messageCount });
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send batch messages to room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "SendMessageBatch", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, MessageHistoryResponse?)> GetMessageHistoryAsync(
         MessageHistoryRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
             if (model == null)
@@ -1618,20 +1483,12 @@ public partial class ChatService : IChatService
                 NextCursor = nextCursor,
             });
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get message history for room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "GetMessageHistory", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatMessageResponse?)> DeleteMessageAsync(
         DeleteMessageRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var callerSessionId = GetCallerSessionId();
             if (callerSessionId == null)
@@ -1674,20 +1531,12 @@ public partial class ChatService : IChatService
 
             return (StatusCodes.OK, snapshot);
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to delete message {MessageId} from room {RoomId}", body.MessageId, body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "DeleteMessage", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatMessageResponse?)> PinMessageAsync(
         PinMessageRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             await using var lockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
@@ -1745,20 +1594,12 @@ public partial class ChatService : IChatService
 
             return (StatusCodes.OK, MapToMessageResponse(message, model.RoomTypeCode));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to pin message {MessageId} in room {RoomId}", body.MessageId, body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "PinMessage", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ChatMessageResponse?)> UnpinMessageAsync(
         UnpinMessageRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var msgKey = $"{body.RoomId}:{body.MessageId}";
             var message = await _messageStore.GetAsync(msgKey, cancellationToken);
@@ -1786,20 +1627,12 @@ public partial class ChatService : IChatService
 
             return (StatusCodes.OK, MapToMessageResponse(message, model.RoomTypeCode));
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to unpin message {MessageId} in room {RoomId}", body.MessageId, body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "UnpinMessage", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, SearchMessagesResponse?)> SearchMessagesAsync(
         SearchMessagesRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
             if (model == null)
@@ -1832,13 +1665,6 @@ public partial class ChatService : IChatService
                 TotalMatches = (int)result.TotalCount,
             });
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to search messages in room {RoomId}", body.RoomId);
-            await _messageBus.TryPublishErrorAsync("chat", "SearchMessages", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     // ============================================================================
@@ -1849,7 +1675,6 @@ public partial class ChatService : IChatService
     public async Task<(StatusCodes, ListRoomsResponse?)> AdminListRoomsAsync(
         AdminListRoomsRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var conditions = new List<QueryCondition>
             {
@@ -1886,20 +1711,12 @@ public partial class ChatService : IChatService
                 PageSize = body.PageSize,
             });
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to admin list rooms");
-            await _messageBus.TryPublishErrorAsync("chat", "AdminListRooms", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, AdminStatsResponse?)> AdminGetStatsAsync(
         AdminGetStatsRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var allRoomsConditions = new List<QueryCondition>
             {
@@ -1949,30 +1766,15 @@ public partial class ChatService : IChatService
                 TotalRoomTypes = (int)totalRoomTypes,
             });
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get admin stats");
-            await _messageBus.TryPublishErrorAsync("chat", "AdminGetStats", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, AdminCleanupResponse?)> AdminForceCleanupAsync(
         AdminForceCleanupRequest body, CancellationToken cancellationToken)
     {
-        try
         {
             var result = await CleanupIdleRoomsAsync(cancellationToken);
             return (StatusCodes.OK, result);
-        }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to execute admin force cleanup");
-            await _messageBus.TryPublishErrorAsync("chat", "AdminForceCleanup", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 

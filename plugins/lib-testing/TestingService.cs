@@ -41,35 +41,18 @@ public partial class TestingService : ITestingService
     /// </summary>
     public async Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogDebug("Running test: {TestName}", testName);
+        _logger.LogDebug("Running test: {TestName}", testName);
 
-            var response = new TestResponse
-            {
-                TestName = testName,
-                Success = true,
-                Message = $"Test {testName} completed successfully",
-                Timestamp = DateTime.UtcNow
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        var response = new TestResponse
         {
-            _logger.LogError(ex, "Error running test: {TestName}", testName);
-            await _messageBus.TryPublishErrorAsync(
-                "testing",
-                "RunTest",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "testing",
-                endpoint: "post:/testing/run",
-                details: new { TestName = testName },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            TestName = testName,
+            Success = true,
+            Message = $"Test {testName} completed successfully",
+            Timestamp = DateTime.UtcNow
+        };
+
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -77,34 +60,17 @@ public partial class TestingService : ITestingService
     /// </summary>
     public async Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogDebug("Testing configuration");
+        _logger.LogDebug("Testing configuration");
 
-            var response = new ConfigTestResponse
-            {
-                ConfigLoaded = _configuration != null,
-                Message = "Configuration test completed",
-                Timestamp = DateTime.UtcNow
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        var response = new ConfigTestResponse
         {
-            _logger.LogError(ex, "Error testing configuration");
-            await _messageBus.TryPublishErrorAsync(
-                "testing",
-                "TestConfiguration",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "testing",
-                endpoint: "post:/testing/config",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            ConfigLoaded = _configuration != null,
+            Message = "Configuration test completed",
+            Timestamp = DateTime.UtcNow
+        };
+
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -113,72 +79,55 @@ public partial class TestingService : ITestingService
     /// </summary>
     public async Task<(StatusCodes, DependencyTestResponse?)> TestDependencyInjectionHealthAsync(CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Testing dependency injection health");
+
+        // Since we established null safety in constructor with proper null checks,
+        // we know both _logger and _configuration are not null
+        var dependencyHealthChecks = new List<(string Name, bool IsHealthy, string Status)>
+        {
+            ("Logger", true, "Injected successfully - validated in constructor"),
+            ("Configuration", true, "Injected successfully - validated in constructor"),
+        };
+
+        // Test actual functionality of dependencies
+        var loggerWorks = false;
+        var configWorks = false;
+
         try
         {
-            _logger.LogDebug("Testing dependency injection health");
-
-            // Since we established null safety in constructor with proper null checks,
-            // we know both _logger and _configuration are not null
-            var dependencyHealthChecks = new List<(string Name, bool IsHealthy, string Status)>
-            {
-                ("Logger", true, "Injected successfully - validated in constructor"),
-                ("Configuration", true, "Injected successfully - validated in constructor"),
-            };
-
-            // Test actual functionality of dependencies
-            var loggerWorks = false;
-            var configWorks = false;
-
-            try
-            {
-                _logger.LogTrace("Dependency injection health check - logger test");
-                loggerWorks = true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Logger dependency health check failed");
-            }
-
-            try
-            {
-                // Access a property on configuration to validate it's properly constructed
-                var _ = _configuration.ForceServiceId; // Safe to access, validates object integrity
-                configWorks = true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Configuration dependency health check failed");
-            }
-
-            var allHealthy = dependencyHealthChecks.All(h => h.IsHealthy) && loggerWorks && configWorks;
-
-            var response = new DependencyTestResponse
-            {
-                AllDependenciesHealthy = allHealthy,
-                DependencyChecks = dependencyHealthChecks,
-                LoggerFunctional = loggerWorks,
-                ConfigurationFunctional = configWorks,
-                Message = allHealthy ? "All dependencies healthy" : "Some dependencies failed health check",
-                Timestamp = DateTime.UtcNow
-            };
-
-            return (StatusCodes.OK, response);
+            _logger.LogTrace("Dependency injection health check - logger test");
+            loggerWorks = true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error testing dependency injection health");
-            await _messageBus.TryPublishErrorAsync(
-                "testing",
-                "TestDependencyInjectionHealth",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "testing",
-                endpoint: "post:/testing/dependency-health",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning(ex, "Logger dependency health check failed");
         }
+
+        try
+        {
+            // Access a property on configuration to validate it's properly constructed
+            var _ = _configuration.ForceServiceId; // Safe to access, validates object integrity
+            configWorks = true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Configuration dependency health check failed");
+        }
+
+        var allHealthy = dependencyHealthChecks.All(h => h.IsHealthy) && loggerWorks && configWorks;
+
+        var response = new DependencyTestResponse
+        {
+            AllDependenciesHealthy = allHealthy,
+            DependencyChecks = dependencyHealthChecks,
+            LoggerFunctional = loggerWorks,
+            ConfigurationFunctional = configWorks,
+            Message = allHealthy ? "All dependencies healthy" : "Some dependencies failed health check",
+            Timestamp = DateTime.UtcNow
+        };
+
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     #region Ping / Latency Testing
@@ -196,38 +145,21 @@ public partial class TestingService : ITestingService
     {
         var serverReceiveTime = DateTimeOffset.UtcNow;
 
-        try
+        // Create response with timing data
+        var response = new PingResponse
         {
-            // Create response with timing data
-            var response = new PingResponse
-            {
-                ServerTimestamp = serverReceiveTime.ToUnixTimeMilliseconds(),
-                ClientTimestamp = request?.ClientTimestamp,
-                Sequence = request?.Sequence ?? 0,
-                ServerProcessingTimeMs = 0 // Will be calculated at the end
-            };
+            ServerTimestamp = serverReceiveTime.ToUnixTimeMilliseconds(),
+            ClientTimestamp = request?.ClientTimestamp,
+            Sequence = request?.Sequence ?? 0,
+            ServerProcessingTimeMs = 0 // Will be calculated at the end
+        };
 
-            // Calculate processing time
-            var processingTime = DateTimeOffset.UtcNow - serverReceiveTime;
-            response.ServerProcessingTimeMs = processingTime.TotalMilliseconds;
+        // Calculate processing time
+        var processingTime = DateTimeOffset.UtcNow - serverReceiveTime;
+        response.ServerProcessingTimeMs = processingTime.TotalMilliseconds;
 
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing ping request");
-            await _messageBus.TryPublishErrorAsync(
-                "testing",
-                "Ping",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "testing",
-                endpoint: "post:/testing/ping",
-                details: new { Sequence = request?.Sequence },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     #endregion
@@ -253,42 +185,34 @@ public partial class TestingService : ITestingService
             return (StatusCodes.BadRequest, null);
         }
 
-        try
+        _logger.LogInformation("Publishing test notification event to session {SessionId}", sessionId);
+
+        var testEvent = new SystemNotificationEvent
         {
-            _logger.LogInformation("Publishing test notification event to session {SessionId}", sessionId);
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            NotificationType = SystemNotificationEventNotificationType.Info,
+            Title = "Test Notification",
+            Message = message ?? "This is a test notification from the Testing service"
+        };
 
-            var testEvent = new SystemNotificationEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                NotificationType = SystemNotificationEventNotificationType.Info,
-                Title = "Test Notification",
-                Message = message ?? "This is a test notification from the Testing service"
-            };
+        var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, testEvent, cancellationToken);
 
-            var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, testEvent, cancellationToken);
-
-            if (published)
+        if (published)
+        {
+            _logger.LogInformation("Successfully published test event to session {SessionId}", sessionId);
+            return (StatusCodes.OK, new PublishTestEventResponse
             {
-                _logger.LogInformation("Successfully published test event to session {SessionId}", sessionId);
-                return (StatusCodes.OK, new PublishTestEventResponse
-                {
-                    Success = true,
-                    Message = "Test event published successfully",
-                    EventId = testEvent.EventId,
-                    SessionId = sessionId,
-                    Timestamp = DateTime.UtcNow
-                });
-            }
-            else
-            {
-                _logger.LogWarning("Failed to publish test event to session {SessionId}", sessionId);
-                return (StatusCodes.InternalServerError, null);
-            }
+                Success = true,
+                Message = "Test event published successfully",
+                EventId = testEvent.EventId,
+                SessionId = sessionId,
+                Timestamp = DateTime.UtcNow
+            });
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Error publishing test event to session {SessionId}", sessionId);
+            _logger.LogWarning("Failed to publish test event to session {SessionId}", sessionId);
             return (StatusCodes.InternalServerError, null);
         }
     }

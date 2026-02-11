@@ -174,26 +174,15 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedResponse?)> GetSeedAsync(GetSeedRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
-            var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-            var seed = await store.GetAsync($"seed:{body.SeedId}", cancellationToken);
+        var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var seed = await store.GetAsync($"seed:{body.SeedId}", cancellationToken);
 
-            if (seed == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapToResponse(seed));
-        }
-        catch (Exception ex)
+        if (seed == null)
         {
-            _logger.LogError(ex, "Error getting seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/get", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapToResponse(seed));
     }
 
     /// <summary>
@@ -201,43 +190,32 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, ListSeedsResponse?)> GetSeedsByOwnerAsync(GetSeedsByOwnerRequest body, CancellationToken cancellationToken)
     {
-        try
+        var store = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
+        var conditions = new List<QueryCondition>
         {
-            var store = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
-            var conditions = new List<QueryCondition>
-            {
-                new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = body.OwnerId.ToString() },
-                new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType },
-                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
-            };
+            new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = body.OwnerId.ToString() },
+            new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType },
+            new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
+        };
 
-            if (!string.IsNullOrEmpty(body.SeedTypeCode))
-            {
-                conditions.Add(new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode });
-            }
-
-            if (!body.IncludeArchived)
-            {
-                conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() });
-            }
-
-            var result = await store.JsonQueryPagedAsync(conditions, 0, _configuration.DefaultQueryPageSize, null, cancellationToken);
-            var seeds = result.Items.Select(r => MapToResponse(r.Value)).ToList();
-
-            return (StatusCodes.OK, new ListSeedsResponse
-            {
-                Seeds = seeds,
-                TotalCount = (int)result.TotalCount
-            });
-        }
-        catch (Exception ex)
+        if (!string.IsNullOrEmpty(body.SeedTypeCode))
         {
-            _logger.LogError(ex, "Error getting seeds for owner {OwnerId}", body.OwnerId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetSeedsByOwner", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/get-by-owner", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            conditions.Add(new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode });
         }
+
+        if (!body.IncludeArchived)
+        {
+            conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() });
+        }
+
+        var result = await store.JsonQueryPagedAsync(conditions, 0, _configuration.DefaultQueryPageSize, null, cancellationToken);
+        var seeds = result.Items.Select(r => MapToResponse(r.Value)).ToList();
+
+        return (StatusCodes.OK, new ListSeedsResponse
+        {
+            Seeds = seeds,
+            TotalCount = (int)result.TotalCount
+        });
     }
 
     /// <summary>
@@ -245,43 +223,32 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, ListSeedsResponse?)> ListSeedsAsync(ListSeedsRequest body, CancellationToken cancellationToken)
     {
-        try
+        var store = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
+        var conditions = new List<QueryCondition>
         {
-            var store = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
-            var conditions = new List<QueryCondition>
-            {
-                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
-            };
+            new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
+        };
 
-            if (!string.IsNullOrEmpty(body.SeedTypeCode))
-                conditions.Add(new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode });
-            if (!string.IsNullOrEmpty(body.OwnerType))
-                conditions.Add(new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType });
-            if (body.GameServiceId.HasValue)
-                conditions.Add(new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.Value.ToString() });
-            if (!string.IsNullOrEmpty(body.GrowthPhase))
-                conditions.Add(new QueryCondition { Path = "$.GrowthPhase", Operator = QueryOperator.Equals, Value = body.GrowthPhase });
-            if (body.Status.HasValue)
-                conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
+        if (!string.IsNullOrEmpty(body.SeedTypeCode))
+            conditions.Add(new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode });
+        if (!string.IsNullOrEmpty(body.OwnerType))
+            conditions.Add(new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType });
+        if (body.GameServiceId.HasValue)
+            conditions.Add(new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.Value.ToString() });
+        if (!string.IsNullOrEmpty(body.GrowthPhase))
+            conditions.Add(new QueryCondition { Path = "$.GrowthPhase", Operator = QueryOperator.Equals, Value = body.GrowthPhase });
+        if (body.Status.HasValue)
+            conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
 
-            var offset = (body.Page - 1) * body.PageSize;
-            var result = await store.JsonQueryPagedAsync(conditions, offset, body.PageSize, null, cancellationToken);
-            var seeds = result.Items.Select(r => MapToResponse(r.Value)).ToList();
+        var offset = (body.Page - 1) * body.PageSize;
+        var result = await store.JsonQueryPagedAsync(conditions, offset, body.PageSize, null, cancellationToken);
+        var seeds = result.Items.Select(r => MapToResponse(r.Value)).ToList();
 
-            return (StatusCodes.OK, new ListSeedsResponse
-            {
-                Seeds = seeds,
-                TotalCount = (int)result.TotalCount
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new ListSeedsResponse
         {
-            _logger.LogError(ex, "Error listing seeds");
-            await _messageBus.TryPublishErrorAsync("seed", "ListSeeds", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/list", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Seeds = seeds,
+            TotalCount = (int)result.TotalCount
+        });
     }
 
     /// <summary>
@@ -289,70 +256,59 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedResponse?)> UpdateSeedAsync(UpdateSeedRequest body, CancellationToken cancellationToken)
     {
-        try
+        var lockOwner = $"update-seed-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, body.SeedId.ToString(), lockOwner, 10, cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            var lockOwner = $"update-seed-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.SeedLock, body.SeedId.ToString(), lockOwner, 10, cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                return (StatusCodes.Conflict, null);
-            }
-
-            var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-            var key = $"seed:{body.SeedId}";
-            var seed = await store.GetAsync(key, cancellationToken);
-
-            if (seed == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var changedFields = new List<string>();
-
-            if (body.DisplayName != null)
-            {
-                seed.DisplayName = body.DisplayName;
-                changedFields.Add("displayName");
-            }
-
-            if (body.Metadata != null)
-            {
-                seed.Metadata ??= new Dictionary<string, object>();
-                seed.Metadata["data"] = body.Metadata;
-                changedFields.Add("metadata");
-            }
-
-            await store.SaveAsync(key, seed, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("seed.updated", new SeedUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SeedId = seed.SeedId,
-                OwnerId = seed.OwnerId,
-                OwnerType = seed.OwnerType,
-                SeedTypeCode = seed.SeedTypeCode,
-                GameServiceId = seed.GameServiceId,
-                GrowthPhase = seed.GrowthPhase,
-                TotalGrowth = seed.TotalGrowth,
-                DisplayName = seed.DisplayName,
-                Status = seed.Status,
-                BondId = seed.BondId,
-                ChangedFields = changedFields
-            }, cancellationToken: cancellationToken);
-
-            return (StatusCodes.OK, MapToResponse(seed));
+            return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
+
+        var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var key = $"seed:{body.SeedId}";
+        var seed = await store.GetAsync(key, cancellationToken);
+
+        if (seed == null)
         {
-            _logger.LogError(ex, "Error updating seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "UpdateSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/update", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        var changedFields = new List<string>();
+
+        if (body.DisplayName != null)
+        {
+            seed.DisplayName = body.DisplayName;
+            changedFields.Add("displayName");
+        }
+
+        if (body.Metadata != null)
+        {
+            seed.Metadata ??= new Dictionary<string, object>();
+            seed.Metadata["data"] = body.Metadata;
+            changedFields.Add("metadata");
+        }
+
+        await store.SaveAsync(key, seed, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("seed.updated", new SeedUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedId = seed.SeedId,
+            OwnerId = seed.OwnerId,
+            OwnerType = seed.OwnerType,
+            SeedTypeCode = seed.SeedTypeCode,
+            GameServiceId = seed.GameServiceId,
+            GrowthPhase = seed.GrowthPhase,
+            TotalGrowth = seed.TotalGrowth,
+            DisplayName = seed.DisplayName,
+            Status = seed.Status,
+            BondId = seed.BondId,
+            ChangedFields = changedFields
+        }, cancellationToken: cancellationToken);
+
+        return (StatusCodes.OK, MapToResponse(seed));
     }
 
     /// <summary>
@@ -360,86 +316,75 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedResponse?)> ActivateSeedAsync(ActivateSeedRequest body, CancellationToken cancellationToken)
     {
-        try
+        var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var key = $"seed:{body.SeedId}";
+        var seed = await store.GetAsync(key, cancellationToken);
+
+        if (seed == null)
         {
-            var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-            var key = $"seed:{body.SeedId}";
-            var seed = await store.GetAsync(key, cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (seed == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (seed.Status == SeedStatus.Active)
-            {
-                return (StatusCodes.OK, MapToResponse(seed));
-            }
-
-            if (seed.Status == SeedStatus.Archived)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var lockOwner = $"activate-seed-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.SeedLock, $"owner:{seed.OwnerId}:{seed.SeedTypeCode}",
-                lockOwner, 10, cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Find and deactivate current active seed of same type for same owner
-            Guid? previousActiveSeedId = null;
-            var queryStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
-            var conditions = new List<QueryCondition>
-            {
-                new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = seed.OwnerId.ToString() },
-                new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = seed.OwnerType },
-                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = seed.SeedTypeCode },
-                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = seed.GameServiceId.ToString() },
-                new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = SeedStatus.Active.ToString() },
-                new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
-            };
-            var activeSeeds = await queryStore.JsonQueryPagedAsync(conditions, 0, 10, null, cancellationToken);
-
-            foreach (var activeSeed in activeSeeds.Items)
-            {
-                if (activeSeed.Value.SeedId != seed.SeedId)
-                {
-                    previousActiveSeedId = activeSeed.Value.SeedId;
-                    activeSeed.Value.Status = SeedStatus.Dormant;
-                    await store.SaveAsync($"seed:{activeSeed.Value.SeedId}", activeSeed.Value,
-                        cancellationToken: cancellationToken);
-                }
-            }
-
-            seed.Status = SeedStatus.Active;
-            await store.SaveAsync(key, seed, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("seed.activated", new SeedActivatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SeedId = seed.SeedId,
-                OwnerId = seed.OwnerId,
-                OwnerType = seed.OwnerType,
-                SeedTypeCode = seed.SeedTypeCode,
-                PreviousActiveSeedId = previousActiveSeedId
-            }, cancellationToken: cancellationToken);
-
+        if (seed.Status == SeedStatus.Active)
+        {
             return (StatusCodes.OK, MapToResponse(seed));
         }
-        catch (Exception ex)
+
+        if (seed.Status == SeedStatus.Archived)
         {
-            _logger.LogError(ex, "Error activating seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "ActivateSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/activate", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.BadRequest, null);
         }
+
+        var lockOwner = $"activate-seed-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, $"owner:{seed.OwnerId}:{seed.SeedTypeCode}",
+            lockOwner, 10, cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Find and deactivate current active seed of same type for same owner
+        Guid? previousActiveSeedId = null;
+        var queryStore = _stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
+        var conditions = new List<QueryCondition>
+        {
+            new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = seed.OwnerId.ToString() },
+            new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = seed.OwnerType },
+            new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = seed.SeedTypeCode },
+            new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = seed.GameServiceId.ToString() },
+            new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = SeedStatus.Active.ToString() },
+            new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
+        };
+        var activeSeeds = await queryStore.JsonQueryPagedAsync(conditions, 0, 10, null, cancellationToken);
+
+        foreach (var activeSeed in activeSeeds.Items)
+        {
+            if (activeSeed.Value.SeedId != seed.SeedId)
+            {
+                previousActiveSeedId = activeSeed.Value.SeedId;
+                activeSeed.Value.Status = SeedStatus.Dormant;
+                await store.SaveAsync($"seed:{activeSeed.Value.SeedId}", activeSeed.Value,
+                    cancellationToken: cancellationToken);
+            }
+        }
+
+        seed.Status = SeedStatus.Active;
+        await store.SaveAsync(key, seed, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("seed.activated", new SeedActivatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedId = seed.SeedId,
+            OwnerId = seed.OwnerId,
+            OwnerType = seed.OwnerType,
+            SeedTypeCode = seed.SeedTypeCode,
+            PreviousActiveSeedId = previousActiveSeedId
+        }, cancellationToken: cancellationToken);
+
+        return (StatusCodes.OK, MapToResponse(seed));
     }
 
     /// <summary>
@@ -447,51 +392,40 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedResponse?)> ArchiveSeedAsync(ArchiveSeedRequest body, CancellationToken cancellationToken)
     {
-        try
+        var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var key = $"seed:{body.SeedId}";
+        var seed = await store.GetAsync(key, cancellationToken);
+
+        if (seed == null)
         {
-            var store = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-            var key = $"seed:{body.SeedId}";
-            var seed = await store.GetAsync(key, cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (seed == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
+        if (seed.Status == SeedStatus.Active)
+        {
+            _logger.LogWarning("Cannot archive active seed {SeedId}, deactivate first", body.SeedId);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (seed.Status == SeedStatus.Active)
-            {
-                _logger.LogWarning("Cannot archive active seed {SeedId}, deactivate first", body.SeedId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (seed.Status == SeedStatus.Archived)
-            {
-                return (StatusCodes.OK, MapToResponse(seed));
-            }
-
-            seed.Status = SeedStatus.Archived;
-            await store.SaveAsync(key, seed, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("seed.archived", new SeedArchivedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SeedId = seed.SeedId,
-                OwnerId = seed.OwnerId,
-                OwnerType = seed.OwnerType,
-                SeedTypeCode = seed.SeedTypeCode
-            }, cancellationToken: cancellationToken);
-
+        if (seed.Status == SeedStatus.Archived)
+        {
             return (StatusCodes.OK, MapToResponse(seed));
         }
-        catch (Exception ex)
+
+        seed.Status = SeedStatus.Archived;
+        await store.SaveAsync(key, seed, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("seed.archived", new SeedArchivedEvent
         {
-            _logger.LogError(ex, "Error archiving seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "ArchiveSeed", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/archive", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedId = seed.SeedId,
+            OwnerId = seed.OwnerId,
+            OwnerType = seed.OwnerType,
+            SeedTypeCode = seed.SeedTypeCode
+        }, cancellationToken: cancellationToken);
+
+        return (StatusCodes.OK, MapToResponse(seed));
     }
 
     // ========================================================================
@@ -503,34 +437,23 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, GrowthResponse?)> GetGrowthAsync(GetGrowthRequest body, CancellationToken cancellationToken)
     {
-        try
+        var growthStore = _stateStoreFactory.GetStore<SeedGrowthModel>(StateStoreDefinitions.SeedGrowth);
+        var growth = await growthStore.GetAsync($"growth:{body.SeedId}", cancellationToken);
+
+        if (growth == null)
         {
-            var growthStore = _stateStoreFactory.GetStore<SeedGrowthModel>(StateStoreDefinitions.SeedGrowth);
-            var growth = await growthStore.GetAsync($"growth:{body.SeedId}", cancellationToken);
-
-            if (growth == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Decay is applied by the background worker (write-back). Return stored values directly.
-            var domains = growth.Domains.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Depth);
-
-            return (StatusCodes.OK, new GrowthResponse
-            {
-                SeedId = growth.SeedId,
-                TotalGrowth = domains.Values.Sum(),
-                Domains = domains
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Decay is applied by the background worker (write-back). Return stored values directly.
+        var domains = growth.Domains.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Depth);
+
+        return (StatusCodes.OK, new GrowthResponse
         {
-            _logger.LogError(ex, "Error getting growth for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetGrowth", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/growth/get", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            SeedId = growth.SeedId,
+            TotalGrowth = domains.Values.Sum(),
+            Domains = domains
+        });
     }
 
     /// <summary>
@@ -538,19 +461,8 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, GrowthResponse?)> RecordGrowthAsync(RecordGrowthRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
-            return await RecordGrowthInternalAsync(
-                body.SeedId, new[] { (body.Domain, body.Amount) }, body.Source, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording growth for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "RecordGrowth", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/growth/record", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return await RecordGrowthInternalAsync(
+            body.SeedId, new[] { (body.Domain, body.Amount) }, body.Source, cancellationToken);
     }
 
     /// <summary>
@@ -558,19 +470,8 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, GrowthResponse?)> RecordGrowthBatchAsync(RecordGrowthBatchRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
-            var entries = body.Entries.Select(e => (e.Domain, e.Amount)).ToArray();
-            return await RecordGrowthInternalAsync(body.SeedId, entries, body.Source, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording batch growth for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "RecordGrowthBatch", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/growth/record-batch", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+        var entries = body.Entries.Select(e => (e.Domain, e.Amount)).ToArray();
+        return await RecordGrowthInternalAsync(body.SeedId, entries, body.Source, cancellationToken);
     }
 
     /// <summary>
@@ -578,45 +479,34 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, GrowthPhaseResponse?)> GetGrowthPhaseAsync(GetGrowthPhaseRequest body, CancellationToken cancellationToken)
     {
-        try
+        var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
+
+        if (seed == null)
         {
-            var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-            var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
-
-            if (seed == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var seedType = await typeStore.GetAsync($"type:{seed.GameServiceId}:{seed.SeedTypeCode}", cancellationToken);
-
-            if (seedType == null)
-            {
-                _logger.LogError("Seed type {SeedTypeCode} not found for seed {SeedId}", seed.SeedTypeCode, seed.SeedId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            var (currentPhase, nextPhase) = ComputePhaseInfo(seedType.GrowthPhases, seed.TotalGrowth);
-
-            return (StatusCodes.OK, new GrowthPhaseResponse
-            {
-                SeedId = seed.SeedId,
-                PhaseCode = currentPhase.PhaseCode,
-                DisplayName = currentPhase.DisplayName,
-                TotalGrowth = seed.TotalGrowth,
-                NextPhaseCode = nextPhase?.PhaseCode,
-                NextPhaseThreshold = nextPhase?.MinTotalGrowth
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var seedType = await typeStore.GetAsync($"type:{seed.GameServiceId}:{seed.SeedTypeCode}", cancellationToken);
+
+        if (seedType == null)
         {
-            _logger.LogError(ex, "Error getting growth phase for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetGrowthPhase", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/growth/get-phase", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
+            _logger.LogError("Seed type {SeedTypeCode} not found for seed {SeedId}", seed.SeedTypeCode, seed.SeedId);
             return (StatusCodes.InternalServerError, null);
         }
+
+        var (currentPhase, nextPhase) = ComputePhaseInfo(seedType.GrowthPhases, seed.TotalGrowth);
+
+        return (StatusCodes.OK, new GrowthPhaseResponse
+        {
+            SeedId = seed.SeedId,
+            PhaseCode = currentPhase.PhaseCode,
+            DisplayName = currentPhase.DisplayName,
+            TotalGrowth = seed.TotalGrowth,
+            NextPhaseCode = nextPhase?.PhaseCode,
+            NextPhaseThreshold = nextPhase?.MinTotalGrowth
+        });
     }
 
     // ========================================================================
@@ -628,38 +518,27 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, CapabilityManifestResponse?)> GetCapabilityManifestAsync(GetCapabilityManifestRequest body, CancellationToken cancellationToken)
     {
-        try
+        // Check cache first; honor debounce window from configuration
+        var cacheStore = _stateStoreFactory.GetStore<CapabilityManifestModel>(StateStoreDefinitions.SeedCapabilitiesCache);
+        var cached = await cacheStore.GetAsync($"cap:{body.SeedId}", cancellationToken);
+        var debounceWindow = TimeSpan.FromMilliseconds(_configuration.CapabilityRecomputeDebounceMs);
+
+        if (cached != null && (DateTimeOffset.UtcNow - cached.ComputedAt) < debounceWindow)
         {
-            // Check cache first; honor debounce window from configuration
-            var cacheStore = _stateStoreFactory.GetStore<CapabilityManifestModel>(StateStoreDefinitions.SeedCapabilitiesCache);
-            var cached = await cacheStore.GetAsync($"cap:{body.SeedId}", cancellationToken);
-            var debounceWindow = TimeSpan.FromMilliseconds(_configuration.CapabilityRecomputeDebounceMs);
-
-            if (cached != null && (DateTimeOffset.UtcNow - cached.ComputedAt) < debounceWindow)
-            {
-                return (StatusCodes.OK, MapManifestToResponse(cached));
-            }
-
-            // Cache miss - compute
-            var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
-            var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
-
-            if (seed == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var manifest = await ComputeAndCacheManifestAsync(seed, cancellationToken);
-            return (StatusCodes.OK, MapManifestToResponse(manifest));
+            return (StatusCodes.OK, MapManifestToResponse(cached));
         }
-        catch (Exception ex)
+
+        // Cache miss - compute
+        var seedStore = _stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
+        var seed = await seedStore.GetAsync($"seed:{body.SeedId}", cancellationToken);
+
+        if (seed == null)
         {
-            _logger.LogError(ex, "Error getting capability manifest for seed {SeedId}", body.SeedId);
-            await _messageBus.TryPublishErrorAsync("seed", "GetCapabilityManifest", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/capability/get-manifest", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        var manifest = await ComputeAndCacheManifestAsync(seed, cancellationToken);
+        return (StatusCodes.OK, MapManifestToResponse(manifest));
     }
 
     // ========================================================================

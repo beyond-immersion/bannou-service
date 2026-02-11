@@ -249,61 +249,43 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Updating leaderboard {LeaderboardId}", body.LeaderboardId);
 
-        try
+        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+        var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+
+        var (definition, etag) = await definitionStore.GetWithETagAsync(key, cancellationToken);
+        if (definition == null)
         {
-            var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
-            var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-
-            var (definition, etag) = await definitionStore.GetWithETagAsync(key, cancellationToken);
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Apply updates
-            if (!string.IsNullOrEmpty(body.DisplayName))
-            {
-                definition.DisplayName = body.DisplayName;
-            }
-            if (body.Description != null)
-            {
-                definition.Description = body.Description;
-            }
-            if (body.IsPublic.HasValue)
-            {
-                definition.IsPublic = body.IsPublic.Value;
-            }
-
-            // etag is non-null at this point; coalesce satisfies compiler nullable analysis
-            var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId}", body.LeaderboardId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Get entry count
-            var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
-            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
-            var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
-
-            return (StatusCodes.OK, MapToResponse(definition, entryCount));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Apply updates
+        if (!string.IsNullOrEmpty(body.DisplayName))
         {
-            _logger.LogError(ex, "Error updating leaderboard definition");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "UpdateLeaderboardDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/definition/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            definition.DisplayName = body.DisplayName;
         }
+        if (body.Description != null)
+        {
+            definition.Description = body.Description;
+        }
+        if (body.IsPublic.HasValue)
+        {
+            definition.IsPublic = body.IsPublic.Value;
+        }
+
+        // etag is non-null at this point; coalesce satisfies compiler nullable analysis
+        var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId}", body.LeaderboardId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Get entry count
+        var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
+        var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+        var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+        return (StatusCodes.OK, MapToResponse(definition, entryCount));
     }
 
     /// <summary>
@@ -314,68 +296,50 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Deleting leaderboard {LeaderboardId}", body.LeaderboardId);
 
-        try
+        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+        var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+
+        var definition = await definitionStore.GetAsync(key, cancellationToken);
+        if (definition == null)
         {
-            var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
-            var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+            return StatusCodes.NotFound;
+        }
 
-            var definition = await definitionStore.GetAsync(key, cancellationToken);
-            if (definition == null)
+        // Delete the definition
+        await definitionStore.DeleteAsync(key, cancellationToken);
+
+        var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
+
+        if (definition.IsSeasonal)
+        {
+            var seasonIndexKey = GetSeasonIndexKey(body.GameServiceId, body.LeaderboardId);
+            var seasons = await definitionStore.GetSetAsync<int>(seasonIndexKey, cancellationToken);
+
+            if (seasons.Count == 0 && definition.CurrentSeason.HasValue)
             {
-                return StatusCodes.NotFound;
+                seasons = new List<int> { definition.CurrentSeason.Value };
             }
 
-            // Delete the definition
-            await definitionStore.DeleteAsync(key, cancellationToken);
-
-            var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
-
-            if (definition.IsSeasonal)
+            foreach (var season in seasons)
             {
-                var seasonIndexKey = GetSeasonIndexKey(body.GameServiceId, body.LeaderboardId);
-                var seasons = await definitionStore.GetSetAsync<int>(seasonIndexKey, cancellationToken);
-
-                if (seasons.Count == 0 && definition.CurrentSeason.HasValue)
-                {
-                    seasons = new List<int> { definition.CurrentSeason.Value };
-                }
-
-                foreach (var season in seasons)
-                {
-                    var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, season);
-                    await rankingStore.SortedSetDeleteAsync(rankingKey, cancellationToken);
-                }
-
-                await definitionStore.DeleteSetAsync(seasonIndexKey, cancellationToken);
-            }
-            else
-            {
-                var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+                var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, season);
                 await rankingStore.SortedSetDeleteAsync(rankingKey, cancellationToken);
             }
 
-            await definitionStore.RemoveFromSetAsync(
-                GetDefinitionIndexKey(body.GameServiceId),
-                body.LeaderboardId,
-                cancellationToken);
-
-            return StatusCodes.OK;
+            await definitionStore.DeleteSetAsync(seasonIndexKey, cancellationToken);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Error deleting leaderboard definition");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "DeleteLeaderboardDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/definition/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+            await rankingStore.SortedSetDeleteAsync(rankingKey, cancellationToken);
         }
+
+        await definitionStore.RemoveFromSetAsync(
+            GetDefinitionIndexKey(body.GameServiceId),
+            body.LeaderboardId,
+            cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -387,113 +351,95 @@ public partial class LeaderboardService : ILeaderboardService
         _logger.LogDebug("Submitting score for {EntityType}:{EntityId} to {LeaderboardId}",
             body.EntityType, body.EntityId, body.LeaderboardId);
 
-        try
+        // Get leaderboard definition
+        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+        var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+        var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+        if (definition == null)
         {
-            // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
-            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Validate entity type
-            if (definition.EntityTypes != null && !definition.EntityTypes.Contains(body.EntityType))
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
-            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
-            var memberKey = GetMemberKey(body.EntityType, body.EntityId);
-
-            // Get previous score and rank
-            var previousScore = await rankingStore.SortedSetScoreAsync(rankingKey, memberKey, cancellationToken);
-            var previousRank = previousScore.HasValue
-                ? await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken)
-                : null;
-
-            // Calculate final score based on update mode
-            var finalScore = CalculateFinalScore(definition.UpdateMode, previousScore, body.Score);
-
-            // Add/update score in sorted set
-            await rankingStore.SortedSetAddAsync(rankingKey, memberKey, finalScore, options: null, cancellationToken);
-
-            // Get new rank
-            var newRank = await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken);
-
-            // Calculate rank change (positive = improved)
-            var currentRank = (newRank ?? 0) + 1; // Convert 0-based to 1-based
-            var prevRank = previousRank.HasValue ? previousRank.Value + 1 : currentRank;
-            var rankChange = definition.SortOrder == SortOrder.Descending
-                ? prevRank - currentRank // Higher rank (lower number) is better
-                : currentRank - prevRank; // Lower rank is better for ascending
-
-            // Publish entry added event for new entities (first time on leaderboard)
-            if (!previousScore.HasValue && newRank.HasValue)
-            {
-                var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
-                var entryAddedEvent = new LeaderboardEntryAddedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    GameServiceId = body.GameServiceId,
-                    LeaderboardId = body.LeaderboardId,
-                    EntityId = body.EntityId,
-                    EntityType = body.EntityType,
-                    Score = finalScore,
-                    Rank = currentRank,
-                    TotalEntries = totalEntries
-                };
-                await _messageBus.TryPublishAsync("leaderboard.entry.added", entryAddedEvent, cancellationToken: cancellationToken);
-            }
-            // Publish rank changed event if rank changed significantly (for existing entries)
-            else if (previousRank.HasValue && newRank.HasValue && previousRank.Value != newRank.Value)
-            {
-                var rankEvent = new LeaderboardRankChangedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    GameServiceId = body.GameServiceId,
-                    LeaderboardId = body.LeaderboardId,
-                    EntityId = body.EntityId,
-                    EntityType = body.EntityType,
-                    PreviousRank = prevRank,
-                    NewRank = currentRank,
-                    RankChange = rankChange,
-                    PreviousScore = previousScore ?? 0,
-                    CurrentScore = finalScore
-                };
-                await _messageBus.TryPublishAsync("leaderboard.rank.changed", rankEvent, cancellationToken: cancellationToken);
-            }
-
-            return (StatusCodes.OK, new SubmitScoreResponse
-            {
-                Accepted = true,
-                PreviousScore = previousScore,
-                CurrentScore = finalScore,
-                PreviousRank = previousRank.HasValue ? prevRank : null,
-                CurrentRank = currentRank,
-                RankChange = rankChange
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Validate entity type
+        if (definition.EntityTypes != null && !definition.EntityTypes.Contains(body.EntityType))
         {
-            _logger.LogError(ex, "Error submitting score");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "SubmitScore",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/score/submit",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.BadRequest, null);
         }
+
+        var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
+        var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+        var memberKey = GetMemberKey(body.EntityType, body.EntityId);
+
+        // Get previous score and rank
+        var previousScore = await rankingStore.SortedSetScoreAsync(rankingKey, memberKey, cancellationToken);
+        var previousRank = previousScore.HasValue
+            ? await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken)
+            : null;
+
+        // Calculate final score based on update mode
+        var finalScore = CalculateFinalScore(definition.UpdateMode, previousScore, body.Score);
+
+        // Add/update score in sorted set
+        await rankingStore.SortedSetAddAsync(rankingKey, memberKey, finalScore, options: null, cancellationToken);
+
+        // Get new rank
+        var newRank = await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken);
+
+        // Calculate rank change (positive = improved)
+        var currentRank = (newRank ?? 0) + 1; // Convert 0-based to 1-based
+        var prevRank = previousRank.HasValue ? previousRank.Value + 1 : currentRank;
+        var rankChange = definition.SortOrder == SortOrder.Descending
+            ? prevRank - currentRank // Higher rank (lower number) is better
+            : currentRank - prevRank; // Lower rank is better for ascending
+
+        // Publish entry added event for new entities (first time on leaderboard)
+        if (!previousScore.HasValue && newRank.HasValue)
+        {
+            var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+            var entryAddedEvent = new LeaderboardEntryAddedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GameServiceId = body.GameServiceId,
+                LeaderboardId = body.LeaderboardId,
+                EntityId = body.EntityId,
+                EntityType = body.EntityType,
+                Score = finalScore,
+                Rank = currentRank,
+                TotalEntries = totalEntries
+            };
+            await _messageBus.TryPublishAsync("leaderboard.entry.added", entryAddedEvent, cancellationToken: cancellationToken);
+        }
+        // Publish rank changed event if rank changed significantly (for existing entries)
+        else if (previousRank.HasValue && newRank.HasValue && previousRank.Value != newRank.Value)
+        {
+            var rankEvent = new LeaderboardRankChangedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GameServiceId = body.GameServiceId,
+                LeaderboardId = body.LeaderboardId,
+                EntityId = body.EntityId,
+                EntityType = body.EntityType,
+                PreviousRank = prevRank,
+                NewRank = currentRank,
+                RankChange = rankChange,
+                PreviousScore = previousScore ?? 0,
+                CurrentScore = finalScore
+            };
+            await _messageBus.TryPublishAsync("leaderboard.rank.changed", rankEvent, cancellationToken: cancellationToken);
+        }
+
+        return (StatusCodes.OK, new SubmitScoreResponse
+        {
+            Accepted = true,
+            PreviousScore = previousScore,
+            CurrentScore = finalScore,
+            PreviousRank = previousRank.HasValue ? prevRank : null,
+            CurrentRank = currentRank,
+            RankChange = rankChange
+        });
     }
 
     /// <summary>
@@ -505,77 +451,59 @@ public partial class LeaderboardService : ILeaderboardService
         _logger.LogDebug("Submitting batch of {Count} scores to {LeaderboardId}",
             body.Scores.Count, body.LeaderboardId);
 
-        try
+        if (body.Scores.Count == 0 || body.Scores.Count > _configuration.ScoreUpdateBatchSize)
         {
-            if (body.Scores.Count == 0 || body.Scores.Count > _configuration.ScoreUpdateBatchSize)
-            {
-                _logger.LogWarning(
-                    "Invalid score batch size {Count} for leaderboard {LeaderboardId}; max is {MaxBatchSize}",
-                    body.Scores.Count, body.LeaderboardId, _configuration.ScoreUpdateBatchSize);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
-            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
-            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
-
-            var accepted = 0;
-            var rejected = 0;
-
-            // Prepare batch entries
-            var entries = new List<(string member, double score)>();
-            foreach (var entry in body.Scores)
-            {
-                // Validate entity type
-                if (definition.EntityTypes != null && !definition.EntityTypes.Contains(entry.EntityType))
-                {
-                    rejected++;
-                    continue;
-                }
-
-                var memberKey = GetMemberKey(entry.EntityType, entry.EntityId);
-
-                // For batch, we use replace mode only (simpler)
-                entries.Add((memberKey, entry.Score));
-                accepted++;
-            }
-
-            // Batch add to sorted set
-            if (entries.Count > 0)
-            {
-                await rankingStore.SortedSetAddBatchAsync(rankingKey, entries, options: null, cancellationToken);
-            }
-
-            return (StatusCodes.OK, new SubmitScoreBatchResponse
-            {
-                Accepted = accepted,
-                Rejected = rejected
-            });
+            _logger.LogWarning(
+                "Invalid score batch size {Count} for leaderboard {LeaderboardId}; max is {MaxBatchSize}",
+                body.Scores.Count, body.LeaderboardId, _configuration.ScoreUpdateBatchSize);
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        // Get leaderboard definition
+        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+        var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+        var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+        if (definition == null)
         {
-            _logger.LogError(ex, "Error submitting batch scores");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "SubmitScoreBatch",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/score/submit-batch",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
+        var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+
+        var accepted = 0;
+        var rejected = 0;
+
+        // Prepare batch entries
+        var entries = new List<(string member, double score)>();
+        foreach (var entry in body.Scores)
+        {
+            // Validate entity type
+            if (definition.EntityTypes != null && !definition.EntityTypes.Contains(entry.EntityType))
+            {
+                rejected++;
+                continue;
+            }
+
+            var memberKey = GetMemberKey(entry.EntityType, entry.EntityId);
+
+            // For batch, we use replace mode only (simpler)
+            entries.Add((memberKey, entry.Score));
+            accepted++;
+        }
+
+        // Batch add to sorted set
+        if (entries.Count > 0)
+        {
+            await rankingStore.SortedSetAddBatchAsync(rankingKey, entries, options: null, cancellationToken);
+        }
+
+        return (StatusCodes.OK, new SubmitScoreBatchResponse
+        {
+            Accepted = accepted,
+            Rejected = rejected
+        });
     }
 
     /// <summary>
@@ -587,69 +515,51 @@ public partial class LeaderboardService : ILeaderboardService
         _logger.LogDebug("Getting rank for {EntityType}:{EntityId} on {LeaderboardId}",
             body.EntityType, body.EntityId, body.LeaderboardId);
 
-        try
+        // Get leaderboard definition
+        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+        var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+        var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+        if (definition == null)
         {
-            // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
-            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
-            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
-            var memberKey = GetMemberKey(body.EntityType, body.EntityId);
-
-            // Get score
-            var score = await rankingStore.SortedSetScoreAsync(rankingKey, memberKey, cancellationToken);
-            if (!score.HasValue)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get rank (0-based)
-            var rank = await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken);
-            if (!rank.HasValue)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get total entries
-            var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
-
-            // Calculate percentile
-            var percentile = totalEntries > 0
-                ? (1.0 - (double)rank.Value / totalEntries) * 100.0
-                : 100.0;
-
-            return (StatusCodes.OK, new EntityRankResponse
-            {
-                EntityId = body.EntityId,
-                EntityType = body.EntityType,
-                Score = score.Value,
-                Rank = rank.Value + 1, // Convert to 1-based
-                TotalEntries = totalEntries,
-                Percentile = Math.Round(percentile, 2)
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
+        var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+        var memberKey = GetMemberKey(body.EntityType, body.EntityId);
+
+        // Get score
+        var score = await rankingStore.SortedSetScoreAsync(rankingKey, memberKey, cancellationToken);
+        if (!score.HasValue)
         {
-            _logger.LogError(ex, "Error getting entity rank");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "GetEntityRank",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/rank/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Get rank (0-based)
+        var rank = await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken);
+        if (!rank.HasValue)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Get total entries
+        var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+        // Calculate percentile
+        var percentile = totalEntries > 0
+            ? (1.0 - (double)rank.Value / totalEntries) * 100.0
+            : 100.0;
+
+        return (StatusCodes.OK, new EntityRankResponse
+        {
+            EntityId = body.EntityId,
+            EntityType = body.EntityType,
+            Score = score.Value,
+            Rank = rank.Value + 1, // Convert to 1-based
+            TotalEntries = totalEntries,
+            Percentile = Math.Round(percentile, 2)
+        });
     }
 
     /// <summary>
@@ -660,78 +570,60 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Getting top {Count} for {LeaderboardId}", body.Count, body.LeaderboardId);
 
-        try
+        if (body.Count <= 0 || body.Count > _configuration.MaxEntriesPerQuery)
         {
-            if (body.Count <= 0 || body.Count > _configuration.MaxEntriesPerQuery)
-            {
-                _logger.LogWarning("Invalid count {Count} for leaderboard {LeaderboardId}; max is {MaxEntries}",
-                    body.Count, body.LeaderboardId, _configuration.MaxEntriesPerQuery);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (body.Offset < 0)
-            {
-                _logger.LogWarning("Invalid offset {Offset} for leaderboard {LeaderboardId}", body.Offset, body.LeaderboardId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
-            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
-            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
-
-            // Get range from sorted set
-            var start = body.Offset;
-            var stop = body.Offset + body.Count - 1;
-            var entries = await rankingStore.SortedSetRangeByRankAsync(
-                rankingKey, start, stop, definition.SortOrder == SortOrder.Descending, cancellationToken);
-
-            // Get total entries
-            var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
-
-            // Convert to response entries
-            var responseEntries = entries.Select((entry, index) =>
-            {
-                var (entityType, entityId) = ParseMemberKey(entry.member);
-                return new LeaderboardEntry
-                {
-                    EntityId = entityId,
-                    EntityType = entityType,
-                    Score = entry.score,
-                    Rank = body.Offset + index + 1 // 1-based rank
-                };
-            }).ToList();
-
-            return (StatusCodes.OK, new LeaderboardEntriesResponse
-            {
-                LeaderboardId = body.LeaderboardId,
-                Entries = responseEntries,
-                TotalEntries = totalEntries
-            });
+            _logger.LogWarning("Invalid count {Count} for leaderboard {LeaderboardId}; max is {MaxEntries}",
+                body.Count, body.LeaderboardId, _configuration.MaxEntriesPerQuery);
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        if (body.Offset < 0)
         {
-            _logger.LogError(ex, "Error getting top ranks");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "GetTopRanks",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/rank/top",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Invalid offset {Offset} for leaderboard {LeaderboardId}", body.Offset, body.LeaderboardId);
+            return (StatusCodes.BadRequest, null);
         }
+
+        // Get leaderboard definition
+        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+        var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+        var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+        if (definition == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
+        var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+
+        // Get range from sorted set
+        var start = body.Offset;
+        var stop = body.Offset + body.Count - 1;
+        var entries = await rankingStore.SortedSetRangeByRankAsync(
+            rankingKey, start, stop, definition.SortOrder == SortOrder.Descending, cancellationToken);
+
+        // Get total entries
+        var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+        // Convert to response entries
+        var responseEntries = entries.Select((entry, index) =>
+        {
+            var (entityType, entityId) = ParseMemberKey(entry.member);
+            return new LeaderboardEntry
+            {
+                EntityId = entityId,
+                EntityType = entityType,
+                Score = entry.score,
+                Rank = body.Offset + index + 1 // 1-based rank
+            };
+        }).ToList();
+
+        return (StatusCodes.OK, new LeaderboardEntriesResponse
+        {
+            LeaderboardId = body.LeaderboardId,
+            Entries = responseEntries,
+            TotalEntries = totalEntries
+        });
     }
 
     /// <summary>
@@ -743,91 +635,73 @@ public partial class LeaderboardService : ILeaderboardService
         _logger.LogDebug("Getting ranks around {EntityType}:{EntityId} on {LeaderboardId}",
             body.EntityType, body.EntityId, body.LeaderboardId);
 
-        try
+        if (body.CountBefore < 0 || body.CountAfter < 0)
         {
-            if (body.CountBefore < 0 || body.CountAfter < 0)
-            {
-                _logger.LogWarning(
-                    "Invalid surrounding counts (before:{CountBefore}, after:{CountAfter}) for leaderboard {LeaderboardId}",
-                    body.CountBefore, body.CountAfter, body.LeaderboardId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var totalRequested = body.CountBefore + body.CountAfter + 1;
-            if (totalRequested > _configuration.MaxEntriesPerQuery)
-            {
-                _logger.LogWarning(
-                    "Requested {TotalRequested} entries around entity exceeds max {MaxEntries} for leaderboard {LeaderboardId}",
-                    totalRequested, _configuration.MaxEntriesPerQuery, body.LeaderboardId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
-            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
-            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
-            var memberKey = GetMemberKey(body.EntityType, body.EntityId);
-
-            // Get entity's rank
-            var entityRank = await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken);
-            if (!entityRank.HasValue)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Calculate range around the entity
-            var start = Math.Max(0, entityRank.Value - body.CountBefore);
-            var stop = entityRank.Value + body.CountAfter;
-
-            var entries = await rankingStore.SortedSetRangeByRankAsync(
-                rankingKey, start, stop, definition.SortOrder == SortOrder.Descending, cancellationToken);
-
-            // Get total entries
-            var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
-
-            // Convert to response entries
-            var responseEntries = entries.Select((entry, index) =>
-            {
-                var (entryEntityType, entryEntityId) = ParseMemberKey(entry.member);
-                return new LeaderboardEntry
-                {
-                    EntityId = entryEntityId,
-                    EntityType = entryEntityType,
-                    Score = entry.score,
-                    Rank = start + index + 1 // 1-based rank
-                };
-            }).ToList();
-
-            return (StatusCodes.OK, new LeaderboardEntriesResponse
-            {
-                LeaderboardId = body.LeaderboardId,
-                Entries = responseEntries,
-                TotalEntries = totalEntries
-            });
+            _logger.LogWarning(
+                "Invalid surrounding counts (before:{CountBefore}, after:{CountAfter}) for leaderboard {LeaderboardId}",
+                body.CountBefore, body.CountAfter, body.LeaderboardId);
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        var totalRequested = body.CountBefore + body.CountAfter + 1;
+        if (totalRequested > _configuration.MaxEntriesPerQuery)
         {
-            _logger.LogError(ex, "Error getting ranks around entity");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "GetRanksAround",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/rank/around",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning(
+                "Requested {TotalRequested} entries around entity exceeds max {MaxEntries} for leaderboard {LeaderboardId}",
+                totalRequested, _configuration.MaxEntriesPerQuery, body.LeaderboardId);
+            return (StatusCodes.BadRequest, null);
         }
+
+        // Get leaderboard definition
+        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+        var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+        var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+        if (definition == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
+        var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+        var memberKey = GetMemberKey(body.EntityType, body.EntityId);
+
+        // Get entity's rank
+        var entityRank = await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken);
+        if (!entityRank.HasValue)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Calculate range around the entity
+        var start = Math.Max(0, entityRank.Value - body.CountBefore);
+        var stop = entityRank.Value + body.CountAfter;
+
+        var entries = await rankingStore.SortedSetRangeByRankAsync(
+            rankingKey, start, stop, definition.SortOrder == SortOrder.Descending, cancellationToken);
+
+        // Get total entries
+        var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+        // Convert to response entries
+        var responseEntries = entries.Select((entry, index) =>
+        {
+            var (entryEntityType, entryEntityId) = ParseMemberKey(entry.member);
+            return new LeaderboardEntry
+            {
+                EntityId = entryEntityId,
+                EntityType = entryEntityType,
+                Score = entry.score,
+                Rank = start + index + 1 // 1-based rank
+            };
+        }).ToList();
+
+        return (StatusCodes.OK, new LeaderboardEntriesResponse
+        {
+            LeaderboardId = body.LeaderboardId,
+            Entries = responseEntries,
+            TotalEntries = totalEntries
+        });
     }
 
     /// <summary>
