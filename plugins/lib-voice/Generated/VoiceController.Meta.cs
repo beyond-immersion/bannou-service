@@ -25,7 +25,7 @@ public partial class VoiceController
         "CreateVoiceRoomRequest": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Request to create a voice room for a game session",
+            "description": "Request to create a voice room",
             "required": [
                 "sessionId"
             ],
@@ -33,7 +33,7 @@ public partial class VoiceController
                 "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game session ID this voice room is associated with"
+                    "description": "Session ID this voice room is associated with"
                 },
                 "preferredTier": {
                     "$ref": "#/$defs/VoiceTier",
@@ -49,6 +49,16 @@ public partial class VoiceController
                 "codec": {
                     "$ref": "#/$defs/VoiceCodec",
                     "description": "Preferred audio codec (defaults to opus)"
+                },
+                "autoCleanup": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, room auto-deletes when empty after grace period"
+                },
+                "password": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional room password for access control"
                 }
             }
         },
@@ -97,7 +107,7 @@ public partial class VoiceController
                 "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Associated game session ID"
+                    "description": "Associated session ID"
                 },
                 "tier": {
                     "$ref": "#/$defs/VoiceTier",
@@ -131,6 +141,22 @@ public partial class VoiceController
                     "type": "string",
                     "nullable": true,
                     "description": "RTP server URI (only present in scaled tier)"
+                },
+                "autoCleanup": {
+                    "type": "boolean",
+                    "description": "Whether the room auto-deletes when empty"
+                },
+                "isPasswordProtected": {
+                    "type": "boolean",
+                    "description": "Whether the room requires a password to join"
+                },
+                "isBroadcasting": {
+                    "type": "boolean",
+                    "description": "Whether the room is currently broadcasting (Approved state)"
+                },
+                "broadcastState": {
+                    "$ref": "#/$defs/BroadcastConsentState",
+                    "description": "Current broadcast consent state"
                 }
             }
         },
@@ -181,6 +207,15 @@ public partial class VoiceController
                     "description": "Whether participant is muted"
                 }
             }
+        },
+        "BroadcastConsentState": {
+            "type": "string",
+            "enum": [
+                "Inactive",
+                "Pending",
+                "Approved"
+            ],
+            "description": "Current state of broadcast consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as terminal.\n"
         }
     }
 }
@@ -188,8 +223,8 @@ public partial class VoiceController
 
     private static readonly string _CreateVoiceRoom_Info = """
 {
-    "summary": "Create voice room for a game session",
-    "description": "Creates a new voice room associated with a game session.\nCalled by GameSession service when creating a session with voice enabled.\nReturns room ID and initial configuration.\n",
+    "summary": "Create a new voice room",
+    "description": "Creates a new voice room associated with a session. Any service can call this.\nReturns room ID and initial configuration.\n",
     "tags": [
         "Voice Rooms"
     ],
@@ -290,7 +325,7 @@ public partial class VoiceController
                 "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Associated game session ID"
+                    "description": "Associated session ID"
                 },
                 "tier": {
                     "$ref": "#/$defs/VoiceTier",
@@ -324,6 +359,22 @@ public partial class VoiceController
                     "type": "string",
                     "nullable": true,
                     "description": "RTP server URI (only present in scaled tier)"
+                },
+                "autoCleanup": {
+                    "type": "boolean",
+                    "description": "Whether the room auto-deletes when empty"
+                },
+                "isPasswordProtected": {
+                    "type": "boolean",
+                    "description": "Whether the room requires a password to join"
+                },
+                "isBroadcasting": {
+                    "type": "boolean",
+                    "description": "Whether the room is currently broadcasting (Approved state)"
+                },
+                "broadcastState": {
+                    "$ref": "#/$defs/BroadcastConsentState",
+                    "description": "Current broadcast consent state"
                 }
             }
         },
@@ -374,6 +425,15 @@ public partial class VoiceController
                     "description": "Whether participant is muted"
                 }
             }
+        },
+        "BroadcastConsentState": {
+            "type": "string",
+            "enum": [
+                "Inactive",
+                "Pending",
+                "Approved"
+            ],
+            "description": "Current state of broadcast consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as terminal.\n"
         }
     }
 }
@@ -382,7 +442,7 @@ public partial class VoiceController
     private static readonly string _GetVoiceRoom_Info = """
 {
     "summary": "Get voice room details",
-    "description": "Retrieves current state of a voice room including participant list.\nCalled by GameSession service to check room status.\n",
+    "description": "Retrieves current state of a voice room including participant list.\n",
     "tags": [
         "Voice Rooms"
     ],
@@ -468,6 +528,11 @@ public partial class VoiceController
                     "type": "string",
                     "maxLength": 50,
                     "description": "Display name for UI"
+                },
+                "password": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Room password (required if room is password-protected)"
                 }
             }
         },
@@ -556,6 +621,14 @@ public partial class VoiceController
                     "type": "boolean",
                     "default": false,
                     "description": "True if room is about to upgrade to scaled tier"
+                },
+                "isBroadcasting": {
+                    "type": "boolean",
+                    "description": "Whether the room is currently broadcasting (Approved state)"
+                },
+                "broadcastState": {
+                    "$ref": "#/$defs/BroadcastConsentState",
+                    "description": "Current broadcast consent state"
                 }
             }
         },
@@ -631,6 +704,15 @@ public partial class VoiceController
                     "description": "UDP port for RTP"
                 }
             }
+        },
+        "BroadcastConsentState": {
+            "type": "string",
+            "enum": [
+                "Inactive",
+                "Pending",
+                "Approved"
+            ],
+            "description": "Current state of broadcast consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as terminal.\n"
         }
     }
 }
@@ -639,7 +721,7 @@ public partial class VoiceController
     private static readonly string _JoinVoiceRoom_Info = """
 {
     "summary": "Join voice room and register SIP endpoint",
-    "description": "Registers a participant's SIP endpoint with the voice room.\nCalled by GameSession service when a player joins a session.\ nReturns connection info and current peer list for P2P mode,\nor RTP server details for scaled mode.\n",
+    "description": "Registers a participant in the voice room. If AdHocRoomsEnabled and room\ndoesn't exist, auto-creates it.\nReturns connection info and current peer list for P2P mode,\nor RTP server details for scaled mode.\n",
     "tags": [
         "Voice Rooms"
     ],
@@ -729,7 +811,7 @@ public partial class VoiceController
     private static readonly string _LeaveVoiceRoom_Info = """
 {
     "summary": "Leave voice room",
-    "description": "Removes a participant from the voice room and notifies other peers.\nCalled by GameSession service when a player leaves a session.\n",
+    "description": "Removes a participant from the voice room.\n",
     "tags": [
         "Voice Rooms"
     ],
@@ -802,7 +884,7 @@ public partial class VoiceController
                 },
                 "reason": {
                     "type": "string",
-                    "description": "Reason for deletion (e.g., \"session_ended\")"
+                    "description": "Reason for deletion"
                 }
             }
         }
@@ -817,7 +899,7 @@ public partial class VoiceController
     private static readonly string _DeleteVoiceRoom_Info = """
 {
     "summary": "Delete voice room",
-    "description": "Deletes a voice room and notifies all participants.\nCalled by GameSession service when a session is deleted.\n",
+    "description": "Deletes a voice room and notifies all participants.\n",
     "tags": [
         "Voice Rooms"
     ],
@@ -1063,6 +1145,536 @@ public partial class VoiceController
             _AnswerPeer_Info,
             _AnswerPeer_RequestSchema,
             _AnswerPeer_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RequestBroadcastConsent
+
+    private static readonly string _RequestBroadcastConsent_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BroadcastConsentRequest",
+    "$defs": {
+        "BroadcastConsentRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to initiate broadcast consent for a voice room",
+            "required": [
+                "roomId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room to broadcast"
+                },
+                "requestingSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Session ID of the participant requesting broadcast (server can derive from auth context)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RequestBroadcastConsent_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BroadcastConsentStatus",
+    "$defs": {
+        "BroadcastConsentStatus": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Current broadcast consent status for a voice room",
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID"
+                },
+                "state": {
+                    "$ref": "#/$defs/BroadcastConsentState",
+                    "description": "Current broadcast consent state"
+                },
+                "requestedBySessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Who initiated the broadcast request (null if inactive)"
+                },
+                "consentedSessionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Sessions that have consented so far"
+                },
+                "pendingSessionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Sessions that haven't responded yet"
+                },
+                "rtpAudioEndpoint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.\n"
+                }
+            }
+        },
+        "BroadcastConsentState": {
+            "type": "string",
+            "enum": [
+                "Inactive",
+                "Pending",
+                "Approved"
+            ],
+            "description": "Current state of broadcast consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as terminal.\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _RequestBroadcastConsent_Info = """
+{
+    "summary": "Request broadcast consent from all room participants",
+    "description": "Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.\ nThis endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.\n",
+    "tags": [
+        "Voice Broadcasting"
+    ],
+    "deprecated": false,
+    "operationId": "requestBroadcastConsent"
+}
+""";
+
+    /// <summary>Returns endpoint information for RequestBroadcastConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/request/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestBroadcastConsent_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/request",
+            _RequestBroadcastConsent_Info));
+
+    /// <summary>Returns request schema for RequestBroadcastConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/request/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestBroadcastConsent_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/request",
+            "request-schema",
+            _RequestBroadcastConsent_RequestSchema));
+
+    /// <summary>Returns response schema for RequestBroadcastConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/request/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestBroadcastConsent_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/request",
+            "response-schema",
+            _RequestBroadcastConsent_ResponseSchema));
+
+    /// <summary>Returns full schema for RequestBroadcastConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/request/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestBroadcastConsent_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/request",
+            _RequestBroadcastConsent_Info,
+            _RequestBroadcastConsent_RequestSchema,
+            _RequestBroadcastConsent_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RespondBroadcastConsent
+
+    private static readonly string _RespondBroadcastConsent_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BroadcastConsentResponse",
+    "$defs": {
+        "BroadcastConsentResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response to a broadcast consent request from a participant",
+            "required": [
+                "roomId",
+                "sessionId",
+                "consented"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID of the responding participant"
+                },
+                "consented": {
+                    "type": "boolean",
+                    "description": "True if participant consents to broadcasting"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RespondBroadcastConsent_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BroadcastConsentStatus",
+    "$defs": {
+        "BroadcastConsentStatus": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Current broadcast consent status for a voice room",
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID"
+                },
+                "state": {
+                    "$ref": "#/$defs/BroadcastConsentState",
+                    "description": "Current broadcast consent state"
+                },
+                "requestedBySessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Who initiated the broadcast request (null if inactive)"
+                },
+                "consentedSessionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Sessions that have consented so far"
+                },
+                "pendingSessionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Sessions that haven't responded yet"
+                },
+                "rtpAudioEndpoint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.\n"
+                }
+            }
+        },
+        "BroadcastConsentState": {
+            "type": "string",
+            "enum": [
+                "Inactive",
+                "Pending",
+                "Approved"
+            ],
+            "description": "Current state of broadcast consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as terminal.\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _RespondBroadcastConsent_Info = """
+{
+    "summary": "Respond to a broadcast consent request",
+    "description": "Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.\n",
+    "tags": [
+        "Voice Broadcasting"
+    ],
+    "deprecated": false,
+    "operationId": "respondBroadcastConsent"
+}
+""";
+
+    /// <summary>Returns endpoint information for RespondBroadcastConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/consent/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RespondBroadcastConsent_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/consent",
+            _RespondBroadcastConsent_Info));
+
+    /// <summary>Returns request schema for RespondBroadcastConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/consent/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RespondBroadcastConsent_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/consent",
+            "request-schema",
+            _RespondBroadcastConsent_RequestSchema));
+
+    /// <summary>Returns response schema for RespondBroadcastConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/consent/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RespondBroadcastConsent_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/consent",
+            "response-schema",
+            _RespondBroadcastConsent_ResponseSchema));
+
+    /// <summary>Returns full schema for RespondBroadcastConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/consent/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RespondBroadcastConsent_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/consent",
+            _RespondBroadcastConsent_Info,
+            _RespondBroadcastConsent_RequestSchema,
+            _RespondBroadcastConsent_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for StopBroadcast
+
+    private static readonly string _StopBroadcast_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StopBroadcastConsentRequest",
+    "$defs": {
+        "StopBroadcastConsentRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to stop broadcasting from a voice room",
+            "required": [
+                "roomId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Session ID of the participant stopping the broadcast"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _StopBroadcast_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _StopBroadcast_Info = """
+{
+    "summary": "Stop broadcasting from a voice room",
+    "description": "Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.\n",
+    "tags": [
+        "Voice Broadcasting"
+    ],
+    "deprecated": false,
+    "operationId": "stopBroadcast"
+}
+""";
+
+    /// <summary>Returns endpoint information for StopBroadcast</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/stop/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StopBroadcast_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/stop",
+            _StopBroadcast_Info));
+
+    /// <summary>Returns request schema for StopBroadcast</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/stop/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StopBroadcast_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/stop",
+            "request-schema",
+            _StopBroadcast_RequestSchema));
+
+    /// <summary>Returns response schema for StopBroadcast</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/stop/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StopBroadcast_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/stop",
+            "response-schema",
+            _StopBroadcast_ResponseSchema));
+
+    /// <summary>Returns full schema for StopBroadcast</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/stop/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StopBroadcast_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/stop",
+            _StopBroadcast_Info,
+            _StopBroadcast_RequestSchema,
+            _StopBroadcast_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetBroadcastStatus
+
+    private static readonly string _GetBroadcastStatus_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BroadcastStatusRequest",
+    "$defs": {
+        "BroadcastStatusRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get broadcast consent status for a voice room",
+            "required": [
+                "roomId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetBroadcastStatus_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BroadcastConsentStatus",
+    "$defs": {
+        "BroadcastConsentStatus": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Current broadcast consent status for a voice room",
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID"
+                },
+                "state": {
+                    "$ref": "#/$defs/BroadcastConsentState",
+                    "description": "Current broadcast consent state"
+                },
+                "requestedBySessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Who initiated the broadcast request (null if inactive)"
+                },
+                "consentedSessionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Sessions that have consented so far"
+                },
+                "pendingSessionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Sessions that haven't responded yet"
+                },
+                "rtpAudioEndpoint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.\n"
+                }
+            }
+        },
+        "BroadcastConsentState": {
+            "type": "string",
+            "enum": [
+                "Inactive",
+                "Pending",
+                "Approved"
+            ],
+            "description": "Current state of broadcast consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as terminal.\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _GetBroadcastStatus_Info = """
+{
+    "summary": "Get broadcast status for a voice room",
+    "description": "Returns the current broadcast state: whether consent is pending, active, or inactive.\n",
+    "tags": [
+        "Voice Broadcasting"
+    ],
+    "deprecated": false,
+    "operationId": "getBroadcastStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetBroadcastStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetBroadcastStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/status",
+            _GetBroadcastStatus_Info));
+
+    /// <summary>Returns request schema for GetBroadcastStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetBroadcastStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/status",
+            "request-schema",
+            _GetBroadcastStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetBroadcastStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetBroadcastStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/status",
+            "response-schema",
+            _GetBroadcastStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetBroadcastStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/voice/room/broadcast/status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetBroadcastStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "POST",
+            "/voice/room/broadcast/status",
+            _GetBroadcastStatus_Info,
+            _GetBroadcastStatus_RequestSchema,
+            _GetBroadcastStatus_ResponseSchema));
 
     #endregion
 }

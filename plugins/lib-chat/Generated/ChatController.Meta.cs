@@ -24,6 +24,8 @@ public partial class ChatController
     "$defs": {
         "RegisterRoomTypeRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to register a new room type definition",
             "required": [
                 "code",
                 "displayName",
@@ -52,15 +54,21 @@ public partial class ChatController
                     "description": "Game service scope (null for global types)"
                 },
                 "messageFormat": {
-                    "$ref": "#/$defs/MessageFormat"
+                    "$ref": "#/$defs/MessageFormat",
+                    "description": "Content format this room type accepts"
                 },
                 "validatorConfig": {
-                    "$ref": "#/$defs/ValidatorConfig",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidatorConfig"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Validation rules for messages (null uses format defaults)"
                 },
                 "persistenceMode": {
-                    "$ref": "#/$defs/PersistenceMode"
+                    "$ref": "#/$defs/PersistenceMode",
+                    "description": "Message storage mode (ephemeral or persistent)"
                 },
                 "defaultMaxParticipants": {
                     "type": "integer",
@@ -106,6 +114,7 @@ public partial class ChatController
         },
         "ValidatorConfig": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Validation rules applied to messages in rooms of this type",
             "properties": {
                 "maxMessageLength": {
@@ -162,6 +171,8 @@ public partial class ChatController
     "$defs": {
         "RoomTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Room type definition with current configuration and status",
             "required": [
                 "code",
                 "displayName",
@@ -192,15 +203,21 @@ public partial class ChatController
                     "description": "Game service scope (null for global)"
                 },
                 "messageFormat": {
-                    "$ref": "#/$defs/MessageFormat"
+                    "$ref": "#/$defs/MessageFormat",
+                    "description": "Content format accepted by this room type"
                 },
                 "validatorConfig": {
-                    "$ref": "#/$defs/ValidatorConfig",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidatorConfig"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Active validation rules"
                 },
                 "persistenceMode": {
-                    "$ref": "#/$defs/PersistenceMode"
+                    "$ref": "#/$defs/PersistenceMode",
+                    "description": "Message storage mode"
                 },
                 "defaultMaxParticipants": {
                     "type": "integer",
@@ -233,7 +250,8 @@ public partial class ChatController
                     "description": "Arbitrary JSON metadata"
                 },
                 "status": {
-                    "$ref": "#/$defs/RoomTypeStatus"
+                    "$ref": "#/$defs/RoomTypeStatus",
+                    "description": "Current lifecycle status of the room type"
                 },
                 "createdAt": {
                     "type": "string",
@@ -260,6 +278,7 @@ public partial class ChatController
         },
         "ValidatorConfig": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Validation rules applied to messages in rooms of this type",
             "properties": {
                 "maxMessageLength": {
@@ -378,6 +397,8 @@ public partial class ChatController
     "$defs": {
         "GetRoomTypeRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to retrieve a room type by code",
             "required": [
                 "code"
             ],
@@ -405,6 +426,8 @@ public partial class ChatController
     "$defs": {
         "RoomTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Room type definition with current configuration and status",
             "required": [
                 "code",
                 "displayName",
@@ -435,15 +458,21 @@ public partial class ChatController
                     "description": "Game service scope (null for global)"
                 },
                 "messageFormat": {
-                    "$ref": "#/$defs/MessageFormat"
+                    "$ref": "#/$defs/MessageFormat",
+                    "description": "Content format accepted by this room type"
                 },
                 "validatorConfig": {
-                    "$ref": "#/$defs/ValidatorConfig",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidatorConfig"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Active validation rules"
                 },
                 "persistenceMode": {
-                    "$ref": "#/$defs/PersistenceMode"
+                    "$ref": "#/$defs/PersistenceMode",
+                    "description": "Message storage mode"
                 },
                 "defaultMaxParticipants": {
                     "type": "integer",
@@ -476,7 +505,8 @@ public partial class ChatController
                     "description": "Arbitrary JSON metadata"
                 },
                 "status": {
-                    "$ref": "#/$defs/RoomTypeStatus"
+                    "$ref": "#/$defs/RoomTypeStatus",
+                    "description": "Current lifecycle status of the room type"
                 },
                 "createdAt": {
                     "type": "string",
@@ -503,6 +533,7 @@ public partial class ChatController
         },
         "ValidatorConfig": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Validation rules applied to messages in rooms of this type",
             "properties": {
                 "maxMessageLength": {
@@ -621,6 +652,8 @@ public partial class ChatController
     "$defs": {
         "ListRoomTypesRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list room types with optional filters and pagination",
             "properties": {
                 "gameServiceId": {
                     "type": "string",
@@ -629,12 +662,20 @@ public partial class ChatController
                     "description": "Filter by game service scope"
                 },
                 "messageFormat": {
-                    "$ref": "#/$defs/MessageFormat",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/MessageFormat"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Filter by message format"
                 },
                 "status": {
-                    "$ref": "#/$defs/RoomTypeStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/RoomTypeStatus"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Filter by status"
                 },
@@ -679,6 +720,8 @@ public partial class ChatController
     "$defs": {
         "ListRoomTypesResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Paginated list of room type definitions",
             "required": [
                 "items",
                 "totalCount",
@@ -709,6 +752,8 @@ public partial class ChatController
         },
         "RoomTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Room type definition with current configuration and status",
             "required": [
                 "code",
                 "displayName",
@@ -739,15 +784,21 @@ public partial class ChatController
                     "description": "Game service scope (null for global)"
                 },
                 "messageFormat": {
-                    "$ref": "#/$defs/MessageFormat"
+                    "$ref": "#/$defs/MessageFormat",
+                    "description": "Content format accepted by this room type"
                 },
                 "validatorConfig": {
-                    "$ref": "#/$defs/ValidatorConfig",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidatorConfig"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Active validation rules"
                 },
                 "persistenceMode": {
-                    "$ref": "#/$defs/PersistenceMode"
+                    "$ref": "#/$defs/PersistenceMode",
+                    "description": "Message storage mode"
                 },
                 "defaultMaxParticipants": {
                     "type": "integer",
@@ -780,7 +831,8 @@ public partial class ChatController
                     "description": "Arbitrary JSON metadata"
                 },
                 "status": {
-                    "$ref": "#/$defs/RoomTypeStatus"
+                    "$ref": "#/$defs/RoomTypeStatus",
+                    "description": "Current lifecycle status of the room type"
                 },
                 "createdAt": {
                     "type": "string",
@@ -807,6 +859,7 @@ public partial class ChatController
         },
         "ValidatorConfig": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Validation rules applied to messages in rooms of this type",
             "properties": {
                 "maxMessageLength": {
@@ -925,6 +978,8 @@ public partial class ChatController
     "$defs": {
         "UpdateRoomTypeRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to update room type properties (null fields left unchanged)",
             "required": [
                 "code"
             ],
@@ -950,7 +1005,11 @@ public partial class ChatController
                     "description": "Updated description"
                 },
                 "validatorConfig": {
-                    "$ref": "#/$defs/ValidatorConfig",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidatorConfig"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Updated validation rules"
                 },
@@ -989,6 +1048,7 @@ public partial class ChatController
         },
         "ValidatorConfig": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Validation rules applied to messages in rooms of this type",
             "properties": {
                 "maxMessageLength": {
@@ -1037,6 +1097,8 @@ public partial class ChatController
     "$defs": {
         "RoomTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Room type definition with current configuration and status",
             "required": [
                 "code",
                 "displayName",
@@ -1067,15 +1129,21 @@ public partial class ChatController
                     "description": "Game service scope (null for global)"
                 },
                 "messageFormat": {
-                    "$ref": "#/$defs/MessageFormat"
+                    "$ref": "#/$defs/MessageFormat",
+                    "description": "Content format accepted by this room type"
                 },
                 "validatorConfig": {
-                    "$ref": "#/$defs/ValidatorConfig",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidatorConfig"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Active validation rules"
                 },
                 "persistenceMode": {
-                    "$ref": "#/$defs/PersistenceMode"
+                    "$ref": "#/$defs/PersistenceMode",
+                    "description": "Message storage mode"
                 },
                 "defaultMaxParticipants": {
                     "type": "integer",
@@ -1108,7 +1176,8 @@ public partial class ChatController
                     "description": "Arbitrary JSON metadata"
                 },
                 "status": {
-                    "$ref": "#/$defs/RoomTypeStatus"
+                    "$ref": "#/$defs/RoomTypeStatus",
+                    "description": "Current lifecycle status of the room type"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1135,6 +1204,7 @@ public partial class ChatController
         },
         "ValidatorConfig": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Validation rules applied to messages in rooms of this type",
             "properties": {
                 "maxMessageLength": {
@@ -1253,6 +1323,8 @@ public partial class ChatController
     "$defs": {
         "DeprecateRoomTypeRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to deprecate a room type (prevents new room creation)",
             "required": [
                 "code"
             ],
@@ -1280,6 +1352,8 @@ public partial class ChatController
     "$defs": {
         "RoomTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Room type definition with current configuration and status",
             "required": [
                 "code",
                 "displayName",
@@ -1310,15 +1384,21 @@ public partial class ChatController
                     "description": "Game service scope (null for global)"
                 },
                 "messageFormat": {
-                    "$ref": "#/$defs/MessageFormat"
+                    "$ref": "#/$defs/MessageFormat",
+                    "description": "Content format accepted by this room type"
                 },
                 "validatorConfig": {
-                    "$ref": "#/$defs/ValidatorConfig",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidatorConfig"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Active validation rules"
                 },
                 "persistenceMode": {
-                    "$ref": "#/$defs/PersistenceMode"
+                    "$ref": "#/$defs/PersistenceMode",
+                    "description": "Message storage mode"
                 },
                 "defaultMaxParticipants": {
                     "type": "integer",
@@ -1351,7 +1431,8 @@ public partial class ChatController
                     "description": "Arbitrary JSON metadata"
                 },
                 "status": {
-                    "$ref": "#/$defs/RoomTypeStatus"
+                    "$ref": "#/$defs/RoomTypeStatus",
+                    "description": "Current lifecycle status of the room type"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1378,6 +1459,7 @@ public partial class ChatController
         },
         "ValidatorConfig": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Validation rules applied to messages in rooms of this type",
             "properties": {
                 "maxMessageLength": {
@@ -1496,6 +1578,8 @@ public partial class ChatController
     "$defs": {
         "CreateRoomRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to create a new chat room",
             "required": [
                 "roomTypeCode"
             ],
@@ -1527,22 +1611,38 @@ public partial class ChatController
                     "description": "Participant limit override (null uses type default)"
                 },
                 "contractFulfilledAction": {
-                    "$ref": "#/$defs/ContractRoomAction",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ContractRoomAction"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Action when governing contract is fulfilled (null uses service default)"
                 },
                 "contractBreachAction": {
-                    "$ref": "#/$defs/ContractRoomAction",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ContractRoomAction"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Action when governing contract is breached (null uses service default)"
                 },
                 "contractTerminatedAction": {
-                    "$ref": "#/$defs/ContractRoomAction",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ContractRoomAction"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Action when governing contract is terminated (null uses service default)"
                 },
                 "contractExpiredAction": {
-                    "$ref": "#/$defs/ContractRoomAction",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ContractRoomAction"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Action when governing contract expires (null uses service default)"
                 },
@@ -1574,6 +1674,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -1610,7 +1712,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -1711,6 +1814,8 @@ public partial class ChatController
     "$defs": {
         "GetRoomRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to retrieve a room by ID",
             "required": [
                 "roomId"
             ],
@@ -1733,6 +1838,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -1769,7 +1876,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -1870,6 +1978,8 @@ public partial class ChatController
     "$defs": {
         "ListRoomsRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list rooms with optional filters and pagination",
             "properties": {
                 "roomTypeCode": {
                     "type": "string",
@@ -1883,7 +1993,11 @@ public partial class ChatController
                     "description": "Filter by Connect session ID"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ChatRoomStatus"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Filter by room status"
                 },
@@ -1919,6 +2033,8 @@ public partial class ChatController
     "$defs": {
         "ListRoomsResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Paginated list of chat rooms",
             "required": [
                 "items",
                 "totalCount",
@@ -1949,6 +2065,8 @@ public partial class ChatController
         },
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -1985,7 +2103,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -2086,6 +2205,8 @@ public partial class ChatController
     "$defs": {
         "UpdateRoomRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to update room properties (null fields left unchanged)",
             "required": [
                 "roomId"
             ],
@@ -2123,6 +2244,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -2159,7 +2282,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -2260,6 +2384,8 @@ public partial class ChatController
     "$defs": {
         "DeleteRoomRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to permanently delete a room and all its messages",
             "required": [
                 "roomId"
             ],
@@ -2282,6 +2408,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -2318,7 +2446,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -2419,6 +2548,8 @@ public partial class ChatController
     "$defs": {
         "ArchiveRoomRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to archive a room (makes it read-only)",
             "required": [
                 "roomId"
             ],
@@ -2441,6 +2572,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -2477,7 +2610,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -2578,6 +2712,8 @@ public partial class ChatController
     "$defs": {
         "JoinRoomRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to join a chat room as a participant",
             "required": [
                 "roomId"
             ],
@@ -2604,7 +2740,11 @@ public partial class ChatController
                     "description": "Human-readable display name"
                 },
                 "role": {
-                    "$ref": "#/$defs/ChatParticipantRole",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ChatParticipantRole"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Requested role (defaults to Member if not specified)"
                 }
@@ -2631,6 +2771,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -2667,7 +2809,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -2768,6 +2911,8 @@ public partial class ChatController
     "$defs": {
         "LeaveRoomRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to leave a chat room",
             "required": [
                 "roomId"
             ],
@@ -2790,6 +2935,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -2826,7 +2973,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -2927,6 +3075,8 @@ public partial class ChatController
     "$defs": {
         "ListParticipantsRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list participants in a room",
             "required": [
                 "roomId"
             ],
@@ -2949,6 +3099,8 @@ public partial class ChatController
     "$defs": {
         "ParticipantsResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "List of participants in a room",
             "required": [
                 "roomId",
                 "participants"
@@ -2970,6 +3122,8 @@ public partial class ChatController
         },
         "ParticipantInfo": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Details about a chat room participant",
             "required": [
                 "sessionId",
                 "role",
@@ -2999,7 +3153,8 @@ public partial class ChatController
                     "description": "Display name"
                 },
                 "role": {
-                    "$ref": "#/$defs/ChatParticipantRole"
+                    "$ref": "#/$defs/ChatParticipantRole",
+                    "description": "Participant role in the room"
                 },
                 "joinedAt": {
                     "type": "string",
@@ -3087,6 +3242,8 @@ public partial class ChatController
     "$defs": {
         "KickParticipantRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to remove a participant from a room",
             "required": [
                 "roomId",
                 "targetSessionId"
@@ -3120,6 +3277,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -3156,7 +3315,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -3257,6 +3417,8 @@ public partial class ChatController
     "$defs": {
         "BanParticipantRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to ban a participant from a room",
             "required": [
                 "roomId",
                 "targetSessionId"
@@ -3295,6 +3457,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -3331,7 +3495,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -3432,6 +3597,8 @@ public partial class ChatController
     "$defs": {
         "UnbanParticipantRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to remove a ban for a participant",
             "required": [
                 "roomId",
                 "targetSessionId"
@@ -3460,6 +3627,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -3496,7 +3665,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -3597,6 +3767,8 @@ public partial class ChatController
     "$defs": {
         "MuteParticipantRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to mute a participant in a room",
             "required": [
                 "roomId",
                 "targetSessionId"
@@ -3630,6 +3802,8 @@ public partial class ChatController
     "$defs": {
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -3666,7 +3840,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -3767,6 +3942,8 @@ public partial class ChatController
     "$defs": {
         "SendMessageRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to send a message to a chat room",
             "required": [
                 "roomId",
                 "content"
@@ -3778,7 +3955,8 @@ public partial class ChatController
                     "description": "Room ID to send the message to"
                 },
                 "content": {
-                    "$ref": "#/$defs/SendMessageContent"
+                    "$ref": "#/$defs/SendMessageContent",
+                    "description": "Message content matching the room format"
                 },
                 "senderType": {
                     "type": "string",
@@ -3800,6 +3978,7 @@ public partial class ChatController
         },
         "SendMessageContent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format.\n",
             "properties": {
                 "text": {
@@ -3808,7 +3987,11 @@ public partial class ChatController
                     "description": "Text content (for Text format rooms)"
                 },
                 "sentimentCategory": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Sentiment category (for Sentiment format rooms)"
                 },
@@ -3816,6 +3999,8 @@ public partial class ChatController
                     "type": "number",
                     "format": "float",
                     "nullable": true,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "description": "Sentiment intensity 0.0-1.0 (for Sentiment format rooms)"
                 },
                 "emojiCode": {
@@ -3847,6 +4032,8 @@ public partial class ChatController
     "$defs": {
         "ChatMessageResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "A chat message with metadata and content",
             "required": [
                 "messageId",
                 "roomId",
@@ -3891,7 +4078,11 @@ public partial class ChatController
                     "description": "Room type code for this message"
                 },
                 "content": {
-                    "$ref": "#/$defs/SendMessageContent",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SendMessageContent"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Message content (null for deleted messages)"
                 },
@@ -3903,6 +4094,7 @@ public partial class ChatController
         },
         "SendMessageContent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format.\n",
             "properties": {
                 "text": {
@@ -3911,7 +4103,11 @@ public partial class ChatController
                     "description": "Text content (for Text format rooms)"
                 },
                 "sentimentCategory": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Sentiment category (for Sentiment format rooms)"
                 },
@@ -3919,6 +4115,8 @@ public partial class ChatController
                     "type": "number",
                     "format": "float",
                     "nullable": true,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "description": "Sentiment intensity 0.0-1.0 (for Sentiment format rooms)"
                 },
                 "emojiCode": {
@@ -4004,6 +4202,8 @@ public partial class ChatController
     "$defs": {
         "SendMessageBatchRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to send multiple messages to a room atomically",
             "required": [
                 "roomId",
                 "messages"
@@ -4025,12 +4225,15 @@ public partial class ChatController
         },
         "BatchMessageEntry": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Individual message entry in a batch send operation",
             "required": [
                 "content"
             ],
             "properties": {
                 "content": {
-                    "$ref": "#/$defs/SendMessageContent"
+                    "$ref": "#/$defs/SendMessageContent",
+                    "description": "Message content matching the room format"
                 },
                 "senderType": {
                     "type": "string",
@@ -4052,6 +4255,7 @@ public partial class ChatController
         },
         "SendMessageContent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format.\n",
             "properties": {
                 "text": {
@@ -4060,7 +4264,11 @@ public partial class ChatController
                     "description": "Text content (for Text format rooms)"
                 },
                 "sentimentCategory": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Sentiment category (for Sentiment format rooms)"
                 },
@@ -4068,6 +4276,8 @@ public partial class ChatController
                     "type": "number",
                     "format": "float",
                     "nullable": true,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "description": "Sentiment intensity 0.0-1.0 (for Sentiment format rooms)"
                 },
                 "emojiCode": {
@@ -4099,6 +4309,8 @@ public partial class ChatController
     "$defs": {
         "SendMessageBatchResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Result of a batch message send operation",
             "required": [
                 "messageCount"
             ],
@@ -4174,6 +4386,8 @@ public partial class ChatController
     "$defs": {
         "MessageHistoryRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to retrieve message history for a room with cursor pagination",
             "required": [
                 "roomId"
             ],
@@ -4206,6 +4420,8 @@ public partial class ChatController
     "$defs": {
         "MessageHistoryResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Paginated message history with cursor for next page",
             "required": [
                 "messages",
                 "hasMore"
@@ -4231,6 +4447,8 @@ public partial class ChatController
         },
         "ChatMessageResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "A chat message with metadata and content",
             "required": [
                 "messageId",
                 "roomId",
@@ -4275,7 +4493,11 @@ public partial class ChatController
                     "description": "Room type code for this message"
                 },
                 "content": {
-                    "$ref": "#/$defs/SendMessageContent",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SendMessageContent"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Message content (null for deleted messages)"
                 },
@@ -4287,6 +4509,7 @@ public partial class ChatController
         },
         "SendMessageContent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format.\n",
             "properties": {
                 "text": {
@@ -4295,7 +4518,11 @@ public partial class ChatController
                     "description": "Text content (for Text format rooms)"
                 },
                 "sentimentCategory": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Sentiment category (for Sentiment format rooms)"
                 },
@@ -4303,6 +4530,8 @@ public partial class ChatController
                     "type": "number",
                     "format": "float",
                     "nullable": true,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "description": "Sentiment intensity 0.0-1.0 (for Sentiment format rooms)"
                 },
                 "emojiCode": {
@@ -4388,6 +4617,8 @@ public partial class ChatController
     "$defs": {
         "DeleteMessageRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to delete a message from a room",
             "required": [
                 "roomId",
                 "messageId"
@@ -4416,6 +4647,8 @@ public partial class ChatController
     "$defs": {
         "ChatMessageResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "A chat message with metadata and content",
             "required": [
                 "messageId",
                 "roomId",
@@ -4460,7 +4693,11 @@ public partial class ChatController
                     "description": "Room type code for this message"
                 },
                 "content": {
-                    "$ref": "#/$defs/SendMessageContent",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SendMessageContent"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Message content (null for deleted messages)"
                 },
@@ -4472,6 +4709,7 @@ public partial class ChatController
         },
         "SendMessageContent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format.\n",
             "properties": {
                 "text": {
@@ -4480,7 +4718,11 @@ public partial class ChatController
                     "description": "Text content (for Text format rooms)"
                 },
                 "sentimentCategory": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Sentiment category (for Sentiment format rooms)"
                 },
@@ -4488,6 +4730,8 @@ public partial class ChatController
                     "type": "number",
                     "format": "float",
                     "nullable": true,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "description": "Sentiment intensity 0.0-1.0 (for Sentiment format rooms)"
                 },
                 "emojiCode": {
@@ -4573,6 +4817,8 @@ public partial class ChatController
     "$defs": {
         "PinMessageRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to pin a message in a room",
             "required": [
                 "roomId",
                 "messageId"
@@ -4601,6 +4847,8 @@ public partial class ChatController
     "$defs": {
         "ChatMessageResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "A chat message with metadata and content",
             "required": [
                 "messageId",
                 "roomId",
@@ -4645,7 +4893,11 @@ public partial class ChatController
                     "description": "Room type code for this message"
                 },
                 "content": {
-                    "$ref": "#/$defs/SendMessageContent",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SendMessageContent"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Message content (null for deleted messages)"
                 },
@@ -4657,6 +4909,7 @@ public partial class ChatController
         },
         "SendMessageContent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format.\n",
             "properties": {
                 "text": {
@@ -4665,7 +4918,11 @@ public partial class ChatController
                     "description": "Text content (for Text format rooms)"
                 },
                 "sentimentCategory": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Sentiment category (for Sentiment format rooms)"
                 },
@@ -4673,6 +4930,8 @@ public partial class ChatController
                     "type": "number",
                     "format": "float",
                     "nullable": true,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "description": "Sentiment intensity 0.0-1.0 (for Sentiment format rooms)"
                 },
                 "emojiCode": {
@@ -4758,6 +5017,8 @@ public partial class ChatController
     "$defs": {
         "UnpinMessageRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to unpin a message in a room",
             "required": [
                 "roomId",
                 "messageId"
@@ -4786,6 +5047,8 @@ public partial class ChatController
     "$defs": {
         "ChatMessageResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "A chat message with metadata and content",
             "required": [
                 "messageId",
                 "roomId",
@@ -4830,7 +5093,11 @@ public partial class ChatController
                     "description": "Room type code for this message"
                 },
                 "content": {
-                    "$ref": "#/$defs/SendMessageContent",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SendMessageContent"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Message content (null for deleted messages)"
                 },
@@ -4842,6 +5109,7 @@ public partial class ChatController
         },
         "SendMessageContent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format.\n",
             "properties": {
                 "text": {
@@ -4850,7 +5118,11 @@ public partial class ChatController
                     "description": "Text content (for Text format rooms)"
                 },
                 "sentimentCategory": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Sentiment category (for Sentiment format rooms)"
                 },
@@ -4858,6 +5130,8 @@ public partial class ChatController
                     "type": "number",
                     "format": "float",
                     "nullable": true,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "description": "Sentiment intensity 0.0-1.0 (for Sentiment format rooms)"
                 },
                 "emojiCode": {
@@ -4943,6 +5217,8 @@ public partial class ChatController
     "$defs": {
         "SearchMessagesRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Request to full-text search messages in a persistent room",
             "required": [
                 "roomId",
                 "query"
@@ -4975,6 +5251,8 @@ public partial class ChatController
     "$defs": {
         "SearchMessagesResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Full-text search results with total match count",
             "required": [
                 "messages",
                 "totalMatches"
@@ -4995,6 +5273,8 @@ public partial class ChatController
         },
         "ChatMessageResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "A chat message with metadata and content",
             "required": [
                 "messageId",
                 "roomId",
@@ -5039,7 +5319,11 @@ public partial class ChatController
                     "description": "Room type code for this message"
                 },
                 "content": {
-                    "$ref": "#/$defs/SendMessageContent",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SendMessageContent"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Message content (null for deleted messages)"
                 },
@@ -5051,6 +5335,7 @@ public partial class ChatController
         },
         "SendMessageContent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format.\n",
             "properties": {
                 "text": {
@@ -5059,7 +5344,11 @@ public partial class ChatController
                     "description": "Text content (for Text format rooms)"
                 },
                 "sentimentCategory": {
-                    "type": "object",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Sentiment category (for Sentiment format rooms)"
                 },
@@ -5067,6 +5356,8 @@ public partial class ChatController
                     "type": "number",
                     "format": "float",
                     "nullable": true,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
                     "description": "Sentiment intensity 0.0-1.0 (for Sentiment format rooms)"
                 },
                 "emojiCode": {
@@ -5152,6 +5443,8 @@ public partial class ChatController
     "$defs": {
         "AdminListRoomsRequest": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Admin request to list all rooms with filters and pagination",
             "properties": {
                 "roomTypeCode": {
                     "type": "string",
@@ -5159,7 +5452,11 @@ public partial class ChatController
                     "description": "Filter by room type"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ChatRoomStatus"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Filter by status"
                 },
@@ -5195,6 +5492,8 @@ public partial class ChatController
     "$defs": {
         "ListRoomsResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Paginated list of chat rooms",
             "required": [
                 "items",
                 "totalCount",
@@ -5225,6 +5524,8 @@ public partial class ChatController
         },
         "ChatRoomResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
             "required": [
                 "roomId",
                 "roomTypeCode",
@@ -5261,7 +5562,8 @@ public partial class ChatController
                     "description": "Human-readable room name"
                 },
                 "status": {
-                    "$ref": "#/$defs/ChatRoomStatus"
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
                 },
                 "participantCount": {
                     "type": "integer",
@@ -5362,6 +5664,7 @@ public partial class ChatController
     "$defs": {
         "AdminGetStatsRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Empty request body for stats endpoint",
             "properties": {}
         }
@@ -5376,6 +5679,8 @@ public partial class ChatController
     "$defs": {
         "AdminStatsResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "System-wide chat statistics for admin monitoring",
             "required": [
                 "totalRooms",
                 "activeRooms",
@@ -5476,6 +5781,7 @@ public partial class ChatController
     "$defs": {
         "AdminForceCleanupRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Empty request body for force cleanup",
             "properties": {}
         }
@@ -5490,6 +5796,8 @@ public partial class ChatController
     "$defs": {
         "AdminCleanupResponse": {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Result of admin-triggered idle room cleanup",
             "required": [
                 "cleanedRooms",
                 "archivedRooms",

@@ -262,8 +262,7 @@ components:
           format: uuid
           description: Voice room ID that was closed
         reason:
-          type: string
-          enum: [manual, empty, error]
+          $ref: 'voice-api.yaml#/components/schemas/VoiceRoomDeletedReason'
           description: Reason the room was closed
 
     # ============================================
@@ -284,7 +283,6 @@ components:
         - eventId
         - timestamp
         - roomId
-        - requestedBySessionId
       properties:
         eventName:
           type: string
@@ -297,7 +295,8 @@ components:
         requestedBySessionId:
           type: string
           format: uuid
-          description: Who initiated the broadcast request
+          nullable: true
+          description: Who initiated the broadcast request (null if server-derived from auth context)
         requestedByDisplayName:
           type: string
           nullable: true

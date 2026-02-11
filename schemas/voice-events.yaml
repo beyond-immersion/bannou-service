@@ -198,7 +198,7 @@ components:
       description: >
         All participants consented to broadcasting. lib-stream subscribes
         to this to start RTMP output from the room's audio source.
-      required: [eventId, timestamp, roomId, requestedBySessionId]
+      required: [eventId, timestamp, roomId]
       properties:
         eventId:
           type: string
@@ -215,7 +215,8 @@ components:
         requestedBySessionId:
           type: string
           format: uuid
-          description: Session ID of the participant who initiated the broadcast request
+          nullable: true
+          description: Session ID of the participant who initiated the broadcast request (null if server-derived)
         rtpAudioEndpoint:
           type: string
           nullable: true
@@ -225,7 +226,7 @@ components:
       type: object
       additionalProperties: false
       description: A participant declined broadcast consent
-      required: [eventId, timestamp, roomId, declinedBySessionId]
+      required: [eventId, timestamp, roomId]
       properties:
         eventId:
           type: string
@@ -242,7 +243,8 @@ components:
         declinedBySessionId:
           type: string
           format: uuid
-          description: Session ID of the participant who declined
+          nullable: true
+          description: Session ID of the participant who declined (null if auto-declined by consent timeout)
 
     VoiceRoomBroadcastStoppedEvent:
       type: object

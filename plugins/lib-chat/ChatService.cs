@@ -1,6 +1,5 @@
-using System.Text.RegularExpressions;
-using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Chat.ClientEvents;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
@@ -10,11 +9,12 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Resource;
-using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService.Chat;
 

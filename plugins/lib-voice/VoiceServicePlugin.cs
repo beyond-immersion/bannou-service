@@ -47,7 +47,7 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
             var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<RtpEngineClient>>();
             var messageBus = sp.GetRequiredService<IMessageBus>();
-            return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger, messageBus, timeoutSeconds: 5);
+            return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger, messageBus, timeoutSeconds: config.RtpEngineTimeoutSeconds);
         });
         Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, KamailioClient, RtpEngineClient)");
 

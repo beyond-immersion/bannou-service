@@ -27,7 +27,7 @@ public sealed class VoiceProxy
     }
 
     /// <summary>
-    /// Create voice room for a game session
+    /// Create a new voice room
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
@@ -142,5 +142,75 @@ public sealed class VoiceProxy
     {
         return _client.SendEventAsync<AnswerPeerRequest>(
             "/voice/peer/answer", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// Request broadcast consent from all room participants
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BroadcastConsentStatus on success.</returns>
+    public Task<ApiResponse<BroadcastConsentStatus>> RequestBroadcastConsentAsync(
+        BroadcastConsentRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BroadcastConsentRequest, BroadcastConsentStatus>(
+            "/voice/room/broadcast/request", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Respond to a broadcast consent request
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BroadcastConsentStatus on success.</returns>
+    public Task<ApiResponse<BroadcastConsentStatus>> RespondBroadcastConsentAsync(
+        BroadcastConsentResponse request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BroadcastConsentResponse, BroadcastConsentStatus>(
+            "/voice/room/broadcast/consent", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Stop broadcasting from a voice room
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task StopBroadcastEventAsync(
+        StopBroadcastConsentRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<StopBroadcastConsentRequest>(
+            "/voice/room/broadcast/stop", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get broadcast status for a voice room
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BroadcastConsentStatus on success.</returns>
+    public Task<ApiResponse<BroadcastConsentStatus>> GetBroadcastStatusAsync(
+        BroadcastStatusRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BroadcastStatusRequest, BroadcastConsentStatus>(
+            "/voice/room/broadcast/status", request, channel, timeout, cancellationToken);
     }
 }

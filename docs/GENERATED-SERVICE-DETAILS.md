@@ -20,6 +20,7 @@ This document provides a compact reference of all Bannou services.
 | [Character Encounter](#character-encounter) | 1.0.0 | 21 | Character encounter tracking service for memorable interacti... |
 | [Character History](#character-history) | 1.0.0 | 12 | Historical event participation and backstory management for ... |
 | [Character Personality](#character-personality) | 1.0.0 | 12 | Machine-readable personality traits for NPC behavior decisio... |
+| [Chat](#chat) | 1.0.0 | 28 | Typed message channel service (L1 AppFoundation) providing u... |
 | [Collection](#collection) | 1.0.0 | 20 | Universal content unlock and archive system for collectible ... |
 | [Common](#common) | 1.0.0 | 0 | Shared type definitions used across multiple Bannou services... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
@@ -58,7 +59,7 @@ Support... |
 | [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
 Tracks which ac... |
 | [Telemetry](#telemetry) | 1.0.0 | 2 | Unified observability plugin providing distributed tracing, ... |
-| [Voice](#voice) | 1.1.0 | 7 | Voice communication coordination service for P2P and room-ba... |
+| [Voice](#voice) | 2.0.0 | 11 | Voice room coordination service. Internal service accessed b... |
 | [Website](#website) | 1.0.0 | 14 | Public-facing website service for registration, information,... |
 
 ---
@@ -148,6 +149,14 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 **Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md)
 
 Machine-readable personality traits and combat preferences (L4 GameFeatures) for NPC behavior decisions. Features probabilistic personality evolution based on character experiences and combat preference adaptation based on battle outcomes. Traits are floating-point values on bipolar axes that shift based on experience intensity. Provides `${personality.*}` and `${combat.*}` ABML variables to the Actor service via the Variable Provider Factory pattern.
+
+---
+
+## Chat {#chat}
+
+**Version**: 1.0.0 | **Schema**: `schemas/chat-api.yaml` | **Deep Dive**: [docs/plugins/CHAT.md](plugins/CHAT.md)
+
+The Chat service (L1 AppFoundation) provides universal typed message channel primitives for real-time communication. Room types determine valid message formats (text, sentiment, emoji, custom-validated payloads), with rooms optionally governed by Contract instances for lifecycle management. Supports ephemeral (Redis TTL) and persistent (MySQL) message storage, participant moderation (kick/ban/mute), rate limiting via atomic Redis counters, and automatic idle room cleanup. Three built-in room types (text, sentiment, emoji) are registered on startup. Internal-only, never internet-facing.
 
 ---
 
@@ -435,9 +444,9 @@ The Telemetry service (L0 Infrastructure, optional) provides unified observabili
 
 ## Voice {#voice}
 
-**Version**: 1.1.0 | **Schema**: `schemas/voice-api.yaml` | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md)
+**Version**: 2.0.0 | **Schema**: `schemas/voice-api.yaml` | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md)
 
-The Voice service (L4 GameFeatures) provides WebRTC-based voice communication for game sessions, supporting both P2P mesh topology (small groups) and scaled tier via SFU for large rooms. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Features automatic tier upgrade when P2P rooms exceed capacity and permission-state-gated SDP exchange. Integrated with lib-game-session for room lifecycle management.
+The Voice service (L3 AppFeatures) provides voice room coordination for P2P and scaled-tier (SFU) WebRTC communication. Supports dual room modes (persistent rooms created via API, ad-hoc rooms auto-created on join), broadcast consent flows for streaming integration, participant TTL enforcement via background worker, and automatic tier upgrade when P2P rooms exceed capacity. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Permission-state-gated SDP exchange and broadcast consent. Internal service accessed by other services via lib-mesh.
 
 ---
 
@@ -451,8 +460,8 @@ Public-facing website service (L3 AppFeatures) for browser-based access to news,
 
 ## Summary
 
-- **Total services**: 48
-- **Total endpoints**: 691
+- **Total services**: 49
+- **Total endpoints**: 723
 
 ---
 

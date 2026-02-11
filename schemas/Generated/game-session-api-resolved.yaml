@@ -974,10 +974,6 @@ components:
       enum: [opus, g711, g722]
       description: Audio codec for voice communication
 
-    # ============================================
-    # Request Models
-    # ============================================
-
     VoiceTier:
       type: string
       enum: [p2p, scaled]

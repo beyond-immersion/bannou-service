@@ -84,6 +84,42 @@ public enum EntityType
 #pragma warning restore CS1591
 
 /// <summary>
+/// Standardized sentiment categories for anonymous audience and reaction data. Used by lib-chat for sentiment room messages and lib-stream for platform audience processing. Designed for privacy-safe communication where text content is inappropriate or unnecessary.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SentimentCategory
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Excited")]
+    Excited = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Supportive")]
+    Supportive = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Critical")]
+    Critical = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Curious")]
+    Curious = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Surprised")]
+    Surprised = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Amused")]
+    Amused = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Bored")]
+    Bored = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Hostile")]
+    Hostile = 7,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Base schema for all resource archives that can be stored in
 /// <br/>the resource service's archive bundles and consumed by the
 /// <br/>storyline SDK's ArchiveExtractor.

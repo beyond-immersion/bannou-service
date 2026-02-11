@@ -75,7 +75,7 @@ public class ParticipantEvictionWorker : BackgroundService
         // Initial delay before first cycle to let the system stabilize
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.EvictionWorkerInitialDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -411,7 +411,7 @@ public class ParticipantEvictionWorker : BackgroundService
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RoomId = roomId,
-            DeclinedBySessionId = Guid.Empty
+            DeclinedBySessionId = null
         });
 
         // Publish client event

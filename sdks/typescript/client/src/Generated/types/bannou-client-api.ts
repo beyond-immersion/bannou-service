@@ -1771,6 +1771,566 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/chat/type/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Register a new room type
+     * @description Registers a new room type definition. Room types are a dynamic registry of string codes. Built-in types (text, sentiment, emoji) are pre-registered on startup. Custom types are added via this endpoint. Returns conflict if code already exists for the given game service scope.
+     */
+    post: operations['RegisterRoomType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/type/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get room type by code
+     * @description Returns the room type definition for the specified code and optional game service scope.
+     */
+    post: operations['GetRoomType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/type/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List room types with filters
+     * @description Returns room types matching the specified filters with pagination.
+     */
+    post: operations['ListRoomTypes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/type/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a room type definition
+     * @description Updates mutable fields of a room type definition. Cannot change code or message format.
+     */
+    post: operations['UpdateRoomType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/type/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Soft-deprecate a room type
+     * @description Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be created with this type.
+     */
+    post: operations['DeprecateRoomType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a chat room
+     * @description Creates a new chat room of the specified type. Optionally associates a governing contract that drives room lifecycle (lock, archive, delete) on contract state changes.
+     */
+    post: operations['CreateRoom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get room by ID
+     * @description Returns the chat room metadata for the specified room ID.
+     */
+    post: operations['GetRoom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List rooms with filters
+     * @description Returns rooms matching the specified filters with pagination.
+     */
+    post: operations['ListRooms'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update room settings
+     * @description Updates mutable room settings. Caller must be the room owner.
+     */
+    post: operations['UpdateRoom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a room
+     * @description Deletes a room, removing all participants and messages. Caller must be the room owner or the room must be empty.
+     */
+    post: operations['DeleteRoom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/archive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Archive a room to Resource
+     * @description Archives a persistent room via lib-resource, preserving message history and metadata. Room is marked as archived after successful archival.
+     */
+    post: operations['ArchiveRoom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/join': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Join a chat room
+     * @description Joins the caller to the specified room. For companion rooms in AutoJoinLazy or Manual mode, the room is created on-the-fly if it does not yet exist. Returns conflict if the room is full or forbidden if the caller is banned.
+     */
+    post: operations['JoinRoom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/leave': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Leave a chat room
+     * @description Removes the caller from the room. If the owner leaves, promotes the next moderator or oldest member.
+     */
+    post: operations['LeaveRoom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/participants': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List room participants
+     * @description Returns all current participants in the room with their roles and status.
+     */
+    post: operations['ListParticipants'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/participant/kick': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Remove a participant from the room
+     * @description Kicks a participant from the room. Caller must be Owner or Moderator with higher role than target.
+     */
+    post: operations['KickParticipant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/participant/ban': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Ban a participant from the room
+     * @description Bans a participant. If currently in the room, they are kicked first. Optionally set a duration; null means permanent.
+     */
+    post: operations['BanParticipant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/participant/unban': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Unban a participant
+     * @description Removes a ban record for a participant. Caller must be Owner or Moderator.
+     */
+    post: operations['UnbanParticipant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/participant/mute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Mute a participant
+     * @description Mutes a participant, preventing them from sending messages. Optionally set a duration; null means permanent.
+     */
+    post: operations['MuteParticipant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/message/send': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send a message to a room
+     * @description Sends a message to the specified room. Content is validated against the room type's message format and validator config. For AutoJoinLazy companion rooms, the room is created and the sender auto-joined if the room does not yet exist.
+     */
+    post: operations['SendMessage'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/message/send-batch': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send multiple messages
+     * @description Sends multiple messages to a room atomically. Intended for bulk sentiment pushes from higher-layer services.
+     */
+    post: operations['SendMessageBatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/message/history': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get message history
+     * @description Returns paginated message history for a room, ordered by timestamp descending. Uses cursor-based pagination.
+     */
+    post: operations['GetMessageHistory'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/message/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a message
+     * @description Deletes a specific message. Caller must be the message sender, room Owner, or Moderator.
+     */
+    post: operations['DeleteMessage'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/message/pin': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Pin a message
+     * @description Pins a message in the room. Caller must be Owner or Moderator. Returns conflict if max pinned messages reached.
+     */
+    post: operations['PinMessage'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/message/unpin': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Unpin a message
+     * @description Unpins a previously pinned message. Caller must be Owner or Moderator.
+     */
+    post: operations['UnpinMessage'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/message/search': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Full-text search in persistent rooms
+     * @description Searches message content in persistent rooms using MySQL full-text search. Not available for ephemeral rooms.
+     */
+    post: operations['SearchMessages'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/admin/rooms': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List all rooms system-wide
+     * @description Returns all rooms across the system for administrative purposes. Supports filtering by status and type.
+     */
+    post: operations['AdminListRooms'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/admin/stats': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Room and message statistics
+     * @description Returns system-wide chat statistics for monitoring and debugging.
+     */
+    post: operations['AdminGetStats'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/admin/cleanup': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Force cleanup of idle rooms
+     * @description Triggers an immediate idle room cleanup cycle, bypassing the normal interval.
+     */
+    post: operations['AdminForceCleanup'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/collection/entry-template/create': {
     parameters: {
       query?: never;
@@ -8689,6 +9249,87 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/voice/room/broadcast/request': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Request broadcast consent from all room participants
+     * @description Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
+     *     This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+     */
+    post: operations['requestBroadcastConsent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/voice/room/broadcast/consent': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Respond to a broadcast consent request
+     * @description Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+     */
+    post: operations['respondBroadcastConsent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/voice/room/broadcast/stop': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Stop broadcasting from a voice room
+     * @description Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+     */
+    post: operations['stopBroadcast'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/voice/room/broadcast/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get broadcast status for a voice room
+     * @description Returns the current broadcast state: whether consent is pending, active, or inactive.
+     */
+    post: operations['getBroadcastStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/website/status': {
     parameters: {
       query?: never;
@@ -9346,6 +9987,51 @@ export interface components {
      * @enum {string}
      */
     AdjacencyMode: 'four_way' | 'eight_way';
+    /** @description Result of admin-triggered idle room cleanup */
+    AdminCleanupResponse: {
+      /** @description Total rooms processed by cleanup */
+      cleanedRooms: number;
+      /** @description Number of rooms archived */
+      archivedRooms: number;
+      /** @description Number of rooms deleted */
+      deletedRooms: number;
+    };
+    /** @description Empty request body for force cleanup */
+    AdminForceCleanupRequest: Record<string, never>;
+    /** @description Empty request body for stats endpoint */
+    AdminGetStatsRequest: Record<string, never>;
+    /** @description Admin request to list all rooms with filters and pagination */
+    AdminListRoomsRequest: {
+      /** @description Filter by room type */
+      roomTypeCode?: string | null;
+      /** @description Filter by status */
+      status?: components['schemas']['ChatRoomStatus'] | null;
+      /**
+       * @description Page number (zero-based)
+       * @default 0
+       */
+      page: number;
+      /**
+       * @description Number of items per page
+       * @default 50
+       */
+      pageSize: number;
+    };
+    /** @description System-wide chat statistics for admin monitoring */
+    AdminStatsResponse: {
+      /** @description Total number of rooms in the system */
+      totalRooms: number;
+      /** @description Number of active rooms */
+      activeRooms: number;
+      /** @description Number of locked rooms */
+      lockedRooms: number;
+      /** @description Number of archived rooms */
+      archivedRooms: number;
+      /** @description Total participants across all rooms */
+      totalParticipants: number;
+      /** @description Total registered room types */
+      totalRoomTypes: number;
+    };
     /** @description Request to advance the discovery level of an unlocked entry */
     AdvanceDiscoveryRequest: {
       /**
@@ -9572,6 +10258,14 @@ export interface components {
        *     or a service name for service-initiated archives.
        */
       owner?: string;
+    };
+    /** @description Request to archive a room (makes it read-only) */
+    ArchiveRoomRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to archive
+       */
+      roomId: string;
     };
     /** @description Request to archive a seed. */
     ArchiveSeedRequest: {
@@ -10135,6 +10829,23 @@ export interface components {
        */
       effectiveAmount: number;
     };
+    /** @description Request to ban a participant from a room */
+    BanParticipantRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Session ID of participant to ban
+       */
+      targetSessionId: string;
+      /** @description Optional reason for the ban */
+      reason?: string | null;
+      /** @description Ban duration in minutes (null for permanent) */
+      durationMinutes?: number | null;
+    };
     /** @description Result of a single balance query in a batch */
     BatchBalanceResult: {
       /**
@@ -10234,6 +10945,20 @@ export interface components {
       items: components['schemas']['ItemInstanceResponse'][];
       /** @description Instance IDs that were not found */
       notFound: string[];
+    };
+    /** @description Individual message entry in a batch send operation */
+    BatchMessageEntry: {
+      /** @description Message content matching the room format */
+      content: components['schemas']['SendMessageContent'];
+      /** @description Opaque sender type */
+      senderType?: string | null;
+      /**
+       * Format: uuid
+       * @description Sender entity ID
+       */
+      senderId?: string | null;
+      /** @description Sender display name */
+      displayName?: string | null;
     };
     /** @description Compiled behavior tree data with bytecode or download reference */
     BehaviorTreeData: {
@@ -10634,6 +11359,68 @@ export interface components {
       | 'milestone_deadline'
       | 'unauthorized_action'
       | 'non_payment';
+    /** @description Request to initiate broadcast consent for a voice room */
+    BroadcastConsentRequest: {
+      /**
+       * Format: uuid
+       * @description Voice room to broadcast
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Session ID of the participant requesting broadcast (server can derive from auth context)
+       */
+      requestingSessionId?: string | null;
+    };
+    /** @description Response to a broadcast consent request from a participant */
+    BroadcastConsentResponse: {
+      /**
+       * Format: uuid
+       * @description Voice room ID
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Session ID of the responding participant
+       */
+      sessionId: string;
+      /** @description True if participant consents to broadcasting */
+      consented: boolean;
+    };
+    /**
+     * @description Current state of broadcast consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as terminal.
+     * @enum {string}
+     */
+    BroadcastConsentState: 'Inactive' | 'Pending' | 'Approved';
+    /** @description Current broadcast consent status for a voice room */
+    BroadcastConsentStatus: {
+      /**
+       * Format: uuid
+       * @description Voice room ID
+       */
+      roomId?: string;
+      /** @description Current broadcast consent state */
+      state?: components['schemas']['BroadcastConsentState'];
+      /**
+       * Format: uuid
+       * @description Who initiated the broadcast request (null if inactive)
+       */
+      requestedBySessionId?: string | null;
+      /** @description Sessions that have consented so far */
+      consentedSessionIds?: string[];
+      /** @description Sessions that haven't responded yet */
+      pendingSessionIds?: string[];
+      /** @description RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio. */
+      rtpAudioEndpoint?: string | null;
+    };
+    /** @description Request to get broadcast consent status for a voice room */
+    BroadcastStatusRequest: {
+      /**
+       * Format: uuid
+       * @description Voice room ID
+       */
+      roomId: string;
+    };
     /** @description Request to retrieve metadata for multiple assets */
     BulkGetAssetsRequest: {
       /** @description Asset IDs to retrieve (max 100) */
@@ -11365,11 +12152,91 @@ export interface components {
        */
       targetPlayerId?: string | null;
     };
+    /** @description A chat message with metadata and content */
+    ChatMessageResponse: {
+      /**
+       * Format: uuid
+       * @description Unique message identifier
+       */
+      messageId: string;
+      /**
+       * Format: uuid
+       * @description Room the message belongs to
+       */
+      roomId: string;
+      /** @description Opaque sender type */
+      senderType?: string | null;
+      /**
+       * Format: uuid
+       * @description Sender entity ID
+       */
+      senderId?: string | null;
+      /** @description Sender display name */
+      displayName?: string | null;
+      /**
+       * Format: date-time
+       * @description When the message was sent
+       */
+      timestamp: string;
+      /** @description Room type code for this message */
+      roomTypeCode: string;
+      /** @description Message content (null for deleted messages) */
+      content?: components['schemas']['SendMessageContent'] | null;
+      /** @description Whether the message is pinned */
+      isPinned: boolean;
+    };
     /**
      * @description Type of chat message
      * @enum {string}
      */
     ChatMessageType: 'public' | 'whisper' | 'system';
+    /**
+     * @description Participant role within a chat room determining moderation privileges
+     * @enum {string}
+     */
+    ChatParticipantRole: 'Owner' | 'Moderator' | 'Member' | 'ReadOnly';
+    /** @description Chat room details including status and participant count */
+    ChatRoomResponse: {
+      /**
+       * Format: uuid
+       * @description Unique room identifier
+       */
+      roomId: string;
+      /** @description Room type code */
+      roomTypeCode: string;
+      /**
+       * Format: uuid
+       * @description Connect session ID if companion room
+       */
+      sessionId?: string | null;
+      /**
+       * Format: uuid
+       * @description Governing contract ID
+       */
+      contractId?: string | null;
+      /** @description Human-readable room name */
+      displayName?: string | null;
+      /** @description Current room status */
+      status: components['schemas']['ChatRoomStatus'];
+      /** @description Current number of participants */
+      participantCount: number;
+      /** @description Maximum participant limit */
+      maxParticipants?: number | null;
+      /** @description Whether the room has been archived */
+      isArchived: boolean;
+      /**
+       * Format: date-time
+       * @description When the room was created
+       */
+      createdAt: string;
+      /** @description Arbitrary JSON metadata */
+      metadata?: string | null;
+    };
+    /**
+     * @description Current state of a chat room
+     * @enum {string}
+     */
+    ChatRoomStatus: 'Active' | 'Locked' | 'Archived';
     /** @description Request to check asset requirement clauses */
     CheckAssetRequirementsRequest: {
       /**
@@ -12811,6 +13678,11 @@ export interface components {
       consentedAt?: string | null;
     };
     /**
+     * @description Action to take on a contract-governed room when contract state changes
+     * @enum {string}
+     */
+    ContractRoomAction: 'Continue' | 'Lock' | 'Archive' | 'Delete';
+    /**
      * @description Current status of a contract instance
      * @enum {string}
      */
@@ -13872,6 +14744,35 @@ export interface components {
        */
       gameServiceId?: string;
     };
+    /** @description Request to create a new chat room */
+    CreateRoomRequest: {
+      /** @description Room type code determining message format and validation */
+      roomTypeCode: string;
+      /**
+       * Format: uuid
+       * @description Connect session ID for companion rooms
+       */
+      sessionId?: string | null;
+      /**
+       * Format: uuid
+       * @description Governing contract ID for lifecycle management
+       */
+      contractId?: string | null;
+      /** @description Human-readable room name */
+      displayName?: string | null;
+      /** @description Participant limit override (null uses type default) */
+      maxParticipants?: number | null;
+      /** @description Action when governing contract is fulfilled (null uses service default) */
+      contractFulfilledAction?: components['schemas']['ContractRoomAction'] | null;
+      /** @description Action when governing contract is breached (null uses service default) */
+      contractBreachAction?: components['schemas']['ContractRoomAction'] | null;
+      /** @description Action when governing contract is terminated (null uses service default) */
+      contractTerminatedAction?: components['schemas']['ContractRoomAction'] | null;
+      /** @description Action when governing contract expires (null uses service default) */
+      contractExpiredAction?: components['schemas']['ContractRoomAction'] | null;
+      /** @description Arbitrary JSON metadata for client rendering hints */
+      metadata?: string | null;
+    };
     /** @description Request to create a scenario definition */
     CreateScenarioDefinitionRequest: {
       /** @description Human-readable scenario code (uppercase with underscores) */
@@ -14483,6 +15384,27 @@ export interface components {
       /** @description ID of the leaderboard to delete */
       leaderboardId: string;
     };
+    /** @description Request to delete a message from a room */
+    DeleteMessageRequest: {
+      /**
+       * Format: uuid
+       * @description Room the message belongs to
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Message ID to delete
+       */
+      messageId: string;
+    };
+    /** @description Request to permanently delete a room and all its messages */
+    DeleteRoomRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to delete
+       */
+      roomId: string;
+    };
     /** @description Request to delete a scene */
     DeleteSceneRequest: {
       /**
@@ -14613,6 +15535,16 @@ export interface components {
        * @description Definition to deprecate
        */
       definitionId: string;
+    };
+    /** @description Request to deprecate a room type (prevents new room creation) */
+    DeprecateRoomTypeRequest: {
+      /** @description Room type code to deprecate */
+      code: string;
+      /**
+       * Format: uuid
+       * @description Game service scope for the type
+       */
+      gameServiceId?: string | null;
     };
     /** @description Request to deprecate a scenario definition */
     DeprecateScenarioDefinitionRequest: {
@@ -17796,6 +18728,24 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to retrieve a room by ID */
+    GetRoomRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to look up
+       */
+      roomId: string;
+    };
+    /** @description Request to retrieve a room type by code */
+    GetRoomTypeRequest: {
+      /** @description Room type code to look up */
+      code: string;
+      /**
+       * Format: uuid
+       * @description Game service scope (null for global types)
+       */
+      gameServiceId?: string | null;
+    };
     /** @description Request to retrieve a scenario definition */
     GetScenarioDefinitionRequest: {
       /**
@@ -19020,6 +19970,25 @@ export interface components {
       /** @description Approximate position in queue (null if not tracked) */
       position?: number | null;
     };
+    /** @description Request to join a chat room as a participant */
+    JoinRoomRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to join
+       */
+      roomId: string;
+      /** @description Opaque sender type identifier (e.g., "session", "character", "system") */
+      senderType?: string | null;
+      /**
+       * Format: uuid
+       * @description Sender entity ID (nullable for anonymous)
+       */
+      senderId?: string | null;
+      /** @description Human-readable display name */
+      displayName?: string | null;
+      /** @description Requested role (defaults to Member if not specified) */
+      role?: components['schemas']['ChatParticipantRole'] | null;
+    };
     /**
      * @description JSON Patch operation per RFC 6902.
      *     Uses JsonPatch.Net library (MIT licensed).
@@ -19063,6 +20032,21 @@ export interface components {
       tonic: components['schemas']['PitchClass'];
       /** @description Mode/scale type */
       mode: components['schemas']['ModeType'];
+    };
+    /** @description Request to remove a participant from a room */
+    KickParticipantRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Session ID of participant to kick
+       */
+      targetSessionId: string;
+      /** @description Optional reason for the kick */
+      reason?: string | null;
     };
     /** @description Configuration for a specific layer within a map definition */
     LayerDefinition: {
@@ -19212,6 +20196,14 @@ export interface components {
        * @description ID of the ticket to cancel
        */
       ticketId: string;
+    };
+    /** @description Request to leave a chat room */
+    LeaveRoomRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to leave
+       */
+      roomId: string;
     };
     /** @description License definition with all fields */
     LicenseDefinitionResponse: {
@@ -19915,6 +20907,14 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to list participants in a room */
+    ListParticipantsRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to list participants for
+       */
+      roomId: string;
+    };
     /** @description Request to list cached plans */
     ListPlansRequest: {
       /**
@@ -20166,6 +21166,72 @@ export interface components {
       bindings: components['schemas']['RepositoryBindingInfo'][];
       /** @description Total number of bindings matching filter */
       total: number;
+    };
+    /** @description Request to list room types with optional filters and pagination */
+    ListRoomTypesRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by game service scope
+       */
+      gameServiceId?: string | null;
+      /** @description Filter by message format */
+      messageFormat?: components['schemas']['MessageFormat'] | null;
+      /** @description Filter by status */
+      status?: components['schemas']['RoomTypeStatus'] | null;
+      /**
+       * @description Page number (zero-based)
+       * @default 0
+       */
+      page: number;
+      /**
+       * @description Number of items per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Paginated list of room type definitions */
+    ListRoomTypesResponse: {
+      /** @description Room type definitions matching the filter */
+      items: components['schemas']['RoomTypeResponse'][];
+      /** @description Total number of matching room types */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Items per page */
+      pageSize: number;
+    };
+    /** @description Request to list rooms with optional filters and pagination */
+    ListRoomsRequest: {
+      /** @description Filter by room type code */
+      roomTypeCode?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter by Connect session ID
+       */
+      sessionId?: string | null;
+      /** @description Filter by room status */
+      status?: components['schemas']['ChatRoomStatus'] | null;
+      /**
+       * @description Page number (zero-based)
+       * @default 0
+       */
+      page: number;
+      /**
+       * @description Number of items per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Paginated list of chat rooms */
+    ListRoomsResponse: {
+      /** @description Rooms matching the filter */
+      items: components['schemas']['ChatRoomResponse'][];
+      /** @description Total number of matching rooms */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Items per page */
+      pageSize: number;
     };
     /** @description Request to list all top-level locations (without parents) in a realm */
     ListRootLocationsRequest: {
@@ -20985,6 +22051,35 @@ export interface components {
       overflowQuantity?: number | null;
     };
     /**
+     * @description Determines what kind of content a room accepts
+     * @enum {string}
+     */
+    MessageFormat: 'Text' | 'Sentiment' | 'Emoji' | 'Custom';
+    /** @description Request to retrieve message history for a room with cursor pagination */
+    MessageHistoryRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to get history for
+       */
+      roomId: string;
+      /** @description Cursor for pagination (message ID to fetch before) */
+      before?: string | null;
+      /**
+       * @description Maximum number of messages to return
+       * @default 50
+       */
+      limit: number;
+    };
+    /** @description Paginated message history with cursor for next page */
+    MessageHistoryResponse: {
+      /** @description Messages in reverse chronological order */
+      messages: components['schemas']['ChatMessageResponse'][];
+      /** @description Whether more messages exist before the returned set */
+      hasMore: boolean;
+      /** @description Cursor for fetching the next page */
+      nextCursor?: string | null;
+    };
+    /**
      * @description Type of metadata to update
      * @enum {string}
      */
@@ -21401,6 +22496,21 @@ export interface components {
       | 'RelationshipCreate'
       | 'RelationshipEnd'
       | 'Custom';
+    /** @description Request to mute a participant in a room */
+    MuteParticipantRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Session ID of participant to mute
+       */
+      targetSessionId: string;
+      /** @description Mute duration in minutes (null for permanent) */
+      durationMinutes?: number | null;
+    };
     /** @description Narrative effect on the emotional arc (SDK type) */
     NarrativeEffect: {
       /**
@@ -21732,6 +22842,42 @@ export interface components {
        */
       maxSize?: number;
     };
+    /** @description Details about a chat room participant */
+    ParticipantInfo: {
+      /**
+       * Format: uuid
+       * @description Participant Connect session ID
+       */
+      sessionId: string;
+      /** @description Opaque sender type */
+      senderType?: string | null;
+      /**
+       * Format: uuid
+       * @description Sender entity ID
+       */
+      senderId?: string | null;
+      /** @description Display name */
+      displayName?: string | null;
+      /** @description Participant role in the room */
+      role: components['schemas']['ChatParticipantRole'];
+      /**
+       * Format: date-time
+       * @description When the participant joined
+       */
+      joinedAt: string;
+      /** @description Whether the participant is currently muted */
+      isMuted: boolean;
+    };
+    /** @description List of participants in a room */
+    ParticipantsResponse: {
+      /**
+       * Format: uuid
+       * @description Room ID
+       */
+      roomId: string;
+      /** @description Current room participants */
+      participants: components['schemas']['ParticipantInfo'][];
+    };
     /** @description Paginated list of participation records */
     ParticipationListResponse: {
       /** @description List of participation records */
@@ -21956,6 +23102,11 @@ export interface components {
       | 'message'
       | 'service'
       | 'system';
+    /**
+     * @description Whether room messages are stored in Redis (TTL) or MySQL (durable)
+     * @enum {string}
+     */
+    PersistenceMode: 'Ephemeral' | 'Persistent';
     /** @description Complete personality profile for behavior system consumption */
     PersonalityResponse: {
       /**
@@ -22035,6 +23186,19 @@ export interface components {
       maxPrimarySpectrum: number;
       /** @description Human-readable description of this state range */
       rangeDescription?: string | null;
+    };
+    /** @description Request to pin a message in a room */
+    PinMessageRequest: {
+      /**
+       * Format: uuid
+       * @description Room the message belongs to
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Message ID to pin
+       */
+      messageId: string;
     };
     /** @description Request to pin a save version as a checkpoint to prevent cleanup */
     PinVersionRequest: {
@@ -23571,6 +24735,41 @@ export interface components {
        */
       connectUrl: string;
     };
+    /** @description Request to register a new room type definition */
+    RegisterRoomTypeRequest: {
+      /** @description Unique room type code (e.g., "text", "guild_board", "trade_posting") */
+      code: string;
+      /** @description Human-readable name for the room type */
+      displayName: string;
+      /** @description Optional description of the room type */
+      description?: string | null;
+      /**
+       * Format: uuid
+       * @description Game service scope (null for global types)
+       */
+      gameServiceId?: string | null;
+      /** @description Content format this room type accepts */
+      messageFormat: components['schemas']['MessageFormat'];
+      /** @description Validation rules for messages (null uses format defaults) */
+      validatorConfig?: components['schemas']['ValidatorConfig'] | null;
+      /** @description Message storage mode (ephemeral or persistent) */
+      persistenceMode: components['schemas']['PersistenceMode'];
+      /** @description Default participant limit (null uses service default) */
+      defaultMaxParticipants?: number | null;
+      /** @description Message retention in days (null uses service default) */
+      retentionDays?: number | null;
+      /**
+       * Format: uuid
+       * @description Default contract template for rooms of this type
+       */
+      defaultContractTemplateId?: string | null;
+      /** @description Whether null senderId is allowed in messages */
+      allowAnonymousSenders: boolean;
+      /** @description Messages per minute per participant (null uses service default) */
+      rateLimitPerMinute?: number | null;
+      /** @description Arbitrary JSON metadata for client rendering hints */
+      metadata?: string | null;
+    };
     /** @description Request to register a new save data schema with optional migration rules */
     RegisterSchemaRequest: {
       /** @description Schema namespace (e.g., game identifier) */
@@ -24346,6 +25545,58 @@ export interface components {
       /** @description Faction code for REPUTATION rewards */
       factionCode?: string | null;
     };
+    /** @description Room type definition with current configuration and status */
+    RoomTypeResponse: {
+      /** @description Unique room type code */
+      code: string;
+      /** @description Human-readable name */
+      displayName: string;
+      /** @description Room type description */
+      description?: string | null;
+      /**
+       * Format: uuid
+       * @description Game service scope (null for global)
+       */
+      gameServiceId?: string | null;
+      /** @description Content format accepted by this room type */
+      messageFormat: components['schemas']['MessageFormat'];
+      /** @description Active validation rules */
+      validatorConfig?: components['schemas']['ValidatorConfig'] | null;
+      /** @description Message storage mode */
+      persistenceMode: components['schemas']['PersistenceMode'];
+      /** @description Default participant limit */
+      defaultMaxParticipants?: number | null;
+      /** @description Message retention in days */
+      retentionDays?: number | null;
+      /**
+       * Format: uuid
+       * @description Default contract template ID
+       */
+      defaultContractTemplateId?: string | null;
+      /** @description Whether anonymous senders are allowed */
+      allowAnonymousSenders: boolean;
+      /** @description Messages per minute limit */
+      rateLimitPerMinute?: number | null;
+      /** @description Arbitrary JSON metadata */
+      metadata?: string | null;
+      /** @description Current lifecycle status of the room type */
+      status: components['schemas']['RoomTypeStatus'];
+      /**
+       * Format: date-time
+       * @description When the room type was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When the room type was last updated
+       */
+      updatedAt?: string | null;
+    };
+    /**
+     * @description Lifecycle status of a room type definition
+     * @enum {string}
+     */
+    RoomTypeStatus: 'Active' | 'Deprecated';
     /** @description Search engine optimization and social media sharing metadata */
     SEOMetadata: {
       /** @description Meta description for search engines */
@@ -25010,6 +26261,28 @@ export interface components {
      * @enum {string}
      */
     SearchMatchType: 'name' | 'description' | 'tag' | 'node_name';
+    /** @description Request to full-text search messages in a persistent room */
+    SearchMessagesRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to search in (must be a persistent room)
+       */
+      roomId: string;
+      /** @description Full-text search query string */
+      query: string;
+      /**
+       * @description Maximum number of results to return
+       * @default 20
+       */
+      limit: number;
+    };
+    /** @description Full-text search results with total match count */
+    SearchMessagesResponse: {
+      /** @description Messages matching the search query */
+      messages: components['schemas']['ChatMessageResponse'][];
+      /** @description Total number of matching messages */
+      totalMatches: number;
+    };
     /** @description A single search result */
     SearchResult: {
       /** @description Matching scene summary */
@@ -25235,6 +26508,74 @@ export interface components {
       /** @description Area code to select music for */
       areaCode: string;
     };
+    /** @description Request to send multiple messages to a room atomically */
+    SendMessageBatchRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to send messages to
+       */
+      roomId: string;
+      /** @description Messages to send atomically */
+      messages: components['schemas']['BatchMessageEntry'][];
+    };
+    /** @description Result of a batch message send operation */
+    SendMessageBatchResponse: {
+      /** @description Number of messages sent */
+      messageCount: number;
+    };
+    /** @description Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format. */
+    SendMessageContent: {
+      /** @description Text content (for Text format rooms) */
+      text?: string | null;
+      /** @description Sentiment category (for Sentiment format rooms) */
+      sentimentCategory?: components['schemas']['SentimentCategory'] | null;
+      /**
+       * Format: float
+       * @description Sentiment intensity 0.0-1.0 (for Sentiment format rooms)
+       */
+      sentimentIntensity?: number | null;
+      /** @description Emoji code (Unicode or custom) for Emoji format rooms */
+      emojiCode?: string | null;
+      /**
+       * Format: uuid
+       * @description Custom emoji set reference (null for Unicode)
+       */
+      emojiSetId?: string | null;
+      /** @description JSON string validated against room type validator config (for Custom format rooms) */
+      customPayload?: string | null;
+    };
+    /** @description Request to send a message to a chat room */
+    SendMessageRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to send the message to
+       */
+      roomId: string;
+      /** @description Message content matching the room format */
+      content: components['schemas']['SendMessageContent'];
+      /** @description Opaque sender type for this message */
+      senderType?: string | null;
+      /**
+       * Format: uuid
+       * @description Sender entity ID
+       */
+      senderId?: string | null;
+      /** @description Sender display name for this message */
+      displayName?: string | null;
+    };
+    /**
+     * @description Standardized sentiment categories for anonymous audience and reaction data. Used by lib-chat for sentiment room messages and lib-stream for platform audience processing. Designed for privacy-safe communication where text content is inappropriate or unnecessary.
+     * @enum {string}
+     */
+    SentimentCategory:
+      | 'Excited'
+      | 'Supportive'
+      | 'Critical'
+      | 'Curious'
+      | 'Surprised'
+      | 'Amused'
+      | 'Bored'
+      | 'Hostile';
     /** @description Response containing aggregate sentiment */
     SentimentResponse: {
       /**
@@ -25796,6 +27137,19 @@ export interface components {
       stopped: boolean;
       /** @description Final status of the actor after stopping */
       finalStatus: components['schemas']['ActorStatus'];
+    };
+    /** @description Request to stop broadcasting from a voice room */
+    StopBroadcastConsentRequest: {
+      /**
+       * Format: uuid
+       * @description Voice room ID
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Session ID of the participant stopping the broadcast
+       */
+      sessionId?: string | null;
     };
     /** @description Request to stop a regional watcher */
     StopWatcherRequest: {
@@ -26607,6 +27961,19 @@ export interface components {
       /** @description Rhythm pattern names to use */
       rhythmPatterns?: string[] | null;
     };
+    /** @description Request to remove a ban for a participant */
+    UnbanParticipantRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Session ID of participant to unban
+       */
+      targetSessionId: string;
+    };
     /** @description Request to restore a deprecated seed type to active status. */
     UndeprecateSeedTypeRequest: {
       /** @description The seed type to restore. */
@@ -26721,6 +28088,19 @@ export interface components {
       unlockedAt: string;
       /** @description Entry instance metadata */
       metadata?: components['schemas']['EntryMetadata'];
+    };
+    /** @description Request to unpin a message in a room */
+    UnpinMessageRequest: {
+      /**
+       * Format: uuid
+       * @description Room the message belongs to
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Message ID to unpin
+       */
+      messageId: string;
     };
     /** @description Request to unpin a previously pinned save version */
     UnpinVersionRequest: {
@@ -27230,6 +28610,51 @@ export interface components {
     UpdateRepositoryBindingResponse: {
       /** @description Updated binding configuration */
       binding: components['schemas']['RepositoryBindingInfo'];
+    };
+    /** @description Request to update room properties (null fields left unchanged) */
+    UpdateRoomRequest: {
+      /**
+       * Format: uuid
+       * @description Room ID to update
+       */
+      roomId: string;
+      /** @description Updated room name */
+      displayName?: string | null;
+      /** @description Updated participant limit */
+      maxParticipants?: number | null;
+      /** @description Updated JSON metadata */
+      metadata?: string | null;
+    };
+    /** @description Request to update room type properties (null fields left unchanged) */
+    UpdateRoomTypeRequest: {
+      /** @description Room type code to update */
+      code: string;
+      /**
+       * Format: uuid
+       * @description Game service scope for the type
+       */
+      gameServiceId?: string | null;
+      /** @description Updated display name */
+      displayName?: string | null;
+      /** @description Updated description */
+      description?: string | null;
+      /** @description Updated validation rules */
+      validatorConfig?: components['schemas']['ValidatorConfig'] | null;
+      /** @description Updated default participant limit */
+      defaultMaxParticipants?: number | null;
+      /** @description Updated message retention in days */
+      retentionDays?: number | null;
+      /**
+       * Format: uuid
+       * @description Updated default contract template
+       */
+      defaultContractTemplateId?: string | null;
+      /** @description Updated anonymous sender policy */
+      allowAnonymousSenders?: boolean | null;
+      /** @description Updated rate limit */
+      rateLimitPerMinute?: number | null;
+      /** @description Updated JSON metadata */
+      metadata?: string | null;
     };
     /** @description Request to update a scenario definition */
     UpdateScenarioDefinitionRequest: {
@@ -27776,6 +29201,19 @@ export interface components {
      * @enum {string}
      */
     ValidationSeverity: 'error' | 'warning';
+    /** @description Validation rules applied to messages in rooms of this type */
+    ValidatorConfig: {
+      /** @description Maximum message length in characters for text and custom formats */
+      maxMessageLength?: number | null;
+      /** @description Regex pattern for content validation */
+      allowedPattern?: string | null;
+      /** @description Whitelist of allowed values (emoji codes, etc.) */
+      allowedValues?: string[] | null;
+      /** @description Required JSON fields for Custom format messages */
+      requiredFields?: string[] | null;
+      /** @description Full JSON Schema string for complex Custom format validation */
+      jsonSchema?: string | null;
+    };
     /** @description A point or direction in 3D space */
     Vector3: {
       /**
@@ -30680,6 +32118,678 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['CleanupByCharacterResponse'];
+        };
+      };
+    };
+  };
+  RegisterRoomType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegisterRoomTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Room type registered successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RoomTypeResponse'];
+        };
+      };
+    };
+  };
+  GetRoomType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetRoomTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Room type found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RoomTypeResponse'];
+        };
+      };
+    };
+  };
+  ListRoomTypes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListRoomTypesRequest'];
+      };
+    };
+    responses: {
+      /** @description Room types returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListRoomTypesResponse'];
+        };
+      };
+    };
+  };
+  UpdateRoomType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateRoomTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Room type updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RoomTypeResponse'];
+        };
+      };
+    };
+  };
+  DeprecateRoomType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateRoomTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Room type deprecated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RoomTypeResponse'];
+        };
+      };
+    };
+  };
+  CreateRoom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateRoomRequest'];
+      };
+    };
+    responses: {
+      /** @description Room created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  GetRoom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetRoomRequest'];
+      };
+    };
+    responses: {
+      /** @description Room found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  ListRooms: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListRoomsRequest'];
+      };
+    };
+    responses: {
+      /** @description Rooms returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListRoomsResponse'];
+        };
+      };
+    };
+  };
+  UpdateRoom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateRoomRequest'];
+      };
+    };
+    responses: {
+      /** @description Room updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  DeleteRoom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteRoomRequest'];
+      };
+    };
+    responses: {
+      /** @description Room deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  ArchiveRoom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ArchiveRoomRequest'];
+      };
+    };
+    responses: {
+      /** @description Room archived */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  JoinRoom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['JoinRoomRequest'];
+      };
+    };
+    responses: {
+      /** @description Joined room */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  LeaveRoom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LeaveRoomRequest'];
+      };
+    };
+    responses: {
+      /** @description Left room */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  ListParticipants: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListParticipantsRequest'];
+      };
+    };
+    responses: {
+      /** @description Participants returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ParticipantsResponse'];
+        };
+      };
+    };
+  };
+  KickParticipant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['KickParticipantRequest'];
+      };
+    };
+    responses: {
+      /** @description Participant kicked */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  BanParticipant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BanParticipantRequest'];
+      };
+    };
+    responses: {
+      /** @description Participant banned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  UnbanParticipant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UnbanParticipantRequest'];
+      };
+    };
+    responses: {
+      /** @description Participant unbanned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  MuteParticipant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MuteParticipantRequest'];
+      };
+    };
+    responses: {
+      /** @description Participant muted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  SendMessage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SendMessageRequest'];
+      };
+    };
+    responses: {
+      /** @description Message sent */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatMessageResponse'];
+        };
+      };
+    };
+  };
+  SendMessageBatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SendMessageBatchRequest'];
+      };
+    };
+    responses: {
+      /** @description Messages sent */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SendMessageBatchResponse'];
+        };
+      };
+    };
+  };
+  GetMessageHistory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MessageHistoryRequest'];
+      };
+    };
+    responses: {
+      /** @description Messages returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MessageHistoryResponse'];
+        };
+      };
+    };
+  };
+  DeleteMessage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteMessageRequest'];
+      };
+    };
+    responses: {
+      /** @description Message deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatMessageResponse'];
+        };
+      };
+    };
+  };
+  PinMessage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PinMessageRequest'];
+      };
+    };
+    responses: {
+      /** @description Message pinned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatMessageResponse'];
+        };
+      };
+    };
+  };
+  UnpinMessage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UnpinMessageRequest'];
+      };
+    };
+    responses: {
+      /** @description Message unpinned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatMessageResponse'];
+        };
+      };
+    };
+  };
+  SearchMessages: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SearchMessagesRequest'];
+      };
+    };
+    responses: {
+      /** @description Search results returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SearchMessagesResponse'];
+        };
+      };
+    };
+  };
+  AdminListRooms: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdminListRoomsRequest'];
+      };
+    };
+    responses: {
+      /** @description Rooms returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListRoomsResponse'];
+        };
+      };
+    };
+  };
+  AdminGetStats: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdminGetStatsRequest'];
+      };
+    };
+    responses: {
+      /** @description Statistics returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminStatsResponse'];
+        };
+      };
+    };
+  };
+  AdminForceCleanup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdminForceCleanupRequest'];
+      };
+    };
+    responses: {
+      /** @description Cleanup executed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminCleanupResponse'];
         };
       };
     };
@@ -40822,6 +42932,135 @@ export interface operations {
         content?: never;
       };
       /** @description Peer or room not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  requestBroadcastConsent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BroadcastConsentRequest'];
+      };
+    };
+    responses: {
+      /** @description Consent request sent to all participants */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BroadcastConsentStatus'];
+        };
+      };
+      /** @description Room not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Broadcast already active or consent pending */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  respondBroadcastConsent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BroadcastConsentResponse'];
+      };
+    };
+    responses: {
+      /** @description Consent response recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BroadcastConsentStatus'];
+        };
+      };
+      /** @description Room not found or no pending consent request */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  stopBroadcast: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StopBroadcastConsentRequest'];
+      };
+    };
+    responses: {
+      /** @description Broadcast stopped */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Room not found or not broadcasting */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getBroadcastStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BroadcastStatusRequest'];
+      };
+    };
+    responses: {
+      /** @description Broadcast status */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BroadcastConsentStatus'];
+        };
+      };
+      /** @description Room not found */
       404: {
         headers: {
           [name: string]: unknown;

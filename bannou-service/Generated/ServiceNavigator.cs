@@ -20,6 +20,7 @@ using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
+using BeyondImmersion.BannouService.Chat;
 using BeyondImmersion.BannouService.Collection;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Contract;
@@ -92,6 +93,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly ICharacterEncounterClient _characterEncounter;
     private readonly ICharacterHistoryClient _characterHistory;
     private readonly ICharacterPersonalityClient _characterPersonality;
+    private readonly IChatClient _chat;
     private readonly ICollectionClient _collection;
     private readonly IConnectClient _connect;
     private readonly IContractClient _contract;
@@ -149,6 +151,7 @@ public partial class ServiceNavigator : IServiceNavigator
         ICharacterEncounterClient characterEncounter,
         ICharacterHistoryClient characterHistory,
         ICharacterPersonalityClient characterPersonality,
+        IChatClient chat,
         ICollectionClient collection,
         IConnectClient connect,
         IContractClient contract,
@@ -202,6 +205,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _characterEncounter = characterEncounter;
         _characterHistory = characterHistory;
         _characterPersonality = characterPersonality;
+        _chat = chat;
         _collection = collection;
         _connect = connect;
         _contract = contract;
@@ -316,6 +320,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public ICharacterPersonalityClient CharacterPersonality => _characterPersonality;
+
+    /// <inheritdoc />
+    public IChatClient Chat => _chat;
 
     /// <inheritdoc />
     public ICollectionClient Collection => _collection;

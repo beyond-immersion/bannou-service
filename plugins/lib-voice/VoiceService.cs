@@ -381,11 +381,11 @@ public partial class VoiceService : IVoiceService
                 CurrentCount = newCount
             });
 
-            // Parse STUN servers from config
+            // Parse STUN servers from config (StunServers has a schema default; null means infrastructure failure)
             var stunServers = _configuration.StunServers?
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Select(s => s.Trim())
-                .ToList() ?? new List<string> { "stun:stun.l.google.com:19302" };
+                .ToList() ?? throw new InvalidOperationException("StunServers configuration is required but was null");
 
             // Handle based on current tier
             if (isScaledTier)
@@ -631,7 +631,7 @@ public partial class VoiceService : IVoiceService
             });
 
             // Notify all participants that room is closed
-            await NotifyRoomClosedAsync(body.RoomId, participants, VoiceRoomClosedEventReason.Manual, cancellationToken);
+            await NotifyRoomClosedAsync(body.RoomId, participants, VoiceRoomDeletedReason.Manual, cancellationToken);
 
             // Clear permission states for all participants
             foreach (var participant in participants)
@@ -832,7 +832,7 @@ public partial class VoiceService : IVoiceService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RoomId = body.RoomId,
-                RequestedBySessionId = body.RequestingSessionId ?? Guid.Empty,
+                RequestedBySessionId = body.RequestingSessionId,
                 RequestedByDisplayName = requester?.DisplayName
             };
 
@@ -959,7 +959,7 @@ public partial class VoiceService : IVoiceService
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     RoomId = body.RoomId,
-                    RequestedBySessionId = roomData.BroadcastRequestedBy ?? Guid.Empty,
+                    RequestedBySessionId = roomData.BroadcastRequestedBy,
                     RtpAudioEndpoint = roomData.RtpServerUri
                 });
 
@@ -1306,7 +1306,7 @@ public partial class VoiceService : IVoiceService
     private async Task NotifyRoomClosedAsync(
         Guid roomId,
         List<ParticipantRegistration> participants,
-        VoiceRoomClosedEventReason reason,
+        VoiceRoomDeletedReason reason,
         CancellationToken cancellationToken)
     {
         if (participants.Count == 0)

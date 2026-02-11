@@ -24,6 +24,7 @@
 
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Quest;
+using BeyondImmersion.BannouService.Common;
 
 
 namespace BeyondImmersion.BannouService.Quest;

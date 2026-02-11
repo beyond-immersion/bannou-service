@@ -7,6 +7,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Asset.ClientEvents;
+using BeyondImmersion.Bannou.Chat.ClientEvents;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
@@ -30,7 +31,18 @@ public static class ClientEventRegistry
         { typeof(BundleValidationCompleteEvent), "asset.bundle.validation.complete" },
         { typeof(BundleValidationFailedEvent), "asset.bundle.validation.failed" },
         { typeof(CapabilityManifestEvent), "connect.capability_manifest" },
+        { typeof(ChatMessageDeletedClientEvent), "chat.message_deleted" },
+        { typeof(ChatMessagePinnedEvent), "chat.message_pinned" },
+        { typeof(ChatMessageReceivedEvent), "chat.message_received" },
         { typeof(ChatMessageReceivedEvent), "game_session.chat_received" },
+        { typeof(ChatParticipantBannedClientEvent), "chat.participant_banned" },
+        { typeof(ChatParticipantJoinedClientEvent), "chat.participant_joined" },
+        { typeof(ChatParticipantKickedClientEvent), "chat.participant_kicked" },
+        { typeof(ChatParticipantLeftClientEvent), "chat.participant_left" },
+        { typeof(ChatParticipantMutedClientEvent), "chat.participant_muted" },
+        { typeof(ChatParticipantUnmutedClientEvent), "chat.participant_unmuted" },
+        { typeof(ChatRoomDeletedClientEvent), "chat.room_deleted" },
+        { typeof(ChatRoomLockedClientEvent), "chat.room_locked" },
         { typeof(DisconnectNotificationEvent), "connect.disconnect_notification" },
         { typeof(GameActionResultEvent), "game_session.action_result" },
         { typeof(GameStateUpdatedEvent), "game_session.state_updated" },
@@ -48,6 +60,8 @@ public static class ClientEventRegistry
         { typeof(SessionStateChangedEvent), "game_session.state_changed" },
         { typeof(SystemErrorEvent), "system.error" },
         { typeof(SystemNotificationEvent), "system.notification" },
+        { typeof(VoiceBroadcastConsentRequestEvent), "voice.broadcast_consent_request" },
+        { typeof(VoiceBroadcastConsentUpdateEvent), "voice.broadcast_consent_update" },
         { typeof(VoicePeerJoinedEvent), "voice.peer_joined" },
         { typeof(VoicePeerLeftEvent), "voice.peer_left" },
         { typeof(VoicePeerUpdatedEvent), "voice.peer_updated" },
@@ -66,6 +80,17 @@ public static class ClientEventRegistry
         { "asset.processing.failed", typeof(AssetProcessingFailedEvent) },
         { "asset.ready", typeof(AssetReadyEvent) },
         { "asset.upload.complete", typeof(AssetUploadCompleteEvent) },
+        { "chat.message_deleted", typeof(ChatMessageDeletedClientEvent) },
+        { "chat.message_pinned", typeof(ChatMessagePinnedEvent) },
+        { "chat.message_received", typeof(ChatMessageReceivedEvent) },
+        { "chat.participant_banned", typeof(ChatParticipantBannedClientEvent) },
+        { "chat.participant_joined", typeof(ChatParticipantJoinedClientEvent) },
+        { "chat.participant_kicked", typeof(ChatParticipantKickedClientEvent) },
+        { "chat.participant_left", typeof(ChatParticipantLeftClientEvent) },
+        { "chat.participant_muted", typeof(ChatParticipantMutedClientEvent) },
+        { "chat.participant_unmuted", typeof(ChatParticipantUnmutedClientEvent) },
+        { "chat.room_deleted", typeof(ChatRoomDeletedClientEvent) },
+        { "chat.room_locked", typeof(ChatRoomLockedClientEvent) },
         { "connect.capability_manifest", typeof(CapabilityManifestEvent) },
         { "connect.disconnect_notification", typeof(DisconnectNotificationEvent) },
         { "game_session.action_result", typeof(GameActionResultEvent) },
@@ -84,6 +109,8 @@ public static class ClientEventRegistry
         { "matchmaking.status_update", typeof(MatchmakingStatusUpdateEvent) },
         { "system.error", typeof(SystemErrorEvent) },
         { "system.notification", typeof(SystemNotificationEvent) },
+        { "voice.broadcast_consent_request", typeof(VoiceBroadcastConsentRequestEvent) },
+        { "voice.broadcast_consent_update", typeof(VoiceBroadcastConsentUpdateEvent) },
         { "voice.peer_joined", typeof(VoicePeerJoinedEvent) },
         { "voice.peer_left", typeof(VoicePeerLeftEvent) },
         { "voice.peer_updated", typeof(VoicePeerUpdatedEvent) },

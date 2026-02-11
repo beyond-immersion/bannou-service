@@ -346,6 +346,25 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT` | double | `0.1` | Maximum magnitude of trait change per evolution event |
 | `CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT` | double | `0.02` | Minimum magnitude of trait change per evolution event |
 
+### Chat
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CHAT_DEFAULT_CONTRACT_BREACH_ACTION` | string | `Lock` | Default action when a breach is detected on governing contra... |
+| `CHAT_DEFAULT_CONTRACT_EXPIRED_ACTION` | string | `Archive` | Default action when governing contract expires naturally |
+| `CHAT_DEFAULT_CONTRACT_FULFILLED_ACTION` | string | `Archive` | Default action when governing contract is fulfilled |
+| `CHAT_DEFAULT_CONTRACT_TERMINATED_ACTION` | string | `Delete` | Default action when governing contract is terminated early |
+| `CHAT_DEFAULT_MAX_PARTICIPANTS_PER_ROOM` | int | `100` | Default participant limit when room type does not specify |
+| `CHAT_DEFAULT_RATE_LIMIT_PER_MINUTE` | int | `60` | Default messages per minute per participant when room type d... |
+| `CHAT_EPHEMERAL_MESSAGE_TTL_MINUTES` | int | `60` | TTL for messages in ephemeral (Redis) rooms |
+| `CHAT_IDLE_ROOM_CLEANUP_INTERVAL_MINUTES` | int | `60` | How often the background worker checks for idle rooms |
+| `CHAT_IDLE_ROOM_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Initial delay before the idle room cleanup worker begins its... |
+| `CHAT_IDLE_ROOM_TIMEOUT_MINUTES` | int | `1440` | Minutes of inactivity before a room is eligible for auto-cle... |
+| `CHAT_LOCK_EXPIRY_SECONDS` | int | `15` | Distributed lock expiry for chat room and participant mutati... |
+| `CHAT_MAX_PINNED_MESSAGES_PER_ROOM` | int | `10` | Maximum pinned messages per room |
+| `CHAT_MAX_ROOM_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum custom room types per game service |
+| `CHAT_MESSAGE_HISTORY_PAGE_SIZE` | int | `50` | Default page size for message history queries |
+
 ### Collection
 
 | Environment Variable | Type | Default | Description |
@@ -362,6 +381,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
+| `CONNECT_COMPANION_ROOM_MODE` | string | `Disabled` | How Connect manages companion chat rooms (Disabled, AutoJoin... |
 | `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval in seconds between connection cleanup runs |
 | `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
 | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds when waiting for connection closure durin... |
@@ -987,13 +1007,20 @@ Applied when... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `VOICE_AD_HOC_ROOMS_ENABLED` | bool | `false` | If true, joining a non-existent room auto-creates it with au... |
+| `VOICE_BROADCAST_CONSENT_TIMEOUT_SECONDS` | int | `30` | Seconds to wait for all participants to respond before auto-... |
+| `VOICE_EMPTY_ROOM_GRACE_PERIOD_SECONDS` | int | `300` | Seconds an empty autoCleanup room persists before auto-delet... |
+| `VOICE_EVICTION_WORKER_INITIAL_DELAY_SECONDS` | int | `10` | Seconds to wait after startup before the first eviction cycl... |
 | `VOICE_KAMAILIO_HOST` | string | `localhost` | Kamailio SIP server host |
 | `VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for Kamailio service requests |
 | `VOICE_KAMAILIO_RPC_PORT` | int | `5080` | Kamailio JSON-RPC port (typically 5080, not SIP port 5060) |
 | `VOICE_KAMAILIO_SIP_PORT` | int | `5060` | Kamailio SIP signaling port for client registration |
 | `VOICE_P2P_MAX_PARTICIPANTS` | int | `8` | Maximum participants in P2P voice sessions |
+| `VOICE_PARTICIPANT_EVICTION_CHECK_INTERVAL_SECONDS` | int | `15` | How often the background worker checks for stale participant... |
+| `VOICE_PARTICIPANT_HEARTBEAT_TIMEOUT_SECONDS` | int | `60` | Seconds of missed heartbeats before participant is evicted |
 | `VOICE_RTPENGINE_HOST` | string | `localhost` | RTPEngine media relay host |
 | `VOICE_RTPENGINE_PORT` | int | `22222` | RTPEngine control port |
+| `VOICE_RTPENGINE_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for RTPEngine UDP requests |
 | `VOICE_SCALED_MAX_PARTICIPANTS` | int | `100` | Maximum participants in scaled tier voice sessions |
 | `VOICE_SCALED_TIER_ENABLED` | bool | `false` | Enable scaled tier voice communication (SIP-based) |
 | `VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS` | int | `24` | Hours until SIP credentials expire (clients should re-authen... |
@@ -1005,9 +1032,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 753
+- **Total properties**: 775
 - **Required (no default)**: 51
-- **Optional (has default)**: 702
+- **Optional (has default)**: 724
 
 ## Environment Variable Naming Convention
 

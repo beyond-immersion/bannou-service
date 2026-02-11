@@ -135,6 +135,13 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     public int RtpEnginePort { get; set; } = 22222;
 
     /// <summary>
+    /// Timeout in seconds for RTPEngine UDP requests
+    /// Environment variable: VOICE_RTPENGINE_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int RtpEngineTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
     /// Timeout in seconds for Kamailio service requests
     /// Environment variable: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
     /// </summary>
@@ -146,6 +153,13 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     /// Environment variable: VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS
     /// </summary>
     public int SipCredentialExpirationHours { get; set; } = 24;
+
+    /// <summary>
+    /// Seconds to wait after startup before the first eviction cycle runs
+    /// Environment variable: VOICE_EVICTION_WORKER_INITIAL_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 120)]
+    public int EvictionWorkerInitialDelaySeconds { get; set; } = 10;
 
     /// <summary>
     /// Seconds of missed heartbeats before participant is evicted

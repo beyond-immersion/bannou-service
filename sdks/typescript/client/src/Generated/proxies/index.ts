@@ -14,6 +14,7 @@ export { CharacterProxy } from './CharacterProxy.js';
 export { CharacterEncounterProxy } from './CharacterEncounterProxy.js';
 export { CharacterHistoryProxy } from './CharacterHistoryProxy.js';
 export { CharacterPersonalityProxy } from './CharacterPersonalityProxy.js';
+export { ChatProxy } from './ChatProxy.js';
 export { ClientCapabilitiesProxy } from './ClientCapabilitiesProxy.js';
 export { CollectionProxy } from './CollectionProxy.js';
 export { CompileProxy } from './CompileProxy.js';

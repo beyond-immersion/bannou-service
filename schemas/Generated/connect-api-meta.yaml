@@ -1107,6 +1107,14 @@ components:
           additionalProperties: true
           nullable: true
           description: Additional context for the recompilation
+    CompanionRoomMode:
+      type: string
+      description: How Connect manages companion chat rooms for WebSocket sessions
+      enum:
+      - Disabled
+      - AutoJoinLazy
+      - AutoJoin
+      - Manual
   securitySchemes:
     BearerAuth:
       type: http

@@ -23,6 +23,7 @@ import { CharacterProxy } from './proxies/CharacterProxy.js';
 import { CharacterEncounterProxy } from './proxies/CharacterEncounterProxy.js';
 import { CharacterHistoryProxy } from './proxies/CharacterHistoryProxy.js';
 import { CharacterPersonalityProxy } from './proxies/CharacterPersonalityProxy.js';
+import { ChatProxy } from './proxies/ChatProxy.js';
 import { ClientCapabilitiesProxy } from './proxies/ClientCapabilitiesProxy.js';
 import { CollectionProxy } from './proxies/CollectionProxy.js';
 import { CompileProxy } from './proxies/CompileProxy.js';
@@ -74,6 +75,7 @@ interface ProxyCache {
   characterEncounter?: CharacterEncounterProxy;
   characterHistory?: CharacterHistoryProxy;
   characterPersonality?: CharacterPersonalityProxy;
+  chat?: ChatProxy;
   clientCapabilities?: ClientCapabilitiesProxy;
   collection?: CollectionProxy;
   compile?: CompileProxy;
@@ -240,6 +242,18 @@ Object.defineProperty(BannouClient.prototype, 'characterPersonality', {
   get(this: BannouClientWithCache): CharacterPersonalityProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.characterPersonality ??= new CharacterPersonalityProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
+ * Add lazy-initialized chat proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'chat', {
+  get(this: BannouClientWithCache): ChatProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.chat ??= new ChatProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -700,6 +714,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for CharacterPersonality API endpoints.
      */
     readonly characterPersonality: CharacterPersonalityProxy;
+    /**
+     * Typed proxy for Chat API endpoints.
+     */
+    readonly chat: ChatProxy;
     /**
      * Typed proxy for ClientCapabilities API endpoints.
      */

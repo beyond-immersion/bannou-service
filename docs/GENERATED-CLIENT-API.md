@@ -20,6 +20,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
+| [Chat Service API](#chat) | `client.Chat` | 28 | Typed message channel service (L1 AppFoundation) providing u... |
 | [Collection Service API](#collection) | `client.Collection` | 20 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
@@ -54,7 +55,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
-| [Bannou Voice Service API](#voice) | `client.Voice` | 7 | Voice communication coordination service for P2P and room-ba... |
+| [Bannou Voice Service API](#voice) | `client.Voice` | 11 | Voice room coordination service. Internal service accessed b... |
 | [Bannou Website Service API](#website) | `client.Website` | 12 | Public-facing website service for registration, information,... |
 
 ---
@@ -542,6 +543,47 @@ Machine-readable personality traits for NPC behavior decisions.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup all personality data for a deleted character |
+
+---
+
+## Chat Service API {#chat}
+
+**Proxy**: `client.Chat` | **Version**: 1.0.0
+
+Typed message channel service (L1 AppFoundation) providing universal communication primitives. Channel type determines valid message formats: text,...
+
+### Other
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterRoomtypeAsync` | `RegisterRoomTypeRequest` | `RoomTypeResponse` | Register a new room type |
+| `GetRoomtypeAsync` | `GetRoomTypeRequest` | `RoomTypeResponse` | Get room type by code |
+| `ListRoomtypesAsync` | `ListRoomTypesRequest` | `ListRoomTypesResponse` | List room types with filters |
+| `UpdateRoomtypeAsync` | `UpdateRoomTypeRequest` | `RoomTypeResponse` | Update a room type definition |
+| `DeprecateroomtypeAsync` | `DeprecateRoomTypeRequest` | `RoomTypeResponse` | Soft-deprecate a room type |
+| `CreateRoomAsync` | `CreateRoomRequest` | `ChatRoomResponse` | Create a chat room |
+| `GetRoomAsync` | `GetRoomRequest` | `ChatRoomResponse` | Get room by ID |
+| `ListRoomsAsync` | `ListRoomsRequest` | `ListRoomsResponse` | List rooms with filters |
+| `UpdateRoomAsync` | `UpdateRoomRequest` | `ChatRoomResponse` | Update room settings |
+| `DeleteRoomAsync` | `DeleteRoomRequest` | `ChatRoomResponse` | Delete a room |
+| `ArchiveroomAsync` | `ArchiveRoomRequest` | `ChatRoomResponse` | Archive a room to Resource |
+| `JoinroomAsync` | `JoinRoomRequest` | `ChatRoomResponse` | Join a chat room |
+| `LeaveroomAsync` | `LeaveRoomRequest` | `ChatRoomResponse` | Leave a chat room |
+| `ListParticipantsAsync` | `ListParticipantsRequest` | `ParticipantsResponse` | List room participants |
+| `KickparticipantAsync` | `KickParticipantRequest` | `ChatRoomResponse` | Remove a participant from the room |
+| `BanparticipantAsync` | `BanParticipantRequest` | `ChatRoomResponse` | Ban a participant from the room |
+| `UnbanparticipantAsync` | `UnbanParticipantRequest` | `ChatRoomResponse` | Unban a participant |
+| `MuteparticipantAsync` | `MuteParticipantRequest` | `ChatRoomResponse` | Mute a participant |
+| `SendmessageAsync` | `SendMessageRequest` | `ChatMessageResponse` | Send a message to a room |
+| `SendmessagebatchAsync` | `SendMessageBatchRequest` | `SendMessageBatchResponse` | Send multiple messages |
+| `GetMessagehistoryAsync` | `MessageHistoryRequest` | `MessageHistoryResponse` | Get message history |
+| `DeleteMessageAsync` | `DeleteMessageRequest` | `ChatMessageResponse` | Delete a message |
+| `PinmessageAsync` | `PinMessageRequest` | `ChatMessageResponse` | Pin a message |
+| `UnpinmessageAsync` | `UnpinMessageRequest` | `ChatMessageResponse` | Unpin a message |
+| `SearchmessagesAsync` | `SearchMessagesRequest` | `SearchMessagesResponse` | Full-text search in persistent rooms |
+| `AdminlistroomsAsync` | `AdminListRoomsRequest` | `ListRoomsResponse` | List all rooms system-wide |
+| `AdmingetstatsAsync` | `AdminGetStatsRequest` | `AdminStatsResponse` | Room and message statistics |
+| `AdminforcecleanupAsync` | `AdminForceCleanupRequest` | `AdminCleanupResponse` | Force cleanup of idle rooms |
 
 ---
 
@@ -1985,9 +2027,18 @@ Unified observability plugin providing distributed tracing, metrics, and log cor
 
 ## Bannou Voice Service API {#voice}
 
-**Proxy**: `client.Voice` | **Version**: 1.1.0
+**Proxy**: `client.Voice` | **Version**: 2.0.0
 
-Voice communication coordination service for P2P and room-based audio.
+Voice room coordination service. Internal service accessed by other services via lib-mesh.
+
+### Voice Broadcasting
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RequestbroadcastconsentAsync` | `BroadcastConsentRequest` | `BroadcastConsentStatus` | Request broadcast consent from all room participants |
+| `RespondbroadcastconsentAsync` | `BroadcastConsentResponse` | `BroadcastConsentStatus` | Respond to a broadcast consent request |
+| `StopbroadcastEventAsync` | `StopBroadcastConsentRequest` | *(fire-and-forget)* | Stop broadcasting from a voice room |
+| `GetBroadcaststatusAsync` | `BroadcastStatusRequest` | `BroadcastConsentStatus` | Get broadcast status for a voice room |
 
 ### Voice Peers
 
@@ -2000,7 +2051,7 @@ Voice communication coordination service for P2P and room-based audio.
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `CreateVoiceroomAsync` | `CreateVoiceRoomRequest` | `VoiceRoomResponse` | Create voice room for a game session |
+| `CreateVoiceroomAsync` | `CreateVoiceRoomRequest` | `VoiceRoomResponse` | Create a new voice room |
 | `GetVoiceroomAsync` | `GetVoiceRoomRequest` | `VoiceRoomResponse` | Get voice room details |
 | `JoinvoiceroomAsync` | `JoinVoiceRoomRequest` | `JoinVoiceRoomResponse` | Join voice room and register SIP endpoint |
 | `LeavevoiceroomEventAsync` | `LeaveVoiceRoomRequest` | *(fire-and-forget)* | Leave voice room |
@@ -2060,8 +2111,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 47
-- **Total methods**: 685
+- **Total services**: 48
+- **Total methods**: 717
 
 ---
 

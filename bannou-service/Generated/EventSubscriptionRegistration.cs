@@ -58,6 +58,12 @@ public static class EventSubscriptionRegistration
         // From character-encounter-events.yaml
         EventSubscriptionRegistry.Register<CharacterDeletedEvent>("character.deleted");
 
+        // From chat-events.yaml
+        EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
+        EventSubscriptionRegistry.Register<ContractBreachDetectedEvent>("contract.breach.detected");
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
+        EventSubscriptionRegistry.Register<ContractExpiredEvent>("contract.expired");
+
         // From collection-events.yaml
         EventSubscriptionRegistry.Register<CharacterDeletedEvent>("character.deleted");
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");

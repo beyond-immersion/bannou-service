@@ -97,6 +97,13 @@ x-service-configuration:
       default: 22222
       minimum: 1
       maximum: 65535
+    RtpEngineTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for RTPEngine UDP requests
+      env: VOICE_RTPENGINE_TIMEOUT_SECONDS
+      default: 5
+      minimum: 1
+      maximum: 60
 
     # Request Timeout Configuration
     KamailioRequestTimeoutSeconds:
@@ -113,6 +120,15 @@ x-service-configuration:
       description: Hours until SIP credentials expire (clients should re-authenticate before expiration)
       env: VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS
       default: 24
+
+    # Eviction Worker
+    EvictionWorkerInitialDelaySeconds:
+      type: integer
+      description: Seconds to wait after startup before the first eviction cycle runs
+      env: VOICE_EVICTION_WORKER_INITIAL_DELAY_SECONDS
+      default: 10
+      minimum: 0
+      maximum: 120
 
     # Participant TTL enforcement
     ParticipantHeartbeatTimeoutSeconds:

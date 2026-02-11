@@ -152,6 +152,37 @@ This document lists all events defined in Bannou's event schemas.
 | `PersonalityEvolvedEvent` | Custom | `personality-evolved` | Published when a character's personality evolves d... |
 | `PersonalityUpdatedEvent` | Lifecycle (Updated) | `personality.updated` | Published when a character's personality traits ar... |
 
+### Chat
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ChatMessageDeletedEvent` | Lifecycle (Deleted) | `chat-message.deleted` | Published when a message is deleted from a chat ro... |
+| `ChatMessageSentEvent` | Custom | `chat-message-sent` | Published when a message is sent. Contains metadat... |
+| `ChatParticipantBannedEvent` | Custom | `chat-participant-banned` | Published when a participant is banned from a chat... |
+| `ChatParticipantJoinedEvent` | Custom | `chat-participant-joined` | Published when a participant joins a chat room |
+| `ChatParticipantKickedEvent` | Custom | `chat-participant-kicked` | Published when a participant is kicked from a chat... |
+| `ChatParticipantLeftEvent` | Custom | `chat-participant-left` | Published when a participant leaves a chat room |
+| `ChatParticipantMutedEvent` | Custom | `chat-participant-muted` | Published when a participant is muted in a chat ro... |
+| `ChatParticipantUnmutedEvent` | Custom | `chat-participant-unmuted` | Published when a participant is unmuted in a chat ... |
+| `ChatRoomArchivedEvent` | Custom | `chat-room-archived` | Published when a chat room is archived via Resourc... |
+| `ChatRoomLockedEvent` | Custom | `chat-room-locked` | Published when a chat room is locked (contract-tri... |
+
+### Chat (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ChatMessageDeletedClientEvent` | Lifecycle (Deleted) | `chat-message.deleted-client` | Sent to room participants when a message is delete... |
+| `ChatMessagePinnedEvent` | Custom | `chat-message-pinned` | Sent to room participants when a message is pinned... |
+| `ChatMessageReceivedEvent` | Custom | `chat-message-received` | Sent to room participants when a new message is re... |
+| `ChatParticipantBannedClientEvent` | Custom | `chat-participant-banned-client` | Sent to all room participants when someone is bann... |
+| `ChatParticipantJoinedClientEvent` | Custom | `chat-participant-joined-client` | Sent to room participants when someone joins the r... |
+| `ChatParticipantKickedClientEvent` | Custom | `chat-participant-kicked-client` | Sent to all room participants when someone is kick... |
+| `ChatParticipantLeftClientEvent` | Custom | `chat-participant-left-client` | Sent to room participants when someone leaves the ... |
+| `ChatParticipantMutedClientEvent` | Custom | `chat-participant-muted-client` | Sent to all room participants when someone is mute... |
+| `ChatParticipantUnmutedClientEvent` | Custom | `chat-participant-unmuted-client` | Sent to all room participants when someone is unmu... |
+| `ChatRoomDeletedClientEvent` | Lifecycle (Deleted) | `chat-room.deleted-client` | Sent to room participants when the room is being d... |
+| `ChatRoomLockedClientEvent` | Custom | `chat-room-locked-client` | Sent to room participants when the room is locked. |
+
 ### Collection
 
 | Event | Type | Likely Topic | Description |
@@ -498,10 +529,25 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `SubscriptionUpdatedEvent` | Lifecycle (Updated) | `subscription.updated` | Published when a subscription changes state (creat... |
 
+### Voice
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `VoiceParticipantJoinedEvent` | Custom | `voice-participant-joined` | Published when a participant joins a room |
+| `VoiceParticipantLeftEvent` | Custom | `voice-participant-left` | Published when a participant leaves a room |
+| `VoiceRoomBroadcastApprovedEvent` | Custom | `voice-room-broadcast-approved` | All participants consented to broadcasting. lib-st... |
+| `VoiceRoomBroadcastDeclinedEvent` | Custom | `voice-room-broadcast-declined` | A participant declined broadcast consent |
+| `VoiceRoomBroadcastStoppedEvent` | Custom | `voice-room-broadcast-stopped` | Broadcasting stopped |
+| `VoiceRoomCreatedEvent` | Lifecycle (Created) | `voice-room.created` | Published when a voice room is created |
+| `VoiceRoomDeletedEvent` | Lifecycle (Deleted) | `voice-room.deleted` | Published when a voice room is deleted |
+| `VoiceRoomTierUpgradedEvent` | Custom | `voice-room-tier-upgraded` | Published when a room upgrades from P2P to scaled ... |
+
 ### Voice (client)
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `VoiceBroadcastConsentRequestEvent` | Custom | `voice-broadcast-consent-request` | Sent to all room participants when someone request... |
+| `VoiceBroadcastConsentUpdateEvent` | Custom | `voice-broadcast-consent-update` | Sent to all room participants when the broadcast c... |
 | `VoicePeerJoinedEvent` | Custom | `voice-peer-joined` | Sent to existing room participants when a new peer... |
 | `VoicePeerLeftEvent` | Custom | `voice-peer-left` | Sent to remaining room participants when a peer le... |
 | `VoicePeerUpdatedEvent` | Lifecycle (Updated) | `voice-peer.updated` | Sent when a peer updates their SIP endpoint (e.g.,... |
