@@ -215,16 +215,18 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Guid? areaConfigId = null,
         string areaCode = "enchanted_forest",
         Guid? gameServiceId = null,
+        string collectionType = "music_library",
         List<string>? themes = null,
-        string defaultTrackCode = "forest_ambient")
+        string defaultEntryCode = "forest_ambient")
     {
         return new AreaContentConfigModel
         {
             AreaConfigId = areaConfigId ?? TestAreaConfigId,
             AreaCode = areaCode,
             GameServiceId = gameServiceId ?? TestGameServiceId,
+            CollectionType = collectionType,
             Themes = themes ?? new List<string> { "forest", "peaceful" },
-            DefaultTrackCode = defaultTrackCode,
+            DefaultEntryCode = defaultEntryCode,
             CreatedAt = DateTimeOffset.UtcNow
         };
     }
@@ -335,7 +337,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         {
             GameServiceId = TestGameServiceId,
             Code = "boss_dragon",
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             DisplayName = "Dragon Boss",
             Category = "boss",
             Tags = new List<string> { "monster", "dragon" },
@@ -351,7 +353,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Assert.NotNull(response);
         Assert.Equal("boss_dragon", response.Code);
         Assert.Equal("Dragon Boss", response.DisplayName);
-        Assert.Equal(CollectionType.Bestiary, response.CollectionType);
+        Assert.Equal("bestiary", response.CollectionType);
         Assert.Equal(TestGameServiceId, response.GameServiceId);
         Assert.Equal("boss", response.Category);
         Assert.False(response.HideWhenLocked);
@@ -383,7 +385,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         {
             GameServiceId = Guid.NewGuid(),
             Code = "test",
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             DisplayName = "Test",
             ItemTemplateId = TestItemTemplateId,
             HideWhenLocked = false
@@ -413,7 +415,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         {
             GameServiceId = TestGameServiceId,
             Code = "test",
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             DisplayName = "Test",
             ItemTemplateId = Guid.NewGuid(),
             HideWhenLocked = false
@@ -440,7 +442,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Code lookup returns existing template
         _mockTemplateStore
-            .Setup(s => s.GetAsync($"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestTemplate());
 
         var service = CreateService();
@@ -448,7 +450,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         {
             GameServiceId = TestGameServiceId,
             Code = "boss_dragon",
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             DisplayName = "Dragon Boss",
             ItemTemplateId = TestItemTemplateId,
             HideWhenLocked = false
@@ -520,7 +522,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new ListEntryTemplatesRequest
         {
             GameServiceId = TestGameServiceId,
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             Category = "boss"
         };
 
@@ -645,7 +647,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             s => s.DeleteAsync($"tpl:{TestEntryTemplateId}", It.IsAny<CancellationToken>()),
             Times.Once);
         _mockTemplateStore.Verify(
-            s => s.DeleteAsync($"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon", It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync($"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon", It.IsAny<CancellationToken>()),
             Times.Once);
 
         _mockMessageBus.Verify(
@@ -658,7 +660,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     {
         // Arrange
         _mockTemplateStore
-            .Setup(s => s.GetAsync($"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:existing_code", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"tpl:{TestGameServiceId}:{"bestiary"}:existing_code", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestTemplate(code: "existing_code"));
         // "new_code" returns null by default (not found)
 
@@ -671,7 +673,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 {
                     GameServiceId = TestGameServiceId,
                     Code = "existing_code",
-                    CollectionType = CollectionType.Bestiary,
+                    CollectionType = "bestiary",
                     DisplayName = "Existing",
                     ItemTemplateId = TestItemTemplateId,
                     HideWhenLocked = false
@@ -680,7 +682,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 {
                     GameServiceId = TestGameServiceId,
                     Code = "new_code",
-                    CollectionType = CollectionType.Bestiary,
+                    CollectionType = "bestiary",
                     DisplayName = "New Entry",
                     ItemTemplateId = TestItemTemplateId,
                     HideWhenLocked = false
@@ -724,7 +726,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         {
             OwnerId = TestOwnerId,
             OwnerType = "character",
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             GameServiceId = TestGameServiceId
         };
 
@@ -736,7 +738,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Assert.NotNull(response);
         Assert.Equal(TestOwnerId, response.OwnerId);
         Assert.Equal("character", response.OwnerType);
-        Assert.Equal(CollectionType.Bestiary, response.CollectionType);
+        Assert.Equal("bestiary", response.CollectionType);
         Assert.Equal(TestContainerId, response.ContainerId);
         Assert.Equal(0, response.EntryCount);
 
@@ -772,7 +774,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         {
             OwnerId = TestOwnerId,
             OwnerType = "invalid:type",
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             GameServiceId = TestGameServiceId
         };
 
@@ -793,7 +795,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         {
             OwnerId = TestOwnerId,
             OwnerType = "npc",
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             GameServiceId = TestGameServiceId
         };
 
@@ -816,7 +818,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Owner key lookup returns existing collection
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestCollection());
 
@@ -825,7 +827,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         {
             OwnerId = TestOwnerId,
             OwnerType = "character",
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             GameServiceId = TestGameServiceId
         };
 
@@ -858,7 +860,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         {
             OwnerId = TestOwnerId,
             OwnerType = "character",
-            CollectionType = CollectionType.SceneArchive,
+            CollectionType = "scene_archive",
             GameServiceId = TestGameServiceId
         };
 
@@ -944,7 +946,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             s => s.DeleteAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()),
             Times.Once);
         _mockCollectionStore.Verify(
-            s => s.DeleteAsync($"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}", It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync($"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}", It.IsAny<CancellationToken>()),
             Times.Once);
 
         _mockMessageBus.Verify(
@@ -983,8 +985,8 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Arrange
         var collections = new List<CollectionInstanceModel>
         {
-            CreateTestCollection(collectionId: Guid.NewGuid(), collectionType: CollectionType.Bestiary),
-            CreateTestCollection(collectionId: Guid.NewGuid(), collectionType: CollectionType.MusicLibrary, gameServiceId: Guid.NewGuid())
+            CreateTestCollection(collectionId: Guid.NewGuid(), collectionType: "bestiary"),
+            CreateTestCollection(collectionId: Guid.NewGuid(), collectionType: "music_library", gameServiceId: Guid.NewGuid())
         };
 
         _mockCollectionStore
@@ -1027,7 +1029,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             OwnerId = TestOwnerId,
             OwnerType = "character",
             GameServiceId = TestGameServiceId,
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             EntryCode = "boss_dragon"
         };
 
@@ -1081,12 +1083,12 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockCollectionCache
@@ -1099,7 +1101,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             OwnerId = TestOwnerId,
             OwnerType = "character",
             GameServiceId = TestGameServiceId,
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             EntryCode = "boss_dragon"
         };
 
@@ -1129,7 +1131,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             OwnerId = TestOwnerId,
             OwnerType = "character",
             GameServiceId = TestGameServiceId,
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             EntryCode = "nonexistent_code"
         };
 
@@ -1169,12 +1171,12 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockCollectionCache
@@ -1187,7 +1189,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             OwnerId = TestOwnerId,
             OwnerType = "character",
             GameServiceId = TestGameServiceId,
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             EntryCode = "boss_dragon"
         };
 
@@ -1215,7 +1217,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Template found by code
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
@@ -1256,7 +1258,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             OwnerId = TestOwnerId,
             OwnerType = "character",
             GameServiceId = TestGameServiceId,
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             EntryCode = "boss_dragon"
         };
 
@@ -1288,12 +1290,12 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockCollectionCache
@@ -1310,7 +1312,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             OwnerId = TestOwnerId,
             OwnerType = "character",
             GameServiceId = TestGameServiceId,
-            CollectionType = CollectionType.Bestiary,
+            CollectionType = "bestiary",
             EntryCode = "boss_dragon"
         };
 
@@ -1346,7 +1348,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
         _mockCollectionCache
@@ -1362,7 +1364,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 OwnerId = TestOwnerId,
                 OwnerType = "character",
                 GameServiceId = TestGameServiceId,
-                CollectionType = CollectionType.Bestiary,
+                CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
             CancellationToken.None);
@@ -1387,7 +1389,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 OwnerId = Guid.NewGuid(),
                 OwnerType = "character",
                 GameServiceId = TestGameServiceId,
-                CollectionType = CollectionType.Bestiary,
+                CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
             CancellationToken.None);
@@ -1422,7 +1424,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var collection = CreateTestCollection();
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
 
@@ -1444,7 +1446,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 OwnerId = TestOwnerId,
                 OwnerType = "character",
                 GameServiceId = TestGameServiceId,
-                CollectionType = CollectionType.Bestiary
+                CollectionType = "bestiary"
             },
             CancellationToken.None);
 
@@ -1484,7 +1486,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 OwnerId = Guid.NewGuid(),
                 OwnerType = "character",
                 GameServiceId = TestGameServiceId,
-                CollectionType = CollectionType.Bestiary
+                CollectionType = "bestiary"
             },
             CancellationToken.None);
 
@@ -1498,44 +1500,45 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
     #endregion
 
-    #region Music Operations Tests
+    #region Content Selection Tests
 
     [Fact]
-    public async Task SetAreaMusicConfig_NewConfig_CreatesAndReturns()
+    public async Task SetAreaContentConfig_NewConfig_CreatesAndReturns()
     {
         // Arrange
         _mockGameServiceClient
             .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceInfo { ServiceId = TestGameServiceId });
 
-        var defaultTrack = CreateTestTemplate(
+        var defaultEntry = CreateTestTemplate(
             code: "forest_ambient",
-            collectionType: CollectionType.MusicLibrary,
+            collectionType: "music_library",
             themes: new List<string> { "forest", "peaceful" });
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.MusicLibrary}:forest_ambient",
+                $"tpl:{TestGameServiceId}:music_library:forest_ambient",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(defaultTrack);
+            .ReturnsAsync(defaultEntry);
 
         var service = CreateService();
-        var request = new SetAreaMusicConfigRequest
+        var request = new SetAreaContentConfigRequest
         {
             GameServiceId = TestGameServiceId,
+            CollectionType = "music_library",
             AreaCode = "enchanted_forest",
             Themes = new List<string> { "forest", "peaceful", "magical" },
-            DefaultTrackCode = "forest_ambient"
+            DefaultEntryCode = "forest_ambient"
         };
 
         // Act
-        var (status, response) = await service.SetAreaMusicConfigAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetAreaContentConfigAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal("enchanted_forest", response.AreaCode);
         Assert.Equal(3, response.Themes.Count);
-        Assert.Equal("forest_ambient", response.DefaultTrackCode);
+        Assert.Equal("forest_ambient", response.DefaultEntryCode);
 
         // Verify saved twice (by ID and by code key)
         _mockAreaContentStore.Verify(
@@ -1544,41 +1547,42 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     }
 
     [Fact]
-    public async Task SetAreaMusicConfig_ExistingConfig_Updates()
+    public async Task SetAreaContentConfig_ExistingConfig_Updates()
     {
         // Arrange
         _mockGameServiceClient
             .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceInfo { ServiceId = TestGameServiceId });
 
-        var defaultTrack = CreateTestTemplate(
+        var defaultEntry = CreateTestTemplate(
             code: "forest_ambient",
-            collectionType: CollectionType.MusicLibrary);
+            collectionType: "music_library");
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.MusicLibrary}:forest_ambient",
+                $"tpl:{TestGameServiceId}:music_library:forest_ambient",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(defaultTrack);
+            .ReturnsAsync(defaultEntry);
 
         // Existing config
         var existingConfig = CreateTestAreaConfig();
         _mockAreaContentStore
             .Setup(s => s.GetAsync(
-                $"amc:{TestGameServiceId}:enchanted_forest",
+                $"acc:{TestGameServiceId}:music_library:enchanted_forest",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingConfig);
 
         var service = CreateService();
-        var request = new SetAreaMusicConfigRequest
+        var request = new SetAreaContentConfigRequest
         {
             GameServiceId = TestGameServiceId,
+            CollectionType = "music_library",
             AreaCode = "enchanted_forest",
             Themes = new List<string> { "dark", "eerie" },
-            DefaultTrackCode = "forest_ambient"
+            DefaultEntryCode = "forest_ambient"
         };
 
         // Act
-        var (status, response) = await service.SetAreaMusicConfigAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetAreaContentConfigAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1589,21 +1593,21 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     }
 
     [Fact]
-    public async Task GetAreaMusicConfig_Exists_ReturnsOk()
+    public async Task GetAreaContentConfig_Exists_ReturnsOk()
     {
         // Arrange
         var config = CreateTestAreaConfig();
         _mockAreaContentStore
             .Setup(s => s.GetAsync(
-                $"amc:{TestGameServiceId}:enchanted_forest",
+                $"acc:{TestGameServiceId}:music_library:enchanted_forest",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(config);
 
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.GetAreaMusicConfigAsync(
-            new GetAreaMusicConfigRequest { GameServiceId = TestGameServiceId, AreaCode = "enchanted_forest" },
+        var (status, response) = await service.GetAreaContentConfigAsync(
+            new GetAreaContentConfigRequest { GameServiceId = TestGameServiceId, CollectionType = "music_library", AreaCode = "enchanted_forest" },
             CancellationToken.None);
 
         // Assert
@@ -1613,18 +1617,19 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     }
 
     [Fact]
-    public async Task SelectTrackForArea_NoAreaConfig_ReturnsNotFound()
+    public async Task SelectContentForArea_NoAreaConfig_ReturnsNotFound()
     {
         // Arrange - no area config
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.SelectTrackForAreaAsync(
-            new SelectTrackForAreaRequest
+        var (status, response) = await service.SelectContentForAreaAsync(
+            new SelectContentForAreaRequest
             {
                 OwnerId = TestOwnerId,
                 OwnerType = "character",
                 GameServiceId = TestGameServiceId,
+                CollectionType = "music_library",
                 AreaCode = "unknown_area"
             },
             CancellationToken.None);
@@ -1635,38 +1640,39 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     }
 
     [Fact]
-    public async Task SelectTrackForArea_NoMusicCollection_ReturnsDefaultTrack()
+    public async Task SelectContentForArea_NoCollection_ReturnsDefaultEntry()
     {
         // Arrange
         var areaConfig = CreateTestAreaConfig();
         _mockAreaContentStore
             .Setup(s => s.GetAsync(
-                $"amc:{TestGameServiceId}:enchanted_forest",
+                $"acc:{TestGameServiceId}:music_library:enchanted_forest",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(areaConfig);
 
-        // No music collection for this owner
+        // No collection for this owner
 
-        var defaultTrack = CreateTestTemplate(
+        var defaultEntry = CreateTestTemplate(
             code: "forest_ambient",
-            collectionType: CollectionType.MusicLibrary,
+            collectionType: "music_library",
             displayName: "Forest Ambience",
             themes: new List<string> { "forest" });
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.MusicLibrary}:forest_ambient",
+                $"tpl:{TestGameServiceId}:music_library:forest_ambient",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(defaultTrack);
+            .ReturnsAsync(defaultEntry);
 
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.SelectTrackForAreaAsync(
-            new SelectTrackForAreaRequest
+        var (status, response) = await service.SelectContentForAreaAsync(
+            new SelectContentForAreaRequest
             {
                 OwnerId = TestOwnerId,
                 OwnerType = "character",
                 GameServiceId = TestGameServiceId,
+                CollectionType = "music_library",
                 AreaCode = "enchanted_forest"
             },
             CancellationToken.None);
@@ -1674,50 +1680,50 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal("forest_ambient", response.TrackCode);
+        Assert.Equal("forest_ambient", response.EntryCode);
         Assert.Equal("Forest Ambience", response.DisplayName);
         Assert.Empty(response.MatchedThemes);
     }
 
     [Fact]
-    public async Task SelectTrackForArea_WithMatchingTracks_SelectsWeightedCandidate()
+    public async Task SelectContentForArea_WithMatchingEntries_SelectsWeightedCandidate()
     {
         // Arrange
         var areaConfig = CreateTestAreaConfig(themes: new List<string> { "forest", "peaceful", "magical" });
         _mockAreaContentStore
             .Setup(s => s.GetAsync(
-                $"amc:{TestGameServiceId}:enchanted_forest",
+                $"acc:{TestGameServiceId}:music_library:enchanted_forest",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(areaConfig);
 
-        var collection = CreateTestCollection(collectionType: CollectionType.MusicLibrary);
+        var collection = CreateTestCollection(collectionType: "music_library");
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.MusicLibrary}",
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:music_library",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
 
-        var track1 = CreateTestTemplate(
+        var entry1 = CreateTestTemplate(
             entryTemplateId: Guid.NewGuid(),
             code: "forest_theme",
-            collectionType: CollectionType.MusicLibrary,
+            collectionType: "music_library",
             displayName: "Forest Theme",
             themes: new List<string> { "forest", "peaceful" });
-        var track2 = CreateTestTemplate(
+        var entry2 = CreateTestTemplate(
             entryTemplateId: Guid.NewGuid(),
             code: "battle_theme",
-            collectionType: CollectionType.MusicLibrary,
+            collectionType: "music_library",
             displayName: "Battle Theme",
             themes: new List<string> { "battle", "intense" });
 
         _mockTemplateStore
             .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<EntryTemplateModel> { track1, track2 });
+            .ReturnsAsync(new List<EntryTemplateModel> { entry1, entry2 });
 
         var cache = CreateTestCache(collectionId: collection.CollectionId, unlockedEntries: new List<UnlockedEntryRecord>
         {
-            new UnlockedEntryRecord { Code = "forest_theme", EntryTemplateId = track1.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
-            new UnlockedEntryRecord { Code = "battle_theme", EntryTemplateId = track2.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+            new UnlockedEntryRecord { Code = "forest_theme", EntryTemplateId = entry1.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
+            new UnlockedEntryRecord { Code = "battle_theme", EntryTemplateId = entry2.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
         });
         _mockCollectionCache
             .Setup(s => s.GetAsync($"cache:{collection.CollectionId}", It.IsAny<CancellationToken>()))
@@ -1726,12 +1732,13 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.SelectTrackForAreaAsync(
-            new SelectTrackForAreaRequest
+        var (status, response) = await service.SelectContentForAreaAsync(
+            new SelectContentForAreaRequest
             {
                 OwnerId = TestOwnerId,
                 OwnerType = "character",
                 GameServiceId = TestGameServiceId,
+                CollectionType = "music_library",
                 AreaCode = "enchanted_forest"
             },
             CancellationToken.None);
@@ -1740,7 +1747,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         // Only forest_theme should match (forest + peaceful themes overlap)
-        Assert.Equal("forest_theme", response.TrackCode);
+        Assert.Equal("forest_theme", response.EntryCode);
         Assert.Equal("Forest Theme", response.DisplayName);
         Assert.Contains("forest", response.MatchedThemes);
         Assert.Contains("peaceful", response.MatchedThemes);
@@ -1783,7 +1790,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync(cache);
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
@@ -1851,7 +1858,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync(cache);
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
@@ -1893,7 +1900,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync(cache);
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
@@ -1946,7 +1953,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .ReturnsAsync("etag-2");
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
@@ -2016,7 +2023,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var characterId = Guid.NewGuid();
         var collection1 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: characterId, ownerType: "character");
         var collection2 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: characterId, ownerType: "character",
-            collectionType: CollectionType.MusicLibrary);
+            collectionType: "music_library");
 
         _mockCollectionStore
             .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
@@ -2116,13 +2123,13 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:account:{TestGameServiceId}:{CollectionType.Bestiary}",
+                $"col:{TestOwnerId}:account:{TestGameServiceId}:{"bestiary"}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
 
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
@@ -2161,7 +2168,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 OwnerId = TestOwnerId,
                 OwnerType = "account",
                 GameServiceId = TestGameServiceId,
-                CollectionType = CollectionType.Bestiary,
+                CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
             CancellationToken.None);
@@ -2190,13 +2197,13 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
 
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:entry_two",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:entry_two",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template2);
 
@@ -2230,7 +2237,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 OwnerId = TestOwnerId,
                 OwnerType = "character",
                 GameServiceId = TestGameServiceId,
-                CollectionType = CollectionType.Bestiary,
+                CollectionType = "bestiary",
                 EntryCode = "entry_two"
             },
             CancellationToken.None);
@@ -2254,13 +2261,13 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{TestOwnerId}:character:{TestGameServiceId}:{CollectionType.Bestiary}",
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
 
         _mockTemplateStore
             .Setup(s => s.GetAsync(
-                $"tpl:{TestGameServiceId}:{CollectionType.Bestiary}:boss_dragon",
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
@@ -2300,7 +2307,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 OwnerId = TestOwnerId,
                 OwnerType = "character",
                 GameServiceId = TestGameServiceId,
-                CollectionType = CollectionType.Bestiary,
+                CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
             CancellationToken.None);
