@@ -254,6 +254,6 @@ await Task.Delay(1000);  # Or use proper health checks
 
 ## Next Steps
 
-- [Testing Guide](../guides/TESTING.md) - Detailed test documentation
+- [Testing Guide](TESTING.md) - Detailed test documentation
 - [NuGet Setup](NUGET_SETUP.md) - SDK package configuration
 - [Deployment Guide](../guides/DEPLOYMENT.md) - Production deployment

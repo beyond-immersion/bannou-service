@@ -514,4 +514,4 @@ These are intentionally deferred as they add complexity beyond core use cases.
 - **Events**: `schemas/scene-events.yaml`
 - **Configuration**: `schemas/scene-configuration.yaml`
 - **Design Philosophy**: `docs/BANNOU_DESIGN.md` (monoservice architecture)
-- **Testing**: `docs/guides/TESTING.md`
+- **Testing**: `docs/operations/TESTING.md`

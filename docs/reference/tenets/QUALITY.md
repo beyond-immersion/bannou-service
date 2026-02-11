@@ -47,7 +47,7 @@ Use **Debug** for individual retry attempts, **Error** only when all retries exh
 
 **Rule**: All services MUST have tests at appropriate tiers.
 
-**For detailed testing architecture and plugin isolation boundaries, see [TESTING.md](../../guides/TESTING.md).**
+**For detailed testing architecture and plugin isolation boundaries, see [TESTING.md](../../operations/TESTING.md).**
 
 ### Testing Philosophy
 

@@ -3,7 +3,7 @@
 > **Version**: 1.0
 > **Status**: Implemented
 > **Location**: `plugins/lib-mapping/`
-> **Related**: [GOAP Guide](./GOAP.md), [ABML Guide](./ABML.md)
+> **Related**: [Behavior System Guide](./BEHAVIOR-SYSTEM.md), [ABML Guide](./ABML.md)
 
 The Mapping System (`lib-mapping`) manages spatial data for game worlds. It enables game servers to publish live spatial data, event actors to orchestrate region-wide encounters, NPC actors to receive perception-filtered context, and behaviors to make spatially-aware decisions through affordance queries.
 

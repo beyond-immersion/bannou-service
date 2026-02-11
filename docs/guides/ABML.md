@@ -2,7 +2,7 @@
 
 > **Version**: 3.0
 > **Status**: Implemented
-> **Related**: [GOAP Guide](./GOAP.md), [Actor System Guide](./ACTOR-SYSTEM.md), [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md)
+> **Related**: [Behavior System Guide](./BEHAVIOR-SYSTEM.md), [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md)
 
 ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Bannou-powered games.
 
@@ -585,7 +585,7 @@ Template filters: `capitalize`, `upcase`, `downcase`, `truncate`, `strip`, `defa
 
 ### 5.4 Character Variable Providers
 
-When executing behaviors for characters, the ActorRunner registers variable providers via the Variable Provider Factory pattern (see [Actor System Guide](./ACTOR-SYSTEM.md)). These providers expose character data from L4 services without hierarchy violations.
+When executing behaviors for characters, the ActorRunner registers variable providers via the Variable Provider Factory pattern (see [Behavior System Guide](./BEHAVIOR-SYSTEM.md)). These providers expose character data from L4 services without hierarchy violations.
 
 | Namespace | Source Service | Example Variables |
 |-----------|---------------|-------------------|
@@ -1082,7 +1082,7 @@ triggers:
 
 ## 10. GOAP Integration
 
-> **Full Documentation**: For comprehensive GOAP documentation including the A* planning algorithm, cognition integration, and best practices, see the [GOAP Guide](./GOAP.md).
+> **Full Documentation**: For the A* planning algorithm, cognition integration, and best practices, see the [Behavior System Guide section 8](./BEHAVIOR-SYSTEM.md#8-goap-planning).
 
 GOAP (Goal-Oriented Action Planning) metadata are **optional annotations** on ABML flows. This allows:
 - Same ABML documents to work without GOAP (cutscenes, dialogues)
@@ -1395,7 +1395,7 @@ sdks/behavior-compiler/            # Document parsing and compilation (standalon
 
 bannou-service/Abml/               # Runtime execution (server-side)
 ├── Cognition/                     # 5-stage NPC perception pipeline
-│   └── (see Actor System Guide)
+│   └── (see Behavior System Guide)
 └── Execution/
     ├── DocumentExecutor.cs        # Tree-walking interpreter
     ├── ExecutionContext.cs
@@ -1424,7 +1424,7 @@ Domain action handlers are registered by plugins:
 - **lib-actor**: `ActorCommandHandler`, `ActorQueryHandler`, `EmitPerceptionHandler`, `QueryActorStateHandler`, `QueryOptionsHandler`, `ScheduleEventHandler`, `StateUpdateHandler`, `EndEncounterHandler`, `SetEncounterPhaseHandler`
 - **lib-puppetmaster**: `LoadSnapshotHandler`, `PrefetchSnapshotsHandler`, `SpawnWatcherHandler`, `ListWatchersHandler`, `StopWatcherHandler`, `WatchHandler`, `UnwatchHandler`
 
-For the cognition pipeline, behavior stack, and actor execution runtime, see the [Actor System Guide](./ACTOR-SYSTEM.md).
+For the cognition pipeline, behavior stack, and actor execution runtime, see the [Behavior System Guide](./BEHAVIOR-SYSTEM.md).
 
 ---
 

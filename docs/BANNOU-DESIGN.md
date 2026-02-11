@@ -339,5 +339,5 @@ Bannou implements three-tier testing:
 - [WebSocket Protocol Specification](WEBSOCKET-PROTOCOL.md) - Binary protocol details
 - [Plugin Development Guide](guides/PLUGIN_DEVELOPMENT.md) - Creating and extending services
 - [Deployment Guide](guides/DEPLOYMENT.md) - Production deployment patterns
-- [Testing Guide](guides/TESTING.md) - Testing architecture and commands
+- [Testing Guide](operations/TESTING.md) - Testing architecture and commands
 - [Development Rules](reference/TENETS.md) - Mandatory development constraints

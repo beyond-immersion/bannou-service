@@ -194,15 +194,15 @@ These documents provide the high-level architectural north-star context for the 
 - **Why this matters**: Integration tests take 5-10 minutes, rebuild containers, and are disruptive. Running them without being asked wastes significant time.
 
 ### ⚠️ MANDATORY REFERENCE - TESTING.md for ALL Testing Tasks
-**CRITICAL**: For ANY task involving tests, testing architecture, or test placement, you MUST ALWAYS reference the testing documentation (`docs/guides/TESTING.md`) FIRST and IN FULL before proceeding with any work.
+**CRITICAL**: For ANY task involving tests, testing architecture, or test placement, you MUST ALWAYS reference the testing documentation (`docs/operations/TESTING.md`) FIRST and IN FULL before proceeding with any work.
 
 **MANDATORY TESTING WORKFLOW**:
-1. Read `docs/guides/TESTING.md` completely to understand plugin isolation boundaries
+1. Read `docs/operations/TESTING.md` completely to understand plugin isolation boundaries
 2. Use the decision guide to determine correct test placement
 3. Follow architectural constraints (unit-tests cannot reference plugins, lib-testing cannot reference other plugins, etc.)
 4. ALWAYS respond with "I have referred to the service testing document" to confirm you read it
 
-**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference `docs/guides/TESTING.md` for:
+**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference `docs/operations/TESTING.md` for:
 - ANY task involving writing, modifying, or debugging tests
 - Questions about where to place tests (unit tests vs infrastructure tests vs integration tests)
 - Testing configuration classes, service functionality, or cross-service communication

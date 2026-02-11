@@ -8,7 +8,7 @@
 
 This document identifies expansion opportunities for ABML/GOAP into new domains. Each requires Bannou service changes (new schemas, new services, or extensions to existing ones) before the game design can be realized.
 
-For current ABML/GOAP architecture, see: [ABML Guide](../guides/ABML.md), [GOAP Guide](../guides/GOAP.md), [Behavior Deep Dive](../plugins/BEHAVIOR.md), [Actor Deep Dive](../plugins/ACTOR.md).
+For current ABML/GOAP architecture, see: [ABML Guide](../guides/ABML.md), [Behavior System Guide](../guides/BEHAVIOR-SYSTEM.md), [Behavior Deep Dive](../plugins/BEHAVIOR.md), [Actor Deep Dive](../plugins/ACTOR.md).
 
 ---
 
@@ -648,8 +648,7 @@ GOAP for automated moderation: goals include "maintain positive community", "ide
 ## Related Documentation
 
 - [ABML Guide](../guides/ABML.md) - Full ABML specification
-- [GOAP Guide](../guides/GOAP.md) - GOAP planning details
-- [Actor System Guide](../guides/ACTOR-SYSTEM.md) - Actor execution model
+- [Behavior System Guide](../guides/BEHAVIOR-SYSTEM.md) - Actor execution model and GOAP planning
 - [Music System Guide](../guides/MUSIC-SYSTEM.md) - Music GOAP patterns (established SDK pattern)
 - [Behavior Deep Dive](../plugins/BEHAVIOR.md) - Compiler, planner, and runtime internals
 - [Actor Deep Dive](../plugins/ACTOR.md) - Variable Provider Factory, pool deployment

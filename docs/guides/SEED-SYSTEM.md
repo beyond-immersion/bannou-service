@@ -3,7 +3,7 @@
 > **Version**: 1.0
 > **Status**: Seed service implemented; consumers in progress
 > **Location**: `plugins/lib-seed/`, `schemas/seed-*.yaml`
-> **Related**: [Seed Deep Dive](../plugins/SEED.md), [Gardener Plan](../plans/GARDENER.md), [Actor System](./ACTOR-SYSTEM.md), [Service Hierarchy](../reference/SERVICE-HIERARCHY.md)
+> **Related**: [Seed Deep Dive](../plugins/SEED.md), [Gardener Plan](../plans/GARDENER.md), [Behavior System](./BEHAVIOR-SYSTEM.md), [Service Hierarchy](../reference/SERVICE-HIERARCHY.md)
 
 The Seed System provides the foundational growth primitive for Arcadia's progressive mastery model. Seeds are entities that start empty and grow by accumulating metadata across named domains, progressively gaining capabilities at configurable thresholds. They power guardian spirits, dungeon cores, combat archetypes, crafting specializations, and any future system that needs "progressive growth in a role."
 

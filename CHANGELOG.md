@@ -161,7 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Certbot webroot integration with OpenResty
   - Production quickstart guide (`docs/guides/PRODUCTION-QUICKSTART.md`)
 - **Release Management**: `scripts/prepare-release.sh` for semantic version releases
-- **Releasing Guide** (`docs/guides/RELEASING.md`): Complete release workflow documentation
+- **Releasing Guide** (`docs/operations/RELEASING.md`): Complete release workflow documentation
 - **Permission Registration Tests**: Verify all plugins register permissions correctly
 - **TestConfigurationHelper**: Shared test utilities for configuration testing
 

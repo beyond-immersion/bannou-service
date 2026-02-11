@@ -4,9 +4,9 @@
 > **Status**: Production-ready (all core systems implemented)
 > **Key Plugins**: `lib-actor` (L2), `lib-behavior` (L4), `lib-puppetmaster` (L4), `lib-character-personality` (L4), `lib-character-encounter` (L4), `lib-character-history` (L4), `lib-quest` (L2)
 > **Deep Dives**: [Actor](../plugins/ACTOR.md), [Behavior](../plugins/BEHAVIOR.md), [Puppetmaster](../plugins/PUPPETMASTER.md), [Character Personality](../plugins/CHARACTER-PERSONALITY.md), [Character Encounter](../plugins/CHARACTER-ENCOUNTER.md), [Character History](../plugins/CHARACTER-HISTORY.md), [Quest](../plugins/QUEST.md)
-> **Related Guides**: [ABML](./ABML.md), [Mapping System](./MAPPING_SYSTEM.md), [Seed System](./SEED-SYSTEM.md)
+> **Related Guides**: [ABML](./ABML.md), [Mapping System](./MAPPING-SYSTEM.md), [Seed System](./SEED-SYSTEM.md)
 
-The Actor System is the cognitive layer that makes Arcadia's worlds alive. It gives NPCs personality, memory, and growth. It orchestrates dramatic encounters. It implements the gods who curate regional flavor. It is the engine behind the vision's promise: **living worlds where content emerges from accumulated play history, not hand-authored content**.
+The Behavior System is the cognitive layer that makes Arcadia's worlds alive. It gives NPCs personality, memory, and growth. It orchestrates dramatic encounters. It implements the gods who curate regional flavor. It is the engine behind the vision's promise: **living worlds where content emerges from accumulated play history, not hand-authored content**.
 
 ---
 
@@ -557,7 +557,7 @@ The GOAP planner lives in `sdks/behavior-compiler/Goap/` and is registered as `I
 
 ## 9. Behavior Integration
 
-### 8.1 The Behavior Stack
+### 9.1 The Behavior Stack
 
 Characters have layered behavior stacks:
 
@@ -581,7 +581,7 @@ Each layer produces intent emissions. The stack merges them using archetype-defi
 | Expression | Facial animations | Blended |
 | Vocalization | Speech/sounds | Priority queue |
 
-### 8.2 Behavior Types and Variants
+### 9.2 Behavior Types and Variants
 
 Characters compose behaviors from types and variants:
 
@@ -600,7 +600,7 @@ Character Behaviors
 
 The `BehaviorModelCache` in lib-behavior supports variant fallback chains -- if a specific variant isn't found, it falls back through the chain until a match is found.
 
-### 8.3 ABML Compilation and Execution
+### 9.3 ABML Compilation and Execution
 
 ABML behaviors are compiled through a multi-phase pipeline: YAML parsing → AST construction → semantic analysis → bytecode emission. The compiled bytecode can be executed by:
 
