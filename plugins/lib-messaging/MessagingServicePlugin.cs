@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,11 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring messaging service dependencies");
+
+        // Register unhandled exception handler that publishes error events via IMessageBus.
+        // Composite pattern: fires alongside LoggingUnhandledExceptionHandler and any other registered handlers.
+        // Registered before the in-memory/RabbitMQ branch — handler resolves IMessageBus lazily from DI.
+        services.AddSingleton<IUnhandledExceptionHandler, MessagingUnhandledExceptionHandler>();
 
         // Register named HttpClient for subscription callbacks (FOUNDATION TENETS: use IHttpClientFactory)
         services.AddHttpClient(MessagingService.HttpClientName);

@@ -876,51 +876,6 @@ public class VoiceServiceTests
 
     #endregion
 
-    #region Error Handling Tests
-
-    [Fact]
-    public async Task CreateVoiceRoom_WhenStateStoreThrows_ReturnsInternalServerErrorAndEmitsEvent()
-    {
-        // Arrange
-        var service = CreateService();
-        var sessionId = Guid.NewGuid();
-        var request = new CreateVoiceRoomRequest
-        {
-            SessionId = sessionId,
-            PreferredTier = VoiceTier.P2p,
-            Codec = VoiceCodec.Opus,
-            MaxParticipants = 6
-        };
-
-        _mockStringStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("State store connection failed"));
-
-        // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(result);
-
-        // Verify error event was emitted
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "voice",
-            "CreateVoiceRoom",
-            "unexpected_exception",
-            It.IsAny<string>(),
-            It.IsAny<string?>(),
-            It.IsAny<string?>(),
-            It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(),
-            It.IsAny<string?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    #endregion
-
     #region Create Room - New Features Tests
 
     [Fact]

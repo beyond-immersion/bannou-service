@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Templates;
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ResourceTemplates;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +50,14 @@ public static class ServiceClientsDependencyInjection
         // ServiceNavigator aggregates all service clients with session context
         // Scoped lifetime ensures per-request client instances
         services.AddScoped<IServiceNavigator, ServiceNavigator>();
+
+        // Default logging-only unhandled exception handler (always present, fires first).
+        // Plugin handlers (lib-messaging, lib-telemetry) register additional implementations
+        // via IEnumerable<IUnhandledExceptionHandler> composite pattern.
+        services.AddSingleton<IUnhandledExceptionHandler, LoggingUnhandledExceptionHandler>();
+
+        // Dispatcher iterates all registered handlers with per-handler fault isolation
+        services.AddSingleton<IUnhandledExceptionDispatcher, UnhandledExceptionDispatcher>();
 
         return services;
     }
