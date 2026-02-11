@@ -60,7 +60,7 @@ You don't accumulate in Arcadia. You **contribute to the compost heap** that gro
 
 ## Verdict
 
-The anti-metaverse position is **clearly stronger**, and the distinction isn't just semantic -- it's architectural. The Vision document's seven design principles aren't aspirational flavor text. They're load-bearing engineering constraints that manifest in actual system design:
+The anti-metaverse position is **clearly stronger**, and the distinction isn't just semantic -- it's architectural. The vision document's seven design principles aren't aspirational flavor text. They're load-bearing engineering constraints that manifest in actual system design:
 
 - Characters-as-independent-entities required the entire dual-agency Actor system with autonomous NPC brains.
 - Intentional inequality required the world-state-driven scenario system instead of scripted content.

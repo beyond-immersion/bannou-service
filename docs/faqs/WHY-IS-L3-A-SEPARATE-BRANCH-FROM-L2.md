@@ -60,7 +60,7 @@ BANNOU_ENABLE_APP_FOUNDATION=true   # L1
 BANNOU_ENABLE_GAME_FOUNDATION=true  # L2: character, realm, species, location, currency, ...
 ```
 
-This gives you: everything above, plus characters, realms, species, locations, currencies, items, inventories, quests, actors, game sessions.
+This gives you: authentication, accounts, permissions, WebSocket gateway, binding agreements, and resource tracking... plus characters, realms, species, locations, currencies, items, inventories, quests, actors, and game sessions.
 
 No asset storage. No orchestrator. No documentation service. No website.
 
