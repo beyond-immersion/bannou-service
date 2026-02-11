@@ -104,253 +104,209 @@ public partial class ChatService : IChatService
     public async Task<(StatusCodes, RoomTypeResponse?)> RegisterRoomTypeAsync(
         RegisterRoomTypeRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
-            var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
+        var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
 
-            // Check uniqueness
-            var existing = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
-            if (existing != null)
+        // Check uniqueness
+        var existing = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
+        if (existing != null)
+        {
+            _logger.LogWarning("Room type already exists: {Code} for game {GameServiceId}", body.Code, body.GameServiceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check MaxRoomTypesPerGameService for scoped types
+        if (body.GameServiceId.HasValue)
+        {
+            var countConditions = new List<QueryCondition>
             {
-                _logger.LogWarning("Room type already exists: {Code} for game {GameServiceId}", body.Code, body.GameServiceId);
+                new() { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.Value.ToString() },
+                new() { Path = "$.Code", Operator = QueryOperator.Exists, Value = true }
+            };
+            var count = await _roomTypeStore.JsonCountAsync(countConditions, cancellationToken);
+            if (count >= _configuration.MaxRoomTypesPerGameService)
+            {
+                _logger.LogWarning("Game service {GameServiceId} has reached max room types ({Max})",
+                    body.GameServiceId, _configuration.MaxRoomTypesPerGameService);
                 return (StatusCodes.Conflict, null);
             }
-
-            // Check MaxRoomTypesPerGameService for scoped types
-            if (body.GameServiceId.HasValue)
-            {
-                var countConditions = new List<QueryCondition>
-                {
-                    new() { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.Value.ToString() },
-                    new() { Path = "$.Code", Operator = QueryOperator.Exists, Value = true }
-                };
-                var count = await _roomTypeStore.JsonCountAsync(countConditions, cancellationToken);
-                if (count >= _configuration.MaxRoomTypesPerGameService)
-                {
-                    _logger.LogWarning("Game service {GameServiceId} has reached max room types ({Max})",
-                        body.GameServiceId, _configuration.MaxRoomTypesPerGameService);
-                    return (StatusCodes.Conflict, null);
-                }
-            }
-
-            var now = DateTimeOffset.UtcNow;
-            var model = new ChatRoomTypeModel
-            {
-                Code = body.Code,
-                DisplayName = body.DisplayName,
-                Description = body.Description,
-                GameServiceId = body.GameServiceId,
-                MessageFormat = body.MessageFormat,
-                ValidatorConfig = body.ValidatorConfig != null ? new ValidatorConfigModel
-                {
-                    MaxMessageLength = body.ValidatorConfig.MaxMessageLength,
-                    AllowedPattern = body.ValidatorConfig.AllowedPattern,
-                    AllowedValues = body.ValidatorConfig.AllowedValues?.ToList(),
-                    RequiredFields = body.ValidatorConfig.RequiredFields?.ToList(),
-                    JsonSchema = body.ValidatorConfig.JsonSchema,
-                } : null,
-                PersistenceMode = body.PersistenceMode,
-                DefaultMaxParticipants = body.DefaultMaxParticipants,
-                RetentionDays = body.RetentionDays,
-                DefaultContractTemplateId = body.DefaultContractTemplateId,
-                AllowAnonymousSenders = body.AllowAnonymousSenders,
-                RateLimitPerMinute = body.RateLimitPerMinute,
-                Metadata = body.Metadata,
-                Status = RoomTypeStatus.Active,
-                CreatedAt = now,
-            };
-
-            await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("chat-room-type.created", new ChatRoomTypeCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                Code = model.Code,
-                GameServiceId = model.GameServiceId,
-                DisplayName = model.DisplayName,
-                MessageFormat = model.MessageFormat,
-                PersistenceMode = model.PersistenceMode,
-                AllowAnonymousSenders = model.AllowAnonymousSenders,
-                Status = model.Status,
-                CreatedAt = model.CreatedAt,
-            }, cancellationToken);
-
-            _logger.LogInformation("Registered room type {Code} for game {GameServiceId}", body.Code, body.GameServiceId);
-            return (StatusCodes.OK, MapToRoomTypeResponse(model));
         }
-        catch (ApiException ex)
+
+        var now = DateTimeOffset.UtcNow;
+        var model = new ChatRoomTypeModel
         {
-            _logger.LogWarning(ex, "API error in RegisterRoomType: {Status}", ex.StatusCode);
-            throw;
-        }
-        catch (Exception ex)
+            Code = body.Code,
+            DisplayName = body.DisplayName,
+            Description = body.Description,
+            GameServiceId = body.GameServiceId,
+            MessageFormat = body.MessageFormat,
+            ValidatorConfig = body.ValidatorConfig != null ? new ValidatorConfigModel
+            {
+                MaxMessageLength = body.ValidatorConfig.MaxMessageLength,
+                AllowedPattern = body.ValidatorConfig.AllowedPattern,
+                AllowedValues = body.ValidatorConfig.AllowedValues?.ToList(),
+                RequiredFields = body.ValidatorConfig.RequiredFields?.ToList(),
+                JsonSchema = body.ValidatorConfig.JsonSchema,
+            } : null,
+            PersistenceMode = body.PersistenceMode,
+            DefaultMaxParticipants = body.DefaultMaxParticipants,
+            RetentionDays = body.RetentionDays,
+            DefaultContractTemplateId = body.DefaultContractTemplateId,
+            AllowAnonymousSenders = body.AllowAnonymousSenders,
+            RateLimitPerMinute = body.RateLimitPerMinute,
+            Metadata = body.Metadata,
+            Status = RoomTypeStatus.Active,
+            CreatedAt = now,
+        };
+
+        await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("chat-room-type.created", new ChatRoomTypeCreatedEvent
         {
-            _logger.LogError(ex, "Failed to register room type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync("chat", "RegisterRoomType", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            Code = model.Code,
+            GameServiceId = model.GameServiceId,
+            DisplayName = model.DisplayName,
+            MessageFormat = model.MessageFormat,
+            PersistenceMode = model.PersistenceMode,
+            AllowAnonymousSenders = model.AllowAnonymousSenders,
+            Status = model.Status,
+            CreatedAt = model.CreatedAt,
+        }, cancellationToken);
+
+        _logger.LogInformation("Registered room type {Code} for game {GameServiceId}", body.Code, body.GameServiceId);
+        return (StatusCodes.OK, MapToRoomTypeResponse(model));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, RoomTypeResponse?)> GetRoomTypeAsync(
         GetRoomTypeRequest body, CancellationToken cancellationToken)
     {
-        try
+        var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
+        var model = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
+        if (model == null)
         {
-            var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
-            var model = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-            return (StatusCodes.OK, MapToRoomTypeResponse(model));
+            return (StatusCodes.NotFound, null);
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get room type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync("chat", "GetRoomType", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, MapToRoomTypeResponse(model));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ListRoomTypesResponse?)> ListRoomTypesAsync(
         ListRoomTypesRequest body, CancellationToken cancellationToken)
     {
-        try
+        var conditions = new List<QueryCondition>
         {
-            var conditions = new List<QueryCondition>
-            {
-                // Type discriminator
-                new() { Path = "$.Code", Operator = QueryOperator.Exists, Value = true }
-            };
+            // Type discriminator
+            new() { Path = "$.Code", Operator = QueryOperator.Exists, Value = true }
+        };
 
-            if (body.GameServiceId.HasValue)
+        if (body.GameServiceId.HasValue)
+        {
+            conditions.Add(new QueryCondition
             {
-                conditions.Add(new QueryCondition
-                {
-                    Path = "$.GameServiceId",
-                    Operator = QueryOperator.Equals,
-                    Value = body.GameServiceId.Value.ToString()
-                });
-            }
-            if (body.MessageFormat.HasValue)
-            {
-                conditions.Add(new QueryCondition
-                {
-                    Path = "$.MessageFormat",
-                    Operator = QueryOperator.Equals,
-                    Value = body.MessageFormat.Value.ToString()
-                });
-            }
-            if (body.Status.HasValue)
-            {
-                conditions.Add(new QueryCondition
-                {
-                    Path = "$.Status",
-                    Operator = QueryOperator.Equals,
-                    Value = body.Status.Value.ToString()
-                });
-            }
-
-            var offset = body.Page * body.PageSize;
-            var result = await _roomTypeStore.JsonQueryPagedAsync(
-                conditions, offset, body.PageSize,
-                new JsonSortSpec { Path = "$.CreatedAt", Descending = true },
-                cancellationToken);
-
-            var items = result.Items.Select(r => MapToRoomTypeResponse(r.Value)).ToList();
-
-            return (StatusCodes.OK, new ListRoomTypesResponse
-            {
-                Items = items,
-                TotalCount = (int)result.TotalCount,
-                Page = body.Page,
-                PageSize = body.PageSize,
+                Path = "$.GameServiceId",
+                Operator = QueryOperator.Equals,
+                Value = body.GameServiceId.Value.ToString()
             });
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
+        if (body.MessageFormat.HasValue)
         {
-            _logger.LogError(ex, "Failed to list room types");
-            await _messageBus.TryPublishErrorAsync("chat", "ListRoomTypes", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.MessageFormat",
+                Operator = QueryOperator.Equals,
+                Value = body.MessageFormat.Value.ToString()
+            });
         }
+        if (body.Status.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.Status",
+                Operator = QueryOperator.Equals,
+                Value = body.Status.Value.ToString()
+            });
+        }
+
+        var offset = body.Page * body.PageSize;
+        var result = await _roomTypeStore.JsonQueryPagedAsync(
+            conditions, offset, body.PageSize,
+            new JsonSortSpec { Path = "$.CreatedAt", Descending = true },
+            cancellationToken);
+
+        var items = result.Items.Select(r => MapToRoomTypeResponse(r.Value)).ToList();
+
+        return (StatusCodes.OK, new ListRoomTypesResponse
+        {
+            Items = items,
+            TotalCount = (int)result.TotalCount,
+            Page = body.Page,
+            PageSize = body.PageSize,
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, RoomTypeResponse?)> UpdateRoomTypeAsync(
         UpdateRoomTypeRequest body, CancellationToken cancellationToken)
     {
-        try
+        var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
+
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.ChatLock, $"type:{body.Code}",
+            Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
+        if (!lockResponse.Success)
         {
-            var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
-
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.ChatLock, $"type:{body.Code}",
-                Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
-            if (!lockResponse.Success)
-            {
-                return (StatusCodes.Conflict, null);
-            }
-
-            var model = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var changedFields = new List<string>();
-            if (body.DisplayName != null) { model.DisplayName = body.DisplayName; changedFields.Add("DisplayName"); }
-            if (body.Description != null) { model.Description = body.Description; changedFields.Add("Description"); }
-            if (body.ValidatorConfig != null)
-            {
-                model.ValidatorConfig = new ValidatorConfigModel
-                {
-                    MaxMessageLength = body.ValidatorConfig.MaxMessageLength,
-                    AllowedPattern = body.ValidatorConfig.AllowedPattern,
-                    AllowedValues = body.ValidatorConfig.AllowedValues?.ToList(),
-                    RequiredFields = body.ValidatorConfig.RequiredFields?.ToList(),
-                    JsonSchema = body.ValidatorConfig.JsonSchema,
-                };
-                changedFields.Add("ValidatorConfig");
-            }
-            if (body.DefaultMaxParticipants.HasValue) { model.DefaultMaxParticipants = body.DefaultMaxParticipants; changedFields.Add("DefaultMaxParticipants"); }
-            if (body.RetentionDays.HasValue) { model.RetentionDays = body.RetentionDays; changedFields.Add("RetentionDays"); }
-            if (body.DefaultContractTemplateId.HasValue) { model.DefaultContractTemplateId = body.DefaultContractTemplateId; changedFields.Add("DefaultContractTemplateId"); }
-            if (body.AllowAnonymousSenders.HasValue) { model.AllowAnonymousSenders = body.AllowAnonymousSenders.Value; changedFields.Add("AllowAnonymousSenders"); }
-            if (body.RateLimitPerMinute.HasValue) { model.RateLimitPerMinute = body.RateLimitPerMinute; changedFields.Add("RateLimitPerMinute"); }
-            if (body.Metadata != null) { model.Metadata = body.Metadata; changedFields.Add("Metadata"); }
-
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-            await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("chat-room-type.updated", new ChatRoomTypeUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = model.UpdatedAt.Value,
-                Code = model.Code,
-                GameServiceId = model.GameServiceId,
-                DisplayName = model.DisplayName,
-                MessageFormat = model.MessageFormat,
-                PersistenceMode = model.PersistenceMode,
-                AllowAnonymousSenders = model.AllowAnonymousSenders,
-                Status = model.Status,
-                CreatedAt = model.CreatedAt,
-                ChangedFields = changedFields,
-            }, cancellationToken);
-
-            return (StatusCodes.OK, MapToRoomTypeResponse(model));
+            return (StatusCodes.Conflict, null);
         }
-        catch (ApiException) { throw; }
-        catch (Exception ex)
+
+        var model = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
+        if (model == null)
         {
-            _logger.LogError(ex, "Failed to update room type {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync("chat", "UpdateRoomType", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        var changedFields = new List<string>();
+        if (body.DisplayName != null) { model.DisplayName = body.DisplayName; changedFields.Add("DisplayName"); }
+        if (body.Description != null) { model.Description = body.Description; changedFields.Add("Description"); }
+        if (body.ValidatorConfig != null)
+        {
+            model.ValidatorConfig = new ValidatorConfigModel
+            {
+                MaxMessageLength = body.ValidatorConfig.MaxMessageLength,
+                AllowedPattern = body.ValidatorConfig.AllowedPattern,
+                AllowedValues = body.ValidatorConfig.AllowedValues?.ToList(),
+                RequiredFields = body.ValidatorConfig.RequiredFields?.ToList(),
+                JsonSchema = body.ValidatorConfig.JsonSchema,
+            };
+            changedFields.Add("ValidatorConfig");
+        }
+        if (body.DefaultMaxParticipants.HasValue) { model.DefaultMaxParticipants = body.DefaultMaxParticipants; changedFields.Add("DefaultMaxParticipants"); }
+        if (body.RetentionDays.HasValue) { model.RetentionDays = body.RetentionDays; changedFields.Add("RetentionDays"); }
+        if (body.DefaultContractTemplateId.HasValue) { model.DefaultContractTemplateId = body.DefaultContractTemplateId; changedFields.Add("DefaultContractTemplateId"); }
+        if (body.AllowAnonymousSenders.HasValue) { model.AllowAnonymousSenders = body.AllowAnonymousSenders.Value; changedFields.Add("AllowAnonymousSenders"); }
+        if (body.RateLimitPerMinute.HasValue) { model.RateLimitPerMinute = body.RateLimitPerMinute; changedFields.Add("RateLimitPerMinute"); }
+        if (body.Metadata != null) { model.Metadata = body.Metadata; changedFields.Add("Metadata"); }
+
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+        await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("chat-room-type.updated", new ChatRoomTypeUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = model.UpdatedAt.Value,
+            Code = model.Code,
+            GameServiceId = model.GameServiceId,
+            DisplayName = model.DisplayName,
+            MessageFormat = model.MessageFormat,
+            PersistenceMode = model.PersistenceMode,
+            AllowAnonymousSenders = model.AllowAnonymousSenders,
+            Status = model.Status,
+            CreatedAt = model.CreatedAt,
+            ChangedFields = changedFields,
+        }, cancellationToken);
+
+        return (StatusCodes.OK, MapToRoomTypeResponse(model));
     }
 
     /// <inheritdoc />
