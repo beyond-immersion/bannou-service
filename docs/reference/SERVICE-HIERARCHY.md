@@ -175,6 +175,7 @@ These services provide optional capabilities that enhance ANY Bannou deployment 
 | **orchestrator** | Environment management, deployment orchestration |
 | **documentation** | Knowledge base for users, developers, and AI agents |
 | **website** | Public web interface (registration, news, status) |
+| **voice** | Voice room coordination (P2P and scaled tier) |
 
 **Rules**:
 - May depend on Layer 0 and Layer 1
@@ -193,7 +194,7 @@ These services provide optional capabilities that enhance ANY Bannou deployment 
 
 ## Layer 4: Game Features (Optional Game-Specific Capabilities)
 
-These services provide optional game-specific capabilities - NPCs, matchmaking, voice chat, achievements. They depend on Game Foundation (L2) and may optionally use App Features (L3).
+These services provide optional game-specific capabilities - NPCs, matchmaking, achievements. They depend on Game Foundation (L2) and may optionally use App Features (L3).
 
 | Service | Role |
 |---------|------|
@@ -205,7 +206,6 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 | **matchmaking** | Player matching and queue management |
 | **leaderboard** | Competitive rankings |
 | **achievement** | Trophy/achievement system |
-| **voice** | WebRTC voice communication |
 | **save-load** | Game state persistence |
 | **music** | Procedural music generation |
 | **escrow** | Multi-party asset exchanges |
@@ -230,7 +230,7 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 - Missing L4 service = graceful degradation for L4 consumers
 - L4 requires ALL of L1 and L2 to be running
 
-**Use Case**: "I want NPCs, matchmaking, voice chat, and achievements for my game."
+**Use Case**: "I want NPCs, matchmaking, and achievements for my game."
 
 ---
 
@@ -869,8 +869,8 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | **L0** | state, messaging, mesh (required); telemetry (optional)† |
 | **L1** | account, auth, connect, permission, contract, resource |
 | **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest, seed |
-| **L3** | asset, orchestrator, documentation, website |
-| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history, license, collection, storyline |
+| **L3** | asset, orchestrator, documentation, website, voice |
+| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history, license, collection, storyline |
 | **L5** | (reserved for third-party plugins and internal meta-services) |
 
 † Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.

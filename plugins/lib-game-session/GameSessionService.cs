@@ -11,7 +11,6 @@ using BeyondImmersion.BannouService.Protocol;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscription;
-using BeyondImmersion.BannouService.Voice;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -35,7 +34,6 @@ public partial class GameSessionService : IGameSessionService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
-    private readonly IVoiceClient _voiceClient;
     private readonly IPermissionClient _permissionClient;
     private readonly ISubscriptionClient _subscriptionClient;
     private readonly IClientEventPublisher _clientEventPublisher;
@@ -130,7 +128,6 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="configuration">Service configuration.</param>
     /// <param name="eventConsumer">Event consumer for pub/sub fan-out.</param>
     /// <param name="clientEventPublisher">Client event publisher for pushing events to WebSocket clients.</param>
-    /// <param name="voiceClient">Voice client for voice room coordination.</param>
     /// <param name="permissionClient">Permission client for setting game-session:in_game state.</param>
     /// <param name="subscriptionClient">Subscription client for fetching account subscriptions.</param>
     /// <param name="connectClient">Connect client for querying connected sessions per account.</param>
@@ -141,7 +138,6 @@ public partial class GameSessionService : IGameSessionService
         GameSessionServiceConfiguration configuration,
         IEventConsumer eventConsumer,
         IClientEventPublisher clientEventPublisher,
-        IVoiceClient voiceClient,
         IPermissionClient permissionClient,
         ISubscriptionClient subscriptionClient,
         IDistributedLockProvider lockProvider,
@@ -152,7 +148,6 @@ public partial class GameSessionService : IGameSessionService
         _logger = logger;
         _configuration = configuration;
         _clientEventPublisher = clientEventPublisher;
-        _voiceClient = voiceClient;
         _permissionClient = permissionClient;
         _subscriptionClient = subscriptionClient;
         _lockProvider = lockProvider;
@@ -255,7 +250,7 @@ public partial class GameSessionService : IGameSessionService
                 Players = new List<GamePlayer>(),
                 CreatedAt = DateTimeOffset.UtcNow,
                 GameSettings = body.GameSettings,
-                VoiceEnabled = _voiceClient != null, // Voice enabled if voice service is available
+                VoiceEnabled = false, // Voice rooms managed externally via event-driven orchestration
                 SessionType = sessionType
             };
 
@@ -281,38 +276,8 @@ public partial class GameSessionService : IGameSessionService
                     session.Reservations.Count, sessionId, reservationExpiry);
             }
 
-            // Create voice room if voice service is available
-            if (_voiceClient != null)
-            {
-                try
-                {
-                    _logger.LogDebug("Creating voice room for session {SessionId}", sessionId);
-                    var voiceResponse = await _voiceClient.CreateVoiceRoomAsync(new CreateVoiceRoomRequest
-                    {
-                        SessionId = sessionId,
-                        PreferredTier = Voice.VoiceTier.P2p,
-                        Codec = Voice.VoiceCodec.Opus,
-                        MaxParticipants = body.MaxPlayers
-                    }, cancellationToken);
-
-                    session.VoiceRoomId = voiceResponse.RoomId;
-                    _logger.LogInformation("Voice room {VoiceRoomId} created for session {SessionId}",
-                        voiceResponse.RoomId, sessionId);
-                }
-                catch (ApiException ex)
-                {
-                    // Voice service returned an error - non-fatal, session can still work without voice
-                    _logger.LogWarning(ex, "Voice service error creating room for session {SessionId}: {StatusCode}, continuing without voice",
-                        sessionId, ex.StatusCode);
-                    session.VoiceEnabled = false;
-                }
-                catch (Exception ex)
-                {
-                    // Unexpected error - non-fatal, session can still work without voice
-                    _logger.LogWarning(ex, "Failed to create voice room for session {SessionId}, continuing without voice", sessionId);
-                    session.VoiceEnabled = false;
-                }
-            }
+            // Voice room creation removed: voice (L3 AppFeatures) is now managed
+            // externally via event-driven orchestration per service hierarchy
 
             // Save to state store
             await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
@@ -716,71 +681,13 @@ public partial class GameSessionService : IGameSessionService
             model.Players.Remove(leavingPlayer);
             model.CurrentPlayers = model.Players.Count;
 
-            // Leave voice room if voice is enabled and player has a voice session (best effort - has TTL)
-            if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null
-                && leavingPlayer.VoiceSessionId.HasValue)
-            {
-                try
-                {
-                    _logger.LogDebug("Player {AccountId} leaving voice room {VoiceRoomId} with voice session {VoiceSessionId}",
-                        leavingPlayer.AccountId, model.VoiceRoomId, leavingPlayer.VoiceSessionId);
-
-                    await _voiceClient.LeaveVoiceRoomAsync(new LeaveVoiceRoomRequest
-                    {
-                        RoomId = model.VoiceRoomId.Value,
-                        SessionId = leavingPlayer.VoiceSessionId.Value
-                    }, cancellationToken);
-
-                    _logger.LogInformation("Player {AccountId} left voice room {VoiceRoomId}",
-                        leavingPlayer.AccountId, model.VoiceRoomId);
-                }
-                catch (ApiException ex)
-                {
-                    // Voice service error - non-fatal
-                    _logger.LogWarning(ex, "Voice service error leaving room for player {AccountId}: {StatusCode}",
-                        leavingPlayer.AccountId, ex.StatusCode);
-                }
-                catch (Exception ex)
-                {
-                    // Unexpected error - non-fatal
-                    _logger.LogWarning(ex, "Failed to leave voice room for player {AccountId}",
-                        leavingPlayer.AccountId);
-                }
-            }
+            // Voice room leave/delete removed: voice (L3 AppFeatures) manages its own
+            // participant lifecycle via heartbeat TTL and event-driven orchestration
 
             // Update status
             if (model.CurrentPlayers == 0)
             {
                 model.Status = SessionStatus.Finished;
-
-                // Delete voice room when session ends
-                if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
-                {
-                    try
-                    {
-                        _logger.LogDebug("Deleting voice room {VoiceRoomId} as lobby {LobbyId} has ended",
-                            model.VoiceRoomId, lobbyId);
-
-                        await _voiceClient.DeleteVoiceRoomAsync(new DeleteVoiceRoomRequest
-                        {
-                            RoomId = model.VoiceRoomId.Value,
-                            Reason = "session_ended"
-                        }, cancellationToken);
-
-                        _logger.LogInformation("Voice room {VoiceRoomId} deleted for ended lobby {LobbyId}",
-                            model.VoiceRoomId, lobbyId);
-                    }
-                    catch (ApiException ex)
-                    {
-                        _logger.LogWarning(ex, "Voice service error deleting room {VoiceRoomId} for lobby {LobbyId}: {StatusCode}",
-                            model.VoiceRoomId, lobbyId, ex.StatusCode);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to delete voice room {VoiceRoomId} for lobby {LobbyId}",
-                            model.VoiceRoomId, lobbyId);
-                    }
-                }
             }
             else if (model.Status == SessionStatus.Full)
             {
@@ -1095,58 +1002,13 @@ public partial class GameSessionService : IGameSessionService
             model.Players.Remove(leavingPlayer);
             model.CurrentPlayers = model.Players.Count;
 
-            // Leave voice room if applicable
-            if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null
-                && leavingPlayer.VoiceSessionId.HasValue)
-            {
-                try
-                {
-                    await _voiceClient.LeaveVoiceRoomAsync(new LeaveVoiceRoomRequest
-                    {
-                        RoomId = model.VoiceRoomId.Value,
-                        SessionId = leavingPlayer.VoiceSessionId.Value
-                    }, cancellationToken);
-                }
-                catch (ApiException ex)
-                {
-                    // Voice service error - non-fatal
-                    _logger.LogWarning(ex, "Voice service error leaving room for player {AccountId}: {StatusCode}",
-                        leavingPlayer.AccountId, ex.StatusCode);
-                }
-                catch (Exception ex)
-                {
-                    // Unexpected error - non-fatal
-                    _logger.LogWarning(ex, "Failed to leave voice room for player {AccountId}", leavingPlayer.AccountId);
-                }
-            }
+            // Voice room leave/delete removed: voice (L3 AppFeatures) manages its own
+            // participant lifecycle via heartbeat TTL and event-driven orchestration
 
             // Update status
             if (model.CurrentPlayers == 0)
             {
                 model.Status = SessionStatus.Finished;
-
-                // Delete voice room when session ends
-                if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
-                {
-                    try
-                    {
-                        await _voiceClient.DeleteVoiceRoomAsync(new DeleteVoiceRoomRequest
-                        {
-                            RoomId = model.VoiceRoomId.Value,
-                            Reason = "session_ended"
-                        }, cancellationToken);
-                    }
-                    catch (ApiException ex)
-                    {
-                        _logger.LogWarning(ex, "Voice service error deleting room {VoiceRoomId} for session {SessionId}: {StatusCode}",
-                            model.VoiceRoomId, gameSessionId, ex.StatusCode);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to delete voice room {VoiceRoomId} for session {SessionId}",
-                            model.VoiceRoomId, gameSessionId);
-                    }
-                }
             }
             else if (model.Status == SessionStatus.Full)
             {

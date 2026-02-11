@@ -1,5 +1,8 @@
+using BeyondImmersion.Bannou.Chat.ClientEvents;
 using BeyondImmersion.BannouService.Chat;
+using BeyondImmersion.BannouService.Common;
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Moq;
 
@@ -9,7 +12,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Tests for ChatService message operations:
 /// SendMessage, SendMessageBatch, GetMessageHistory, DeleteMessage, PinMessage, UnpinMessage, SearchMessages.
 /// </summary>
-internal class ChatServiceMessageTests : ChatServiceTestBase
+public class ChatServiceMessageTests : ChatServiceTestBase
 {
     #region SendMessage
 
@@ -76,7 +79,7 @@ internal class ChatServiceMessageTests : ChatServiceTestBase
         // Verify client broadcast
         MockClientEventPublisher.Verify(
             p => p.PublishToSessionsAsync(
-                It.IsAny<IReadOnlyList<string>>(), It.IsAny<object>(), It.IsAny<CancellationToken>()),
+                It.IsAny<IEnumerable<string>>(), It.IsAny<ChatMessageReceivedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -86,7 +89,7 @@ internal class ChatServiceMessageTests : ChatServiceTestBase
         var service = CreateService();
         SetCallerSession(TestSessionId);
 
-        var room = CreateTestRoom();
+        var room = CreateTestRoom(roomTypeCode: "ephemeral");
         var roomType = CreateTestRoomType("ephemeral", MessageFormat.Text, PersistenceMode.Ephemeral);
         SetupRoomCache(room);
         SetupFindRoomTypeByCode(roomType);
@@ -338,7 +341,7 @@ internal class ChatServiceMessageTests : ChatServiceTestBase
         var service = CreateService();
         SetCallerSession(TestSessionId);
 
-        var room = CreateTestRoom();
+        var room = CreateTestRoom(roomTypeCode: "limited");
         var roomType = CreateTestRoomType("limited", MessageFormat.Text, PersistenceMode.Persistent, rateLimitPerMinute: 5);
         SetupRoomCache(room);
         SetupFindRoomTypeByCode(roomType);
@@ -428,7 +431,7 @@ internal class ChatServiceMessageTests : ChatServiceTestBase
                 RoomId = TestRoomId,
                 Content = new SendMessageContent
                 {
-                    SentimentCategory = "happy",
+                    SentimentCategory = SentimentCategory.Excited,
                     SentimentIntensity = 0.8f,
                 },
             }, CancellationToken.None);
@@ -559,8 +562,8 @@ internal class ChatServiceMessageTests : ChatServiceTestBase
             RoomId = TestRoomId,
             Messages = new List<BatchMessageEntry>
             {
-                new() { SenderType = SenderType.Npc, SenderId = Guid.NewGuid(), DisplayName = "NPC1", Content = new SendMessageContent { Text = "Hello" } },
-                new() { SenderType = SenderType.Npc, SenderId = Guid.NewGuid(), DisplayName = "NPC2", Content = new SendMessageContent { Text = "World" } },
+                new() { SenderType = "npc", SenderId = Guid.NewGuid(), DisplayName = "NPC1", Content = new SendMessageContent { Text = "Hello" } },
+                new() { SenderType = "npc", SenderId = Guid.NewGuid(), DisplayName = "NPC2", Content = new SendMessageContent { Text = "World" } },
             },
         };
 
@@ -594,7 +597,7 @@ internal class ChatServiceMessageTests : ChatServiceTestBase
             RoomId = TestRoomId,
             Messages = new List<BatchMessageEntry>
             {
-                new() { SenderType = SenderType.System, DisplayName = "Sys", Content = new SendMessageContent { Text = "test" } },
+                new() { SenderType = "system", DisplayName = "Sys", Content = new SendMessageContent { Text = "test" } },
             },
         };
 
@@ -614,7 +617,7 @@ internal class ChatServiceMessageTests : ChatServiceTestBase
             RoomId = TestRoomId,
             Messages = new List<BatchMessageEntry>
             {
-                new() { SenderType = SenderType.System, DisplayName = "Sys", Content = new SendMessageContent { Text = "test" } },
+                new() { SenderType = "system", DisplayName = "Sys", Content = new SendMessageContent { Text = "test" } },
             },
         };
 
@@ -641,9 +644,9 @@ internal class ChatServiceMessageTests : ChatServiceTestBase
             Messages = new List<BatchMessageEntry>
             {
                 // Valid emoji
-                new() { SenderType = SenderType.Npc, SenderId = Guid.NewGuid(), DisplayName = "NPC", Content = new SendMessageContent { EmojiCode = "smile" } },
+                new() { SenderType = "npc", SenderId = Guid.NewGuid(), DisplayName = "NPC", Content = new SendMessageContent { EmojiCode = "smile" } },
                 // Invalid: emoji room needs EmojiCode, not text
-                new() { SenderType = SenderType.Npc, SenderId = Guid.NewGuid(), DisplayName = "NPC", Content = new SendMessageContent { Text = "wrong" } },
+                new() { SenderType = "npc", SenderId = Guid.NewGuid(), DisplayName = "NPC", Content = new SendMessageContent { Text = "wrong" } },
             },
         };
 
@@ -800,7 +803,7 @@ internal class ChatServiceMessageTests : ChatServiceTestBase
         // Verify client broadcast
         MockClientEventPublisher.Verify(
             p => p.PublishToSessionsAsync(
-                It.IsAny<IReadOnlyList<string>>(), It.IsAny<object>(), It.IsAny<CancellationToken>()),
+                It.IsAny<IEnumerable<string>>(), It.IsAny<ChatMessageDeletedClientEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

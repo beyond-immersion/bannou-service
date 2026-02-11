@@ -31,7 +31,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<ILogger<GameSessionService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
-    private readonly Mock<BeyondImmersion.BannouService.Voice.IVoiceClient> _mockVoiceClient;
+
     private readonly Mock<BeyondImmersion.BannouService.Permission.IPermissionClient> _mockPermissionClient;
     private readonly Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
@@ -56,7 +56,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockLogger = new Mock<ILogger<GameSessionService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
-        _mockVoiceClient = new Mock<BeyondImmersion.BannouService.Voice.IVoiceClient>();
+
         _mockPermissionClient = new Mock<BeyondImmersion.BannouService.Permission.IPermissionClient>();
         _mockSubscriptionClient = new Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
@@ -96,7 +96,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             Configuration,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            _mockVoiceClient.Object,
+
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
@@ -832,7 +832,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
     private readonly Mock<ILogger<GameSessionService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
-    private readonly Mock<BeyondImmersion.BannouService.Voice.IVoiceClient> _mockVoiceClient;
+
     private readonly Mock<BeyondImmersion.BannouService.Permission.IPermissionClient> _mockPermissionClient;
     private readonly Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
@@ -856,7 +856,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
         _mockLogger = new Mock<ILogger<GameSessionService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
-        _mockVoiceClient = new Mock<BeyondImmersion.BannouService.Voice.IVoiceClient>();
+
         _mockPermissionClient = new Mock<BeyondImmersion.BannouService.Permission.IPermissionClient>();
         _mockSubscriptionClient = new Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
@@ -896,7 +896,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             Configuration,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            _mockVoiceClient.Object,
+
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
@@ -1286,7 +1286,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             config,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            _mockVoiceClient.Object,
+
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
@@ -1352,7 +1352,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             config,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            _mockVoiceClient.Object,
+
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
@@ -1400,7 +1400,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             config,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            _mockVoiceClient.Object,
+
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,

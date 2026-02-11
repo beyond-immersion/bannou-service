@@ -919,6 +919,990 @@ public class VoiceServiceTests
     }
 
     #endregion
+
+    #region Create Room - New Features Tests
+
+    [Fact]
+    public async Task CreateVoiceRoom_ValidRequest_PublishesCreatedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var request = new CreateVoiceRoomRequest
+        {
+            SessionId = sessionId,
+            PreferredTier = VoiceTier.P2p,
+            Codec = VoiceCodec.Opus,
+            MaxParticipants = 6
+        };
+
+        _mockStringStore.Setup(s => s.GetAsync(
+            $"voice:session-room:{sessionId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify voice.room.created event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.created",
+            It.Is<VoiceRoomCreatedEvent>(e =>
+                e.SessionId == sessionId &&
+                e.Tier == VoiceTier.P2p &&
+                e.MaxParticipants == 6),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateVoiceRoom_WithPassword_SavesPasswordProtectedRoom()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var request = new CreateVoiceRoomRequest
+        {
+            SessionId = sessionId,
+            PreferredTier = VoiceTier.P2p,
+            Codec = VoiceCodec.Opus,
+            MaxParticipants = 6,
+            Password = "secret123"
+        };
+
+        _mockStringStore.Setup(s => s.GetAsync(
+            $"voice:session-room:{sessionId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        VoiceRoomData? savedRoom = null;
+        _mockRoomStore.Setup(s => s.SaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<VoiceRoomData>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, VoiceRoomData, StateOptions?, CancellationToken>((_, data, _, _) => savedRoom = data);
+
+        // Act
+        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.True(result.IsPasswordProtected);
+        Assert.NotNull(savedRoom);
+        Assert.Equal("secret123", savedRoom.Password);
+    }
+
+    [Fact]
+    public async Task CreateVoiceRoom_WithAutoCleanup_SetsAutoCleanupFlag()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var request = new CreateVoiceRoomRequest
+        {
+            SessionId = sessionId,
+            PreferredTier = VoiceTier.P2p,
+            Codec = VoiceCodec.Opus,
+            MaxParticipants = 6,
+            AutoCleanup = true
+        };
+
+        _mockStringStore.Setup(s => s.GetAsync(
+            $"voice:session-room:{sessionId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        VoiceRoomData? savedRoom = null;
+        _mockRoomStore.Setup(s => s.SaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<VoiceRoomData>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, VoiceRoomData, StateOptions?, CancellationToken>((_, data, _, _) => savedRoom = data);
+
+        // Act
+        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.True(result.AutoCleanup);
+        Assert.NotNull(savedRoom);
+        Assert.True(savedRoom.AutoCleanup);
+    }
+
+    #endregion
+
+    #region Join Room - New Features Tests
+
+    [Fact]
+    public async Task JoinVoiceRoom_NotFound_AdHocEnabled_AutoCreatesAndJoins()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var request = new JoinVoiceRoomRequest
+        {
+            RoomId = roomId,
+            SessionId = sessionId,
+            DisplayName = "TestPlayer",
+            SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() }
+        };
+
+        // Room not found
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((VoiceRoomData?)null);
+
+        // Enable ad-hoc rooms
+        _mockConfiguration.Setup(c => c.AdHocRoomsEnabled).Returns(true);
+
+        // Registration succeeds
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+        _mockP2PCoordinator.Setup(p => p.CanAcceptNewParticipantAsync(roomId, 0, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _mockEndpointRegistry.Setup(r => r.RegisterAsync(
+            roomId, sessionId, It.IsAny<SipEndpoint>(), "TestPlayer", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _mockP2PCoordinator.Setup(p => p.GetMeshPeersForNewJoinAsync(roomId, sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<VoicePeer>());
+        _mockP2PCoordinator.Setup(p => p.ShouldUpgradeToScaledAsync(roomId, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>());
+
+        // Act
+        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(roomId, result.RoomId);
+
+        // Verify room was saved (ad-hoc auto-creation)
+        _mockRoomStore.Verify(s => s.SaveAsync(
+            $"voice:room:{roomId}",
+            It.Is<VoiceRoomData>(d => d.AutoCleanup == true && d.RoomId == roomId),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify room created event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.created",
+            It.Is<VoiceRoomCreatedEvent>(e => e.RoomId == roomId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task JoinVoiceRoom_PasswordProtected_WrongPassword_ReturnsForbidden()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var request = new JoinVoiceRoomRequest
+        {
+            RoomId = roomId,
+            SessionId = Guid.NewGuid(),
+            DisplayName = "TestPlayer",
+            SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() },
+            Password = "wrong"
+        };
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                Tier = VoiceTier.P2p,
+                Codec = VoiceCodec.Opus,
+                MaxParticipants = 6,
+                Password = "correct"
+            });
+
+        // Act
+        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task JoinVoiceRoom_PasswordProtected_CorrectPassword_Joins()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var request = new JoinVoiceRoomRequest
+        {
+            RoomId = roomId,
+            SessionId = sessionId,
+            DisplayName = "TestPlayer",
+            SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() },
+            Password = "correct"
+        };
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                Tier = VoiceTier.P2p,
+                Codec = VoiceCodec.Opus,
+                MaxParticipants = 6,
+                Password = "correct"
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+        _mockP2PCoordinator.Setup(p => p.CanAcceptNewParticipantAsync(roomId, 0, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _mockEndpointRegistry.Setup(r => r.RegisterAsync(
+            roomId, sessionId, It.IsAny<SipEndpoint>(), "TestPlayer", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _mockP2PCoordinator.Setup(p => p.GetMeshPeersForNewJoinAsync(roomId, sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<VoicePeer>());
+        _mockP2PCoordinator.Setup(p => p.ShouldUpgradeToScaledAsync(roomId, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>());
+
+        // Act
+        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task JoinVoiceRoom_BroadcastingRoom_ResponseIncludesIsBroadcasting()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var request = new JoinVoiceRoomRequest
+        {
+            RoomId = roomId,
+            SessionId = sessionId,
+            DisplayName = "TestPlayer",
+            SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() }
+        };
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                Tier = VoiceTier.P2p,
+                Codec = VoiceCodec.Opus,
+                MaxParticipants = 6,
+                BroadcastState = BroadcastConsentState.Approved
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+        _mockP2PCoordinator.Setup(p => p.CanAcceptNewParticipantAsync(roomId, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _mockEndpointRegistry.Setup(r => r.RegisterAsync(
+            roomId, sessionId, It.IsAny<SipEndpoint>(), "TestPlayer", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _mockP2PCoordinator.Setup(p => p.GetMeshPeersForNewJoinAsync(roomId, sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<VoicePeer>());
+        _mockP2PCoordinator.Setup(p => p.ShouldUpgradeToScaledAsync(roomId, 2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>());
+
+        // Act
+        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.True(result.IsBroadcasting);
+        Assert.Equal(BroadcastConsentState.Approved, result.BroadcastState);
+    }
+
+    [Fact]
+    public async Task JoinVoiceRoom_PublishesParticipantJoinedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var request = new JoinVoiceRoomRequest
+        {
+            RoomId = roomId,
+            SessionId = sessionId,
+            DisplayName = "TestPlayer",
+            SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() }
+        };
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                Tier = VoiceTier.P2p,
+                Codec = VoiceCodec.Opus,
+                MaxParticipants = 6
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+        _mockP2PCoordinator.Setup(p => p.CanAcceptNewParticipantAsync(roomId, 0, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _mockEndpointRegistry.Setup(r => r.RegisterAsync(
+            roomId, sessionId, It.IsAny<SipEndpoint>(), "TestPlayer", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _mockP2PCoordinator.Setup(p => p.GetMeshPeersForNewJoinAsync(roomId, sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<VoicePeer>());
+        _mockP2PCoordinator.Setup(p => p.ShouldUpgradeToScaledAsync(roomId, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>());
+
+        // Act
+        var (status, _) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify participant joined event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.participant.joined",
+            It.Is<VoiceParticipantJoinedEvent>(e =>
+                e.RoomId == roomId &&
+                e.ParticipantSessionId == sessionId &&
+                e.CurrentCount == 1),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Leave Room - New Features Tests
+
+    [Fact]
+    public async Task LeaveVoiceRoom_PublishesParticipantLeftEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var request = new LeaveVoiceRoomRequest { RoomId = roomId, SessionId = sessionId };
+
+        _mockEndpointRegistry.Setup(r => r.UnregisterAsync(roomId, sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ParticipantRegistration { DisplayName = "Player", SessionId = sessionId });
+
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = Guid.NewGuid() }
+            });
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData { RoomId = roomId, SessionId = Guid.NewGuid() });
+
+        _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Act
+        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify participant left event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.participant.left",
+            It.Is<VoiceParticipantLeftEvent>(e =>
+                e.RoomId == roomId &&
+                e.ParticipantSessionId == sessionId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LeaveVoiceRoom_LastParticipant_AutoCleanup_SetsLastLeftTimestamp()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var request = new LeaveVoiceRoomRequest { RoomId = roomId, SessionId = sessionId };
+
+        _mockEndpointRegistry.Setup(r => r.UnregisterAsync(roomId, sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ParticipantRegistration { DisplayName = "Player", SessionId = sessionId });
+
+        // Room is now empty
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>());
+
+        // Room has autoCleanup enabled
+        var roomData = new VoiceRoomData
+        {
+            RoomId = roomId,
+            SessionId = Guid.NewGuid(),
+            AutoCleanup = true,
+            BroadcastState = BroadcastConsentState.Inactive
+        };
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(roomData);
+
+        // Act
+        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify room was saved with LastParticipantLeftAt set
+        _mockRoomStore.Verify(s => s.SaveAsync(
+            $"voice:room:{roomId}",
+            It.Is<VoiceRoomData>(d => d.LastParticipantLeftAt != null),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LeaveVoiceRoom_WhileBroadcasting_StopsBroadcast()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var request = new LeaveVoiceRoomRequest { RoomId = roomId, SessionId = sessionId };
+
+        _mockEndpointRegistry.Setup(r => r.UnregisterAsync(roomId, sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ParticipantRegistration { DisplayName = "Player", SessionId = sessionId });
+
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = Guid.NewGuid() }
+            });
+
+        _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Room is broadcasting
+        var roomData = new VoiceRoomData
+        {
+            RoomId = roomId,
+            SessionId = Guid.NewGuid(),
+            BroadcastState = BroadcastConsentState.Approved,
+            BroadcastConsentedSessions = new HashSet<Guid> { sessionId, Guid.NewGuid() }
+        };
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(roomData);
+
+        // Act
+        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify broadcast stopped event was published with ConsentRevoked reason
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.broadcast.stopped",
+            It.Is<VoiceRoomBroadcastStoppedEvent>(e =>
+                e.RoomId == roomId &&
+                e.Reason == VoiceBroadcastStoppedReason.ConsentRevoked),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Delete Room - New Features Tests
+
+    [Fact]
+    public async Task DeleteVoiceRoom_PublishesRoomDeletedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var request = new DeleteVoiceRoomRequest { RoomId = roomId, Reason = "manual" };
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = sessionId,
+                Tier = VoiceTier.P2p
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>());
+
+        // Act
+        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify room deleted event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.deleted",
+            It.Is<VoiceRoomDeletedEvent>(e =>
+                e.RoomId == roomId &&
+                e.Reason == VoiceRoomDeletedReason.Manual),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteVoiceRoom_ActiveBroadcast_StopsBroadcastFirst()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var request = new DeleteVoiceRoomRequest { RoomId = roomId, Reason = "manual" };
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                Tier = VoiceTier.P2p,
+                BroadcastState = BroadcastConsentState.Approved,
+                BroadcastConsentedSessions = new HashSet<Guid> { Guid.NewGuid() }
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>());
+
+        // Act
+        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify broadcast stopped event was published with RoomClosed reason BEFORE room deleted
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.broadcast.stopped",
+            It.Is<VoiceRoomBroadcastStoppedEvent>(e =>
+                e.RoomId == roomId &&
+                e.Reason == VoiceBroadcastStoppedReason.RoomClosed),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Also verify room deleted event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.deleted",
+            It.Is<VoiceRoomDeletedEvent>(e => e.RoomId == roomId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Broadcast Consent Tests
+
+    [Fact]
+    public async Task RequestBroadcastConsent_InactiveRoom_SetsPendingAndNotifiesParticipants()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var requestingSessionId = Guid.NewGuid();
+        var otherSessionId = Guid.NewGuid();
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Inactive
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = requestingSessionId, DisplayName = "Requester" },
+                new() { SessionId = otherSessionId, DisplayName = "Other" }
+            });
+
+        var request = new BroadcastConsentRequest
+        {
+            RoomId = roomId,
+            RequestingSessionId = requestingSessionId
+        };
+
+        // Act
+        var (status, result) = await service.RequestBroadcastConsentAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(BroadcastConsentState.Pending, result.State);
+        Assert.Equal(2, result.PendingSessionIds.Count);
+        Assert.Empty(result.ConsentedSessionIds);
+
+        // Verify room was saved with Pending state
+        _mockRoomStore.Verify(s => s.SaveAsync(
+            $"voice:room:{roomId}",
+            It.Is<VoiceRoomData>(d =>
+                d.BroadcastState == BroadcastConsentState.Pending &&
+                d.BroadcastRequestedBy == requestingSessionId),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify consent request client event was published to all participants
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
+            It.Is<IEnumerable<string>>(list => list.Count() == 2),
+            It.IsAny<VoiceBroadcastConsentRequestEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RequestBroadcastConsent_AlreadyPending_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Pending
+            });
+
+        var request = new BroadcastConsentRequest
+        {
+            RoomId = roomId,
+            RequestingSessionId = Guid.NewGuid()
+        };
+
+        // Act
+        var (status, result) = await service.RequestBroadcastConsentAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RespondConsent_AllConsented_SetsApprovedAndPublishesEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var session1 = Guid.NewGuid();
+        var session2 = Guid.NewGuid();
+        var requestedBy = Guid.NewGuid();
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Pending,
+                BroadcastRequestedBy = requestedBy,
+                BroadcastConsentedSessions = new HashSet<Guid> { session1 } // session1 already consented
+            });
+
+        // Only session1 and session2 are in the room
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = session1 },
+                new() { SessionId = session2 }
+            });
+
+        var request = new BroadcastConsentResponse
+        {
+            RoomId = roomId,
+            SessionId = session2, // Last one consenting
+            Consented = true
+        };
+
+        // Act
+        var (status, result) = await service.RespondBroadcastConsentAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(BroadcastConsentState.Approved, result.State);
+        Assert.Empty(result.PendingSessionIds);
+
+        // Verify approved event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.broadcast.approved",
+            It.Is<VoiceRoomBroadcastApprovedEvent>(e => e.RoomId == roomId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RespondConsent_Declined_SetsInactiveAndPublishesDeclineEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var decliningSession = Guid.NewGuid();
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Pending,
+                BroadcastRequestedBy = Guid.NewGuid(),
+                BroadcastConsentedSessions = new HashSet<Guid>()
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = decliningSession, DisplayName = "Decliner" },
+                new() { SessionId = Guid.NewGuid() }
+            });
+
+        var request = new BroadcastConsentResponse
+        {
+            RoomId = roomId,
+            SessionId = decliningSession,
+            Consented = false
+        };
+
+        // Act
+        var (status, result) = await service.RespondBroadcastConsentAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(BroadcastConsentState.Inactive, result.State);
+
+        // Verify declined event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.broadcast.declined",
+            It.Is<VoiceRoomBroadcastDeclinedEvent>(e =>
+                e.RoomId == roomId &&
+                e.DeclinedBySessionId == decliningSession),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RespondConsent_PartialConsent_RemainsInPendingState()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var session1 = Guid.NewGuid();
+        var session2 = Guid.NewGuid();
+        var session3 = Guid.NewGuid();
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Pending,
+                BroadcastRequestedBy = session1,
+                BroadcastConsentedSessions = new HashSet<Guid>() // No one consented yet
+            });
+
+        // Three participants in the room
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = session1 },
+                new() { SessionId = session2 },
+                new() { SessionId = session3 }
+            });
+
+        var request = new BroadcastConsentResponse
+        {
+            RoomId = roomId,
+            SessionId = session1, // First consent
+            Consented = true
+        };
+
+        // Act
+        var (status, result) = await service.RespondBroadcastConsentAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(BroadcastConsentState.Pending, result.State);
+        Assert.Single(result.ConsentedSessionIds);
+        Assert.Equal(2, result.PendingSessionIds.Count);
+
+        // Verify approved event was NOT published (still waiting)
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.broadcast.approved",
+            It.IsAny<VoiceRoomBroadcastApprovedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task StopBroadcast_ApprovedRoom_SetsInactiveAndPublishesStopEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Approved,
+                BroadcastConsentedSessions = new HashSet<Guid> { Guid.NewGuid() }
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = Guid.NewGuid() }
+            });
+
+        var request = new StopBroadcastConsentRequest { RoomId = roomId };
+
+        // Act
+        var status = await service.StopBroadcastAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify broadcast stopped event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.broadcast.stopped",
+            It.Is<VoiceRoomBroadcastStoppedEvent>(e =>
+                e.RoomId == roomId &&
+                e.Reason == VoiceBroadcastStoppedReason.Manual),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify room was saved with Inactive state
+        _mockRoomStore.Verify(s => s.SaveAsync(
+            $"voice:room:{roomId}",
+            It.Is<VoiceRoomData>(d => d.BroadcastState == BroadcastConsentState.Inactive),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task StopBroadcast_InactiveRoom_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Inactive
+            });
+
+        var request = new StopBroadcastConsentRequest { RoomId = roomId };
+
+        // Act
+        var status = await service.StopBroadcastAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task GetBroadcastStatus_ReturnsCurrentState()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var session1 = Guid.NewGuid();
+        var session2 = Guid.NewGuid();
+        var requestedBy = Guid.NewGuid();
+
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Pending,
+                BroadcastRequestedBy = requestedBy,
+                BroadcastConsentedSessions = new HashSet<Guid> { session1 },
+                RtpServerUri = "rtp://media.test:5060"
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = session1 },
+                new() { SessionId = session2 }
+            });
+
+        var request = new BroadcastStatusRequest { RoomId = roomId };
+
+        // Act
+        var (status, result) = await service.GetBroadcastStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(BroadcastConsentState.Pending, result.State);
+        Assert.Equal(requestedBy, result.RequestedBySessionId);
+        Assert.Single(result.ConsentedSessionIds);
+        Assert.Contains(session1, result.ConsentedSessionIds);
+        Assert.Single(result.PendingSessionIds);
+        Assert.Contains(session2, result.PendingSessionIds);
+        Assert.Equal("rtp://media.test:5060", result.RtpAudioEndpoint);
+    }
+
+    #endregion
 }
 
 public class VoiceConfigurationTests

@@ -1,6 +1,12 @@
+using BeyondImmersion.Bannou.Chat.ClientEvents;
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Chat;
 using BeyondImmersion.BannouService.Common;
+using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Moq;
 
@@ -10,7 +16,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Tests for ChatService room CRUD operations:
 /// CreateRoom, GetRoom, ListRooms, UpdateRoom, DeleteRoom, ArchiveRoom.
 /// </summary>
-internal class ChatServiceRoomTests : ChatServiceTestBase
+public class ChatServiceRoomTests : ChatServiceTestBase
 {
     #region CreateRoom
 
@@ -372,8 +378,8 @@ internal class ChatServiceRoomTests : ChatServiceTestBase
 
         // Verify client event published to participants
         MockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
-            It.IsAny<IReadOnlyList<string>>(),
-            It.IsAny<object>(),
+            It.IsAny<IEnumerable<string>>(),
+            It.IsAny<ChatRoomDeletedClientEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify permission state cleared for both participants

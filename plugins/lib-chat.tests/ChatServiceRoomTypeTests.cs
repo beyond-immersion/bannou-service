@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Chat;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Moq;
 
@@ -8,7 +9,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Tests for ChatService room type operations:
 /// RegisterRoomType, GetRoomType, ListRoomTypes, UpdateRoomType, DeprecateRoomType.
 /// </summary>
-internal class ChatServiceRoomTypeTests : ChatServiceTestBase
+public class ChatServiceRoomTypeTests : ChatServiceTestBase
 {
     #region RegisterRoomType
 

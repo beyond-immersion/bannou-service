@@ -281,11 +281,10 @@ public class ParticipantEvictionWorker : BackgroundService
             // Clear permission state for evicted participant
             try
             {
-                await permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+                await permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest
                 {
                     SessionId = stale.SessionId,
-                    ServiceId = "voice",
-                    NewState = null
+                    ServiceId = "voice"
                 }, cancellationToken);
             }
             catch (Exception ex)

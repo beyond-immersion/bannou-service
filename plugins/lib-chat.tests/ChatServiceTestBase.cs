@@ -19,7 +19,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Base class for ChatService unit tests providing shared mock infrastructure,
 /// state store wiring, and test data builders.
 /// </summary>
-internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfiguration>
+public abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfiguration>
 {
     // Infrastructure mocks
     protected readonly Mock<IMessageBus> MockMessageBus;
@@ -34,14 +34,14 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     protected readonly Mock<IResourceClient> MockResourceClient;
     protected readonly Mock<IPermissionClient> MockPermissionClient;
 
-    // State store mocks
-    protected readonly Mock<IJsonQueryableStateStore<ChatRoomTypeModel>> MockRoomTypeStore;
-    protected readonly Mock<IJsonQueryableStateStore<ChatRoomModel>> MockRoomStore;
-    protected readonly Mock<IStateStore<ChatRoomModel>> MockRoomCache;
-    protected readonly Mock<IJsonQueryableStateStore<ChatMessageModel>> MockMessageStore;
-    protected readonly Mock<IStateStore<ChatMessageModel>> MockMessageBuffer;
-    protected readonly Mock<ICacheableStateStore<ChatParticipantModel>> MockParticipantStore;
-    protected readonly Mock<IJsonQueryableStateStore<ChatBanModel>> MockBanStore;
+    // State store mocks (private protected: internal model types not visible outside assembly)
+    private protected readonly Mock<IJsonQueryableStateStore<ChatRoomTypeModel>> MockRoomTypeStore;
+    private protected readonly Mock<IJsonQueryableStateStore<ChatRoomModel>> MockRoomStore;
+    private protected readonly Mock<IStateStore<ChatRoomModel>> MockRoomCache;
+    private protected readonly Mock<IJsonQueryableStateStore<ChatMessageModel>> MockMessageStore;
+    private protected readonly Mock<IStateStore<ChatMessageModel>> MockMessageBuffer;
+    private protected readonly Mock<ICacheableStateStore<ChatParticipantModel>> MockParticipantStore;
+    private protected readonly Mock<IJsonQueryableStateStore<ChatBanModel>> MockBanStore;
 
     // Test data
     protected readonly Guid TestRoomId = Guid.NewGuid();
@@ -110,11 +110,8 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        // Default: client event publisher succeeds
-        MockClientEventPublisher
-            .Setup(p => p.PublishToSessionsAsync(
-                It.IsAny<IReadOnlyList<string>>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        // Note: PublishToSessionsAsync<TEvent> has BaseClientEvent constraint.
+        // Individual tests mock specific event types as needed. No default mock here.
 
         // Default: participant store returns empty hash (no participants)
         MockParticipantStore
@@ -131,11 +128,11 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
         MockPermissionClient
             .Setup(p => p.UpdateSessionStateAsync(
                 It.IsAny<SessionStateUpdate>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new SessionUpdateResponse());
         MockPermissionClient
             .Setup(p => p.ClearSessionStateAsync(
                 It.IsAny<ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new SessionUpdateResponse());
     }
 
     /// <summary>
@@ -218,7 +215,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Creates a test room type model with sensible defaults.
     /// </summary>
-    protected ChatRoomTypeModel CreateTestRoomType(
+    private protected ChatRoomTypeModel CreateTestRoomType(
         string code = "text",
         MessageFormat messageFormat = MessageFormat.Text,
         PersistenceMode persistenceMode = PersistenceMode.Persistent,
@@ -246,7 +243,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Creates a test room model with sensible defaults.
     /// </summary>
-    protected ChatRoomModel CreateTestRoom(
+    private protected ChatRoomModel CreateTestRoom(
         Guid? roomId = null,
         string roomTypeCode = "text",
         Guid? sessionId = null,
@@ -273,7 +270,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Creates a test participant model.
     /// </summary>
-    protected ChatParticipantModel CreateTestParticipant(
+    private protected ChatParticipantModel CreateTestParticipant(
         Guid? roomId = null,
         Guid? sessionId = null,
         ChatParticipantRole role = ChatParticipantRole.Member,
@@ -283,7 +280,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
         {
             RoomId = roomId ?? TestRoomId,
             SessionId = sessionId ?? TestSessionId,
-            SenderType = SenderType.Player,
+            SenderType = "player",
             SenderId = Guid.NewGuid(),
             DisplayName = "TestPlayer",
             Role = role,
@@ -296,7 +293,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Creates a test message model.
     /// </summary>
-    protected ChatMessageModel CreateTestMessage(
+    private protected ChatMessageModel CreateTestMessage(
         Guid? roomId = null,
         Guid? messageId = null,
         string? textContent = "Hello world",
@@ -306,7 +303,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
         {
             MessageId = messageId ?? Guid.NewGuid(),
             RoomId = roomId ?? TestRoomId,
-            SenderType = SenderType.Player,
+            SenderType = "player",
             SenderId = Guid.NewGuid(),
             DisplayName = "TestSender",
             Timestamp = DateTimeOffset.UtcNow.AddMinutes(-5),
@@ -323,7 +320,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Sets up a room type to be found by direct key lookup.
     /// </summary>
-    protected void SetupRoomType(ChatRoomTypeModel roomType, Guid? gameServiceId = null)
+    private protected void SetupRoomType(ChatRoomTypeModel roomType, Guid? gameServiceId = null)
     {
         var scope = gameServiceId.HasValue ? gameServiceId.Value.ToString() : "global";
         var typeKey = $"type:{scope}:{roomType.Code}";
@@ -335,7 +332,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Sets up FindRoomTypeByCodeAsync to find a room type via query.
     /// </summary>
-    protected void SetupFindRoomTypeByCode(ChatRoomTypeModel roomType)
+    private protected void SetupFindRoomTypeByCode(ChatRoomTypeModel roomType)
     {
         var queryResult = new JsonQueryResult<ChatRoomTypeModel>(
             $"type:global:{roomType.Code}", roomType);
@@ -351,7 +348,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Sets up a room to be found by key lookup (MySQL store).
     /// </summary>
-    protected void SetupRoom(ChatRoomModel room)
+    private protected void SetupRoom(ChatRoomModel room)
     {
         var roomKey = $"room:{room.RoomId}";
         MockRoomStore
@@ -362,7 +359,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Sets up a room to be found via cache (Redis).
     /// </summary>
-    protected void SetupRoomCache(ChatRoomModel room)
+    private protected void SetupRoomCache(ChatRoomModel room)
     {
         var roomKey = $"room:{room.RoomId}";
         MockRoomCache
@@ -373,7 +370,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Sets up participants for a room in the hash store.
     /// </summary>
-    protected void SetupParticipants(Guid roomId, params ChatParticipantModel[] participants)
+    private protected void SetupParticipants(Guid roomId, params ChatParticipantModel[] participants)
     {
         var dict = participants.ToDictionary(p => p.SessionId.ToString(), p => p);
 
@@ -398,7 +395,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Sets up a ban record for a session in a room.
     /// </summary>
-    protected void SetupBan(Guid roomId, Guid targetSessionId, ChatBanModel ban)
+    private protected void SetupBan(Guid roomId, Guid targetSessionId, ChatBanModel ban)
     {
         var banKey = $"ban:{roomId}:{targetSessionId}";
         MockBanStore
@@ -409,7 +406,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Sets up room query results for ListRooms/AdminListRooms.
     /// </summary>
-    protected void SetupRoomQuery(List<ChatRoomModel> rooms, long totalCount, int offset = 0, int limit = 20)
+    private protected void SetupRoomQuery(List<ChatRoomModel> rooms, long totalCount, int offset = 0, int limit = 20)
     {
         var queryResults = rooms.Select(r =>
             new JsonQueryResult<ChatRoomModel>($"room:{r.RoomId}", r)).ToList();
@@ -424,7 +421,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Sets up room type query results for ListRoomTypes.
     /// </summary>
-    protected void SetupRoomTypeQuery(List<ChatRoomTypeModel> types, long totalCount, int offset = 0, int limit = 20)
+    private protected void SetupRoomTypeQuery(List<ChatRoomTypeModel> types, long totalCount, int offset = 0, int limit = 20)
     {
         var queryResults = types.Select(t =>
             new JsonQueryResult<ChatRoomTypeModel>($"type:global:{t.Code}", t)).ToList();
@@ -439,7 +436,7 @@ internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigu
     /// <summary>
     /// Sets up message query results for GetMessageHistory/SearchMessages.
     /// </summary>
-    protected void SetupMessageQuery(List<ChatMessageModel> messages, long totalCount, int offset = 0, int limit = 50)
+    private protected void SetupMessageQuery(List<ChatMessageModel> messages, long totalCount, int offset = 0, int limit = 50)
     {
         var queryResults = messages.Select(m =>
             new JsonQueryResult<ChatMessageModel>($"{m.RoomId}:{m.MessageId}", m)).ToList();

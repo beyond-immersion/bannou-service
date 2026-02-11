@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Chat;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 
@@ -189,11 +190,17 @@ public class ChatServiceTests
     }
 
     [Fact]
-    public void SenderType_HasExpectedValues()
+    public void SenderType_IsStringBased()
     {
-        Assert.True(Enum.IsDefined(typeof(SenderType), SenderType.Player));
-        Assert.True(Enum.IsDefined(typeof(SenderType), SenderType.Npc));
-        Assert.True(Enum.IsDefined(typeof(SenderType), SenderType.System));
+        // SenderType is an opaque string, not an enum
+        // Verify the model accepts standard string values
+        var request = new JoinRoomRequest
+        {
+            RoomId = Guid.NewGuid(),
+            SenderType = "player",
+            DisplayName = "Test",
+        };
+        Assert.Equal("player", request.SenderType);
     }
 
     #endregion

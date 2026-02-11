@@ -1,4 +1,5 @@
-using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Events;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Voice;
 

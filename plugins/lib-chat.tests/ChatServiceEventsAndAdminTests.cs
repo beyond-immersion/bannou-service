@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Chat;
 using BeyondImmersion.BannouService.Common;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Moq;
 
@@ -11,7 +12,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Tests for ChatService event handlers and admin operations:
 /// Contract events (fulfilled/breach/terminated/expired), AdminListRooms, AdminGetStats, AdminForceCleanup.
 /// </summary>
-internal class ChatServiceEventsAndAdminTests : ChatServiceTestBase
+public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 {
     #region Contract Event Handlers
 

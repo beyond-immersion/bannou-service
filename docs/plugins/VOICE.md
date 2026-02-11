@@ -9,7 +9,7 @@
 
 ## Overview
 
-The Voice service (L4 GameFeatures) provides WebRTC-based voice communication for game sessions, supporting both P2P mesh topology (small groups) and scaled tier via SFU for large rooms. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Features automatic tier upgrade when P2P rooms exceed capacity and permission-state-gated SDP exchange. Integrated with lib-game-session for room lifecycle management.
+The Voice service (L3 AppFeatures) provides voice room coordination for P2P and scaled-tier (SFU) WebRTC communication. Supports dual room modes (persistent rooms created via API, ad-hoc rooms auto-created on join), broadcast consent flows for streaming integration, participant TTL enforcement via background worker, and automatic tier upgrade when P2P rooms exceed capacity. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Permission-state-gated SDP exchange and broadcast consent. Internal service accessed by other services via lib-mesh.
 
 ---
 
@@ -18,9 +18,9 @@ The Voice service (L4 GameFeatures) provides WebRTC-based voice communication fo
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Redis persistence for room data and participant registrations |
-| lib-messaging (`IMessageBus`) | Error event publishing via `TryPublishErrorAsync` |
-| lib-permission (`IPermissionClient`) | Setting `voice:ringing` state for SDP answer permission gating |
-| lib-connect (`IClientEventPublisher`) | Publishing WebSocket events to specific sessions |
+| lib-messaging (`IMessageBus`) | Service event publishing (8 event types) and error events via `TryPublishErrorAsync` |
+| lib-permission (`IPermissionClient`) | Permission state management: `voice:in_room`, `voice:consent_pending`, `voice:ringing` |
+| lib-connect (`IClientEventPublisher`) | Publishing WebSocket events to specific sessions (peer events, broadcast consent events) |
 | Kamailio (external) | SIP proxy for scaled tier room management (JSON-RPC 2.0 protocol) |
 | RTPEngine (external) | Media relay for SFU voice conferencing (UDP bencode ng protocol) |
 
@@ -30,9 +30,10 @@ The Voice service (L4 GameFeatures) provides WebRTC-based voice communication fo
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-game-session | Creates/joins/leaves/deletes voice rooms during session lifecycle via `IVoiceClient` (**VIOLATION**) |
+| lib-streaming (L4, future) | Will subscribe to `voice.room.broadcast.approved` to start broadcast, `voice.room.broadcast.stopped` to stop |
+| lib-stream (L3, future) | Will subscribe to `voice.room.created`/`voice.room.deleted` for stream-voice coordination |
 
-> **⚠️ SERVICE HIERARCHY VIOLATION**: GameSession (L2 Game Foundation) currently depends on Voice (L4 Game Features) via `IVoiceClient`. This is a **critical violation** - L2 services cannot depend on L4. **Remediation**: Invert the dependency. Voice (L4) should subscribe to `game-session.created` and `game-session.ended` events from GameSession (L2), automatically creating rooms when `VoiceEnabled=true` and publishing `voice.room.created`. This is the correct direction (L4 → L2). See "Service-to-service events stub" (#238) for related work on adding service events to Voice.
+> **Hierarchy note**: GameSession (L2) previously depended on Voice via `IVoiceClient` -- this was a hierarchy violation (L2 cannot depend on L3). The dependency has been removed. Voice now manages its own room lifecycle independently, and higher-layer services (lib-streaming at L4) will orchestrate voice-stream coordination via event subscriptions.
 
 ---
 
@@ -42,9 +43,21 @@ The Voice service (L4 GameFeatures) provides WebRTC-based voice communication fo
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `voice:room:{roomId}` | `VoiceRoomData` | Room configuration (tier, codec, max participants, RTP URI) |
+| `voice:room:{roomId}` | `VoiceRoomData` | Room configuration, broadcast consent state, room mode flags |
 | `voice:session-room:{sessionId}` | `string` | Session-to-room mapping for quick lookup (stores roomId as string) |
 | `voice:room:participants:{roomId}` | `List<ParticipantRegistration>` | Room participant list with endpoints and heartbeats |
+
+**VoiceRoomData Fields** (beyond basic room config):
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `BroadcastState` | `BroadcastConsentState` | Current broadcast consent state (Inactive/Pending/Approved) |
+| `BroadcastRequestedBy` | `Guid?` | Session that requested broadcast consent |
+| `BroadcastConsentedSessions` | `HashSet<Guid>` | Sessions that have consented to broadcasting |
+| `BroadcastRequestedAt` | `DateTimeOffset?` | When the current broadcast consent request was initiated |
+| `AutoCleanup` | `bool` | Whether the room auto-deletes when empty after grace period |
+| `Password` | `string?` | Optional room password for access control |
+| `LastParticipantLeftAt` | `DateTimeOffset?` | Timestamp for grace period tracking on empty autoCleanup rooms |
 
 ---
 
@@ -58,11 +71,22 @@ The Voice service (L4 GameFeatures) provides WebRTC-based voice communication fo
 | `VoicePeerLeftEvent` | Peer leaves room |
 | `VoicePeerUpdatedEvent` | Peer sends SDP answer via `/voice/peer/answer` |
 | `VoiceTierUpgradeEvent` | Room upgrades from P2P to scaled (includes SIP credentials per participant) |
-| `VoiceRoomClosedEvent` | Room deleted (reason: session_ended, admin_action, error) |
+| `VoiceRoomClosedEvent` | Room deleted (reason: Manual, Empty, Error) |
+| `VoiceBroadcastConsentRequestEvent` | Broadcast consent requested — sent to all room participants |
+| `VoiceBroadcastConsentUpdateEvent` | Broadcast consent state changed (progress, approved, declined, stopped) |
 
-### Published Service Events
+### Published Service Events (via IMessageBus)
 
-None. The `voice-events.yaml` is a stub with empty publications (`x-event-publications: []`).
+| Topic | Event Model | Trigger |
+|-------|-------------|---------|
+| `voice.room.created` | `VoiceRoomCreatedEvent` | Room created (via API or ad-hoc join) |
+| `voice.room.deleted` | `VoiceRoomDeletedEvent` | Room deleted (reason: Manual, Empty, Error) |
+| `voice.room.tier-upgraded` | `VoiceRoomTierUpgradedEvent` | Room upgrades from P2P to scaled tier |
+| `voice.participant.joined` | `VoiceParticipantJoinedEvent` | Participant joins a room |
+| `voice.participant.left` | `VoiceParticipantLeftEvent` | Participant leaves a room |
+| `voice.room.broadcast.approved` | `VoiceRoomBroadcastApprovedEvent` | All participants consented to broadcasting |
+| `voice.room.broadcast.declined` | `VoiceRoomBroadcastDeclinedEvent` | A participant declined (or consent timed out) |
+| `voice.room.broadcast.stopped` | `VoiceRoomBroadcastStoppedEvent` | Broadcasting stopped (reason: ConsentRevoked, RoomClosed, Manual, Error) |
 
 ### Consumed Events
 
@@ -89,6 +113,11 @@ This plugin does not consume external events (`x-event-subscriptions: []`).
 | `RtpEnginePort` | `VOICE_RTPENGINE_PORT` | `22222` | RTPEngine ng protocol port |
 | `KamailioRequestTimeoutSeconds` | `VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS` | `5` | Kamailio HTTP timeout |
 | `SipCredentialExpirationHours` | `VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS` | `24` | Hours until SIP credentials expire |
+| `ParticipantHeartbeatTimeoutSeconds` | `VOICE_PARTICIPANT_HEARTBEAT_TIMEOUT_SECONDS` | `60` | Seconds of missed heartbeats before participant is evicted |
+| `ParticipantEvictionCheckIntervalSeconds` | `VOICE_PARTICIPANT_EVICTION_CHECK_INTERVAL_SECONDS` | `15` | How often background worker checks for stale participants |
+| `BroadcastConsentTimeoutSeconds` | `VOICE_BROADCAST_CONSENT_TIMEOUT_SECONDS` | `30` | Seconds to wait for all participants before auto-declining |
+| `AdHocRoomsEnabled` | `VOICE_AD_HOC_ROOMS_ENABLED` | `false` | If true, joining a non-existent room auto-creates it with autoCleanup |
+| `EmptyRoomGracePeriodSeconds` | `VOICE_EMPTY_ROOM_GRACE_PERIOD_SECONDS` | `300` | Seconds an empty autoCleanup room persists before auto-deletion |
 
 ---
 
@@ -97,12 +126,13 @@ This plugin does not consume external events (`x-event-subscriptions: []`).
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `VoiceService` | Scoped | Main service implementation |
+| `ParticipantEvictionWorker` | Hosted | Background worker for heartbeat TTL, empty room cleanup, consent timeouts |
 | `ISipEndpointRegistry` / `SipEndpointRegistry` | Singleton | Participant tracking with local ConcurrentDictionary cache + Redis persistence |
 | `IP2PCoordinator` / `P2PCoordinator` | Singleton | P2P mesh topology decisions and upgrade thresholds |
 | `IScaledTierCoordinator` / `ScaledTierCoordinator` | Singleton | SFU management, SIP credential generation, RTP allocation |
 | `IKamailioClient` / `KamailioClient` | Singleton | JSON-RPC client for Kamailio SIP proxy control |
 | `IRtpEngineClient` / `RtpEngineClient` | Singleton | UDP bencode client for RTPEngine ng protocol |
-| `IPermissionClient` | (via mesh) | Permission state management for `voice:ringing` |
+| `IPermissionClient` | (via mesh) | Permission state management: `voice:in_room`, `voice:consent_pending`, `voice:ringing` |
 | `IClientEventPublisher` | (via DI) | WebSocket event delivery to sessions |
 | `IEventConsumer` | (via DI) | Event consumer registration (currently no handlers) |
 
@@ -114,11 +144,20 @@ This plugin does not consume external events (`x-event-subscriptions: []`).
 
 | Endpoint | Notes |
 |----------|-------|
-| `/voice/room/create` | Creates room for a game session. Checks for existing room via session-room mapping (409 Conflict if exists). Default tier is P2P, default codec is Opus. Uses `P2PMaxParticipants` from config if `maxParticipants` is 0 or unset. |
+| `/voice/room/create` | Creates a new voice room associated with a session. Supports `autoCleanup` and `password` options. Publishes `voice.room.created` event. Default tier is P2P, default codec is Opus. Uses `P2PMaxParticipants` from config if `maxParticipants` is 0 or unset. |
 | `/voice/room/get` | Retrieves room details with live participant count from endpoint registry. Admin-only via `x-permissions`. |
-| `/voice/room/join` | **Most complex endpoint.** Multi-step join with automatic tier upgrade: (1) capacity check, (2) tier upgrade if needed, (3) register participant, (4) set `voice:ringing` for existing AND joining peers, (5) fire background tier upgrade if pending, (6) return peer list for P2P mesh. |
-| `/voice/room/leave` | Unregisters participant via endpoint registry, notifies remaining peers with `VoicePeerLeftEvent`. |
-| `/voice/room/delete` | Deletes room and clears all participants. For scaled tier rooms, releases RTP server resources first. Notifies all participants with `VoiceRoomClosedEvent`. Removes both room data and session-to-room mapping. |
+| `/voice/room/join` | **Most complex endpoint.** If room not found and `AdHocRoomsEnabled`, auto-creates with `autoCleanup=true`. Password validation if room is password-protected. Multi-step join with automatic tier upgrade: (1) capacity check, (2) tier upgrade if needed, (3) register participant, (4) set `voice:in_room` + `voice:ringing` for peers, (5) fire background tier upgrade if pending, (6) return peer list with `isBroadcasting` and `broadcastState` flags. Publishes `voice.participant.joined` event. |
+| `/voice/room/leave` | Unregisters participant via endpoint registry, clears `voice:in_room` permission state, notifies remaining peers with `VoicePeerLeftEvent`. If room is now empty and `autoCleanup=true`, sets `LastParticipantLeftAt` for grace period. If leaving breaks broadcast consent, stops broadcast. Publishes `voice.participant.left` event. |
+| `/voice/room/delete` | Deletes room and clears all participants. If broadcasting, stops broadcast first (reason: RoomClosed). For scaled tier rooms, releases RTP server resources. Notifies all participants with `VoiceRoomClosedEvent` (reason: Manual/Empty/Error). Publishes `voice.room.deleted` event. |
+
+### Broadcast Consent (`x-permissions: role: user, states: { voice: in_room }` or `voice: consent_pending`)
+
+| Endpoint | Notes |
+|----------|-------|
+| `/voice/room/broadcast/request` | Initiates broadcast consent flow. Sets room to Pending state, sends `VoiceBroadcastConsentRequestEvent` to all participants, sets `voice:consent_pending` permission state. Requires `voice:in_room`. 409 if already Pending/Approved. |
+| `/voice/room/broadcast/consent` | Responds to consent request. If declined: resets to Inactive, publishes `voice.room.broadcast.declined`. If all consented: sets Approved, publishes `voice.room.broadcast.approved`. Requires `voice:consent_pending`. |
+| `/voice/room/broadcast/stop` | Stops active broadcast. Resets to Inactive, publishes `voice.room.broadcast.stopped`. Any participant can revoke. Requires `voice:in_room`. |
+| `/voice/room/broadcast/status` | Returns current `BroadcastConsentStatus` (state, consented/pending session IDs, RTP endpoint). Requires `voice:in_room`. |
 
 ### Peer Management
 
@@ -173,26 +212,22 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 1. **RTPEngine publish/subscribe**: `PublishAsync` and `SubscribeRequestAsync` are fully implemented in `RtpEngineClient` but never called by `VoiceService`. XML docs indicate these are reserved for future SFU publisher/subscriber routing.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/195 -->
 
-2. **Service-to-service events**: `voice-events.yaml` is a stub with empty publications/subscriptions. No domain events are published to the message bus (only error events via `TryPublishErrorAsync`).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/238 -->
-
-3. **RTP server pool allocation**: `AllocateRtpServerAsync` currently returns the single configured RTP server. The implementation notes "In production, this would select from a pool based on load."
+2. **RTP server pool allocation**: `AllocateRtpServerAsync` currently returns the single configured RTP server. The implementation notes "In production, this would select from a pool based on load."
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/258 -->
 
-4. **IKamailioClient methods unused**: `GetActiveDialogsAsync`, `TerminateDialogAsync`, `ReloadDispatcherAsync`, and `GetStatsAsync` are implemented but never called by VoiceService. Only `IsHealthyAsync` is used (indirectly via `AllocateRtpServerAsync`).
+3. **IKamailioClient methods unused**: `GetActiveDialogsAsync`, `TerminateDialogAsync`, `ReloadDispatcherAsync`, and `GetStatsAsync` are implemented but never called by VoiceService. Only `IsHealthyAsync` is used (indirectly via `AllocateRtpServerAsync`).
 
-5. **VoiceRoomStateEvent**: Defined in `voice-client-events.yaml` but never published by the service.
+4. **VoiceRoomStateEvent**: Defined in `voice-client-events.yaml` but never published by the service.
 
 ---
 
 ## Potential Extensions
 
 1. **RTP server pool**: Multiple RTPEngine instances with load-based allocation.
-2. **Participant TTL enforcement**: Background worker to expire participants with stale heartbeats.
-3. **Room quality metrics**: Track audio quality, latency, packet loss per participant.
-4. **Recording support**: Integrate RTPEngine recording for compliance/replay.
-5. **Mute state synchronization**: Currently `IsMuted` is tracked but not synchronized across peers.
-6. **ICE trickle support**: Current implementation sends all ICE candidates in initial SDP; could support trickle ICE for faster connections.
+2. **Room quality metrics**: Track audio quality, latency, packet loss per participant.
+3. **Recording support**: Integrate RTPEngine recording for compliance/replay.
+4. **Mute state synchronization**: Currently `IsMuted` is tracked but not synchronized across peers.
+5. **ICE trickle support**: Current implementation sends all ICE candidates in initial SDP; could support trickle ICE for faster connections.
 
 ---
 
@@ -218,17 +253,15 @@ None identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **No participant TTL enforcement**: Heartbeats are tracked in `LastHeartbeat` but no background worker expires stale participants. If a client disconnects without leaving, the participant remains until room deletion.
+1. **RTPEngine UDP protocol**: Uses raw UDP with bencode encoding. No connection state, no retries on packet loss. `_sendLock` prevents concurrent sends but lost responses are not retried - the operation simply times out.
 
-2. **RTPEngine UDP protocol**: Uses raw UDP with bencode encoding. No connection state, no retries on packet loss. `_sendLock` prevents concurrent sends but lost responses are not retried - the operation simply times out.
+2. **Permission state race condition**: Setting `voice:ringing` for existing peers happens sequentially in a loop. If a peer leaves between the check and the state update, the state is set on a dead session (benign but wasteful).
 
-3. **Permission state race condition**: Setting `voice:ringing` for existing peers happens sequentially in a loop. If a peer leaves between the check and the state update, the state is set on a dead session (benign but wasteful).
+3. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
 
-4. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
+4. **Hardcoded fallbacks in coordinators**: `P2PCoordinator` returns 6 as fallback for `P2PMaxParticipants`, `ScaledTierCoordinator` returns 100 for `ScaledMaxParticipants`. These differ from schema defaults (8 and 100). Should either throw for invalid config or use schema defaults consistently.
 
-5. **Hardcoded fallbacks in coordinators**: `P2PCoordinator` returns 6 as fallback for `P2PMaxParticipants`, `ScaledTierCoordinator` returns 100 for `ScaledMaxParticipants`. These differ from schema defaults (8 and 100). Should either throw for invalid config or use schema defaults consistently.
-
-6. **Kamailio health check path assumption**: `KamailioClient.IsHealthyAsync` assumes a `/health` endpoint exists by replacing `/RPC` in the configured endpoint URL. This may not work for all Kamailio deployments.
+5. **Kamailio health check path assumption**: `KamailioClient.IsHealthyAsync` assumes a `/health` endpoint exists by replacing `/RPC` in the configured endpoint URL. This may not work for all Kamailio deployments.
 
 ---
 
@@ -239,5 +272,5 @@ None identified.
 | Date | Issue | Gap | Status |
 |------|-------|-----|--------|
 | 2026-01-31 | [#195](https://github.com/beyond-immersion/bannou-service/issues/195) | RTPEngine publish/subscribe methods unused in scaled tier | Needs Design |
-| 2026-02-01 | [#238](https://github.com/beyond-immersion/bannou-service/issues/238) | Service-to-service events stub | Needs Design |
+| 2026-02-01 | [#238](https://github.com/beyond-immersion/bannou-service/issues/238) | Service-to-service events stub | **Resolved** (L3 redesign: 8 service events now published) |
 | 2026-02-01 | [#258](https://github.com/beyond-immersion/bannou-service/issues/258) | RTP server pool allocation with load-based selection | Needs Design |

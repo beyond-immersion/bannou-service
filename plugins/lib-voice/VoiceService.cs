@@ -503,14 +503,13 @@ public partial class VoiceService : IVoiceService
                 return StatusCodes.NotFound;
             }
 
-            // Clear voice:in_room permission state
+            // Clear voice permission state
             try
             {
-                await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+                await _permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest
                 {
                     SessionId = body.SessionId,
-                    ServiceId = "voice",
-                    NewState = null
+                    ServiceId = "voice"
                 }, cancellationToken);
             }
             catch (Exception ex)
@@ -639,11 +638,10 @@ public partial class VoiceService : IVoiceService
             {
                 try
                 {
-                    await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+                    await _permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest
                     {
                         SessionId = participant.SessionId,
-                        ServiceId = "voice",
-                        NewState = null
+                        ServiceId = "voice"
                     }, cancellationToken);
                 }
                 catch (Exception ex)

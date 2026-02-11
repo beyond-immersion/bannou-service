@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Tests for ChatService participant operations:
 /// JoinRoom, LeaveRoom, ListParticipants, KickParticipant, BanParticipant, UnbanParticipant, MuteParticipant.
 /// </summary>
-internal class ChatServiceParticipantTests : ChatServiceTestBase
+public class ChatServiceParticipantTests : ChatServiceTestBase
 {
     #region JoinRoom
 
@@ -29,7 +29,7 @@ internal class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, response) = await service.JoinRoomAsync(new JoinRoomRequest
         {
             RoomId = TestRoomId,
-            SenderType = SenderType.Player,
+            SenderType = "player",
             SenderId = Guid.NewGuid(),
             DisplayName = "Player1",
         }, CancellationToken.None);
